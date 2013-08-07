@@ -1,0 +1,21 @@
+apply plugin: 'java'
+
+repositories {
+	mavenCentral()
+}
+
+configurations { provided }
+
+dependencies {
+	compile 'org.aspectj:aspectjtools:1.7.3'
+	compile 'org.aspectj:aspectjrt:1.7.3'
+	compile 'commons-logging:commons-logging:1.1.3'
+
+	provided 'javax.servlet:servlet-api:2.5'
+}
+
+
+
+sourceSets.main.compileClasspath += configurations.provided
+sourceSets.test.compileClasspath += configurations.provided
+sourceSets.test.runtimeClasspath += configurations.provided
