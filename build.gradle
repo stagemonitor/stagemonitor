@@ -19,3 +19,9 @@ dependencies {
 sourceSets.main.compileClasspath += configurations.provided
 sourceSets.test.compileClasspath += configurations.provided
 sourceSets.test.runtimeClasspath += configurations.provided
+
+
+task wrapper(type: Wrapper) {
+	description = "Generates gradlew[.bat] scripts"
+	gradleVersion = "1.6"
+}
