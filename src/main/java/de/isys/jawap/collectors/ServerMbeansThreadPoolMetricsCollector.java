@@ -1,7 +1,5 @@
 package de.isys.jawap.collectors;
 
-import org.springframework.stereotype.Component;
-
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.MalformedObjectNameException;
@@ -9,7 +7,6 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import java.util.Set;
 
-@Component
 public class ServerMbeansThreadPoolMetricsCollector implements ThreadPoolMetricsCollector {
 
 	private MBeanServer server = MBeanServerFactory.findMBeanServer(null).get(0);

@@ -7,7 +7,6 @@ import de.isys.jawap.model.PeriodicPerformanceData;
 import de.isys.jawap.model.ThreadPoolMetrics;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.webstage.shop.core.configuration.DBProperties;
 
 import javax.annotation.Resource;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,10 +32,10 @@ public class PeriodicMetricCollector {
 		cpuUtilisationWatch.start();
 	}
 
-	@Scheduled(fixedRate = 5 * 1000)
+	//	@Scheduled(fixedRate = 5 * 1000)
 	public void collectPerformanceDataAndWriteToDb() {
 		long timeSinceLastUpdate = System.currentTimeMillis() - lastMetricsCollection.longValue();
-		if (timeSinceLastUpdate >= DBProperties.PERIODIC_PERFORMANCE_METRICS_COLLECTION_ITERVAL.getIntegerValue().longValue()) {
+		if (timeSinceLastUpdate >= Configuration.PERIODIC_PERFORMANCE_METRICS_COLLECTION_ITERVAL_MS) {
 
 			PeriodicPerformanceData periodicPerformanceData = new PeriodicPerformanceData(performanceMonitorFilter.
 					getPerformanceMeasurementSession());
@@ -55,14 +54,14 @@ public class PeriodicMetricCollector {
 	}
 
 	private boolean isMeasuringEnabled() {
-		return DBProperties.PERIODIC_PERFORMANCE_THEAD_POOL_METRICS.getBoolean()
-				|| DBProperties.PERIODIC_PERFORMANCE_HEAP_UTILISATION.getBoolean()
-				|| DBProperties.PERIODIC_PERFORMANCE_CPU_UTILISATION.getBoolean();
+		return Configuration.PERIODIC_PERFORMANCE_THEAD_POOL_METRICS
+				|| Configuration.PERIODIC_PERFORMANCE_HEAP_UTILISATION
+				|| Configuration.PERIODIC_PERFORMANCE_CPU_UTILISATION;
 	}
 
 
 	private void collectThreadPoolMetricsIfEnabled(PeriodicPerformanceData periodicPerformanceData) {
-		if (DBProperties.PERIODIC_PERFORMANCE_THEAD_POOL_METRICS.getBoolean()) {
+		if (Configuration.PERIODIC_PERFORMANCE_THEAD_POOL_METRICS) {
 			try {
 				periodicPerformanceData.setAppServerThreadPoolMetrics(createThreadPoolMetrics(serverCollector));
 			} catch (RuntimeException e) {
@@ -87,14 +86,14 @@ public class PeriodicMetricCollector {
 	}
 
 	private void collectHeapMetricsIfEnabled(PeriodicPerformanceData periodicPerformanceData) {
-		if (DBProperties.PERIODIC_PERFORMANCE_HEAP_UTILISATION.getBoolean()) {
+		if (Configuration.PERIODIC_PERFORMANCE_HEAP_UTILISATION) {
 			periodicPerformanceData.setFreeMemory(Runtime.getRuntime().freeMemory());
 			periodicPerformanceData.setTotalMemory(Runtime.getRuntime().totalMemory());
 		}
 	}
 
 	private void collectCpuMetricsIfEnabled(PeriodicPerformanceData periodicPerformanceData) {
-		if (DBProperties.PERIODIC_PERFORMANCE_CPU_UTILISATION.getBoolean()) {
+		if (Configuration.PERIODIC_PERFORMANCE_CPU_UTILISATION) {
 			periodicPerformanceData.setCpuUsagePercent(cpuUtilisationWatch.getCpuUsagePercent());
 			cpuUtilisationWatch.start();
 		}

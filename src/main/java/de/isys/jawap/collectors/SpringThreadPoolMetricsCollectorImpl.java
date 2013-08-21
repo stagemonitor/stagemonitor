@@ -4,11 +4,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 public class SpringThreadPoolMetricsCollectorImpl implements ThreadPoolMetricsCollector {
 
-	private final ThreadPoolExecutor threadPoolExecutor;
+	private ThreadPoolExecutor threadPoolExecutor;
 
-	public SpringThreadPoolMetricsCollectorImpl(ThreadPoolTaskExecutor threadPoolTaskExecutor) {
-		this.threadPoolExecutor = threadPoolTaskExecutor.getThreadPoolExecutor();
-	}
+//	public SpringThreadPoolMetricsCollectorImpl(ThreadPoolTaskExecutor threadPoolTaskExecutor) {
+//		this.threadPoolExecutor = threadPoolTaskExecutor.getThreadPoolExecutor();
+//	}
 
 	@Override
 	public int getMaxPoolSize() {

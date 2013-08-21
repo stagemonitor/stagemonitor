@@ -1,10 +1,10 @@
 package de.isys.jawap.facade;
 
+import de.isys.jawap.Configuration;
 import de.isys.jawap.model.HttpRequestStats;
 import de.isys.jawap.model.PerformanceMeasurementSession;
 import de.isys.jawap.model.PeriodicPerformanceData;
 import de.isys.jawap.service.PerformanceMeasuringService;
-import org.webstage.shop.core.configuration.DBProperties;
 
 public class DefaultPerformanceMeasuringFacade implements PerformanceMeasuringFacade {
 
@@ -17,7 +17,7 @@ public class DefaultPerformanceMeasuringFacade implements PerformanceMeasuringFa
 
 	@Override
 	public void save(HttpRequestStats requestStats) {
-		if (!DBProperties.PERFORMANCE_STATS_LOG_ONLY.getBoolean()
+		if (!Configuration.PERFORMANCE_STATS_LOG_ONLY
 				&& requestStats.getPerformanceMeasurementSession().getId() != null) {
 			performanceMeasuringService.save(requestStats);
 		}

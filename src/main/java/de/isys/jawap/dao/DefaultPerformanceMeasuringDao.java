@@ -53,7 +53,7 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 	public void save(HttpRequestStats requestStats) {
 		requestStats.setId(UUID.randomUUID().toString());
 
-		shopJdbcTemplate.update(" INSERT INTO REQUEST_STATS (" +
+		update(" INSERT INTO REQUEST_STATS (" +
 				" REQUEST_STATS_ID " +
 				",PERFORMANCE_MEASUREMENT_ID" +
 				",URL" +
@@ -65,18 +65,22 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 				requestStats.getPerformanceMeasurementSession().getId(),
 				requestStats.getUrl(),
 				requestStats.getQueryParams(),
-				new Timestamp(requestStats.getTimestamp().getTime()),
+				new Timestamp(requestStats.getTimestamp()),
 				Long.valueOf(requestStats.getExecutionTime()),
 				requestStats.getStatusCode()
 		);
 
-		long start = System.currentTimeMillis();
 		for (MethodCallStats methodCallStats : requestStats.getMethodCallStats()) {
 			save(methodCallStats);
 		}
-		long stop = System.currentTimeMillis();
-		long duration = stop - start;
-		log.debug("saving MethodCallStats took " + duration);
+	}
+
+	private void update(String sql, Object... args) {
+		// TODO
+	}
+
+	private void batchUpdate(String sql, Object... args) {
+		// TODO
 	}
 
 
@@ -84,7 +88,7 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 		List<Object[]> batchArgs = new ArrayList<Object[]>();
 		fillBatchArgsRek(batchArgs, methodCallStats);
 
-		shopJdbcTemplate.batchUpdate(" INSERT INTO METHOD_CALL_STATS (" +
+		batchUpdate(" INSERT INTO METHOD_CALL_STATS (" +
 				" METHOD_CALL_STATS_ID " +
 				",REQUEST_STATS_ID" +
 				",PARENT_ID" +
@@ -104,8 +108,7 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 		Object[] batchArgs = new Object[]{
 				methodCallStats.getId(),
 				methodCallStats.getRequestStats().getId(),
-				methodCallStats.getParent().getId(),
-				methodCallStats.getSignature(),
+				methodCallStats.parent.getId(),
 				methodCallStats.getClassName(),
 				methodCallStats.getMethodName(),
 				Long.valueOf(methodCallStats.getExecutionTime()),
@@ -121,7 +124,7 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 
 	@Override
 	public void update(PerformanceMeasurementSession performanceMeasurementSession) {
-		shopJdbcTemplate.update("UPDATE PERFORMANCE_MEASUREMENT SET " +
+		update("UPDATE PERFORMANCE_MEASUREMENT SET " +
 				"START_OF_SESSION = ? " +
 				",END_OF_SESSION = ? " +
 				",CPU_USAGE_PERCENT = ? " +
@@ -150,7 +153,7 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 		save(springThreadPoolMetrics);
 		save(springScheduledThreadPoolMetrics);
 
-		shopJdbcTemplate.update(" INSERT INTO PERIODIC_PERFORMANCE_DATA (" +
+		update(" INSERT INTO PERIODIC_PERFORMANCE_DATA (" +
 				" PERIODIC_PERFORMANCE_DATA_ID " +
 				",PERFORMANCE_MEASUREMENT_ID" +
 				",TOTAL_MEMORY" +
@@ -182,7 +185,7 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 			return;
 		}
 		threadPoolMetrics.setId(UUID.randomUUID().toString());
-		shopJdbcTemplate.update("INSERT INTO THREAD_POOL_METRICS (" +
+		update("INSERT INTO THREAD_POOL_METRICS (" +
 				"THREAD_POOL_METRICS_ID" +
 				",THREAD_POOL_MAX_SIZE" +
 				",THREAD_POOL_SIZE" +
