@@ -1,5 +1,7 @@
 package de.isys.jawap.collectors;
 
+// TODO remove hard dependency on com.sun package
+
 import com.sun.management.OperatingSystemMXBean;
 
 import javax.management.MBeanServerConnection;

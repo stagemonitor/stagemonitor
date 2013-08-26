@@ -1,11 +1,10 @@
 package de.isys.jawap.collectors;
 
+import java.util.concurrent.ThreadPoolExecutor;
 
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+public class JavaThreadPoolMetricsCollectorImpl implements ThreadPoolMetricsCollector {
 
-public class SpringScheduledThreadPoolMetricsCollectorImpl implements ThreadPoolMetricsCollector {
-
-	private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+	private ThreadPoolExecutor scheduledThreadPoolExecutor;
 
 //	@Autowired
 //	public SpringScheduledThreadPoolMetricsCollectorImpl(ThreadPoolTaskScheduler threadPoolTaskScheduler) {
