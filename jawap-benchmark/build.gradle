@@ -1,0 +1,11 @@
+apply plugin: 'application'
+apply from: 'https://raw.github.com/ultraq/gradle-support/master/aspectj.gradle'
+
+//mainClassName = "de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark"
+mainClassName = "de.isys.jawap.benchmark.ProfilerBenchmark"
+
+
+dependencies {
+	compile project(":jawap-collector")
+	compile 'com.google.caliper:caliper:1.0-beta-1'
+}

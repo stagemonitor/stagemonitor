@@ -1,0 +1,19 @@
+apply plugin: 'java'
+
+//configurations { provided }
+
+dependencies {
+	compile 'org.aspectj:aspectjtools:1.7.3'
+	compile 'org.aspectj:aspectjrt:1.7.3'
+	compile 'commons-logging:commons-logging:1.1.3'
+
+//	compile 'javax.servlet:servlet-api:2.5'
+	compile 'javax.servlet:javax.servlet-api:3.0.1'
+
+	testCompile 'junit:junit:4.11'
+	testCompile 'org.mockito:mockito-all:1.9.5'
+}
+
+//sourceSets.main.compileClasspath += configurations.provided
+//sourceSets.test.compileClasspath += configurations.provided
+//sourceSets.test.runtimeClasspath += configurations.provided
