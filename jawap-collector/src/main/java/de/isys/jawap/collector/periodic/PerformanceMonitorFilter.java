@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
+// TODO as Aspect of Servlet+.service(..) ?
 public class PerformanceMonitorFilter extends AbstractExclusionFilter {
 
 	private final Log logger = LogFactory.getLog(getClass());

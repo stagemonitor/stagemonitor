@@ -19,12 +19,15 @@ public abstract class PerformanceMonitorAspect {
 
 	@Around("methodsToProfile() && !jawapCollector()")
 	public Object profile(ProceedingJoinPoint pPjp) throws Throwable {
+		System.out.println("> entering " + pPjp.getSignature().toShortString() + pPjp.getSourceLocation());
 		MethodCallStats parent = Profiler.getMethodCallParent();
 		if (parent != null) {
 			MethodCallStats stats = Profiler.start(parent);
 			try {
 				return pPjp.proceed();
 			} finally {
+				System.out.println("< leaving  " + pPjp.getSignature().toShortString());
+
 				Profiler.stop(stats, pPjp.getSignature().getDeclaringTypeName(), pPjp.getSignature().getName());
 			}
 		}
