@@ -1,8 +1,5 @@
 package de.isys.jawap.collector.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class HttpRequestStats {
 
 	private String id;
@@ -12,7 +9,7 @@ public class HttpRequestStats {
 	private long timestamp = System.currentTimeMillis();
 	private long executionTime;
 	private Integer statusCode;
-	private List<MethodCallStats> methodCallStats = new ArrayList<MethodCallStats>();
+	private MethodCallStats methodCallStats;
 
 	public String getId() {
 		return id;
@@ -54,11 +51,11 @@ public class HttpRequestStats {
 		this.executionTime = executionTime;
 	}
 
-	public List<MethodCallStats> getMethodCallStats() {
+	public MethodCallStats getMethodCallStats() {
 		return methodCallStats;
 	}
 
-	public void setMethodCallStats(List<MethodCallStats> methodCallStats) {
+	public void setMethodCallStats(MethodCallStats methodCallStats) {
 		this.methodCallStats = methodCallStats;
 	}
 

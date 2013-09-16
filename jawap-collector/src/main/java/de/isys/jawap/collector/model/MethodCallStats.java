@@ -8,7 +8,6 @@ public class MethodCallStats {
 	public final long start = System.nanoTime();
 	public final MethodCallStats parent;
 	private String id;
-	private HttpRequestStats requestStats;
 	private String className;
 	private String methodName;
 	private long executionTime;
@@ -26,14 +25,6 @@ public class MethodCallStats {
 
 	public void setId(String id) {
 		this.id = id;
-	}
-
-	public HttpRequestStats getRequestStats() {
-		return requestStats;
-	}
-
-	public void setRequestStats(HttpRequestStats requestStats) {
-		this.requestStats = requestStats;
 	}
 
 	public long getExecutionTime() {

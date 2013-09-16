@@ -1,10 +1,10 @@
 package de.isys.jawap.collector.instrument;
 
-import de.isys.jawap.collector.model.MethodCallStats;
 import de.isys.jawap.collector.profile.Profiler;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 
 @Aspect
@@ -14,21 +14,20 @@ public abstract class PerformanceMonitorAspect {
 	public abstract void methodsToProfile();
 
 	@Pointcut("within(de.isys.jawap.collector..*)")
-	public void jawapCollector() {
+	private void jawapCollector() {
 	}
 
-	@Around("methodsToProfile() && !jawapCollector()")
-	public Object profile(ProceedingJoinPoint pPjp) throws Throwable {
-		MethodCallStats parent = Profiler.getMethodCallParent();
-		if (parent != null) {
-			MethodCallStats stats = Profiler.start(parent);
-			try {
-				return pPjp.proceed();
-			} finally {
-				Profiler.stop(stats, pPjp.getSignature().getDeclaringTypeName(), pPjp.getSignature().getName());
-			}
-		}
-		return pPjp.proceed();
+	@Pointcut("methodsToProfile() && !jawapCollector()")
+	private void applicationMethodsToProfile() {
 	}
 
+	@Before("applicationMethodsToProfile()")
+	public void startProfiling() {
+		Profiler.start();
+	}
+
+	@After("applicationMethodsToProfile()")
+	public void stopProfiling(JoinPoint joinPoint) {
+		Profiler.stop(joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().toLongString());
+	}
 }

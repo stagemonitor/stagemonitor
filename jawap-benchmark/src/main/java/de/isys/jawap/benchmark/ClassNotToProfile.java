@@ -1,6 +1,6 @@
 package de.isys.jawap.benchmark;
 
-public class ClassToProfile {
+public class ClassNotToProfile {
 
 
 	public int method1() {

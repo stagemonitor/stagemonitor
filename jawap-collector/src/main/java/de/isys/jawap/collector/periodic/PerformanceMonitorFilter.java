@@ -4,7 +4,6 @@ import de.isys.jawap.collector.AbstractExclusionFilter;
 import de.isys.jawap.collector.Configuration;
 import de.isys.jawap.collector.facade.PerformanceMeasuringFacade;
 import de.isys.jawap.collector.model.HttpRequestStats;
-import de.isys.jawap.collector.model.MethodCallStats;
 import de.isys.jawap.collector.model.PerformanceMeasurementSession;
 import de.isys.jawap.collector.profile.Profiler;
 import org.apache.commons.logging.Log;
@@ -19,6 +18,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,6 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PerformanceMonitorFilter extends AbstractExclusionFilter {
 
 	private final Log logger = LogFactory.getLog(getClass());
+
+	private Method statusCodeMethod;
 
 	private PerformanceMeasuringFacade performanceMeasuringFacade;
 
@@ -36,6 +39,15 @@ public class PerformanceMonitorFilter extends AbstractExclusionFilter {
 	private int warmupRequests = 0;
 	private boolean warmedUp = false;
 	private AtomicInteger noOfRequests = new AtomicInteger(0);
+
+	public PerformanceMonitorFilter() {
+		try {
+			statusCodeMethod = HttpServletResponse.class.getMethod("getStatus");
+		} catch (NoSuchMethodException e) {
+			// we are in a pre servlet 3.0 environment
+			statusCodeMethod = null;
+		}
+	}
 
 	@PostConstruct
 	public void onPostConstruct() {
@@ -63,29 +75,33 @@ public class PerformanceMonitorFilter extends AbstractExclusionFilter {
 			long start = System.currentTimeMillis();
 			HttpRequestStats requestStats = getRequestStats(httpServletRequest);
 
-			MethodCallStats root = null;
 			if (Configuration.METHOD_PERFORMANCE_STATS) {
-				root = new MethodCallStats(null);
 				Profiler.setCurrentRequestStats(requestStats);
-				Profiler.setMethodCallRoot(root);
 			}
-
-			filterChain.doFilter(servletRequest, servletResponse);
-
-			long stop = System.currentTimeMillis();
-			requestStats.setExecutionTime(stop - start);
-			requestStats.setStatusCode(httpServletResponse.getStatus());
-
-			if (root != null) {
-				requestStats.setMethodCallStats(root.getChildren());
-				Profiler.clearStats();
-				Profiler.clearCurrentRequestStats();
+			try {
+				filterChain.doFilter(servletRequest, servletResponse);
+			} finally {
+				long stop = System.currentTimeMillis();
+				requestStats.setExecutionTime(stop - start);
+				requestStats.setStatusCode(getStatusCode(httpServletResponse));
+				performanceMeasuringFacade.save(requestStats);
 			}
-			performanceMeasuringFacade.save(requestStats);
-
 		} else {
 			filterChain.doFilter(servletRequest, servletResponse);
 		}
+	}
+
+	private Integer getStatusCode(HttpServletResponse httpServletResponse) {
+		if (statusCodeMethod != null) {
+			try {
+				return (Integer) statusCodeMethod.invoke(httpServletResponse);
+			} catch (IllegalAccessException e) {
+				logger.error(e.getMessage(), e);
+			} catch (InvocationTargetException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+		return null;
 	}
 
 	private boolean isWarmedUp() {
@@ -107,14 +123,12 @@ public class PerformanceMonitorFilter extends AbstractExclusionFilter {
 	public void onPreDestroy() {
 		if (!Configuration.PERFORMANCE_STATS_LOG_ONLY && performanceMeasurementSession.getId() != null) {
 			performanceMeasurementSession.setEndOfSession(new Date());
-			performanceMeasurementSession.setCpuUsagePercent(Float.valueOf(cpuWatch.getCpuUsagePercent()));
+			performanceMeasurementSession.setCpuUsagePercent(cpuWatch.getCpuUsagePercent());
 			GCStatsUtil.GCStats gcStats = GCStatsUtil.getGCStats();
-			performanceMeasurementSession.setGarbageCollectionsCount(Long.valueOf(gcStats.collectionCount));
-			performanceMeasurementSession.setGarbageCollectionTime(Long.valueOf(gcStats.garbageCollectionTime));
+			performanceMeasurementSession.setGarbageCollectionsCount(gcStats.collectionCount);
+			performanceMeasurementSession.setGarbageCollectionTime(gcStats.garbageCollectionTime);
 			performanceMeasuringFacade.update(performanceMeasurementSession);
 		}
-
-		Profiler.clearAllThreadLoals();
 	}
 
 	public PerformanceMeasurementSession getPerformanceMeasurementSession() {

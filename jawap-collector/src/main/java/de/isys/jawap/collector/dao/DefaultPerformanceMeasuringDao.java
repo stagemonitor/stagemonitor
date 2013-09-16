@@ -1,10 +1,6 @@
 package de.isys.jawap.collector.dao;
 
-import de.isys.jawap.collector.model.HttpRequestStats;
-import de.isys.jawap.collector.model.MethodCallStats;
-import de.isys.jawap.collector.model.PerformanceMeasurementSession;
-import de.isys.jawap.collector.model.PeriodicPerformanceData;
-import de.isys.jawap.collector.model.ThreadPoolMetrics;
+import de.isys.jawap.collector.model.*;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -66,13 +62,11 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 				requestStats.getUrl(),
 				requestStats.getQueryParams(),
 				new Timestamp(requestStats.getTimestamp()),
-				Long.valueOf(requestStats.getExecutionTime()),
+				requestStats.getExecutionTime(),
 				requestStats.getStatusCode()
 		);
 
-		for (MethodCallStats methodCallStats : requestStats.getMethodCallStats()) {
-			save(methodCallStats);
-		}
+		save(requestStats.getMethodCallStats(), requestStats.getId());
 	}
 
 	private void update(String sql, Object... args) {
@@ -84,9 +78,9 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 	}
 
 
-	public void save(MethodCallStats methodCallStats) {
+	public void save(MethodCallStats methodCallStats, String requestStatsId) {
 		List<Object[]> batchArgs = new ArrayList<Object[]>();
-		fillBatchArgsRek(batchArgs, methodCallStats);
+		fillBatchArgsRek(batchArgs, methodCallStats, requestStatsId);
 
 		batchUpdate(" INSERT INTO METHOD_CALL_STATS (" +
 				" METHOD_CALL_STATS_ID " +
@@ -103,22 +97,22 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 		);
 	}
 
-	private void fillBatchArgsRek(List<Object[]> batchArgsList, MethodCallStats methodCallStats) {
+	private void fillBatchArgsRek(List<Object[]> batchArgsList, MethodCallStats methodCallStats, String requestStatsId) {
 		methodCallStats.setId(UUID.randomUUID().toString());
 		Object[] batchArgs = new Object[]{
 				methodCallStats.getId(),
-				methodCallStats.getRequestStats().getId(),
+				requestStatsId,
 				methodCallStats.parent.getId(),
 				methodCallStats.getClassName(),
 				methodCallStats.getMethodName(),
-				Long.valueOf(methodCallStats.getExecutionTime()),
-				Long.valueOf(methodCallStats.getNetExecutionTime()),
+				methodCallStats.getExecutionTime(),
+				methodCallStats.getNetExecutionTime(),
 				new Timestamp(methodCallStats.getTimestamp())
 		};
 		batchArgsList.add(batchArgs);
 
 		for (MethodCallStats callStats : methodCallStats.getChildren()) {
-			fillBatchArgsRek(batchArgsList, callStats);
+			fillBatchArgsRek(batchArgsList, callStats, requestStatsId);
 		}
 	}
 

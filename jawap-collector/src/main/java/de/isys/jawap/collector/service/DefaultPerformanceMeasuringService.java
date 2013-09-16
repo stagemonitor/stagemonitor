@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 
 public class DefaultPerformanceMeasuringService implements PerformanceMeasuringService {
 
-	private static Log logger = LogFactory.getLog(DefaultPerformanceMeasuringService.class);
+	private static final Log logger = LogFactory.getLog(DefaultPerformanceMeasuringService.class);
 
 	private PerformanceMeasuringDao performanceMeasuringDao;
 
@@ -30,12 +30,12 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 			long start = System.currentTimeMillis();
 			StringBuilder log = new StringBuilder(10000);
 			log.append("\n########## PerformanceStats ##########\n");
-			log.append("id: " + requestStats.getId()).append('\n');
+			log.append("id: ").append(requestStats.getId()).append('\n');
 			log.append(getRequestMessage(requestStats));
 
 			logMethodCallStats(requestStats, log);
 
-			log.append("Printing stats took " + (System.currentTimeMillis() - start) + " ms\n");
+			log.append("Printing stats took ").append(System.currentTimeMillis() - start).append(" ms\n");
 			log.append("######################################\n\n\n");
 
 			// One log should occur after another like log1 log2, not lolog2g1
@@ -55,14 +55,12 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 	}
 
 	private void logMethodCallStats(HttpRequestStats requestStats, StringBuilder log) {
-		if (!requestStats.getMethodCallStats().isEmpty()) {
+		if (requestStats.getMethodCallStats() != null) {
 			log.append("--------------------------------------------------\n");
-			log.append("Selftime   %     Total      %     Method signature\n");
+			log.append("Selftime (ms)    Total (ms)       Method signature\n");
 			log.append("--------------------------------------------------\n");
 
-			for (MethodCallStats methodCallStats : requestStats.getMethodCallStats()) {
-				logStats(methodCallStats, requestStats.getExecutionTime() * 1000000, 0, log);
-			}
+			logStats(requestStats.getMethodCallStats(), requestStats.getMethodCallStats().getExecutionTime(), 0, log);
 		}
 	}
 
@@ -81,16 +79,19 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 	}
 
 	private void appendNumber(StringBuilder sb, long time) {
-		sb.append(String.format("%,9.2f", Double.valueOf(time / 1000000.0))).append("  ");
+		sb.append(String.format("%,9.2f", time / 1000000.0)).append("  ");
 	}
 
 	private void appendPercent(StringBuilder sb, long time, long totalExecutionTimeNs) {
-		sb.append(String.format("%3.0f", Double.valueOf(time * 100 / (double) totalExecutionTimeNs))).append("%  ");
+		sb.append(String.format("%3.0f", time * 100 / (double) totalExecutionTimeNs)).append("%  ");
 	}
 
 	private void appendCallTree(MethodCallStats methodCallStats, int depth, StringBuilder sb) {
-		for (int i = 0; i < depth; i++) {
+		for (int i = 1; i <= depth; i++) {
 			sb.append("|  ");
+			if (i == depth) {
+				sb.append("+--");
+			}
 		}
 		sb.append(methodCallStats.toString()).append('\n');
 	}
