@@ -1,9 +1,7 @@
 package de.isys.jawap.benchmark.opencore;
 
 import de.isys.jawap.collector.model.HttpRequestStats;
-import de.isys.jawap.collector.model.MethodCallStats;
-
-import java.util.Collections;
+import de.isys.jawap.collector.profile.Profiler;
 
 import static java.lang.String.format;
 import static java.lang.System.nanoTime;
@@ -39,9 +37,7 @@ public class OpenCoreBenchmark implements Runnable {
 
 	public void run() {
 		HttpRequestStats httpRequestStats = new HttpRequestStats();
-		MethodCallStats root = new MethodCallStats(null);
-		httpRequestStats.setMethodCallStats(Collections.singletonList(root));
-
+		Profiler.setCurrentRequestStats(httpRequestStats);
 		for (int i = 0; i < RUN_COUNT; i++)
 			iterate();
 	}
