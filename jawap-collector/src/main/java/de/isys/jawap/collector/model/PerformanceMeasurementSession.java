@@ -9,7 +9,7 @@ public class PerformanceMeasurementSession {
 	private String id;
 	private Date startOfSession = new Date();
 	private Date endOfSession;
-	private List<HttpRequestStats> requests = new ArrayList<HttpRequestStats>();
+	private List<ExecutionContext> requests = new ArrayList<ExecutionContext>();
 	private Float cpuUsagePercent;
 	private Long garbageCollectionsCount;
 	private Long garbageCollectionTime;
@@ -30,11 +30,11 @@ public class PerformanceMeasurementSession {
 		this.startOfSession = startOfSession;
 	}
 
-	public List<HttpRequestStats> getRequests() {
+	public List<ExecutionContext> getRequests() {
 		return requests;
 	}
 
-	public void setRequests(List<HttpRequestStats> requests) {
+	public void setRequests(List<ExecutionContext> requests) {
 		this.requests = requests;
 	}
 

@@ -1,6 +1,6 @@
 package de.isys.jawap.collector.profile;
 
-import de.isys.jawap.collector.model.HttpRequestStats;
+import de.isys.jawap.collector.model.ExecutionContext;
 import de.isys.jawap.collector.model.MethodCallStats;
 
 public class Profiler {
@@ -9,8 +9,15 @@ public class Profiler {
 
 	private static final ThreadLocal<MethodCallStats> methodCallParent = new ThreadLocal<MethodCallStats>();
 
-	private static final ThreadLocal<HttpRequestStats> currentRequestStats = new ThreadLocal<HttpRequestStats>();
+	private static final ThreadLocal<ExecutionContext> executionContext = new ThreadLocal<ExecutionContext>();
 
+	/**
+	 * @return true, if a executionContext is set, false otherwise
+	 * @see #setExecutionContext(de.isys.jawap.collector.model.ExecutionContext)
+	 */
+	public static boolean isProfilingActive() {
+		return executionContext.get() != null;
+	}
 
 	/**
 	 * Starts the profiling of a method
@@ -22,26 +29,30 @@ public class Profiler {
 			parent.getChildren().add(stats);
 			methodCallParent.set(stats);
 		} else {
-			// Only profile if in an HTTP request context
-			HttpRequestStats httpRequestStats = currentRequestStats.get();
-			if (httpRequestStats != null) {
-				MethodCallStats stats = new MethodCallStats(parent);
-				httpRequestStats.setMethodCallStats(stats);
-				methodCallParent.set(stats);
+			// profile only if we are in a execution context
+			ExecutionContext executionContext = Profiler.executionContext.get();
+			if (executionContext != null) {
+				MethodCallStats root = new MethodCallStats(null);
+				executionContext.setMethodCallStats(root);
+				methodCallParent.set(root);
 			}
 		}
 	}
 
-	public static void stop(String targetClass, String methodName) {
+	public static void stop(String targetClass, String signature) {
 		MethodCallStats currentStats = methodCallParent.get();
 		if (currentStats != null) {
 			long executionTime = System.nanoTime() - currentStats.start;
 
 			final MethodCallStats parent = currentStats.parent;
 			if (executionTime >= MIN_EXECUTION_TIME_NANOS) {
-				fillMethodCallStats(targetClass, methodName, currentStats, executionTime);
+				currentStats.setSignature(signature);
+				currentStats.setClassName(targetClass);
+				currentStats.setExecutionTime(executionTime);
+				currentStats.addToNetExecutionTime(executionTime);
 			} else if (parent != null) {
-				parent.getChildren().remove(currentStats); // TODO remove on ArrayList is 0(n)
+				// currentStats is always the last entry in parent.getChildren()
+				parent.getChildren().remove(parent.getChildren().size() - 1);
 			}
 
 			if (parent == null) {
@@ -53,25 +64,19 @@ public class Profiler {
 		}
 	}
 
-	private static void fillMethodCallStats(String targetClass, String methodName, MethodCallStats stats, long executionTime) {
-		stats.setMethodName(methodName);
-		stats.setClassName(targetClass);
-		stats.setExecutionTime(executionTime);
-		stats.addToNetExecutionTime(executionTime);
-	}
-
 	/**
-	 * Sets the current HTTP requests stats
+	 * Sets the current {@link ExecutionContext}
 	 * This serves as a hint for the Profiler, that Method metrics should be gathered.
+	 * Those metrics are added to the {@link ExecutionContext}
 	 *
-	 * @param requestStats the current HTTP requests stats
+	 * @param executionContext the current HTTP requests stats
 	 */
-	public static void setCurrentRequestStats(HttpRequestStats requestStats) {
-		currentRequestStats.set(requestStats);
+	public static void setExecutionContext(ExecutionContext executionContext) {
+		Profiler.executionContext.set(executionContext);
 	}
 
 	private static void clearAllThreadLoals() {
 		methodCallParent.remove();
-		currentRequestStats.remove();
+		executionContext.remove();
 	}
 }

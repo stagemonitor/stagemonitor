@@ -3,7 +3,7 @@ package de.isys.jawap.collector.periodic;
 import de.isys.jawap.collector.AbstractExclusionFilter;
 import de.isys.jawap.collector.Configuration;
 import de.isys.jawap.collector.facade.PerformanceMeasuringFacade;
-import de.isys.jawap.collector.model.HttpRequestStats;
+import de.isys.jawap.collector.model.HttpRequestContext;
 import de.isys.jawap.collector.model.PerformanceMeasurementSession;
 import de.isys.jawap.collector.profile.Profiler;
 import org.apache.commons.logging.Log;
@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-// TODO as Aspect of Servlet+.service(..) ?
+// TODO as Aspect of Servlet+.service(..) or HttpServletRequest.new ?
 public class PerformanceMonitorFilter extends AbstractExclusionFilter {
 
 	private final Log logger = LogFactory.getLog(getClass());
@@ -73,10 +73,10 @@ public class PerformanceMonitorFilter extends AbstractExclusionFilter {
 			HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
 			HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
 			long start = System.currentTimeMillis();
-			HttpRequestStats requestStats = getRequestStats(httpServletRequest);
+			HttpRequestContext requestStats = getRequestStats(httpServletRequest);
 
 			if (Configuration.METHOD_PERFORMANCE_STATS) {
-				Profiler.setCurrentRequestStats(requestStats);
+				Profiler.setExecutionContext(requestStats);
 			}
 			try {
 				filterChain.doFilter(servletRequest, servletResponse);
@@ -111,8 +111,8 @@ public class PerformanceMonitorFilter extends AbstractExclusionFilter {
 		return warmedUp;
 	}
 
-	private HttpRequestStats getRequestStats(HttpServletRequest httpServletRequest) {
-		HttpRequestStats requestStats = new HttpRequestStats();
+	private HttpRequestContext getRequestStats(HttpServletRequest httpServletRequest) {
+		HttpRequestContext requestStats = new HttpRequestContext();
 		requestStats.setPerformanceMeasurementSession(performanceMeasurementSession);
 		requestStats.setUrl(httpServletRequest.getRequestURI());
 		requestStats.setQueryParams(httpServletRequest.getQueryString());

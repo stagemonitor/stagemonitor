@@ -1,6 +1,10 @@
 package de.isys.jawap.collector.dao;
 
-import de.isys.jawap.collector.model.*;
+import de.isys.jawap.collector.model.HttpRequestContext;
+import de.isys.jawap.collector.model.MethodCallStats;
+import de.isys.jawap.collector.model.PerformanceMeasurementSession;
+import de.isys.jawap.collector.model.PeriodicPerformanceData;
+import de.isys.jawap.collector.model.ThreadPoolMetrics;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -46,7 +50,7 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 	}
 
 	@Override
-	public void save(HttpRequestStats requestStats) {
+	public void save(HttpRequestContext requestStats) {
 		requestStats.setId(UUID.randomUUID().toString());
 
 		update(" INSERT INTO REQUEST_STATS (" +
@@ -104,7 +108,7 @@ public class DefaultPerformanceMeasuringDao implements PerformanceMeasuringDao {
 				requestStatsId,
 				methodCallStats.parent.getId(),
 				methodCallStats.getClassName(),
-				methodCallStats.getMethodName(),
+				methodCallStats.getSignature(),
 				methodCallStats.getExecutionTime(),
 				methodCallStats.getNetExecutionTime(),
 				new Timestamp(methodCallStats.getTimestamp())

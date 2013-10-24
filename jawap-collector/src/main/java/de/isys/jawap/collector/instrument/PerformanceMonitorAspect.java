@@ -21,13 +21,18 @@ public abstract class PerformanceMonitorAspect {
 	private void applicationMethodsToProfile() {
 	}
 
-	@Before("applicationMethodsToProfile()")
+	@Pointcut("if()")
+	public static boolean isProfilingActive() {
+		return Profiler.isProfilingActive();
+	}
+
+	@Before("applicationMethodsToProfile() && isProfilingActive()")
 	public void startProfiling() {
 		Profiler.start();
 	}
 
-	@After("applicationMethodsToProfile()")
-	public void stopProfiling(JoinPoint joinPoint) {
+	@After("applicationMethodsToProfile() && isProfilingActive()")
+	public void stopProfiling(JoinPoint.StaticPart joinPoint) {
 		Profiler.stop(joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().toLongString());
 	}
 }

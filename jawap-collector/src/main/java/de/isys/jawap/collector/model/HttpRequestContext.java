@@ -1,6 +1,6 @@
 package de.isys.jawap.collector.model;
 
-public class HttpRequestStats {
+public class HttpRequestContext extends GenericExecutionContext {
 
 	private String id;
 	private PerformanceMeasurementSession performanceMeasurementSession;
@@ -9,7 +9,6 @@ public class HttpRequestStats {
 	private long timestamp = System.currentTimeMillis();
 	private long executionTime;
 	private Integer statusCode;
-	private MethodCallStats methodCallStats;
 
 	public String getId() {
 		return id;
@@ -49,14 +48,6 @@ public class HttpRequestStats {
 
 	public void setExecutionTime(long executionTime) {
 		this.executionTime = executionTime;
-	}
-
-	public MethodCallStats getMethodCallStats() {
-		return methodCallStats;
-	}
-
-	public void setMethodCallStats(MethodCallStats methodCallStats) {
-		this.methodCallStats = methodCallStats;
 	}
 
 	public String getQueryParams() {

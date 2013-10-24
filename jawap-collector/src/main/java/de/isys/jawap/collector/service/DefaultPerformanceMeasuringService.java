@@ -1,7 +1,7 @@
 package de.isys.jawap.collector.service;
 
 import de.isys.jawap.collector.dao.PerformanceMeasuringDao;
-import de.isys.jawap.collector.model.HttpRequestStats;
+import de.isys.jawap.collector.model.HttpRequestContext;
 import de.isys.jawap.collector.model.MethodCallStats;
 import de.isys.jawap.collector.model.PerformanceMeasurementSession;
 import de.isys.jawap.collector.model.PeriodicPerformanceData;
@@ -20,12 +20,12 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 	}
 
 	@Override
-	public void save(HttpRequestStats requestStats) {
+	public void save(HttpRequestContext requestStats) {
 		performanceMeasuringDao.save(requestStats);
 	}
 
 	@Override
-	public void logStats(HttpRequestStats requestStats) {
+	public void logStats(HttpRequestContext requestStats) {
 		if (logger.isInfoEnabled()) {
 			long start = System.currentTimeMillis();
 			StringBuilder log = new StringBuilder(10000);
@@ -45,7 +45,7 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 		}
 	}
 
-	private String getRequestMessage(HttpRequestStats requestStats) {
+	private String getRequestMessage(HttpRequestContext requestStats) {
 		String requestMessage = "Request to " + requestStats.getUrl();
 		if (requestStats.getQueryParams() != null) {
 			requestMessage += "?" + requestStats.getQueryParams();
@@ -54,7 +54,7 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 		return requestMessage;
 	}
 
-	private void logMethodCallStats(HttpRequestStats requestStats, StringBuilder log) {
+	private void logMethodCallStats(HttpRequestContext requestStats, StringBuilder log) {
 		if (requestStats.getMethodCallStats() != null) {
 			log.append("--------------------------------------------------\n");
 			log.append("Selftime (ms)    Total (ms)       Method signature\n");
@@ -93,7 +93,7 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 				sb.append("+--");
 			}
 		}
-		sb.append(methodCallStats.toString()).append('\n');
+		sb.append(methodCallStats.getSignature()).append('\n');
 	}
 
 	private void preorderTraverseTreeAndComputeDepth(MethodCallStats methodCallStats, long totalExecutionTimeNs,

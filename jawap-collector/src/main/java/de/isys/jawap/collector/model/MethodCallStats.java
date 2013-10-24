@@ -9,7 +9,7 @@ public class MethodCallStats {
 	public final MethodCallStats parent;
 	private String id;
 	private String className;
-	private String methodName;
+	private String signature;
 	private long executionTime;
 	private long netExecutionTime;
 	private long timestamp = System.currentTimeMillis();
@@ -59,12 +59,12 @@ public class MethodCallStats {
 		this.className = className;
 	}
 
-	public String getMethodName() {
-		return methodName;
+	public String getSignature() {
+		return signature;
 	}
 
-	public void setMethodName(String methodName) {
-		this.methodName = methodName;
+	public void setSignature(String signature) {
+		this.signature = signature;
 	}
 
 	public long getTimestamp() {
@@ -73,13 +73,6 @@ public class MethodCallStats {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
-	}
-
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(className).append('.').append(methodName);
-		return sb.toString();
 	}
 
 	public void addToNetExecutionTime(long executionTime) {

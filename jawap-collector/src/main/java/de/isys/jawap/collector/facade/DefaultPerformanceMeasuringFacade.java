@@ -1,7 +1,7 @@
 package de.isys.jawap.collector.facade;
 
 import de.isys.jawap.collector.Configuration;
-import de.isys.jawap.collector.model.HttpRequestStats;
+import de.isys.jawap.collector.model.HttpRequestContext;
 import de.isys.jawap.collector.model.PerformanceMeasurementSession;
 import de.isys.jawap.collector.model.PeriodicPerformanceData;
 import de.isys.jawap.collector.service.PerformanceMeasuringService;
@@ -16,7 +16,7 @@ public class DefaultPerformanceMeasuringFacade implements PerformanceMeasuringFa
 	}
 
 	@Override
-	public void save(HttpRequestStats requestStats) {
+	public void save(HttpRequestContext requestStats) {
 		if (!Configuration.PERFORMANCE_STATS_LOG_ONLY
 				&& requestStats.getPerformanceMeasurementSession().getId() != null) {
 			performanceMeasuringService.save(requestStats);
