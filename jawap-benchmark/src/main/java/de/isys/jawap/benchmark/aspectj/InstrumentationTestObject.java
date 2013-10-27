@@ -2,15 +2,20 @@ package de.isys.jawap.benchmark.aspectj;
 
 public class InstrumentationTestObject {
 
-	public Long testMethod(Long i) {
+	public long testMethod(long i) {
+		AspectJAspect.dummy++;
+		try {
+			return ++i;
+		} finally {
+			AspectJAspect.dummy++;
+		}
+	}
+
+	public long instrumentationAroundTestMethod(long i) {
 		return ++i;
 	}
 
-	public Long instrumentationAroundTestMethod(Long i) {
-		return ++i;
-	}
-
-	public Long instrumentationBeforeAfterTestMethod(Long i) {
+	public long instrumentationBeforeAfterTestMethod(long i) {
 		return ++i;
 	}
 

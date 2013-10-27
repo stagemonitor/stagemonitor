@@ -11,7 +11,7 @@ public class ClassManualProfiling {
 		try {
 			return method2(1) + method3() + method5();
 		} finally {
-			Profiler.stop(className, "method1");
+			Profiler.stop(className, "public int method1()");
 		}
 	}
 
@@ -20,7 +20,7 @@ public class ClassManualProfiling {
 		try {
 			return 1 + i;
 		} finally {
-			Profiler.stop(className, "method2");
+			Profiler.stop(className, "public int method2(int i)");
 		}
 	}
 
@@ -29,7 +29,7 @@ public class ClassManualProfiling {
 		try {
 			return method4();
 		} finally {
-			Profiler.stop(className, "method3");
+			Profiler.stop(className, "public int method3()");
 		}
 	}
 
@@ -38,7 +38,7 @@ public class ClassManualProfiling {
 		try {
 			return 4;
 		} finally {
-			Profiler.stop(className, "method4");
+			Profiler.stop(className, "public int method4()");
 		}
 	}
 
@@ -47,7 +47,7 @@ public class ClassManualProfiling {
 		try {
 			return method6() + method7();
 		} finally {
-			Profiler.stop(className, "method5");
+			Profiler.stop(className, "public int method5()");
 		}
 	}
 
@@ -56,7 +56,7 @@ public class ClassManualProfiling {
 		try {
 			return 6;
 		} finally {
-			Profiler.stop(className, "method6");
+			Profiler.stop(className, "public int method6()");
 		}
 	}
 
@@ -65,7 +65,7 @@ public class ClassManualProfiling {
 		try {
 			return 7;
 		} finally {
-			Profiler.stop(className, "method7");
+			Profiler.stop(className, "public int method7()");
 		}
 	}
 

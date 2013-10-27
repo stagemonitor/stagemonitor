@@ -1,6 +1,5 @@
 package de.isys.jawap.benchmark.opencore;
 
-import de.isys.jawap.collector.model.ExecutionContext;
 import de.isys.jawap.collector.model.HttpRequestContext;
 import de.isys.jawap.collector.profile.Profiler;
 import de.isys.jawap.collector.service.DefaultPerformanceMeasuringService;
@@ -40,11 +39,11 @@ public class OpenCoreBenchmark implements Runnable {
 	}
 
 	public void run() {
-		ExecutionContext httpRequestStats = new HttpRequestContext();
+		HttpRequestContext httpRequestStats = new HttpRequestContext();
 		Profiler.setExecutionContext(httpRequestStats);
 		for (int i = 0; i < RUN_COUNT; i++)
 			iterate();
-//		performanceMeasuringService.logStats(httpRequestStats);
+		performanceMeasuringService.logStats(httpRequestStats);
 	}
 
 	private void iterate() {

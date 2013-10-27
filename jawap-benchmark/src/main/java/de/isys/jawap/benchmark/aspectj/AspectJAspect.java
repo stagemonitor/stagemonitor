@@ -1,12 +1,7 @@
 package de.isys.jawap.benchmark.aspectj;
 
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.After;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 
 @Aspect
 public class AspectJAspect {
@@ -29,12 +24,12 @@ public class AspectJAspect {
 	}
 
 	@Before("beforeAfter()")
-	public void before(JoinPoint jp) {
+	public void before() {
 		dummy++;
 	}
 
 	@After("beforeAfter()")
-	public void after(JoinPoint jp) {
+	public void after() {
 		dummy++;
 	}
 }

@@ -7,26 +7,27 @@ public class InstrumentationBenchmark extends Benchmark {
 	private InstrumentationTestObject instrumentationTestObject = new InstrumentationTestObject();
 
 	public long timeNoInstrumentation(long reps) {
-		Long dummy = new Long(0);
-		for (Long i = new Long(0); i < reps; i++) {
-			AspectJAspect.dummy++;
+		AspectJAspect.dummy = 0;
+		long dummy = 0;
+		for (long i = 0; i < reps; i++) {
 			dummy = instrumentationTestObject.testMethod(i);
-			AspectJAspect.dummy++;
 		}
 		return dummy;
 	}
 
 	public long timeAround(long reps) {
-		Long dummy = new Long(0);
-		for (Long i = new Long(0); i < reps; i++) {
+		AspectJAspect.dummy = 0;
+		long dummy = 0;
+		for (long i = 0; i < reps; i++) {
 			dummy = instrumentationTestObject.instrumentationAroundTestMethod(i);
 		}
 		return dummy;
 	}
 
 	public long timeBeforeAfter(long reps) {
-		Long dummy = new Long(0);
-		for (Long i = new Long(0); i < reps; i++) {
+		AspectJAspect.dummy = 0;
+		long dummy = 0;
+		for (long i = 0; i < reps; i++) {
 			dummy = instrumentationTestObject.instrumentationBeforeAfterTestMethod(i);
 		}
 		return dummy;
@@ -39,7 +40,7 @@ public class InstrumentationBenchmark extends Benchmark {
 	public static void main(String[] args) {
 		InstrumentationBenchmark instrumentationBenchmark = new InstrumentationBenchmark();
 		final long warmups = 10000000L;
-		final long runs = 100000000L;
+		final long runs = 1000000000L;
 		// warmup
 		instrumentationBenchmark.timeNoInstrumentation(warmups);
 		instrumentationBenchmark.timeAround(warmups);
@@ -53,6 +54,8 @@ public class InstrumentationBenchmark extends Benchmark {
 		System.out.println("total time: " + timeNoInstrumentation);
 		System.out.println("time per method: " + (double) timeNoInstrumentation / runs);
 		System.out.println("ratio: " + (double) timeNoInstrumentation / timeNoInstrumentation);
+		if (AspectJAspect.dummy != runs * 2)
+			throw new IllegalStateException("Expected " + runs * 2 + " runs, actual runs: " + AspectJAspect.dummy);
 
 		start = System.nanoTime();
 		instrumentationBenchmark.timeAround(runs);
@@ -61,6 +64,8 @@ public class InstrumentationBenchmark extends Benchmark {
 		System.out.println("total time: " + timeAround);
 		System.out.println("time per method: " + (double) timeAround / runs);
 		System.out.println("ratio: " + (double) timeAround / timeNoInstrumentation);
+		if (AspectJAspect.dummy != runs * 2)
+			throw new IllegalStateException("Expected " + runs * 2 + " runs, actual runs: " + AspectJAspect.dummy);
 
 		start = System.nanoTime();
 		instrumentationBenchmark.timeBeforeAfter(runs);
@@ -69,6 +74,8 @@ public class InstrumentationBenchmark extends Benchmark {
 		System.out.println("total time: " + timeBeforeAfter);
 		System.out.println("time per method: " + (double) timeBeforeAfter / runs);
 		System.out.println("ratio: " + (double) timeBeforeAfter / timeNoInstrumentation);
+		if (AspectJAspect.dummy != runs * 2)
+			throw new IllegalStateException("Expected " + runs * 2 + " runs, actual runs: " + AspectJAspect.dummy);
 
 
 	}

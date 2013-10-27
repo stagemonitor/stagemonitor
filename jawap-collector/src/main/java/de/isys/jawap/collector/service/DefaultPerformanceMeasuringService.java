@@ -8,6 +8,8 @@ import de.isys.jawap.collector.model.PeriodicPerformanceData;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.List;
+
 public class DefaultPerformanceMeasuringService implements PerformanceMeasuringService {
 
 	private static final Log logger = LogFactory.getLog(DefaultPerformanceMeasuringService.class);
@@ -56,9 +58,9 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 
 	private void logMethodCallStats(HttpRequestContext requestStats, StringBuilder log) {
 		if (requestStats.getMethodCallStats() != null) {
-			log.append("--------------------------------------------------\n");
+			log.append("──────────────────────────────────────────────────\n");
 			log.append("Selftime (ms)    Total (ms)       Method signature\n");
-			log.append("--------------------------------------------------\n");
+			log.append("──────────────────────────────────────────────────\n");
 
 			logStats(requestStats.getMethodCallStats(), requestStats.getMethodCallStats().getExecutionTime(), 0, log);
 		}
@@ -88,12 +90,22 @@ public class DefaultPerformanceMeasuringService implements PerformanceMeasuringS
 
 	private void appendCallTree(MethodCallStats methodCallStats, int depth, StringBuilder sb) {
 		for (int i = 1; i <= depth; i++) {
-			sb.append("|  ");
 			if (i == depth) {
-				sb.append("+--");
+				if (isLastChild(methodCallStats) && methodCallStats.getChildren().isEmpty()) {
+					sb.append("└─ ");
+				} else {
+					sb.append("├─ ");
+				}
+			} else {
+				sb.append("│  ");
 			}
 		}
 		sb.append(methodCallStats.getSignature()).append('\n');
+	}
+
+	private boolean isLastChild(MethodCallStats methodCallStats) {
+		final List<MethodCallStats> parentChildren = methodCallStats.parent.getChildren();
+		return parentChildren.get(parentChildren.size() - 1) == methodCallStats;
 	}
 
 	private void preorderTraverseTreeAndComputeDepth(MethodCallStats methodCallStats, long totalExecutionTimeNs,
