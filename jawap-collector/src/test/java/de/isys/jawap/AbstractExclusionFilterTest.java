@@ -1,23 +1,14 @@
 package de.isys.jawap;
 
-import de.isys.jawap.collector.AbstractExclusionFilter;
-import org.junit.Before;
+import de.isys.jawap.collector.web.monitor.filter.AbstractExclusionFilter;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class AbstractExclusionFilterTest {
 
@@ -31,26 +22,42 @@ public class AbstractExclusionFilterTest {
 		}
 	}
 
-	@Before
-	public void setUp() throws ServletException {
+	@Test
+	public void testExclude() throws Exception {
 		when(filterConfigMock.getInitParameter("exclude")).thenReturn("exclude1,/exclude2,  /exclude3/");
 		testFilter.init(filterConfigMock);
+		assertExcludes("/exclude1");
+		assertExcludes("/exclude2/bla/blubb");
+		assertExcludes("/exclude3/");
+		assertExcludes("/exclude2bla");
+
+		assertIncludes("/exclude3");
+		assertIncludes("/included");
+		assertIncludes("/included/exclude1");
 	}
 
 	@Test
-	public void testExclude() throws Exception {
-		testHelper("/exclude1", 0);
-		testHelper("/exclude2/bla/blubb", 0);
-		testHelper("/exclude3/", 0);
-		testHelper("/exclude2bla", 0);
-		testHelper("/exclude3", 1);
-		testHelper("/included", 2);
-		testHelper("/included/exclude1", 3);
+	public void testNotExclude() throws Exception {
+		testFilter.init(filterConfigMock);
+		assertIncludes("/exclude3");
 	}
 
-	private void testHelper(String url, int wantedNumberOfInvocations) throws Exception {
+	private void assertIncludes(String url) throws Exception {
+		assertExcludes(url, false);
+	}
+
+	private void assertExcludes(String url) throws Exception {
+		assertExcludes(url, true);
+	}
+
+	private int notExclutedCount = 0;
+
+	private void assertExcludes(String url, boolean excluded) throws Exception {
+		if (!excluded)
+			notExclutedCount++;
+
 		when(mockRequest.getRequestURI()).thenReturn(url);
 		testFilter.doFilter(mockRequest, null, mock(FilterChain.class));
-		verify(testFilter, times(wantedNumberOfInvocations)).doFilterInternal((ServletRequest) any(), (ServletResponse) any(), (FilterChain) any());
+		verify(testFilter, times(notExclutedCount)).doFilterInternal((ServletRequest) any(), (ServletResponse) any(), (FilterChain) any());
 	}
 }

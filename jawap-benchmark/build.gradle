@@ -1,5 +1,5 @@
 apply plugin: 'application'
-apply from: 'https://raw.github.com/ultraq/gradle-support/master/aspectj.gradle'
+apply from: 'aspectj.gradle'
 
 //mainClassName = "de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark"
 mainClassName = "de.isys.jawap.benchmark.ProfilerBenchmark"
@@ -8,4 +8,7 @@ mainClassName = "de.isys.jawap.benchmark.ProfilerBenchmark"
 dependencies {
 	compile project(":jawap-collector")
 	compile 'com.google.caliper:caliper:1.0-beta-1'
+	// The AspectJ does't like the jpa annotations to not be present
+	compileAjc "org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final"
 }
+

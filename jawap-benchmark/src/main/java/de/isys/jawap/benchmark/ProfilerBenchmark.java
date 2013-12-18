@@ -1,9 +1,8 @@
 package de.isys.jawap.benchmark;
 
-import de.isys.jawap.collector.model.HttpRequestContext;
-import de.isys.jawap.collector.profile.Profiler;
-import de.isys.jawap.collector.service.DefaultPerformanceMeasuringService;
-import de.isys.jawap.collector.service.PerformanceMeasuringService;
+import de.isys.jawap.collector.profiler.ExecutionContextLogger;
+import de.isys.jawap.entities.web.HttpRequestContext;
+import de.isys.jawap.collector.profiler.Profiler;
 
 public class ProfilerBenchmark {
 	private static final int warmups = 10000000;
@@ -15,7 +14,7 @@ public class ProfilerBenchmark {
 	private ClassNotToProfile classNotToProfile = new ClassNotToProfile();
 	private ClassManualProfiling classManualProfiling = new ClassManualProfiling();
 
-	private PerformanceMeasuringService performanceMeasuringService = new DefaultPerformanceMeasuringService();
+	private ExecutionContextLogger executionContextLogger = new ExecutionContextLogger();
 
 	public int testAspectJProfiler(int iter) {
 		int dummy = 0;
@@ -25,7 +24,7 @@ public class ProfilerBenchmark {
 			Profiler.setExecutionContext(executionContext);
 			dummy |= classToProfile.method1();
 		}
-//		performanceMeasuringService.logStats(executionContext);
+//		executionContextLogger.logStats(executionContext);
 		return dummy;
 	}
 

@@ -1,9 +1,8 @@
 package de.isys.jawap.benchmark.opencore;
 
-import de.isys.jawap.collector.model.HttpRequestContext;
-import de.isys.jawap.collector.profile.Profiler;
-import de.isys.jawap.collector.service.DefaultPerformanceMeasuringService;
-import de.isys.jawap.collector.service.PerformanceMeasuringService;
+import de.isys.jawap.collector.profiler.ExecutionContextLogger;
+import de.isys.jawap.entities.web.HttpRequestContext;
+import de.isys.jawap.collector.profiler.Profiler;
 
 import static java.lang.System.nanoTime;
 
@@ -13,7 +12,7 @@ public class OpenCoreBenchmark implements Runnable {
 	public static final int RUN_COUNT = 1000;
 	public static final int SLEEP = 5;
 
-	private PerformanceMeasuringService performanceMeasuringService = new DefaultPerformanceMeasuringService();
+	private ExecutionContextLogger executionContextLogger = new ExecutionContextLogger();
 
 	public static void main(String[] args) throws Exception {
 		for (int i = TEST_COUNT; i > 0; i--) {
@@ -43,7 +42,7 @@ public class OpenCoreBenchmark implements Runnable {
 		Profiler.setExecutionContext(httpRequestStats);
 		for (int i = 0; i < RUN_COUNT; i++)
 			iterate();
-		performanceMeasuringService.logStats(httpRequestStats);
+		executionContextLogger.logStats(httpRequestStats);
 	}
 
 	private void iterate() {

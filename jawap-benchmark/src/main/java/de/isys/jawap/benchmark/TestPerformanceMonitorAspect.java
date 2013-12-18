@@ -1,6 +1,6 @@
 package de.isys.jawap.benchmark;
 
-import de.isys.jawap.collector.instrument.PerformanceMonitorAspect;
+import de.isys.jawap.collector.profiler.instrument.PerformanceMonitorAspect;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 

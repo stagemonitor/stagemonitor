@@ -1,0 +1,50 @@
+/**
+ * see https://raw.github.com/ultraq/gradle-support/master/aspectj.gradle
+ */
+configurations {
+	ajc
+	aspects
+	ajInpath
+	compileAjc
+}
+
+dependencies {
+	ajc 'org.aspectj:aspectjtools:1.7.3'
+	compile 'org.aspectj:aspectjrt:1.7.3'
+}
+
+sourceSets {
+	main {
+		resources {
+			exclude '**/*.java'
+			exclude '**/*.aj'
+		}
+	}
+}
+
+/**
+ * Replace the standard compile action with that of the IAJC Ant task.
+ */
+compileJava.deleteAllActions()
+compileJava << {
+	ant.taskdef(
+			resource: 'org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties',
+			classpath: configurations.ajc.asPath)
+	ant.iajc(
+			source: sourceCompatibility,
+			target: targetCompatibility,
+			destDir: sourceSets.main.output.classesDir.absolutePath,
+			fork: 'true',
+			X: 'noInline',
+			aspectPath: configurations.aspects.asPath,
+			inpath: configurations.ajInpath.asPath,
+			sourceRootCopyFilter: '**/*.java,**/*.aj',
+			classpath: (configurations.compile + configurations.compileAjc).asPath) {
+
+		sourceroots {
+			sourceSets.main.java.srcDirs.each { dir ->
+				pathelement(location: dir.absolutePath)
+			}
+		}
+	}
+}

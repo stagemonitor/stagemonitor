@@ -1,6 +1,6 @@
 package de.isys.jawap.benchmark;
 
-import de.isys.jawap.collector.profile.Profiler;
+import de.isys.jawap.collector.profiler.Profiler;
 
 public class ClassManualProfiling {
 	private static final String className = "ClassManualProfiling";

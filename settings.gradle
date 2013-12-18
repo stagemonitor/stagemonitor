@@ -1,1 +1,1 @@
-include 'jawap-collector', 'jawap-benchmark'
+include 'jawap-collector', 'jawap-benchmark', 'jawap-server', 'jawap-entities'
