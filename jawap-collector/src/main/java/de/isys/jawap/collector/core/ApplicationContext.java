@@ -1,11 +1,11 @@
 package de.isys.jawap.collector.core;
 
-import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import de.isys.jawap.collector.core.metrics.SortedTableConsoleReporter;
 import de.isys.jawap.entities.MeasurementSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,7 +54,7 @@ public class ApplicationContext {
 
 	private static void reportToConsole(long reportingInterval) {
 		if (reportingInterval > 0) {
-			final ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry)
+			final SortedTableConsoleReporter reporter = SortedTableConsoleReporter.forRegistry(metricRegistry)
 					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
 					.build();

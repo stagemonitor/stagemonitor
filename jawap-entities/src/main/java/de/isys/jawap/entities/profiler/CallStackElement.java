@@ -1,6 +1,12 @@
 package de.isys.jawap.entities.profiler;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +17,7 @@ public class CallStackElement {
 	@GeneratedValue
 	private Integer id;
 	@Transient
-	public final long start = System.nanoTime();
+	public transient final long start = System.nanoTime();
 	@ManyToOne
 	private CallStackElement parent;
 	private String className;

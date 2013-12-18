@@ -1,7 +1,6 @@
 package de.isys.jawap.collector.web.rest;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import de.isys.jawap.collector.core.Configuration;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import de.isys.jawap.entities.profiler.ExecutionContext;
 import de.isys.jawap.entities.web.HttpRequestContext;
 import org.apache.commons.logging.Log;
@@ -12,7 +11,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 
 public class HttpRequestContextRestClient {
 	private final Log logger = LogFactory.getLog(getClass());
@@ -22,7 +20,7 @@ public class HttpRequestContextRestClient {
 
 	public HttpRequestContextRestClient(String serverUrl) {
 		this.serverUrl = serverUrl;
-		client = ClientBuilder.newClient(new ClientConfig().register(JacksonJaxbJsonProvider.class));
+		client = ClientBuilder.newClient(new ClientConfig().register(JacksonJsonProvider.class));
 	}
 
 	public void saveRequestContext(ExecutionContext requestContext) {
@@ -34,7 +32,7 @@ public class HttpRequestContextRestClient {
 			if (target == null) {
 				logger.error("Unknown request context: " + requestContext.getClass().getCanonicalName());
 			} else {
-				target.request().async().post(Entity.entity(requestContext, MediaType.APPLICATION_JSON_TYPE));
+				target.request().async().post(Entity.json(requestContext));
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 package de.isys.jawap.collector.core.rest;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import de.isys.jawap.entities.MeasurementSession;
 import org.glassfish.jersey.client.ClientConfig;
 
@@ -18,14 +18,14 @@ public class MeasurementSessionRestClient {
 	public MeasurementSessionRestClient(String serverUrl) {
 		this.serverUrl = serverUrl;
 		client = ClientBuilder.newClient(new ClientConfig()
-				.register(JacksonJaxbJsonProvider.class));
+				.register(JacksonJsonProvider.class));
 	}
 
 	public String saveMeasurementSession(MeasurementSession measurementSession) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
 			return client.target(serverUrl)
-					.path("measurementSession")
-					.request().post(Entity.entity(measurementSession, MediaType.APPLICATION_JSON_TYPE))
+					.path("measurementSessions")
+					.request().post(Entity.json(measurementSession))
 					.getHeaderString("Location");
 		} else return null;
 	}

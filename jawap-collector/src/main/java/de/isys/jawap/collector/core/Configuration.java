@@ -9,7 +9,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -36,29 +39,79 @@ public class Configuration {
 		}
 	}
 
-	public int 		getNoOfWarmupRequests() { 				return getInt(		"jawap.monitor.noOfWarmupRequests", 				0); }
-	public boolean 	isCollectRequestStats() { 				return getBoolean(	"jawap.monitor.collectRequestStats",				true); }
-	public boolean 	isRequestTimerEnabled() { 				return getBoolean(	"jawap.monitor.requestTimerEnabled", 				true); }
-	public long 	getConsoleReportingInterval() { 		return getLong(		"jawap.reporting.interval.console", 				60); }
-	public boolean 	reportToJMX() { 						return getBoolean(	"jawap.reporting.jmx", 								true); }
-	public long 	getGraphiteReportingInterval() { 		return getLong(		"jawap.reporting.interval.graphite", 				-1); }
-	public String 	getGraphiteHostName() { 				return getString(	"jawap.reporting.graphite.hostName"); }
-	public int 		getGraphitePort() { 					return getInt(		"jawap.reporting.graphite.port", 					2003); }
-	public long 	getMinExecutionTimeNanos() { 			return getLong(		"jawap.profiler.minExecutionTimeNanos", 			0L); }
-	public int 		getCallStackEveryXRequestsToGroup() { 	return getInt(		"jawap.profiler.callStackEveryXRequestsToGroup", 	-1); }
-	public boolean 	isLogCallStacks() { 					return getBoolean(	"jawap.profiler.logCallStacks", 					true); }
-	public boolean 	isReportCallStacksToServer() { 			return getBoolean(	"jawap.profiler.reportCallStacksToServer", 			false); }
-	public String 	getApplicationName() { 					return getString(	"jawap.applicationName"); }
-	public String	getInstanceName() { 					return getString(	"jawap.instanceName"); }
-	public String 	getServerUrl() { 						return getString(	"jawap.serverUrl"); }
-	public Map<Pattern, String> getGroupUrls() {			return getPatternMap("jawap.groupUrls",
-			"/\\d+: /{id}," +
-			"(.*).js: *.js," +
-			"(.*).css: *.css," +
-			"(.*).js: *.jpg," +
-			"(.*).jpeg: *.jpeg," +
-			"(.*).png: *.png," +
-			"^/(\\d)+/([a-z]+-)+[a-z]+/?: /{itemId}/{item-name}");
+	public int getNoOfWarmupRequests() {
+		return getInt("jawap.monitor.noOfWarmupRequests", 0);
+	}
+
+	public int getWarmupSeconds() {
+		return getInt("jawap.monitor.warmupSeconds", 0);
+	}
+
+	public boolean isCollectRequestStats() {
+		return getBoolean("jawap.monitor.collectRequestStats", true);
+	}
+
+	public boolean isRequestTimerEnabled() {
+		return getBoolean("jawap.monitor.requestTimerEnabled", true);
+	}
+
+	public long getConsoleReportingInterval() {
+		return getLong("jawap.reporting.interval.console", 60);
+	}
+
+	public boolean reportToJMX() {
+		return getBoolean("jawap.reporting.jmx", true);
+	}
+
+	public long getGraphiteReportingInterval() {
+		return getLong("jawap.reporting.interval.graphite", -1);
+	}
+
+	public String getGraphiteHostName() {
+		return getString("jawap.reporting.graphite.hostName");
+	}
+
+	public int getGraphitePort() {
+		return getInt("jawap.reporting.graphite.port", 2003);
+	}
+
+	public long getMinExecutionTimeNanos() {
+		return getLong("jawap.profiler.minExecutionTimeNanos", 0L);
+	}
+
+	public int getCallStackEveryXRequestsToGroup() {
+		return getInt("jawap.profiler.callStackEveryXRequestsToGroup", -1);
+	}
+
+	public boolean isLogCallStacks() {
+		return getBoolean("jawap.profiler.logCallStacks", true);
+	}
+
+	public boolean isReportCallStacksToServer() {
+		return getBoolean("jawap.profiler.reportCallStacksToServer", false);
+	}
+
+	public String getApplicationName() {
+		return getString("jawap.applicationName");
+	}
+
+	public String getInstanceName() {
+		return getString("jawap.instanceName");
+	}
+
+	public String getServerUrl() {
+		return getString("jawap.serverUrl");
+	}
+
+	public Map<Pattern, String> getGroupUrls() {
+		return getPatternMap("jawap.groupUrls",
+				"/\\d+: /{id}," +
+						"(.*).js: *.js," +
+						"(.*).css: *.css," +
+						"(.*).js: *.jpg," +
+						"(.*).jpeg: *.jpeg," +
+						"(.*).png: *.png," +
+						"^/(\\d)+/([a-z]+-)+[a-z]+/?: /{itemId}/{item-name}");
 	}
 
 	private void loadProperties() {
@@ -154,6 +207,8 @@ public class Configuration {
 		return result;
 	}
 
-	private interface PropertyLoader<T> { T load(); }
+	private interface PropertyLoader<T> {
+		T load();
+	}
 
 }

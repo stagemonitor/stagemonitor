@@ -38,6 +38,7 @@ public class ExecutionContextMonitor {
 	private MeasurementSessionRestClient measurementSessionRestClient;
 	String measurementSessionLocation;
 	private HttpRequestContextRestClient httpRequestContextRestClient;
+	private Date endOfWarmup;
 
 	public ExecutionContextMonitor(MetricRegistry metricRegistry, Configuration configuration) {
 		measurementSessionRestClient = new MeasurementSessionRestClient(configuration.getServerUrl());
@@ -45,6 +46,7 @@ public class ExecutionContextMonitor {
 		warmupRequests = configuration.getNoOfWarmupRequests();
 		this.metricRegistry = metricRegistry;
 		this.configuration = configuration;
+		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getWarmupSeconds()));
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
@@ -132,7 +134,7 @@ public class ExecutionContextMonitor {
 
 	private boolean isWarmedUp() {
 		if (!warmedUp.get()) {
-			warmedUp.set(warmupRequests < noOfRequests.incrementAndGet());
+			warmedUp.set(warmupRequests < noOfRequests.incrementAndGet() && new Date().after(endOfWarmup));
 		}
 		return warmedUp.get();
 	}
