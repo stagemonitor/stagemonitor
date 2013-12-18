@@ -3,6 +3,7 @@ apply plugin: 'maven'
 
 dependencies {
 	compile 'org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final'
+	compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.3.0'
 }
 
 task sourcesJar(type: Jar, dependsOn:classes) {

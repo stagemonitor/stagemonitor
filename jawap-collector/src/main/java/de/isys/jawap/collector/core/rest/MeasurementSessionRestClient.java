@@ -38,7 +38,12 @@ public class MeasurementSessionRestClient {
 			} else {
 				resource = client.target(location);
 			}
-			resource.request().async().put(Entity.entity(measurementSession, MediaType.APPLICATION_JSON_TYPE));
+			resource.request().put(Entity.entity(measurementSession, MediaType.APPLICATION_JSON_TYPE));
 		}
+	}
+
+	public static void main(String[] args) {
+		MeasurementSessionRestClient measurementSessionRestClient = new MeasurementSessionRestClient("http://localhost:8181");
+		System.out.println(measurementSessionRestClient.saveMeasurementSession(new MeasurementSession()));
 	}
 }

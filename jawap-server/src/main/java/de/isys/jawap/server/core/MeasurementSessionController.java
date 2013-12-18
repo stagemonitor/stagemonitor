@@ -33,10 +33,10 @@ public class MeasurementSessionController {
 	@RequestMapping(method = POST)
 	ResponseEntity<Void> create(@RequestBody MeasurementSession measurementSession) {
 		measurementSession = measurementSessionRepository.save(measurementSession);
-		final URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/measurementSessions/" + measurementSession.getId()).build().toUri();
+		final URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/" + measurementSession.getId()).build().toUri();
 		final HttpHeaders httpHeaders = new HttpHeaders();
 		httpHeaders.setLocation(location);
-		return new ResponseEntity<>(httpHeaders, HttpStatus.CREATED);
+		return new ResponseEntity<Void>(httpHeaders, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/{id}", method = PUT)

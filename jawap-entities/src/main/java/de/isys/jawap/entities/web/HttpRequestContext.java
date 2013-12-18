@@ -1,11 +1,15 @@
 package de.isys.jawap.entities.web;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.isys.jawap.entities.profiler.ExecutionContext;
 
 import javax.persistence.Entity;
 import java.util.concurrent.TimeUnit;
 
 @Entity
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class HttpRequestContext extends ExecutionContext {
 
 	private String url;

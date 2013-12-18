@@ -1,11 +1,17 @@
 package de.isys.jawap.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.util.Date;
 
 @Entity
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MeasurementSession {
 
 	@Id
@@ -65,6 +71,7 @@ public class MeasurementSession {
 		this.instanceName = instanceName;
 	}
 
+	@JsonIgnore
 	public boolean isInitialized() {
 		return applicationName != null && instanceName != null && hostName != null;
 	}

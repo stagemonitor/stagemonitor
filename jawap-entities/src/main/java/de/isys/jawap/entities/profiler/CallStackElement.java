@@ -1,5 +1,7 @@
 package de.isys.jawap.entities.profiler;
 
+import com.fasterxml.jackson.annotation.*;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -10,7 +12,11 @@ import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 
+import static javax.persistence.CascadeType.ALL;
+
 @Entity
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CallStackElement {
 
 	@Id
@@ -18,14 +24,15 @@ public class CallStackElement {
 	private Integer id;
 	@Transient
 	public transient final long start = System.nanoTime();
-	@ManyToOne
+	@ManyToOne(cascade = ALL)
+	@JsonBackReference
 	private CallStackElement parent;
 	private String className;
 	private String signature;
 	private long executionTime;
 	private long netExecutionTime;
-	private long timestamp = System.currentTimeMillis();
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "parent")
+	@OneToMany(cascade = ALL, mappedBy = "parent")
+	@JsonManagedReference
 	private List<CallStackElement> children = new ArrayList<CallStackElement>();
 
 	public CallStackElement() {
@@ -81,14 +88,6 @@ public class CallStackElement {
 
 	public void setSignature(String signature) {
 		this.signature = signature;
-	}
-
-	public long getTimestamp() {
-		return timestamp;
-	}
-
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
 	}
 
 	public void addToNetExecutionTime(long executionTime) {
