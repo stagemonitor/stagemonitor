@@ -120,7 +120,8 @@ public class Configuration {
 
 	public Map<Pattern, String> getGroupUrls() {
 		return getPatternMap("jawap.groupUrls",
-				"/\\d+/|/\\d+$: /{id}," +
+				"/\\d+/: /{id}/," +
+						"/\\d+$: /{id}," +
 						"(.*).js: *.js," +
 						"(.*).css: *.css," +
 						"(.*).js: *.jpg," +
