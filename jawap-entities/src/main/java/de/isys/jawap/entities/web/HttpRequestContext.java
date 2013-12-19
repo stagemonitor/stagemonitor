@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.isys.jawap.entities.profiler.ExecutionContext;
 
 import javax.persistence.Entity;
+import javax.persistence.Lob;
 import java.util.concurrent.TimeUnit;
 
 @Entity
@@ -16,6 +17,9 @@ public class HttpRequestContext extends ExecutionContext {
 	private String queryParams;
 	private long timestamp = System.currentTimeMillis();
 	private Integer statusCode;
+	@Lob
+	private String header;
+	private String method;
 	// TODO header, cpu time
 
 	public String getUrl() {
@@ -50,15 +54,32 @@ public class HttpRequestContext extends ExecutionContext {
 		this.statusCode = statusCode;
 	}
 
+	public String getHeader() {
+		return header;
+	}
+
+	public void setHeader(String header) {
+		this.header = header;
+	}
+
+	public String getMethod() {
+		return method;
+	}
+
+	public void setMethod(String method) {
+		this.method = method;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("id: ").append(getId()).append('\n');
-		sb.append("Request to ").append(getUrl());
+		//sb.append("id: ").append(getId()).append('\n');
+		sb.append(method).append(' ').append(getUrl());
 		if (getQueryParams() != null) {
-			sb.append("?").append(getQueryParams());
+			sb.append(getQueryParams());
 		}
-		sb.append(" took ").append(TimeUnit.NANOSECONDS.toMillis(getExecutionTime())).append(" ms\n");
+		sb.append('(').append(TimeUnit.NANOSECONDS.toMillis(getExecutionTime())).append(" ms)\n");
+		sb.append(header);
 		return sb.toString();
 	}
 }

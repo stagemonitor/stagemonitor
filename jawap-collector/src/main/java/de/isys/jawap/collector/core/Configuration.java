@@ -5,8 +5,10 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 // TODO save/load from properties file/Preferences/environment variable
@@ -39,30 +42,90 @@ public class Configuration {
 		}
 	}
 
-	public int 		getNoOfWarmupRequests() { 				return getInt(		"jawap.monitor.noOfWarmupRequests", 				0); }
-	public int 		getWarmupSeconds() { 					return getInt(		"jawap.monitor.warmupSeconds", 						0); }
-	public boolean 	isCollectRequestStats() { 				return getBoolean(	"jawap.monitor.collectRequestStats",				true); }
-	public boolean 	isRequestTimerEnabled() { 				return getBoolean(	"jawap.monitor.requestTimerEnabled", 				true); }
-	public long 	getConsoleReportingInterval() { 		return getLong(		"jawap.reporting.interval.console", 				60); }
-	public boolean 	reportToJMX() { 						return getBoolean(	"jawap.reporting.jmx", 								true); }
-	public long 	getGraphiteReportingInterval() { 		return getLong(		"jawap.reporting.interval.graphite", 				-1); }
-	public String 	getGraphiteHostName() { 				return getString(	"jawap.reporting.graphite.hostName"); }
-	public int 		getGraphitePort() { 					return getInt(		"jawap.reporting.graphite.port", 					2003); }
-	public long 	getMinExecutionTimeNanos() { 			return getLong(		"jawap.profiler.minExecutionTimeNanos", 			0L); }
-	public int 		getCallStackEveryXRequestsToGroup() { 	return getInt(		"jawap.profiler.callStackEveryXRequestsToGroup", 	-1); }
-	public boolean 	isLogCallStacks() { 					return getBoolean(	"jawap.profiler.logCallStacks", 					true); }
-	public boolean 	isReportCallStacksToServer() { 			return getBoolean(	"jawap.profiler.reportCallStacksToServer", 			false); }
-	public String 	getApplicationName() { 					return getString(	"jawap.applicationName"); }
-	public String	getInstanceName() { 					return getString(	"jawap.instanceName"); }
-	public String 	getServerUrl() { 						return getString(	"jawap.serverUrl"); }
-	public Map<Pattern, String> getGroupUrls() {			return getPatternMap("jawap.groupUrls",
-			"/\\d+: /{id}," +
-					"(.*).js: *.js," +
-					"(.*).css: *.css," +
-					"(.*).js: *.jpg," +
-					"(.*).jpeg: *.jpeg," +
-					"(.*).png: *.png," +
-					"^/(\\d)+/([a-z]+-)+[a-z]+/?: /{itemId}/{item-name}");
+	public int getNoOfWarmupRequests() {
+		return getInt("jawap.monitor.noOfWarmupRequests", 0);
+	}
+
+	public int getWarmupSeconds() {
+		return getInt("jawap.monitor.warmupSeconds", 0);
+	}
+
+	public boolean isCollectRequestStats() {
+		return getBoolean("jawap.monitor.collectRequestStats", true);
+	}
+
+	public boolean isRequestTimerEnabled() {
+		return getBoolean("jawap.monitor.requestTimerEnabled", true);
+	}
+
+	public boolean isCollectHeaders() {
+		return getBoolean("jawap.monitor.http.collectHeaders", true);
+	}
+
+	public List<String> getExcludedHeaders() {
+		return getLowerStrings("jawap.monitor.http.headers.excluded", "cookie");
+	}
+
+	public List<String> getConfidentialQueryParams() {
+		return getStrings("jawap.monitor.http.queryparams.confidential", "pass, credit");
+	}
+
+	public long getConsoleReportingInterval() {
+		return getLong("jawap.reporting.interval.console", 60);
+	}
+
+	public boolean reportToJMX() {
+		return getBoolean("jawap.reporting.jmx", true);
+	}
+
+	public long getGraphiteReportingInterval() {
+		return getLong("jawap.reporting.interval.graphite", -1);
+	}
+
+	public String getGraphiteHostName() {
+		return getString("jawap.reporting.graphite.hostName");
+	}
+
+	public int getGraphitePort() {
+		return getInt("jawap.reporting.graphite.port", 2003);
+	}
+
+	public long getMinExecutionTimeNanos() {
+		return getLong("jawap.profiler.minExecutionTimeNanos", 0L);
+	}
+
+	public int getCallStackEveryXRequestsToGroup() {
+		return getInt("jawap.profiler.callStackEveryXRequestsToGroup", -1);
+	}
+
+	public boolean isLogCallStacks() {
+		return getBoolean("jawap.profiler.logCallStacks", true);
+	}
+
+	public boolean isReportCallStacksToServer() {
+		return getBoolean("jawap.profiler.reportCallStacksToServer", false);
+	}
+
+	public String getApplicationName() {
+		return getString("jawap.applicationName");
+	}
+
+	public String getInstanceName() {
+		return getString("jawap.instanceName");
+	}
+
+	public String getServerUrl() {
+		return getString("jawap.serverUrl");
+	}
+
+	public Map<Pattern, String> getGroupUrls() {
+		return getPatternMap("jawap.groupUrls",
+				"/\\d+/|/\\d+$: /{id}," +
+						"(.*).js: *.js," +
+						"(.*).css: *.css," +
+						"(.*).js: *.jpg," +
+						"(.*).jpeg: *.jpeg," +
+						"(.*).png: *.png");
 	}
 
 	private void loadProperties() {
@@ -88,6 +151,40 @@ public class Configuration {
 			@Override
 			public String load() {
 				return properties.getProperty(key);
+			}
+		});
+	}
+
+	private List<String> getLowerStrings(final String key, final String defaultValue) {
+		return getAndCache(key, null, new PropertyLoader<List<String>>() {
+			@Override
+			public List<String> load() {
+				String property = properties.getProperty(key, defaultValue);
+				if (property != null && property.length() > 0) {
+					final String[] split = property.split(",");
+					for (int i = 0; i < split.length; i++) {
+						split[i] = split[i].trim().toLowerCase();
+					}
+					return Arrays.asList(split);
+				}
+				return emptyList();
+			}
+		});
+	}
+
+	private List<String> getStrings(final String key, final String defaultValue) {
+		return getAndCache(key, null, new PropertyLoader<List<String>>() {
+			@Override
+			public List<String> load() {
+				String property = properties.getProperty(key, defaultValue);
+				if (property != null && property.length() > 0) {
+					final String[] split = property.split(",");
+					for (int i = 0; i < split.length; i++) {
+						split[i] = split[i].trim();
+					}
+					return Arrays.asList(split);
+				}
+				return emptyList();
 			}
 		});
 	}
@@ -158,6 +255,8 @@ public class Configuration {
 		return result;
 	}
 
-	private interface PropertyLoader<T> { T load(); }
+	private interface PropertyLoader<T> {
+		T load();
+	}
 
 }

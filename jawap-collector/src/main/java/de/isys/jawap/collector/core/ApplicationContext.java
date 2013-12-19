@@ -14,6 +14,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static de.isys.jawap.collector.core.monitor.ExecutionContextMonitor.encodeForGraphite;
 
 public class ApplicationContext {
 
@@ -42,14 +43,20 @@ public class ApplicationContext {
 			final Graphite graphite = new Graphite(new InetSocketAddress(configuration.getGraphiteHostName(),
 					configuration.getGraphitePort()));
 			final GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
-					.prefixedWith(name("jawap", measurementSession.getApplicationName(),
-							measurementSession.getInstanceName(), measurementSession.getHostName()))
+					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
 					.filter(MetricFilter.ALL)
 					.build(graphite);
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 		}
+	}
+
+	private static String getGraphitePrefix(MeasurementSession measurementSession) {
+		return name("jawap",
+				encodeForGraphite(measurementSession.getApplicationName()),
+				encodeForGraphite(measurementSession.getInstanceName()),
+				encodeForGraphite(measurementSession.getHostName()));
 	}
 
 	private static void reportToConsole(long reportingInterval) {

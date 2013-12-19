@@ -76,7 +76,7 @@ public class ExecutionContextMonitor {
 				requestContext = monitoredExecution.getExecutionContext();
 				String requestName = monitoredExecution.getRequestName();
 				requestContext.setName(requestName);
-				timer = metricRegistry.timer(monitoredExecution.getTimerName(requestName));
+				timer = metricRegistry.timer(getTimerName(monitoredExecution, requestName));
 				if (profileThisRequest(timer)) {
 					Profiler.setExecutionContext(requestContext);
 					Profiler.start();
@@ -93,21 +93,26 @@ public class ExecutionContextMonitor {
 					requestContext.setFailed(exceptionThrown);
 					requestContext.setExecutionTime(executionTime);
 					monitoredExecution.onPostExecute(requestContext);
-					if (requestContext.isFailed()) {
-						metricRegistry.counter(name(requestContext.getName(), "failed")).inc();
-					}
+
 					if (requestContext.getCallStack() != null) {
 						Profiler.stop("root", "root");
 						reportCallStack(requestContext);
 					}
 					if (timer != null) {
 						timer.update(executionTime, TimeUnit.NANOSECONDS);
+						if (requestContext.isFailed()) {
+							metricRegistry.counter(name(getTimerName(monitoredExecution, requestContext.getName()), "failed")).inc();
+						}
 					}
 				}
 			}
 		} else {
 			monitoredExecution.execute();
 		}
+	}
+
+	private <T extends ExecutionContext> String getTimerName(MonitoredExecution<T> monitoredExecution, String requestName) {
+		return name("request", encodeForGraphite(monitoredExecution.getTimerName(requestName)));
 	}
 
 	private <T extends ExecutionContext> void reportCallStack(T requestContext) {
@@ -146,5 +151,13 @@ public class ExecutionContextMonitor {
 			logger.error(e.getMessage(), e);
 			return null;
 		}
+	}
+
+	public static String encodeForGraphite(String s) {
+		return s.replace(".", ":").replace(" ", "_").replace("/", "|");
+	}
+
+	public static String decodeForGraphite(String s) {
+		return s.replace(":", ".").replace("_", " ").replace("|", "/");
 	}
 }

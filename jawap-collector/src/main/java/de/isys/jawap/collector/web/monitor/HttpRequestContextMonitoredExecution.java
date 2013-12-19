@@ -8,6 +8,8 @@ import de.isys.jawap.entities.web.HttpRequestContext;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -48,15 +50,64 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 
 	@Override
 	public String getTimerName(String requestName) {
-		return name("web.request", httpServletRequest.getMethod(), requestName.replace('.', ':'));
+		return httpServletRequest.getMethod() + "_" + requestName;
 	}
 
 	@Override
 	public HttpRequestContext getExecutionContext() {
 		HttpRequestContext requestStats = new HttpRequestContext();
+		requestStats.setMethod(httpServletRequest.getMethod());
 		requestStats.setUrl(httpServletRequest.getRequestURI());
-		requestStats.setQueryParams(httpServletRequest.getQueryString());
+		requestStats.setQueryParams(getSafeQueryString(httpServletRequest.getParameterMap()));
+		if (configuration.isCollectHeaders()) {
+			requestStats.setHeader(getHeadersAsString(httpServletRequest));
+		}
 		return requestStats;
+	}
+
+	private String getSafeQueryString(Map<String, String[]> parameterMap) {
+		StringBuilder queryStringBuilder = new StringBuilder();
+		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+			final boolean paramExcluded = isParamExcluded(entry.getKey());
+			for (String value : entry.getValue()) {
+				if (queryStringBuilder.length() == 0) {
+					queryStringBuilder.append('?');
+				} else {
+					queryStringBuilder.append('&');
+				}
+
+				queryStringBuilder.append(entry.getKey()).append('=');
+				if (paramExcluded) {
+					queryStringBuilder.append("XXXX");
+				} else {
+					queryStringBuilder.append(value);
+				}
+			}
+		}
+		return queryStringBuilder.toString();
+	}
+
+	private boolean isParamExcluded(String queryParameter) {
+		final List<String> excludedHeaders = configuration.getConfidentialQueryParams();
+		for (String excludedHeader : excludedHeaders) {
+			if (queryParameter.toLowerCase().contains(excludedHeader.toLowerCase())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private String getHeadersAsString(HttpServletRequest request) {
+		StringBuilder headerStringBuilder = new StringBuilder();
+		final Enumeration headerNames = request.getHeaderNames();
+		final List<String> excludedHeaders = configuration.getExcludedHeaders();
+		while (headerNames.hasMoreElements()) {
+			final String headerName = (String) headerNames.nextElement();
+			if (!excludedHeaders.contains(headerName.toLowerCase())) {
+				headerStringBuilder.append(headerName).append(": ").append(request.getHeader(headerName)).append('\n');
+			}
+		}
+		return headerStringBuilder.toString();
 	}
 
 	@Override

@@ -26,6 +26,8 @@ import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import static de.isys.jawap.collector.core.monitor.ExecutionContextMonitor.decodeForGraphite;
+
 public class SortedTableConsoleReporter extends ScheduledReporter {
 	/**
 	 * Returns a new {@link SortedTableConsoleReporter.Builder} for {@link SortedTableConsoleReporter}.
@@ -289,25 +291,29 @@ public class SortedTableConsoleReporter extends ScheduledReporter {
 		int maxLength = -1;
 		for (String s : map.keySet()) {
 			if (s.length() > maxLength) {
-				maxLength = s.length();
+				maxLength = removePrefix(s).length();
 			}
 		}
 		return maxLength;
 	}
 
 	private void printGauge(String name, Gauge gauge, int maxNameLength) {
-		output.printf("%" + maxNameLength + "s | ", name);
+		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
 		output.println(gauge.getValue());
 
 	}
 
+	private static String removePrefix(String s) {
+		return s.replaceFirst("^.*?\\.", "");
+	}
+
 	private void printCounter(String name, Counter counter, int maxNameLength) {
-		output.printf("%" + maxNameLength + "s | ", name);
+		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
 		output.println(counter.getCount());
 	}
 
 	private void printMeter(String name, Meter meter, int maxNameLength) {
-		output.printf("%" + maxNameLength + "s | ", name);
+		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
 		output.println(meter.getCount());
 		printMetered(meter);
 		output.println();
@@ -324,7 +330,7 @@ public class SortedTableConsoleReporter extends ScheduledReporter {
 
 
 	private void printHistogram(String name, Histogram histogram, int maxNameLength) {
-		output.printf("%" + maxNameLength + "s | ", name);
+		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
 		output.println(histogram.getCount());
 		printSnapshot(histogram.getSnapshot());
 		output.println();
@@ -345,7 +351,7 @@ public class SortedTableConsoleReporter extends ScheduledReporter {
 
 	private void printTimer(String name, Timer timer, int maxNameLength) {
 		final Snapshot snapshot = timer.getSnapshot();
-		output.printf("%" + maxNameLength + "s | ", name);
+		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
 		output.printf(locale, "%,9d | ", timer.getCount());
 		printSnapshot(snapshot);
 		printMetered(timer);

@@ -32,8 +32,13 @@ public class Application extends SpringBootServletInitializer {
 	@PostConstruct
 	void seedData() {
 		MeasurementSession measurementSession = new MeasurementSession();
+		measurementSession.setHostName("localhorst");
+		measurementSession.setApplicationName("jawap");
+		measurementSession.setInstanceName("test");
+
 		HttpRequestContext httpRequestContext = new HttpRequestContext();
 		httpRequestContext.setMeasurementSession(measurementSession);
+		httpRequestContext.setName("bla");
 		httpRequestContext.setUrl("bla");
 
 		CallStackElement callStack = new CallStackElement(null);
