@@ -133,17 +133,19 @@ public class Configuration {
 		logger.info("reloading properties");
 		properties = new Properties();
 		InputStream resourceStream = getClass().getClassLoader().getResourceAsStream("jawap.properties");
-		try {
-			properties.load(resourceStream);
-		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
-		} finally {
+		if (resourceStream != null) {
 			try {
-				resourceStream.close();
+				properties.load(resourceStream);
 			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
+			} finally {
+				try {
+					resourceStream.close();
+				} catch (IOException e) {
+					logger.error(e.getMessage(), e);
+				}
+				propertiesCache.clear();
 			}
-			propertiesCache.clear();
 		}
 	}
 
