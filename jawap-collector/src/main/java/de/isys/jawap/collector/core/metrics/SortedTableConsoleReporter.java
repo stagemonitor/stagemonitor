@@ -11,6 +11,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
+import org.apache.commons.logging.Log;
 
 import java.io.PrintStream;
 import java.text.DateFormat;
@@ -26,7 +27,7 @@ import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-import static de.isys.jawap.collector.core.monitor.ExecutionContextMonitor.decodeForGraphite;
+import static de.isys.jawap.util.GraphiteEncoder.decodeForGraphite;
 
 public class SortedTableConsoleReporter extends ScheduledReporter {
 	/**
@@ -177,98 +178,85 @@ public class SortedTableConsoleReporter extends ScheduledReporter {
 		printWithBanner(dateTime, '=');
 		output.println();
 
-		if (!gauges.isEmpty()) {
-			printWithBanner("-- Gauges", '-');
-			int maxLength = getMaxLengthOfKeys(gauges);
-			output.printf("%-" + maxLength + "s | value\n", "name");
-			Map<String, Gauge> sortedTimers = sortByValue(gauges, new Comparator<Gauge>() {
-				private NaturalOrderComparator<Object> naturalOrderComparator = new NaturalOrderComparator<Object>();
+		try {
 
-				@Override
-				public int compare(Gauge o1, Gauge o2) {
-					return naturalOrderComparator.compare(o2.getValue(), o1.getValue());
+			if (!gauges.isEmpty()) {
+				printWithBanner("-- Gauges", '-');
+				int maxLength = getMaxLengthOfKeys(gauges);
+				output.printf("%-" + maxLength + "s | value\n", "name");
+				for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+					printGauge(entry.getKey(), entry.getValue(), maxLength);
 				}
-			});
-			for (Map.Entry<String, Gauge> entry : sortedTimers.entrySet()) {
-				printGauge(entry.getKey(), entry.getValue(), maxLength);
+				output.println();
 			}
-			output.println();
-		}
-		if (!counters.isEmpty()) {
-			printWithBanner("-- Counters", '-');
-			int maxLength = getMaxLengthOfKeys(counters);
-			output.printf("%-" + maxLength + "s | count\n", "name");
-			Map<String, Counter> sortedTimers = sortByValue(counters, new Comparator<Counter>() {
-				@Override
-				public int compare(Counter o1, Counter o2) {
-					return Long.compare(o2.getCount(), o1.getCount());
+			if (!counters.isEmpty()) {
+				printWithBanner("-- Counters", '-');
+				int maxLength = getMaxLengthOfKeys(counters);
+				output.printf("%-" + maxLength + "s | count\n", "name");
+				Map<String, Counter> sortedCounters = sortByValue(counters, new Comparator<Counter>() {
+					@Override
+					public int compare(Counter o1, Counter o2) {
+						return Long.compare(o2.getCount(), o1.getCount());
+					}
+				});
+				for (Map.Entry<String, Counter> entry : sortedCounters.entrySet()) {
+					printCounter(entry.getKey(), entry.getValue(), maxLength);
 				}
-			});
-			for (Map.Entry<String, Counter> entry : sortedTimers.entrySet()) {
-				printCounter(entry.getKey(), entry.getValue(), maxLength);
+				output.println();
 			}
-			output.println();
-		}
 
-		if (!histograms.isEmpty()) {
-			printWithBanner("-- Histograms", '-');
-			int maxLength = getMaxLengthOfKeys(histograms);
-			output.printf("%-" + maxLength + "s | count     | max       | mean      | min       | stddev    | p50       | p75       | p95       | p98       | p99       | p999\n", "name");
-			Map<String, Histogram> sortedTimers = sortByValue(histograms, new Comparator<Histogram>() {
-				@Override
-				public int compare(Histogram o1, Histogram o2) {
-					return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
+			if (!histograms.isEmpty()) {
+				printWithBanner("-- Histograms", '-');
+				int maxLength = getMaxLengthOfKeys(histograms);
+				output.printf("%-" + maxLength + "s | count     | max       | mean      | min       | stddev    | p50       | p75       | p95       | p98       | p99       | p999\n", "name");
+				Map<String, Histogram> sortedHistograms = sortByValue(histograms, new Comparator<Histogram>() {
+					@Override
+					public int compare(Histogram o1, Histogram o2) {
+						return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
+					}
+				});
+				for (Map.Entry<String, Histogram> entry : sortedHistograms.entrySet()) {
+					printHistogram(entry.getKey(), entry.getValue(), maxLength);
 				}
-			});
-			for (Map.Entry<String, Histogram> entry : sortedTimers.entrySet()) {
-				printHistogram(entry.getKey(), entry.getValue(), maxLength);
+				output.println();
 			}
-			output.println();
-		}
 
-		if (!meters.isEmpty()) {
-			printWithBanner("-- Meters", '-');
-			int maxLength = getMaxLengthOfKeys(meters);
-			output.printf("%-" + maxLength + "s | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit\n", "name");
-			Map<String, Meter> sortedTimers = sortByValue(meters, new Comparator<Meter>() {
-				@Override
-				public int compare(Meter o1, Meter o2) {
-					return Long.compare(o2.getCount(), o1.getCount());
+			if (!meters.isEmpty()) {
+				printWithBanner("-- Meters", '-');
+				int maxLength = getMaxLengthOfKeys(meters);
+				output.printf("%-" + maxLength + "s | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit\n", "name");
+				Map<String, Meter> sortedMeters = sortByValue(meters, new Comparator<Meter>() {
+					@Override
+					public int compare(Meter o1, Meter o2) {
+						return Long.compare(o2.getCount(), o1.getCount());
+					}
+				});
+				for (Map.Entry<String, Meter> entry : sortedMeters.entrySet()) {
+					printMeter(entry.getKey(), entry.getValue(), maxLength);
 				}
-			});
-			for (Map.Entry<String, Meter> entry : sortedTimers.entrySet()) {
-				printMeter(entry.getKey(), entry.getValue(), maxLength);
+				output.println();
 			}
-			output.println();
-		}
 
-		if (!timers.isEmpty()) {
-			printWithBanner("-- Timers", '-');
-			int maxLength = getMaxLengthOfKeys(timers);
-			output.printf("%-" + maxLength + "s | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name");
-			Map<String, Timer> sortedTimers = sortByValue(timers, new Comparator<Timer>() {
-				public int compare(Timer o1, Timer o2) {
-					return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
+			if (!timers.isEmpty()) {
+				printWithBanner("-- Timers", '-');
+				int maxLength = getMaxLengthOfKeys(timers);
+				output.printf("%-" + maxLength + "s | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name");
+				Map<String, Timer> sortedTimers = sortByValue(timers, new Comparator<Timer>() {
+					public int compare(Timer o1, Timer o2) {
+						return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
+					}
+				});
+				for (Map.Entry<String, Timer> entry : sortedTimers.entrySet()) {
+					printTimer(entry.getKey(), entry.getValue(), maxLength);
 				}
-			});
-			for (Map.Entry<String, Timer> entry : sortedTimers.entrySet()) {
-				printTimer(entry.getKey(), entry.getValue(), maxLength);
+				output.println();
 			}
+
 			output.println();
-		}
-
-		output.println();
-		output.flush();
-	}
-
-
-	private class NaturalOrderComparator<T> implements Comparator<T> {
-		@Override
-		public int compare(T o1, T o2) {
-			if (o1 instanceof Comparable) {
-				return ((Comparable<T>) o1).compareTo(o2);
-			}
-			return 0;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			output.flush();
 		}
 	}
 
@@ -291,29 +279,25 @@ public class SortedTableConsoleReporter extends ScheduledReporter {
 		int maxLength = -1;
 		for (String s : map.keySet()) {
 			if (s.length() > maxLength) {
-				maxLength = removePrefix(s).length();
+				maxLength = s.length();
 			}
 		}
 		return maxLength;
 	}
 
 	private void printGauge(String name, Gauge gauge, int maxNameLength) {
-		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
+		output.printf("%" + maxNameLength + "s | ", decodeForGraphite(name));
 		output.println(gauge.getValue());
 
 	}
 
-	private static String removePrefix(String s) {
-		return s.replaceFirst("^.*?\\.", "");
-	}
-
 	private void printCounter(String name, Counter counter, int maxNameLength) {
-		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
+		output.printf("%" + maxNameLength + "s | ", decodeForGraphite(name));
 		output.println(counter.getCount());
 	}
 
 	private void printMeter(String name, Meter meter, int maxNameLength) {
-		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
+		output.printf("%" + maxNameLength + "s | ", decodeForGraphite(name));
 		output.println(meter.getCount());
 		printMetered(meter);
 		output.println();
@@ -330,7 +314,7 @@ public class SortedTableConsoleReporter extends ScheduledReporter {
 
 
 	private void printHistogram(String name, Histogram histogram, int maxNameLength) {
-		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
+		output.printf("%" + maxNameLength + "s | ", decodeForGraphite(name));
 		output.println(histogram.getCount());
 		printSnapshot(histogram.getSnapshot());
 		output.println();
@@ -351,7 +335,7 @@ public class SortedTableConsoleReporter extends ScheduledReporter {
 
 	private void printTimer(String name, Timer timer, int maxNameLength) {
 		final Snapshot snapshot = timer.getSnapshot();
-		output.printf("%" + maxNameLength + "s | ", removePrefix(decodeForGraphite(name)));
+		output.printf("%" + maxNameLength + "s | ", decodeForGraphite(name));
 		output.printf(locale, "%,9d | ", timer.getCount());
 		printSnapshot(snapshot);
 		printMetered(timer);

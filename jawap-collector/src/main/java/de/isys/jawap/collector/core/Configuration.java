@@ -42,85 +42,28 @@ public class Configuration {
 		}
 	}
 
-	public int getNoOfWarmupRequests() {
-		return getInt("jawap.monitor.noOfWarmupRequests", 0);
-	}
-
-	public int getWarmupSeconds() {
-		return getInt("jawap.monitor.warmupSeconds", 0);
-	}
-
-	public boolean isCollectRequestStats() {
-		return getBoolean("jawap.monitor.collectRequestStats", true);
-	}
-
-	public boolean isRequestTimerEnabled() {
-		return getBoolean("jawap.monitor.requestTimerEnabled", true);
-	}
-
-	public boolean isCollectHeaders() {
-		return getBoolean("jawap.monitor.http.collectHeaders", true);
-	}
-
-	public List<String> getExcludedHeaders() {
-		return getLowerStrings("jawap.monitor.http.headers.excluded", "cookie");
-	}
-
-	public List<String> getConfidentialQueryParams() {
-		return getStrings("jawap.monitor.http.queryparams.confidential", "pass, credit");
-	}
-
-	public long getConsoleReportingInterval() {
-		return getLong("jawap.reporting.interval.console", 60);
-	}
-
-	public boolean reportToJMX() {
-		return getBoolean("jawap.reporting.jmx", true);
-	}
-
-	public long getGraphiteReportingInterval() {
-		return getLong("jawap.reporting.interval.graphite", -1);
-	}
-
-	public String getGraphiteHostName() {
-		return getString("jawap.reporting.graphite.hostName");
-	}
-
-	public int getGraphitePort() {
-		return getInt("jawap.reporting.graphite.port", 2003);
-	}
-
-	public long getMinExecutionTimeNanos() {
-		return getLong("jawap.profiler.minExecutionTimeNanos", 0L);
-	}
-
-	public int getCallStackEveryXRequestsToGroup() {
-		return getInt("jawap.profiler.callStackEveryXRequestsToGroup", -1);
-	}
-
-	public boolean isLogCallStacks() {
-		return getBoolean("jawap.profiler.logCallStacks", true);
-	}
-
-	public boolean isReportCallStacksToServer() {
-		return getBoolean("jawap.profiler.reportCallStacksToServer", false);
-	}
-
-	public String getApplicationName() {
-		return getString("jawap.applicationName");
-	}
-
-	public String getInstanceName() {
-		return getString("jawap.instanceName");
-	}
-
-	public String getServerUrl() {
-		return getString("jawap.serverUrl");
-	}
-
-	public Map<Pattern, String> getGroupUrls() {
-		return getPatternMap("jawap.groupUrls",
-				"/\\d+/: /{id}/," +
+	public int 		getNoOfWarmupRequests() { 				return getInt(		"jawap.monitor.noOfWarmupRequests", 				0); }
+	public int 		getWarmupSeconds() { 					return getInt(		"jawap.monitor.warmupSeconds", 						0); }
+	public boolean 	isCollectRequestStats() { 				return getBoolean("jawap.monitor.collectRequestStats", 					true); }
+	public boolean 	isRequestTimerEnabled() { 				return getBoolean(	"jawap.monitor.requestTimerEnabled", 				true); }
+	public boolean	isCollectHeaders() {					return getBoolean(	"jawap.monitor.http.collectHeaders",				true);}
+	public List<String> getExcludedHeaders() {				return getLowerStrings("jawap.monitor.http.headers.excluded", 			"cookie");}
+	public List<String> getConfidentialQueryParams() {		return getStrings("jawap.monitor.http.queryparams.confidential", 		"pass, credit");}
+	public String	getPluginConsoleReporting() {			return getString("jawap.reporting.console.includedPlugins", 			"request"); }
+	public long 	getConsoleReportingInterval() { 		return getLong("jawap.reporting.interval.console", 						60); }
+	public boolean 	reportToJMX() { 						return getBoolean("jawap.reporting.jmx", 								true); }
+	public long 	getGraphiteReportingInterval() { 		return getLong("jawap.reporting.interval.graphite", 					-1); }
+	public String 	getGraphiteHostName() { 				return getString("jawap.reporting.graphite.hostName"); }
+	public int 		getGraphitePort() { 					return getInt("jawap.reporting.graphite.port", 							2003); }
+	public long 	getMinExecutionTimeNanos() { 			return getLong(		"jawap.profiler.minExecutionTimeNanos", 			0L); }
+	public int 		getCallStackEveryXRequestsToGroup() { 	return getInt("jawap.profiler.callStackEveryXRequestsToGroup", 			-1); }
+	public boolean 	isLogCallStacks() { 					return getBoolean("jawap.profiler.logCallStacks", 						true); }
+	public boolean 	isReportCallStacksToServer() { 			return getBoolean("jawap.profiler.reportCallStacksToServer", 			false); }
+	public String 	getApplicationName() { 					return getString("jawap.applicationName"); }
+	public String	getInstanceName() { 					return getString("jawap.instanceName"); }
+	public String 	getServerUrl() { 						return getString("jawap.serverUrl"); }
+	public Map<Pattern, String> getGroupUrls() {			return getPatternMap("jawap.groupUrls",
+						"/\\d+/: /{id}/," +
 						"/\\d+$: /{id}," +
 						"(.*).js: *.js," +
 						"(.*).css: *.css," +
@@ -150,10 +93,14 @@ public class Configuration {
 	}
 
 	private String getString(final String key) {
+		return getString(key, null);
+	}
+
+	private String getString(final String key, final String defaultValue) {
 		return getAndCache(key, null, new PropertyLoader<String>() {
 			@Override
 			public String load() {
-				return properties.getProperty(key);
+				return properties.getProperty(key, defaultValue);
 			}
 		});
 	}

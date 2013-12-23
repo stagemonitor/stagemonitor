@@ -1,3 +1,4 @@
+apply plugin: 'groovy'
 apply plugin: 'war'
 apply plugin: 'application'
 
@@ -11,10 +12,9 @@ dependencies {
 	compile project(":jawap-entities")
 	compile "org.springframework.boot:spring-boot-starter-web:0.5.0.M6"
 	compile "org.springframework.boot:spring-boot-starter-data-jpa:0.5.0.M6"
-	compile 'org.springframework.data:spring-data-rest-webmvc:2.0.0.M1'
 	compile('com.github.scobal.seyren:seyren-core:1.0.0-SNAPSHOT') {
 		exclude group: 'org.python', module: 'jython-standalone'
 	}
 	compile 'com.h2database:h2:1.3.174'
-
+	compile 'org.codehaus.groovy:groovy-all:2.2.0'
 }

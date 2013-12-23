@@ -47,10 +47,6 @@ public class Application extends SpringBootServletInitializer {
 		httpRequestContextRepository.save(httpRequestContext);
 	}
 
-//	@Configuration
-//	public static class RestMvcConfiguration extends RepositoryRestMvcConfiguration{
-//	}
-
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}

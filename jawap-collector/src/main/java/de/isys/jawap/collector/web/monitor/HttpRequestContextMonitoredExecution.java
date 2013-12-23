@@ -1,6 +1,5 @@
 package de.isys.jawap.collector.web.monitor;
 
-import com.codahale.metrics.MetricRegistry;
 import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.core.monitor.MonitoredExecution;
 import de.isys.jawap.collector.web.monitor.filter.StatusExposingServletResponse;
@@ -25,9 +24,8 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 
 	public HttpRequestContextMonitoredExecution(HttpServletRequest httpServletRequest,
 												StatusExposingServletResponse statusExposingResponse,
-												FilterChain filterChain, MetricRegistry metricRegistry,
+												FilterChain filterChain,
 												Configuration configuration) {
-		super(metricRegistry);
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
 		this.statusExposingResponse = statusExposingResponse;
@@ -119,7 +117,7 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 	public void onPostExecute(HttpRequestContext executionContext) {
 		int status = statusExposingResponse.getStatus();
 		executionContext.setStatusCode(status);
-		metricRegistry.counter(name("web.statuscode", Integer.toString(status))).inc();
+		metricRegistry.counter(name("statuscode", Integer.toString(status))).inc();
 		if (status >= 400) {
 			executionContext.setFailed(true);
 		}

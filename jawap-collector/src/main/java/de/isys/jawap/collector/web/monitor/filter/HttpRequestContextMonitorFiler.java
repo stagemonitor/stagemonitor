@@ -21,9 +21,8 @@ public class HttpRequestContextMonitorFiler extends AbstractExclusionFilter impl
 
 	private final Log logger = LogFactory.getLog(getClass());
 
-	private final MetricRegistry metricRegistry = ApplicationContext.getMetricRegistry();
 	private Configuration configuration = ApplicationContext.getConfiguration();
-	private ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(metricRegistry, configuration);
+	private ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
 
 	@Override
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
@@ -50,7 +49,7 @@ public class HttpRequestContextMonitorFiler extends AbstractExclusionFilter impl
 			final StatusExposingServletResponse statusExposingResponse = new StatusExposingServletResponse((HttpServletResponse) response);
 			try {
 				executionContextMonitor.monitor(new HttpRequestContextMonitoredExecution(httpServletRequest,
-						statusExposingResponse, filterChain, metricRegistry, configuration));
+						statusExposingResponse, filterChain, configuration));
 			} catch (IOException e) {
 				throw e;
 			} catch (ServletException e) {

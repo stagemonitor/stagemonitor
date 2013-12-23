@@ -28,7 +28,7 @@ public class CpuUtilisationWatch {
 	/**
 	 * Starts or restarts the watch
 	 */
-	public synchronized void start() {
+	public void start() {
 		nanoBefore = Long.valueOf(System.nanoTime());
 		cpuBefore = Long.valueOf(osMBean.getProcessCpuTime());
 	}
@@ -38,7 +38,7 @@ public class CpuUtilisationWatch {
 	 *
 	 * @return the average CPU utilisation since the last call of {@link CpuUtilisationWatch#start()}
 	 */
-	public synchronized float getCpuUsagePercent() {
+	public float getCpuUsagePercent() {
 		if (nanoBefore == null || cpuBefore == null) {
 			throw new IllegalStateException("nanoBefore or cpuBefore where null: nanoBefore: " + nanoBefore + ", " +
 					" cpuBefore: " + cpuBefore);

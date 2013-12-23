@@ -2,7 +2,7 @@ package de.isys.jawap.collector.core;
 
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import de.isys.jawap.collector.core.metrics.SortedTableConsoleReporter;
@@ -11,23 +11,20 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.net.InetSocketAddress;
+import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static de.isys.jawap.collector.core.monitor.ExecutionContextMonitor.encodeForGraphite;
+import static de.isys.jawap.util.GraphiteEncoder.encodeForGraphite;
 
 public class ApplicationContext {
 
 	private final static Log logger = LogFactory.getLog(ApplicationContext.class);
-	private static MetricRegistry metricRegistry = new MetricRegistry();
 	private static Configuration configuration = new Configuration();
 
-	public static void setMeasurementSession(MeasurementSession measurementSession) {
-		startMonitoring(measurementSession);
-	}
-
-	private static void startMonitoring(MeasurementSession measurementSession) {
+	public static void startMonitoring(MeasurementSession measurementSession) {
 		if (measurementSession.isInitialized()) {
+			initializePlugins();
 			reportToGraphite(configuration.getGraphiteReportingInterval(), measurementSession);
 			reportToConsole(configuration.getConsoleReportingInterval());
 			if (configuration.reportToJMX()) {
@@ -38,48 +35,54 @@ public class ApplicationContext {
 		}
 	}
 
-	private static void reportToGraphite(long reportingInterval, MeasurementSession measurementSession) {
-		if (reportingInterval > 0) {
-			final Graphite graphite = new Graphite(new InetSocketAddress(configuration.getGraphiteHostName(),
-					configuration.getGraphitePort()));
-			final GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
-					.prefixedWith(getGraphitePrefix(measurementSession))
-					.convertRatesTo(TimeUnit.SECONDS)
-					.convertDurationsTo(TimeUnit.MILLISECONDS)
-					.filter(MetricFilter.ALL)
-					.build(graphite);
-			reporter.start(reportingInterval, TimeUnit.SECONDS);
+	private static void initializePlugins() {
+		for (JawapPlugin jawapPlugin : ServiceLoader.load(JawapPlugin.class)) {
+			jawapPlugin.initializePlugin();
 		}
 	}
 
-	private static String getGraphitePrefix(MeasurementSession measurementSession) {
+	private static void reportToGraphite(long reportingInterval, MeasurementSession measurementSession) {
+		if (reportingInterval > 0) {
+			for (String plugin : SharedMetricRegistries.names()) {
+				final Graphite graphite = new Graphite(new InetSocketAddress(configuration.getGraphiteHostName(),
+						configuration.getGraphitePort()));
+				GraphiteReporter.forRegistry(SharedMetricRegistries.getOrCreate(plugin))
+						.prefixedWith(getGraphitePrefix(measurementSession, plugin))
+						.convertRatesTo(TimeUnit.SECONDS)
+						.convertDurationsTo(TimeUnit.MILLISECONDS)
+						.filter(MetricFilter.ALL)
+						.build(graphite)
+						.start(reportingInterval, TimeUnit.SECONDS);
+			}
+		}
+	}
+
+	private static String getGraphitePrefix(MeasurementSession measurementSession, String plugin) {
 		return name("jawap",
 				encodeForGraphite(measurementSession.getApplicationName()),
 				encodeForGraphite(measurementSession.getInstanceName()),
-				encodeForGraphite(measurementSession.getHostName()));
+				encodeForGraphite(measurementSession.getHostName()),
+				encodeForGraphite(plugin));
 	}
 
 	private static void reportToConsole(long reportingInterval) {
 		if (reportingInterval > 0) {
-			final SortedTableConsoleReporter reporter = SortedTableConsoleReporter.forRegistry(metricRegistry)
-					.convertRatesTo(TimeUnit.SECONDS)
-					.convertDurationsTo(TimeUnit.MILLISECONDS)
-					.build();
-			reporter.start(reportingInterval, TimeUnit.SECONDS);
+			String pluginConsoleReporting = configuration.getPluginConsoleReporting();
+			if (pluginConsoleReporting != null) {
+				SortedTableConsoleReporter
+						.forRegistry(SharedMetricRegistries.getOrCreate(pluginConsoleReporting))
+						.convertRatesTo(TimeUnit.SECONDS)
+						.convertDurationsTo(TimeUnit.MILLISECONDS)
+						.build()
+						.start(reportingInterval, TimeUnit.SECONDS);
+			}
 		}
 	}
 
 	private static void reportToJMX() {
-		final JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).build();
-		reporter.start();
-	}
-
-	public static MetricRegistry getMetricRegistry() {
-		return metricRegistry;
-	}
-
-	public static void setMetricRegistry(MetricRegistry metricRegistry) {
-		ApplicationContext.metricRegistry = metricRegistry;
+		for (String plugin : SharedMetricRegistries.names()) {
+			JmxReporter.forRegistry(SharedMetricRegistries.getOrCreate(plugin)).build().start();
+		}
 	}
 
 	public static Configuration getConfiguration() {

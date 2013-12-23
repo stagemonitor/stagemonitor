@@ -1,6 +1,7 @@
 package de.isys.jawap.collector.core.monitor;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import de.isys.jawap.collector.core.ApplicationContext;
 import de.isys.jawap.collector.core.Configuration;
@@ -10,6 +11,7 @@ import de.isys.jawap.collector.profiler.Profiler;
 import de.isys.jawap.collector.web.rest.HttpRequestContextRestClient;
 import de.isys.jawap.entities.MeasurementSession;
 import de.isys.jawap.entities.profiler.ExecutionContext;
+import de.isys.jawap.util.GraphiteEncoder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -40,18 +42,18 @@ public class ExecutionContextMonitor {
 	private HttpRequestContextRestClient httpRequestContextRestClient;
 	private Date endOfWarmup;
 
-	public ExecutionContextMonitor(MetricRegistry metricRegistry, Configuration configuration) {
+	public ExecutionContextMonitor(Configuration configuration) {
 		measurementSessionRestClient = new MeasurementSessionRestClient(configuration.getServerUrl());
 		httpRequestContextRestClient = new HttpRequestContextRestClient(configuration.getServerUrl());
 		warmupRequests = configuration.getNoOfWarmupRequests();
-		this.metricRegistry = metricRegistry;
+		this.metricRegistry = SharedMetricRegistries.getOrCreate("request");
 		this.configuration = configuration;
 		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getWarmupSeconds()));
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
 		this.measurementSession = measurementSession;
-		ApplicationContext.setMeasurementSession(measurementSession);
+		ApplicationContext.startMonitoring(measurementSession);
 		if (measurementSession.isInitialized()) {
 			measurementSessionLocation = measurementSessionRestClient.saveMeasurementSession(measurementSession);
 		}
@@ -61,7 +63,7 @@ public class ExecutionContextMonitor {
 		// in case the instance name is not set by configuration
 		if (measurementSession.getInstanceName() == null && noOfRequests.get() == 0) {
 			measurementSession.setInstanceName(monitoredExecution.getInstanceName());
-			ApplicationContext.setMeasurementSession(measurementSession);
+			ApplicationContext.startMonitoring(measurementSession);
 			measurementSessionLocation = measurementSessionRestClient.saveMeasurementSession(measurementSession);
 		}
 
@@ -112,7 +114,7 @@ public class ExecutionContextMonitor {
 	}
 
 	private <T extends ExecutionContext> String getTimerName(MonitoredExecution<T> monitoredExecution, String requestName) {
-		return name("request", encodeForGraphite(monitoredExecution.getTimerName(requestName)));
+		return name(GraphiteEncoder.encodeForGraphite(monitoredExecution.getTimerName(requestName)));
 	}
 
 	private <T extends ExecutionContext> void reportCallStack(T requestContext) {
@@ -153,11 +155,4 @@ public class ExecutionContextMonitor {
 		}
 	}
 
-	public static String encodeForGraphite(String s) {
-		return s.replace(".", ":").replace(" ", "_").replace("/", "|");
-	}
-
-	public static String decodeForGraphite(String s) {
-		return s.replace(":", ".").replace("_", " ").replace("|", "/");
-	}
 }
