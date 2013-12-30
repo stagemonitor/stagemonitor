@@ -14,6 +14,10 @@ dependencies {
 	compile 'javax.servlet:servlet-api:2.5'
 	compile 'org.glassfish.jersey.core:jersey-client:2.4.1'
 	compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.3.0'
+	
+	// TODO other module
+	compile 'org.springframework:spring-webmvc:3.1.0.RELEASE'
+            
 
 
 	testCompile 'junit:junit:4.11'

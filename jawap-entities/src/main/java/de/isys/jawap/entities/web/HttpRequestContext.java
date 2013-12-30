@@ -78,7 +78,7 @@ public class HttpRequestContext extends ExecutionContext {
 		if (getQueryParams() != null) {
 			sb.append(getQueryParams());
 		}
-		sb.append('(').append(TimeUnit.NANOSECONDS.toMillis(getExecutionTime())).append(" ms)\n");
+		sb.append(" (").append(statusCode).append(")\n");
 		sb.append(header);
 		return sb.toString();
 	}

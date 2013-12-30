@@ -1,8 +1,5 @@
 package de.isys.jawap.collector.jvm;
 
-// TODO remove hard dependency on com.sun package
-
-import com.sun.management.OperatingSystemMXBean;
 
 import javax.management.MBeanServerConnection;
 import java.io.IOException;
@@ -10,27 +7,38 @@ import java.lang.management.ManagementFactory;
 
 public class CpuUtilisationWatch {
 
-	private static final OperatingSystemMXBean osMBean;
+	private final ProcessCpuTime processCpuTime;
 
 	private Long nanoBefore;
 	private Long cpuBefore;
 
-	static {
+	public interface ProcessCpuTime {
+		long getProcessCpuTime();
+	}
+
+	public CpuUtilisationWatch() throws ClassNotFoundException, IOException {
 		MBeanServerConnection mbsc = ManagementFactory.getPlatformMBeanServer();
-		try {
-			osMBean = ManagementFactory.newPlatformMXBeanProxy(mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME,
-					OperatingSystemMXBean.class);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		Class.forName("com.sun.management.OperatingSystemMXBean");
+		final com.sun.management.OperatingSystemMXBean osMxBean = ManagementFactory.newPlatformMXBeanProxy(mbsc, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME,
+				com.sun.management.OperatingSystemMXBean.class);
+		processCpuTime = new ProcessCpuTime() {
+			@Override
+			public long getProcessCpuTime() {
+				return osMxBean.getProcessCpuTime();
+			}
+		};
+	}
+
+	public CpuUtilisationWatch(ProcessCpuTime processCpuTime) {
+		this.processCpuTime = processCpuTime;
 	}
 
 	/**
 	 * Starts or restarts the watch
 	 */
 	public void start() {
-		nanoBefore = Long.valueOf(System.nanoTime());
-		cpuBefore = Long.valueOf(osMBean.getProcessCpuTime());
+		nanoBefore = System.nanoTime();
+		cpuBefore = processCpuTime.getProcessCpuTime();
 	}
 
 	/**
@@ -43,10 +51,10 @@ public class CpuUtilisationWatch {
 			throw new IllegalStateException("nanoBefore or cpuBefore where null: nanoBefore: " + nanoBefore + ", " +
 					" cpuBefore: " + cpuBefore);
 		}
-		long cpuAfter = osMBean.getProcessCpuTime();
+		long cpuAfter = processCpuTime.getProcessCpuTime();
 		long nanoAfter = System.nanoTime();
 
-		float utilisation = ((cpuAfter - cpuBefore.longValue()) * 100F) / (nanoAfter - nanoBefore.longValue());
+		float utilisation = ((cpuAfter - cpuBefore)) / (nanoAfter - nanoBefore);
 		return utilisation / Runtime.getRuntime().availableProcessors();
 	}
 }

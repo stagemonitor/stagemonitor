@@ -1,20 +1,26 @@
 package de.isys.jawap.collector.core.monitor;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
+import de.isys.jawap.collector.core.ApplicationContext;
 import de.isys.jawap.entities.profiler.ExecutionContext;
 
 public abstract class MonitoredExecution<T extends ExecutionContext> {
 
-	protected MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate("request");
+	protected final MetricRegistry metricRegistry;
+
+	protected MonitoredExecution() {
+		this.metricRegistry = ApplicationContext.getMetricRegistry();
+	}
+
+	protected MonitoredExecution(MetricRegistry metricRegistry) {
+		this.metricRegistry = metricRegistry;
+	}
 
 	public String getInstanceName() {
 		return null;
 	}
 
 	public abstract String getRequestName();
-
-	public abstract String getTimerName(String requestName);
 
 	public abstract T getExecutionContext();
 

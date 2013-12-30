@@ -49,10 +49,9 @@ public class Configuration {
 	public boolean	isCollectHeaders() {					return getBoolean(	"jawap.monitor.http.collectHeaders",				true);}
 	public List<String> getExcludedHeaders() {				return getLowerStrings("jawap.monitor.http.headers.excluded", 			"cookie");}
 	public List<String> getConfidentialQueryParams() {		return getStrings("jawap.monitor.http.queryparams.confidential", 		"pass, credit");}
-	public String	getPluginConsoleReporting() {			return getString("jawap.reporting.console.includedPlugins", 			"request"); }
 	public long 	getConsoleReportingInterval() { 		return getLong("jawap.reporting.interval.console", 						60); }
 	public boolean 	reportToJMX() { 						return getBoolean("jawap.reporting.jmx", 								true); }
-	public long 	getGraphiteReportingInterval() { 		return getLong("jawap.reporting.interval.graphite", 					-1); }
+	public long 	getGraphiteReportingInterval() { 		return getLong("jawap.reporting.interval.graphite", 					60); }
 	public String 	getGraphiteHostName() { 				return getString("jawap.reporting.graphite.hostName"); }
 	public int 		getGraphitePort() { 					return getInt("jawap.reporting.graphite.port", 							2003); }
 	public long 	getMinExecutionTimeNanos() { 			return getLong(		"jawap.profiler.minExecutionTimeNanos", 			0L); }
@@ -63,8 +62,7 @@ public class Configuration {
 	public String	getInstanceName() { 					return getString("jawap.instanceName"); }
 	public String 	getServerUrl() { 						return getString("jawap.serverUrl"); }
 	public Map<Pattern, String> getGroupUrls() {			return getPatternMap("jawap.groupUrls",
-						"/\\d+/: /{id}/," +
-						"/\\d+$: /{id}," +
+						"/\\d+: /{id}," +
 						"(.*).js: *.js," +
 						"(.*).css: *.css," +
 						"(.*).js: *.jpg," +

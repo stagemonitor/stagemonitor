@@ -1,7 +1,6 @@
 package de.isys.jawap.collector.core.monitor;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import de.isys.jawap.collector.core.ApplicationContext;
 import de.isys.jawap.collector.core.Configuration;
@@ -46,7 +45,7 @@ public class ExecutionContextMonitor {
 		measurementSessionRestClient = new MeasurementSessionRestClient(configuration.getServerUrl());
 		httpRequestContextRestClient = new HttpRequestContextRestClient(configuration.getServerUrl());
 		warmupRequests = configuration.getNoOfWarmupRequests();
-		this.metricRegistry = SharedMetricRegistries.getOrCreate("request");
+		this.metricRegistry = ApplicationContext.getMetricRegistry();
 		this.configuration = configuration;
 		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getWarmupSeconds()));
 	}
@@ -78,7 +77,7 @@ public class ExecutionContextMonitor {
 				requestContext = monitoredExecution.getExecutionContext();
 				String requestName = monitoredExecution.getRequestName();
 				requestContext.setName(requestName);
-				timer = metricRegistry.timer(getTimerName(monitoredExecution, requestName));
+				timer = metricRegistry.timer(getTimerName(requestName));
 				if (profileThisRequest(timer)) {
 					Profiler.setExecutionContext(requestContext);
 					Profiler.start();
@@ -97,13 +96,13 @@ public class ExecutionContextMonitor {
 					monitoredExecution.onPostExecute(requestContext);
 
 					if (requestContext.getCallStack() != null) {
-						Profiler.stop("root", "root");
+						Profiler.stop(null, "total");
 						reportCallStack(requestContext);
 					}
 					if (timer != null) {
 						timer.update(executionTime, TimeUnit.NANOSECONDS);
 						if (requestContext.isFailed()) {
-							metricRegistry.counter(name(getTimerName(monitoredExecution, requestContext.getName()), "failed")).inc();
+							metricRegistry.counter(name(getTimerName(requestContext.getName()), "failed")).inc();
 						}
 					}
 				}
@@ -113,8 +112,8 @@ public class ExecutionContextMonitor {
 		}
 	}
 
-	private <T extends ExecutionContext> String getTimerName(MonitoredExecution<T> monitoredExecution, String requestName) {
-		return name(GraphiteEncoder.encodeForGraphite(monitoredExecution.getTimerName(requestName)));
+	private <T extends ExecutionContext> String getTimerName(String requestName) {
+		return name("request", GraphiteEncoder.encodeForGraphite(requestName));
 	}
 
 	private <T extends ExecutionContext> void reportCallStack(T requestContext) {

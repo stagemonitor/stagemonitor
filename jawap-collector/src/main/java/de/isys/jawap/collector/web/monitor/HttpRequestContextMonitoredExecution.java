@@ -16,16 +16,15 @@ import static com.codahale.metrics.MetricRegistry.name;
 
 public class HttpRequestContextMonitoredExecution extends MonitoredExecution<HttpRequestContext> {
 
-	private final HttpServletRequest httpServletRequest;
-	private final FilterChain filterChain;
-	private final StatusExposingServletResponse statusExposingResponse;
-	private final Configuration configuration;
+	protected final HttpServletRequest httpServletRequest;
+	protected final FilterChain filterChain;
+	protected final StatusExposingServletResponse statusExposingResponse;
+	protected final Configuration configuration;
 
 
 	public HttpRequestContextMonitoredExecution(HttpServletRequest httpServletRequest,
 												StatusExposingServletResponse statusExposingResponse,
-												FilterChain filterChain,
-												Configuration configuration) {
+												FilterChain filterChain, Configuration configuration) {
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
 		this.statusExposingResponse = statusExposingResponse;
@@ -43,12 +42,7 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 		for (Map.Entry<Pattern, String> entry : configuration.getGroupUrls().entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
-		return requestURI;
-	}
-
-	@Override
-	public String getTimerName(String requestName) {
-		return httpServletRequest.getMethod() + "_" + requestName;
+		return httpServletRequest.getMethod() + "_" +requestURI;
 	}
 
 	@Override
@@ -117,7 +111,7 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 	public void onPostExecute(HttpRequestContext executionContext) {
 		int status = statusExposingResponse.getStatus();
 		executionContext.setStatusCode(status);
-		metricRegistry.counter(name("statuscode", Integer.toString(status))).inc();
+		metricRegistry.counter(name("request.statuscode", Integer.toString(status))).inc();
 		if (status >= 400) {
 			executionContext.setFailed(true);
 		}

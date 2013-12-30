@@ -35,7 +35,7 @@ public class HttpRequestContextRestClient {
 			if (target == null) {
 				logger.error("Unknown request context: " + requestContext.getClass().getCanonicalName());
 			} else {
-				target.request().post(Entity.json(requestContext));
+				target.request().async().post(Entity.json(requestContext));
 			}
 		}
 	}

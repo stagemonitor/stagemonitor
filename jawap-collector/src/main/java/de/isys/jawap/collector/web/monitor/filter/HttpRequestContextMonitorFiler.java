@@ -1,6 +1,5 @@
 package de.isys.jawap.collector.web.monitor.filter;
 
-import com.codahale.metrics.MetricRegistry;
 import de.isys.jawap.collector.core.ApplicationContext;
 import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.core.monitor.ExecutionContextMonitor;
@@ -14,15 +13,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static com.codahale.metrics.MetricRegistry.name;
 
 // TODO as Aspect of Servlet+.service(..) or HttpServletRequest.new ?
 public class HttpRequestContextMonitorFiler extends AbstractExclusionFilter implements Filter {
 
 	private final Log logger = LogFactory.getLog(getClass());
 
-	private Configuration configuration = ApplicationContext.getConfiguration();
-	private ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
+	protected Configuration configuration = ApplicationContext.getConfiguration();
+	protected ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
 
 	@Override
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
@@ -50,17 +48,23 @@ public class HttpRequestContextMonitorFiler extends AbstractExclusionFilter impl
 			try {
 				executionContextMonitor.monitor(new HttpRequestContextMonitoredExecution(httpServletRequest,
 						statusExposingResponse, filterChain, configuration));
-			} catch (IOException e) {
-				throw e;
-			} catch (ServletException e) {
-				throw e;
-			} catch (RuntimeException e) {
-				throw e;
 			} catch (Exception e) {
-				throw new RuntimeException(e);
+				handleException(e);
 			}
 		} else {
 			filterChain.doFilter(request, response);
+		}
+	}
+
+	protected void handleException(Exception e) throws IOException, ServletException  {
+		if (e instanceof IOException) {
+			throw (IOException) e;
+		} if (e instanceof ServletException) {
+			throw (ServletException) e;
+		} if (e instanceof RuntimeException) {
+			throw (RuntimeException) e;
+		} else {
+			throw new RuntimeException(e);
 		}
 	}
 
