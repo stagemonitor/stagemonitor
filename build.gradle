@@ -1,5 +1,7 @@
+apply plugin: 'idea'
 subprojects {
 	apply plugin: 'java'
+	apply plugin: 'idea'
 
 	group = "de.isys"
 	version = "0.1-SNAPSHOT"

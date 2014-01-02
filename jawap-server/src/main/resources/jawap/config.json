@@ -1,0 +1,6 @@
+{
+	"dashboardListUrl": "dashboards",
+	"dashboardUrlTemplate": "dash?id=${dashboardId}",
+	"minimumRefresh": 60,
+	"timezones": ["US/Eastern", "US/Central", "US/Pacific", "Europe/London", "Europe/Berlin", "Israel"]
+}

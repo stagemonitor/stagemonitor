@@ -1,0 +1,3 @@
+moduleName=jawap-module
+moduleVersion=1.0-test
+extensionClasses=de.isys.jawap.server.util.ExtensionMethods

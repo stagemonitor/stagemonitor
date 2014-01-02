@@ -1,0 +1,9 @@
+{
+	"data": [
+		{
+			"title": "Cpu utilisation",
+			"target": "groupByNode([_jawapPrefix_].cpu.process.usage,${group},'averageSeries'))",
+			"yMax": "100"
+		}
+	]
+}

@@ -5,12 +5,15 @@ import de.isys.jawap.entities.profiler.CallStackElement;
 import de.isys.jawap.entities.web.HttpRequestContext;
 import de.isys.jawap.server.profiler.HttpRequestContextRepository;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration
+import org.springframework.boot.autoconfigure.data.JpaRepositoriesAutoConfiguration
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.SpringBootServletInitializer
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.PropertySource
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -21,6 +24,7 @@ import javax.annotation.Resource;
 @Configuration
 @EnableAutoConfiguration
 @EnableTransactionManagement
+@PropertySource("classpath:application.properties")
 public class Application extends SpringBootServletInitializer {
 
 	@Override
@@ -47,11 +51,6 @@ public class Application extends SpringBootServletInitializer {
 		httpRequestContext.setCallStack(callStack);
 		callStack.setClassName("test");
 		httpRequestContextRepository.save(httpRequestContext);
-	}
-
-	@Bean
-	public static PropertySourcesPlaceholderConfigurer propertyPlaceholderConfigurer() {
-		return new PropertySourcesPlaceholderConfigurer();
 	}
 
 	public static void main(String[] args) {
