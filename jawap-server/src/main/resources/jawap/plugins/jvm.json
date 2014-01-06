@@ -2,7 +2,7 @@
 	"data": [
 		{
 			"title": "Cpu utilisation",
-			"target": "groupByNode([_jawapPrefix_].cpu.process.usage,${group},'averageSeries'))",
+			"target": "groupByNode(jawap.${application}.${environment}.${host}.jvm.cpu.process.usage,${group},'averageSeries')",
 			"yMax": "100"
 		}
 	]

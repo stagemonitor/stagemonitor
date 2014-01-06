@@ -18,19 +18,17 @@ public class HttpRequestContextRestClient {
 	private final Log logger = LogFactory.getLog(getClass());
 
 	private Client client;
-	private String serverUrl;
 
-	public HttpRequestContextRestClient(String serverUrl) {
-		this.serverUrl = serverUrl;
+	public HttpRequestContextRestClient() {
 		client = ClientBuilder.newClient(new ClientConfig()
 				.register(JacksonJsonProvider.class));
 	}
 
-	public void saveRequestContext(ExecutionContext requestContext) {
-		if (serverUrl != null && !serverUrl.isEmpty()) {
+	public void saveRequestContext(String measurementSessionLocation, ExecutionContext requestContext) {
+		if (measurementSessionLocation != null && !measurementSessionLocation.isEmpty()) {
 			WebTarget target = null;
 			if (requestContext instanceof HttpRequestContext) {
-				target = client.target(serverUrl).path("/executionContexts");
+				target = client.target(measurementSessionLocation).path("/executionContexts");
 			}
 			if (target == null) {
 				logger.error("Unknown request context: " + requestContext.getClass().getCanonicalName());
@@ -38,9 +36,5 @@ public class HttpRequestContextRestClient {
 				target.request().async().post(Entity.json(requestContext));
 			}
 		}
-	}
-
-	public static void main(String[] args) {
-		new HttpRequestContextRestClient("http://localhost:8181").saveRequestContext(new HttpRequestContext());
 	}
 }

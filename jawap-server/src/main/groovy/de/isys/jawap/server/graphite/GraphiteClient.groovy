@@ -33,6 +33,7 @@ class GraphiteClient {
 		new JsonSlurper().parseText("${graphiteUrl}/metrics?query=$query".toURL().text)*.text
 	}
 
+	// TODO fail rate
 	List<List> getRequestTable(String application, environment, host, String from, String until) {
 		List<String> rawLines = new HTTPBuilder(graphiteUrl).get(
 				path: "/render",
@@ -67,16 +68,6 @@ class GraphiteClient {
 			case 'min': return values.min().doubleValue()
 			default: return (values.sum() as Double) / (double) values.size()
 		}
-	}
-
-	public static void main(String[] args) {
-		def client = new GraphiteClient('http://webstage-loadtest:8080')
-		long start = System.currentTimeMillis();
-		client.getRequestTable()
-		println System.currentTimeMillis() - start;
-		start = System.currentTimeMillis();
-		client.getRequestTable()
-		println System.currentTimeMillis() - start;
 	}
 
 }

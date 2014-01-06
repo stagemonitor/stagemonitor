@@ -1,4 +1,19 @@
 {
-	"type": "request"
+	"type": "request",
+	"data": [
+		{
+			"title": "Response Time",
+			"target": [
+				"dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.p95))",
+				"averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.mean)",
+				"dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.min))"
+			]
+		},
+		{
+			"title": "Throughput",
+			"target": "averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.m1_rate)"
+
+		}
+	]
 
 }

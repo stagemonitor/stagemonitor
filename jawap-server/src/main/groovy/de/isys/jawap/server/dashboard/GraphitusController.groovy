@@ -43,12 +43,11 @@ class GraphitusController {
 
 		return "jawap/DefaultJawapDashboardSettings.json".loadJsonResource() +
 				[title: plugin.capitalize()] +
-				getDashboardPlugin(application, plugin)
+				getDashboardPlugin(plugin)
 	}
 
-	private def getDashboardPlugin(String application, String plugin) {
-		String jawapPrefix = "jawap.\${application}.\${environment}.\${host}.${plugin}"
-		new ClassPathResource("jawap/plugins/${plugin}.json").getURL().text.replace('[_jawapPrefix_]', jawapPrefix).json
+	private def getDashboardPlugin(String plugin) {
+		new ClassPathResource("jawap/plugins/${plugin}.json").getURL().text.json
 	}
 
 	@RequestMapping("/requestTable")

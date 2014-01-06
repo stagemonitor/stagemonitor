@@ -105,4 +105,55 @@ public class CallStackElement {
 	public void setParent(CallStackElement parent) {
 		this.parent = parent;
 	}
+
+	public void logStats(long totalExecutionTimeNs, int depth, StringBuilder log) {
+		appendTimesPercentTable(totalExecutionTimeNs, log);
+		appendCallTree(depth, log);
+		preorderTraverseTreeAndComputeDepth(totalExecutionTimeNs, depth, log);
+	}
+
+	private void appendTimesPercentTable(long totalExecutionTimeNs, StringBuilder sb) {
+		appendNumber(sb, getNetExecutionTime());
+		appendPercent(sb, getNetExecutionTime(), totalExecutionTimeNs);
+
+		appendNumber(sb, getExecutionTime());
+		appendPercent(sb, getExecutionTime(), totalExecutionTimeNs);
+	}
+
+	private void appendNumber(StringBuilder sb, long time) {
+		sb.append(String.format("%,9.2f", time / 1000000.0)).append("  ");
+	}
+
+	private void appendPercent(StringBuilder sb, long time, long totalExecutionTimeNs) {
+		sb.append(String.format("%3.0f", time * 100 / (double) totalExecutionTimeNs)).append("%  ");
+	}
+
+	private void appendCallTree(int depth, StringBuilder sb) {
+		for (int i = 1; i <= depth; i++) {
+			if (i == depth) {
+				if (isLastChild() && getChildren().isEmpty()) {
+					sb.append("`-- ");
+				} else {
+					sb.append("+-- ");
+				}
+			} else {
+				sb.append("|   ");
+			}
+		}
+		sb.append(getSignature()).append('\n');
+	}
+
+	private boolean isLastChild() {
+		final List<CallStackElement> parentChildren = getParent().getChildren();
+		return parentChildren.get(parentChildren.size() - 1) == this;
+	}
+
+	private void preorderTraverseTreeAndComputeDepth(long totalExecutionTimeNs,
+													 int depth, StringBuilder log) {
+		for (CallStackElement callStats : getChildren()) {
+			depth++;
+			callStats.logStats(totalExecutionTimeNs, depth, log);
+			depth--;
+		}
+	}
 }

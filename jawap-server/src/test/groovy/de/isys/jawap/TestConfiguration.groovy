@@ -18,7 +18,6 @@ import javax.persistence.EntityManagerFactory
 @Configuration
 @ComponentScan(excludeFilters = @ComponentScan.Filter(value = Application, type = FilterType.ASSIGNABLE_TYPE))
 @EnableAutoConfiguration(exclude = [HibernateJpaAutoConfiguration, JpaRepositoriesAutoConfiguration])
-@PropertySource("classpath:application.properties")
 class TestConfiguration {
 
 	@Bean

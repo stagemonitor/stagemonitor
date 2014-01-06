@@ -17,7 +17,7 @@ buildscript {
 
 	dependencies {
 		classpath 'org.gradle.api.plugins:gradle-tomcat-plugin:1.0'
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:0.5.0.M6")
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:0.5.0.M7")
 	}
 }
 
@@ -26,6 +26,7 @@ repositories {
 }
 
 dependencies {
+	def springBootVersion = '0.5.0.M7'
 	def tomcatVersion = '7.0.11'
 	tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
 			"org.apache.tomcat.embed:tomcat-embed-logging-juli:${tomcatVersion}"
@@ -33,10 +34,9 @@ dependencies {
 		exclude group: 'org.eclipse.jdt.core.compiler', module: 'ecj'
 	}
 
-
 	compile project(":jawap-entities")
-	compile "org.springframework.boot:spring-boot-starter-web:0.5.0.M6"
-	compile "org.springframework.boot:spring-boot-starter-data-jpa:0.5.0.M6"
+	compile "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+	compile "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
 	compile('com.github.scobal.seyren:seyren-core:1.0.0-SNAPSHOT') {
 		exclude group: 'org.python', module: 'jython-standalone'
 	}
@@ -47,7 +47,8 @@ dependencies {
 		exclude group: 'org.codehaus.groovy', module: 'groovy'
 	}
 
-	testCompile "org.springframework.boot:spring-boot-starter-test:0.5.0.M6"
+	testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+	testCompile "org.springframework.boot:spring-boot:${springBootVersion}:tests"
 
 }
 

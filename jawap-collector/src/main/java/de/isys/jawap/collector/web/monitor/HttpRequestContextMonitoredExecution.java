@@ -42,7 +42,7 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 		for (Map.Entry<Pattern, String> entry : configuration.getGroupUrls().entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
-		return httpServletRequest.getMethod() + "_" +requestURI;
+		return httpServletRequest.getMethod() + " " +requestURI;
 	}
 
 	@Override

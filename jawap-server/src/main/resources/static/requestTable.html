@@ -1,37 +1,52 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title></title>
-	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-	<script type="text/javascript"
-			src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/jquery.dataTables.min.js"></script>
-	<link href="//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/css/demo_page.css" rel="stylesheet">
-	<link href="//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/css/demo_table.css" rel="stylesheet">
-</head>
-<body>
-test
-<table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
-	<thead>
-		<tr>
-			<th>Request Name</th>
-			<th>Throughput</th>
-			<th>Max</th>
-			<th>Mean</th>
-			<th>Min</th>
-			<th>p50</th>
-			<th>p95</th>
-			<th>Std. Dev.</th>
-		</tr>
-	</thead>
-</table>
+<div id="requstTable">
+	<div class="row">
+		<div class="span9" id="request-table-div">
+			<table cellpadding="0" cellspacing="0" border="0" class="display" id="request-table">
+				<thead>
+				<tr>
+					<th>Request Name</th>
+					<th>Throughput</th>
+					<th>Max</th>
+					<th>Mean</th>
+					<th>Min</th>
+					<th>p50</th>
+					<th>p95</th>
+					<th>Std. Dev.</th>
+				</tr>
+				</thead>
+			</table>
+		</div>
+		<div class="span7" id="stacktraces-table-div">
+			<table cellpadding="0" cellspacing="0" border="0" class="display" id="stacktraces-table">
+				<thead>
+				<tr>
+					<th>Id</th>
+					<th>Time</th>
+					<th>Date</th>
+					<th>URL</th>
+					<th>Status</th>
+				</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+</div>
 
-<script type="text/javascript">
-	$(document).ready(function() {
-		$('#example').dataTable( {
-			"sAjaxSource": "/graphitus/requestTable?from=&until="
-		} );
-	} );
-</script>
-
-</body>
-</html>
+<div id="callStackLightbox" class="lightbox hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class='lightbox-header'>
+		<button type="button" class="close" data-dismiss="lightbox" aria-hidden="true">&times;</button>
+	</div>
+	<div class='lightbox-content'>
+		<div class="navbar navbar-inverse">
+			<div class="navbar-inner">
+				<ul class="nav">
+					<li><label class="navbar-text" id="callStackTitle">Call Stack</label></li>
+					<li class="divider-vertical"></li>
+				</ul>
+			</div>
+		</div>
+		<div style="padding: 20px;">
+			<pre id='call-stack' style="overflow: scroll; text-align: left"></pre>
+		</div>
+	</div>
+</div>

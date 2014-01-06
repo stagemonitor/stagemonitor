@@ -20,7 +20,7 @@ public class HttpRequestContext extends ExecutionContext {
 	@Lob
 	private String header;
 	private String method;
-	// TODO header, cpu time
+	// TODO cpu time
 
 	public String getUrl() {
 		return url;
@@ -72,7 +72,7 @@ public class HttpRequestContext extends ExecutionContext {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder(10000);
 		//sb.append("id: ").append(getId()).append('\n');
 		sb.append(method).append(' ').append(getUrl());
 		if (getQueryParams() != null) {
@@ -80,6 +80,14 @@ public class HttpRequestContext extends ExecutionContext {
 		}
 		sb.append(" (").append(statusCode).append(")\n");
 		sb.append(header);
+
+		if (getCallStack() != null) {
+			sb.append("--------------------------------------------------\n");
+			sb.append("Selftime (ms)    Total (ms)       Method signature\n");
+			sb.append("--------------------------------------------------\n");
+
+			getCallStack().logStats(getCallStack().getExecutionTime(), 0, sb);
+		}
 		return sb.toString();
 	}
 }

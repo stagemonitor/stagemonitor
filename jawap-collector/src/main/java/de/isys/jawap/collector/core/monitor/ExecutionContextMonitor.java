@@ -37,13 +37,13 @@ public class ExecutionContextMonitor {
 	private MeasurementSession measurementSession;
 
 	private MeasurementSessionRestClient measurementSessionRestClient;
-	String measurementSessionLocation;
+	private String measurementSessionLocation;
 	private HttpRequestContextRestClient httpRequestContextRestClient;
 	private Date endOfWarmup;
 
 	public ExecutionContextMonitor(Configuration configuration) {
 		measurementSessionRestClient = new MeasurementSessionRestClient(configuration.getServerUrl());
-		httpRequestContextRestClient = new HttpRequestContextRestClient(configuration.getServerUrl());
+		httpRequestContextRestClient = new HttpRequestContextRestClient();
 		warmupRequests = configuration.getNoOfWarmupRequests();
 		this.metricRegistry = ApplicationContext.getMetricRegistry();
 		this.configuration = configuration;
@@ -118,7 +118,7 @@ public class ExecutionContextMonitor {
 
 	private <T extends ExecutionContext> void reportCallStack(T requestContext) {
 		if (configuration.isReportCallStacksToServer()) {
-			httpRequestContextRestClient.saveRequestContext(requestContext);
+			httpRequestContextRestClient.saveRequestContext(measurementSessionLocation, requestContext);
 		}
 		if (configuration.isLogCallStacks()) {
 			executionContextLogger.logStats(requestContext);
