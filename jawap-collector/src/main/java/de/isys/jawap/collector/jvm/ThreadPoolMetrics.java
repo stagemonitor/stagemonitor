@@ -2,7 +2,7 @@ package de.isys.jawap.collector.jvm;
 
 public class ThreadPoolMetrics {
 
-	private String id;
+	private String name;
 	private int maxPoolSize;
 	private int threadPoolSize;
 	private int threadPoolNumActiveThreads;
@@ -32,12 +32,12 @@ public class ThreadPoolMetrics {
 		this.threadPoolNumTasksPending = threadPoolNumTasksPending;
 	}
 
-	public String getId() {
-		return id;
+	public String getName() {
+		return name;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public int getMaxPoolSize() {

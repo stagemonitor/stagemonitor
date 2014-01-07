@@ -1,0 +1,10 @@
+{
+	"data": [
+		{
+			"title": "Server Thread Pool",
+			"target": [
+				"groupByNode(jawap.${application}.${environment}.${host}.server.threadpool.*, 6, 'averageSeries')",
+			]
+		}
+	]
+}

@@ -1,0 +1,32 @@
+{
+	"data": [
+		{
+			"title": "Heap",
+			"target": [
+				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.max), 7)",
+				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.committed), 7)",
+				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.used), 7)"
+			]
+		},
+		{
+			"title": "Non-Heap",
+			"target": [
+				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.max), 7)",
+				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.committed), 7)",
+				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.used), 7)"
+			]
+		},
+		{
+			"title": "Memory Pools",
+			"target": [
+				"groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.pools.*.usage, 7, 'averageSeries')",
+			]
+		},
+		{
+			"title": "GC",
+			"target": [
+				"groupByNode(nonNegativeDerivative(jawap.${application}.${environment}.${host}.jvm.gc.*.time), 6, 'sum')",
+			]
+		}
+	]
+}

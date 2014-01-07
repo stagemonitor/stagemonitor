@@ -1,6 +1,5 @@
 package de.isys.jawap.server.graphite
 
-import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovyx.net.http.HTTPBuilder
 import org.springframework.beans.factory.annotation.Value
@@ -14,23 +13,10 @@ import static de.isys.jawap.util.GraphiteEncoder.decodeForGraphite
 class GraphiteClient {
 
 	String graphiteUrl
-	private def http
 
 	@Inject
 	GraphiteClient(@Value('${jawap.graphiteUrl}') String graphiteUrl) {
 		this.graphiteUrl = graphiteUrl
-	}
-
-	List<String> getApplications() { autocomplete('jawap.*') }
-
-	List<String> getInstances(String application) { autocomplete("jawap.$application.*") }
-
-	List<String> getHosts(String application, String instance) { autocomplete("jawap.$application.$instance.*") }
-
-	List<String> getPlugins(String application) { autocomplete("jawap.$application.*.*.*") }
-
-	private List<String> autocomplete(String query) {
-		new JsonSlurper().parseText("${graphiteUrl}/metrics?query=$query".toURL().text)*.text
 	}
 
 	// TODO fail rate

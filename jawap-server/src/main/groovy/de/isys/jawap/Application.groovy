@@ -6,7 +6,6 @@ import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.web.SpringBootServletInitializer
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.PropertySource
 import org.springframework.transaction.annotation.EnableTransactionManagement
 
 @ComponentScan

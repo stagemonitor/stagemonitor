@@ -1,0 +1,16 @@
+{
+	"data": [
+		{
+			"title": "Cpu utilisation",
+			"target": "alias(groupByNode(jawap.${application}.${environment}.${host}.jvm.cpu.process.usage,${group},'averageSeries'), 'cpu')"
+		},
+		{
+			"title": "Memory",
+			"target": [
+				"alias(groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.total.max,${group},'averageSeries'), 'max')",
+				"alias(groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.total.committed,${group},'averageSeries'), 'committed')",
+				"alias(groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.total.used,${group},'averageSeries'), 'used')"
+			]
+		}
+	]
+}

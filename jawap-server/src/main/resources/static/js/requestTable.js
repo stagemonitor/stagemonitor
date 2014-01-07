@@ -71,7 +71,7 @@ function initializeDatatables() {
 	});
 	$("#stacktraces-table").on('click', "tbody tr", function (e) {
 		var id = e.currentTarget.childNodes[0].innerHTML;
-		highlightSelectedRow(this, stackDataTable);
+//		highlightSelectedRow(this, stackDataTable);
 		loadCallStack(id)
 	});
 	reloadRequestTable();
@@ -113,7 +113,7 @@ function reloadRequestTable() {
 			$('#request-table').dataTable().fnReloadAjax(getRequestTableUrl(), function () {
 				if (selectedRequestName != null) {
 					var matches = $('#request-table tr:contains(' + selectedRequestName + ')');
-					for(var i = 0; i< matches.length; i++) {
+					for (var i = 0; i < matches.length; i++) {
 						match = matches[i];
 						if (match.childNodes[0].innerHTML == selectedRequestName) {
 							$(match).addClass('row_selected');
@@ -131,6 +131,22 @@ function getRequestTableUrl() {
 		+ getAppEnvHostQueryParams()
 		+ getRangeQueryParams();
 }
+
+function getRangeQueryParams() {
+	var range = "";
+	var timeBack = $('#timeBack').val();
+	var start = $('#start').val();
+	var end = $('#end').val();
+	if (timeBack != "") {
+		range = "&from=-" + parseTimeBackValue(timeBack);
+	} else if (start != "" && end != "") {
+		var startParts = start.split(" ");
+		var endParts = end.split(" ");
+		range = "&from=" + startParts[1] + "_" + startParts[0] + "&until=" + endParts[1] + "_" + endParts[0];
+	}
+	return range;
+}
+
 function getAppEnvHostQueryParams() {
 	return "?application=" + getDecodedParameter("application")
 		+ "&environment=" + getDecodedParameter("environment")
