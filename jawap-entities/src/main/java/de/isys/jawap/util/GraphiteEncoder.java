@@ -1,6 +1,7 @@
 package de.isys.jawap.util;
 
 public class GraphiteEncoder {
+	// TODO \?
 	public static String encodeForGraphite(String s) {
 		return s.replace(".", ":").replace(" ", "_").replace("/", "|");
 	}

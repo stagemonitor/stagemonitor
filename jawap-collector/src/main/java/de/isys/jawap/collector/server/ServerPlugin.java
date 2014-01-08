@@ -22,9 +22,11 @@ public class ServerPlugin implements JawapPlugin {
 		try {
 			final Set<ObjectInstance> objectInstances = server.queryMBeans(new ObjectName("Catalina:type=ThreadPool,*"), null);
 			for (final ObjectInstance objectInstance : objectInstances) {
-				registerAttributeAsMetric(registry, objectInstance, "server.threadpool.active", "currentThreadsBusy");
-				registerAttributeAsMetric(registry, objectInstance, "server.threadpool.count", "currentThreadCount");
-				registerAttributeAsMetric(registry, objectInstance, "server.threadpool.max", "maxThreads");
+				// TODO part of objectname as metric name
+				final String prefix = String.format("server.threadpool.%s", objectInstance.getObjectName().getKeyProperty("name")).replace("\"", "");
+				registerAttributeAsMetric(registry, objectInstance, prefix + ".active", "currentThreadsBusy");
+				registerAttributeAsMetric(registry, objectInstance, prefix + ".count", "currentThreadCount");
+				registerAttributeAsMetric(registry, objectInstance, prefix + ".max", "maxThreads");
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
