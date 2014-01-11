@@ -5,6 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.core.JawapPlugin;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,7 +17,7 @@ import java.lang.management.OperatingSystemMXBean;
 public class JvmPlugin implements JawapPlugin {
 	private final Log logger = LogFactory.getLog(getClass());
 	@Override
-	public void initializePlugin(MetricRegistry registry) {
+	public void initializePlugin(MetricRegistry registry, Configuration configuration) {
 		registry.register("jvm.gc", new GarbageCollectorMetricSet());
 		registry.register("jvm.memory", new MemoryUsageGaugeSet());
 

@@ -2,7 +2,7 @@
 	"type": "request",
 	"data": [
 		{
-			"title": "Response Time",
+			"title": "Response Time (ms)",
 			"target": [
 				"dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.p95))",
 				"averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.mean)",
@@ -10,9 +10,11 @@
 			]
 		},
 		{
-			"title": "Throughput",
-			"target": "averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.m1_rate)"
-
+			"title": "Throughput (Requests per Minute)",
+			"target": [
+				"alias(sum(jawap.${application}.${environment}.${host}.request.${requestName}.m1_rate), 'total')",
+			 	"alias(sum(jawap.${application}.${environment}.${host}.request.${requestName}.error.m1_rate), 'failed')"
+			]
 		}
 	]
 

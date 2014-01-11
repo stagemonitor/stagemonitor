@@ -1,6 +1,8 @@
 package de.isys.jawap.collector.jvm;
 
-public interface ThreadPoolMetricsCollector {
+public interface PooledResource {
+	String getName();
+
 	int getMaxPoolSize();
 
 	int getThreadPoolSize();

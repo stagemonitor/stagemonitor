@@ -1,16 +1,21 @@
 package de.isys.jawap.collector.jvm;
 
 
-import de.isys.jawap.collector.core.ApplicationContext;
-
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class JavaThreadPoolMetricsCollectorImpl implements ThreadPoolMetricsCollector {
+public class JavaThreadPoolMetricsCollectorImpl implements PooledResource {
 
-	private ThreadPoolExecutor threadPool;
+	private final ThreadPoolExecutor threadPool;
+	private final String name;
 
-	public void setScheduledThreadPoolExecutor(ThreadPoolExecutor threadPool) {
+	public JavaThreadPoolMetricsCollectorImpl(ThreadPoolExecutor threadPool, String name) {
 		this.threadPool = threadPool;
+		this.name = name;
+	}
+
+	@Override
+	public String getName() {
+		return name;
 	}
 
 	@Override

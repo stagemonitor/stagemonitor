@@ -190,7 +190,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 			if (!meters.isEmpty()) {
 				printWithBanner("-- Meters", '-', sb);
 				int maxLength = getMaxLengthOfKeys(meters);
-				sb.append(String.format("%-" + maxLength + "s | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit\n", "name"));
+				sb.append(String.format("%-" + maxLength + "s | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name"));
 				Map<String, Meter> sortedMeters = sortByValue(meters, new Comparator<Meter>() {
 					@Override
 					public int compare(Meter o1, Meter o2) {
@@ -264,7 +264,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 
 	private void printMeter(String name, Meter meter, int maxNameLength, StringBuilder sb) {
 		sb.append(String.format("%" + maxNameLength + "s | ", decodeForGraphite(name)));
-		sb.append(meter.getCount()).append('\n');
+		sb.append(String.format(locale, "%,9d | ", meter.getCount()));
 		printMetered(meter, sb);
 		sb.append('\n');
 	}
@@ -281,7 +281,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 
 	private void printHistogram(String name, Histogram histogram, int maxNameLength, StringBuilder sb) {
 		sb.append(String.format("%" + maxNameLength + "s | ", decodeForGraphite(name)));
-		sb.append(histogram.getCount()).append('\n');
+		sb.append(String.format(locale, "%,9d | ", histogram.getCount()));
 		printSnapshot(histogram.getSnapshot(), sb);
 		sb.append('\n');
 	}

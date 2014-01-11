@@ -91,7 +91,7 @@ public class ExecutionContextMonitor {
 			} finally {
 				if (requestContext != null) {
 					long executionTime = System.nanoTime() - start;
-					requestContext.setFailed(exceptionThrown);
+					requestContext.setError(exceptionThrown);
 					requestContext.setExecutionTime(executionTime);
 					monitoredExecution.onPostExecute(requestContext);
 
@@ -101,8 +101,8 @@ public class ExecutionContextMonitor {
 					}
 					if (timer != null) {
 						timer.update(executionTime, TimeUnit.NANOSECONDS);
-						if (requestContext.isFailed()) {
-							metricRegistry.counter(name(getTimerName(requestContext.getName()), "failed")).inc();
+						if (requestContext.isError()) {
+							metricRegistry.meter(name(getTimerName(requestContext.getName()), "error")).mark();
 						}
 					}
 				}

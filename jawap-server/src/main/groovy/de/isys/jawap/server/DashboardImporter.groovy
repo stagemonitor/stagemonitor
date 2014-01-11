@@ -21,10 +21,10 @@ class DashboardImporter {
 	@PostConstruct
 	@Transactional
 	importDashboards() {
-		["jvm", "request"].each {
-			if (em.createQuery("select count(*) from Dashboard where id='${it}'").singleResult < 1) {
-				dashboardRepository.save(new Dashboard(name: it, content: new ClassPathResource("jawap/plugins/${it}.json").URL.text));
-			}
-		}
+//		["jvm", "request"].each {
+//			if (em.createQuery("select count(*) from Dashboard where id='${it}'").singleResult < 1) {
+//				dashboardRepository.save(new Dashboard(name: it, content: new ClassPathResource("jawap/plugins/${it}.json").URL.text));
+//			}
+//		}
 	}
 }

@@ -38,7 +38,7 @@ public class ApplicationContext {
 
 	private static void initializePlugins() {
 		for (JawapPlugin jawapPlugin : ServiceLoader.load(JawapPlugin.class)) {
-			jawapPlugin.initializePlugin(getMetricRegistry());
+			jawapPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
 		}
 	}
 

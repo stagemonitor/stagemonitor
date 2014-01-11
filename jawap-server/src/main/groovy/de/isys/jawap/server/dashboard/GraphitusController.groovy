@@ -1,8 +1,6 @@
 package de.isys.jawap.server.dashboard
 
-import de.isys.jawap.server.graphite.GraphiteClient
 import org.springframework.core.io.ClassPathResource
-import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -11,7 +9,6 @@ import javax.annotation.Resource
 import javax.persistence.EntityManager
 import javax.persistence.PersistenceContext
 
-import static groovyx.gpars.GParsPool.withPool
 import static org.springframework.web.bind.annotation.RequestMethod.GET
 
 @RestController
@@ -27,15 +24,26 @@ class GraphitusController {
 	@Resource
 	private DashboardRepository dashboardRepository
 
-	@RequestMapping(value = "/configuration", method = GET)
+	@RequestMapping(value = "/config.json", method = GET)
 	def getConfiguration() {
 		"jawap/config.json".loadJsonResource() + [graphiteUrl: graphite.graphiteUrl]
+	}
+
+	@RequestMapping(value = "/dashboard.html", method = GET)
+	def getDashboardHtml() {
+		new ClassPathResource("static/graphitus/dashboard.html").getURL().text.replace('<script type="text/javascript" src="js/histogram.js"></script>',
+				"""<script type="text/javascript" src="js/histogram.js"></script>
+					<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/jquery.dataTables.min.js"></script>
+					<script type="text/javascript" src="../js/datatables-extensions.js"></script>
+					<script type="text/javascript" src="../js/requestTable.js"></script>
+					<link href="//cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/css/demo_table.css" rel="stylesheet">
+				""")
 	}
 
 	@RequestMapping(value = "/dashboards", method = GET)
 	def getDashboards() {
 //		def results = entityManager.createQuery("select name from Dashboard", String).resultList
-		def results = ['jvm.overview', 'jvm.memory', 'request', 'server']
+		def results = ['request', 'server', 'sql', 'jvm.overview', 'jvm.memory']
 		return [rows: results.collect { [id: it] }]
 	}
 

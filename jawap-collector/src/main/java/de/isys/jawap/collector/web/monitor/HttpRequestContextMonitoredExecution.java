@@ -113,7 +113,7 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 		executionContext.setStatusCode(status);
 		metricRegistry.counter(name("request.statuscode", Integer.toString(status))).inc();
 		if (status >= 400) {
-			executionContext.setFailed(true);
+			executionContext.setError(true);
 		}
 	}
 

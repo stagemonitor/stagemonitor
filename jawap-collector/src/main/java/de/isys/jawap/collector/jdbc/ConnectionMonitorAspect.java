@@ -1,13 +1,19 @@
 package de.isys.jawap.collector.jdbc;
 
 import de.isys.jawap.collector.core.ApplicationContext;
+import de.isys.jawap.collector.profiler.Profiler;
+import de.isys.jawap.entities.profiler.CallStackElement;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -19,53 +25,36 @@ public class ConnectionMonitorAspect {
 	public static final String TIME = ".time";
 	public static final String COUNT = ".count";
 	public ConcurrentMap<DataSource, String> dataSourceUrlMap = new ConcurrentHashMap<DataSource, String>();
-
-	@Pointcut(value = "within(javax.sql.DataSource+) && execution(* javax.sql.DataSource.getConnection(..)) && this(dataSource)", argNames = "dataSource")
-	public void dataSourceConnection(DataSource dataSource) {
+	                                                                                      // no proxies
+	@Pointcut(value = "call(java.sql.Connection javax.sql.DataSource.getConnection(..)) && !within(javax.sql.DataSource+)")
+	public void dataSourceConnection() {
 	}
 
-	@Pointcut(value = "dataSourceConnection(dataSource) && !beneathConnection()", argNames = "dataSource")
-	public void topLevelDataSourceConnection(DataSource dataSource) {
-	}
-
-	@Pointcut("dataSourceConnection(*) || directConnection(*)")
-	public void connection() {
-	}
-
-	@Pointcut("cflowbelow(connection())")
-	public void beneathConnection() {
-	}
-
-
-	@Around(value = "execution(* javax.sql.DataSource.getConnection(..))")
-	public Object aroundGetConnection(ProceedingJoinPoint pjp/*, DataSource dataSource*/) throws Throwable {
-
-		/*if (!dataSourceUrlMap.containsKey(dataSource)) {
-			final DatabaseMetaData metaData = dataSource.getConnection().getMetaData();
-			dataSourceUrlMap.put(dataSource, metaData.getURL() + "-" + metaData.getUserName());
-		}*/
-//		return aroundDirectConnectionConnection(pjp, /*dataSourceUrlMap.get(dataSource)*/"test");
-		System.out.println("test");
-		return pjp.proceed();
-	}
-
-	@Pointcut(value = "(within(java.sql.Driver+) && execution(* java.sql.Driver.connect(..))  || within(java.sql.DriverManager+) && execution(* java.sql.DriverManager.getConnection(..))) && args(url, ..)", argNames = "url")
-	public void directConnection(String url) {}
-
-
-	@Pointcut(value = "directConnection(url) && !beneathConnection()", argNames = "url")
-	public void topLevelDirectConnection(String url) {
-	}
-
-	@Around(value = "topLevelDirectConnection(url)", argNames = "pjp,url")
-	public Object aroundDirectConnectionConnection(ProceedingJoinPoint pjp, String url) throws Throwable {
-		long start = System.nanoTime();
+	@Around(value = "dataSourceConnection()")
+	public Object aroundGetConnection(ProceedingJoinPoint pjp) throws Throwable {
+		Connection connection = null;
 		try {
-			return pjp.proceed();
+			Profiler.start();
+			connection = (Connection) pjp.proceed();
+			return connection;
 		} finally {
-			long duration = System.nanoTime() - start;
-			ApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + COUNT).inc();
-			ApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + TIME).inc(TimeUnit.NANOSECONDS.toMillis(duration));
+			final CallStackElement callStackElement = Profiler.stop(pjp.getSignature().getDeclaringTypeName(), pjp.getSignature().toString());
+			if (connection != null && callStackElement != null) {
+				DataSource dataSource = ensureUrlExistsForDataSource(pjp, connection);
+				String url = dataSourceUrlMap.get(dataSource);
+				ApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + COUNT).inc();
+				final long durationMs = TimeUnit.NANOSECONDS.toMillis(callStackElement.getExecutionTime());
+				ApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + TIME).inc(durationMs);
+			}
 		}
+	}
+
+	private DataSource ensureUrlExistsForDataSource(ProceedingJoinPoint pjp, Connection connection) throws SQLException {
+		DataSource dataSource = (DataSource) pjp.getTarget();
+		if (!dataSourceUrlMap.containsKey(dataSource)) {
+			final DatabaseMetaData metaData = connection.getMetaData();
+			dataSourceUrlMap.put(dataSource, metaData.getURL() + "-" + metaData.getUserName());
+		}
+		return dataSource;
 	}
 }

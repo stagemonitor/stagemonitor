@@ -20,7 +20,6 @@ import java.util.regex.Pattern;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-// TODO save/load from properties file/Preferences/environment variable
 public class Configuration {
 
 	private final Log logger = LogFactory.getLog(getClass());
@@ -90,11 +89,11 @@ public class Configuration {
 		}
 	}
 
-	private String getString(final String key) {
+	public String getString(final String key) {
 		return getString(key, null);
 	}
 
-	private String getString(final String key, final String defaultValue) {
+	public String getString(final String key, final String defaultValue) {
 		return getAndCache(key, null, new PropertyLoader<String>() {
 			@Override
 			public String load() {
@@ -103,7 +102,7 @@ public class Configuration {
 		});
 	}
 
-	private List<String> getLowerStrings(final String key, final String defaultValue) {
+	public List<String> getLowerStrings(final String key, final String defaultValue) {
 		return getAndCache(key, null, new PropertyLoader<List<String>>() {
 			@Override
 			public List<String> load() {
@@ -120,7 +119,7 @@ public class Configuration {
 		});
 	}
 
-	private List<String> getStrings(final String key, final String defaultValue) {
+	public List<String> getStrings(final String key, final String defaultValue) {
 		return getAndCache(key, null, new PropertyLoader<List<String>>() {
 			@Override
 			public List<String> load() {
@@ -137,7 +136,7 @@ public class Configuration {
 		});
 	}
 
-	private boolean getBoolean(final String key, final boolean defaultValue) {
+	public boolean getBoolean(final String key, final boolean defaultValue) {
 		return getAndCache(key, defaultValue, new PropertyLoader<Boolean>() {
 			@Override
 			public Boolean load() {
@@ -146,11 +145,11 @@ public class Configuration {
 		});
 	}
 
-	private int getInt(String key, int defaultValue) {
+	public int getInt(String key, int defaultValue) {
 		return (int) getLong(key, defaultValue);
 	}
 
-	private long getLong(final String key, final long defaultValue) {
+	public long getLong(final String key, final long defaultValue) {
 		return getAndCache(key, defaultValue, new PropertyLoader<Long>() {
 			@Override
 			public Long load() {
@@ -165,7 +164,7 @@ public class Configuration {
 		});
 	}
 
-	private Map<Pattern, String> getPatternMap(final String key, final String defaultValue) {
+	public Map<Pattern, String> getPatternMap(final String key, final String defaultValue) {
 		return getAndCache(key, null, new PropertyLoader<Map<Pattern, String>>() {
 			@Override
 			public Map<Pattern, String> load() {

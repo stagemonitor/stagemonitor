@@ -50,10 +50,38 @@ function initializeDatatables() {
 	requestDataTable = $('#request-table').dataTable({
 		"bJQueryUI": true,
 		"sPaginationType": "full_numbers",
-		"bLengthChange": false
+		"bLengthChange": false,
+		"aoColumns": [{
+			"sTitle": "Request Name",
+			"mData": "name"
+		}, {
+			"sTitle": "Requests/ min",
+			"mData": "m1_rate"
+		}, {
+			"sTitle": "Errors",
+			"mData": "error"
+		}, {
+			"sTitle": "Max",
+			"mData": "max"
+		}, {
+			"sTitle": "Mean",
+			"mData": "mean"
+		}, {
+			"sTitle": "Min",
+			"mData": "min"
+		}, {
+			"sTitle": "p50",
+			"mData": "p50"
+		}, {
+			"sTitle": "p95",
+			"mData": "p95"
+		}, {
+			"sTitle": "Std. Dev.",
+			"mData": "stddev"
+		}]
 	});
 	$("#request-table").on('click', "tbody tr", function (e) {
-		var requestName = e.currentTarget.childNodes[0].innerHTML;
+		var requestName = requestDataTable.fnGetData(this).name;
 		setRequestName(requestName);
 		originalUpdateGraphs();
 		if (selectedRequestName == '*') {
@@ -67,11 +95,26 @@ function initializeDatatables() {
 	var stackDataTable = $('#stacktraces-table').dataTable({
 		"bJQueryUI": true,
 		"sPaginationType": "full_numbers",
-		"bLengthChange": false
+		"bLengthChange": false,
+		"aoColumns": [{
+			"sTitle": "Time",
+			"mData": "time"
+		}, {
+			"sTitle": "Date",
+			"mData": "date"
+		}, {
+			"sTitle": "URL",
+			"mData": "url"
+		}, {
+			"sTitle": "Status",
+			"mData": "status"
+		}, {
+			"sTitle": "Id",
+			"mData": "id"
+		}]
 	});
 	$("#stacktraces-table").on('click', "tbody tr", function (e) {
-		var id = e.currentTarget.childNodes[0].innerHTML;
-//		highlightSelectedRow(this, stackDataTable);
+		var id = stackDataTable.fnGetData(this).id;
 		loadCallStack(id)
 	});
 	reloadRequestTable();

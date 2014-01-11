@@ -3,7 +3,7 @@
 		{
 			"title": "Server Thread Pool",
 			"target": [
-				"groupByNode(jawap.${application}.${environment}.${host}.server.threadpool.*, 6, 'averageSeries')",
+				"groupByNode(jawap.${application}.${environment}.${host}.server.threadpool.*.*, 7, 'maxSeries')",
 			]
 		}
 	]

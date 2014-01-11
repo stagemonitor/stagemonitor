@@ -23,16 +23,15 @@ public class ExecutionContext {
 	@OneToOne(cascade = ALL)
 	private CallStackElement callStack;
 	private long executionTime;
+	private boolean error = false;
 
-	public boolean isFailed() {
-		return failed;
+	public boolean isError() {
+		return error;
 	}
 
-	public void setFailed(boolean failed) {
-		this.failed = failed;
+	public void setError(boolean failed) {
+		this.error = failed;
 	}
-
-	private boolean failed = false;
 
 	public Integer getId() {
 		return id;
