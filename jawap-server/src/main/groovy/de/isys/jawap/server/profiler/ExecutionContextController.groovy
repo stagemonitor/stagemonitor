@@ -69,10 +69,10 @@ public class ExecutionContextController {
 
 		List<HttpRequestContext> searchResult = entityManager.createQuery(query).getResultList()
 		def resultList =  searchResult.collect {
-			String executionTime = "${(it.callStack.executionTime / 1_000_000d).round(2)} ms"
+			def time = (it.callStack.executionTime / 1_000_000d).round(2)
 			String date = new Date(it.timestamp).format('yyyy/MM/dd hh:mm:ss')
 			String url = "$it.method $it.url$it.queryParams"
-			[id: it.id, time: executionTime, date: date, url: url, status: it.statusCode]
+			[id: it.id, time: time, date: date, url: url, status: it.statusCode]
 		}
 		return [ aaData: resultList]
 	}

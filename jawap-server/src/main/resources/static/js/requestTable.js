@@ -27,8 +27,8 @@ function loadAdditionalHtml() {
 	$.get("../requestTable.html", function (html) {
 		var $html = $(html);
 		$html.filter("#requstTable").insertBefore("#dashboards-view");
-		initializeDatatables();
 		$html.filter("#callStackLightbox").insertAfter("#hitogramLightbox");
+		initializeDatatables();
 	});
 }
 
@@ -46,76 +46,105 @@ function setRequestName(requestName) {
 	}
 }
 
+function findStackTraces(requestName) {
+	$("#call-stack").text("");
+	$('#stacktraces-table').dataTable().fnClearTable();
+	$('#stacktraces-table').dataTable().fnReloadAjax("/executionContexts/search" + getAppEnvHostQueryParams() + "&name=" + requestName);
+	$(".lightbox-content").css("width", $(window).width() - 100);
+	$(".lightbox-content").css("height", $(window).height() - 100);
+	$('#callStackLightbox').lightbox({
+		resizeToFit: false
+	});
+}
 function initializeDatatables() {
 	requestDataTable = $('#request-table').dataTable({
 		"bJQueryUI": true,
 		"sPaginationType": "full_numbers",
 		"bLengthChange": false,
-		"aoColumns": [{
-			"sTitle": "Request Name",
-			"mData": "name"
-		}, {
-			"sTitle": "Requests/ min",
-			"mData": "m1_rate"
-		}, {
-			"sTitle": "Errors",
-			"mData": "error"
-		}, {
-			"sTitle": "Max",
-			"mData": "max"
-		}, {
-			"sTitle": "Mean",
-			"mData": "mean"
-		}, {
-			"sTitle": "Min",
-			"mData": "min"
-		}, {
-			"sTitle": "p50",
-			"mData": "p50"
-		}, {
-			"sTitle": "p95",
-			"mData": "p95"
-		}, {
-			"sTitle": "Std. Dev.",
-			"mData": "stddev"
-		}]
+		"aoColumns": [
+			{
+				"sTitle": "Request Name",
+				"mData": "name"
+			},
+			{
+				"sTitle": "Requests/ min",
+				"mData": "m1_rate"
+			},
+			{
+				"sTitle": "Errors",
+				"mData": "error"
+			},
+			{
+				"sTitle": "Max",
+				"mData": "max"
+			},
+			{
+				"sTitle": "Mean",
+				"mData": "mean"
+			},
+			{
+				"sTitle": "Min",
+				"mData": "min"
+			},
+			{
+				"sTitle": "p50",
+				"mData": "p50"
+			},
+			{
+				"sTitle": "p95",
+				"mData": "p95"
+			},
+			{
+				"sTitle": "Std. Dev.",
+				"mData": "stddev"
+			},
+			{   "mData": null,
+				"fnRender": function (oObj) {
+					return '<button class="btn btn-small btn-primary" onclick="findStackTraces(\'' + oObj.aData.name + '\');">Call&nbsp;Stack</button>';
+				}
+			}
+		]
 	});
-	$("#request-table").on('click', "tbody tr", function (e) {
+	$("#request-table").on('click', "tbody tr :not(button)", function (e) {
+		// TODO not when clicked on button
 		var requestName = requestDataTable.fnGetData(this).name;
 		setRequestName(requestName);
 		originalUpdateGraphs();
-		if (selectedRequestName == '*') {
-			$('#stacktraces-table').dataTable().fnClearTable();
-		} else {
-			$('#stacktraces-table').dataTable().fnReloadAjax("/executionContexts/search" + getAppEnvHostQueryParams() + "&name=" + requestName);
-		}
-
 		highlightSelectedRow(this, requestDataTable);
 	});
 	var stackDataTable = $('#stacktraces-table').dataTable({
 		"bJQueryUI": true,
 		"sPaginationType": "full_numbers",
 		"bLengthChange": false,
-		"aoColumns": [{
-			"sTitle": "Time",
-			"mData": "time"
-		}, {
-			"sTitle": "Date",
-			"mData": "date"
-		}, {
-			"sTitle": "URL",
-			"mData": "url"
-		}, {
-			"sTitle": "Status",
-			"mData": "status"
-		}, {
-			"sTitle": "Id",
-			"mData": "id"
-		}]
+		"bFilter": false,
+		"aoColumns": [
+			{
+				"sTitle": "Date",
+				"mData": "date"
+			},
+			{
+				"sTitle": "Time (ms)",
+				"mData": "time"
+			},
+			{
+				"sTitle": "URL",
+				"mData": "url"
+			},
+			{
+				"sTitle": "Status",
+				"mData": "status"
+			}
+		]
 	});
 	$("#stacktraces-table").on('click', "tbody tr", function (e) {
 		var id = stackDataTable.fnGetData(this).id;
-		loadCallStack(id)
+		var onSelect = function () {
+			loadCallStack(id)
+		};
+		var onDeselect = function () {
+			$("#call-stack").text("");
+		};
+		highlightSelectedRow(this, stackDataTable, onSelect, onDeselect);
 	});
 	reloadRequestTable();
 }
@@ -123,12 +152,8 @@ function initializeDatatables() {
 function loadCallStack(id) {
 	var callStack = $("#call-stack");
 	callStack.text("");
-	callStack.css("height", $(window).height() - 250);
-	$(".lightbox-content").css("width", $(window).width() - 100);
-	$(".lightbox-content").css("height", $(window).height() - 100);
-	$('#callStackLightbox').lightbox({
-		resizeToFit: false
-	});
+	$("#stacktraces-lightbox-inner").css("height", $(window).height() - 250);
+	$("#stacktraces-lightbox-inner").css("max-height", $(window).height() - 250);
 	$.ajax({
 		url: "/executionContexts/" + id,
 		dataType: 'text',
@@ -138,11 +163,12 @@ function loadCallStack(id) {
 	});
 }
 
-function highlightSelectedRow(thiz, datatable) {
+function highlightSelectedRow(thiz, datatable, onSelect, onDeselect) {
 	if ($(thiz).hasClass('row_selected')) {
+		if (onDeselect != null) onDeselect();
 		$(thiz).removeClass('row_selected');
-	}
-	else {
+	} else {
+		if (onSelect != null) onSelect();
 		datatable.$('tr.row_selected').removeClass('row_selected');
 		$(thiz).addClass('row_selected');
 	}

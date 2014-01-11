@@ -1,51 +1,53 @@
 package de.isys.jawap.collector.web.monitor;
 
 import de.isys.jawap.collector.core.Configuration;
-import de.isys.jawap.collector.core.monitor.MonitoredExecution;
 import de.isys.jawap.collector.web.monitor.filter.StatusExposingServletResponse;
-import de.isys.jawap.entities.web.HttpRequestContext;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
 public class SpringHttpRequestContextMonitoredExecution extends HttpRequestContextMonitoredExecution {
 
 
-	private final RequestMappingHandlerMapping handlerMapping;
+	private final List<RequestMappingHandlerMapping> allHandlerMappings;
 
 	public SpringHttpRequestContextMonitoredExecution(HttpServletRequest httpServletRequest,
 													  StatusExposingServletResponse statusExposingResponse,
 													  FilterChain filterChain, Configuration configuration,
-													  RequestMappingHandlerMapping handlerMapping) {
+													  List<RequestMappingHandlerMapping> allHandlerMappings) {
 		super(httpServletRequest, statusExposingResponse, filterChain, configuration);
 
-		this.handlerMapping = handlerMapping;
+		this.allHandlerMappings = allHandlerMappings;
 	}
 
 	@Override
 	public String getRequestName() {
-		String name;
-		try {
-			HandlerExecutionChain handler = handlerMapping.getHandler(httpServletRequest);
-			if (handler.getHandler() instanceof HandlerMethod) {
-				HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
-				name = handlerMethod.getMethod().getName();
-				name = splitCamelCase(capitalize(name));
-			} else {
-				name = handler.getHandler().toString();
+		String name = null;
+		for (RequestMappingHandlerMapping handlerMapping : allHandlerMappings) {
+			try {
+				HandlerExecutionChain handler = handlerMapping.getHandler(httpServletRequest);
+				if (handler.getHandler() instanceof HandlerMethod) {
+					HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
+					name = handlerMethod.getMethod().getName();
+					name = splitCamelCase(capitalize(name));
+				} else {
+					name = handler.getHandler().toString();
+				}
+				if (name != null && !name.isEmpty()) {
+					break;
+				}
+			} catch (Exception e) {
+				// ignore, try next
 			}
-		} catch (Exception e) {
-			// Fallback in case of an Exception
-			return super.getRequestName();
+		}
+		if (name == null) {
+			name = super.getRequestName();
 		}
 		return name;
 	}

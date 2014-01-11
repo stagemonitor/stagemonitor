@@ -20,7 +20,7 @@ public class ExecutionContext {
 	@ManyToOne(fetch = EAGER, cascade = ALL)
 	private MeasurementSession measurementSession;
 	private String name;
-	@OneToOne(cascade = ALL)
+	@OneToOne(cascade = ALL) // TODO store as JSON or protobuf
 	private CallStackElement callStack;
 	private long executionTime;
 	private boolean error = false;
