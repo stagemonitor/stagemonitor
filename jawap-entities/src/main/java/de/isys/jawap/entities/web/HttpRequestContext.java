@@ -6,7 +6,6 @@ import de.isys.jawap.entities.profiler.ExecutionContext;
 
 import javax.persistence.Entity;
 import javax.persistence.Lob;
-import java.util.concurrent.TimeUnit;
 
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -72,7 +71,11 @@ public class HttpRequestContext extends ExecutionContext {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(10000);
+		return toString(false);
+	}
+
+	public String toString(boolean asciiArt) {
+		StringBuilder sb = new StringBuilder(3000);
 		//sb.append("id: ").append(getId()).append('\n');
 		sb.append(method).append(' ').append(getUrl());
 		if (getQueryParams() != null) {
@@ -86,7 +89,7 @@ public class HttpRequestContext extends ExecutionContext {
 			sb.append("Selftime (ms)    Total (ms)       Method signature\n");
 			sb.append("--------------------------------------------------\n");
 
-			getCallStack().logStats(getCallStack().getExecutionTime(), 0, sb);
+			sb.append(getCallStack().toString(asciiArt));
 		}
 		return sb.toString();
 	}

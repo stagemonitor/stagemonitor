@@ -100,23 +100,28 @@ function initializeDatatables() {
 			},
 			{   "mData": null,
 				"fnRender": function (oObj) {
-					return '<button class="btn btn-small btn-primary" onclick="findStackTraces(\'' + oObj.aData.name + '\');">Call&nbsp;Stack</button>';
+					return '<button class="btn-stacktrace btn btn-small btn-primary" onclick="findStackTraces(\'' + oObj.aData.name + '\');">Call&nbsp;Stack</button>';
 				}
 			}
 		]
 	});
-	$("#request-table").on('click', "tbody tr :not(button)", function (e) {
-		// TODO not when clicked on button
+	$("#request-table").on('click', "tbody tr", function (e) {
 		var requestName = requestDataTable.fnGetData(this).name;
 		setRequestName(requestName);
 		originalUpdateGraphs();
 		highlightSelectedRow(this, requestDataTable);
+	});
+	// no (de)selection should happen when clicking on button
+	// -> trigger highlightSelectedRow 2nd time so that (de)selection is undone
+	$("#request-table").on('click', ".btn-stacktrace", function (e) {
+		highlightSelectedRow(this.parentNode.parentNode, requestDataTable);
 	});
 	var stackDataTable = $('#stacktraces-table').dataTable({
 		"bJQueryUI": true,
 		"sPaginationType": "full_numbers",
 		"bLengthChange": false,
 		"bFilter": false,
+		"bInfo": false,
 		"aoColumns": [
 			{
 				"sTitle": "Date",
@@ -136,13 +141,14 @@ function initializeDatatables() {
 			}
 		]
 	});
+	$("#stacktraces-table-div .fg-toolbar").first().remove();
 	$("#stacktraces-table").on('click', "tbody tr", function (e) {
 		var id = stackDataTable.fnGetData(this).id;
 		var onSelect = function () {
 			loadCallStack(id)
 		};
 		var onDeselect = function () {
-			$("#call-stack").text("");
+			$("#call-stack").hide();
 		};
 		highlightSelectedRow(this, stackDataTable, onSelect, onDeselect);
 	});
@@ -151,7 +157,6 @@ function initializeDatatables() {
 
 function loadCallStack(id) {
 	var callStack = $("#call-stack");
-	callStack.text("");
 	$("#stacktraces-lightbox-inner").css("height", $(window).height() - 250);
 	$("#stacktraces-lightbox-inner").css("max-height", $(window).height() - 250);
 	$.ajax({
@@ -159,6 +164,7 @@ function loadCallStack(id) {
 		dataType: 'text',
 		success: function (data) {
 			callStack.text(data);
+			callStack.show()
 		}
 	});
 }

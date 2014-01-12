@@ -2,15 +2,13 @@ package de.isys.jawap.entities.profiler;
 
 import com.fasterxml.jackson.annotation.*;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static javax.persistence.CascadeType.ALL;
 
@@ -33,7 +31,7 @@ public class CallStackElement {
 	private long netExecutionTime;
 	@OneToMany(cascade = ALL, mappedBy = "parent")
 	@JsonManagedReference
-	private List<CallStackElement> children = new ArrayList<CallStackElement>();
+	private List<CallStackElement> children = new LinkedList<CallStackElement>();
 
 	public CallStackElement() {
 	}
@@ -106,10 +104,33 @@ public class CallStackElement {
 		this.parent = parent;
 	}
 
-	public void logStats(long totalExecutionTimeNs, int depth, StringBuilder log) {
+	@Override
+	public String toString() {
+		return toString(true);
+	}
+
+	public String toString(boolean asciiArt) {
+		final StringBuilder sb = new StringBuilder(3000);
+		logStats(getExecutionTime(), new Stack<String>(), sb, asciiArt);
+		return sb.toString();
+	}
+
+	public void logStats(long totalExecutionTimeNs, Stack<String> indentationStack, StringBuilder log,
+						 final boolean asciiArt) {
 		appendTimesPercentTable(totalExecutionTimeNs, log);
-		appendCallTree(depth, log);
-		preorderTraverseTreeAndComputeDepth(totalExecutionTimeNs, depth, log);
+		appendCallTree(indentationStack, log, asciiArt);
+
+		for (CallStackElement callStats : getChildren()) {
+			if (!isRoot()) {
+				if (isLastChild()) {
+					indentationStack.push("    ");
+				} else  {
+					indentationStack.push(asciiArt ? "│   ": "|   ");
+				}
+			}
+			callStats.logStats(totalExecutionTimeNs, indentationStack, log, asciiArt);
+			if (!isRoot()) indentationStack.pop();
+		}
 	}
 
 	private void appendTimesPercentTable(long totalExecutionTimeNs, StringBuilder sb) {
@@ -128,32 +149,40 @@ public class CallStackElement {
 		sb.append(String.format("%3.0f", time * 100 / (double) totalExecutionTimeNs)).append("%  ");
 	}
 
-	private void appendCallTree(int depth, StringBuilder sb) {
-		for (int i = 1; i <= depth; i++) {
-			if (i == depth) {
-				if (isLastChild() && getChildren().isEmpty()) {
-					sb.append("`-- ");
-				} else {
-					sb.append("+-- ");
-				}
+	private void appendCallTree(Stack<String> indentationStack, StringBuilder sb, final boolean asciiArt) {
+		for (String indentation : indentationStack) {
+			sb.append(indentation);
+		}
+		if (!isRoot()) {
+			if (isLastChild()) {
+				sb.append(asciiArt ? "└── " : "`--");
 			} else {
-				sb.append("|   ");
+				sb.append(asciiArt ? "├── ": "|--");
 			}
 		}
+
 		sb.append(getSignature()).append('\n');
 	}
 
 	private boolean isLastChild() {
-		final List<CallStackElement> parentChildren = getParent().getChildren();
+		final CallStackElement parent = getParent();
+		if (parent == null) return true;
+		final List<CallStackElement> parentChildren = parent.getChildren();
 		return parentChildren.get(parentChildren.size() - 1) == this;
 	}
 
-	private void preorderTraverseTreeAndComputeDepth(long totalExecutionTimeNs,
-													 int depth, StringBuilder log) {
-		for (CallStackElement callStats : getChildren()) {
-			depth++;
-			callStats.logStats(totalExecutionTimeNs, depth, log);
-			depth--;
-		}
+	private boolean isRoot() {
+		return parent == null;
+	}
+
+	public static void main(String[] args) {
+		CallStackElement c0 = new CallStackElement();
+		CallStackElement c1_1 = new CallStackElement(c0);
+		CallStackElement c2_1 = new CallStackElement(c1_1);
+		CallStackElement c2_2 = new CallStackElement(c1_1);
+		c1_1.setChildren(Arrays.asList(c2_1, c2_2));
+		CallStackElement c1_2 = new CallStackElement(c0);
+		c0.setChildren(Arrays.asList(c1_1, c1_2));
+		System.out.println(c0);
 	}
 }
