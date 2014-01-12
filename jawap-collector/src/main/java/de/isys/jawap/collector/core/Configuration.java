@@ -5,17 +5,13 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -43,30 +39,31 @@ public class Configuration {
 
 	public int 		getNoOfWarmupRequests() { 				return getInt(		"jawap.monitor.noOfWarmupRequests", 				0); }
 	public int 		getWarmupSeconds() { 					return getInt(		"jawap.monitor.warmupSeconds", 						0); }
-	public boolean 	isCollectRequestStats() { 				return getBoolean("jawap.monitor.collectRequestStats", 					true); }
+	public boolean 	isCollectRequestStats() { 				return getBoolean(	"jawap.monitor.collectRequestStats", 				true); }
 	public boolean 	isRequestTimerEnabled() { 				return getBoolean(	"jawap.monitor.requestTimerEnabled", 				true); }
 	public boolean	isCollectHeaders() {					return getBoolean(	"jawap.monitor.http.collectHeaders",				true);}
 	public List<String> getExcludedHeaders() {				return getLowerStrings("jawap.monitor.http.headers.excluded", 			"cookie");}
-	public List<String> getConfidentialQueryParams() {		return getStrings("jawap.monitor.http.queryparams.confidential", 		"pass, credit");}
-	public long 	getConsoleReportingInterval() { 		return getLong("jawap.reporting.interval.console", 						60); }
-	public boolean 	reportToJMX() { 						return getBoolean("jawap.reporting.jmx", 								true); }
-	public long 	getGraphiteReportingInterval() { 		return getLong("jawap.reporting.interval.graphite", 					60); }
-	public String 	getGraphiteHostName() { 				return getString("jawap.reporting.graphite.hostName"); }
-	public int 		getGraphitePort() { 					return getInt("jawap.reporting.graphite.port", 							2003); }
+	public List<Pattern> getConfidentialQueryParams() {		return getPatterns(	"jawap.monitor.http.queryparams.confidential.regex","(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*");}
+	public long 	getConsoleReportingInterval() { 		return getLong(		"jawap.reporting.interval.console", 				60); }
+	public boolean 	reportToJMX() { 						return getBoolean(	"jawap.reporting.jmx", 								true); }
+	public long 	getGraphiteReportingInterval() { 		return getLong(		"jawap.reporting.interval.graphite", 				60); }
+	public String 	getGraphiteHostName() { 				return getString(	"jawap.reporting.graphite.hostName"); }
+	public int 		getGraphitePort() { 					return getInt(		"jawap.reporting.graphite.port", 					2003); }
 	public long 	getMinExecutionTimeNanos() { 			return getLong(		"jawap.profiler.minExecutionTimeNanos", 			0L); }
-	public int 		getCallStackEveryXRequestsToGroup() { 	return getInt("jawap.profiler.callStackEveryXRequestsToGroup", 			-1); }
-	public boolean 	isLogCallStacks() { 					return getBoolean("jawap.profiler.logCallStacks", 						true); }
-	public boolean 	isReportCallStacksToServer() { 			return getBoolean("jawap.profiler.reportCallStacksToServer", 			false); }
-	public String 	getApplicationName() { 					return getString("jawap.applicationName"); }
-	public String	getInstanceName() { 					return getString("jawap.instanceName"); }
-	public String 	getServerUrl() { 						return getString("jawap.serverUrl"); }
+	public int 		getCallStackEveryXRequestsToGroup() { 	return getInt(		"jawap.profiler.callStackEveryXRequestsToGroup", 	-1); }
+	public boolean 	isLogCallStacks() { 					return getBoolean(	"jawap.profiler.logCallStacks", 					true); }
+	public boolean 	isReportCallStacksToServer() { 			return getBoolean(	"jawap.profiler.reportCallStacksToServer", 			false); }
+	public String 	getApplicationName() { 					return getString(	"jawap.applicationName"); }
+	public String	getInstanceName() { 					return getString(	"jawap.instanceName"); }
+	public String 	getServerUrl() { 						return getString(	"jawap.serverUrl"); }
+	public List<String> getExcludedMetricsPatterns() {		return getStrings("jawap.metrics.excluded.pattern", "");}
 	public Map<Pattern, String> getGroupUrls() {			return getPatternMap("jawap.groupUrls",
-						"/\\d+: /{id}," +
-						"(.*).js: *.js," +
-						"(.*).css: *.css," +
-						"(.*).js: *.jpg," +
+						"/\\d+:     /{id}," +
+						"(.*).js:   *.js," +
+						"(.*).css:  *.css," +
+						"(.*).js:   *.jpg," +
 						"(.*).jpeg: *.jpeg," +
-						"(.*).png: *.png");
+						"(.*).png:  *.png");
 	}
 
 	private void loadProperties() {
@@ -119,6 +116,18 @@ public class Configuration {
 		});
 	}
 
+	public List<Pattern> getPatterns(final String key, final String defaultValue) {
+		final List<String> strings = getStrings(key, defaultValue);
+		List<Pattern> patterns = new ArrayList<Pattern>(strings.size());
+		for (String patternString : strings) {
+			try {
+				patterns.add(Pattern.compile(patternString));
+			} catch (PatternSyntaxException e) {
+				logger.error("Error while compiling pattern " + patternString, e);
+			}
+		}
+		return patterns;
+	}
 	public List<String> getStrings(final String key, final String defaultValue) {
 		return getAndCache(key, null, new PropertyLoader<List<String>>() {
 			@Override
@@ -180,7 +189,7 @@ public class Configuration {
 					}
 					return pattenGroupMap;
 				} catch (RuntimeException e) {
-					logger.error("Error while parsing groupUrls. Expected format <regex>: <name>[, <regex>: <name>]. " +
+					logger.error("Error while parsing pattern map. Expected format <regex>: <name>[, <regex>: <name>]. " +
 							"Actual value: " + patternString, e);
 					return Collections.emptyMap();
 				}

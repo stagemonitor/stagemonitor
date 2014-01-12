@@ -11,7 +11,11 @@ $(document).ready(function () {
 	}, function () {
 		// Afterwards, delete requestName from parameters so that it won't be rendered as a dropdown
 		delete config.parameters.requestName;
-	})
+	});
+
+//	applyRegexToName = interceptFunction(applyRegexToName, function(args) {
+//		args[1] = decodeForGraphite(args[1]);
+//	});
 });
 
 function initializeRequestTable() {
@@ -230,13 +234,16 @@ function getAppEnvHostQueryParams() {
 
 function getDecodedParameter(paramGroupName) {
 	var selectedParamText = $('#' + paramGroupName + " option:selected").text();
-	return config.parameters[paramGroupName][selectedParamText][paramGroupName]
+	return encodeURIComponent(config.parameters[paramGroupName][selectedParamText][paramGroupName])
 }
 
 /* UTILS */
 
 function encodeForGraphite(requestName) {
-	return requestName.replaceAll(".", ":").replaceAll(" ", "_").replaceAll("/", "|");
+	return encodeURIComponent(requestName.replaceAll(".", ":dot:"));
+}
+function decodeForGraphite(requestName) {
+	return decodeURIComponent(requestName).replaceAll(":dot:", ".");
 }
 
 String.prototype.replaceAll = function (search, replacement) {
@@ -246,13 +253,13 @@ String.prototype.replaceAll = function (search, replacement) {
 function interceptFunction(funktion, before, after) {
 	return function () {
 		if (before != null) {
-			before();
+			before(arguments);
 		}
 		try {
 			return funktion.apply(this, arguments);
 		} finally {
 			if (after != null) {
-				after();
+				after(arguments);
 			}
 		}
 	};

@@ -1,8 +1,6 @@
 package de.isys.jawap.collector.core;
 
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.*;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import de.isys.jawap.collector.core.metrics.SortedTableLogReporter;
@@ -11,6 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.net.InetSocketAddress;
+import java.net.URLEncoder;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +24,8 @@ public class JawapApplicationContext {
 	public static void startMonitoring(MeasurementSession measurementSession) {
 		if (measurementSession.isInitialized()) {
 			initializePlugins();
+			applyExcludePatterns();
+
 			reportToGraphite(configuration.getGraphiteReportingInterval(), measurementSession);
 			reportToConsole(configuration.getConsoleReportingInterval());
 			if (configuration.reportToJMX()) {
@@ -32,6 +33,17 @@ public class JawapApplicationContext {
 			}
 		} else {
 			logger.info("Measurement Session is not initialized " + measurementSession);
+		}
+	}
+
+	private static void applyExcludePatterns() {
+		for (final String excludePattern : configuration.getExcludedMetricsPatterns()) {
+			getMetricRegistry().removeMatching(new MetricFilter() {
+				@Override
+				public boolean matches(String name, Metric metric) {
+					return name.matches(excludePattern);
+				}
+			});
 		}
 	}
 

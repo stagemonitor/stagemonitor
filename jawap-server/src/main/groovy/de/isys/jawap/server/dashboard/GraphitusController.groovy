@@ -1,5 +1,6 @@
 package de.isys.jawap.server.dashboard
 
+import de.isys.jawap.util.GraphiteEncoder
 import org.springframework.core.io.ClassPathResource
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -9,6 +10,7 @@ import javax.annotation.Resource
 import javax.persistence.EntityManager
 import javax.persistence.PersistenceContext
 
+import static de.isys.jawap.util.GraphiteEncoder.encodeForGraphite
 import static org.springframework.web.bind.annotation.RequestMethod.GET
 
 @RestController

@@ -80,9 +80,9 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 	}
 
 	private boolean isParamExcluded(String queryParameter) {
-		final List<String> excludedHeaders = configuration.getConfidentialQueryParams();
-		for (String excludedHeader : excludedHeaders) {
-			if (queryParameter.toLowerCase().contains(excludedHeader.toLowerCase())) {
+		final List<Pattern> confidentialQueryParams = configuration.getConfidentialQueryParams();
+		for (Pattern excludedParam : confidentialQueryParams) {
+			if (excludedParam.matcher(queryParameter).matches()) {
 				return true;
 			}
 		}

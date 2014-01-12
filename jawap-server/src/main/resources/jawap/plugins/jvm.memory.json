@@ -3,17 +3,17 @@
 		{
 			"title": "Heap",
 			"target": [
-				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.max), 7)",
-				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.committed), 7)",
-				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.used), 7)"
+				"alias(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.max), 'max')",
+				"alias(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.committed), 'committed')",
+				"alias(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.heap.used), 'used')"
 			]
 		},
 		{
 			"title": "Non-Heap",
 			"target": [
-				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.max), 7)",
-				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.committed), 7)",
-				"aliasByNode(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.used), 7)"
+				"alias(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.max), 'max')",
+				"alias(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.committed), 'committed')",
+				"alias(averageSeries(jawap.${application}.${environment}.${host}.jvm.memory.non-heap.used), 'used')"
 			]
 		},
 		{

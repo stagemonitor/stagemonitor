@@ -42,7 +42,7 @@ class GraphiteClient {
 			[name: requestName] + defaultMetrics + aggregatedMetrics
 		}.findAll { it.mean != null }.each {
 			if (it.error != null && it.m1_rate)
-				it.error = MessageFormat.format("{0,number,#.##%}", it.error / it.m1_rate)
+				it.error = MessageFormat.format("{0,number,#.##%}", Math.min(1d, it.error / it.m1_rate))
 		}
 	}
 
