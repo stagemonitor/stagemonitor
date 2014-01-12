@@ -1,6 +1,6 @@
 package de.isys.jawap.collector.jdbc;
 
-import de.isys.jawap.collector.core.ApplicationContext;
+import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.profiler.Profiler;
 import de.isys.jawap.entities.profiler.CallStackElement;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -40,9 +40,9 @@ public class ConnectionMonitorAspect {
 			if (connection != null && callStackElement != null) {
 				DataSource dataSource = ensureUrlExistsForDataSource(pjp, connection);
 				String url = dataSourceUrlMap.get(dataSource);
-				ApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + COUNT).inc();
+				JawapApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + COUNT).inc();
 				final long durationMs = TimeUnit.NANOSECONDS.toMillis(callStackElement.getExecutionTime());
-				ApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + TIME).inc(durationMs);
+				JawapApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + TIME).inc(durationMs);
 			}
 		}
 	}

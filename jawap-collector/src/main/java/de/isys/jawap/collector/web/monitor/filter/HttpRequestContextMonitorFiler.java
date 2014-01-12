@@ -1,6 +1,6 @@
 package de.isys.jawap.collector.web.monitor.filter;
 
-import de.isys.jawap.collector.core.ApplicationContext;
+import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.core.monitor.ExecutionContextMonitor;
 import de.isys.jawap.collector.web.monitor.HttpRequestContextMonitoredExecution;
@@ -19,7 +19,7 @@ public class HttpRequestContextMonitorFiler extends AbstractExclusionFilter impl
 
 	private final Log logger = LogFactory.getLog(getClass());
 
-	protected Configuration configuration = ApplicationContext.getConfiguration();
+	protected Configuration configuration = JawapApplicationContext.getConfiguration();
 	protected ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
 
 	@Override

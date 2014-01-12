@@ -1,12 +1,12 @@
 package de.isys.jawap.collector.profiler;
 
-import de.isys.jawap.collector.core.ApplicationContext;
+import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.entities.profiler.CallStackElement;
 import de.isys.jawap.entities.profiler.ExecutionContext;
 
 public class Profiler {
 
-	public static final long MIN_EXECUTION_TIME_NANOS = ApplicationContext.getConfiguration().getMinExecutionTimeNanos();
+	public static final long MIN_EXECUTION_TIME_NANOS = JawapApplicationContext.getConfiguration().getMinExecutionTimeNanos();
 
 	private static final ThreadLocal<CallStackElement> methodCallParent = new ThreadLocal<CallStackElement>();
 

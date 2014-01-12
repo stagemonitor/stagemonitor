@@ -2,7 +2,7 @@ package de.isys.jawap.collector.core.monitor;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import de.isys.jawap.collector.core.ApplicationContext;
+import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.core.rest.MeasurementSessionRestClient;
 import de.isys.jawap.collector.profiler.ExecutionContextLogger;
@@ -45,14 +45,14 @@ public class ExecutionContextMonitor {
 		measurementSessionRestClient = new MeasurementSessionRestClient(configuration.getServerUrl());
 		httpRequestContextRestClient = new HttpRequestContextRestClient();
 		warmupRequests = configuration.getNoOfWarmupRequests();
-		this.metricRegistry = ApplicationContext.getMetricRegistry();
+		this.metricRegistry = JawapApplicationContext.getMetricRegistry();
 		this.configuration = configuration;
 		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getWarmupSeconds()));
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
 		this.measurementSession = measurementSession;
-		ApplicationContext.startMonitoring(measurementSession);
+		JawapApplicationContext.startMonitoring(measurementSession);
 		if (measurementSession.isInitialized()) {
 			measurementSessionLocation = measurementSessionRestClient.saveMeasurementSession(measurementSession);
 		}
@@ -62,7 +62,7 @@ public class ExecutionContextMonitor {
 		// in case the instance name is not set by configuration
 		if (measurementSession.getInstanceName() == null && noOfRequests.get() == 0) {
 			measurementSession.setInstanceName(monitoredExecution.getInstanceName());
-			ApplicationContext.startMonitoring(measurementSession);
+			JawapApplicationContext.startMonitoring(measurementSession);
 			measurementSessionLocation = measurementSessionRestClient.saveMeasurementSession(measurementSession);
 		}
 

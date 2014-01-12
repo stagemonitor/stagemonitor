@@ -1,7 +1,6 @@
 package de.isys.jawap.collector.core;
 
 import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.graphite.Graphite;
@@ -18,9 +17,9 @@ import java.util.concurrent.TimeUnit;
 import static com.codahale.metrics.MetricRegistry.name;
 import static de.isys.jawap.util.GraphiteEncoder.encodeForGraphite;
 
-public class ApplicationContext {
+public class JawapApplicationContext {
 
-	private final static Log logger = LogFactory.getLog(ApplicationContext.class);
+	private final static Log logger = LogFactory.getLog(JawapApplicationContext.class);
 	private static Configuration configuration = new Configuration();
 
 	public static void startMonitoring(MeasurementSession measurementSession) {
