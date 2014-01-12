@@ -17,15 +17,15 @@
 			]
 		},
 		{
-			"title": "Memory Pools",
-			"target": [
-				"groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.pools.*.usage, 7, 'averageSeries')",
-			]
-		},
-		{
 			"title": "GC",
 			"target": [
 				"groupByNode(nonNegativeDerivative(jawap.${application}.${environment}.${host}.jvm.gc.*.time), 6, 'sum')",
+			]
+		},
+		{
+			"title": "Memory Pools",
+			"target": [
+				"groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.pools.*.usage, 7, 'averageSeries')",
 			]
 		}
 	]
