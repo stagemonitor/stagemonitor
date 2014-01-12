@@ -33,6 +33,6 @@ public abstract class PerformanceMonitorAspect {
 
 	@After("applicationMethodsToProfile() && isProfilingActive()")
 	public void stopProfiling(JoinPoint.StaticPart joinPoint) {
-		Profiler.stop(joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().toString());
+		Profiler.stop(joinPoint.getSignature().toString());
 	}
 }

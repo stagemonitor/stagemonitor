@@ -40,7 +40,7 @@ public class Profiler {
 		}
 	}
 
-	public static CallStackElement stop(String targetClass, String signature) {
+	public static CallStackElement stop(String signature) {
 		CallStackElement currentStats = methodCallParent.get();
 		if (currentStats != null) {
 			long executionTime = System.nanoTime() - currentStats.start;
@@ -48,7 +48,6 @@ public class Profiler {
 			final CallStackElement parent = currentStats.getParent();
 			if (executionTime >= MIN_EXECUTION_TIME_NANOS) {
 				currentStats.setSignature(signature);
-				currentStats.setClassName(targetClass);
 				currentStats.setExecutionTime(executionTime);
 				currentStats.addToNetExecutionTime(executionTime);
 			} else if (parent != null) {

@@ -2,12 +2,7 @@ package de.isys.jawap.entities.profiler;
 
 import com.fasterxml.jackson.annotation.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.util.*;
 
 import static javax.persistence.CascadeType.ALL;
@@ -20,16 +15,24 @@ public class CallStackElement {
 	@Id
 	@GeneratedValue
 	private Integer id;
+	@Lob
+	@JsonIgnore
+	private String callStackJson;
+
 	@Transient
 	public transient final long start = System.nanoTime();
-	@ManyToOne(cascade = ALL)
+	@Transient
 	@JsonBackReference
 	private CallStackElement parent;
+	@Transient
 	private String className;
+	@Transient
 	private String signature;
+	@Transient
 	private long executionTime;
+	@Transient
 	private long netExecutionTime;
-	@OneToMany(cascade = ALL, mappedBy = "parent")
+	@Transient
 	@JsonManagedReference
 	private List<CallStackElement> children = new LinkedList<CallStackElement>();
 
@@ -38,14 +41,6 @@ public class CallStackElement {
 
 	public CallStackElement(CallStackElement parent) {
 		this.parent = parent;
-	}
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
 	}
 
 	public long getExecutionTime() {
@@ -104,6 +99,14 @@ public class CallStackElement {
 		this.parent = parent;
 	}
 
+	public String getCallStackJson() {
+		return callStackJson;
+	}
+
+	public void setCallStackJson(String callStackJson) {
+		this.callStackJson = callStackJson;
+	}
+
 	@Override
 	public String toString() {
 		return toString(true);
@@ -155,9 +158,9 @@ public class CallStackElement {
 		}
 		if (!isRoot()) {
 			if (isLastChild()) {
-				sb.append(asciiArt ? "└── " : "`--");
+				sb.append(asciiArt ? "└── " : "`-- ");
 			} else {
-				sb.append(asciiArt ? "├── ": "|--");
+				sb.append(asciiArt ? "├── ": "|-- ");
 			}
 		}
 
@@ -184,5 +187,13 @@ public class CallStackElement {
 		CallStackElement c1_2 = new CallStackElement(c0);
 		c0.setChildren(Arrays.asList(c1_1, c1_2));
 		System.out.println(c0);
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
 	}
 }

@@ -1,15 +1,16 @@
 package de.isys.jawap.entities.profiler;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.isys.jawap.entities.MeasurementSession;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
+
+import java.io.IOException;
 
 import static javax.persistence.CascadeType.ALL;
-import static javax.persistence.FetchType.EAGER;
+import static javax.persistence.FetchType.LAZY;
 
 @MappedSuperclass
 public class ExecutionContext {
@@ -17,10 +18,11 @@ public class ExecutionContext {
 	@Id
 	@GeneratedValue
 	private Integer id;
-	@ManyToOne(fetch = EAGER, cascade = ALL)
+	@ManyToOne(fetch = LAZY, cascade = ALL)
+	@JsonIgnore
 	private MeasurementSession measurementSession;
 	private String name;
-	@OneToOne(cascade = ALL) // TODO store as JSON or protobuf
+	@OneToOne(fetch = LAZY, cascade = ALL)
 	private CallStackElement callStack;
 	private long executionTime;
 	private boolean error = false;
@@ -71,5 +73,25 @@ public class ExecutionContext {
 
 	public void setExecutionTime(long executionTime) {
 		this.executionTime = executionTime;
+	}
+
+	public void convertCallStackToJson() {
+		if (callStack != null) {
+			try {
+				callStack.setCallStackJson(new ObjectMapper().writeValueAsString(callStack));
+			} catch (JsonProcessingException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	public void convertJsonToCallStack() {
+		if (callStack != null) {
+			try {
+				callStack = new ObjectMapper().readValue(callStack.getCallStackJson(), CallStackElement.class);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 }

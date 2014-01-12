@@ -96,7 +96,7 @@ public class ExecutionContextMonitor {
 					monitoredExecution.onPostExecute(requestContext);
 
 					if (requestContext.getCallStack() != null) {
-						Profiler.stop(null, "total");
+						Profiler.stop("total");
 						reportCallStack(requestContext);
 					}
 					if (timer != null) {

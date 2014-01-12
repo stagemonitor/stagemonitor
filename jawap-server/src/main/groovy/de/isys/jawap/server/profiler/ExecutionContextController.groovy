@@ -31,17 +31,19 @@ public class ExecutionContextController {
 
 	@RequestMapping(value = "/executionContexts", method = GET)
 	public List<HttpRequestContext> getAllHttpRequestContexts() {
-		return httpRequestContextRepository.findAll();
+		return httpRequestContextRepository.findAll().each {it.callStack = null};
 	}
 
 	@RequestMapping(value = "/executionContexts/{id}", method = GET, produces = MediaType.TEXT_PLAIN_VALUE)
 	public String getHttpRequestContextsPlainText(@PathVariable Integer id) {
-		httpRequestContextRepository.findOne(id).toString()
+		getHttpRequestContexts(id).toString()
 	}
 
 	@RequestMapping(value = "/executionContexts/{id}", method = GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public HttpRequestContext getHttpRequestContexts(@PathVariable Integer id) {
-		httpRequestContextRepository.findOne(id)
+		HttpRequestContext requestContext = httpRequestContextRepository.findOne(id)
+		requestContext.convertJsonToCallStack()
+		return requestContext
 	}
 
 	@RequestMapping(value = "/executionContexts/search", method = GET)
@@ -69,7 +71,7 @@ public class ExecutionContextController {
 
 		List<HttpRequestContext> searchResult = entityManager.createQuery(query).getResultList()
 		def resultList =  searchResult.collect {
-			def time = (it.callStack.executionTime / 1_000_000d).round(2)
+			def time = (it.executionTime / 1_000_000d).round(2)
 			String date = new Date(it.timestamp).format('yyyy/MM/dd hh:mm:ss')
 			String url = "$it.method $it.url$it.queryParams"
 			[id: it.id, time: time, date: date, url: url, status: it.statusCode]
@@ -85,6 +87,7 @@ public class ExecutionContextController {
 	@RequestMapping(value = "/measurementSessions/{measurementSessionId}/executionContexts", method = POST)
 	public void saveExecutionContext(@PathVariable Integer measurementSessionId, @RequestBody HttpRequestContext context) {
 		context.setMeasurementSession(entityManager.find(MeasurementSession, measurementSessionId))
-		httpRequestContextRepository.save(context);
+		context.convertCallStackToJson()
+		httpRequestContextRepository.save(context)
 	}
 }

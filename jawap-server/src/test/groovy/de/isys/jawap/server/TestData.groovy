@@ -35,7 +35,6 @@ class TestData {
 
 		CallStackElement callStack = new CallStackElement(null);
 		httpRequestContext.setCallStack(callStack);
-		callStack.setClassName(name);
 		return httpRequestContextRepository.save(httpRequestContext);
 	}
 }
