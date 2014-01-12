@@ -52,6 +52,7 @@ function setRequestName(requestName) {
 
 function findStackTraces(requestName) {
 	$("#call-stack").text("");
+	// TODO stacktrace -> call stack
 	$('#stacktraces-table').dataTable().fnClearTable();
 	$('#stacktraces-table').dataTable().fnReloadAjax("/executionContexts/search" + getAppEnvHostQueryParams() + "&name=" + requestName);
 	$(".lightbox-content").css("width", $(window).width() - 100);

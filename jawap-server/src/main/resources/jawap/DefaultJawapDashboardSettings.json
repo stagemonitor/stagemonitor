@@ -29,6 +29,7 @@
 			"index": 3,
 			"showAll": true
 		},
+		// TODO no groupByNode?
 		"group": {
 			"application": {
 				"group": 1

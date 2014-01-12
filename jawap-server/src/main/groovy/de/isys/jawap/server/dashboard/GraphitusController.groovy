@@ -42,6 +42,7 @@ class GraphitusController {
 				""")
 	}
 
+	// TODO strore dashboards in db
 	@RequestMapping(value = "/dashboards", method = GET)
 	def getDashboards() {
 //		def results = entityManager.createQuery("select name from Dashboard", String).resultList
@@ -61,6 +62,7 @@ class GraphitusController {
 //		dashboardRepository.findOne(id).content.json
 	}
 
+	// TODO environment -> instance
 	@RequestMapping("/requestTable")
 	def getRequestTable(@RequestParam application, @RequestParam environment, @RequestParam host,
 						@RequestParam(required = false) from, @RequestParam(required = false) until) {
