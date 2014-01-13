@@ -3,7 +3,12 @@
 		{
 			"title": "Server Thread Pool",
 			"target": [
-				"groupByNode(jawap.${application}.${environment}.${host}.server.threadpool.*.*, 7, 'maxSeries')",
+				"groupByNode(jawap.${application}.${environment}.${host}.server.threadpool.*.*, 7, 'maxSeries')"
+			]
+		}, {
+			"title": "Number of Sessions",
+			"target": [
+				"sumSeries(jawap.${application}.${environment}.${host}.web.sessions.count)"
 			]
 		}
 	]

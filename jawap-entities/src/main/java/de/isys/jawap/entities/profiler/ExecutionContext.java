@@ -13,6 +13,7 @@ import static javax.persistence.CascadeType.ALL;
 import static javax.persistence.FetchType.LAZY;
 
 @MappedSuperclass
+// TODO Name vereinheitlichen
 public class ExecutionContext {
 
 	@Id
