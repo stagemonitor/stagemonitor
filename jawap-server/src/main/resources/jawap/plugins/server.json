@@ -8,8 +8,9 @@
 		}, {
 			"title": "Number of Sessions",
 			"target": [
-				"sumSeries(jawap.${application}.${environment}.${host}.web.sessions.count)"
-			]
+				"jawap.${application}.${environment}.${host}.web.sessions.count"
+			],
+			"params": "areaMode=stacked"
 		}
 	]
 }
