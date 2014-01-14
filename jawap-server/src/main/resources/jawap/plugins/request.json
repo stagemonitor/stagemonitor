@@ -4,9 +4,9 @@
 		{
 			"title": "Response Time (ms)",
 			"target": [
-				"dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.p95))",
-				"averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.mean)",
-				"dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.min))"
+				"alias(dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.p95)), 'p95')",
+				"alias(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.mean), 'avg')",
+				"alias(dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.min)), 'min')"
 			]
 		},
 		{
