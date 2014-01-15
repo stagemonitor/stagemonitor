@@ -49,7 +49,7 @@ public class Configuration {
 	public long 	getGraphiteReportingInterval() { 		return getLong(		"jawap.reporting.interval.graphite", 				60); }
 	public String 	getGraphiteHostName() { 				return getString(	"jawap.reporting.graphite.hostName"); }
 	public int 		getGraphitePort() { 					return getInt(		"jawap.reporting.graphite.port", 					2003); }
-	public long 	getMinExecutionTimeNanos() { 			return getLong(		"jawap.profiler.minExecutionTimeNanos", 			0L); }
+	public long 	getMinExecutionTimeNanos() { 			return getLong(		"jawap.profiler.minExecutionTimeNanos", 			100000L); }
 	public int 		getCallStackEveryXRequestsToGroup() { 	return getInt(		"jawap.profiler.callStackEveryXRequestsToGroup", 	-1); }
 	public boolean 	isLogCallStacks() { 					return getBoolean(	"jawap.profiler.logCallStacks", 					true); }
 	public boolean 	isReportCallStacksToServer() { 			return getBoolean(	"jawap.profiler.reportCallStacksToServer", 			false); }

@@ -2,7 +2,6 @@ apply plugin: 'groovy'
 apply plugin: 'war'
 apply plugin: 'application'
 apply plugin: 'tomcat'
-apply plugin: 'jetty'
 apply plugin: 'idea'
 apply plugin: 'spring-boot'
 
@@ -16,7 +15,6 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'org.gradle.api.plugins:gradle-tomcat-plugin:1.0'
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:0.5.0.M7")
 	}
 }
@@ -27,12 +25,6 @@ repositories {
 
 dependencies {
 	def springBootVersion = '0.5.0.M7'
-	def tomcatVersion = '7.0.11'
-	tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
-			"org.apache.tomcat.embed:tomcat-embed-logging-juli:${tomcatVersion}"
-	tomcat("org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}") {
-		exclude group: 'org.eclipse.jdt.core.compiler', module: 'ecj'
-	}
 
 	compile project(":jawap-entities")
 	compile "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
@@ -48,9 +40,4 @@ dependencies {
 	}
 
 	testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
-}
-
-tomcatRun {
-	httpPort = 8181
-	ajpPort = 8008
 }
