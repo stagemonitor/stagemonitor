@@ -50,11 +50,10 @@ function setRequestName(requestName) {
 	}
 }
 
-function findStackTraces(requestName) {
+function findCallStacks(requestName) {
 	$("#call-stack").text("");
-	// TODO stacktrace -> call stack
-	$('#stacktraces-table').dataTable().fnClearTable();
-	$('#stacktraces-table').dataTable().fnReloadAjax("/executionContexts/search" + getAppEnvHostQueryParams() + "&name=" + requestName);
+	$('#callstacks-table').dataTable().fnClearTable();
+	$('#callstacks-table').dataTable().fnReloadAjax("/executionContexts/search" + getAppEnvHostQueryParams() + "&name=" + requestName);
 	$(".lightbox-content").css("width", $(window).width() - 100);
 	$(".lightbox-content").css("height", $(window).height() - 100);
 	$('#callStackLightbox').lightbox({
@@ -105,7 +104,7 @@ function initializeDatatables() {
 			},
 			{   "mData": null,
 				"fnRender": function (oObj) {
-					return '<button class="btn-stacktrace btn btn-small btn-primary" onclick="findStackTraces(\'' + oObj.aData.name + '\');">Call&nbsp;Stack</button>';
+					return '<button class="btn-callstack btn btn-small btn-primary" onclick="findCallStacks(\'' + oObj.aData.name + '\');">Call&nbsp;Stack</button>';
 				}
 			}
 		]
@@ -118,10 +117,10 @@ function initializeDatatables() {
 	});
 	// no (de)selection should happen when clicking on button
 	// -> trigger highlightSelectedRow 2nd time so that (de)selection is undone
-	$("#request-table").on('click', ".btn-stacktrace", function (e) {
+	$("#request-table").on('click', ".btn-callstack", function (e) {
 		highlightSelectedRow(this.parentNode.parentNode, requestDataTable);
 	});
-	var stackDataTable = $('#stacktraces-table').dataTable({
+	var stackDataTable = $('#callstacks-table').dataTable({
 		"bJQueryUI": true,
 		"sPaginationType": "full_numbers",
 		"bLengthChange": false,
@@ -146,8 +145,8 @@ function initializeDatatables() {
 			}
 		]
 	});
-	$("#stacktraces-table-div .fg-toolbar").first().remove();
-	$("#stacktraces-table").on('click', "tbody tr", function (e) {
+	$("#callstacks-table-div .fg-toolbar").first().remove();
+	$("#callstacks-table").on('click', "tbody tr", function (e) {
 		var id = stackDataTable.fnGetData(this).id;
 		var onSelect = function () {
 			loadCallStack(id)
@@ -162,8 +161,8 @@ function initializeDatatables() {
 
 function loadCallStack(id) {
 	var callStack = $("#call-stack");
-	$("#stacktraces-lightbox-inner").css("height", $(window).height() - 250);
-	$("#stacktraces-lightbox-inner").css("max-height", $(window).height() - 250);
+	$("#callstacks-lightbox-inner").css("height", $(window).height() - 250);
+	$("#callstacks-lightbox-inner").css("max-height", $(window).height() - 250);
 	$.ajax({
 		url: "/executionContexts/" + id,
 		dataType: 'text',
