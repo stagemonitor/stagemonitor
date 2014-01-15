@@ -26,8 +26,8 @@ class GraphiteClient {
 		this.graphiteUrl = graphiteUrl
 	}
 
-	List<List> getRequestTable(String application, environment, host, String from, String until) {
-		def targetPrefix = "jawap.${application}.${environment}.${host}.request"
+	List<List> getRequestTable(String application, instance, host, String from, String until) {
+		def targetPrefix = "jawap.${application}.${instance}.${host}.request"
 		List<String> rawLines = new HTTPBuilder(graphiteUrl).get(
 				path: "/render",
 				query: [target: ["$targetPrefix.*.{m1_rate,max,mean,min,stddev,p50,p95}", "$targetPrefix.*.error.m1_rate"],

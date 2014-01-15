@@ -228,7 +228,7 @@ function getRangeQueryParams() {
 
 function getAppEnvHostQueryParams() {
 	return "?application=" + getDecodedParameter("application")
-		+ "&environment=" + getDecodedParameter("environment")
+		+ "&instance=" + getDecodedParameter("instance")
 		+ "&host=" + getDecodedParameter("host");
 }
 

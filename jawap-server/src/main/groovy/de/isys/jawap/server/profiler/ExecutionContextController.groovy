@@ -48,11 +48,11 @@ public class ExecutionContextController {
 
 	@RequestMapping(value = "/executionContexts/search", method = GET)
 	public def searchHttpRequestContexts(@RequestParam(defaultValue = '*') String application,
-										  @RequestParam(defaultValue = '*') String environment,
+										  @RequestParam(defaultValue = '*') String instance,
 										  @RequestParam(defaultValue = '*') String host,
 										  @RequestParam String name) {
 		application = decodeAndCheckNull(application)
-		environment = decodeAndCheckNull(environment)
+		instance = decodeAndCheckNull(instance)
 		host = decodeAndCheckNull(host)
 
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -60,11 +60,11 @@ public class ExecutionContextController {
 		Root<HttpRequestContext> httpRequestContext = query.from(HttpRequestContext.class);
 		List<Predicate> restrictions = new ArrayList<Predicate>(3);
 		restrictions.add(cb.equal(httpRequestContext.get("name"), name));
-		if (application || host || environment) {
+		if (application || host || instance) {
 			final Join<HttpRequestContext, MeasurementSession> measurementSession = httpRequestContext.join("measurementSession");
 			if (application) restrictions.add(cb.equal(measurementSession.get("applicationName"), application))
 			if (host) restrictions.add(cb.equal(measurementSession.get("hostName"), host))
-			if (environment) restrictions.add(cb.equal(measurementSession.get("instanceName"), environment))
+			if (instance) restrictions.add(cb.equal(measurementSession.get("instanceName"), instance))
 		}
 		query.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		query.orderBy(cb.desc(httpRequestContext.get("timestamp")))

@@ -17,7 +17,7 @@
 			"index": 1,
 			"showAll": false
 		},
-		"environment": {
+		"instance": {
 			"type": "dynamic",
 			"query": "jawap.${application}.*",
 			"index": 2,
@@ -25,7 +25,7 @@
 		},
 		"host": {
 			"type": "dynamic",
-			"query": "jawap.${application}.${environment}.*",
+			"query": "jawap.${application}.${instance}.*",
 			"index": 3,
 			"showAll": true
 		},
@@ -33,7 +33,7 @@
 			"application": {
 				"group": 1
 			},
-			"environment": {
+			"instance": {
 				"group": 2
 			},
 			"host": {

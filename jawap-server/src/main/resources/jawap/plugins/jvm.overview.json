@@ -2,15 +2,15 @@
 	"data": [
 		{
 			"title": "Cpu utilisation",
-			"target": "alias(groupByNode(jawap.${application}.${environment}.${host}.jvm.cpu.process.usage,${group},'averageSeries'), 'cpu')",
+			"target": "alias(groupByNode(jawap.${application}.${instance}.${host}.jvm.cpu.process.usage,${group},'averageSeries'), 'cpu')",
 			"params": "yMax=100"
 		},
 		{
 			"title": "Memory",
 			"target": [
-				"alias(groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.total.max,${group},'averageSeries'), 'max')",
-				"alias(groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.total.committed,${group},'averageSeries'), 'committed')",
-				"alias(groupByNode(jawap.${application}.${environment}.${host}.jvm.memory.total.used,${group},'averageSeries'), 'used')"
+				"alias(groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.total.max,${group},'averageSeries'), 'max')",
+				"alias(groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.total.committed,${group},'averageSeries'), 'committed')",
+				"alias(groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.total.used,${group},'averageSeries'), 'used')"
 			]
 		}
 	]

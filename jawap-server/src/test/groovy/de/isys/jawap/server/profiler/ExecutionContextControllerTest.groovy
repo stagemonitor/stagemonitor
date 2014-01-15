@@ -62,7 +62,7 @@ public class ExecutionContextControllerTest {
 						.param("name", "bla")
 						.param("application", "app_1")
 						.param("host", "localhorst")
-						.param("environment", "test"))
+						.param("instance", "test"))
 				.andExpect(status().isOk())
 				.andReturn().response.contentAsString.json
 		assert response.aaData.size() == 1

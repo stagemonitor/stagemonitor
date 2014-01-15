@@ -4,16 +4,16 @@
 		{
 			"title": "Response Time (ms)",
 			"target": [
-				"alias(dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.p95)), 'p95')",
-				"alias(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.mean), 'avg')",
-				"alias(dashed(averageSeries(jawap.${application}.${environment}.${host}.request.${requestName}.min)), 'min')"
+				"alias(dashed(averageSeries(jawap.${application}.${instance}.${host}.request.${requestName}.p95)), 'p95')",
+				"alias(averageSeries(jawap.${application}.${instance}.${host}.request.${requestName}.mean), 'avg')",
+				"alias(dashed(averageSeries(jawap.${application}.${instance}.${host}.request.${requestName}.min)), 'min')"
 			]
 		},
 		{
 			"title": "Throughput (Requests per Minute)",
 			"target": [
-				"alias(sum(jawap.${application}.${environment}.${host}.request.${requestName}.m1_rate), 'total')",
-			 	"alias(sum(jawap.${application}.${environment}.${host}.request.${requestName}.error.m1_rate), 'failed')"
+				"alias(sum(jawap.${application}.${instance}.${host}.request.${requestName}.m1_rate), 'total')",
+			 	"alias(sum(jawap.${application}.${instance}.${host}.request.${requestName}.error.m1_rate), 'failed')"
 			]
 		}
 	]

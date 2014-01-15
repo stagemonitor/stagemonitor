@@ -42,7 +42,7 @@ class GraphitusControllerTest {
 				.andReturn().response.contentAsString.json
 		println json
 		assert json.title == "Jvm"
-		assert json.data.first().target == 'groupByNode(jawap.${application}.${environment}.${host}.jvm.cpu.process.usage,${group},\'averageSeries\')'
+		assert json.data.first().target == 'groupByNode(jawap.${application}.${instance}.${host}.jvm.cpu.process.usage,${group},\'averageSeries\')'
 	}
 
 }

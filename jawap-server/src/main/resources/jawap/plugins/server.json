@@ -3,12 +3,12 @@
 		{
 			"title": "Server Thread Pool",
 			"target": [
-				"groupByNode(jawap.${application}.${environment}.${host}.server.threadpool.*.*, 7, 'maxSeries')"
+				"groupByNode(jawap.${application}.${instance}.${host}.server.threadpool.*.*, 7, 'maxSeries')"
 			]
 		}, {
 			"title": "Number of Sessions",
 			"target": [
-				"jawap.${application}.${environment}.${host}.web.sessions.count"
+				"jawap.${application}.${instance}.${host}.web.sessions.count"
 			],
 			"params": "areaMode=stacked"
 		}

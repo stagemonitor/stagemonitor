@@ -64,9 +64,9 @@ class GraphitusController {
 
 	// TODO environment -> instance
 	@RequestMapping("/requestTable")
-	def getRequestTable(@RequestParam application, @RequestParam environment, @RequestParam host,
+	def getRequestTable(@RequestParam application, @RequestParam instance, @RequestParam host,
 						@RequestParam(required = false) from, @RequestParam(required = false) until) {
-		[aaData: graphite.getRequestTable(application, environment, host, from, until)]
+		[aaData: graphite.getRequestTable(application, instance, host, from, until)]
 	}
 
 }

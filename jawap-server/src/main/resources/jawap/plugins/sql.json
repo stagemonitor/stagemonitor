@@ -3,13 +3,13 @@
 		{
 			"title": "Time of getConnection",
 			"target": [
-				"groupByNode(nonNegativeDerivative(jawap.${application}.${environment}.${host}.jdbc.getconnection.*.time.count), 6, 'sum')"
+				"groupByNode(nonNegativeDerivative(jawap.${application}.${instance}.${host}.jdbc.getconnection.*.time.count), 6, 'sum')"
 			]
 		},
 		{
 			"title": "Calls to getConnection",
 			"target": [
-				"groupByNode(nonNegativeDerivative(jawap.${application}.${environment}.${host}.jdbc.getconnection.*.count.count), 6, 'sum')"
+				"groupByNode(nonNegativeDerivative(jawap.${application}.${instance}.${host}.jdbc.getconnection.*.count.count), 6, 'sum')"
 			]
 		}
 	]
