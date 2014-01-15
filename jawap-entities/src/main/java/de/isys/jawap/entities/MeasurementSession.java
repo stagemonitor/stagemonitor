@@ -93,6 +93,7 @@ public class MeasurementSession {
 	 * @return the input string without common special characters
 	 */
 	private String avoidCommonSpecialCharacters(String s) {
+		if (s == null) return null;
 		return s.replace(' ', '-').replace('.', '-');
 	}
 }
