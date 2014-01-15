@@ -1,1 +1,12 @@
-include 'jawap-collector', 'jawap-benchmark', 'jawap-server', 'jawap-entities'
+include 'jawap-collector', 
+		'jawap-collector:jawap-collector-core',
+		'jawap-collector:jawap-collector-jdbc',
+		'jawap-collector:jawap-collector-jvm',
+		'jawap-collector:jawap-collector-monitor',
+		'jawap-collector:jawap-collector-profiler',
+		'jawap-collector:jawap-collector-server',
+		'jawap-collector:jawap-collector-spring',
+		'jawap-collector:jawap-collector-starter-spring-web',
+		'jawap-collector:jawap-collector-starter-web',
+		'jawap-collector:jawap-collector-web',
+	'jawap-benchmark', 'jawap-server', 'jawap-entities'

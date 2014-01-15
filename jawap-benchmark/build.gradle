@@ -6,7 +6,7 @@ mainClassName = "de.isys.jawap.benchmark.ProfilerBenchmark"
 
 
 dependencies {
-	compile project(":jawap-collector")
+	compile project(":jawap-collector:jawap-collector-profiler")
 	compile 'com.google.caliper:caliper:1.0-beta-1'
 	// The AspectJ does't like the jpa annotations to not be present
 	compileAjc "org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final"

@@ -1,0 +1,7 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+dependencies {
+	compile project(":jawap-collector:jawap-collector-jvm")
+	compile 'javax.servlet:servlet-api:2.5'
+}

@@ -1,0 +1,10 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+dependencies {
+	compile project(":jawap-collector:jawap-collector-core")
+	compile project(":jawap-collector:jawap-collector-profiler")
+
+	compile 'org.aspectj:aspectjtools:1.7.3'
+	compile 'org.aspectj:aspectjrt:1.7.3'
+}

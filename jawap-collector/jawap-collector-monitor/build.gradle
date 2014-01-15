@@ -1,0 +1,6 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+dependencies {
+	compile project(":jawap-collector:jawap-collector-core")
+	compile project(":jawap-collector:jawap-collector-profiler")
+}

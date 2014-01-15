@@ -1,0 +1,8 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+dependencies {
+	compile project(":jawap-collector:jawap-collector-core")
+	compile 'com.codahale.metrics:metrics-jvm:3.0.1'
+	compile 'javax.servlet:servlet-api:2.5'
+}

@@ -1,0 +1,9 @@
+apply plugin: 'maven'
+
+dependencies {
+	compile project(":jawap-collector:jawap-collector-jdbc")
+	compile project(":jawap-collector:jawap-collector-jvm")
+	compile project(":jawap-collector:jawap-collector-monitor")
+	compile project(":jawap-collector:jawap-collector-server")
+	compile project(":jawap-collector:jawap-collector-web")
+}
