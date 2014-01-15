@@ -1,7 +1,7 @@
 package de.isys.jawap
 
 import de.isys.jawap.server.core.MeasurementSessionRepository
-import de.isys.jawap.server.profiler.HttpRequestContextRepository
+import de.isys.jawap.server.profiler.HttpExecutionContextRepository
 import org.mockito.Mockito
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.data.JpaRepositoriesAutoConfiguration
@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.FilterType
-import org.springframework.context.annotation.PropertySource
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer
 
 import javax.persistence.EntityManagerFactory
 
@@ -21,8 +19,8 @@ import javax.persistence.EntityManagerFactory
 class TestConfiguration {
 
 	@Bean
-	HttpRequestContextRepository httpRequestContextRepository() {
-		Mockito.mock(HttpRequestContextRepository)
+	HttpExecutionContextRepository httpExecutionContextRepository() {
+		Mockito.mock(HttpExecutionContextRepository)
 	}
 	@Bean
 	MeasurementSessionRepository measurementSessionRepository() {

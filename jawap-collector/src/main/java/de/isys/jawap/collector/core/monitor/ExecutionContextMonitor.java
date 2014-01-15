@@ -7,7 +7,7 @@ import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.core.rest.MeasurementSessionRestClient;
 import de.isys.jawap.collector.profiler.ExecutionContextLogger;
 import de.isys.jawap.collector.profiler.Profiler;
-import de.isys.jawap.collector.web.rest.HttpRequestContextRestClient;
+import de.isys.jawap.collector.web.rest.HttpExecutionContextRestClient;
 import de.isys.jawap.entities.MeasurementSession;
 import de.isys.jawap.entities.profiler.ExecutionContext;
 import de.isys.jawap.util.GraphiteEncoder;
@@ -38,12 +38,12 @@ public class ExecutionContextMonitor {
 
 	private MeasurementSessionRestClient measurementSessionRestClient;
 	private String measurementSessionLocation;
-	private HttpRequestContextRestClient httpRequestContextRestClient;
+	private HttpExecutionContextRestClient httpExecutionContextRestClient;
 	private Date endOfWarmup;
 
 	public ExecutionContextMonitor(Configuration configuration) {
 		measurementSessionRestClient = new MeasurementSessionRestClient(configuration.getServerUrl());
-		httpRequestContextRestClient = new HttpRequestContextRestClient();
+		httpExecutionContextRestClient = new HttpExecutionContextRestClient();
 		warmupRequests = configuration.getNoOfWarmupRequests();
 		this.metricRegistry = JawapApplicationContext.getMetricRegistry();
 		this.configuration = configuration;
@@ -118,7 +118,7 @@ public class ExecutionContextMonitor {
 
 	private <T extends ExecutionContext> void reportCallStack(T requestContext) {
 		if (configuration.isReportCallStacksToServer()) {
-			httpRequestContextRestClient.saveRequestContext(measurementSessionLocation, requestContext);
+			httpExecutionContextRestClient.saveRequestContext(measurementSessionLocation, requestContext);
 		}
 		if (configuration.isLogCallStacks()) {
 			executionContextLogger.logStats(requestContext);

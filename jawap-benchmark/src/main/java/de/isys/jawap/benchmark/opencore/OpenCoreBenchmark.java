@@ -1,7 +1,7 @@
 package de.isys.jawap.benchmark.opencore;
 
 import de.isys.jawap.collector.profiler.ExecutionContextLogger;
-import de.isys.jawap.entities.web.HttpRequestContext;
+import de.isys.jawap.entities.web.HttpExecutionContext;
 import de.isys.jawap.collector.profiler.Profiler;
 
 import static java.lang.System.nanoTime;
@@ -38,7 +38,7 @@ public class OpenCoreBenchmark implements Runnable {
 	}
 
 	public void run() {
-		HttpRequestContext httpRequestStats = new HttpRequestContext();
+		HttpExecutionContext httpRequestStats = new HttpExecutionContext();
 		Profiler.setExecutionContext(httpRequestStats);
 		for (int i = 0; i < RUN_COUNT; i++)
 			iterate();

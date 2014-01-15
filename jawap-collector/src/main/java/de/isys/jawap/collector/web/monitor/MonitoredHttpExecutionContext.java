@@ -3,7 +3,7 @@ package de.isys.jawap.collector.web.monitor;
 import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.core.monitor.MonitoredExecution;
 import de.isys.jawap.collector.web.monitor.filter.StatusExposingServletResponse;
-import de.isys.jawap.entities.web.HttpRequestContext;
+import de.isys.jawap.entities.web.HttpExecutionContext;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-public class HttpRequestContextMonitoredExecution extends MonitoredExecution<HttpRequestContext> {
+public class MonitoredHttpExecutionContext extends MonitoredExecution<HttpExecutionContext> {
 
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
@@ -22,7 +22,7 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 	protected final Configuration configuration;
 
 
-	public HttpRequestContextMonitoredExecution(HttpServletRequest httpServletRequest,
+	public MonitoredHttpExecutionContext(HttpServletRequest httpServletRequest,
 												StatusExposingServletResponse statusExposingResponse,
 												FilterChain filterChain, Configuration configuration) {
 		this.httpServletRequest = httpServletRequest;
@@ -46,8 +46,8 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 	}
 
 	@Override
-	public HttpRequestContext getExecutionContext() {
-		HttpRequestContext requestStats = new HttpRequestContext();
+	public HttpExecutionContext getExecutionContext() {
+		HttpExecutionContext requestStats = new HttpExecutionContext();
 		requestStats.setMethod(httpServletRequest.getMethod());
 		requestStats.setUrl(httpServletRequest.getRequestURI());
 		requestStats.setQueryParams(getSafeQueryString(httpServletRequest.getParameterMap()));
@@ -108,7 +108,7 @@ public class HttpRequestContextMonitoredExecution extends MonitoredExecution<Htt
 	}
 
 	@Override
-	public void onPostExecute(HttpRequestContext executionContext) {
+	public void onPostExecute(HttpExecutionContext executionContext) {
 		int status = statusExposingResponse.getStatus();
 		executionContext.setStatusCode(status);
 		metricRegistry.counter(name("request.statuscode", Integer.toString(status))).inc();

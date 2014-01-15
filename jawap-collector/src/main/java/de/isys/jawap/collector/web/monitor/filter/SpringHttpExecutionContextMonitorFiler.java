@@ -1,6 +1,6 @@
 package de.isys.jawap.collector.web.monitor.filter;
 
-import de.isys.jawap.collector.web.monitor.SpringHttpRequestContextMonitoredExecution;
+import de.isys.jawap.collector.web.monitor.SpringMonitoredHttpExecutionContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
-public class SpringHttpRequestContextMonitorFiler extends HttpRequestContextMonitorFiler {
+public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContextMonitorFiler {
 	private final Log logger = LogFactory.getLog(getClass());
 
 	private List<RequestMappingHandlerMapping> allHandlerMappings;
@@ -41,7 +41,7 @@ public class SpringHttpRequestContextMonitorFiler extends HttpRequestContextMoni
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 			final StatusExposingServletResponse statusExposingResponse = new StatusExposingServletResponse((HttpServletResponse) response);
 			try {
-				executionContextMonitor.monitor(new SpringHttpRequestContextMonitoredExecution(httpServletRequest,
+				executionContextMonitor.monitor(new SpringMonitoredHttpExecutionContext(httpServletRequest,
 						statusExposingResponse, filterChain, configuration, allHandlerMappings));
 			} catch (Exception e) {
 				handleException(e);

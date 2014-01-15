@@ -10,7 +10,7 @@ import javax.persistence.Lob;
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class HttpRequestContext extends ExecutionContext {
+public class HttpExecutionContext extends ExecutionContext {
 
 	private String url;
 	private String queryParams;

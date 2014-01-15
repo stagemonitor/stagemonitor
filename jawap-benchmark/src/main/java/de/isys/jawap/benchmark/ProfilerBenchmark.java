@@ -1,7 +1,7 @@
 package de.isys.jawap.benchmark;
 
 import de.isys.jawap.collector.profiler.ExecutionContextLogger;
-import de.isys.jawap.entities.web.HttpRequestContext;
+import de.isys.jawap.entities.web.HttpExecutionContext;
 import de.isys.jawap.collector.profiler.Profiler;
 
 public class ProfilerBenchmark {
@@ -18,9 +18,9 @@ public class ProfilerBenchmark {
 
 	public int testAspectJProfiler(int iter) {
 		int dummy = 0;
-		HttpRequestContext executionContext = null;
+		HttpExecutionContext executionContext = null;
 		for (int i = 0; i < iter; i++) {
-			executionContext = new HttpRequestContext();
+			executionContext = new HttpExecutionContext();
 			Profiler.setExecutionContext(executionContext);
 			dummy |= classToProfile.method1();
 		}

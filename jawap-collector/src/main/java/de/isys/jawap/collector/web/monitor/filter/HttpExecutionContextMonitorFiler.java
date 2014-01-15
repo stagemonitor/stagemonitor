@@ -3,17 +3,15 @@ package de.isys.jawap.collector.web.monitor.filter;
 import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.core.monitor.ExecutionContextMonitor;
-import de.isys.jawap.collector.web.monitor.HttpRequestContextMonitoredExecution;
+import de.isys.jawap.collector.web.monitor.MonitoredHttpExecutionContext;
 import de.isys.jawap.entities.MeasurementSession;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class HttpRequestContextMonitorFiler extends AbstractExclusionFilter implements Filter {
+public class HttpExecutionContextMonitorFiler extends AbstractExclusionFilter implements Filter {
 
 	protected Configuration configuration = JawapApplicationContext.getConfiguration();
 	protected ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
@@ -42,7 +40,7 @@ public class HttpRequestContextMonitorFiler extends AbstractExclusionFilter impl
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 			final StatusExposingServletResponse statusExposingResponse = new StatusExposingServletResponse((HttpServletResponse) response);
 			try {
-				executionContextMonitor.monitor(new HttpRequestContextMonitoredExecution(httpServletRequest,
+				executionContextMonitor.monitor(new MonitoredHttpExecutionContext(httpServletRequest,
 						statusExposingResponse, filterChain, configuration));
 			} catch (Exception e) {
 				handleException(e);

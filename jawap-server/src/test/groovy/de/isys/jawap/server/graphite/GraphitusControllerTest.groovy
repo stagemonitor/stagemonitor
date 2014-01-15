@@ -27,7 +27,7 @@ class GraphitusControllerTest {
 
 	@Test
 	void testGetConfiguration() {
-		def json = mvc.perform(get("/graphitus/configuration"))
+		def json = mvc.perform(get("/graphitus/config.json"))
 				.andExpect(status().isOk())
 				.andReturn().response.contentAsString.json
 
@@ -37,12 +37,13 @@ class GraphitusControllerTest {
 
 	@Test
 	void testGetDashboard() {
-		def json = mvc.perform(get("/graphitus/dash").param("id", "test.jvm"))
+		def json = mvc.perform(get("/graphitus/dash").param("id", "jvm.overview"))
 				.andExpect(status().isOk())
 				.andReturn().response.contentAsString.json
 		println json
-		assert json.title == "Jvm"
-		assert json.data.first().target == 'groupByNode(jawap.${application}.${instance}.${host}.jvm.cpu.process.usage,${group},\'averageSeries\')'
+		assert json.title == "Jvm Overview"
+		assert json.data.first().target.contains('jawap.${application}.${instance}.${host}')
+
 	}
 
 }

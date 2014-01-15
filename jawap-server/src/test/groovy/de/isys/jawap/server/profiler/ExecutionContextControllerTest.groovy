@@ -25,12 +25,12 @@ public class ExecutionContextControllerTest {
 	public void setup() {
 		this.mvc = webAppContextSetup(this.wac).build();
 		MeasurementSession session = testData.addMeasurementSession('app 1')
-		testData.addHttpRequestContext(session, "bla")
-		testData.addHttpRequestContext(session, "blubb")
+		testData.addHttpExecutionContext(session, "bla")
+		testData.addHttpExecutionContext(session, "blubb")
 
 		session = testData.addMeasurementSession('app 2')
-		testData.addHttpRequestContext(session, "bla")
-		testData.addHttpRequestContext(session, "blubb")
+		testData.addHttpExecutionContext(session, "bla")
+		testData.addHttpExecutionContext(session, "blubb")
 	}
 
 	@Test
@@ -48,7 +48,7 @@ public class ExecutionContextControllerTest {
 		def response = mvc.perform(
 				get("/executionContexts/search")
 						.param("name", "bla")
-						.param("application", "app_1")
+						.param("application", "app-1")
 						.param("host", "*"))
 				.andExpect(status().isOk())
 				.andReturn().response.contentAsString.json
@@ -60,7 +60,7 @@ public class ExecutionContextControllerTest {
 		def response = mvc.perform(
 				get("/executionContexts/search")
 						.param("name", "bla")
-						.param("application", "app_1")
+						.param("application", "app-1")
 						.param("host", "localhorst")
 						.param("instance", "test"))
 				.andExpect(status().isOk())

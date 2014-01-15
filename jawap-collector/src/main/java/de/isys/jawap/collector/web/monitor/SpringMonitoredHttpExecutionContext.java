@@ -12,12 +12,12 @@ import java.util.List;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-public class SpringHttpRequestContextMonitoredExecution extends HttpRequestContextMonitoredExecution {
+public class SpringMonitoredHttpExecutionContext extends MonitoredHttpExecutionContext {
 
 
 	private final List<RequestMappingHandlerMapping> allHandlerMappings;
 
-	public SpringHttpRequestContextMonitoredExecution(HttpServletRequest httpServletRequest,
+	public SpringMonitoredHttpExecutionContext(HttpServletRequest httpServletRequest,
 													  StatusExposingServletResponse statusExposingResponse,
 													  FilterChain filterChain, Configuration configuration,
 													  List<RequestMappingHandlerMapping> allHandlerMappings) {
