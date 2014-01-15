@@ -240,10 +240,10 @@ function getDecodedParameter(paramGroupName) {
 /* UTILS */
 
 function encodeForGraphite(requestName) {
-	return encodeURIComponent(requestName.replaceAll(".", ":dot:"));
+	return encodeURIComponent(requestName).replaceAll(".", "%2e").replaceAll("+", "%20");
 }
 function decodeForGraphite(requestName) {
-	return decodeURIComponent(requestName).replaceAll(":dot:", ".");
+	return decodeURIComponent(requestName);
 }
 
 String.prototype.replaceAll = function (search, replacement) {

@@ -13,11 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-
-// TODO as Aspect of Servlet+.service(..) or HttpServletRequest.new ?
 public class HttpRequestContextMonitorFiler extends AbstractExclusionFilter implements Filter {
-
-	private final Log logger = LogFactory.getLog(getClass());
 
 	protected Configuration configuration = JawapApplicationContext.getConfiguration();
 	protected ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);

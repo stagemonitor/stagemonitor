@@ -62,7 +62,6 @@ class GraphitusController {
 //		dashboardRepository.findOne(id).content.json
 	}
 
-	// TODO environment -> instance
 	@RequestMapping("/requestTable")
 	def getRequestTable(@RequestParam application, @RequestParam instance, @RequestParam host,
 						@RequestParam(required = false) from, @RequestParam(required = false) until) {

@@ -52,7 +52,7 @@ public class MeasurementSession {
 	}
 
 	public void setApplicationName(String applicationName) {
-		this.applicationName = applicationName;
+		this.applicationName = avoidCommonSpecialCharacters(applicationName);
 	}
 
 	public String getHostName() {
@@ -60,7 +60,7 @@ public class MeasurementSession {
 	}
 
 	public void setHostName(String hostName) {
-		this.hostName = hostName;
+		this.hostName = avoidCommonSpecialCharacters(hostName);
 	}
 
 	public String getInstanceName() {
@@ -68,7 +68,7 @@ public class MeasurementSession {
 	}
 
 	public void setInstanceName(String instanceName) {
-		this.instanceName = instanceName;
+		this.instanceName = avoidCommonSpecialCharacters(instanceName);
 	}
 
 	@JsonIgnore
@@ -83,5 +83,16 @@ public class MeasurementSession {
 				", hostName='" + hostName + '\'' +
 				", instanceName='" + instanceName + '\'' +
 				'}';
+	}
+
+	/**
+	 * Actually, special characters are no real problem, because everything will be url encoded before sending to
+	 * graphite. But that leads to difficult to read names in the UI.
+	 *
+	 * @param s the string to clean
+	 * @return the input string without common special characters
+	 */
+	private String avoidCommonSpecialCharacters(String s) {
+		return s.replace(' ', '-').replace('.', '-');
 	}
 }
