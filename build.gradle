@@ -3,7 +3,7 @@ subprojects {
 	apply plugin: 'java'
 	apply plugin: 'idea'
 
-	group = "de.isys"
+	group = "de.isys.jawap"
 	version = "0.1-SNAPSHOT"
 
 	repositories {

@@ -19,13 +19,13 @@
 		{
 			"title": "GC",
 			"target": [
-				"groupByNode(nonNegativeDerivative(jawap.${application}.${instance}.${host}.jvm.gc.*.time), 6, 'sum')",
+				"groupByNode(nonNegativeDerivative(jawap.${application}.${instance}.${host}.jvm.gc.*.time), 6, 'sum')"
 			]
 		},
 		{
 			"title": "Memory Pools",
 			"target": [
-				"groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.pools.*.usage, 7, 'averageSeries')",
+				"groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.pools.*.usage, 7, 'averageSeries')"
 			]
 		}
 	]
