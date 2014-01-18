@@ -1,8 +1,6 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-
 dependencies {
 	compile project(":jawap-collector:jawap-collector-web")
 	compile project(":jawap-collector:jawap-collector-profiler")
 	compile 'org.springframework:spring-webmvc:3.1.0.RELEASE'
+	provided 'javax.servlet:servlet-api:2.5'
 }

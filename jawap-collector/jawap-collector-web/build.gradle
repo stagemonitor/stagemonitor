@@ -1,7 +1,4 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-
 dependencies {
 	compile project(":jawap-collector:jawap-collector-monitor")
-	compile 'javax.servlet:servlet-api:2.5'
+	provided 'javax.servlet:servlet-api:2.5'
 }
