@@ -69,16 +69,19 @@ public class ExecutionContextMonitor {
 			T requestContext = null;
 			boolean exceptionThrown = false;
 			long start = System.nanoTime();
-
-			if (configuration.isRequestTimerEnabled()) {
-				requestContext = monitoredExecution.getExecutionContext();
-				String requestName = monitoredExecution.getRequestName();
-				requestContext.setName(requestName);
-				timer = metricRegistry.timer(getTimerName(requestName));
-				if (profileThisRequest(timer)) {
-					Profiler.setExecutionContext(requestContext);
-					Profiler.start();
+			try {
+				if (configuration.isRequestTimerEnabled()) {
+					requestContext = monitoredExecution.getExecutionContext();
+					String requestName = monitoredExecution.getRequestName();
+					requestContext.setName(requestName);
+					timer = metricRegistry.timer(getTimerName(requestName));
+					if (profileThisRequest(timer)) {
+						Profiler.setExecutionContext(requestContext);
+						Profiler.start();
+					}
 				}
+			} catch (RuntimeException e) {
+				logger.error(e.getMessage(), e);
 			}
 			try {
 				monitoredExecution.execute();
@@ -86,22 +89,26 @@ public class ExecutionContextMonitor {
 				exceptionThrown = true;
 				throw e;
 			} finally {
-				if (requestContext != null) {
-					long executionTime = System.nanoTime() - start;
-					requestContext.setError(exceptionThrown);
-					requestContext.setExecutionTime(executionTime);
-					monitoredExecution.onPostExecute(requestContext);
+				try {
+					if (requestContext != null) {
+						long executionTime = System.nanoTime() - start;
+						requestContext.setError(exceptionThrown);
+						requestContext.setExecutionTime(executionTime);
+						monitoredExecution.onPostExecute(requestContext);
 
-					if (requestContext.getCallStack() != null) {
-						Profiler.stop("total");
-						reportCallStack(monitoredExecution, requestContext);
-					}
-					if (timer != null) {
-						timer.update(executionTime, TimeUnit.NANOSECONDS);
-						if (requestContext.isError()) {
-							metricRegistry.meter(name(getTimerName(requestContext.getName()), "error")).mark();
+						if (requestContext.getCallStack() != null) {
+							Profiler.stop("total");
+							reportCallStack(monitoredExecution, requestContext);
+						}
+						if (timer != null) {
+							timer.update(executionTime, TimeUnit.NANOSECONDS);
+							if (requestContext.isError()) {
+								metricRegistry.meter(name(getTimerName(requestContext.getName()), "error")).mark();
+							}
 						}
 					}
+				} catch (RuntimeException e) {
+					logger.error(e.getMessage(), e);
 				}
 			}
 		} else {

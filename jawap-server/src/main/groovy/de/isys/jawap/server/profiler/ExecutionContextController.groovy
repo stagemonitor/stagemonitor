@@ -39,7 +39,7 @@ public class ExecutionContextController {
 	@RequestMapping(value = "/executionContexts/{id}", method = GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public HttpExecutionContext getHttpRequestContexts(@PathVariable Integer id) {
 		HttpExecutionContext requestContext = httpExecutionContextRepository.findOne(id)
-		requestContext.convertJsonToCallStack()
+		if (requestContext) requestContext.convertJsonToCallStack()
 		return requestContext
 	}
 

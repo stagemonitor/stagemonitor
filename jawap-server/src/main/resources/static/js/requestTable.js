@@ -104,16 +104,21 @@ function initializeDatatables() {
 			},
 			{   "mData": null,
 				"fnRender": function (oObj) {
-					return '<button class="btn-callstack btn btn-small btn-primary" onclick="findCallStacks(\'' + oObj.aData.name + '\');">Call&nbsp;Stack</button>';
+					var name = oObj.aData.name;
+					if (name != '- Total -')
+						return '<button class="btn-callstack btn btn-small btn-primary" onclick="findCallStacks(\'' + name + '\');">Call&nbsp;Stack</button>';
+					else return null;
 				}
 			}
 		]
 	});
 	$("#request-table").on('click', "tbody tr", function (e) {
 		var requestName = requestDataTable.fnGetData(this).name;
-		setRequestName(requestName);
-		originalUpdateGraphs();
-		highlightSelectedRow(this, requestDataTable);
+		if (requestName != '- Total -') {
+			setRequestName(requestName);
+			originalUpdateGraphs();
+			highlightSelectedRow(this, requestDataTable);
+		}
 	});
 	// no (de)selection should happen when clicking on button
 	// -> trigger highlightSelectedRow 2nd time so that (de)selection is undone

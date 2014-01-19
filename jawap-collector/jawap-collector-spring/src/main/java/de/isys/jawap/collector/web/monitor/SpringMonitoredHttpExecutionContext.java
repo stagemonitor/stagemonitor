@@ -34,15 +34,17 @@ public class SpringMonitoredHttpExecutionContext extends MonitoredHttpExecutionC
 		for (RequestMappingHandlerMapping handlerMapping : allHandlerMappings) {
 			try {
 				HandlerExecutionChain handler = handlerMapping.getHandler(httpServletRequest);
-				if (handler.getHandler() instanceof HandlerMethod) {
-					HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
-					name = handlerMethod.getMethod().getName();
-					name = splitCamelCase(capitalize(name));
-				} else {
-					name = handler.getHandler().toString();
-				}
-				if (name != null && !name.isEmpty()) {
-					break;
+				if (handler != null) {
+					if (handler.getHandler() instanceof HandlerMethod) {
+						HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
+						name = handlerMethod.getMethod().getName();
+						name = splitCamelCase(capitalize(name));
+					} else {
+						name = handler.getHandler().toString();
+					}
+					if (name != null && !name.isEmpty()) {
+						break;
+					}
 				}
 			} catch (Exception e) {
 				// ignore, try next
