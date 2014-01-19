@@ -3,7 +3,10 @@ var originalUpdateGraphs;
 var selectedRequestName;
 $(document).ready(function () {
 	// hook into dashboard.js#renderView to initializeRequestTable
-	renderView = interceptFunction(renderView, initializeRequestTable);
+	renderView = interceptFunction(renderView, initializeRequestTable, function() {
+		// I don't like the histogram ...
+		$(".fa-bar-chart-o").parent().remove();
+	});
 
 	//  intercept dashboard.js#applyParameters to add requestName parameters
 	applyParameters = interceptFunction(applyParameters, function () {
@@ -205,7 +208,7 @@ function reloadRequestTable() {
 						}
 					}
 				}
-			});
+			}, true);
 		}
 	}
 }

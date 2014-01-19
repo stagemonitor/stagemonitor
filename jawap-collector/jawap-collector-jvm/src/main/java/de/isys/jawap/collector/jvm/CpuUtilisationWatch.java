@@ -54,7 +54,7 @@ public class CpuUtilisationWatch {
 		long cpuAfter = processCpuTime.getProcessCpuTime();
 		long nanoAfter = System.nanoTime();
 
-		float utilisation = ((cpuAfter - cpuBefore)) / (nanoAfter - nanoBefore);
+		float utilisation = ((float)(cpuAfter - cpuBefore)) / (nanoAfter - nanoBefore);
 		return utilisation / Runtime.getRuntime().availableProcessors();
 	}
 }

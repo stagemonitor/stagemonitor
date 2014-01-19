@@ -1,14 +1,15 @@
 {
+	"groupBy": true,
 	"data": [
 		{
-			"title": "Server Thread Pool",
-			"target": [
-				"groupByNode(jawap.${application}.${instance}.${host}.server.threadpool.*.*, 7, 'maxSeries')"
-			]
+			"title": "Server Thread Pool usage",
+			"target": "groupByNode(jawap.${application}.${instance}.${host}.server.threadpool.*.usage, ${group}, 'maxSeries')",
+			"params": "yMax=1"
+
 		}, {
 			"title": "Number of Sessions",
 			"target": [
-				"jawap.${application}.${instance}.${host}.web.sessions.count"
+				"groupByNode(jawap.${application}.${instance}.${host}.web.sessions.count,${group},'sumSeries')"
 			],
 			"params": "areaMode=stacked"
 		}

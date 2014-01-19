@@ -29,10 +29,7 @@
 			"index": 3,
 			"showAll": true
 		},
-		"group": {
-			"application": {
-				"group": 1
-			},
+		"group-by": {
 			"instance": {
 				"group": 2
 			},

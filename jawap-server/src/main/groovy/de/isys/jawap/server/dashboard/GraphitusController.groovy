@@ -52,9 +52,10 @@ class GraphitusController {
 
 	@RequestMapping(value = "/dash", method = GET)
 	def getDashboard(@RequestParam String id) {
-		return "jawap/DefaultJawapDashboardSettings.json".loadJsonResource() +
-				[title: id.split(/\./)*.capitalize().join(' ')] +
-				getDashboardPlugin(id)
+		def defaultSettings = "jawap/DefaultJawapDashboardSettings.json".loadJsonResource()
+		def dashboard =  getDashboardPlugin(id)
+		if (!dashboard.groupBy) defaultSettings.parameters.remove('group-by')
+		return defaultSettings + [title: id.split(/\./)*.capitalize().join(' ')] + dashboard
 	}
 
 	private def getDashboardPlugin(String id) {

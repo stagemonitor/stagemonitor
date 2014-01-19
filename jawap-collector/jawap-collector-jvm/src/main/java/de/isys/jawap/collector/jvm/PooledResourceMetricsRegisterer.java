@@ -2,6 +2,7 @@ package de.isys.jawap.collector.jvm;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.RatioGauge;
 
 import java.util.List;
 
@@ -41,5 +42,11 @@ public class PooledResourceMetricsRegisterer {
 				}
 			});
 		}
+		registry.register(name + ".usage", new RatioGauge() {
+			@Override
+			protected Ratio getRatio() {
+			return Ratio.of(pooledResource.getThreadPoolNumActiveThreads(), pooledResource.getMaxPoolSize());
+			}
+		});
 	}
 }

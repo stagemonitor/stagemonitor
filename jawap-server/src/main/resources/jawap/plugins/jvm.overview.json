@@ -1,17 +1,15 @@
 {
+	"groupBy": true,
 	"data": [
 		{
 			"title": "Cpu utilisation",
-			"target": "alias(groupByNode(jawap.${application}.${instance}.${host}.jvm.cpu.process.usage,${group},'averageSeries'), 'cpu')",
-			"params": "yMax=100"
+			"target": "groupByNode(jawap.${application}.${instance}.${host}.jvm.cpu.process.usage,${group},'maxSeries')",
+			"params": "yMax=1"
 		},
 		{
-			"title": "Memory",
-			"target": [
-				"alias(groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.total.max,${group},'averageSeries'), 'max')",
-				"alias(groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.total.committed,${group},'averageSeries'), 'committed')",
-				"alias(groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.total.used,${group},'averageSeries'), 'used')"
-			]
+			"title": "Heap utilisation",
+			"target": "groupByNode(jawap.${application}.${instance}.${host}.jvm.memory.heap.usage,${group},'maxSeries')",
+			"params": "yMax=1"
 		}
 	]
 }
