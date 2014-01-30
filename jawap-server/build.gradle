@@ -40,3 +40,5 @@ dependencies {
 
 	testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
 }
+
+war.archiveName = 'jawap.war'
