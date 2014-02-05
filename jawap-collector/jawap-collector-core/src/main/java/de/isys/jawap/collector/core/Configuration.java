@@ -61,7 +61,7 @@ public class Configuration {
 						"/\\d+:     /{id}," +
 						"(.*).js:   *.js," +
 						"(.*).css:  *.css," +
-						"(.*).js:   *.jpg," +
+						"(.*).jpg:  *.jpg," +
 						"(.*).jpeg: *.jpeg," +
 						"(.*).png:  *.png");
 	}

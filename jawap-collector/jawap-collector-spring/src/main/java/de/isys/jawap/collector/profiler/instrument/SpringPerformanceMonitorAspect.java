@@ -6,10 +6,6 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 public abstract class SpringPerformanceMonitorAspect extends PerformanceMonitorAspect {
 
-	@Pointcut("execution(* javax.servlet.Filter+.doFilter(..))")
-	public void doFilter() {
-	}
-
 	@Pointcut("execution(* javax.servlet.Servlet+.service(..))")
 	public void servletService() {
 	}
@@ -25,7 +21,7 @@ public abstract class SpringPerformanceMonitorAspect extends PerformanceMonitorA
 	@Pointcut
 	public abstract void projectPointcut();
 
-	@Pointcut("doFilter() || servletService() || renderView() || (resolveView() && !cflowbelow(resolveView())) || projectPointcut()")
+	@Pointcut("servletService() || renderView() || (resolveView() && !cflowbelow(resolveView())) || projectPointcut()")
 	public void methodsToProfile() {
 	}
 
