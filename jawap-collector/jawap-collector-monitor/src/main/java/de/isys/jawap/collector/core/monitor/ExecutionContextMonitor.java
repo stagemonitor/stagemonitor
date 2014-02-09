@@ -70,15 +70,13 @@ public class ExecutionContextMonitor {
 			boolean exceptionThrown = false;
 			long start = System.nanoTime();
 			try {
-				if (configuration.isRequestTimerEnabled()) {
-					requestContext = monitoredExecution.getExecutionContext();
-					String requestName = monitoredExecution.getRequestName();
-					requestContext.setName(requestName);
-					timer = metricRegistry.timer(getTimerName(requestName));
-					if (profileThisRequest(timer)) {
-						Profiler.setExecutionContext(requestContext);
-						Profiler.start();
-					}
+				requestContext = monitoredExecution.getExecutionContext();
+				String requestName = monitoredExecution.getRequestName();
+				requestContext.setName(requestName);
+				timer = metricRegistry.timer(getTimerName(requestName));
+				if (profileThisRequest(timer)) {
+					Profiler.setExecutionContext(requestContext);
+					Profiler.start();
 				}
 			} catch (RuntimeException e) {
 				logger.error(e.getMessage(), e);

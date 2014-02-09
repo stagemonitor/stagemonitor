@@ -37,28 +37,207 @@ public class Configuration {
 		}
 	}
 
-	public int 		getNoOfWarmupRequests() { 				return getInt(		"jawap.monitor.noOfWarmupRequests", 				0); }
-	public int 		getWarmupSeconds() { 					return getInt(		"jawap.monitor.warmupSeconds", 						0); }
-	public boolean 	isCollectRequestStats() { 				return getBoolean(	"jawap.monitor.collectRequestStats", 				true); }
-	public boolean 	isRequestTimerEnabled() { 				return getBoolean(	"jawap.monitor.requestTimerEnabled", 				true); }
-	public boolean	isCollectHeaders() {					return getBoolean(	"jawap.monitor.http.collectHeaders",				true);}
-	public List<String> getExcludedHeaders() {				return getLowerStrings("jawap.monitor.http.headers.excluded", 			"cookie");}
-	public List<Pattern> getConfidentialQueryParams() {		return getPatterns(	"jawap.monitor.http.queryparams.confidential.regex","(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*");}
-	public long 	getConsoleReportingInterval() { 		return getLong(		"jawap.reporting.interval.console", 				60); }
-	public boolean 	reportToJMX() { 						return getBoolean(	"jawap.reporting.jmx", 								true); }
-	public long 	getGraphiteReportingInterval() { 		return getLong(		"jawap.reporting.interval.graphite", 				60); }
-	public String 	getGraphiteHostName() { 				return getString(	"jawap.reporting.graphite.hostName"); }
-	public int 		getGraphitePort() { 					return getInt(		"jawap.reporting.graphite.port", 					2003); }
-	public long 	getMinExecutionTimeNanos() { 			return getLong(		"jawap.profiler.minExecutionTimeNanos", 			100000L); }
-	public int 		getCallStackEveryXRequestsToGroup() { 	return getInt(		"jawap.profiler.callStackEveryXRequestsToGroup", 	-1); }
-	public boolean 	isLogCallStacks() { 					return getBoolean(	"jawap.profiler.logCallStacks", 					true); }
-	public boolean 	isReportCallStacksToServer() { 			return getBoolean(	"jawap.profiler.reportCallStacksToServer", 			false); }
-	public String 	getApplicationName() { 					return getString(	"jawap.applicationName"); }
-	public String	getInstanceName() { 					return getString(	"jawap.instanceName"); }
-	public String 	getServerUrl() { 						return getString(	"jawap.serverUrl"); }
-	public List<String> getExcludedMetricsPatterns() {		return getStrings("jawap.metrics.excluded.pattern", "");}
-	public Map<Pattern, String> getGroupUrls() {			return getPatternMap("jawap.groupUrls",
-						"/\\d+:     /{id}," +
+	/**
+	 * Specifies the minimum number of requests that have to be issued against the application before metrics are collected.
+	 *
+	 * @return the number of warmup requests
+	 */
+	public int getNoOfWarmupRequests() {
+		return getInt("jawap.monitor.noOfWarmupRequests", 0);
+	}
+
+	/**
+	 * A timespan in seconds after the start of the server where no metrics are collected.
+	 *
+	 * @return the warmups in seconds
+	 */
+	public int getWarmupSeconds() {
+		return getInt("jawap.monitor.warmupSeconds", 0);
+	}
+
+	/**
+	 * Whether or not metrics about requests (Call Stacks, response times, errors status codes) should be collected.
+	 *
+	 * @return <code>true</code> if metrics about requests should be collected, <code>false</code> otherwise
+	 */
+	public boolean isCollectRequestStats() {
+		return getBoolean("jawap.monitor.collectRequestStats", true);
+	}
+
+	/**
+	 * Whether or not HTTP headers should be collected with a call stack.
+	 *
+	 * @return <code>true</code> if HTTP headers should be collected, <code>false</code> otherwise
+	 */
+	public boolean isCollectHeaders() {
+		return getBoolean("jawap.monitor.http.collectHeaders", true);
+	}
+
+	/**
+	 * A list of header names that should not be collected.
+	 *
+	 * @return list header names not to collect
+	 */
+	public List<String> getExcludedHeaders() {
+		return getLowerStrings("jawap.monitor.http.headers.excluded", "cookie");
+	}
+
+	/**
+	 * A list of query parameter name patterns that should not be collected.
+	 *
+	 * @return list of confidential query parameter names
+	 */
+	public List<Pattern> getConfidentialQueryParams() {
+		return getPatterns("jawap.monitor.http.queryparams.confidential.regex", "(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*");
+	}
+
+	/**
+	 * The amount of time between console reports (in seconds).
+	 * <p>
+	 * To deactivate console reports, set this to a value below 1.
+	 * </p>
+	 *
+	 * @return the amount of time between console reports in seconds
+	 */
+	public long getConsoleReportingInterval() {
+		return getLong("jawap.reporting.interval.console", 60);
+	}
+
+	/**
+	 * Whether or not to expose all metrics as MBeans.
+	 *
+	 * @return <code>true</code>, if all metrics should be exposed as MBeans, <code>false</code> otherwise
+	 */
+	public boolean reportToJMX() {
+		return getBoolean("jawap.reporting.jmx", true);
+	}
+
+	/**
+	 * The amount of time between the metrics are reported to graphite (in seconds).
+	 * <p>
+	 * To deactivate console reports, set this to a value below 1.
+	 * </p>
+	 *
+	 * @return the amount of time between graphite reports in seconds
+	 */
+	public long getGraphiteReportingInterval() {
+		return getLong("jawap.reporting.interval.graphite", 60);
+	}
+
+	/**
+	 * The name of the host where graphite is running
+	 * <p><b>This setting is mandatory, if you want to use the dashboard UI.</b></p>
+	 *
+	 * @return graphite's host's name
+	 */
+	public String getGraphiteHostName() {
+		return getString("jawap.reporting.graphite.hostName");
+	}
+
+	/**
+	 * The port where carbon is listening.
+	 *
+	 * @return the graphite carbon port
+	 */
+	public int getGraphitePort() {
+		return getInt("jawap.reporting.graphite.port", 2003);
+	}
+
+	/**
+	 * The minimal inclusive execution time of a method before it is included in a call stack.
+	 *
+	 * @return the minimal execution time
+	 */
+	public long getMinExecutionTimeNanos() {
+		return getLong("jawap.profiler.minExecutionTimeNanos", 100000L);
+	}
+
+	/**
+	 * Defines after how many requests to a URL group a call stack should be collected.
+	 *
+	 * @return the number of requests to a URL group after a call stack should be collected
+	 */
+	public int getCallStackEveryXRequestsToGroup() {
+		return getInt("jawap.profiler.callStackEveryXRequestsToGroup", 1);
+	}
+
+	/**
+	 * Whether or not call stacks should be logged.
+	 *
+	 * @return <code>true</code>, if call stacks should be logged, <code>false</code> otherwise
+	 */
+	public boolean isLogCallStacks() {
+		return getBoolean("jawap.profiler.logCallStacks", true);
+	}
+
+	/**
+	 * Whether or not call stacks should reported to the server.
+	 *
+	 * @return <code>true</code>, if call stacks should reported to the server, <code>false</code> otherwise
+	 */
+	public boolean isReportCallStacksToServer() {
+		return getBoolean("jawap.profiler.reportCallStacksToServer", true);
+	}
+
+	/**
+	 * The name of the application
+	 * <p>
+	 * <b>Either this property or the <code>display-name</code> in <code>web.xml</code> is mandatory!</b>
+	 * </p>
+	 *
+	 * @return the application name
+	 */
+	public String getApplicationName() {
+		return getString("jawap.applicationName");
+	}
+
+	/**
+	 * The instance name.
+	 * <p>If this property is not set, the instance name set to the first request's {@link javax.servlet.ServletRequest#getServerName()}<br/>
+	 * <b>that means that the collection of metrics does not start before the first request is executed</b>
+	 * </p>
+	 *
+	 * @return
+	 */
+	public String getInstanceName() {
+		return getString("jawap.instanceName");
+	}
+
+	/**
+	 * The URL of the jawap server
+	 * <p/>
+	 * <b>This setting is mandatory!</b>
+	 *
+	 * @return the server url
+	 */
+	public String getServerUrl() {
+		return getString("jawap.serverUrl");
+	}
+
+	/**
+	 * A comma separated list of metric names that should not be collected.
+	 *
+	 * @return a pattern list of excluded metric names
+	 */
+	public List<String> getExcludedMetricsPatterns() {
+		return getStrings("jawap.metrics.excluded.pattern", "");
+	}
+
+	/**
+	 * Combine url paths by regex to a single url group.
+	 * <p>
+	 * E.g. <code>(.*).js: *.js</code> combines all URLs that end with .js to a group named *.js.
+	 * The metrics for all URLs matching the pattern are consolidated and shown in one row in the request table.
+	 * </p>
+	 * <p>
+	 * The syntax is <code>&lt;regex>: &lt;group name>[, &lt;regex>: &lt;group name>]*</code>
+	 * </p>
+	 *
+	 * @return the url groups definition
+	 */
+	public Map<Pattern, String> getGroupUrls() {
+		return getPatternMap("jawap.groupUrls",
+				"/\\d+:     /{id}," +
 						"(.*).js:   *.js," +
 						"(.*).css:  *.css," +
 						"(.*).jpg:  *.jpg," +
@@ -128,6 +307,7 @@ public class Configuration {
 		}
 		return patterns;
 	}
+
 	public List<String> getStrings(final String key, final String defaultValue) {
 		return getAndCache(key, null, new PropertyLoader<List<String>>() {
 			@Override
