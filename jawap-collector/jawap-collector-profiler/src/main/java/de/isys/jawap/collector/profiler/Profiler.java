@@ -30,7 +30,7 @@ public class Profiler {
 			parent.getChildren().add(stats);
 			methodCallParent.set(stats);
 		} else {
-			// profile only if we are in a execution context
+			// profing is only active if we are in a execution context
 			ExecutionContext executionContext = Profiler.executionContext.get();
 			if (executionContext != null) {
 				CallStackElement root = new CallStackElement(null);
@@ -43,13 +43,11 @@ public class Profiler {
 	public static CallStackElement stop(String signature) {
 		CallStackElement currentStats = methodCallParent.get();
 		if (currentStats != null) {
-			long executionTime = System.nanoTime() - currentStats.start;
+			long executionTime = System.nanoTime() - currentStats.getExecutionTime();
 
 			final CallStackElement parent = currentStats.getParent();
 			if (executionTime >= MIN_EXECUTION_TIME_NANOS) {
-				currentStats.setSignature(signature);
-				currentStats.setExecutionTime(executionTime);
-				currentStats.addToNetExecutionTime(executionTime);
+				currentStats.profile(signature, executionTime);
 			} else if (parent != null) {
 				// currentStats is always the last entry in parent.getChildren()
 				parent.getChildren().remove(parent.getChildren().size() - 1);
@@ -58,7 +56,6 @@ public class Profiler {
 			if (parent == null) {
 				clearAllThreadLoals();
 			} else {
-				parent.subtractFromNetExecutionTime(executionTime);
 				methodCallParent.set(parent);
 			}
 		}

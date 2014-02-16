@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.*;
 import javax.persistence.*;
 import java.util.*;
 
-import static javax.persistence.CascadeType.ALL;
-
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -20,18 +18,12 @@ public class CallStackElement {
 	private String callStackJson;
 
 	@Transient
-	public transient final long start = System.nanoTime();
-	@Transient
 	@JsonBackReference
 	private CallStackElement parent;
-	@Transient
-	private String className;
 	@Transient
 	private String signature;
 	@Transient
 	private long executionTime;
-	@Transient
-	private long netExecutionTime;
 	@Transient
 	@JsonManagedReference
 	private List<CallStackElement> children = new LinkedList<CallStackElement>();
@@ -40,9 +32,37 @@ public class CallStackElement {
 	}
 
 	public CallStackElement(CallStackElement parent) {
-		this.parent = parent;
+		this(parent, System.nanoTime());
 	}
 
+	public CallStackElement(CallStackElement parent, long startTimestamp) {
+		this.parent = parent;
+		executionTime = startTimestamp;
+	}
+
+	/**
+	 * This static factory method also sets the parent-child relationships.
+	 * Therefore it must perform a null check on parent, which costs about 5ns.
+	 * @param parent the parent
+	 * @return the newly created instance
+	 */
+	public static CallStackElement newInstance(CallStackElement parent) {
+		CallStackElement cse = new CallStackElement();
+		cse.setParent(parent);
+		if (parent != null) {
+			parent.getChildren().add(cse);
+		}
+		cse.setExecutionTime(System.nanoTime());
+		return cse;
+	}
+
+
+	/**
+	 * The execution time of the Method.
+	 * Initially set to the start timestamp
+	 *
+	 * @return the execution time/start timestamp of the method
+	 */
 	public long getExecutionTime() {
 		return executionTime;
 	}
@@ -52,11 +72,12 @@ public class CallStackElement {
 	}
 
 	public long getNetExecutionTime() {
-		return netExecutionTime;
-	}
+		long net = executionTime;
+		for (CallStackElement child : children) {
+			net -= child.executionTime;
+		}
 
-	public void setNetExecutionTime(long netExecutionTime) {
-		this.netExecutionTime = netExecutionTime;
+		return net;
 	}
 
 	public List<CallStackElement> getChildren() {
@@ -67,28 +88,12 @@ public class CallStackElement {
 		this.children = children;
 	}
 
-	public String getClassName() {
-		return className;
-	}
-
-	public void setClassName(String className) {
-		this.className = className;
-	}
-
 	public String getSignature() {
 		return signature;
 	}
 
 	public void setSignature(String signature) {
 		this.signature = signature;
-	}
-
-	public void addToNetExecutionTime(long executionTime) {
-		netExecutionTime += executionTime;
-	}
-
-	public void subtractFromNetExecutionTime(long executionTime) {
-		netExecutionTime -= executionTime;
 	}
 
 	public CallStackElement getParent() {
@@ -107,9 +112,14 @@ public class CallStackElement {
 		this.callStackJson = callStackJson;
 	}
 
+	public void profile(String signature, long executionTime) {
+		this.signature = signature;
+		this.executionTime = executionTime;
+	}
+
 	@Override
 	public String toString() {
-		return toString(true);
+		return toString(false);
 	}
 
 	public String toString(boolean asciiArt) {
@@ -127,8 +137,8 @@ public class CallStackElement {
 			if (!isRoot()) {
 				if (isLastChild()) {
 					indentationStack.push("    ");
-				} else  {
-					indentationStack.push(asciiArt ? "│   ": "|   ");
+				} else {
+					indentationStack.push(asciiArt ? "│   " : "|   ");
 				}
 			}
 			callStats.logStats(totalExecutionTimeNs, indentationStack, log, asciiArt);
@@ -160,7 +170,7 @@ public class CallStackElement {
 			if (isLastChild()) {
 				sb.append(asciiArt ? "└── " : "`-- ");
 			} else {
-				sb.append(asciiArt ? "├── ": "|-- ");
+				sb.append(asciiArt ? "├── " : "|-- ");
 			}
 		}
 

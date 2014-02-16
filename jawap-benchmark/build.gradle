@@ -2,13 +2,60 @@ apply plugin: 'application'
 apply from: 'aspectj.gradle'
 
 //mainClassName = "de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark"
-mainClassName = "de.isys.jawap.benchmark.ProfilerBenchmark"
-
+mainClassName = "de.isys.jawap.benchmark.profiler.ProfilerBenchmark"
+applicationDefaultJvmArgs = [/*'-Xmx12g', '-Xms12g', '-XX:NewSize=11900m', '-XX:MaxNewSize=11900m',*/
+		'-XX:+PrintCompilation', '-verbose:gc',
+		"-javaagent:$projectDir/jawap-instrument-javassist/build/libs/jawap-instrument-javassist-0.1-SNAPSHOT.jar"]
 
 dependencies {
 	compile project(":jawap-collector:jawap-collector-profiler")
-	compile 'com.google.caliper:caliper:1.0-beta-1'
+	compile 'com.google.caliper:caliper:1.0-beta-SNAPSHOT'
 	// The AspectJ compiler does't like the jpa annotations to not be present
 	compile "org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final"
+	compile 'com.sun.jersey:jersey-core:1.11'
+}
+
+task simpleProfilerBenchmark(dependsOn: 'classes', type: JavaExec) {
+	main = 'com.google.caliper.runner.CaliperMain'
+	classpath = sourceSets.main.runtimeClasspath
+	args 'de.isys.jawap.benchmark.profiler.simple.SimpleProfilerBenchmark', '--instrument', 'runtime', '--trials', '10'
+}
+
+task profilerBenchmark(dependsOn: ['classes', ':jawap-benchmark:jawap-instrument-javassist:jar'], type: JavaExec) {
+	doLast {
+		def javaagent = getJavaagentPath(project)
+		if (javaagent.contains(' ')) {
+			throw new IllegalArgumentException("Space detected in javaagent path: '$javaagent'\n" +
+					"copy this project in a directory without spaces and try again")
+		}
+	}
+	main = 'com.google.caliper.runner.CaliperMain'
+	classpath = sourceSets.main.runtimeClasspath
+
+	args 'de.isys.jawap.benchmark.profiler.ProfilerBenchmark', '--instrument', 'runtime', '--trials', '10',
+			"-Cvm.args=-javaagent:${getJavaagentPath(project)}"
+}
+
+private String getJavaagentPath(project) {
+//	"$projectDir/jawap-instrument-javassist/build/libs/jawap-instrument-javassist.jar"
+	"E:/jawap-instrument-javassist-0.1-SNAPSHOT.jar"
+}
+
+task variableMethodsBenchmark(dependsOn: 'classes', type: JavaExec) {
+	main = 'com.google.caliper.runner.CaliperMain'
+	classpath = sourceSets.main.runtimeClasspath
+	args 'de.isys.jawap.benchmark.profiler.VariableMethodsBenchmark', '--instrument', 'runtime', '--trials', '1'
+}
+
+task instrumentationBenchmark(dependsOn: 'classes', type: JavaExec) {
+	main = 'com.google.caliper.runner.CaliperMain'
+	classpath = sourceSets.main.runtimeClasspath
+	args 'de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark', '--instrument', 'runtime', '--trials', '10'
+}
+
+task allBenchmarks(dependsOn: ['simpleProfilerBenchmark', 'profilerBenchmark', 'variableMethodsBenchmark', 'instrumentationBenchmark'])
+
+configurations {
+	all*.exclude group: 'org.glassfish.jersey.core', module: 'jersey-client'
 }
 

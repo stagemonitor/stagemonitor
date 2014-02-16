@@ -9,4 +9,5 @@ include 'jawap-collector',
 		'jawap-collector:jawap-collector-starter-spring-web',
 		'jawap-collector:jawap-collector-starter-web',
 		'jawap-collector:jawap-collector-web',
-	'jawap-benchmark', 'jawap-server', 'jawap-entities'
+		'jawap-collector:jawap-collector-web',
+	'jawap-benchmark', 'jawap-benchmark:jawap-instrument-javassist', 'jawap-server', 'jawap-entities'

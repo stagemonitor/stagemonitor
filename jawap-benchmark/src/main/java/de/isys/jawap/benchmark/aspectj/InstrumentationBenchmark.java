@@ -1,82 +1,82 @@
 package de.isys.jawap.benchmark.aspectj;
 
 import com.google.caliper.Benchmark;
+import com.google.caliper.api.VmOptions;
 
-public class InstrumentationBenchmark extends Benchmark {
+@VmOptions({"-Xmx6144m", "-Xms6144m", "-XX:NewSize=6000m", "-XX:MaxNewSize=6000m"})
+public class InstrumentationBenchmark {
 
 	private InstrumentationTestObject instrumentationTestObject = new InstrumentationTestObject();
 
-	public long timeNoInstrumentation(long reps) {
+	@Benchmark
+	public long noAspectPrimitiveLong(long reps) {
 		AspectJAspect.dummy = 0;
 		long dummy = 0;
 		for (long i = 0; i < reps; i++) {
-			dummy = instrumentationTestObject.testMethod(i);
+			dummy = instrumentationTestObject.noAspectPrimitiveLong(i);
 		}
+		if (AspectJAspect.dummy != reps * 2)
+			throw new IllegalStateException("Expected " + reps * 2 + " runs, actual runs: " + AspectJAspect.dummy);
 		return dummy;
 	}
 
-	public long timeAround(long reps) {
+	@Benchmark
+	public long noAspectObjectLong(long reps) {
 		AspectJAspect.dummy = 0;
 		long dummy = 0;
 		for (long i = 0; i < reps; i++) {
-			dummy = instrumentationTestObject.instrumentationAroundTestMethod(i);
+			dummy = instrumentationTestObject.noAspectObjectLong(i);
 		}
+		if (AspectJAspect.dummy != reps * 2)
+			throw new IllegalStateException("Expected " + reps * 2 + " runs, actual runs: " + AspectJAspect.dummy);
 		return dummy;
 	}
 
-	public long timeBeforeAfter(long reps) {
+	@Benchmark
+	public long aroundPrimitiveLong(long reps) {
 		AspectJAspect.dummy = 0;
 		long dummy = 0;
 		for (long i = 0; i < reps; i++) {
-			dummy = instrumentationTestObject.instrumentationBeforeAfterTestMethod(i);
+			dummy = instrumentationTestObject.aroundPrimitiveLong(i);
 		}
+		if (AspectJAspect.dummy != reps * 2)
+			throw new IllegalStateException("Expected " + reps * 2 + " runs, actual runs: " + AspectJAspect.dummy);
 		return dummy;
 	}
 
-//	public static void main(String[] args) {
-//			CaliperMain.main(InstrumentationBenchmark.class, args);
-//		}
+	@Benchmark
+	public long aroundObjectLong(long reps) {
+		AspectJAspect.dummy = 0;
+		long dummy = 0;
+		for (long i = 0; i < reps; i++) {
+			dummy = instrumentationTestObject.aroundObjectLong(i);
+		}
+		if (AspectJAspect.dummy != reps * 2)
+			throw new IllegalStateException("Expected " + reps * 2 + " runs, actual runs: " + AspectJAspect.dummy);
+		return dummy;
+	}
 
-	public static void main(String[] args) {
-		InstrumentationBenchmark instrumentationBenchmark = new InstrumentationBenchmark();
-		final long warmups = 10000000L;
-		final long runs = 1000000000L;
-		// warmup
-		instrumentationBenchmark.timeNoInstrumentation(warmups);
-		instrumentationBenchmark.timeAround(warmups);
-		instrumentationBenchmark.timeBeforeAfter(warmups);
+	@Benchmark
+	public long beforeAfterPrimitiveLong(long reps) {
+		AspectJAspect.dummy = 0;
+		long dummy = 0;
+		for (long i = 0; i < reps; i++) {
+			dummy = instrumentationTestObject.beforeAfterPrimitiveLong(i);
+		}
+		if (AspectJAspect.dummy != reps * 2)
+			throw new IllegalStateException("Expected " + reps * 2 + " runs, actual runs: " + AspectJAspect.dummy);
+		return dummy;
+	}
 
-		// benchmark
-		long start = System.nanoTime();
-		instrumentationBenchmark.timeNoInstrumentation(runs);
-		final long timeNoInstrumentation = System.nanoTime() - start;
-		System.out.println("timeNoInstrumentation");
-		System.out.println("total time: " + timeNoInstrumentation);
-		System.out.println("time per method: " + (double) timeNoInstrumentation / runs);
-		System.out.println("ratio: " + (double) timeNoInstrumentation / timeNoInstrumentation);
-		if (AspectJAspect.dummy != runs * 2)
-			throw new IllegalStateException("Expected " + runs * 2 + " runs, actual runs: " + AspectJAspect.dummy);
-
-		start = System.nanoTime();
-		instrumentationBenchmark.timeAround(runs);
-		final long timeAround = System.nanoTime() - start;
-		System.out.println("\ntimeAround");
-		System.out.println("total time: " + timeAround);
-		System.out.println("time per method: " + (double) timeAround / runs);
-		System.out.println("ratio: " + (double) timeAround / timeNoInstrumentation);
-		if (AspectJAspect.dummy != runs * 2)
-			throw new IllegalStateException("Expected " + runs * 2 + " runs, actual runs: " + AspectJAspect.dummy);
-
-		start = System.nanoTime();
-		instrumentationBenchmark.timeBeforeAfter(runs);
-		final long timeBeforeAfter = System.nanoTime() - start;
-		System.out.println("\ntimeBeforeAfter");
-		System.out.println("total time: " + timeBeforeAfter);
-		System.out.println("time per method: " + (double) timeBeforeAfter / runs);
-		System.out.println("ratio: " + (double) timeBeforeAfter / timeNoInstrumentation);
-		if (AspectJAspect.dummy != runs * 2)
-			throw new IllegalStateException("Expected " + runs * 2 + " runs, actual runs: " + AspectJAspect.dummy);
-
-
+	@Benchmark
+	public long beforeAfterObjectLong(long reps) {
+		AspectJAspect.dummy = 0;
+		long dummy = 0;
+		for (long i = 0; i < reps; i++) {
+			dummy = instrumentationTestObject.beforeAfterObjectLong(i);
+		}
+		if (AspectJAspect.dummy != reps * 2)
+			throw new IllegalStateException("Expected " + reps * 2 + " runs, actual runs: " + AspectJAspect.dummy);
+		return dummy;
 	}
 }

@@ -6,10 +6,10 @@ import org.aspectj.lang.annotation.*;
 @Aspect
 public class AspectJAspect {
 
-	public static int dummy = 0;
+	public static long dummy = 0;
 
 
-	@Around("execution(* de.isys.jawap.benchmark.aspectj.InstrumentationTestObject.instrumentationAroundTestMethod(..))")
+	@Around("execution(* de.isys.jawap.benchmark.aspectj.InstrumentationTestObject.around*(..))")
 	public Object around(ProceedingJoinPoint pPjp) throws Throwable {
 		dummy++;
 		try {
@@ -19,7 +19,7 @@ public class AspectJAspect {
 		}
 	}
 
-	@Pointcut("execution(* de.isys.jawap.benchmark.aspectj.InstrumentationTestObject.instrumentationBeforeAfterTestMethod(..))")
+	@Pointcut("execution(* de.isys.jawap.benchmark.aspectj.InstrumentationTestObject.beforeAfter*(..))")
 	public void beforeAfter() {
 	}
 

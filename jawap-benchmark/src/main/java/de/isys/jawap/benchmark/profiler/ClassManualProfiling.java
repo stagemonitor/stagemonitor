@@ -1,17 +1,15 @@
-package de.isys.jawap.benchmark;
+package de.isys.jawap.benchmark.profiler;
 
 import de.isys.jawap.collector.profiler.Profiler;
 
 public class ClassManualProfiling {
-	private static final String className = "ClassManualProfiling";
-
 
 	public int method1() {
 		Profiler.start();
 		try {
 			return method2(1) + method3() + method5();
 		} finally {
-			Profiler.stop("public int method1()");
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method1()");
 		}
 	}
 
@@ -20,7 +18,7 @@ public class ClassManualProfiling {
 		try {
 			return 1 + i;
 		} finally {
-			Profiler.stop("public int method2(int i)");
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method2(int i)");
 		}
 	}
 
@@ -29,7 +27,7 @@ public class ClassManualProfiling {
 		try {
 			return method4();
 		} finally {
-			Profiler.stop("public int method3()");
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method3()");
 		}
 	}
 
@@ -38,7 +36,7 @@ public class ClassManualProfiling {
 		try {
 			return 4;
 		} finally {
-			Profiler.stop("public int method4()");
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method4()");
 		}
 	}
 
@@ -47,7 +45,7 @@ public class ClassManualProfiling {
 		try {
 			return method6() + method7();
 		} finally {
-			Profiler.stop("public int method5()");
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method5()");
 		}
 	}
 
@@ -56,7 +54,7 @@ public class ClassManualProfiling {
 		try {
 			return 6;
 		} finally {
-			Profiler.stop("public int method6()");
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method6()");
 		}
 	}
 
@@ -65,8 +63,12 @@ public class ClassManualProfiling {
 		try {
 			return 7;
 		} finally {
-			Profiler.stop("public int method7()");
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method7()");
 		}
+	}
+
+	public static void main(String[] args) {
+		new ClassManualProfiling().method1();
 	}
 
 }

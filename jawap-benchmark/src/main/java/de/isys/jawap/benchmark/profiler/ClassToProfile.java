@@ -1,4 +1,4 @@
-package de.isys.jawap.benchmark;
+package de.isys.jawap.benchmark.profiler;
 
 public class ClassToProfile {
 

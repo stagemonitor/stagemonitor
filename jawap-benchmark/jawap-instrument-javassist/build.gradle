@@ -1,0 +1,19 @@
+dependencies {
+	compile 'org.javassist:javassist:3.18.1-GA'
+}
+
+
+jar.doFirst{
+	manifest {
+		attributes("Manifest-Version"       : "1.0",
+				"Agent-Class": "my.agent.MyAgent",
+				"Can-Redefine-Classes": true,
+				"Can-Retransform-Classes": true,
+				"Premain-Class": "de.isys.jawap.instrument.JavassistInstrumenter"
+		)
+	}
+}
+jar {
+	archiveName = "$baseName.$extension"
+	from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}
