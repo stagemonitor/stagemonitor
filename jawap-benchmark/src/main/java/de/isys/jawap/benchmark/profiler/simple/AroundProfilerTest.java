@@ -61,9 +61,27 @@ public class AroundProfilerTest {
 	private int method7() {
 		CallStackElement cse = AroundProfiler.start();
 		try {
-			return 7;
+			return method8();
 		} finally {
 			AroundProfiler.stop(cse, "public int de.isys.jawap.benchmark.profiler.ClassToProfile.method7()");
+		}
+	}
+
+	private int method8() {
+		CallStackElement cse = AroundProfiler.start();
+		try {
+			return method9();
+		} finally {
+			AroundProfiler.stop(cse, "public int de.isys.jawap.benchmark.profiler.ClassToProfile.method8()");
+		}
+	}
+
+	private int method9() {
+		CallStackElement cse = AroundProfiler.start();
+		try {
+			return 9;
+		} finally {
+			AroundProfiler.stop(cse, "public int de.isys.jawap.benchmark.profiler.ClassToProfile.method9()");
 		}
 	}
 

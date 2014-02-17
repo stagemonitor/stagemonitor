@@ -1,6 +1,7 @@
 package de.isys.jawap.benchmark.opencore;
 
 import de.isys.jawap.collector.profiler.ExecutionContextLogger;
+import de.isys.jawap.entities.profiler.CallStackElement;
 import de.isys.jawap.entities.web.HttpExecutionContext;
 import de.isys.jawap.collector.profiler.Profiler;
 
@@ -39,10 +40,12 @@ public class OpenCoreBenchmark implements Runnable {
 
 	public void run() {
 		HttpExecutionContext httpRequestStats = new HttpExecutionContext();
-		Profiler.setExecutionContext(httpRequestStats);
+		final CallStackElement root = new CallStackElement();
+		Profiler.activateProfiling(root);
 		for (int i = 0; i < RUN_COUNT; i++)
 			iterate();
-		executionContextLogger.logStats(httpRequestStats);
+		Profiler.stop("root");
+		System.out.println(root.toString());
 	}
 
 	private void iterate() {

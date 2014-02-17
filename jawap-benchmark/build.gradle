@@ -18,7 +18,7 @@ dependencies {
 task simpleProfilerBenchmark(dependsOn: 'classes', type: JavaExec) {
 	main = 'com.google.caliper.runner.CaliperMain'
 	classpath = sourceSets.main.runtimeClasspath
-	args 'de.isys.jawap.benchmark.profiler.simple.SimpleProfilerBenchmark', '--instrument', 'runtime', '--trials', '10'
+	args 'de.isys.jawap.benchmark.profiler.simple.SimpleProfilerBenchmark', '--instrument', 'runtime', '--trials', '1'
 }
 
 task profilerBenchmark(dependsOn: ['classes', ':jawap-benchmark:jawap-instrument-javassist:jar'], type: JavaExec) {
@@ -32,7 +32,7 @@ task profilerBenchmark(dependsOn: ['classes', ':jawap-benchmark:jawap-instrument
 	main = 'com.google.caliper.runner.CaliperMain'
 	classpath = sourceSets.main.runtimeClasspath
 
-	args 'de.isys.jawap.benchmark.profiler.ProfilerBenchmark', '--instrument', 'runtime', '--trials', '10',
+	args 'de.isys.jawap.benchmark.profiler.ProfilerBenchmark', '--instrument', 'runtime', '--trials', '1',
 			"-Cvm.args=-javaagent:${getJavaagentPath(project)}"
 }
 
@@ -50,10 +50,10 @@ task variableMethodsBenchmark(dependsOn: 'classes', type: JavaExec) {
 task instrumentationBenchmark(dependsOn: 'classes', type: JavaExec) {
 	main = 'com.google.caliper.runner.CaliperMain'
 	classpath = sourceSets.main.runtimeClasspath
-	args 'de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark', '--instrument', 'runtime', '--trials', '10'
+	args 'de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark', '--instrument', 'runtime', '--trials', '1'
 }
 
-task allBenchmarks(dependsOn: ['simpleProfilerBenchmark', 'profilerBenchmark', 'variableMethodsBenchmark', 'instrumentationBenchmark'])
+task allBenchmarks(dependsOn: ['simpleProfilerBenchmark', 'profilerBenchmark'/*, 'variableMethodsBenchmark', 'instrumentationBenchmark'*/])
 
 configurations {
 	all*.exclude group: 'org.glassfish.jersey.core', module: 'jersey-client'

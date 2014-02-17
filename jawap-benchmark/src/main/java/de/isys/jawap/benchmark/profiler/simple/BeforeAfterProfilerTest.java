@@ -1,5 +1,7 @@
 package de.isys.jawap.benchmark.profiler.simple;
 
+import de.isys.jawap.collector.profiler.Profiler;
+
 public class BeforeAfterProfilerTest {
 
 	public int method1() {
@@ -59,14 +61,28 @@ public class BeforeAfterProfilerTest {
 	private int method7() {
 		BeforeAfterProfiler.start();
 		try {
-			return 7;
+			return method8();
 		} finally {
 			BeforeAfterProfiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method7()");
 		}
 	}
 
-	public static void main(String[] args) {
-		new BeforeAfterProfilerTest().method1();
+	private int method8() {
+		BeforeAfterProfiler.start();
+		try {
+			return method9();
+		} finally {
+			BeforeAfterProfiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method8()");
+		}
+	}
+
+	private int method9() {
+		BeforeAfterProfiler.start();
+		try {
+			return 9;
+		} finally {
+			BeforeAfterProfiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method9()");
+		}
 	}
 
 }

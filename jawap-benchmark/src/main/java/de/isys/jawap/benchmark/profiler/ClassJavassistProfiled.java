@@ -31,14 +31,15 @@ public class ClassJavassistProfiled {
 	}
 
 	private int method7() {
-		return 7;
+		return method8();
 	}
 
-	public static void main(String[] args) {
-		HttpExecutionContext executionContext = new HttpExecutionContext();
-		Profiler.setExecutionContext(executionContext);
-		new ClassJavassistProfiled().method1();
-		System.out.println(executionContext);
+	private int method8() {
+		return method9();
+	}
+
+	private int method9() {
+		return 9;
 	}
 
 }

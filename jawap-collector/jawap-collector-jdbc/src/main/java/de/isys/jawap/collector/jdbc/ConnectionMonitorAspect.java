@@ -36,7 +36,8 @@ public class ConnectionMonitorAspect {
 			connection = (Connection) pjp.proceed();
 			return connection;
 		} finally {
-			final CallStackElement callStackElement = Profiler.stop(pjp.getSignature().toString());
+			Profiler.stop(pjp.getSignature().toString());
+			final CallStackElement callStackElement = Profiler.getMethodCallParent();
 			if (connection != null && callStackElement != null) {
 				DataSource dataSource = ensureUrlExistsForDataSource(pjp, connection);
 				String url = dataSourceUrlMap.get(dataSource);

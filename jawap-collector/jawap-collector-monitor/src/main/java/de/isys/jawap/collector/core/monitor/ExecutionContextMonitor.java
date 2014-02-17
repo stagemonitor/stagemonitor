@@ -8,6 +8,7 @@ import de.isys.jawap.collector.core.rest.MeasurementSessionRestClient;
 import de.isys.jawap.collector.profiler.ExecutionContextLogger;
 import de.isys.jawap.collector.profiler.Profiler;
 import de.isys.jawap.entities.MeasurementSession;
+import de.isys.jawap.entities.profiler.CallStackElement;
 import de.isys.jawap.entities.profiler.ExecutionContext;
 import de.isys.jawap.util.GraphiteEncoder;
 import org.apache.commons.logging.Log;
@@ -75,7 +76,9 @@ public class ExecutionContextMonitor {
 				requestContext.setName(requestName);
 				timer = metricRegistry.timer(getTimerName(requestName));
 				if (profileThisRequest(timer)) {
-					Profiler.setExecutionContext(requestContext);
+					final CallStackElement root = new CallStackElement();
+					Profiler.activateProfiling(root);
+					requestContext.setCallStack(root);
 					Profiler.start();
 				}
 			} catch (RuntimeException e) {
@@ -96,6 +99,7 @@ public class ExecutionContextMonitor {
 
 						if (requestContext.getCallStack() != null) {
 							Profiler.stop("total");
+							Profiler.clearMethodCallParent();
 							reportCallStack(monitoredExecution, requestContext);
 						}
 						if (timer != null) {

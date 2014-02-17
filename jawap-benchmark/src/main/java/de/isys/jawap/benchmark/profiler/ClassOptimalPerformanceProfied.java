@@ -1,6 +1,8 @@
 package de.isys.jawap.benchmark.profiler;
 
 
+import de.isys.jawap.collector.profiler.Profiler;
+
 public class ClassOptimalPerformanceProfied {
 
 	public int method1() {
@@ -60,9 +62,27 @@ public class ClassOptimalPerformanceProfied {
 	private int method7() {
 		OptimalPerformanceProfilerMock.start();
 		try {
-			return 7;
+			return method8();
 		} finally {
 			OptimalPerformanceProfilerMock.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method7()");
+		}
+	}
+
+	private int method8() {
+		OptimalPerformanceProfilerMock.start();
+		try {
+			return method9();
+		} finally {
+			OptimalPerformanceProfilerMock.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method8()");
+		}
+	}
+
+	private int method9() {
+		OptimalPerformanceProfilerMock.start();
+		try {
+			return 9;
+		} finally {
+			OptimalPerformanceProfilerMock.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method9()");
 		}
 	}
 

@@ -1,9 +1,10 @@
 package de.isys.jawap.benchmark.profiler;
 
+import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.api.VmOptions;
 import de.isys.jawap.collector.profiler.Profiler;
-import de.isys.jawap.entities.web.HttpExecutionContext;
+import de.isys.jawap.entities.profiler.CallStackElement;
 
 import java.lang.management.ManagementFactory;
 
@@ -15,27 +16,27 @@ public class VariableMethodsBenchmark {
 	@Param({"1", "10", "100", "1000"})
 	private int iterations;
 
-	@com.google.caliper.Benchmark
+	@Benchmark
 	public int testManualProfiling(int iter) {
 		int dummy = 0;
 		int innerIterations = iterations;
-		HttpExecutionContext executionContext = new HttpExecutionContext();
+		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
-			Profiler.setExecutionContext(executionContext);
-			executionContext.setCallStack(null);
+			root = new CallStackElement();
+			Profiler.activateProfiling(root);
 			Profiler.start();
 			for (int j = 0; j < innerIterations; j++) {
 				dummy |= classManualProfiling.method1();
 			}
 			Profiler.stop("root");
 		}
-		assertProfilingWorks(executionContext);
+		assertProfilingWorks(root);
 		return dummy;
 	}
 
-	private void assertProfilingWorks(HttpExecutionContext executionContext) {
-		if (executionContext.getCallStack() == null ||executionContext.getCallStack().getChildren().size() != iterations) {
-			System.out.println(executionContext);
+	private void assertProfilingWorks(CallStackElement cse) {
+		if (cse == null || cse.getChildren().size() != iterations) {
+			System.out.println(cse);
 			throw new IllegalStateException("profiling did not work! "+ ManagementFactory.getRuntimeMXBean().getInputArguments());
 		}
 	}

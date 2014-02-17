@@ -28,7 +28,14 @@ public class ClassNotToProfile {
 	}
 
 	private int method7() {
-		return 7;
+		return method8();
 	}
 
+	private int method8() {
+		return method9();
+	}
+
+	private int method9() {
+		return 9;
+	}
 }

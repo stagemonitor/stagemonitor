@@ -39,8 +39,4 @@ public class SimpleProfilerBenchmark {
 		}
 		return dummy;
 	}
-
-	public static void main(String[] args) {
-		new SimpleProfilerBenchmark().aroundProfilerTest(1);
-	}
 }

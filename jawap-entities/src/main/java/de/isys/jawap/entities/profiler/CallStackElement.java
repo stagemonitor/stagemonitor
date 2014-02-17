@@ -38,6 +38,9 @@ public class CallStackElement {
 	public CallStackElement(CallStackElement parent, long startTimestamp) {
 		this.parent = parent;
 		executionTime = startTimestamp;
+		if (parent != null) {
+			parent.getChildren().add(this);
+		}
 	}
 
 	/**
@@ -116,6 +119,27 @@ public class CallStackElement {
 		this.signature = signature;
 		this.executionTime = executionTime;
 	}
+
+	public CallStackElement profile2(String signature, long timestamp) {
+		this.signature = signature;
+		this.executionTime = timestamp - this.executionTime;
+		return parent;
+	}
+//
+//	public CallStackElement profile2(String signature, long timestamp, long minExecutionTime) {
+//		this.signature = signature;
+//		long executionTime = timestamp - this.executionTime; // executionTime is initialized to start timestamp
+//
+//		if (executionTime >= minExecutionTime) {
+//			this.signature = signature;
+//			this.executionTime = executionTime;
+//		} else if (parent != null) {
+//			// this is always the last entry in parent.getChildren()
+//			parent.getChildren().remove(parent.getChildren().size() - 1);
+//		}
+//		return parent;
+//	}
+
 
 	@Override
 	public String toString() {

@@ -61,9 +61,27 @@ public class ClassManualProfiling {
 	private int method7() {
 		Profiler.start();
 		try {
-			return 7;
+			return method8();
 		} finally {
 			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method7()");
+		}
+	}
+
+	private int method8() {
+		Profiler.start();
+		try {
+			return method9();
+		} finally {
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method8()");
+		}
+	}
+
+	private int method9() {
+		Profiler.start();
+		try {
+			return 9;
+		} finally {
+			Profiler.stop("public int de.isys.jawap.benchmark.profiler.ClassToProfile.method9()");
 		}
 	}
 
