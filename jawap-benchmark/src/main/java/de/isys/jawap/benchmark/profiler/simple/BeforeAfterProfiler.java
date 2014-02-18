@@ -7,8 +7,7 @@ public class BeforeAfterProfiler {
 	static final ThreadLocal<CallStackElement> methodCallParent = new ThreadLocal<CallStackElement>();
 
 	public static void start() {
-		CallStackElement cse = CallStackElement.newInstance(methodCallParent.get());
-		methodCallParent.set(cse);
+		methodCallParent.set(new CallStackElement(methodCallParent.get()));
 	}
 
 	public static void stop(String signature) {

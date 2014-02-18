@@ -53,7 +53,7 @@ task instrumentationBenchmark(dependsOn: 'classes', type: JavaExec) {
 	args 'de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark', '--instrument', 'runtime', '--trials', '1'
 }
 
-task allBenchmarks(dependsOn: ['simpleProfilerBenchmark', 'profilerBenchmark'/*, 'variableMethodsBenchmark', 'instrumentationBenchmark'*/])
+task allBenchmarks(dependsOn: ['simpleProfilerBenchmark', 'profilerBenchmark'/*, 'variableMethodsBenchmark'*/, 'instrumentationBenchmark'])
 
 configurations {
 	all*.exclude group: 'org.glassfish.jersey.core', module: 'jersey-client'

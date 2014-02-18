@@ -10,8 +10,8 @@ public class SimpleProfilerBenchmark {
 	private AroundProfilerTest aroundProfilerTest = new AroundProfilerTest();
 	private BeforeAfterProfilerTest beforeAfterProfilerTest = new BeforeAfterProfilerTest();
 
-//	@Benchmark
-	public int aroundProfilerTest(int iter) {
+	@Benchmark
+	public int aroundProfiler(int iter) {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {

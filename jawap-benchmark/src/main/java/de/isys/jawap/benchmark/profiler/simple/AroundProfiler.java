@@ -7,8 +7,7 @@ public class AroundProfiler {
       new ThreadLocal<CallStackElement>();
 
   public static CallStackElement start() {
-    CallStackElement cse = CallStackElement.
-        newInstance(methodCallParent.get());
+    CallStackElement cse = new CallStackElement(methodCallParent.get());
     methodCallParent.set(cse);
     return cse;
   }

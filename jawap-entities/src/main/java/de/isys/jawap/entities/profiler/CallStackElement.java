@@ -36,30 +36,18 @@ public class CallStackElement {
 		this(parent, System.nanoTime());
 	}
 
+	/**
+	 * This static factory method also sets the parent-child relationships.
+	 * @param parent the parent
+	 * @param startTimestamp the timestamp at the beginning of the method
+	 */
 	public CallStackElement(CallStackElement parent, long startTimestamp) {
-		this.parent = parent;
 		executionTime = startTimestamp;
 		if (parent != null) {
+			this.parent = parent;
 			parent.getChildren().add(this);
 		}
 	}
-
-	/**
-	 * This static factory method also sets the parent-child relationships.
-	 * Therefore it must perform a null check on parent, which costs about 5ns.
-	 * @param parent the parent
-	 * @return the newly created instance
-	 */
-	public static CallStackElement newInstance(CallStackElement parent) {
-		CallStackElement cse = new CallStackElement();
-		cse.setParent(parent);
-		if (parent != null) {
-			parent.getChildren().add(cse);
-		}
-		cse.setExecutionTime(System.nanoTime());
-		return cse;
-	}
-
 
 	/**
 	 * The execution time of the Method.
