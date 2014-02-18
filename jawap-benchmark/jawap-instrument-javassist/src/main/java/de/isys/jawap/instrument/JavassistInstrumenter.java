@@ -28,7 +28,7 @@ public class JavassistInstrumenter implements ClassFileTransformer {
 				CtClass cc = cp.makeClass(new java.io.ByteArrayInputStream(classfileBuffer));
 				for (CtMethod m : cc.getDeclaredMethods()) {
 					m.insertBefore("de.isys.jawap.collector.profiler.Profiler.start();");
-					m.insertAfter("de.isys.jawap.collector.profiler.Profiler.stop(\""+m.getLongName()+"\");");
+					m.insertAfter("de.isys.jawap.collector.profiler.Profiler.stop(\""+m.getLongName()+"\");", true);
 				}
 				byteCode = cc.toBytecode();
 				cc.detach();

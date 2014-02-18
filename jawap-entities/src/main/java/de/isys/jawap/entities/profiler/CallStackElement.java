@@ -216,17 +216,6 @@ public class CallStackElement {
 		return parent == null;
 	}
 
-	public static void main(String[] args) {
-		CallStackElement c0 = new CallStackElement();
-		CallStackElement c1_1 = new CallStackElement(c0);
-		CallStackElement c2_1 = new CallStackElement(c1_1);
-		CallStackElement c2_2 = new CallStackElement(c1_1);
-		c1_1.setChildren(Arrays.asList(c2_1, c2_2));
-		CallStackElement c1_2 = new CallStackElement(c0);
-		c0.setChildren(Arrays.asList(c1_1, c1_2));
-		System.out.println(c0);
-	}
-
 	public Integer getId() {
 		return id;
 	}
