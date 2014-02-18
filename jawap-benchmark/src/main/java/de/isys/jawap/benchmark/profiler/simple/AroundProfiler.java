@@ -15,8 +15,8 @@ public class AroundProfiler {
 
   public static void stop(CallStackElement currentStats,
                           String signature) {
-    currentStats.profile(signature, System.nanoTime() -
-        currentStats.getExecutionTime());
+    currentStats.executionStopped(signature, System.nanoTime() -
+			currentStats.getExecutionTime());
     methodCallParent.set(currentStats.getParent());
   }
 

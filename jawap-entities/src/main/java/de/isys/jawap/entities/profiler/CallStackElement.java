@@ -29,6 +29,7 @@ public class CallStackElement {
 	private List<CallStackElement> children = new LinkedList<CallStackElement>();
 
 	public CallStackElement() {
+		this(null);
 	}
 
 	public CallStackElement(CallStackElement parent) {
@@ -115,30 +116,33 @@ public class CallStackElement {
 		this.callStackJson = callStackJson;
 	}
 
-	public void profile(String signature, long executionTime) {
+	private void removeLastChild() {
+		children.remove(children.size() - 1);
+	}
+
+	public void executionStopped(String signature, long executionTime) {
 		this.signature = signature;
 		this.executionTime = executionTime;
 	}
 
-	public CallStackElement profile2(String signature, long timestamp) {
-		this.signature = signature;
-		this.executionTime = timestamp - this.executionTime;
+	/**
+	 *
+	 * @param signature the signature of the profiled method
+	 * @param timestamp the stop timestamp
+	 * @param minExecutionTime the threshold for the minimum execution time
+	 * @return the parent of this {@link CallStackElement}
+	 */
+	public CallStackElement executionStopped(String signature, long timestamp, long minExecutionTime) {
+		long executionTime = timestamp - this.executionTime; // executionTime is initialized to start timestamp
+		if (executionTime >= minExecutionTime) {
+			this.signature = signature;
+			this.executionTime = executionTime;
+		} else if (parent != null) {
+			// <this> is always the last entry in parent.getChildren()
+			parent.removeLastChild();
+		}
 		return parent;
 	}
-//
-//	public CallStackElement profile2(String signature, long timestamp, long minExecutionTime) {
-//		this.signature = signature;
-//		long executionTime = timestamp - this.executionTime; // executionTime is initialized to start timestamp
-//
-//		if (executionTime >= minExecutionTime) {
-//			this.signature = signature;
-//			this.executionTime = executionTime;
-//		} else if (parent != null) {
-//			// this is always the last entry in parent.getChildren()
-//			parent.getChildren().remove(parent.getChildren().size() - 1);
-//		}
-//		return parent;
-//	}
 
 
 	@Override

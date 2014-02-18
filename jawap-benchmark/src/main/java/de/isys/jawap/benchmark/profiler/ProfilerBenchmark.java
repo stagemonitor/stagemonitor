@@ -17,8 +17,8 @@ public class ProfilerBenchmark {
 	private ClassManualProfiling classManualProfiling = new ClassManualProfiling();
 	private ClassOptimalPerformanceProfied classOptimalPerformanceProfied = new ClassOptimalPerformanceProfied();
 
-	//@Benchmark
-	public int testNoProfiling(long iter) {
+//	@Benchmark
+	public int noProfiling(long iter) {
 		int dummy = 0;
 		for (int i = 0; i < iter; i++) {
 			dummy |= classNotToProfile.method1();
@@ -26,13 +26,15 @@ public class ProfilerBenchmark {
 		return dummy;
 	}
 
-	//@Benchmark
-	public int testOptimalPerformanceProfiling(int iter) {
+	@Benchmark
+	public int theoreticalOptimum(int iter) {
 		int dummy = 0;
 		for (int i = 0; i < iter; i++) {
 			OptimalPerformanceProfilerMock.times.clear();
 			OptimalPerformanceProfilerMock.signatures.clear();
+			OptimalPerformanceProfilerMock.start();
 			dummy |= classOptimalPerformanceProfied.method1();
+			OptimalPerformanceProfilerMock.stop("root");
 		}
 		if (OptimalPerformanceProfilerMock.times.isEmpty() || OptimalPerformanceProfilerMock.signatures.isEmpty()) {
 			throw new IllegalArgumentException("Profiling did not work");
@@ -41,7 +43,7 @@ public class ProfilerBenchmark {
 	}
 
 	@Benchmark
-	public int testManualProfiling(int iter) {
+	public int manual(int iter) {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
@@ -54,8 +56,9 @@ public class ProfilerBenchmark {
 		return dummy;
 	}
 
-	//@Benchmark
-	public int testJavassistProfilingDeactivated(int iter) {
+
+//	@Benchmark
+	public int javassistDeactivated(int iter) {
 		Profiler.deactivateProfiling();
 		if (Profiler.isProfilingActive()) throw new IllegalStateException("profiling is not deactivated!");
 		int dummy = 0;
@@ -64,8 +67,8 @@ public class ProfilerBenchmark {
 		}
 		return dummy;
 	}
-	//@Benchmark
-	public int testJavassistProfiling(int iter) {
+	@Benchmark
+	public int javassist(int iter) {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
@@ -81,8 +84,8 @@ public class ProfilerBenchmark {
 		return dummy;
 	}
 
-	//@Benchmark
-	public int testAspectJProfilerDeactivated(int iter) {
+//	@Benchmark
+	public int aspectJDeactivated(int iter) {
 		Profiler.deactivateProfiling();
 		if (Profiler.isProfilingActive()) throw new IllegalStateException("profiling is not deactivated!");
 		int dummy = 0;
@@ -92,8 +95,8 @@ public class ProfilerBenchmark {
 		return dummy;
 	}
 
-//	@Benchmark
-	public int testAspectJProfiler(int iter) {
+	@Benchmark
+	public int aspectJ(int iter) {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {

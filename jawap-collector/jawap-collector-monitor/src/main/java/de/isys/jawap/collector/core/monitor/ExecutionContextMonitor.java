@@ -79,7 +79,6 @@ public class ExecutionContextMonitor {
 					final CallStackElement root = new CallStackElement();
 					Profiler.activateProfiling(root);
 					requestContext.setCallStack(root);
-					Profiler.start();
 				}
 			} catch (RuntimeException e) {
 				logger.error(e.getMessage(), e);

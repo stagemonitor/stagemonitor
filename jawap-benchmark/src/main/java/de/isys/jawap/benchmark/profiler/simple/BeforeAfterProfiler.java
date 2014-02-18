@@ -13,7 +13,7 @@ public class BeforeAfterProfiler {
 
 	public static void stop(String signature) {
 		CallStackElement currentStats = methodCallParent.get();
-		currentStats.profile(signature, System.nanoTime() - currentStats.getExecutionTime());
+		currentStats.executionStopped(signature, System.nanoTime() - currentStats.getExecutionTime());
 		methodCallParent.set(currentStats.getParent());
 	}
 

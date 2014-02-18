@@ -9,26 +9,27 @@ public class Profiler {
 
 	private static final ThreadLocal<CallStackElement> methodCallParent = new ThreadLocal<CallStackElement>();
 
-	public static boolean isProfilingActive() {
-		return methodCallParent.get() != null;
-	}
-
-	/**
-	 * Starts the profiling of a method
-	 */
 	public static void start() {
-		CallStackElement parent = methodCallParent.get();
+		final CallStackElement parent = methodCallParent.get();
 		if (parent != null) {
 			methodCallParent.set(new CallStackElement(parent));
 		}
 	}
 
 	public static void stop(String signature) {
-		methodCallParent.set(methodCallParent.get().profile2(signature, System.nanoTime()));
+		final CallStackElement currentElement = methodCallParent.get();
+		if (currentElement != null) {
+			methodCallParent.set(currentElement.executionStopped(signature, System.nanoTime(), MIN_EXECUTION_TIME_NANOS));
+		}
+	}
+
+	public static boolean isProfilingActive() {
+		return methodCallParent.get() != null;
 	}
 
 	/**
-	 * Activates the profiling by setting the provided {@link CallStackElement} as the root
+	 * Activates the profiling for the current thread by setting the provided
+	 * {@link CallStackElement} as the root of the call stack
 	 *
 	 * @param root the root of the call stack
 	 */
@@ -36,12 +37,12 @@ public class Profiler {
 		methodCallParent.set(root);
 	}
 
-	public static CallStackElement getMethodCallParent() {
-		return methodCallParent.get();
-	}
-
 	public static void deactivateProfiling() {
 		methodCallParent.set(null);
+	}
+
+	public static CallStackElement getMethodCallParent() {
+		return methodCallParent.get();
 	}
 
 	public static void clearMethodCallParent() {
