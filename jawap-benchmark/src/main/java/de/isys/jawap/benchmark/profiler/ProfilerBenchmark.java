@@ -52,7 +52,7 @@ public class ProfilerBenchmark {
 			dummy |= classManualProfiling.method1();
 			Profiler.stop("root");
 		}
-		assertProfilingWorks(root);
+		assertProfilingWorks(root, iter);
 		return dummy;
 	}
 
@@ -77,10 +77,8 @@ public class ProfilerBenchmark {
 			dummy |= classJavassistProfiled.method1();
 			Profiler.stop("root");
 		}
-		boolean dryRun = iter == 1;
-		if (!dryRun) {
-			assertProfilingWorks(root);
-		}
+		assertProfilingWorks(root, iter);
+
 		return dummy;
 	}
 
@@ -105,11 +103,13 @@ public class ProfilerBenchmark {
 			dummy |= classToProfile.method1();
 			Profiler.stop("root");
 		}
-		assertProfilingWorks(root);
+		if (iter > 0) assertProfilingWorks(root, iter);
 		return dummy;
 	}
 
-	private void assertProfilingWorks(CallStackElement cse) {
+	private void assertProfilingWorks(CallStackElement cse, int iter) {
+		boolean dryRun = iter <= 1;
+		if (dryRun) return;
 		if (cse.getChildren().isEmpty() || !cse.getChildren().get(0).getSignature().contains("method1")) {
 			System.out.println(cse);
 			throw new IllegalStateException("profiling did not work! "+ ManagementFactory.getRuntimeMXBean().getInputArguments());

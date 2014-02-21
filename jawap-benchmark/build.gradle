@@ -1,11 +1,4 @@
-apply plugin: 'application'
 apply from: 'aspectj.gradle'
-
-//mainClassName = "de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark"
-mainClassName = "de.isys.jawap.benchmark.profiler.ProfilerBenchmark"
-applicationDefaultJvmArgs = [/*'-Xmx12g', '-Xms12g', '-XX:NewSize=11900m', '-XX:MaxNewSize=11900m',*/
-		'-XX:+PrintCompilation', '-verbose:gc',
-		"-javaagent:$projectDir/jawap-instrument-javassist/build/libs/jawap-instrument-javassist-0.1-SNAPSHOT.jar"]
 
 dependencies {
 	compile project(":jawap-collector:jawap-collector-profiler")
@@ -18,7 +11,7 @@ dependencies {
 task simpleProfilerBenchmark(dependsOn: 'classes', type: JavaExec) {
 	main = 'com.google.caliper.runner.CaliperMain'
 	classpath = sourceSets.main.runtimeClasspath
-	args 'de.isys.jawap.benchmark.profiler.simple.SimpleProfilerBenchmark', '--instrument', 'runtime', '--trials', '1'
+	args 'de.isys.jawap.benchmark.profiler.simple.SimpleProfilerBenchmark', '--instrument', 'runtime', '--trials', '40'
 }
 
 task profilerBenchmark(dependsOn: ['classes', ':jawap-benchmark:jawap-instrument-javassist:jar'], type: JavaExec) {
@@ -32,28 +25,44 @@ task profilerBenchmark(dependsOn: ['classes', ':jawap-benchmark:jawap-instrument
 	main = 'com.google.caliper.runner.CaliperMain'
 	classpath = sourceSets.main.runtimeClasspath
 
-	args 'de.isys.jawap.benchmark.profiler.ProfilerBenchmark', '--instrument', 'runtime', '--trials', '1',
+	args 'de.isys.jawap.benchmark.profiler.ProfilerBenchmark', '--instrument', 'runtime', '--trials', '40',
+			"-Cvm.args=-javaagent:${getJavaagentPath(project)}"
+}
+
+
+
+task profilerAllocationBenchmark(dependsOn: ['classes', ':jawap-benchmark:jawap-instrument-javassist:jar'], type: JavaExec) {
+	doLast {
+		def javaagent = getJavaagentPath(project)
+		if (javaagent.contains(' ')) {
+			throw new IllegalArgumentException("Space detected in javaagent path: '$javaagent'\n" +
+					"copy this project in a directory without spaces and try again")
+		}
+	}
+	main = 'com.google.caliper.runner.CaliperMain'
+	classpath = sourceSets.main.runtimeClasspath
+
+	args 'de.isys.jawap.benchmark.profiler.ProfilerBenchmark', '--instrument', 'allocation', '--trials', '1',
 			"-Cvm.args=-javaagent:${getJavaagentPath(project)}"
 }
 
 private String getJavaagentPath(project) {
-//	"$projectDir/jawap-instrument-javassist/build/libs/jawap-instrument-javassist.jar"
-	"E:/jawap-instrument-javassist-0.1-SNAPSHOT.jar"
+	"$projectDir/jawap-instrument-javassist/build/libs/jawap-instrument-javassist.jar"
 }
 
 task variableMethodsBenchmark(dependsOn: 'classes', type: JavaExec) {
 	main = 'com.google.caliper.runner.CaliperMain'
 	classpath = sourceSets.main.runtimeClasspath
-	args 'de.isys.jawap.benchmark.profiler.VariableMethodsBenchmark', '--instrument', 'runtime', '--trials', '1'
+	args 'de.isys.jawap.benchmark.profiler.VariableMethodsBenchmark', '--instrument', 'runtime', '--trials', '40'
 }
 
 task instrumentationBenchmark(dependsOn: 'classes', type: JavaExec) {
 	main = 'com.google.caliper.runner.CaliperMain'
 	classpath = sourceSets.main.runtimeClasspath
-	args 'de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark', '--instrument', 'runtime', '--trials', '1'
+	args 'de.isys.jawap.benchmark.aspectj.InstrumentationBenchmark', '--instrument', 'runtime', '--trials', '40'
 }
 
-task allBenchmarks(dependsOn: ['simpleProfilerBenchmark', 'profilerBenchmark'/*, 'variableMethodsBenchmark'*/, 'instrumentationBenchmark'])
+task allBenchmarks(dependsOn: ['simpleProfilerBenchmark', 'profilerBenchmark', 'profilerAllocationBenchmark', 'variableMethodsBenchmark', 'instrumentationBenchmark'])
 
 configurations {
 	all*.exclude group: 'org.glassfish.jersey.core', module: 'jersey-client'
