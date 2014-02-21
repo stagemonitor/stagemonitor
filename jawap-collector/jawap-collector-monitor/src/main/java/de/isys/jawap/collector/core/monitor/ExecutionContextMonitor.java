@@ -28,6 +28,11 @@ public class ExecutionContextMonitor {
 	private static final Log logger = LogFactory.getLog(ExecutionContextMonitor.class);
 	private final ExecutionContextLogger executionContextLogger = new ExecutionContextLogger();
 
+	/**
+	 * helps to detect, if this request is the 'real' one or just the forwarding one.
+	 */
+	private static ThreadLocal<String> actualRequestName = new ThreadLocal<String>();
+
 	private int warmupRequests = 0;
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
 	private AtomicInteger noOfRequests = new AtomicInteger(0);
@@ -67,18 +72,23 @@ public class ExecutionContextMonitor {
 		if (configuration.isCollectRequestStats() && isWarmedUp()) {
 
 			Timer timer = null;
-			T requestContext = null;
+			T executionContext = null;
 			boolean exceptionThrown = false;
 			long start = System.nanoTime();
+			boolean forwardedExecution = false;
 			try {
-				requestContext = monitoredExecution.getExecutionContext();
+				executionContext = monitoredExecution.getExecutionContext();
 				String requestName = monitoredExecution.getRequestName();
-				requestContext.setName(requestName);
+				if (actualRequestName.get() != null) {
+					forwardedExecution = true;
+				}
+				actualRequestName.set(requestName);
+				executionContext.setName(requestName);
 				timer = metricRegistry.timer(getTimerName(requestName));
 				if (profileThisRequest(timer)) {
 					final CallStackElement root = new CallStackElement();
 					Profiler.activateProfiling(root);
-					requestContext.setCallStack(root);
+					executionContext.setCallStack(root);
 				}
 			} catch (RuntimeException e) {
 				logger.error(e.getMessage(), e);
@@ -90,31 +100,43 @@ public class ExecutionContextMonitor {
 				throw e;
 			} finally {
 				try {
-					if (requestContext != null) {
+					if (executionContext != null && !isForwardingExecution(executionContext.getName())) {
 						long executionTime = System.nanoTime() - start;
-						requestContext.setError(exceptionThrown);
-						requestContext.setExecutionTime(executionTime);
-						monitoredExecution.onPostExecute(requestContext);
+						executionContext.setError(exceptionThrown);
+						executionContext.setExecutionTime(executionTime);
+						monitoredExecution.onPostExecute(executionContext);
 
-						if (requestContext.getCallStack() != null) {
+						if (executionContext.getCallStack() != null) {
 							Profiler.stop("total");
-							Profiler.clearMethodCallParent();
-							reportCallStack(monitoredExecution, requestContext);
+							reportCallStack(monitoredExecution, executionContext);
 						}
 						if (timer != null) {
 							timer.update(executionTime, TimeUnit.NANOSECONDS);
-							if (requestContext.isError()) {
-								metricRegistry.meter(name(getTimerName(requestContext.getName()), "error")).mark();
+							if (executionContext.isError()) {
+								metricRegistry.meter(name(getTimerName(executionContext.getName()), "error")).mark();
 							}
+						}
+					} else if (isForwardingExecution(executionContext.getName())) {
+						// don't remove forwarding request from timer, if it is forwarding only sometimes
+						if (timer.getCount() == 0) {
+							metricRegistry.remove(getTimerName(executionContext.getName()));
 						}
 					}
 				} catch (RuntimeException e) {
 					logger.error(e.getMessage(), e);
 				}
+				if (!forwardedExecution) {
+					actualRequestName.remove();
+				}
+				Profiler.clearMethodCallParent();
 			}
 		} else {
 			monitoredExecution.execute();
 		}
+	}
+
+	private boolean isForwardingExecution(String thisExecutionsName) {
+		return !actualRequestName.get().equals(thisExecutionsName);
 	}
 
 	private <T extends ExecutionContext> String getTimerName(String requestName) {
