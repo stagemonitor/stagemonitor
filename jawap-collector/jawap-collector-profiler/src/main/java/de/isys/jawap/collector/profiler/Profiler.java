@@ -31,10 +31,12 @@ public class Profiler {
 	 * Activates the profiling for the current thread by setting the provided
 	 * {@link CallStackElement} as the root of the call stack
 	 *
-	 * @param root the root of the call stack
+	 * @return the root of the call stack
 	 */
-	public static void activateProfiling(CallStackElement root) {
+	public static CallStackElement activateProfiling() {
+		CallStackElement root = new CallStackElement();
 		methodCallParent.set(root);
+		return root;
 	}
 
 	public static void deactivateProfiling() {

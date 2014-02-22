@@ -40,8 +40,7 @@ public class OpenCoreBenchmark implements Runnable {
 
 	public void run() {
 		HttpExecutionContext httpRequestStats = new HttpExecutionContext();
-		final CallStackElement root = new CallStackElement();
-		Profiler.activateProfiling(root);
+		final CallStackElement root = Profiler.activateProfiling();
 		for (int i = 0; i < RUN_COUNT; i++)
 			iterate();
 		Profiler.stop("root");

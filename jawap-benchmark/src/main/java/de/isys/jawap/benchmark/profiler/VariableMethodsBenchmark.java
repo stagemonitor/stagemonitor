@@ -22,8 +22,7 @@ public class VariableMethodsBenchmark {
 		int innerIterations = iterations;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
-			root = new CallStackElement();
-			Profiler.activateProfiling(root);
+			root = Profiler.activateProfiling();
 			for (int j = 0; j < innerIterations; j++) {
 				dummy |= classManualProfiling.method1();
 			}

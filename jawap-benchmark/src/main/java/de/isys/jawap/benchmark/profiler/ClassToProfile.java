@@ -1,5 +1,7 @@
 package de.isys.jawap.benchmark.profiler;
 
+import de.isys.jawap.collector.profiler.Profiler;
+
 public class ClassToProfile {
 
 
@@ -37,6 +39,15 @@ public class ClassToProfile {
 
 	private int method9() {
 		return 9;
+	}
+
+	public static void main(String[] args) {
+		final ClassToProfile classToProfile = new ClassToProfile();
+		Profiler.activateProfiling();
+		classToProfile.method1();
+		classToProfile.method1();
+		classToProfile.method1();
+		Profiler.stop("root");
 	}
 
 }

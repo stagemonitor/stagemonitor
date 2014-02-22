@@ -47,8 +47,7 @@ public class ProfilerBenchmark {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
-			root = new CallStackElement();
-			Profiler.activateProfiling(root);
+			root = Profiler.activateProfiling();
 			dummy |= classManualProfiling.method1();
 			Profiler.stop("root");
 		}
@@ -72,8 +71,7 @@ public class ProfilerBenchmark {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
-			root = new CallStackElement();
-			Profiler.activateProfiling(root);
+			root = Profiler.activateProfiling();
 			dummy |= classJavassistProfiled.method1();
 			Profiler.stop("root");
 		}
@@ -98,8 +96,7 @@ public class ProfilerBenchmark {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
-			root = new CallStackElement();
-			Profiler.activateProfiling(root);
+			root = Profiler.activateProfiling();
 			dummy |= classToProfile.method1();
 			Profiler.stop("root");
 		}

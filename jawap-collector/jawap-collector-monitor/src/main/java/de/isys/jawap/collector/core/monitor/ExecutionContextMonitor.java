@@ -86,8 +86,7 @@ public class ExecutionContextMonitor {
 				executionContext.setName(requestName);
 				timer = metricRegistry.timer(getTimerName(requestName));
 				if (profileThisRequest(timer)) {
-					final CallStackElement root = new CallStackElement();
-					Profiler.activateProfiling(root);
+					final CallStackElement root = Profiler.activateProfiling();
 					executionContext.setCallStack(root);
 				}
 			} catch (RuntimeException e) {
