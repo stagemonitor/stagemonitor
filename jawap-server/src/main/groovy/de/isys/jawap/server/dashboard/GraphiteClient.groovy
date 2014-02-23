@@ -19,7 +19,7 @@ class GraphiteClient {
 	 * Providing default values makes sure, that all metric types are present so datatables doesn't get
 	 * confused about missing coloums.
 	 */
-	private final defaultMetrics = [error: 0, m1_rate: null, max: null, mean: null, min: null, stddev: null, p50: null, p95: null]
+	private final defaultMetrics = [error: 0, m1_rate: 0, max: 0, mean: 0, min: 0, stddev: 0, p50: 0, p95: 0]
 
 	@Inject
 	GraphiteClient(@Value('${jawap.graphiteUrl}') String graphiteUrl) {
