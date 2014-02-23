@@ -56,7 +56,7 @@ public class ProfilerBenchmark {
 	}
 
 
-//	@Benchmark
+	@Benchmark
 	public int javassistDeactivated(int iter) {
 		Profiler.deactivateProfiling();
 		if (Profiler.isProfilingActive()) throw new IllegalStateException("profiling is not deactivated!");
@@ -80,7 +80,7 @@ public class ProfilerBenchmark {
 		return dummy;
 	}
 
-//	@Benchmark
+	@Benchmark
 	public int aspectJDeactivated(int iter) {
 		Profiler.deactivateProfiling();
 		if (Profiler.isProfilingActive()) throw new IllegalStateException("profiling is not deactivated!");

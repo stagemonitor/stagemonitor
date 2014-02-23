@@ -48,6 +48,7 @@ task profilerAllocationBenchmark(dependsOn: ['classes', ':jawap-benchmark:jawap-
 
 private String getJavaagentPath(project) {
 	"$projectDir/jawap-instrument-javassist/build/libs/jawap-instrument-javassist.jar"
+	//"E:/jawap-instrument-javassist-0.1-SNAPSHOT.jar"
 }
 
 task variableMethodsBenchmark(dependsOn: 'classes', type: JavaExec) {

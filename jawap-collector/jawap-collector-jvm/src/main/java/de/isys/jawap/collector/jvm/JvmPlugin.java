@@ -47,7 +47,7 @@ public class JvmPlugin implements JawapPlugin {
 				registry.register("os.cpu.queueLength", new Gauge<Double>() {
 					@Override
 					public Double getValue() {
-						return Math.min(0.0, operatingSystemMXBean.getSystemLoadAverage() - operatingSystemMXBean.getAvailableProcessors());
+						return Math.max(0.0, operatingSystemMXBean.getSystemLoadAverage() - operatingSystemMXBean.getAvailableProcessors());
 					}
 				});
 				registry.register("os.cpu.load", new Gauge<Double>() {

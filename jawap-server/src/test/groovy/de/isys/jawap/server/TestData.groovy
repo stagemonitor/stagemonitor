@@ -20,21 +20,22 @@ class TestData {
 	private MeasurementSessionRepository measurementSessionRepository
 
 	MeasurementSession addMeasurementSession(String app = 'testapp', String host = 'localhorst', String inst='test') {
-		MeasurementSession measurementSession = new MeasurementSession();
-		measurementSession.setApplicationName(app);
-		measurementSession.setHostName(host);
-		measurementSession.setInstanceName(inst);
+		MeasurementSession measurementSession = new MeasurementSession()
+		measurementSession.setApplicationName(app)
+		measurementSession.setHostName(host)
+		measurementSession.setInstanceName(inst)
 		return measurementSessionRepository.save(measurementSession)
 	}
 
 	HttpExecutionContext addHttpExecutionContext(MeasurementSession measurementSession, String name) {
-		HttpExecutionContext httpExecutionContext = new HttpExecutionContext();
-		httpExecutionContext.setMeasurementSession(measurementSession);
-		httpExecutionContext.setName(name);
-		httpExecutionContext.setUrl(name);
+		HttpExecutionContext httpExecutionContext = new HttpExecutionContext()
+		httpExecutionContext.setMeasurementSession(measurementSession)
+		httpExecutionContext.setName(name)
+		httpExecutionContext.setUrl(name)
 
-		CallStackElement callStack = new CallStackElement(null);
-		httpExecutionContext.setCallStack(callStack);
-		return httpExecutionContextRepository.save(httpExecutionContext);
+		CallStackElement callStack = new CallStackElement(null)
+		httpExecutionContext.setCallStack(callStack)
+		httpExecutionContext.convertCallStackToLob()
+		return httpExecutionContextRepository.save(httpExecutionContext)
 	}
 }

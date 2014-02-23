@@ -15,6 +15,7 @@ import static javax.persistence.FetchType.LAZY;
 @MappedSuperclass
 public class ExecutionContext {
 
+	public static final ObjectMapper MAPPER = new ObjectMapper();
 	@Id
 	@GeneratedValue
 	private Integer id;
@@ -23,6 +24,9 @@ public class ExecutionContext {
 	private MeasurementSession measurementSession;
 	private String name;
 	@OneToOne(fetch = LAZY, cascade = ALL)
+	@JsonIgnore
+	private CallStackLob callStackLob;
+	@Transient
 	private CallStackElement callStack;
 	private long executionTime;
 	private boolean error = false;
@@ -43,12 +47,20 @@ public class ExecutionContext {
 		this.id = id;
 	}
 
+	public CallStackLob getCallStackLob() {
+		return callStackLob;
+	}
+
+	public void setCallStackLob(CallStackLob callStackLob) {
+		this.callStackLob = callStackLob;
+	}
+
 	public CallStackElement getCallStack() {
 		return callStack;
 	}
 
-	public void setCallStack(CallStackElement callStackElement) {
-		this.callStack = callStackElement;
+	public void setCallStack(CallStackElement callStack) {
+		this.callStack = callStack;
 	}
 
 	public MeasurementSession getMeasurementSession() {
@@ -75,20 +87,21 @@ public class ExecutionContext {
 		this.executionTime = executionTime;
 	}
 
-	public void convertCallStackToJson() {
+	public void convertCallStackToLob() {
 		if (callStack != null) {
 			try {
-				callStack.setCallStackJson(new ObjectMapper().writeValueAsString(callStack));
+				callStackLob = new CallStackLob();
+				callStackLob.setCallStackJson(MAPPER.writeValueAsString(callStack));
 			} catch (JsonProcessingException e) {
 				throw new RuntimeException(e);
 			}
 		}
 	}
 
-	public void convertJsonToCallStack() {
-		if (callStack != null) {
+	public void convertLobToCallStack() {
+		if (callStackLob != null) {
 			try {
-				callStack = new ObjectMapper().readValue(callStack.getCallStackJson(), CallStackElement.class);
+				callStack = MAPPER.readValue(callStackLob.getCallStackJson(), CallStackElement.class);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

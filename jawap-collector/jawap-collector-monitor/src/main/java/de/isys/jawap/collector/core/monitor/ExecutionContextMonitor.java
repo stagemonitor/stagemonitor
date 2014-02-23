@@ -29,7 +29,9 @@ public class ExecutionContextMonitor {
 	private final ExecutionContextLogger executionContextLogger = new ExecutionContextLogger();
 
 	/**
-	 * helps to detect, if this request is the 'real' one or just the forwarding one.
+	 * Helps to detect, if this request is the 'real' one or just the forwarding one.
+	 * Example: /a is forwarding the request to /b. /a is the forwarding request /b is the real or forwarded request.
+	 * Only /b will be measured, /a will be ignored.
 	 */
 	private static ThreadLocal<String> actualRequestName = new ThreadLocal<String>();
 

@@ -26,12 +26,12 @@ public abstract class PerformanceMonitorAspect {
 		return Profiler.isProfilingActive();
 	}
 
-	@Before("applicationMethodsToProfile() && isProfilingActive()")
+	@Before("applicationMethodsToProfile()")
 	public void startProfiling() {
 		Profiler.start();
 	}
 
-	@After("applicationMethodsToProfile() && isProfilingActive()")
+	@After("applicationMethodsToProfile()")
 	public void stopProfiling(JoinPoint.StaticPart joinPoint) {
 		Profiler.stop(joinPoint.getSignature().toString());
 	}

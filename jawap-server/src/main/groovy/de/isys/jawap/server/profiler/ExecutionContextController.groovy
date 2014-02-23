@@ -22,13 +22,13 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST
 public class ExecutionContextController {
 
 	@Resource
-	private HttpExecutionContextRepository httpExecutionContextRepository;
+	private HttpExecutionContextRepository httpExecutionContextRepository
 	@PersistenceContext
-	private EntityManager entityManager;
+	private EntityManager entityManager
 
 	@RequestMapping(value = "/executionContexts", method = GET)
 	public List<HttpExecutionContext> getAllHttpRequestContexts() {
-		return httpExecutionContextRepository.findAll().each {it.callStack = null};
+		return httpExecutionContextRepository.findAll()
 	}
 
 	@RequestMapping(value = "/executionContexts/{id}", method = GET, produces = MediaType.TEXT_PLAIN_VALUE)
@@ -39,7 +39,7 @@ public class ExecutionContextController {
 	@RequestMapping(value = "/executionContexts/{id}", method = GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public HttpExecutionContext getHttpRequestContexts(@PathVariable Integer id) {
 		HttpExecutionContext requestContext = httpExecutionContextRepository.findOne(id)
-		if (requestContext) requestContext.convertJsonToCallStack()
+		if (requestContext) requestContext.convertLobToCallStack()
 		return requestContext
 	}
 
@@ -52,18 +52,18 @@ public class ExecutionContextController {
 		instance = decodeAndCheckNull(instance)
 		host = decodeAndCheckNull(host)
 
-		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-		CriteriaQuery<HttpExecutionContext> query = cb.createQuery(HttpExecutionContext.class);
-		Root<HttpExecutionContext> httpExecutionContext = query.from(HttpExecutionContext.class);
-		List<Predicate> restrictions = new ArrayList<Predicate>(3);
-		restrictions.add(cb.equal(httpExecutionContext.get("name"), name));
+		CriteriaBuilder cb = entityManager.getCriteriaBuilder()
+		CriteriaQuery<HttpExecutionContext> query = cb.createQuery(HttpExecutionContext.class)
+		Root<HttpExecutionContext> httpExecutionContext = query.from(HttpExecutionContext.class)
+		List<Predicate> restrictions = new ArrayList<Predicate>(3)
+		restrictions.add(cb.equal(httpExecutionContext.get("name"), name))
 		if (application || host || instance) {
-			final Join<HttpExecutionContext, MeasurementSession> measurementSession = httpExecutionContext.join("measurementSession");
+			final Join<HttpExecutionContext, MeasurementSession> measurementSession = httpExecutionContext.join("measurementSession")
 			if (application) restrictions.add(cb.equal(measurementSession.get("applicationName"), application))
 			if (host) restrictions.add(cb.equal(measurementSession.get("hostName"), host))
 			if (instance) restrictions.add(cb.equal(measurementSession.get("instanceName"), instance))
 		}
-		query.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		query.where(restrictions.toArray(new Predicate[restrictions.size()]))
 		query.orderBy(cb.desc(httpExecutionContext.get("timestamp")))
 
 		List<HttpExecutionContext> searchResult = entityManager.createQuery(query).getResultList()
@@ -84,7 +84,7 @@ public class ExecutionContextController {
 	@RequestMapping(value = "/measurementSessions/{measurementSessionId}/executionContexts", method = POST)
 	public void saveExecutionContext(@PathVariable Integer measurementSessionId, @RequestBody HttpExecutionContext context) {
 		context.setMeasurementSession(entityManager.find(MeasurementSession, measurementSessionId))
-		context.convertCallStackToJson()
+		context.convertCallStackToLob()
 		httpExecutionContextRepository.save(context)
 	}
 }

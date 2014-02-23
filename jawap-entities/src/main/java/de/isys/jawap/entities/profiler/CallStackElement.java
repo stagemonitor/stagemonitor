@@ -2,29 +2,16 @@ package de.isys.jawap.entities.profiler;
 
 import com.fasterxml.jackson.annotation.*;
 
-import javax.persistence.*;
 import java.util.*;
 
-@Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CallStackElement {
 
-	@Id
-	@GeneratedValue
-	private Integer id;
-	@Lob
-	@JsonIgnore
-	private String callStackJson;
-
-	@Transient
 	@JsonBackReference
 	private CallStackElement parent;
-	@Transient
 	private String signature;
-	@Transient
 	private long executionTime;
-	@Transient
 	@JsonManagedReference
 	private List<CallStackElement> children = new LinkedList<CallStackElement>();
 
@@ -94,14 +81,6 @@ public class CallStackElement {
 
 	public void setParent(CallStackElement parent) {
 		this.parent = parent;
-	}
-
-	public String getCallStackJson() {
-		return callStackJson;
-	}
-
-	public void setCallStackJson(String callStackJson) {
-		this.callStackJson = callStackJson;
 	}
 
 	private void removeLastChild() {
@@ -202,13 +181,5 @@ public class CallStackElement {
 
 	private boolean isRoot() {
 		return parent == null;
-	}
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
 	}
 }
