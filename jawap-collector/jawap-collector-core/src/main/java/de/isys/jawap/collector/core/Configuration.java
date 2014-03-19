@@ -8,33 +8,19 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import static java.util.Collections.emptyList;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Configuration {
 
 	private final Log logger = LogFactory.getLog(getClass());
 	private Properties properties;
-	private ScheduledExecutorService propertiesReloader;
 	private ConcurrentMap<String, Object> propertiesCache = new ConcurrentHashMap<String, Object>();
 
 	public Configuration() {
 		loadProperties();
-		long reloadInterval = getLong("jawap.properties.reloadIntervalSeconds", -1);
-		if (reloadInterval > 0) {
-			propertiesReloader = Executors.newSingleThreadScheduledExecutor();
-			propertiesReloader.scheduleAtFixedRate(new Runnable() {
-				@Override
-				public void run() {
-					loadProperties();
-				}
-			}, reloadInterval, reloadInterval, SECONDS);
-		}
 	}
 
 	/**
@@ -206,7 +192,7 @@ public class Configuration {
 	/**
 	 * The URL of the jawap server
 	 * <p/>
-	 * <b>This setting is mandatory!</b>
+	 * <b>This setting is mandatory if jawap.profiler.reportCallStacksToServer is set to true</b>
 	 *
 	 * @return the server url
 	 */
@@ -246,12 +232,42 @@ public class Configuration {
 	}
 
 	private void loadProperties() {
-		logger.info("reloading properties");
-		properties = new Properties();
-		InputStream resourceStream = getClass().getClassLoader().getResourceAsStream("jawap.properties");
+		Properties defaultProperties = getProperties("jawap.properties");
+		if (defaultProperties == null) {
+			logger.error("Could not find jawap.properties in classpath");
+		}
+		// override values in default properties file
+		final String jawapPropertyOverridesLocation = System.getProperty("jawap.property.overrides");
+		if (jawapPropertyOverridesLocation != null) {
+			logger.info("try loading of default property overrides: '" + jawapPropertyOverridesLocation + "'");
+			properties = getProperties(jawapPropertyOverridesLocation, defaultProperties);
+			if (properties == null) {
+				logger.error("Could not find " + jawapPropertyOverridesLocation + " in classpath");
+			}
+		} else {
+			properties = defaultProperties;
+		}
+	}
+
+	private Properties getProperties(String classpathLocation) {
+		return getProperties(classpathLocation, null);
+	}
+
+	private Properties getProperties(String classpathLocation, Properties defaultProperties) {
+		if (classpathLocation == null) {
+			return null;
+		}
+		final Properties props;
+		if (defaultProperties != null) {
+			props = new Properties(defaultProperties);
+		} else {
+			props = new Properties();
+		}
+		InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(classpathLocation);
 		if (resourceStream != null) {
 			try {
-				properties.load(resourceStream);
+				props.load(resourceStream);
+				return props;
 			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
 			} finally {
@@ -260,9 +276,9 @@ public class Configuration {
 				} catch (IOException e) {
 					logger.error(e.getMessage(), e);
 				}
-				propertiesCache.clear();
 			}
 		}
+		return null;
 	}
 
 	public String getString(final String key) {

@@ -3,6 +3,7 @@ package de.isys.jawap.collector.jdbc;
 import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.profiler.Profiler;
 import de.isys.jawap.entities.profiler.CallStackElement;
+import de.isys.jawap.util.GraphiteEncoder;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -31,18 +32,19 @@ public class ConnectionMonitorAspect {
 	@Around(value = "dataSourceConnection()")
 	public Object aroundGetConnection(ProceedingJoinPoint pjp) throws Throwable {
 		Connection connection = null;
+		final long start = System.nanoTime();
 		try {
 			Profiler.start();
 			connection = (Connection) pjp.proceed();
 			return connection;
 		} finally {
 			Profiler.stop(pjp.getSignature().toString());
-			final CallStackElement callStackElement = Profiler.getMethodCallParent();
-			if (connection != null && callStackElement != null) {
+			long duration = System.nanoTime() - start;
+			if (connection != null) {
 				DataSource dataSource = ensureUrlExistsForDataSource(pjp, connection);
 				String url = dataSourceUrlMap.get(dataSource);
 				JawapApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + COUNT).inc();
-				final long durationMs = TimeUnit.NANOSECONDS.toMillis(callStackElement.getExecutionTime());
+				final long durationMs = TimeUnit.NANOSECONDS.toMillis(duration);
 				JawapApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + TIME).inc(durationMs);
 			}
 		}
@@ -52,7 +54,7 @@ public class ConnectionMonitorAspect {
 		DataSource dataSource = (DataSource) pjp.getTarget();
 		if (!dataSourceUrlMap.containsKey(dataSource)) {
 			final DatabaseMetaData metaData = connection.getMetaData();
-			dataSourceUrlMap.put(dataSource, metaData.getURL() + "-" + metaData.getUserName());
+			dataSourceUrlMap.put(dataSource, GraphiteEncoder.encodeForGraphite(metaData.getURL() + "-" + metaData.getUserName()));
 		}
 		return dataSource;
 	}

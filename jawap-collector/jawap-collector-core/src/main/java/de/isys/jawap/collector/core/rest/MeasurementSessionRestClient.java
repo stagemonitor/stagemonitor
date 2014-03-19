@@ -53,9 +53,4 @@ public class MeasurementSessionRestClient {
 			logger.error(e.getMessage(), e);
 		}
 	}
-
-	public static void main(String[] args) {
-		MeasurementSessionRestClient measurementSessionRestClient = new MeasurementSessionRestClient("http://localhost:8181");
-		System.out.println(measurementSessionRestClient.saveMeasurementSession(new MeasurementSession()));
-	}
 }
