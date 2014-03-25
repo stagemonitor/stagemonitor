@@ -16,7 +16,6 @@ apply plugin: 'propdeps-eclipse'
 
 dependencies {
 	optional 'org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final'
-	compile 'com.fasterxml.jackson.core:jackson-core:2.3.0'
 	compile 'com.fasterxml.jackson.core:jackson-databind:2.3.0'
 }
 
