@@ -1,10 +1,11 @@
+import com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile
+
 apply plugin: 'idea'
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'idea'
 
 	group = "de.isys.jawap"
-	version = "0.3-SNAPSHOT"
 
 	repositories {
 		mavenCentral()

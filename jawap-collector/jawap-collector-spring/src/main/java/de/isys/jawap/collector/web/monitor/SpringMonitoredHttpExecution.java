@@ -2,7 +2,6 @@ package de.isys.jawap.collector.web.monitor;
 
 import de.isys.jawap.collector.core.Configuration;
 import de.isys.jawap.collector.web.monitor.filter.StatusExposingServletResponse;
-import de.isys.jawap.collector.web.rest.HttpExecutionContextRestClient;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -11,20 +10,16 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static com.codahale.metrics.MetricRegistry.name;
-
-public class SpringMonitoredHttpExecutionContext extends MonitoredHttpExecutionContext {
-
+public class SpringMonitoredHttpExecution extends MonitoredHttpExecution {
 
 	private final List<RequestMappingHandlerMapping> allHandlerMappings;
 
-	public SpringMonitoredHttpExecutionContext(HttpServletRequest httpServletRequest,
-													  StatusExposingServletResponse statusExposingResponse,
-													  FilterChain filterChain, Configuration configuration,
-													  HttpExecutionContextRestClient httpExecutionContextRestClient,
-													  List<RequestMappingHandlerMapping> allHandlerMappings) {
+	public SpringMonitoredHttpExecution(HttpServletRequest httpServletRequest,
+										StatusExposingServletResponse statusExposingResponse,
+										FilterChain filterChain, Configuration configuration,
+										List<RequestMappingHandlerMapping> allHandlerMappings) {
 
-		super(httpServletRequest, statusExposingResponse, filterChain, configuration, httpExecutionContextRestClient);
+		super(httpServletRequest, statusExposingResponse, filterChain, configuration);
 		this.allHandlerMappings = allHandlerMappings;
 	}
 

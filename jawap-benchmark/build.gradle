@@ -1,7 +1,8 @@
 apply from: 'aspectj.gradle'
 
 dependencies {
-	compile project(":jawap-collector:jawap-collector-profiler")
+	compile project(":jawap-collector:jawap-collector-monitor")
+	compile project(":jawap-collector:jawap-collector-aspectj")
 	compile 'com.google.caliper:caliper:1.0-beta-SNAPSHOT'
 	// The AspectJ compiler does't like the jpa annotations to not be present
 	compile "org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final"

@@ -1,33 +1,16 @@
 package de.isys.jawap.collector.core.monitor;
 
-import com.codahale.metrics.MetricRegistry;
-import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.entities.profiler.ExecutionContext;
 
-public abstract class MonitoredExecution<T extends ExecutionContext> {
+public interface MonitoredExecution<T extends ExecutionContext> {
 
-	protected final MetricRegistry metricRegistry;
+	String getInstanceName();
 
-	protected MonitoredExecution() {
-		this.metricRegistry = JawapApplicationContext.getMetricRegistry();
-	}
+	T createExecutionContext();
 
-	protected MonitoredExecution(MetricRegistry metricRegistry) {
-		this.metricRegistry = metricRegistry;
-	}
+	Object execute() throws Exception;
 
-	public String getInstanceName() {
-		return null;
-	}
+	void onPostExecute(T executionContext);
 
-	public abstract String getRequestName();
-
-	public abstract T getExecutionContext();
-
-	public abstract void execute() throws Exception;
-
-	public abstract void onPostExecute(T executionContext);
-
-	public abstract void reportCallStackToServer(String measurementSessionLocation, T executionContext);
-
+	boolean isMonitorForwardedExecutions();
 }

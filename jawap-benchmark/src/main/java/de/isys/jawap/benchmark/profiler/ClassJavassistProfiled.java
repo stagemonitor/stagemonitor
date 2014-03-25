@@ -1,8 +1,5 @@
 package de.isys.jawap.benchmark.profiler;
 
-import de.isys.jawap.collector.profiler.Profiler;
-import de.isys.jawap.entities.web.HttpExecutionContext;
-
 public class ClassJavassistProfiled {
 
 

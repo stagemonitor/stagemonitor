@@ -13,13 +13,10 @@ import javax.persistence.Lob;
 public class HttpExecutionContext extends ExecutionContext {
 
 	private String url;
-	private String queryParams;
-	private long timestamp = System.currentTimeMillis();
 	private Integer statusCode;
 	@Lob
 	private String header;
 	private String method;
-	// TODO cpu time
 
 	public String getUrl() {
 		return url;
@@ -27,22 +24,6 @@ public class HttpExecutionContext extends ExecutionContext {
 
 	public void setUrl(String url) {
 		this.url = url;
-	}
-
-	public long getTimestamp() {
-		return timestamp;
-	}
-
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
-
-	public String getQueryParams() {
-		return queryParams;
-	}
-
-	public void setQueryParams(String queryParams) {
-		this.queryParams = queryParams;
 	}
 
 	public Integer getStatusCode() {
@@ -78,8 +59,8 @@ public class HttpExecutionContext extends ExecutionContext {
 		StringBuilder sb = new StringBuilder(3000);
 		//sb.append("id: ").append(getId()).append('\n');
 		sb.append(method).append(' ').append(getUrl());
-		if (getQueryParams() != null) {
-			sb.append(getQueryParams());
+		if (getParameter() != null) {
+			sb.append(getParameter());
 		}
 		sb.append(" (").append(statusCode).append(")\n");
 		sb.append(header);

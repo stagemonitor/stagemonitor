@@ -3,11 +3,7 @@ package de.isys.jawap.server.profiler
 import de.isys.jawap.entities.MeasurementSession
 import de.isys.jawap.entities.web.HttpExecutionContext
 import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 import javax.annotation.Resource
 import javax.persistence.EntityManager
@@ -70,7 +66,7 @@ public class ExecutionContextController {
 		def resultList =  searchResult.collect {
 			def time = (it.executionTime / 1_000_000d).round(2)
 			String date = new Date(it.timestamp).format('yyyy/MM/dd hh:mm:ss')
-			String url = "$it.method $it.url$it.queryParams"
+			String url = "$it.method $it.url$it.parameter"
 			[id: it.id, time: time, date: date, url: url, status: it.statusCode]
 		}
 		return [ aaData: resultList]

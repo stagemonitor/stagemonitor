@@ -1,4 +1,8 @@
 dependencies {
 	compile project(":jawap-collector:jawap-collector-core")
-	compile project(":jawap-collector:jawap-collector-profiler")
+}
+
+task fatJar(type: Jar) {
+	baseName = project.name + '-all'
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }

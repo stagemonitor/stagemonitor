@@ -5,8 +5,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.isys.jawap.entities.MeasurementSession;
 
-import javax.persistence.*;
-
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 import java.io.IOException;
 
 import static javax.persistence.CascadeType.ALL;
@@ -28,8 +32,11 @@ public class ExecutionContext {
 	private CallStackLob callStackLob;
 	@Transient
 	private CallStackElement callStack;
+	// TODO cpu time
 	private long executionTime;
 	private boolean error = false;
+	private long timestamp = System.currentTimeMillis();
+	private String parameter;
 
 	public boolean isError() {
 		return error;
@@ -85,6 +92,22 @@ public class ExecutionContext {
 
 	public void setExecutionTime(long executionTime) {
 		this.executionTime = executionTime;
+	}
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
+
+	public String getParameter() {
+		return parameter;
+	}
+
+	public void setParameter(String parameter) {
+		this.parameter = parameter;
 	}
 
 	public void convertCallStackToLob() {

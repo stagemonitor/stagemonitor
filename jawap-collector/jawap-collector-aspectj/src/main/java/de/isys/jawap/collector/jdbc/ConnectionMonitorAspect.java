@@ -2,7 +2,6 @@ package de.isys.jawap.collector.jdbc;
 
 import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.profiler.Profiler;
-import de.isys.jawap.entities.profiler.CallStackElement;
 import de.isys.jawap.util.GraphiteEncoder;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

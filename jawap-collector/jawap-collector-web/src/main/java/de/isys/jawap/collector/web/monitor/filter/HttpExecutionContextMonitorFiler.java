@@ -1,20 +1,23 @@
 package de.isys.jawap.collector.web.monitor.filter;
 
-import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.core.Configuration;
+import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.core.monitor.ExecutionContextMonitor;
-import de.isys.jawap.collector.web.monitor.MonitoredHttpExecutionContext;
-import de.isys.jawap.collector.web.rest.HttpExecutionContextRestClient;
+import de.isys.jawap.collector.web.monitor.MonitoredHttpExecution;
 import de.isys.jawap.entities.MeasurementSession;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class HttpExecutionContextMonitorFiler extends AbstractExclusionFilter implements Filter {
 
-	protected HttpExecutionContextRestClient httpExecutionContextRestClient = new HttpExecutionContextRestClient();
 	protected Configuration configuration = JawapApplicationContext.getConfiguration();
 	protected ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
 
@@ -42,8 +45,8 @@ public class HttpExecutionContextMonitorFiler extends AbstractExclusionFilter im
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 			final StatusExposingServletResponse statusExposingResponse = new StatusExposingServletResponse((HttpServletResponse) response);
 			try {
-				executionContextMonitor.monitor(new MonitoredHttpExecutionContext(httpServletRequest,
-						statusExposingResponse, filterChain, configuration, httpExecutionContextRestClient));
+				executionContextMonitor.monitor(new MonitoredHttpExecution(httpServletRequest,
+						statusExposingResponse, filterChain, configuration));
 			} catch (Exception e) {
 				handleException(e);
 			}

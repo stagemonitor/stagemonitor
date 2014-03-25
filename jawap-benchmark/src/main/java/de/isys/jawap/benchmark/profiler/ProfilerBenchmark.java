@@ -2,8 +2,8 @@ package de.isys.jawap.benchmark.profiler;
 
 import com.google.caliper.Benchmark;
 import com.google.caliper.api.VmOptions;
-import de.isys.jawap.entities.profiler.CallStackElement;
 import de.isys.jawap.collector.profiler.Profiler;
+import de.isys.jawap.entities.profiler.CallStackElement;
 
 import java.lang.management.ManagementFactory;
 

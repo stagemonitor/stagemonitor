@@ -9,6 +9,7 @@ buildscript {
 
 configure(allprojects) {
 	apply plugin: 'propdeps'
+	apply plugin: 'maven-publish'
 	apply plugin: 'propdeps-maven'
 	apply plugin: 'propdeps-idea'
 	apply plugin: 'propdeps-eclipse'
@@ -22,4 +23,21 @@ subprojects {
 	artifacts {
 		archives sourcesJar
 	}
+	publishing {
+		publications {
+			maven(MavenPublication) {
+				from components.java
+
+				artifact sourcesJar {
+					classifier "sources"
+				}
+			}
+		}
+		repositories {
+			maven {
+				url "http://maven.isys-software.de:8080/archiva/repository/webstage-shop/"
+			}
+		}
+	}
 }
+

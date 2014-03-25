@@ -1,6 +1,8 @@
 dependencies {
 	compile project(":jawap-collector:jawap-collector-web")
-	compile project(":jawap-collector:jawap-collector-profiler")
+	compile project(":jawap-collector:jawap-collector-aspectj")
 	compile 'org.springframework:spring-webmvc:3.1.0.RELEASE'
 	provided 'javax.servlet:servlet-api:2.5'
+
+	testCompile 'org.springframework:spring-test:3.1.0.RELEASE'
 }

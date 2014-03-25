@@ -1,6 +1,10 @@
 package de.isys.jawap.collector.core;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import de.isys.jawap.collector.core.metrics.SortedTableLogReporter;
@@ -9,7 +13,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.net.InetSocketAddress;
-import java.net.URLEncoder;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
@@ -21,7 +24,7 @@ public class JawapApplicationContext {
 	private final static Log logger = LogFactory.getLog(JawapApplicationContext.class);
 	private static Configuration configuration = new Configuration();
 
-	public static void startMonitoring(MeasurementSession measurementSession) {
+	public static boolean startMonitoring(MeasurementSession measurementSession) {
 		if (measurementSession.isInitialized()) {
 			initializePlugins();
 			applyExcludePatterns();
@@ -31,8 +34,12 @@ public class JawapApplicationContext {
 			if (configuration.reportToJMX()) {
 				reportToJMX();
 			}
+			logger.info("Measurement Session is initialized: " + measurementSession);
+			return true;
 		} else {
-			logger.info("Measurement Session is not initialized " + measurementSession);
+			logger.warn("Measurement Session is not initialized: " + measurementSession);
+			logger.warn("make sure the properties 'jawap.instanceName' and 'jawap.applicationName' are set and jawap.properties is available in the classpath");
+			return false;
 		}
 	}
 

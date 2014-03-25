@@ -1,7 +1,5 @@
 package de.isys.jawap.benchmark.profiler.simple;
 
-import de.isys.jawap.collector.profiler.Profiler;
-
 public class BeforeAfterProfilerTest {
 
 	public int method1() {

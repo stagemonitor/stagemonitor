@@ -1,10 +1,10 @@
-package de.isys.jawap.collector.profiler.instrument;
+package de.isys.jawap.collector.profiler;
 
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 
 @Aspect
-public abstract class SpringPerformanceMonitorAspect extends PerformanceMonitorAspect {
+public abstract class SpringPerformanceMonitorAspect extends ProfilingAspect {
 
 	@Pointcut("execution(* javax.servlet.Servlet+.service(..))")
 	public void servletService() {

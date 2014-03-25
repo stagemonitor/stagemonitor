@@ -5,7 +5,13 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -235,6 +241,7 @@ public class Configuration {
 		Properties defaultProperties = getProperties("jawap.properties");
 		if (defaultProperties == null) {
 			logger.error("Could not find jawap.properties in classpath");
+			defaultProperties = new Properties();
 		}
 		// override values in default properties file
 		final String jawapPropertyOverridesLocation = System.getProperty("jawap.property.overrides");

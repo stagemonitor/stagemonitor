@@ -1,6 +1,5 @@
-package de.isys.jawap.collector.profiler.instrument;
+package de.isys.jawap.collector.profiler;
 
-import de.isys.jawap.collector.profiler.Profiler;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
@@ -8,7 +7,7 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 
 @Aspect
-public abstract class PerformanceMonitorAspect {
+public abstract class ProfilingAspect {
 
 	@Pointcut
 	public abstract void methodsToProfile();

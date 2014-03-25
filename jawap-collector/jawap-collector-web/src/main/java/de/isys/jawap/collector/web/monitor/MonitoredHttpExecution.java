@@ -1,10 +1,10 @@
 package de.isys.jawap.collector.web.monitor;
 
+import com.codahale.metrics.MetricRegistry;
 import de.isys.jawap.collector.core.Configuration;
+import de.isys.jawap.collector.core.JawapApplicationContext;
 import de.isys.jawap.collector.core.monitor.MonitoredExecution;
 import de.isys.jawap.collector.web.monitor.filter.StatusExposingServletResponse;
-import de.isys.jawap.collector.web.rest.HttpExecutionContextRestClient;
-import de.isys.jawap.entities.profiler.ExecutionContext;
 import de.isys.jawap.entities.web.HttpExecutionContext;
 
 import javax.servlet.FilterChain;
@@ -16,25 +16,22 @@ import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-public class MonitoredHttpExecutionContext extends MonitoredExecution<HttpExecutionContext> {
+public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionContext> {
 
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingServletResponse statusExposingResponse;
 	protected final Configuration configuration;
-	private final HttpExecutionContextRestClient httpExecutionContextRestClient;
+	private final MetricRegistry metricRegistry;
 
-
-
-	public MonitoredHttpExecutionContext(HttpServletRequest httpServletRequest,
-										 StatusExposingServletResponse statusExposingResponse,
-										 FilterChain filterChain, Configuration configuration,
-										 HttpExecutionContextRestClient httpExecutionContextRestClient) {
+	public MonitoredHttpExecution(HttpServletRequest httpServletRequest,
+								  StatusExposingServletResponse statusExposingResponse,
+								  FilterChain filterChain, Configuration configuration) {
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
 		this.statusExposingResponse = statusExposingResponse;
 		this.configuration = configuration;
-		this.httpExecutionContextRestClient = httpExecutionContextRestClient;
+		metricRegistry = JawapApplicationContext.getMetricRegistry();
 	}
 
 	@Override
@@ -43,24 +40,26 @@ public class MonitoredHttpExecutionContext extends MonitoredExecution<HttpExecut
 	}
 
 	@Override
+	public HttpExecutionContext createExecutionContext() {
+		HttpExecutionContext requestStats = new HttpExecutionContext();
+		requestStats.setName(getRequestName());
+		requestStats.setMethod(httpServletRequest.getMethod());
+		requestStats.setUrl(httpServletRequest.getRequestURI());
+		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
+		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
+		requestStats.setParameter(getSafeQueryString(parameterMap));
+		if (configuration.isCollectHeaders()) {
+			requestStats.setHeader(getHeadersAsString(httpServletRequest));
+		}
+		return requestStats;
+	}
+
 	public String getRequestName() {
 		String requestURI = httpServletRequest.getRequestURI();
 		for (Map.Entry<Pattern, String> entry : configuration.getGroupUrls().entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
 		return httpServletRequest.getMethod() + " " +requestURI;
-	}
-
-	@Override
-	public HttpExecutionContext getExecutionContext() {
-		HttpExecutionContext requestStats = new HttpExecutionContext();
-		requestStats.setMethod(httpServletRequest.getMethod());
-		requestStats.setUrl(httpServletRequest.getRequestURI());
-		requestStats.setQueryParams(getSafeQueryString(httpServletRequest.getParameterMap()));
-		if (configuration.isCollectHeaders()) {
-			requestStats.setHeader(getHeadersAsString(httpServletRequest));
-		}
-		return requestStats;
 	}
 
 	private String getSafeQueryString(Map<String, String[]> parameterMap) {
@@ -109,8 +108,9 @@ public class MonitoredHttpExecutionContext extends MonitoredExecution<HttpExecut
 	}
 
 	@Override
-	public void execute() throws Exception {
+	public Object execute() throws Exception {
 		filterChain.doFilter(httpServletRequest, statusExposingResponse);
+		return null;
 	}
 
 	@Override
@@ -123,9 +123,16 @@ public class MonitoredHttpExecutionContext extends MonitoredExecution<HttpExecut
 		}
 	}
 
+	/**
+	 * In a web context, we only want to monitor non-forwarded requests.
+	 * If a request to /a makes a
+	 * {@link javax.servlet.RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)}
+	 * to /b, we only want to collect metrics for /b, because it is the request, that does the actual computation.
+	 *
+	 * @return true
+	 */
 	@Override
-	public void reportCallStackToServer(String measurementSessionLocation, HttpExecutionContext executionContext) {
-		httpExecutionContextRestClient.saveRequestContext(measurementSessionLocation, executionContext);
+	public boolean isMonitorForwardedExecutions() {
+		return true;
 	}
-
 }

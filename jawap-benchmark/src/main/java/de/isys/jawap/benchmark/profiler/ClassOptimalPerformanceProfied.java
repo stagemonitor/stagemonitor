@@ -1,8 +1,6 @@
 package de.isys.jawap.benchmark.profiler;
 
 
-import de.isys.jawap.collector.profiler.Profiler;
-
 public class ClassOptimalPerformanceProfied {
 
 	public int method1() {
