@@ -1,9 +1,7 @@
 package org.stagemonitor.server.util
 
-import groovy.json.JsonSlurper
-import org.codehaus.jackson.map.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.core.io.ClassPathResource
-
 
 class ExtensionMethods {
 

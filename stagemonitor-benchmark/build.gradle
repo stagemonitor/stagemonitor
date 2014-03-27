@@ -1,5 +1,9 @@
 apply from: 'aspectj.gradle'
 
+repositories {
+	maven { url 'https://raw.githubusercontent.com/stagemonitor/mvn-repo/master' }
+}
+
 dependencies {
 	compile project(":stagemonitor-collector:stagemonitor-collector-monitor")
 	compile project(":stagemonitor-collector:stagemonitor-collector-aspectj")
