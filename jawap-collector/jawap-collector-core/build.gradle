@@ -1,6 +1,0 @@
-dependencies {
-	compile project(":jawap-entities")
-	compile 'commons-logging:commons-logging:1.1.3'
-	compile 'com.codahale.metrics:metrics-core:3.0.1'
-	compile 'com.codahale.metrics:metrics-graphite:3.0.1'
-}

@@ -1,4 +1,0 @@
-dependencies {
-	compile project(":jawap-collector:jawap-collector-monitor")
-	provided 'javax.servlet:servlet-api:2.5'
-}

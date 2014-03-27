@@ -1,4 +1,0 @@
-dependencies {
-	compile project(":jawap-collector:jawap-collector-starter-web")
-	compile project(":jawap-collector:jawap-collector-spring")
-}

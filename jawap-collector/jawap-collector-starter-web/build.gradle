@@ -1,6 +1,0 @@
-dependencies {
-	compile project(":jawap-collector:jawap-collector-monitor")
-	compile project(":jawap-collector:jawap-collector-aspectj")
-	compile project(":jawap-collector:jawap-collector-jvm")
-	compile project(":jawap-collector:jawap-collector-server")
-}

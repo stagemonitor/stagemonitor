@@ -1,0 +1,41 @@
+{
+	"columns": 2,
+	"timeBack": "6h",
+	"from": "",
+	"until": "",
+	"width": 700,
+	"height": 350,
+	"legend": true,
+	"refresh": true,
+	"refreshIntervalSeconds": 30,
+	"averageSeries": false,
+	"defaultLineWidth": 2,
+	"parameters": {
+		"application": {
+			"type": "dynamic",
+			"query": "stagemonitor.*",
+			"index": 1,
+			"showAll": false
+		},
+		"instance": {
+			"type": "dynamic",
+			"query": "stagemonitor.${application}.*",
+			"index": 2,
+			"showAll": true
+		},
+		"host": {
+			"type": "dynamic",
+			"query": "stagemonitor.${application}.${instance}.*",
+			"index": 3,
+			"showAll": true
+		},
+		"group-by": {
+			"instance": {
+				"group": 2
+			},
+			"host": {
+				"group": 3
+			}
+		}
+	}
+}

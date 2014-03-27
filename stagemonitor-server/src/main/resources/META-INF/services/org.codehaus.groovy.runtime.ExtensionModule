@@ -1,0 +1,3 @@
+moduleName=stagemonitor-module
+moduleVersion=1.0-test
+extensionClasses=org.stagemonitor.server.util.ExtensionMethods

@@ -1,0 +1,4 @@
+dependencies {
+	compile project(":stagemonitor-collector:stagemonitor-collector-starter-web")
+	compile project(":stagemonitor-collector:stagemonitor-collector-spring")
+}

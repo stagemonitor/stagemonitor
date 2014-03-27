@@ -1,0 +1,4 @@
+dependencies {
+	compile project(":stagemonitor-collector:stagemonitor-collector-monitor")
+	provided 'javax.servlet:servlet-api:2.5'
+}

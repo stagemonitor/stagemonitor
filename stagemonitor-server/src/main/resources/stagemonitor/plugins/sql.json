@@ -1,0 +1,53 @@
+{
+	"parameters": {
+		"application": {
+			"type": "dynamic",
+			"query": "stagemonitor.*",
+			"index": 1,
+			"showAll": false
+		},
+		"instance": {
+			"type": "dynamic",
+			"query": "stagemonitor.${application}.*",
+			"index": 2,
+			"showAll": true
+		},
+		"host": {
+			"type": "dynamic",
+			"query": "stagemonitor.${application}.${instance}.*",
+			"index": 3,
+			"showAll": true
+		},
+		"datasource": {
+			"type": "dynamic",
+			"query": "stagemonitor.${application}.${instance}.${host}.jdbc.getconnection.*",
+			"index": 6,
+			"showAll": true
+		},
+		"group-by": {
+			"datasource": {
+				"group": 6
+			},
+			"instance": {
+				"group": 2
+			},
+			"host": {
+				"group": 3
+			}
+		}
+	},
+	"data": [
+		{
+			"title": "Time of getConnection",
+			"target": [
+				"groupByNode(nonNegativeDerivative(stagemonitor.${application}.${instance}.${host}.jdbc.getconnection.*.time.count), ${group}, 'sum')"
+			]
+		},
+		{
+			"title": "Calls to getConnection",
+			"target": [
+				"groupByNode(nonNegativeDerivative(stagemonitor.${application}.${instance}.${host}.jdbc.getconnection.*.count.count), ${group}, 'sum')"
+			]
+		}
+	]
+}

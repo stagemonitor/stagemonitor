@@ -1,0 +1,21 @@
+{
+	"type": "request",
+	"data": [
+		{
+			"title": "Response Time (ms)",
+			"target": [
+				"alias(dashed(averageSeries(stagemonitor.${application}.${instance}.${host}.request.${requestName}.p95)), 'p95')",
+				"alias(averageSeries(stagemonitor.${application}.${instance}.${host}.request.${requestName}.mean), 'avg')",
+				"alias(dashed(averageSeries(stagemonitor.${application}.${instance}.${host}.request.${requestName}.min)), 'min')"
+			]
+		},
+		{
+			"title": "Throughput (Requests per Minute)",
+			"target": [
+				"alias(sum(stagemonitor.${application}.${instance}.${host}.request.${requestName}.m1_rate), 'total')",
+			 	"alias(sum(stagemonitor.${application}.${instance}.${host}.request.${requestName}.error.m1_rate), 'failed')"
+			]
+		}
+	]
+
+}

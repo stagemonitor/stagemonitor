@@ -1,0 +1,32 @@
+{
+	"data": [
+		{
+			"title": "Heap",
+			"target": [
+				"alias(averageSeries(stagemonitor.${application}.${instance}.${host}.jvm.memory.heap.max), 'max')",
+				"alias(averageSeries(stagemonitor.${application}.${instance}.${host}.jvm.memory.heap.committed), 'committed')",
+				"alias(averageSeries(stagemonitor.${application}.${instance}.${host}.jvm.memory.heap.used), 'used')"
+			]
+		},
+		{
+			"title": "Non-Heap",
+			"target": [
+				"alias(averageSeries(stagemonitor.${application}.${instance}.${host}.jvm.memory.non-heap.max), 'max')",
+				"alias(averageSeries(stagemonitor.${application}.${instance}.${host}.jvm.memory.non-heap.committed), 'committed')",
+				"alias(averageSeries(stagemonitor.${application}.${instance}.${host}.jvm.memory.non-heap.used), 'used')"
+			]
+		},
+		{
+			"title": "GC",
+			"target": [
+				"groupByNode(nonNegativeDerivative(stagemonitor.${application}.${instance}.${host}.jvm.gc.*.time), 6, 'sum')"
+			]
+		},
+		{
+			"title": "Memory Pools",
+			"target": [
+				"groupByNode(stagemonitor.${application}.${instance}.${host}.jvm.memory.pools.*.usage, 7, 'averageSeries')"
+			]
+		}
+	]
+}

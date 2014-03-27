@@ -1,0 +1,15 @@
+{
+	"groupBy": true,
+	"data": [
+		{
+			"title": "Cpu utilisation",
+			"target": "groupByNode(stagemonitor.${application}.${instance}.${host}.jvm.cpu.process.usage,${group},'maxSeries')",
+			"params": "yMax=1"
+		},
+		{
+			"title": "Heap utilisation",
+			"target": "groupByNode(stagemonitor.${application}.${instance}.${host}.jvm.memory.heap.usage,${group},'maxSeries')",
+			"params": "yMax=1"
+		}
+	]
+}
