@@ -57,7 +57,6 @@ public class HttpExecutionContext extends ExecutionContext {
 
 	public String toString(boolean asciiArt) {
 		StringBuilder sb = new StringBuilder(3000);
-		//sb.append("id: ").append(getId()).append('\n');
 		sb.append(method).append(' ').append(getUrl());
 		if (getParameter() != null) {
 			sb.append(getParameter());
@@ -65,13 +64,7 @@ public class HttpExecutionContext extends ExecutionContext {
 		sb.append(" (").append(statusCode).append(")\n");
 		sb.append(header);
 
-		if (getCallStack() != null) {
-			sb.append("--------------------------------------------------\n");
-			sb.append("Selftime (ms)    Total (ms)       Method signature\n");
-			sb.append("--------------------------------------------------\n");
-
-			sb.append(getCallStack().toString(asciiArt));
-		}
+		appendCallStack(sb, asciiArt);
 		return sb.toString();
 	}
 }

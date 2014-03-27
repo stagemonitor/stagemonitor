@@ -1,6 +1,7 @@
 package de.isys.jawap.collector.core;
 
 import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.Metered;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -15,6 +16,7 @@ import org.apache.commons.logging.LogFactory;
 import java.net.InetSocketAddress;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static de.isys.jawap.util.GraphiteEncoder.encodeForGraphite;
@@ -23,9 +25,13 @@ public class JawapApplicationContext {
 
 	private final static Log logger = LogFactory.getLog(JawapApplicationContext.class);
 	private static Configuration configuration = new Configuration();
+	private static AtomicBoolean started = new AtomicBoolean(false);
 
-	public static boolean startMonitoring(MeasurementSession measurementSession) {
-		if (measurementSession.isInitialized()) {
+	public synchronized static boolean startMonitoring(MeasurementSession measurementSession) {
+		if (started.get()) {
+			return true;
+		}
+		if (measurementSession.isInitialized() && !started.get()) {
 			initializePlugins();
 			applyExcludePatterns();
 
@@ -35,6 +41,7 @@ public class JawapApplicationContext {
 				reportToJMX();
 			}
 			logger.info("Measurement Session is initialized: " + measurementSession);
+			started.set(true);
 			return true;
 		} else {
 			logger.warn("Measurement Session is not initialized: " + measurementSession);
@@ -73,6 +80,7 @@ public class JawapApplicationContext {
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.MINUTES)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
+					.filter(new MetricsWithCountFilter())
 					.build(graphite)
 					.start(reportingInterval, TimeUnit.SECONDS);
 		}
@@ -90,6 +98,7 @@ public class JawapApplicationContext {
 			SortedTableLogReporter.forRegistry(getMetricRegistry())
 					.convertRatesTo(TimeUnit.MINUTES)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
+					.filter(new MetricsWithCountFilter())
 					.build()
 					.start(reportingInterval, TimeUnit.SECONDS);
 		}
@@ -101,5 +110,15 @@ public class JawapApplicationContext {
 
 	public static Configuration getConfiguration() {
 		return configuration;
+	}
+
+	private static class MetricsWithCountFilter implements MetricFilter {
+		@Override
+		public boolean matches(String name, Metric metric) {
+			if (metric instanceof Metered) {
+				return ((Metered) metric).getCount() > 0;
+			}
+			return true;
+		}
 	}
 }

@@ -130,4 +130,29 @@ public class ExecutionContext {
 			}
 		}
 	}
+
+	@Override
+	public String toString() {
+		return toString(false);
+	}
+
+	public String toString(boolean asciiArt) {
+		StringBuilder sb = new StringBuilder(3000);
+		sb.append(name);
+		if (getParameter() != null) {
+			sb.append(getParameter());
+		}
+		appendCallStack(sb, asciiArt);
+		return sb.toString();
+	}
+
+	protected void appendCallStack(StringBuilder sb, boolean asciiArt) {
+		if (getCallStack() != null) {
+			sb.append("--------------------------------------------------\n");
+			sb.append("Selftime (ms)    Total (ms)       Method signature\n");
+			sb.append("--------------------------------------------------\n");
+
+			sb.append(getCallStack().toString(asciiArt));
+		}
+	}
 }

@@ -107,7 +107,7 @@ public class Configuration {
 	/**
 	 * The amount of time between the metrics are reported to graphite (in seconds).
 	 * <p>
-	 * To deactivate console reports, set this to a value below 1.
+	 * To deactivate graphite reporting, set this to a value below 1, or don't provide jawap.reporting.graphite.hostName.
 	 * </p>
 	 *
 	 * @return the amount of time between graphite reports in seconds
