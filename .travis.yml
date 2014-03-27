@@ -1,5 +1,5 @@
 language: java
 env:
   - TERM=dumb
-script:
-   - ./gradlew assemble --stacktrace --info
+install:
+  - ./gradlew assemble --stacktrace --info
