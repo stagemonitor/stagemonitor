@@ -5,7 +5,7 @@ import org.stagemonitor.collector.core.StageMonitorApplicationContext;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
-public class SessoinCounter implements HttpSessionListener {
+public class SessionCounter implements HttpSessionListener {
 
 
 	@Override
