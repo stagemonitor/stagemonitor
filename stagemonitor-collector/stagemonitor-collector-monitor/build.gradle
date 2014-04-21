@@ -1,9 +1,0 @@
-dependencies {
-	compile project(":stagemonitor-collector:stagemonitor-collector-core")
-}
-
-task fatJar(type: Jar) {
-	baseName = project.name + '-all'
-	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-	with jar
-}

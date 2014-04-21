@@ -1,4 +1,0 @@
-dependencies {
-	compile project(":stagemonitor-collector:stagemonitor-collector-core")
-	compile 'com.codahale.metrics:metrics-jvm:3.0.1'
-}

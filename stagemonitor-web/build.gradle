@@ -1,0 +1,4 @@
+dependencies {
+	compile project("stagemonitor-speedo")
+	provided 'javax.servlet:servlet-api:2.5'
+}

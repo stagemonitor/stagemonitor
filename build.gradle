@@ -2,33 +2,65 @@ import com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile
 
 apply plugin: 'idea'
 subprojects {
-	apply plugin: 'java'
 	apply plugin: 'idea'
 
-	group = "org.stagemonitor"
+	if (!project.name.contains("starter")) {
+		apply plugin: 'java'
 
-	repositories {
-		mavenCentral()
-		maven { url "http://repo.spring.io/libs-snapshot" }
+		group = "org.stagemonitor"
+
+		repositories {
+			mavenCentral()
+			maven { url "http://repo.spring.io/libs-snapshot" }
+		}
+
+		dependencies {
+			testCompile 'junit:junit:4.11'
+			testCompile 'org.mockito:mockito-all:1.9.5'
+		}
+
+		test.testLogging.exceptionFormat = 'full'
+
+		compileJava {
+			sourceCompatibility = 1.6
+			targetCompatibility = 1.6
+		}
+
+		tasks.withType(Compile) {
+			options.encoding = 'UTF-8'
+		}
 	}
 
-	dependencies {
-		testCompile 'junit:junit:4.11'
-		testCompile 'org.mockito:mockito-all:1.9.5'
-	}
 
-	test.testLogging.exceptionFormat = 'full'
+	if (!project.name.equals("stagemonitor-benchmark")) {
+		apply plugin: 'maven-publish'
 
-	compileJava {
-		sourceCompatibility = 1.6
-		targetCompatibility = 1.6
-	}
+		task sourcesJar(type: Jar, dependsOn:classes) {
+			classifier = 'sources'
+			from sourceSets.main.allSource
+		}
+		artifacts {
+			archives sourcesJar
+		}
+		publishing {
+			publications {
+				maven(MavenPublication) {
+					from components.java
 
-	tasks.withType(Compile) {
-		options.encoding = 'UTF-8'
+					artifact sourcesJar {
+						classifier "sources"
+					}
+				}
+			}
+			repositories {
+				maven {
+					url mvnRepoUrl
+				}
+			}
+		}
 	}
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "1.10"
+	gradleVersion = "1.11"
 }
