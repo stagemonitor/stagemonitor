@@ -1,17 +1,12 @@
 package org.stagemonitor.collector.core;
 
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Metered;
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.*;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import org.stagemonitor.collector.core.metrics.SortedTableLogReporter;
-import org.stagemonitor.entities.MeasurementSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.stagemonitor.collector.core.metrics.SortedTableLogReporter;
+import org.stagemonitor.entities.MeasurementSession;
 
 import java.net.InetSocketAddress;
 import java.util.ServiceLoader;
@@ -105,7 +100,9 @@ public class StageMonitorApplicationContext {
 	}
 
 	private static void reportToJMX() {
-		JmxReporter.forRegistry(getMetricRegistry()).build().start();
+		JmxReporter.forRegistry(getMetricRegistry())
+				.filter(new MetricsWithCountFilter())
+				.build().start();
 	}
 
 	public static Configuration getConfiguration() {
