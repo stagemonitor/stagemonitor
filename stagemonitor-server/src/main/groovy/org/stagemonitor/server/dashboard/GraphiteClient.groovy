@@ -22,17 +22,19 @@ class GraphiteClient {
 	private final defaultMetrics = [error: 0, m1_rate: 0, max: 0, mean: 0, min: 0, stddev: 0, p50: 0, p95: 0]
 
 	@Inject
-	GraphiteClient(@Value('${stagemonitor.graphiteUrl}') String graphiteUrl) {
+	GraphiteClient(@Value('${stagemonitor.graphiteUrl:}') String graphiteUrl) {
 		this.graphiteUrl = graphiteUrl
 	}
 
 	List<Map> getRequestTable(String application, instance, host, String from, String until) {
+		if (!graphiteUrl) return []
 		def targetPrefix = "stagemonitor.${application}.${instance}.${host}.request"
 		List<String> rawLines = new HTTPBuilder(graphiteUrl).get(
 				path: "/render",
 				query: [target: ["maximumAbove($targetPrefix.*.{m1_rate,max,mean,min,stddev,p50,p95},0)",
 								"maximumAbove($targetPrefix.*.error.m1_rate, 0)"],
-						from: from, until: until, format: 'raw'].findAll { it.value }).readLines()
+						from: from, until: until, format: 'raw'].findAll { it.value })?.readLines()
+		if (!rawLines) return []
 		rawLines = rawLines.collect { it.replace('None,', '') }
 		List<Map<String, Object>> structuredRawLines = getStructuredLines(rawLines)
 		Map<String, List<Map>> groupedStructuredLines = structuredRawLines.groupBy { it.requestName }
