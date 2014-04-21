@@ -5,7 +5,6 @@ import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitorApplicationContext;
 import org.stagemonitor.collector.core.monitor.MonitoredExecution;
 import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
-import org.stagemonitor.entities.web.HttpExecutionContext;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;

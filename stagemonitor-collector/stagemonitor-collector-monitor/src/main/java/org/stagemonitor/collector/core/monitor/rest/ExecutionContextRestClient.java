@@ -1,7 +1,7 @@
 package org.stagemonitor.collector.core.monitor.rest;
 
 import org.stagemonitor.collector.core.rest.RestClient;
-import org.stagemonitor.entities.profiler.ExecutionContext;
+import org.stagemonitor.collector.core.monitor.ExecutionContext;
 
 public class ExecutionContextRestClient {
 

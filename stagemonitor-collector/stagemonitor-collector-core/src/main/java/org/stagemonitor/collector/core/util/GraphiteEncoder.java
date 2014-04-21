@@ -1,4 +1,4 @@
-package org.stagemonitor.util;
+package org.stagemonitor.collector.core.util;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;

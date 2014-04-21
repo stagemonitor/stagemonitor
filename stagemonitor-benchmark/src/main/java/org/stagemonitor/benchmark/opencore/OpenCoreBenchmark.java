@@ -1,8 +1,6 @@
 package org.stagemonitor.benchmark.opencore;
 
-import org.stagemonitor.collector.profiler.ExecutionContextLogger;
-import org.stagemonitor.entities.profiler.CallStackElement;
-import org.stagemonitor.entities.web.HttpExecutionContext;
+import org.stagemonitor.collector.profiler.CallStackElement;
 import org.stagemonitor.collector.profiler.Profiler;
 
 import static java.lang.System.nanoTime;
@@ -12,8 +10,6 @@ public class OpenCoreBenchmark implements Runnable {
 	public static final int TEST_COUNT = 10;
 	public static final int RUN_COUNT = 1000;
 	public static final int SLEEP = 5;
-
-	private ExecutionContextLogger executionContextLogger = new ExecutionContextLogger();
 
 	public static void main(String[] args) throws Exception {
 		for (int i = TEST_COUNT; i > 0; i--) {
@@ -39,7 +35,6 @@ public class OpenCoreBenchmark implements Runnable {
 	}
 
 	public void run() {
-		HttpExecutionContext httpRequestStats = new HttpExecutionContext();
 		final CallStackElement root = Profiler.activateProfiling();
 		for (int i = 0; i < RUN_COUNT; i++)
 			iterate();

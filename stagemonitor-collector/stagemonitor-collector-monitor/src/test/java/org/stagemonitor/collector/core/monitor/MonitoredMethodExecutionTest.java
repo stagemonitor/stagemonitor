@@ -2,13 +2,11 @@ package org.stagemonitor.collector.core.monitor;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
-import org.stagemonitor.entities.profiler.ExecutionContext;
-import org.junit.Before;
 import org.junit.Test;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.collector.core.StageMonitorApplicationContext.getMetricRegistry;
-import static org.stagemonitor.util.GraphiteEncoder.encodeForGraphite;
+import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

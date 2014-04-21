@@ -1,21 +1,15 @@
-package org.stagemonitor.entities;
+package org.stagemonitor.collector.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import java.util.Date;
 
-@Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MeasurementSession {
 
-	@Id
-	@GeneratedValue
 	private Integer id;
 	private Date startOfSession = new Date();
 	private Date endOfSession;

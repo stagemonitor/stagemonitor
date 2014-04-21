@@ -10,10 +10,9 @@ import org.stagemonitor.collector.core.monitor.rest.ExecutionContextRestClient;
 import org.stagemonitor.collector.core.rest.MeasurementSessionRestClient;
 import org.stagemonitor.collector.profiler.ExecutionContextLogger;
 import org.stagemonitor.collector.profiler.Profiler;
-import org.stagemonitor.entities.MeasurementSession;
-import org.stagemonitor.entities.profiler.CallStackElement;
-import org.stagemonitor.entities.profiler.ExecutionContext;
-import org.stagemonitor.util.GraphiteEncoder;
+import org.stagemonitor.collector.core.MeasurementSession;
+import org.stagemonitor.collector.profiler.CallStackElement;
+import org.stagemonitor.collector.core.util.GraphiteEncoder;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

@@ -1,20 +1,15 @@
-package org.stagemonitor.entities.web;
+package org.stagemonitor.collector.web.monitor;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.stagemonitor.entities.profiler.ExecutionContext;
+import org.stagemonitor.collector.core.monitor.ExecutionContext;
 
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-
-@Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class HttpExecutionContext extends ExecutionContext {
 
 	private String url;
 	private Integer statusCode;
-	@Lob
 	private String header;
 	private String method;
 

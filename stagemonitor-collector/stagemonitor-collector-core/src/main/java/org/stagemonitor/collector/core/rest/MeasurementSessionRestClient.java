@@ -1,6 +1,6 @@
 package org.stagemonitor.collector.core.rest;
 
-import org.stagemonitor.entities.MeasurementSession;
+import org.stagemonitor.collector.core.MeasurementSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

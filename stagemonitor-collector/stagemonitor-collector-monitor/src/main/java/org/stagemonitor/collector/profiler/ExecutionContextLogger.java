@@ -1,6 +1,6 @@
 package org.stagemonitor.collector.profiler;
 
-import org.stagemonitor.entities.profiler.ExecutionContext;
+import org.stagemonitor.collector.core.monitor.ExecutionContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

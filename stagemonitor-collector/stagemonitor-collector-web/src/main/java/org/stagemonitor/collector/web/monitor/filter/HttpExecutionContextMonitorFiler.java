@@ -4,7 +4,7 @@ import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitorApplicationContext;
 import org.stagemonitor.collector.core.monitor.ExecutionContextMonitor;
 import org.stagemonitor.collector.web.monitor.MonitoredHttpExecution;
-import org.stagemonitor.entities.MeasurementSession;
+import org.stagemonitor.collector.core.MeasurementSession;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;

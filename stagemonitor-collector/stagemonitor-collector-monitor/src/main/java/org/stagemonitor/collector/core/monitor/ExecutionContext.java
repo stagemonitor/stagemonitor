@@ -1,36 +1,15 @@
-package org.stagemonitor.entities.profiler;
+package org.stagemonitor.collector.core.monitor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.stagemonitor.entities.MeasurementSession;
+import org.stagemonitor.collector.core.MeasurementSession;
+import org.stagemonitor.collector.profiler.CallStackElement;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.OneToOne;
-import javax.persistence.Transient;
-import java.io.IOException;
-
-import static javax.persistence.CascadeType.ALL;
-import static javax.persistence.FetchType.LAZY;
-
-@MappedSuperclass
 public class ExecutionContext {
 
-	public static final ObjectMapper MAPPER = new ObjectMapper();
-	@Id
-	@GeneratedValue
 	private Integer id;
-	@ManyToOne(fetch = LAZY, cascade = ALL)
 	@JsonIgnore
 	private MeasurementSession measurementSession;
 	private String name;
-	@OneToOne(fetch = LAZY, cascade = ALL)
-	@JsonIgnore
-	private CallStackLob callStackLob;
-	@Transient
 	private CallStackElement callStack;
 	// TODO cpu time
 	private long executionTime;
@@ -52,14 +31,6 @@ public class ExecutionContext {
 
 	public void setId(Integer id) {
 		this.id = id;
-	}
-
-	public CallStackLob getCallStackLob() {
-		return callStackLob;
-	}
-
-	public void setCallStackLob(CallStackLob callStackLob) {
-		this.callStackLob = callStackLob;
 	}
 
 	public CallStackElement getCallStack() {
@@ -108,27 +79,6 @@ public class ExecutionContext {
 
 	public void setParameter(String parameter) {
 		this.parameter = parameter;
-	}
-
-	public void convertCallStackToLob() {
-		if (callStack != null) {
-			try {
-				callStackLob = new CallStackLob();
-				callStackLob.setCallStackJson(MAPPER.writeValueAsString(callStack));
-			} catch (JsonProcessingException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
-
-	public void convertLobToCallStack() {
-		if (callStackLob != null) {
-			try {
-				callStack = MAPPER.readValue(callStackLob.getCallStackJson(), CallStackElement.class);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
 	}
 
 	@Override

@@ -6,7 +6,6 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.stagemonitor.collector.core.metrics.SortedTableLogReporter;
-import org.stagemonitor.entities.MeasurementSession;
 
 import java.net.InetSocketAddress;
 import java.util.ServiceLoader;
@@ -14,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.util.GraphiteEncoder.encodeForGraphite;
+import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
 
 public class StageMonitorApplicationContext {
 

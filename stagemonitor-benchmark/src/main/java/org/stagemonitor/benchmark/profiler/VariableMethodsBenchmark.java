@@ -4,7 +4,7 @@ import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.api.VmOptions;
 import org.stagemonitor.collector.profiler.Profiler;
-import org.stagemonitor.entities.profiler.CallStackElement;
+import org.stagemonitor.collector.profiler.CallStackElement;
 
 import java.lang.management.ManagementFactory;
 

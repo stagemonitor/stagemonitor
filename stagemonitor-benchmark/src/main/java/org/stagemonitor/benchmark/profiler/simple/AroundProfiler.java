@@ -1,6 +1,6 @@
 package org.stagemonitor.benchmark.profiler.simple;
 
-import org.stagemonitor.entities.profiler.CallStackElement;
+import org.stagemonitor.collector.profiler.CallStackElement;
 
 public class AroundProfiler {
   static final ThreadLocal<CallStackElement> methodCallParent =

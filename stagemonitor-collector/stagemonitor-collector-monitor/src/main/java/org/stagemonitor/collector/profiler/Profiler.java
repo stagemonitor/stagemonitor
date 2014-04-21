@@ -1,7 +1,6 @@
 package org.stagemonitor.collector.profiler;
 
 import org.stagemonitor.collector.core.StageMonitorApplicationContext;
-import org.stagemonitor.entities.profiler.CallStackElement;
 
 public class Profiler {
 

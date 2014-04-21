@@ -1,4 +1,4 @@
-package org.stagemonitor.entities.profiler;
+package org.stagemonitor.collector.profiler;
 
 import com.fasterxml.jackson.annotation.*;
 

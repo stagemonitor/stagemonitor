@@ -2,7 +2,7 @@ package org.stagemonitor.collector.jdbc;
 
 import org.stagemonitor.collector.core.StageMonitorApplicationContext;
 import org.stagemonitor.collector.profiler.Profiler;
-import org.stagemonitor.util.GraphiteEncoder;
+import org.stagemonitor.collector.core.util.GraphiteEncoder;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;

@@ -2,7 +2,7 @@ package org.stagemonitor.benchmark.profiler.simple;
 
 import com.google.caliper.Benchmark;
 import com.google.caliper.api.VmOptions;
-import org.stagemonitor.entities.profiler.CallStackElement;
+import org.stagemonitor.collector.profiler.CallStackElement;
 
 @VmOptions({"-Xmx6144m", "-Xms6144m", "-XX:NewSize=6000m", "-XX:MaxNewSize=6000m" })
 public class SimpleProfilerBenchmark {

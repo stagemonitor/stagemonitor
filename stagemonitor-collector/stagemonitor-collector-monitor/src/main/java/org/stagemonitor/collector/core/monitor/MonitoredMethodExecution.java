@@ -1,7 +1,5 @@
 package org.stagemonitor.collector.core.monitor;
 
-import org.stagemonitor.entities.profiler.ExecutionContext;
-
 public class MonitoredMethodExecution implements MonitoredExecution<ExecutionContext> {
 
 	private final String methodSignature;

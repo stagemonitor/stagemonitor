@@ -1,7 +1,5 @@
 package org.stagemonitor.collector.core.monitor;
 
-import org.stagemonitor.entities.profiler.ExecutionContext;
-
 public interface MonitoredExecution<T extends ExecutionContext> {
 
 	/**

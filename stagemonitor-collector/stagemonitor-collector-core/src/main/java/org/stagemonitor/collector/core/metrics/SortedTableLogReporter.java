@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.stagemonitor.util.GraphiteEncoder.decodeForGraphite;
+import static org.stagemonitor.collector.core.util.GraphiteEncoder.decodeForGraphite;
 
 public class SortedTableLogReporter extends ScheduledReporter {
 	/**
