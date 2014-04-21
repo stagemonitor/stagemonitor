@@ -1,7 +1,7 @@
 include 'stagemonitor-core',
 		'stagemonitor-aspectj',
 		'stagemonitor-jvm',
-		'stagemonitor-speedo',
+		'stagemonitor-timer',
 		'stagemonitor-server',
 		'stagemonitor-spring',
 		'stagemonitor-starter-spring-web',

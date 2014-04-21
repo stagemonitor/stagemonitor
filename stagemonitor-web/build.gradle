@@ -12,6 +12,6 @@ buildscript {
 }
 
 dependencies {
-	compile project(":stagemonitor-speedo")
+	compile project(":stagemonitor-timer")
 	provided 'javax.servlet:servlet-api:2.5'
 }
