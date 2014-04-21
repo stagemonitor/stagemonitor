@@ -1,4 +1,17 @@
+apply plugin: 'propdeps'
+apply plugin: 'propdeps-maven'
+apply plugin: 'propdeps-idea'
+
+buildscript {
+	repositories {
+		maven { url 'http://repo.springsource.org/plugins-release' }
+	}
+	dependencies {
+		classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.5'
+	}
+}
+
 dependencies {
-	compile project("stagemonitor-speedo")
+	compile project(":stagemonitor-speedo")
 	provided 'javax.servlet:servlet-api:2.5'
 }

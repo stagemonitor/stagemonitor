@@ -3,39 +3,34 @@ import com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile
 apply plugin: 'idea'
 subprojects {
 	apply plugin: 'idea'
+	apply plugin: 'java'
 
-	if (!project.name.contains("starter")) {
-		apply plugin: 'java'
+	group = "org.stagemonitor"
 
-		group = "org.stagemonitor"
-
-		repositories {
-			mavenCentral()
-			maven { url "http://repo.spring.io/libs-snapshot" }
-		}
-
-		dependencies {
-			testCompile 'junit:junit:4.11'
-			testCompile 'org.mockito:mockito-all:1.9.5'
-		}
-
-		test.testLogging.exceptionFormat = 'full'
-
-		compileJava {
-			sourceCompatibility = 1.6
-			targetCompatibility = 1.6
-		}
-
-		tasks.withType(Compile) {
-			options.encoding = 'UTF-8'
-		}
+	repositories {
+		mavenCentral()
+		maven { url "http://repo.spring.io/libs-snapshot" }
 	}
 
+	dependencies {
+		testCompile 'junit:junit:4.11'
+		testCompile 'org.mockito:mockito-all:1.9.5'
+	}
 
+	test.testLogging.exceptionFormat = 'full'
+
+	compileJava {
+		sourceCompatibility = 1.6
+		targetCompatibility = 1.6
+	}
+
+	tasks.withType(Compile) {
+		options.encoding = 'UTF-8'
+	}
 	if (!project.name.equals("stagemonitor-benchmark")) {
 		apply plugin: 'maven-publish'
 
-		task sourcesJar(type: Jar, dependsOn:classes) {
+		task sourcesJar(type: Jar, dependsOn: classes) {
 			classifier = 'sources'
 			from sourceSets.main.allSource
 		}
@@ -54,11 +49,12 @@ subprojects {
 			}
 			repositories {
 				maven {
-					url mvnRepoUrl
+					url System.getenv('MVN_REPO')
 				}
 			}
 		}
 	}
+
 }
 
 task wrapper(type: Wrapper) {

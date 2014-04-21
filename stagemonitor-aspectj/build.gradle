@@ -1,5 +1,5 @@
 dependencies {
-	compile project("stagemonitor-speedo")
+	compile project(":stagemonitor-speedo")
 
 	compile 'org.aspectj:aspectjtools:1.7.3'
 	compile 'org.aspectj:aspectjrt:1.7.3'
