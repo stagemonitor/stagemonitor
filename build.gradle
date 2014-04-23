@@ -1,9 +1,25 @@
 import com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile
 
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		classpath 'net.saliman:gradle-cobertura-plugin:2.2.2'
+		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:0.4.0'
+	}
+}
+
 apply plugin: 'idea'
-subprojects {
+apply plugin: 'cobertura'
+apply plugin: 'coveralls'
+
+allprojects {
 	apply plugin: 'idea'
 	apply plugin: 'java'
+	apply plugin: 'cobertura'
+	apply plugin: 'coveralls'
 
 	group = "org.stagemonitor"
 
@@ -22,11 +38,18 @@ subprojects {
 	compileJava {
 		sourceCompatibility = 1.6
 		targetCompatibility = 1.6
+		options.debug = true
+		options.debugOptions.debugLevel = "source,lines,vars"
 	}
 
 	tasks.withType(Compile) {
 		options.encoding = 'UTF-8'
 	}
+
+	cobertura {
+		coverageFormats = ['html', 'xml']
+	}
+
 	if (!project.name.equals("stagemonitor-benchmark")) {
 		apply plugin: 'maven-publish'
 
@@ -55,6 +78,16 @@ subprojects {
 		}
 	}
 
+}
+
+cobertura {
+	coverageMergeDatafiles =  rootProject.subprojects.collect {
+		file("${it.buildDir.path}/cobertura/cobertura.ser")
+	}.findAll {!it.toString().contains("stagemonitor-benchmark")}
+	coverageFormats = ['html', 'xml'] // coveralls plugin depends on xml format report
+//	rootProject.subprojects.each {
+//		coverageDirs << file("${it.name}/build/classes/main")
+//	}
 }
 
 task wrapper(type: Wrapper) {
