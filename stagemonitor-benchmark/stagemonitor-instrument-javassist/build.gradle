@@ -2,8 +2,6 @@ dependencies {
 	compile 'org.javassist:javassist:3.18.1-GA'
 }
 
-test.onlyIf { false }
-
 jar.doFirst{
 	manifest {
 		attributes("Manifest-Version"       : "1.0",

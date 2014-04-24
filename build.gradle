@@ -46,10 +46,11 @@ allprojects {
 	}
 
 	cobertura {
-		coverageFormats = ['html', 'xml']
+		coverageFormats = []
+		coverageIgnoreTrivial = true
 	}
 
-	if (!project.name.equals("stagemonitor-benchmark")) {
+	if (!project.name.contains("benchmark")) {
 		apply plugin: 'maven-publish'
 
 		task sourcesJar(type: Jar, dependsOn: classes) {
@@ -87,6 +88,8 @@ test.dependsOn << projectsToTest*.tasks*.withType(Test).flatten()
 cobertura {
 	coverageMergeDatafiles =  projectsToTest.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
 	coverageFormats = ['html', 'xml']
+	coverageIgnoreTrivial = true
+	coverageSourceDirs = [ projectsToTest.sourceSets.main.java.srcDirs.flatten() ]
 }
 
 task wrapper(type: Wrapper) {

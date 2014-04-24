@@ -4,8 +4,6 @@ repositories {
 	maven { url 'https://raw.githubusercontent.com/stagemonitor/mvn-repo/master' }
 }
 
-test.onlyIf { false }
-
 dependencies {
 	compile project(":stagemonitor-timer")
 	compile project(":stagemonitor-aspectj")
