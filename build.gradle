@@ -19,7 +19,6 @@ allprojects {
 	apply plugin: 'idea'
 	apply plugin: 'java'
 	apply plugin: 'cobertura'
-	apply plugin: 'coveralls'
 
 	group = "org.stagemonitor"
 
