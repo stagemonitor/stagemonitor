@@ -77,17 +77,17 @@ allprojects {
 			}
 		}
 	}
-
 }
 
+def getProjectsToTest() {
+	subprojects.findAll { !(it.toString() =~ "benchmark|starter") }
+}
+
+test.dependsOn << projectsToTest*.tasks*.withType(Test).flatten()
+
 cobertura {
-	coverageMergeDatafiles =  rootProject.subprojects.collect {
-		file("${it.buildDir.path}/cobertura/cobertura.ser")
-	}.findAll {!it.toString().contains("stagemonitor-benchmark")}
-	coverageFormats = ['html', 'xml'] // coveralls plugin depends on xml format report
-//	rootProject.subprojects.each {
-//		coverageDirs << file("${it.name}/build/classes/main")
-//	}
+	coverageMergeDatafiles =  projectsToTest.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
+	coverageFormats = ['html', 'xml']
 }
 
 task wrapper(type: Wrapper) {

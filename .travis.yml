@@ -3,3 +3,6 @@ env:
   - TERM=dumb
 install:
   - ./gradlew assemble --stacktrace --info
+
+after_success:
+  - ./gradlew cobertura coveralls
