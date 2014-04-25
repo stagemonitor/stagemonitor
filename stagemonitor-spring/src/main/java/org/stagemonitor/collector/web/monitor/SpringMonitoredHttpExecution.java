@@ -33,26 +33,20 @@ public class SpringMonitoredHttpExecution extends MonitoredHttpExecution {
 					if (handler.getHandler() instanceof HandlerMethod) {
 						HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
 						name = handlerMethod.getMethod().getName();
-						name = splitCamelCase(capitalize(name));
-					} else {
-						name = handler.getHandler().toString();
-					}
-					if (name != null && !name.isEmpty()) {
-						break;
+						return splitCamelCase(capitalize(name));
 					}
 				}
 			} catch (Exception e) {
 				// ignore, try next
 			}
 		}
-		if (name == null && !configuration.getBoolean("stagemonitor.monitor.spring.ignoreNonMvcRequests", false)) {
+		if (!configuration.getBoolean("stagemonitor.monitor.spring.ignoreNonMvcRequests", false)) {
 			name = super.getRequestName();
 		}
 		return name;
 	}
 
 	private static String capitalize(String self) {
-		if (self == null || self.length() == 0) return self;
 		return Character.toUpperCase(self.charAt(0)) + self.substring(1);
 	}
 
