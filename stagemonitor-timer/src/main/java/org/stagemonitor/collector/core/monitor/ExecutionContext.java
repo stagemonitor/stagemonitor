@@ -1,21 +1,33 @@
 package org.stagemonitor.collector.core.monitor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.profiler.CallStackElement;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+import java.util.UUID;
 
 public class ExecutionContext {
 
-	private Integer id;
 	@JsonIgnore
-	private MeasurementSession measurementSession;
+	private String id = UUID.randomUUID().toString();
+	private String measurementSessionId;
 	private String name;
 	private CallStackElement callStack;
 	// TODO cpu time
 	private long executionTime;
 	private boolean error = false;
-	private long timestamp = System.currentTimeMillis();
+	private String timestamp;
 	private String parameter;
+
+	public ExecutionContext() {
+		TimeZone tz = TimeZone.getTimeZone("UTC");
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
+		df.setTimeZone(tz);
+		this.timestamp = df.format(new Date());
+	}
 
 	public boolean isError() {
 		return error;
@@ -25,11 +37,11 @@ public class ExecutionContext {
 		this.error = failed;
 	}
 
-	public Integer getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
@@ -41,12 +53,12 @@ public class ExecutionContext {
 		this.callStack = callStack;
 	}
 
-	public MeasurementSession getMeasurementSession() {
-		return measurementSession;
+	public String getMeasurementSessionId() {
+		return measurementSessionId;
 	}
 
-	public void setMeasurementSession(MeasurementSession measurementSession) {
-		this.measurementSession = measurementSession;
+	public void setMeasurementSessionId(String measurementSessionId) {
+		this.measurementSessionId = measurementSessionId;
 	}
 
 	public String getName() {
@@ -65,11 +77,11 @@ public class ExecutionContext {
 		this.executionTime = executionTime;
 	}
 
-	public long getTimestamp() {
+	public String getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(long timestamp) {
+	public void setTimestamp(String timestamp) {
 		this.timestamp = timestamp;
 	}
 
@@ -81,6 +93,10 @@ public class ExecutionContext {
 		this.parameter = parameter;
 	}
 
+	public String getPlainText() {
+		return toString();
+	}
+
 	@Override
 	public String toString() {
 		return toString(false);
@@ -88,9 +104,10 @@ public class ExecutionContext {
 
 	public String toString(boolean asciiArt) {
 		StringBuilder sb = new StringBuilder(3000);
-		sb.append(name);
+		sb.append("id:     ").append(id).append('\n');
+		sb.append("name:   ").append(name).append('\n');
 		if (getParameter() != null) {
-			sb.append(getParameter());
+			sb.append("params: ").append(getParameter()).append('\n');
 		}
 		appendCallStack(sb, asciiArt);
 		return sb.toString();

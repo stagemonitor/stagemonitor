@@ -1,12 +1,20 @@
 package org.stagemonitor.collector.core;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.stagemonitor.collector.core.metrics.SortedTableLogReporter;
+import org.stagemonitor.collector.core.rest.RestClient;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +33,7 @@ public class StageMonitorApplicationContext {
 		if (started.get()) {
 			return true;
 		}
+		//addElasticsearchMapping();
 		if (measurementSession.isInitialized() && !started.get()) {
 			initializePlugins();
 			applyExcludePatterns();
@@ -41,6 +50,21 @@ public class StageMonitorApplicationContext {
 			logger.warn("Measurement Session is not initialized: " + measurementSession);
 			logger.warn("make sure the properties 'stagemonitor.instanceName' and 'stagemonitor.applicationName' are set and stagemonitor.properties is available in the classpath");
 			return false;
+		}
+	}
+
+	// TODO
+	private static void addElasticsearchMapping() {
+		try {
+			final HttpURLConnection response = RestClient.get(configuration.getServerUrl());
+			final int responseCode = response.getResponseCode();
+			if (responseCode == 404) {
+
+			} else if (responseCode >= 400) {
+				logger.error(String.format("Unexpected elastic search error (%d): %s", responseCode, response.getContent().toString()));
+			}
+		} catch (IOException e) {
+
 		}
 	}
 

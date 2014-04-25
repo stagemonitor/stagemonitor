@@ -51,8 +51,20 @@ public class RestClient {
 		asyncRestPool.execute(new Runnable() {
 			@Override
 			public void run() {
-			 	sendAsJson(urlString, method, requestBody);
+				sendAsJson(urlString, method, requestBody);
 			}
 		});
+	}
+
+	public static HttpURLConnection get(String urlString) {
+		try {
+			URL url = new URL(urlString);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.connect();
+			return connection;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

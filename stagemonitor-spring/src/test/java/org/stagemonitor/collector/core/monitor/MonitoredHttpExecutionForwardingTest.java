@@ -2,14 +2,14 @@ package org.stagemonitor.collector.core.monitor;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
-import org.stagemonitor.collector.core.StageMonitorApplicationContext;
-import org.stagemonitor.collector.web.monitor.MonitoredHttpExecution;
-import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
-import org.stagemonitor.collector.web.monitor.HttpExecutionContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.stagemonitor.collector.core.StageMonitorApplicationContext;
+import org.stagemonitor.collector.web.monitor.HttpExecutionContext;
+import org.stagemonitor.collector.web.monitor.MonitoredHttpExecution;
+import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -18,13 +18,13 @@ import javax.servlet.ServletResponse;
 import java.io.IOException;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.collector.core.StageMonitorApplicationContext.getMetricRegistry;
-import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.stagemonitor.collector.core.StageMonitorApplicationContext.getMetricRegistry;
+import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
 
 public class MonitoredHttpExecutionForwardingTest {
 

@@ -57,7 +57,9 @@ public class HttpExecutionContext extends ExecutionContext {
 			sb.append(getParameter());
 		}
 		sb.append(" (").append(statusCode).append(")\n");
-		sb.append(header);
+		sb.append("id:     ").append(getId()).append('\n');
+		sb.append("name:   ").append(getName()).append('\n');
+		sb.append(header).append('\n');
 
 		appendCallStack(sb, asciiArt);
 		return sb.toString();

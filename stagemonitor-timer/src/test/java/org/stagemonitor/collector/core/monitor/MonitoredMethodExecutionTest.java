@@ -5,13 +5,13 @@ import com.codahale.metrics.MetricFilter;
 import org.junit.Test;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.collector.core.StageMonitorApplicationContext.getMetricRegistry;
-import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.stagemonitor.collector.core.StageMonitorApplicationContext.getMetricRegistry;
+import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
 
 public class MonitoredMethodExecutionTest {
 

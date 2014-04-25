@@ -5,14 +5,13 @@ import com.codahale.metrics.Timer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.stagemonitor.collector.core.Configuration;
+import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.core.StageMonitorApplicationContext;
-import org.stagemonitor.collector.core.monitor.rest.ExecutionContextRestClient;
-import org.stagemonitor.collector.core.rest.MeasurementSessionRestClient;
+import org.stagemonitor.collector.core.rest.RestClient;
+import org.stagemonitor.collector.core.util.GraphiteEncoder;
+import org.stagemonitor.collector.profiler.CallStackElement;
 import org.stagemonitor.collector.profiler.ExecutionContextLogger;
 import org.stagemonitor.collector.profiler.Profiler;
-import org.stagemonitor.collector.core.MeasurementSession;
-import org.stagemonitor.collector.profiler.CallStackElement;
-import org.stagemonitor.collector.core.util.GraphiteEncoder;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -46,9 +45,6 @@ public class ExecutionContextMonitor {
 
 	private volatile MeasurementSession measurementSession;
 
-	private MeasurementSessionRestClient measurementSessionRestClient;
-	private ExecutionContextRestClient executionContextRestClient = new ExecutionContextRestClient();
-	private String measurementSessionLocation;
 	private Date endOfWarmup;
 
 	public ExecutionContextMonitor() {
@@ -56,7 +52,6 @@ public class ExecutionContextMonitor {
 	}
 
 	public ExecutionContextMonitor(Configuration configuration) {
-		measurementSessionRestClient = new MeasurementSessionRestClient(configuration.getServerUrl());
 		warmupRequests = configuration.getNoOfWarmupRequests();
 		this.metricRegistry = StageMonitorApplicationContext.getMetricRegistry();
 		this.configuration = configuration;
@@ -65,9 +60,7 @@ public class ExecutionContextMonitor {
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
 		this.measurementSession = measurementSession;
-		if (StageMonitorApplicationContext.startMonitoring(measurementSession)) {
-			measurementSessionLocation = measurementSessionRestClient.saveMeasurementSession(measurementSession);
-		}
+		StageMonitorApplicationContext.startMonitoring(measurementSession);
 	}
 
 	public <T extends ExecutionContext> ExecutionInformation<T> monitor(MonitoredExecution<T> monitoredExecution) throws Exception {
@@ -105,7 +98,6 @@ public class ExecutionContextMonitor {
 		if (measurementSession.getInstanceName() == null) {
 			measurementSession.setInstanceName(monitoredExecution.getInstanceName());
 			StageMonitorApplicationContext.startMonitoring(measurementSession);
-			measurementSessionLocation = measurementSessionRestClient.saveMeasurementSession(measurementSession);
 		}
 	}
 
@@ -190,17 +182,18 @@ public class ExecutionContextMonitor {
 	}
 
 	private <T extends ExecutionContext> void reportCallStack(T executionContext) {
-		if (configuration.isReportCallStacksToServer()) {
-			executionContextRestClient.saveRequestContext(measurementSessionLocation, executionContext);
+		final String serverUrl = configuration.getServerUrl();
+		if (serverUrl != null && !serverUrl.isEmpty()) {
+			final String callStacksTimeToLive = configuration.getCallStacksTimeToLive();
+			String url = serverUrl + "/stagemonitor/executionContexts/" + executionContext.getId();
+			if (callStacksTimeToLive != null && !callStacksTimeToLive.isEmpty()) {
+				url += "?ttl=" + callStacksTimeToLive;
+			}
+			RestClient.sendAsJsonAsync(url, "PUT", executionContext);
 		}
 		if (configuration.isLogCallStacks()) {
 			executionContextLogger.logStats(executionContext);
 		}
-	}
-
-	public void onPreDestroy() {
-		measurementSession.setEndOfSession(new Date());
-		measurementSessionRestClient.updateMeasurementSession(measurementSession, measurementSessionLocation);
 	}
 
 	private boolean isWarmedUp() {

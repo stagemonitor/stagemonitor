@@ -1,10 +1,10 @@
 package org.stagemonitor.collector.web.monitor.filter;
 
 import org.stagemonitor.collector.core.Configuration;
+import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.core.StageMonitorApplicationContext;
 import org.stagemonitor.collector.core.monitor.ExecutionContextMonitor;
 import org.stagemonitor.collector.web.monitor.MonitoredHttpExecution;
-import org.stagemonitor.collector.core.MeasurementSession;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -66,10 +66,4 @@ public class HttpExecutionContextMonitorFiler extends AbstractExclusionFilter im
 			throw new RuntimeException(e);
 		}
 	}
-
-	@Override
-	public void destroy() {
-		executionContextMonitor.onPreDestroy();
-	}
-
 }

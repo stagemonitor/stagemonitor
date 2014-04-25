@@ -1,45 +1,12 @@
 package org.stagemonitor.collector.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
-import java.util.Date;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MeasurementSession {
 
-	private Integer id;
-	private Date startOfSession = new Date();
-	private Date endOfSession;
 	private String applicationName;
 	private String hostName;
 	private String instanceName;
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
-	}
-
-	public Date getStartOfSession() {
-		return startOfSession;
-	}
-
-	public void setStartOfSession(Date startOfSession) {
-		this.startOfSession = startOfSession;
-	}
-
-	public Date getEndOfSession() {
-		return endOfSession;
-	}
-
-	public void setEndOfSession(Date endOfSession) {
-		this.endOfSession = endOfSession;
-	}
 
 	public String getApplicationName() {
 		return applicationName;

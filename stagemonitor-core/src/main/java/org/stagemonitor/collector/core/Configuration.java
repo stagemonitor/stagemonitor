@@ -163,12 +163,15 @@ public class Configuration {
 	}
 
 	/**
-	 * Whether or not call stacks should reported to the server.
+	 * When set, call stacks will be deleted automatically after the specified interval
+	 * <p/>
+	 * In case you do not specify a time unit like d (days), m (minutes), h (hours), ms (milliseconds) or w (weeks),
+	 * milliseconds is used as default unit.
 	 *
-	 * @return <code>true</code>, if call stacks should reported to the server, <code>false</code> otherwise
+	 * @return the time to live interval for a call stack
 	 */
-	public boolean isReportCallStacksToServer() {
-		return getBoolean("stagemonitor.profiler.reportCallStacksToServer", true);
+	public String getCallStacksTimeToLive() {
+		return getString("stagemonitor.profiler.callStacksTTL", "1w");
 	}
 
 	/**
@@ -196,9 +199,8 @@ public class Configuration {
 	}
 
 	/**
-	 * The URL of the stagemonitor server
-	 * <p/>
-	 * <b>This setting is mandatory if stagemonitor.profiler.reportCallStacksToServer is set to true</b>
+	 * The URL of the elasticsearch server that stores the call stacks.
+	 * If the URL is not provided, the call stacks won't get stored.
 	 *
 	 * @return the server url
 	 */
