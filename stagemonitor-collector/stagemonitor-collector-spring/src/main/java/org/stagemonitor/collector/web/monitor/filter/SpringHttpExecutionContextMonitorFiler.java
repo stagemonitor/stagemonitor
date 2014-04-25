@@ -1,11 +1,12 @@
 package org.stagemonitor.collector.web.monitor.filter;
 
-import org.stagemonitor.collector.web.monitor.SpringMonitoredHttpExecution;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.servlet.FrameworkServlet;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import org.stagemonitor.collector.web.monitor.SpringMonitoredHttpExecution;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -24,7 +25,7 @@ import java.util.List;
 public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContextMonitorFiler {
 	private final Log logger = LogFactory.getLog(getClass());
 
-	private List<RequestMappingHandlerMapping> allHandlerMappings;
+	private List<HandlerMapping> allHandlerMappings;
 	private ServletContext servletContext;
 
 	@Override
@@ -56,8 +57,8 @@ public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContext
 		}
 	}
 
-	private List<RequestMappingHandlerMapping> ensureHandlerMappingsAreInitialized() {
-		List<RequestMappingHandlerMapping> result = allHandlerMappings;
+	private List<HandlerMapping> ensureHandlerMappingsAreInitialized() {
+		List<HandlerMapping> result = allHandlerMappings;
 		if (result == null) {
 			synchronized (this) {
 				result = allHandlerMappings;
@@ -74,8 +75,8 @@ public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContext
 		return result;
 	}
 
-	private List<RequestMappingHandlerMapping> getAllHandlerMappings() {
-		List<RequestMappingHandlerMapping> result = new ArrayList<RequestMappingHandlerMapping>();
+	private List<HandlerMapping> getAllHandlerMappings() {
+		List<HandlerMapping> result = new ArrayList<HandlerMapping>();
 		final Enumeration attributeNames = servletContext.getAttributeNames();
 		while (attributeNames.hasMoreElements()) {
 			String attributeName = (String) attributeNames.nextElement();

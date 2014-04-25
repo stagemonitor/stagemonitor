@@ -1,10 +1,10 @@
 package org.stagemonitor.collector.web.monitor;
 
-import org.stagemonitor.collector.core.Configuration;
-import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import org.springframework.web.servlet.HandlerMapping;
+import org.stagemonitor.collector.core.Configuration;
+import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -12,12 +12,12 @@ import java.util.List;
 
 public class SpringMonitoredHttpExecution extends MonitoredHttpExecution {
 
-	private final List<RequestMappingHandlerMapping> allHandlerMappings;
+	private final List<HandlerMapping> allHandlerMappings;
 
 	public SpringMonitoredHttpExecution(HttpServletRequest httpServletRequest,
 										StatusExposingServletResponse statusExposingResponse,
 										FilterChain filterChain, Configuration configuration,
-										List<RequestMappingHandlerMapping> allHandlerMappings) {
+										List<HandlerMapping> allHandlerMappings) {
 
 		super(httpServletRequest, statusExposingResponse, filterChain, configuration);
 		this.allHandlerMappings = allHandlerMappings;
@@ -26,7 +26,7 @@ public class SpringMonitoredHttpExecution extends MonitoredHttpExecution {
 	@Override
 	public String getRequestName() {
 		String name = null;
-		for (RequestMappingHandlerMapping handlerMapping : allHandlerMappings) {
+		for (HandlerMapping handlerMapping : allHandlerMappings) {
 			try {
 				HandlerExecutionChain handler = handlerMapping.getHandler(httpServletRequest);
 				if (handler != null) {
@@ -45,7 +45,7 @@ public class SpringMonitoredHttpExecution extends MonitoredHttpExecution {
 				// ignore, try next
 			}
 		}
-		if (name == null) {
+		if (name == null && !configuration.getBoolean("stagemonitor.monitor.spring.ignoreNonMvcRequests", false)) {
 			name = super.getRequestName();
 		}
 		return name;

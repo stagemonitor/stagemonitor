@@ -34,7 +34,7 @@ public class MonitoredMethodExecution implements MonitoredExecution<ExecutionCon
 	}
 
 	/**
-	 * In a Method execution context, we only want to monitor the topmost monitored method call.
+	 * In a Method execution context, we only want to monitor the topmost monitored (forwarding) method call.
 	 * <p/>
 	 * Example:<br/>
 	 * Suppose, we have three methods: monitored1(), monitored2() and notMonitored().

@@ -124,7 +124,7 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 	}
 
 	/**
-	 * In a web context, we only want to monitor non-forwarded requests.
+	 * In a web context, we only want to monitor forwarded requests.
 	 * If a request to /a makes a
 	 * {@link javax.servlet.RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)}
 	 * to /b, we only want to collect metrics for /b, because it is the request, that does the actual computation.

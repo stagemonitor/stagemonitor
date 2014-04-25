@@ -2,6 +2,8 @@ package org.stagemonitor.collector.core.monitor;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitorApplicationContext;
 import org.stagemonitor.collector.core.monitor.rest.ExecutionContextRestClient;
@@ -12,8 +14,6 @@ import org.stagemonitor.entities.MeasurementSession;
 import org.stagemonitor.entities.profiler.CallStackElement;
 import org.stagemonitor.entities.profiler.ExecutionContext;
 import org.stagemonitor.util.GraphiteEncoder;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -123,23 +123,21 @@ public class ExecutionContextMonitor {
 	private <T extends ExecutionContext> void beforeExecution(MonitoredExecution<T> monitoredExecution, ExecutionInformation<T> ei) {
 		try {
 			ei.executionContext = monitoredExecution.createExecutionContext();
-			String requestName = ei.executionContext.getName();
-			if (requestName == null || requestName.isEmpty()) {
-				throw new RuntimeException("requestName is null or empty! '" + requestName + "'");
-			}
-			if (actualRequestName.get() != null) {
-				ei.forwardedExecution = true;
-				if (!monitoredExecution.isMonitorForwardedExecutions()) {
-					ei.executionContext = null;
-					return;
+			if (ei.monitorThisExecution()) {
+				if (actualRequestName.get() != null) {
+					ei.forwardedExecution = true;
+					if (!monitoredExecution.isMonitorForwardedExecutions()) {
+						ei.executionContext = null;
+						return;
+					}
 				}
-			}
-			actualRequestName.set(requestName);
-			ei.executionContext.setName(requestName);
-			ei.timer = metricRegistry.timer(ei.getTimerName());
-			if (ei.profileThisRequest()) {
-				final CallStackElement root = Profiler.activateProfiling();
-				ei.executionContext.setCallStack(root);
+				actualRequestName.set(ei.executionContext.getName());
+				ei.executionContext.setName(ei.executionContext.getName());
+				ei.timer = metricRegistry.timer(ei.getTimerName());
+				if (ei.profileThisExecution()) {
+					final CallStackElement root = Profiler.activateProfiling();
+					ei.executionContext.setCallStack(root);
+				}
 			}
 		} catch (RuntimeException e) {
 			logger.error(e.getMessage(), e);
@@ -149,7 +147,7 @@ public class ExecutionContextMonitor {
 	private <T extends ExecutionContext> void afterExecution(MonitoredExecution<T> monitoredExecution,
 															 ExecutionInformation<T> ei) {
 		try {
-			if (ei.executionContext != null) {
+			if (ei.monitorThisExecution()) {
 				// if forwarded executions are not monitored, ei.executionContext would be null
 				if (!ei.isForwardingExecution()) {
 					long executionTime = System.nanoTime() - ei.start;
@@ -232,12 +230,16 @@ public class ExecutionContextMonitor {
 		boolean forwardedExecution = false;
 		Object executionResult = null;
 
-		private boolean profileThisRequest() {
+		private boolean profileThisExecution() {
 			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
 			if (callStackEveryXRequestsToGroup == 1) return true;
 			if (callStackEveryXRequestsToGroup < 1) return false;
 			if (timer.getCount() == 0) return false;
 			return timer.getCount() % callStackEveryXRequestsToGroup == 0;
+		}
+
+		private boolean monitorThisExecution() {
+			return executionContext != null && executionContext.getName() != null && !executionContext.getName().isEmpty();
 		}
 
 		private String getTimerName() {
