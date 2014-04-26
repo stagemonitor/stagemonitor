@@ -1,8 +1,13 @@
 package org.stagemonitor.collector.profiler;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Stack;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -125,7 +130,7 @@ public class CallStackElement {
 
 	public void logStats(long totalExecutionTimeNs, Stack<String> indentationStack, StringBuilder log,
 						 final boolean asciiArt) {
-		appendTimesPercentTable(totalExecutionTimeNs, log);
+		appendTimesPercentTable(totalExecutionTimeNs, log, asciiArt);
 		appendCallTree(indentationStack, log, asciiArt);
 
 		for (CallStackElement callStats : getChildren()) {
@@ -141,20 +146,37 @@ public class CallStackElement {
 		}
 	}
 
-	private void appendTimesPercentTable(long totalExecutionTimeNs, StringBuilder sb) {
+	private void appendTimesPercentTable(long totalExecutionTimeNs, StringBuilder sb, boolean asciiArt) {
 		appendNumber(sb, getNetExecutionTime());
-		appendPercent(sb, getNetExecutionTime(), totalExecutionTimeNs);
+		appendPercent(sb, getNetExecutionTime(), totalExecutionTimeNs, asciiArt);
 
 		appendNumber(sb, getExecutionTime());
-		appendPercent(sb, getExecutionTime(), totalExecutionTimeNs);
+		appendPercent(sb, getExecutionTime(), totalExecutionTimeNs, asciiArt);
 	}
 
 	private void appendNumber(StringBuilder sb, long time) {
 		sb.append(String.format("%,9.2f", time / 1000000.0)).append("  ");
 	}
 
-	private void appendPercent(StringBuilder sb, long time, long totalExecutionTimeNs) {
-		sb.append(String.format("%3.0f", time * 100 / (double) totalExecutionTimeNs)).append("%  ");
+	private void appendPercent(StringBuilder sb, long time, long totalExecutionTimeNs, boolean asciiArt) {
+		final double percent = time / (double) totalExecutionTimeNs;
+		sb.append(String.format("%3.0f", percent * 100)).append("% ").append(printPercentAsBar(percent, 10, asciiArt)).append(' ');
+	}
+
+	static String printPercentAsBar(double percent, int totalBars, boolean asciiArt) {
+		int actualBars = (int) (percent * totalBars);
+		boolean includeHalfBarAtEnd = actualBars * 2 != (int) (percent * totalBars * 2);
+		StringBuilder sb = new StringBuilder(totalBars);
+		for (int i = 0; i < totalBars; i++) {
+			if (i < actualBars) {
+				sb.append(asciiArt ? (char) 9608 : '|'); // █
+			} else if (i == actualBars && includeHalfBarAtEnd) {
+				sb.append(asciiArt ? (char) 9619 : '-'); // ▓
+			} else {
+				sb.append(asciiArt ? (char) 9617 : ' '); // ▒
+			}
+		}
+		return sb.toString();
 	}
 
 	private void appendCallTree(Stack<String> indentationStack, StringBuilder sb, final boolean asciiArt) {

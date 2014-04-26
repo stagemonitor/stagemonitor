@@ -115,9 +115,9 @@ public class ExecutionContext {
 
 	protected void appendCallStack(StringBuilder sb, boolean asciiArt) {
 		if (getCallStack() != null) {
-			sb.append("--------------------------------------------------\n");
-			sb.append("Selftime (ms)    Total (ms)       Method signature\n");
-			sb.append("--------------------------------------------------\n");
+			sb.append("--------------------------------------------------------------------------\n");
+			sb.append("Selftime (ms)                Total (ms)                   Method signature\n");
+			sb.append("--------------------------------------------------------------------------\n");
 
 			sb.append(getCallStack().toString(asciiArt));
 		}
