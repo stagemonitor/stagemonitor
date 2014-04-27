@@ -1,7 +1,7 @@
 package org.stagemonitor.collector.jvm;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectInstance;
@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class MBeanPooledResourceImpl implements PooledResource {
 
-	private static final Log logger = LogFactory.getLog(MBeanPooledResourceImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(MBeanPooledResourceImpl.class);
 
 	private static final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 	private final String name;

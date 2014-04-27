@@ -3,6 +3,7 @@ package org.stagemonitor.collector.core.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -32,9 +33,7 @@ public class RestClient {
 			connection.setRequestMethod(method);
 			connection.setRequestProperty("Content-Type", "application/json");
 
-			OutputStream os = connection.getOutputStream();
-			MAPPER.writeValue(os, requestBody);
-			os.flush();
+			writeRequestBody(requestBody, connection.getOutputStream());
 
 			connection.getContent();
 			final int responseCode = connection.getResponseCode();
@@ -47,6 +46,21 @@ public class RestClient {
 		}
 	}
 
+	private static void writeRequestBody(Object requestBody, OutputStream os) throws IOException {
+		if (requestBody != null && os != null) {
+			if (requestBody instanceof InputStream) {
+				byte[] buf = new byte[8192];
+				int n;
+				while ((n = ((InputStream) requestBody).read(buf)) > 0) {
+					os.write(buf, 0, n);
+				}
+			} else {
+				MAPPER.writeValue(os, requestBody);
+			}
+			os.flush();
+		}
+	}
+
 	public static void sendAsJsonAsync(final String urlString, final String method, final Object requestBody) {
 		asyncRestPool.execute(new Runnable() {
 			@Override
@@ -54,17 +68,5 @@ public class RestClient {
 				sendAsJson(urlString, method, requestBody);
 			}
 		});
-	}
-
-	public static HttpURLConnection get(String urlString) {
-		try {
-			URL url = new URL(urlString);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("GET");
-			connection.connect();
-			return connection;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 }

@@ -4,13 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.stagemonitor.collector.core.monitor.ExecutionContext;
 
+import java.util.Map;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class HttpExecutionContext extends ExecutionContext {
 
 	private String url;
 	private Integer statusCode;
-	private String header;
+	private Map<String, String> headers;
 	private String method;
 
 	public String getUrl() {
@@ -29,12 +31,12 @@ public class HttpExecutionContext extends ExecutionContext {
 		this.statusCode = statusCode;
 	}
 
-	public String getHeader() {
-		return header;
+	public Map<String, String> getHeaders() {
+		return headers;
 	}
 
-	public void setHeader(String header) {
-		this.header = header;
+	public void setHeaders(Map<String, String> headers) {
+		this.headers = headers;
 	}
 
 	public String getMethod() {
@@ -52,15 +54,16 @@ public class HttpExecutionContext extends ExecutionContext {
 
 	public String toString(boolean asciiArt) {
 		StringBuilder sb = new StringBuilder(3000);
-		sb.append(method).append(' ').append(getUrl());
+		sb.append(method).append(' ').append(url);
 		if (getParameter() != null) {
 			sb.append(getParameter());
 		}
 		sb.append(" (").append(statusCode).append(")\n");
 		sb.append("id:     ").append(getId()).append('\n');
 		sb.append("name:   ").append(getName()).append('\n');
-		sb.append(header).append('\n');
-
+		for (Map.Entry<String, String> entry : headers.entrySet()) {
+			sb.append(entry.getKey()).append(": ").append(entry.getValue()).append('\n');
+		}
 		appendCallStack(sb, asciiArt);
 		return sb.toString();
 	}

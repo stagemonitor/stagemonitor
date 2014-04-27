@@ -9,6 +9,7 @@ import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletRespon
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -48,7 +49,7 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
 		requestStats.setParameter(getSafeQueryString(parameterMap));
 		if (configuration.isCollectHeaders()) {
-			requestStats.setHeader(getHeadersAsString(httpServletRequest));
+			requestStats.setHeaders(getHeaders(httpServletRequest));
 		}
 		return requestStats;
 	}
@@ -93,17 +94,17 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 		return false;
 	}
 
-	private String getHeadersAsString(HttpServletRequest request) {
-		StringBuilder headerStringBuilder = new StringBuilder();
+	private Map<String, String> getHeaders(HttpServletRequest request) {
+		Map<String, String> headers = new HashMap<String, String>();
 		final Enumeration headerNames = request.getHeaderNames();
 		final List<String> excludedHeaders = configuration.getExcludedHeaders();
 		while (headerNames.hasMoreElements()) {
 			final String headerName = (String) headerNames.nextElement();
 			if (!excludedHeaders.contains(headerName.toLowerCase())) {
-				headerStringBuilder.append(headerName).append(": ").append(request.getHeader(headerName)).append('\n');
+				headers.put(headerName, request.getHeader(headerName));
 			}
 		}
-		return headerStringBuilder.toString();
+		return headers;
 	}
 
 	@Override

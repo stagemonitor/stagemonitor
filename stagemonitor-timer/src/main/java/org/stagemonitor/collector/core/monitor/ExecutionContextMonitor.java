@@ -2,8 +2,8 @@ package org.stagemonitor.collector.core.monitor;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.core.StageMonitorApplicationContext;
@@ -15,6 +15,7 @@ import org.stagemonitor.collector.profiler.Profiler;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +25,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 
 public class ExecutionContextMonitor {
 
-	private static final Log logger = LogFactory.getLog(ExecutionContextMonitor.class);
+	private static final Logger logger = LoggerFactory.getLogger(ExecutionContextMonitor.class);
 	private final ExecutionContextLogger executionContextLogger = new ExecutionContextLogger();
 
 	/**
@@ -79,6 +80,7 @@ public class ExecutionContextMonitor {
 		}
 		try {
 			ei.executionResult = monitoredExecution.execute();
+			return ei;
 		} catch (Exception e) {
 			ei.exceptionThrown = true;
 			throw e;
@@ -86,7 +88,6 @@ public class ExecutionContextMonitor {
 			if (monitor) {
 				afterExecution(monitoredExecution, ei);
 			}
-			return ei;
 		}
 	}
 
@@ -114,6 +115,7 @@ public class ExecutionContextMonitor {
 	private <T extends ExecutionContext> void beforeExecution(MonitoredExecution<T> monitoredExecution, ExecutionInformation<T> ei) {
 		try {
 			ei.executionContext = monitoredExecution.createExecutionContext();
+			ei.executionContext.setMeasurementSession(measurementSession);
 			if (ei.monitorThisExecution()) {
 				if (actualRequestName.get() != null) {
 					ei.forwardedExecution = true;
@@ -143,12 +145,12 @@ public class ExecutionContextMonitor {
 				if (!ei.isForwardingExecution()) {
 					long executionTime = System.nanoTime() - ei.start;
 					ei.executionContext.setError(ei.exceptionThrown);
-					ei.executionContext.setExecutionTime(executionTime);
+					ei.executionContext.setExecutionTime(TimeUnit.NANOSECONDS.toMillis(executionTime));
 					monitoredExecution.onPostExecute(ei.executionContext);
 
 					if (ei.executionContext.getCallStack() != null) {
 						Profiler.stop("total");
-						reportCallStack(ei.executionContext);
+						reportCallStack(ei.executionContext, configuration.getServerUrl());
 					}
 					if (ei.timer != null) {
 						ei.timer.update(executionTime, TimeUnit.NANOSECONDS);
@@ -181,13 +183,13 @@ public class ExecutionContextMonitor {
 		}
 	}
 
-	private <T extends ExecutionContext> void reportCallStack(T executionContext) {
-		final String serverUrl = configuration.getServerUrl();
+	private <T extends ExecutionContext> void reportCallStack(T executionContext, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
-			final String callStacksTimeToLive = configuration.getCallStacksTimeToLive();
-			String url = serverUrl + "/stagemonitor/executionContexts/" + executionContext.getId();
-			if (callStacksTimeToLive != null && !callStacksTimeToLive.isEmpty()) {
-				url += "?ttl=" + callStacksTimeToLive;
+			String url = String.format("%s/stagemonitor-%s/executions/%s", serverUrl,
+					new SimpleDateFormat("yyyy.MM.dd").format(new Date()), executionContext.getId());
+			final String ttl = configuration.getCallStacksTimeToLive();
+			if (ttl != null && !ttl.isEmpty()) {
+				url += "?ttl=" + ttl;
 			}
 			RestClient.sendAsJsonAsync(url, "PUT", executionContext);
 		}

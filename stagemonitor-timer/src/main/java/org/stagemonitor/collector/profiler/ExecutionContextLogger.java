@@ -1,8 +1,8 @@
 package org.stagemonitor.collector.profiler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.monitor.ExecutionContext;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,7 +10,7 @@ import java.util.concurrent.ThreadFactory;
 
 public class ExecutionContextLogger {
 
-	private static final Log logger = LogFactory.getLog(ExecutionContextLogger.class);
+	private static final Logger logger = LoggerFactory.getLogger(ExecutionContextLogger.class);
 
 	private ExecutorService asyncLoggPool = Executors.newSingleThreadExecutor(new ThreadFactory() {
 		@Override

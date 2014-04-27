@@ -13,6 +13,15 @@ import java.util.Stack;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CallStackElement {
 
+	private static final String horizontal;      // '│   '
+	private static final String angle;           // '└── '
+	private static final String horizontalAngle; // '├── '
+	static {
+		horizontal = new String(new char[]{9474, ' ', ' ', ' '});
+		angle = new String(new char[] {9492, 9472, 9472, ' '});
+		horizontalAngle = new String(new char[]{9500, 9472, 9472, ' '});
+	}
+
 	@JsonBackReference
 	private CallStackElement parent;
 	private String signature;
@@ -116,7 +125,6 @@ public class CallStackElement {
 		return parent;
 	}
 
-
 	@Override
 	public String toString() {
 		return toString(false);
@@ -138,7 +146,7 @@ public class CallStackElement {
 				if (isLastChild()) {
 					indentationStack.push("    ");
 				} else {
-					indentationStack.push(asciiArt ? "│   " : "|   ");
+					indentationStack.push(asciiArt ? horizontal : "|   ");
 				}
 			}
 			callStats.logStats(totalExecutionTimeNs, indentationStack, log, asciiArt);
@@ -155,12 +163,12 @@ public class CallStackElement {
 	}
 
 	private void appendNumber(StringBuilder sb, long time) {
-		sb.append(String.format("%,9.2f", time / 1000000.0)).append("  ");
+		sb.append(String.format("%0,9.2f", time / 1000000.0)).append("  ");
 	}
 
 	private void appendPercent(StringBuilder sb, long time, long totalExecutionTimeNs, boolean asciiArt) {
 		final double percent = time / (double) totalExecutionTimeNs;
-		sb.append(String.format("%3.0f", percent * 100)).append("% ").append(printPercentAsBar(percent, 10, asciiArt)).append(' ');
+		sb.append(String.format("%03.0f", percent * 100)).append("% ").append(printPercentAsBar(percent, 10, asciiArt)).append(' ');
 	}
 
 	static String printPercentAsBar(double percent, int totalBars, boolean asciiArt) {
@@ -171,7 +179,7 @@ public class CallStackElement {
 			if (i < actualBars) {
 				sb.append(asciiArt ? (char) 9608 : '|'); // █
 			} else if (i == actualBars && includeHalfBarAtEnd) {
-				sb.append(asciiArt ? (char) 9619 : '-'); // ▓
+				sb.append(asciiArt ? (char) 9619 : ':'); // ▓
 			} else {
 				sb.append(asciiArt ? (char) 9617 : ' '); // ▒
 			}
@@ -185,9 +193,9 @@ public class CallStackElement {
 		}
 		if (!isRoot()) {
 			if (isLastChild()) {
-				sb.append(asciiArt ? "└── " : "`-- ");
+				sb.append(asciiArt ? angle : "`-- ");
 			} else {
-				sb.append(asciiArt ? "├── " : "|-- ");
+				sb.append(asciiArt ? horizontalAngle : "|-- ");
 			}
 		}
 

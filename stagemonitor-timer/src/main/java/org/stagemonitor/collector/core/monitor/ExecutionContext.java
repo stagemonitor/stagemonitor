@@ -1,6 +1,8 @@
 package org.stagemonitor.collector.core.monitor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.profiler.CallStackElement;
 
 import java.text.DateFormat;
@@ -13,20 +15,29 @@ public class ExecutionContext {
 
 	@JsonIgnore
 	private String id = UUID.randomUUID().toString();
-	private String measurementSessionId;
 	private String name;
 	private CallStackElement callStack;
 	// TODO cpu time
 	private long executionTime;
 	private boolean error = false;
+	@JsonProperty("@timestamp")
 	private String timestamp;
 	private String parameter;
+	private String application;
+	private String host;
+	private String instance;
 
 	public ExecutionContext() {
 		TimeZone tz = TimeZone.getTimeZone("UTC");
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		df.setTimeZone(tz);
 		this.timestamp = df.format(new Date());
+	}
+
+	public void setMeasurementSession(MeasurementSession measurementSession) {
+		application = measurementSession.getApplicationName();
+		host = measurementSession.getHostName();
+		instance = measurementSession.getInstanceName();
 	}
 
 	public boolean isError() {
@@ -51,14 +62,6 @@ public class ExecutionContext {
 
 	public void setCallStack(CallStackElement callStack) {
 		this.callStack = callStack;
-	}
-
-	public String getMeasurementSessionId() {
-		return measurementSessionId;
-	}
-
-	public void setMeasurementSessionId(String measurementSessionId) {
-		this.measurementSessionId = measurementSessionId;
 	}
 
 	public String getName() {
@@ -93,8 +96,33 @@ public class ExecutionContext {
 		this.parameter = parameter;
 	}
 
-	public String getPlainText() {
-		return toString();
+	@JsonProperty("@message")
+	public String getMessage() {
+		return toString(true);
+	}
+
+	public String getApplication() {
+		return application;
+	}
+
+	public void setApplication(String application) {
+		this.application = application;
+	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
+
+	public String getInstance() {
+		return instance;
+	}
+
+	public void setInstance(String instance) {
+		this.instance = instance;
 	}
 
 	@Override

@@ -1,40 +1,30 @@
 package org.stagemonitor.collector.core;
 
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Metered;
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.*;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.metrics.SortedTableLogReporter;
-import org.stagemonitor.collector.core.rest.RestClient;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
 
 public class StageMonitorApplicationContext {
 
-	private final static Log logger = LogFactory.getLog(StageMonitorApplicationContext.class);
+	private final static Logger logger = LoggerFactory.getLogger(StageMonitorApplicationContext.class);
 	private static Configuration configuration = new Configuration();
-	private static AtomicBoolean started = new AtomicBoolean(false);
+	private static volatile boolean started = false;
 
 	public synchronized static boolean startMonitoring(MeasurementSession measurementSession) {
-		if (started.get()) {
+		if (started) {
 			return true;
 		}
-		//addElasticsearchMapping();
-		if (measurementSession.isInitialized() && !started.get()) {
+		if (measurementSession.isInitialized() && !started) {
 			initializePlugins();
 			applyExcludePatterns();
 
@@ -44,27 +34,12 @@ public class StageMonitorApplicationContext {
 				reportToJMX();
 			}
 			logger.info("Measurement Session is initialized: " + measurementSession);
-			started.set(true);
+			started = true;
 			return true;
 		} else {
 			logger.warn("Measurement Session is not initialized: " + measurementSession);
 			logger.warn("make sure the properties 'stagemonitor.instanceName' and 'stagemonitor.applicationName' are set and stagemonitor.properties is available in the classpath");
 			return false;
-		}
-	}
-
-	// TODO
-	private static void addElasticsearchMapping() {
-		try {
-			final HttpURLConnection response = RestClient.get(configuration.getServerUrl());
-			final int responseCode = response.getResponseCode();
-			if (responseCode == 404) {
-
-			} else if (responseCode >= 400) {
-				logger.error(String.format("Unexpected elastic search error (%d): %s", responseCode, response.getContent().toString()));
-			}
-		} catch (IOException e) {
-
 		}
 	}
 

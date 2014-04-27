@@ -1,18 +1,18 @@
 package org.stagemonitor.collector.server;
 
 import com.codahale.metrics.MetricRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitorPlugin;
 import org.stagemonitor.collector.jvm.MBeanPooledResourceImpl;
 import org.stagemonitor.collector.jvm.PooledResourceMetricsRegisterer;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
 
 public class ServerPlugin implements StageMonitorPlugin {
 
-	private final Log logger = LogFactory.getLog(getClass());
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	boolean requiredPropertiesSet = true;
 

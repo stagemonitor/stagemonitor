@@ -64,13 +64,14 @@ public class ProfilerTest {
 
 	@Test
 	public void testProfiler() {
+		final CallStackElement callStackElement = TestClass.method1();
 		assertEquals(
-				"     0,00    0%                10,00  100% |||||||||| method1()\n" +
-				"     0,50    5% -               5,00   50% |||||      |-- method1_1()\n" +
-				"     2,00   20% ||              2,00   20% ||         |   |-- method1_1_1()\n" +
-				"     2,50   25% ||-             2,50   25% ||-        |   `-- method1_1_2()\n" +
-				"     2,50   25% ||-             5,00   50% |||||      `-- method1_2()\n" +
-				"     2,50   25% ||-             2,50   25% ||-            `-- method1_2_1()\n", TestClass.method1().toString());
+						"000000,00  000%            000010,00  100% |||||||||| method1()\n" +
+						"000000,50  005% :          000005,00  050% |||||      |-- method1_1()\n" +
+						"000002,00  020% ||         000002,00  020% ||         |   |-- method1_1_1()\n" +
+						"000002,50  025% ||:        000002,50  025% ||:        |   `-- method1_1_2()\n" +
+						"000002,50  025% ||:        000005,00  050% |||||      `-- method1_2()\n" +
+						"000002,50  025% ||:        000002,50  025% ||:            `-- method1_2_1()\n", callStackElement.toString());
 	}
 
 	@Test

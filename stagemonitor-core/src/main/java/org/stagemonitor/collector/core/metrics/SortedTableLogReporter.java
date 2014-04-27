@@ -1,26 +1,11 @@
 package org.stagemonitor.collector.core.metrics;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Metered;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
-import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.stagemonitor.collector.core.util.GraphiteEncoder.decodeForGraphite;
@@ -44,7 +29,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 	 */
 	public static class Builder {
 		private final MetricRegistry registry;
-		private Log log;
+		private Logger log;
 		private Locale locale;
 		private TimeUnit rateUnit;
 		private TimeUnit durationUnit;
@@ -52,7 +37,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 
 		private Builder(MetricRegistry registry) {
 			this.registry = registry;
-			this.log = LogFactory.getLog("metrics");
+			this.log = LoggerFactory.getLogger("metrics");
 			this.locale = Locale.getDefault();
 			this.rateUnit = TimeUnit.SECONDS;
 			this.durationUnit = TimeUnit.MILLISECONDS;
@@ -62,10 +47,10 @@ public class SortedTableLogReporter extends ScheduledReporter {
 		/**
 		 * Log to the given {@link Log}.
 		 *
-		 * @param log a {@link Log} instance.
+		 * @param log a {@link Logger} instance.
 		 * @return {@code this}
 		 */
-		public Builder log(Log log) {
+		public Builder log(Logger log) {
 			this.log = log;
 			return this;
 		}
@@ -127,9 +112,9 @@ public class SortedTableLogReporter extends ScheduledReporter {
 	private static final int CONSOLE_WIDTH = 80;
 
 	private final Locale locale;
-	private final Log log;
+	private final Logger log;
 
-	private SortedTableLogReporter(MetricRegistry registry, Log log, Locale locale, TimeUnit rateUnit,
+	private SortedTableLogReporter(MetricRegistry registry, Logger log, Locale locale, TimeUnit rateUnit,
 								   TimeUnit durationUnit, MetricFilter filter) {
 		super(registry, "console-reporter", filter, rateUnit, durationUnit);
 		this.log = log;
