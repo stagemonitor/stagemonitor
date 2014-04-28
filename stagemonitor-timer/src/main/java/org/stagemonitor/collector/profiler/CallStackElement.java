@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Stack;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -163,12 +164,12 @@ public class CallStackElement {
 	}
 
 	private void appendNumber(StringBuilder sb, long time) {
-		sb.append(String.format("%0,9.2f", time / 1000000.0)).append("  ");
+		sb.append(String.format(Locale.US, "%0,9.2f", time / 1000000.0)).append("  ");
 	}
 
 	private void appendPercent(StringBuilder sb, long time, long totalExecutionTimeNs, boolean asciiArt) {
 		final double percent = time / (double) totalExecutionTimeNs;
-		sb.append(String.format("%03.0f", percent * 100)).append("% ").append(printPercentAsBar(percent, 10, asciiArt)).append(' ');
+		sb.append(String.format(Locale.US, "%03.0f", percent * 100)).append("% ").append(printPercentAsBar(percent, 10, asciiArt)).append(' ');
 	}
 
 	static String printPercentAsBar(double percent, int totalBars, boolean asciiArt) {
