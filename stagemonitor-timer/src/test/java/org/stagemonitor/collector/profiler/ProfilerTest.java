@@ -2,7 +2,10 @@ package org.stagemonitor.collector.profiler;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ProfilerTest {
 	private static class TestClass {
@@ -66,12 +69,12 @@ public class ProfilerTest {
 	public void testProfiler() {
 		final CallStackElement callStackElement = TestClass.method1();
 		assertEquals(
-						"000000,00  000%            000010,00  100% |||||||||| method1()\n" +
-						"000000,50  005% :          000005,00  050% |||||      |-- method1_1()\n" +
-						"000002,00  020% ||         000002,00  020% ||         |   |-- method1_1_1()\n" +
-						"000002,50  025% ||:        000002,50  025% ||:        |   `-- method1_1_2()\n" +
-						"000002,50  025% ||:        000005,00  050% |||||      `-- method1_2()\n" +
-						"000002,50  025% ||:        000002,50  025% ||:            `-- method1_2_1()\n", callStackElement.toString());
+						"000000.00  000%            000010.00  100% |||||||||| method1()\n" +
+						"000000.50  005% :          000005.00  050% |||||      |-- method1_1()\n" +
+						"000002.00  020% ||         000002.00  020% ||         |   |-- method1_1_1()\n" +
+						"000002.50  025% ||:        000002.50  025% ||:        |   `-- method1_1_2()\n" +
+						"000002.50  025% ||:        000005.00  050% |||||      `-- method1_2()\n" +
+						"000002.50  025% ||:        000002.50  025% ||:            `-- method1_2_1()\n", callStackElement.toString());
 	}
 
 	@Test
