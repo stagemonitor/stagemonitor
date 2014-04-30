@@ -55,7 +55,7 @@ public class MBeanPooledResourceImpl implements PooledResource {
 			}
 			return pools;
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 			return Collections.emptyList();
 		}
 	}
@@ -70,7 +70,7 @@ public class MBeanPooledResourceImpl implements PooledResource {
 		try {
 			return (Integer) server.getAttribute(objectName, mbeanMaxAttribute);
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 			return -1;
 		}
 	}
@@ -80,7 +80,7 @@ public class MBeanPooledResourceImpl implements PooledResource {
 		try {
 			return (Integer) server.getAttribute(objectName, mbeanCountAttribute);
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 			return -1;
 		}
 	}
@@ -90,7 +90,7 @@ public class MBeanPooledResourceImpl implements PooledResource {
 		try {
 			return (Integer) server.getAttribute(objectName, mbeanActiveAttribute);
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 			return -1;
 		}
 	}
@@ -101,7 +101,7 @@ public class MBeanPooledResourceImpl implements PooledResource {
 		try {
 			return (Integer) server.getAttribute(objectName, mbeanQueueAttribute);
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 			return null;
 		}
 	}

@@ -1,6 +1,11 @@
 package org.stagemonitor.collector.core;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
@@ -45,18 +50,27 @@ public class StageMonitorApplicationContext {
 
 	private static void applyExcludePatterns() {
 		for (final String excludePattern : configuration.getExcludedMetricsPatterns()) {
-			getMetricRegistry().removeMatching(new MetricFilter() {
-				@Override
-				public boolean matches(String name, Metric metric) {
-					return name.matches(excludePattern);
-				}
-			});
+			try {
+				getMetricRegistry().removeMatching(new MetricFilter() {
+					@Override
+					public boolean matches(String name, Metric metric) {
+						return name.matches(excludePattern);
+					}
+				});
+			} catch (RuntimeException e) {
+				logger.error("Exception while applying exclude pattern " + excludePattern + " (this exception is ignored)");
+			}
 		}
 	}
 
 	private static void initializePlugins() {
 		for (StageMonitorPlugin stagemonitorPlugin : ServiceLoader.load(StageMonitorPlugin.class)) {
-			stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
+			logger.info("Initializing plugin {}", stagemonitorPlugin.getClass().getSimpleName());
+			try {
+				stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
+			} catch (RuntimeException e) {
+				logger.error("Error while initializing plugin " + stagemonitorPlugin.getClass().getSimpleName() + " (this exception is ignored)", e);
+			}
 		}
 	}
 

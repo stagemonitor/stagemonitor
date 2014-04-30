@@ -14,7 +14,6 @@ import org.stagemonitor.collector.profiler.ExecutionContextLogger;
 import org.stagemonitor.collector.profiler.Profiler;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -133,7 +132,7 @@ public class ExecutionContextMonitor {
 				}
 			}
 		} catch (RuntimeException e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 		}
 	}
 
@@ -165,7 +164,7 @@ public class ExecutionContextMonitor {
 				}
 			}
 		} catch (RuntimeException e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 		} finally {
 			/*
 			 * the forwarded execution is executed in the same thread
@@ -210,8 +209,8 @@ public class ExecutionContextMonitor {
 	public static String getHostName() {
 		try {
 			return InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e) {
-			logger.error(e.getMessage(), e);
+		} catch (Exception e) {
+			logger.error("Could not get host name. (this exception is ignored)", e);
 			return null;
 		}
 	}

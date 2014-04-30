@@ -5,7 +5,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -272,12 +278,12 @@ public class Configuration {
 				props.load(resourceStream);
 				return props;
 			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
+				logger.error(e.getMessage() + " (this exception is ignored)", e);
 			} finally {
 				try {
 					resourceStream.close();
 				} catch (IOException e) {
-					logger.error(e.getMessage(), e);
+					logger.error(e.getMessage() + " (this exception is ignored)", e);
 				}
 			}
 		}
@@ -321,7 +327,7 @@ public class Configuration {
 			try {
 				patterns.add(Pattern.compile(patternString));
 			} catch (PatternSyntaxException e) {
-				logger.error("Error while compiling pattern " + patternString, e);
+				logger.error("Error while compiling pattern " + patternString + " (this exception is ignored)", e);
 			}
 		}
 		return patterns;
@@ -365,7 +371,7 @@ public class Configuration {
 				try {
 					return Long.parseLong(value);
 				} catch (NumberFormatException e) {
-					logger.error(e.getMessage(), e);
+					logger.error(e.getMessage() + " (this exception is ignored)", e);
 					return defaultValue;
 				}
 			}
@@ -389,7 +395,7 @@ public class Configuration {
 					return pattenGroupMap;
 				} catch (RuntimeException e) {
 					logger.error("Error while parsing pattern map. Expected format <regex>: <name>[, <regex>: <name>]. " +
-							"Actual value: " + patternString, e);
+							"Actual value: " + patternString + " (this exception is ignored)", e);
 					return Collections.emptyMap();
 				}
 			}

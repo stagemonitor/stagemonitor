@@ -35,7 +35,7 @@ public class JvmPlugin implements StageMonitorPlugin {
 				}
 			});
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			logger.error("Could not register cpu usage. (this exception is ignored)", e);
 		}
 
 		try {
@@ -63,7 +63,7 @@ public class JvmPlugin implements StageMonitorPlugin {
 				}
 			});
 		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 		}
 	}
 }

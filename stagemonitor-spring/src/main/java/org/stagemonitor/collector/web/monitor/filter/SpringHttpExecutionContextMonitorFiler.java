@@ -8,7 +8,12 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.stagemonitor.collector.web.monitor.SpringMonitoredHttpExecution;
 
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -29,7 +34,7 @@ public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContext
 		try {
 			servletContext = filterConfig.getServletContext();
 		} catch (RuntimeException e) {
-			logger.error(e.getMessage(), e);
+			logger.error(e.getMessage() + " (this exception is ignored)", e);
 		}
 	}
 
@@ -61,7 +66,7 @@ public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContext
 					try {
 						allHandlerMappings = result = getAllHandlerMappings();
 					} catch (RuntimeException e) {
-						logger.error(e.getMessage(), e);
+						logger.error(e.getMessage() + " (this exception is ignored)", e);
 						allHandlerMappings = result = Collections.emptyList();
 					}
 				}
