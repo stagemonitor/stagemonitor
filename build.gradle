@@ -72,7 +72,9 @@ allprojects {
 			}
 			repositories {
 				maven {
-					url System.getenv('MVN_REPO')
+					if (project.hasProperty('mvnRepo')) {
+						url mvnRepo
+					}
 				}
 			}
 		}
