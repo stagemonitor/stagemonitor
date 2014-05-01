@@ -98,6 +98,7 @@ release {
 	preTagCommitMessage = 'release '
 	tagCommitMessage = 'release '
 	newVersionCommitMessage = 'next development version '
+	failOnSnapshotDependencies = false // snapshot for caliper is needed in benchmark
 }
 release.dependsOn test
 
