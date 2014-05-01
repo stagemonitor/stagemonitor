@@ -3,7 +3,7 @@ env:
   matrix:
   - TERM=dumb
   global:
-    secure: Boxq9DDeiYzpk5lAT/aGU/ScyO62aeRD7yus7PeOm0Z8COe1JLbqabqjLfZdjP65VlyE3Y2cx95WsTnOtE53DCT5+PCBD3hcFHKrRFHY0LZoBC17tu4/6xKFc8yBKSDXM5ymE89Da2zeq7OFdSwC7D2WlKMuo5IVUETqERvKUy8=
+    secure: "YQn9t0lo5f1XosuJ7j7bKVHv91WCqruzpIZed+2AxbZyq0e/9aE0GcOydynio3slWZg/b6X/SRg7M52RKPETyc6ZZ72DPVQ1wIb2LkiQ0cTlaxiKqSLgqsVgmZ4lWFgZz9FvF4dHLRx8WKjpqdiy/mQ07TxicUoSqJf2AtuazQs="
 install:
   - ./gradlew assemble --stacktrace --info
 after_success:
