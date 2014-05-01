@@ -1,6 +1,6 @@
 language: java
 env:
- matrix:
+  matrix:
   - TERM=dumb
   global:
     secure: Boxq9DDeiYzpk5lAT/aGU/ScyO62aeRD7yus7PeOm0Z8COe1JLbqabqjLfZdjP65VlyE3Y2cx95WsTnOtE53DCT5+PCBD3hcFHKrRFHY0LZoBC17tu4/6xKFc8yBKSDXM5ymE89Da2zeq7OFdSwC7D2WlKMuo5IVUETqERvKUy8=
