@@ -1,8 +1,12 @@
 language: java
 env:
+ matrix:
   - TERM=dumb
+  global:
+    secure: Boxq9DDeiYzpk5lAT/aGU/ScyO62aeRD7yus7PeOm0Z8COe1JLbqabqjLfZdjP65VlyE3Y2cx95WsTnOtE53DCT5+PCBD3hcFHKrRFHY0LZoBC17tu4/6xKFc8yBKSDXM5ymE89Da2zeq7OFdSwC7D2WlKMuo5IVUETqERvKUy8=
 install:
   - ./gradlew assemble --stacktrace --info
-
 after_success:
   - ./gradlew cobertura coveralls
+  - chmod +x etc/publish-to-github-mvn-repo-with-travis.sh
+  - etc/publish-to-github-mvn-repo-with-travis.sh
