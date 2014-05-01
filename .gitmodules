@@ -1,3 +1,0 @@
-[submodule "stagemonitor-server/src/main/resources/static/graphitus"]
-	path = stagemonitor-server/src/main/resources/static/graphitus
-	url = https://github.com/erezmazor/graphitus.git
