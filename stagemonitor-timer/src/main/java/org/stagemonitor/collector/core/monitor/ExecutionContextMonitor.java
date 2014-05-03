@@ -224,13 +224,13 @@ public class ExecutionContextMonitor {
 	}
 
 	public class ExecutionInformation<T extends ExecutionContext> {
-		private Timer timer = null;
-		private T executionContext = null;
-		private boolean exceptionThrown = false;
-		private long start = System.nanoTime();
-		private long startCpu = getCpuTime();
-		private boolean forwardedExecution = false;
-		private Object executionResult = null;
+		Timer timer = null;
+		T executionContext = null;
+		boolean exceptionThrown = false;
+		long start = System.nanoTime();
+		long startCpu = getCpuTime();
+		boolean forwardedExecution = false;
+		Object executionResult = null;
 
 		private boolean profileThisExecution() {
 			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
