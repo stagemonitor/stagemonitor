@@ -10,6 +10,7 @@
 	},
 	"mappings": {
 		"_default_": {
+			"_ttl" : { "enabled" : true },
 			"dynamic_templates" : [ {
 				"string_fields" : {
 					"match" : "*",
