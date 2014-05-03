@@ -14,6 +14,15 @@ public class HttpExecutionContext extends ExecutionContext {
 	private Integer statusCode;
 	private Map<String, String> headers;
 	private String method;
+	private String username;
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
 
 	public String getUrl() {
 		return url;

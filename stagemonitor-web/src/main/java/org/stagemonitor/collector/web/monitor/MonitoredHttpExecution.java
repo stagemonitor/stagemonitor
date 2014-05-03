@@ -8,6 +8,7 @@ import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletRespon
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
+import java.security.Principal;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -41,17 +42,19 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 
 	@Override
 	public HttpExecutionContext createExecutionContext() {
-		HttpExecutionContext requestStats = new HttpExecutionContext();
-		requestStats.setName(getRequestName());
-		requestStats.setMethod(httpServletRequest.getMethod());
-		requestStats.setUrl(httpServletRequest.getRequestURI());
+		HttpExecutionContext executionContext = new HttpExecutionContext();
+		executionContext.setName(getRequestName());
+		executionContext.setMethod(httpServletRequest.getMethod());
+		executionContext.setUrl(httpServletRequest.getRequestURI());
+		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
+		executionContext.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
 		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
-		requestStats.setParameter(getSafeQueryString(parameterMap));
+		executionContext.setParameter(getSafeQueryString(parameterMap));
 		if (configuration.isCollectHeaders()) {
-			requestStats.setHeaders(getHeaders(httpServletRequest));
+			executionContext.setHeaders(getHeaders(httpServletRequest));
 		}
-		return requestStats;
+		return executionContext;
 	}
 
 	public String getRequestName() {
