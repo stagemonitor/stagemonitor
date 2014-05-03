@@ -13,6 +13,8 @@ import org.stagemonitor.collector.profiler.CallStackElement;
 import org.stagemonitor.collector.profiler.ExecutionContextLogger;
 import org.stagemonitor.collector.profiler.Profiler;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -42,6 +44,7 @@ public class ExecutionContextMonitor {
 	private AtomicInteger noOfRequests = new AtomicInteger(0);
 	private MetricRegistry metricRegistry;
 	private Configuration configuration;
+	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
 	private volatile MeasurementSession measurementSession;
 
@@ -145,6 +148,7 @@ public class ExecutionContextMonitor {
 					long executionTime = System.nanoTime() - ei.start;
 					ei.executionContext.setError(ei.exceptionThrown);
 					ei.executionContext.setExecutionTime(TimeUnit.NANOSECONDS.toMillis(executionTime));
+					ei.executionContext.setCpuTime(getCpuTime() - ei.startCpu);
 					monitoredExecution.onPostExecute(ei.executionContext);
 
 					if (ei.executionContext.getCallStack() != null) {
@@ -215,13 +219,18 @@ public class ExecutionContextMonitor {
 		}
 	}
 
+	private long getCpuTime() {
+		return threadMXBean.isCurrentThreadCpuTimeSupported() ? threadMXBean.getCurrentThreadCpuTime() : 0L;
+	}
+
 	public class ExecutionInformation<T extends ExecutionContext> {
-		Timer timer = null;
-		T executionContext = null;
-		boolean exceptionThrown = false;
-		long start = System.nanoTime();
-		boolean forwardedExecution = false;
-		Object executionResult = null;
+		private Timer timer = null;
+		private T executionContext = null;
+		private boolean exceptionThrown = false;
+		private long start = System.nanoTime();
+		private long startCpu = getCpuTime();
+		private boolean forwardedExecution = false;
+		private Object executionResult = null;
 
 		private boolean profileThisExecution() {
 			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();

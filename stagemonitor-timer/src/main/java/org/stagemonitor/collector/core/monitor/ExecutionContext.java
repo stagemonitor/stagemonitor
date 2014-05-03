@@ -17,8 +17,8 @@ public class ExecutionContext {
 	private String id = UUID.randomUUID().toString();
 	private String name;
 	private CallStackElement callStack;
-	// TODO cpu time
 	private long executionTime;
+	private long cpuTime;
 	private boolean error = false;
 	@JsonProperty("@timestamp")
 	private String timestamp;
@@ -78,6 +78,14 @@ public class ExecutionContext {
 
 	public void setExecutionTime(long executionTime) {
 		this.executionTime = executionTime;
+	}
+
+	public long getCpuTime() {
+		return cpuTime;
+	}
+
+	public void setCpuTime(long cpuTime) {
+		this.cpuTime = cpuTime;
 	}
 
 	public String getTimestamp() {
