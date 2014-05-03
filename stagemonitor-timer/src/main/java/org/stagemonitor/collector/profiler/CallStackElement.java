@@ -164,7 +164,7 @@ public class CallStackElement {
 	}
 
 	private void appendNumber(StringBuilder sb, long time) {
-		sb.append(String.format(Locale.US, "%0,9.2f", time / 1000000.0)).append("  ");
+		sb.append(String.format(Locale.US, "%09.2f", time / 1000000.0)).append("  ");
 	}
 
 	private void appendPercent(StringBuilder sb, long time, long totalExecutionTimeNs, boolean asciiArt) {

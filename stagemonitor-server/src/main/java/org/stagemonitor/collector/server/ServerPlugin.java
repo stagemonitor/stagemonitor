@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitorPlugin;
+import org.stagemonitor.collector.core.rest.RestClient;
 import org.stagemonitor.collector.jvm.MBeanPooledResourceImpl;
 import org.stagemonitor.collector.jvm.PooledResourceMetricsRegisterer;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 public class ServerPlugin implements StageMonitorPlugin {
 
+	public static final String METRIC_PREFIX = "server.threadpool";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	boolean requiredPropertiesSet = true;
@@ -26,9 +28,15 @@ public class ServerPlugin implements StageMonitorPlugin {
 		final String mbeanQueueAttribute = conf.getString("stagemonitor.server.threadpool.mbeanQueueAttribute");
 		if (requiredPropertiesSet) {
 			final List<MBeanPooledResourceImpl> pools = MBeanPooledResourceImpl.of(objectName,
-					"server.threadpool", mbeanKeyPropertyName, mbeanActiveAttribute, mbeanCountAttribute,
+					METRIC_PREFIX, mbeanKeyPropertyName, mbeanActiveAttribute, mbeanCountAttribute,
 					mbeanMaxAttribute, mbeanQueueAttribute);
 			PooledResourceMetricsRegisterer.registerPooledResources(pools, registry);
+		}
+
+		final String serverUrl = conf.getServerUrl();
+		if (serverUrl != null && !serverUrl.isEmpty()) {
+			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/Server", "PUT",
+					getClass().getClassLoader().getResourceAsStream("Server.json"));
 		}
 	}
 

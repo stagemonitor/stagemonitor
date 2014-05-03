@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitorPlugin;
+import org.stagemonitor.collector.core.rest.RestClient;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -64,6 +65,14 @@ public class JvmPlugin implements StageMonitorPlugin {
 			});
 		} catch (IOException e) {
 			logger.error(e.getMessage() + " (this exception is ignored)", e);
+		}
+
+		final String serverUrl = configuration.getServerUrl();
+		if (serverUrl != null && !serverUrl.isEmpty()) {
+			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/JVM%20Memory", "PUT",
+					getClass().getClassLoader().getResourceAsStream("JVM Memory.json"));
+			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/JVM%20Overview", "PUT",
+					getClass().getClassLoader().getResourceAsStream("JVM Overview.json"));
 		}
 	}
 }

@@ -2,10 +2,7 @@ package org.stagemonitor.collector.profiler;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ProfilerTest {
 	private static class TestClass {
@@ -18,7 +15,7 @@ public class ProfilerTest {
 			} finally {
 				final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
 				Profiler.stop("method1()");
-				thisCallStackElement.setExecutionTime(10000000);
+				thisCallStackElement.setExecutionTime(1000000000);
 			}
 		}
 
@@ -30,7 +27,7 @@ public class ProfilerTest {
 			} finally {
 				final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
 				Profiler.stop("method1_1()");
-				thisCallStackElement.setExecutionTime(5000000);
+				thisCallStackElement.setExecutionTime(500000000);
 
 			}
 		}
@@ -39,7 +36,7 @@ public class ProfilerTest {
 			Profiler.start();
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
 			Profiler.stop("method1_1_1()");
-			thisCallStackElement.setExecutionTime(2000000);
+			thisCallStackElement.setExecutionTime(200000000);
 
 		}
 
@@ -47,7 +44,7 @@ public class ProfilerTest {
 			Profiler.start();
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
 			Profiler.stop("method1_1_2()");
-			thisCallStackElement.setExecutionTime(2500000);
+			thisCallStackElement.setExecutionTime(250000000);
 		}
 
 		static void method1_2() {
@@ -55,13 +52,13 @@ public class ProfilerTest {
 			method1_2_1();
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
 			Profiler.stop("method1_2()");
-			thisCallStackElement.setExecutionTime(5000000);
+			thisCallStackElement.setExecutionTime(500000000);
 		}
 		static void method1_2_1() {
 			Profiler.start();
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
 			Profiler.stop("method1_2_1()");
-			thisCallStackElement.setExecutionTime(2500000);
+			thisCallStackElement.setExecutionTime(250000000);
 		}
 	}
 
@@ -69,12 +66,12 @@ public class ProfilerTest {
 	public void testProfiler() {
 		final CallStackElement callStackElement = TestClass.method1();
 		assertEquals(
-						"000000.00  000%            000010.00  100% |||||||||| method1()\n" +
-						"000000.50  005% :          000005.00  050% |||||      |-- method1_1()\n" +
-						"000002.00  020% ||         000002.00  020% ||         |   |-- method1_1_1()\n" +
-						"000002.50  025% ||:        000002.50  025% ||:        |   `-- method1_1_2()\n" +
-						"000002.50  025% ||:        000005.00  050% |||||      `-- method1_2()\n" +
-						"000002.50  025% ||:        000002.50  025% ||:            `-- method1_2_1()\n", callStackElement.toString());
+						"000000.00  000%            001000.00  100% |||||||||| method1()\n" +
+						"000050.00  005% :          000500.00  050% |||||      |-- method1_1()\n" +
+						"000200.00  020% ||         000200.00  020% ||         |   |-- method1_1_1()\n" +
+						"000250.00  025% ||:        000250.00  025% ||:        |   `-- method1_1_2()\n" +
+						"000250.00  025% ||:        000500.00  050% |||||      `-- method1_2()\n" +
+						"000250.00  025% ||:        000250.00  025% ||:            `-- method1_2_1()\n", callStackElement.toString());
 	}
 
 	@Test
