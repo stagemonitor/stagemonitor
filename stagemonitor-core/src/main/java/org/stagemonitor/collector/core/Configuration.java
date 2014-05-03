@@ -5,13 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -92,7 +86,7 @@ public class Configuration {
 	 * @return the amount of time between console reports in seconds
 	 */
 	public long getConsoleReportingInterval() {
-		return getLong("stagemonitor.reporting.interval.console", 60);
+		return getLong("stagemonitor.reporting.interval.console", 60L);
 	}
 
 	/**
@@ -390,6 +384,9 @@ public class Configuration {
 					for (String group : groups) {
 						group = group.trim();
 						String[] keyValue = group.split(":");
+						if (keyValue.length != 2) {
+							throw new IllegalArgumentException();
+						}
 						pattenGroupMap.put(Pattern.compile(keyValue[0].trim()), keyValue[1].trim());
 					}
 					return pattenGroupMap;

@@ -3,4 +3,5 @@ dependencies {
 	compile 'com.codahale.metrics:metrics-core:3.0.1'
 	compile 'com.codahale.metrics:metrics-graphite:3.0.1'
 	compile 'com.fasterxml.jackson.core:jackson-databind:2.3.0'
+	testCompile 'org.slf4j:slf4j-simple:1.7.7'
 }
