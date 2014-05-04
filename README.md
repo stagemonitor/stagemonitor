@@ -5,7 +5,10 @@ Stagemonitor is a Java monitoring agent that tightly integrates with the timeser
 
 ## Features
 ### Analyze Requests and Call Stacks
-![image](https://cloud.githubusercontent.com/assets/2163464/2870547/8c15a186-d2ce-11e3-9906-ece6e9ee503b.png)
+Filter requests by queries or by selecting charts.
+![recentrequests](https://cloud.githubusercontent.com/assets/2163464/2873213/08c4f504-d399-11e3-99d0-d68bbbf15e18.png)
+Details about the request including a call stack (rendered with state-of-the-art ascii-art).
+![requestdetails](https://cloud.githubusercontent.com/assets/2163464/2873205/7e24947c-d398-11e3-966b-44bf2468505a.png)
 
 ### Collected Metrics
  * HTTP Request Metrics
