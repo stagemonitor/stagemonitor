@@ -148,7 +148,7 @@ public class ExecutionContextMonitor {
 					long executionTime = System.nanoTime() - ei.start;
 					ei.executionContext.setError(ei.exceptionThrown);
 					ei.executionContext.setExecutionTime(TimeUnit.NANOSECONDS.toMillis(executionTime));
-					ei.executionContext.setCpuTime(getCpuTime() - ei.startCpu);
+					ei.executionContext.setCpuTime(TimeUnit.NANOSECONDS.toMillis(getCpuTime() - ei.startCpu));
 					monitoredExecution.onPostExecute(ei.executionContext);
 
 					if (ei.executionContext.getCallStack() != null) {
