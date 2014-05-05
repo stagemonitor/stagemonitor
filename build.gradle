@@ -28,7 +28,7 @@ apply plugin: 'release'
 apply plugin: 'cobertura'
 apply plugin: 'coveralls'
 
-allprojects {
+subprojects {
 	apply plugin: 'idea'
 	apply plugin: 'java'
 	apply plugin: 'cobertura'
@@ -66,9 +66,14 @@ allprojects {
 	if (!project.name.contains("benchmark")) {
 		apply plugin: 'maven-publish'
 
+		jar {
+			metaInf { from "$rootDir/LICENSE" }
+		}
+
 		task sourcesJar(type: Jar, dependsOn: classes) {
 			classifier = 'sources'
 			from sourceSets.main.allSource
+			metaInf { from "$rootDir/LICENSE" }
 		}
 		artifacts {
 			archives sourcesJar
@@ -77,6 +82,18 @@ allprojects {
 			publications {
 				maven(MavenPublication) {
 					from components.java
+					pom.withXml {
+						asNode().children().last() + {
+							resolveStrategy = Closure.DELEGATE_FIRST
+							licenses {
+								license {
+									name 'The Apache Software License, Version 2.0'
+									url 'http://www.apache.org/license/LICENSE-2.0.txt'
+									distribution 'repo'
+								}
+							}
+						}
+					}
 
 					artifact sourcesJar {
 						classifier "sources"
