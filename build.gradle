@@ -37,7 +37,6 @@ subprojects {
 
 	repositories {
 		mavenCentral()
-		maven { url "http://repo.spring.io/libs-snapshot" }
 	}
 
 	dependencies {
@@ -64,50 +63,7 @@ subprojects {
 	}
 
 	if (!project.name.contains("benchmark")) {
-		apply plugin: 'maven-publish'
-
-		jar {
-			metaInf { from "$rootDir/LICENSE" }
-		}
-
-		task sourcesJar(type: Jar, dependsOn: classes) {
-			classifier = 'sources'
-			from sourceSets.main.allSource
-			metaInf { from "$rootDir/LICENSE" }
-		}
-		artifacts {
-			archives sourcesJar
-		}
-		publishing {
-			publications {
-				maven(MavenPublication) {
-					from components.java
-					pom.withXml {
-						asNode().children().last() + {
-							resolveStrategy = Closure.DELEGATE_FIRST
-							licenses {
-								license {
-									name 'The Apache Software License, Version 2.0'
-									url 'http://www.apache.org/license/LICENSE-2.0.txt'
-									distribution 'repo'
-								}
-							}
-						}
-					}
-
-					artifact sourcesJar {
-						classifier "sources"
-					}
-				}
-			}
-			repositories {
-				maven {
-					if (project.hasProperty('mvnRepo')) {
-						url mvnRepo
-					}
-				}
-			}
-		}
+		apply from: "$rootDir/publish-maven.gradle"
 	}
 }
 
@@ -133,5 +89,5 @@ cobertura {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "1.11"
+	gradleVersion = "1.12"
 }

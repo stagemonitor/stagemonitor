@@ -1,0 +1,67 @@
+apply plugin: 'maven-publish'
+
+configurations {
+	provided
+	compile.extendsFrom provided
+}
+jar {
+	metaInf { from "$rootDir/LICENSE" }
+}
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+	metaInf { from "$rootDir/LICENSE" }
+}
+artifacts {
+	archives sourcesJar
+}
+publishing {
+	publications {
+		maven(MavenPublication) {
+			from components.java
+			pom.withXml {
+				asNode().dependencies.first().dependency.each {
+					if (it.artifactId.text() == 'servlet-api') {
+						it.scope.first().value = 'provided'
+					} else {
+						it.scope.first().value = 'compile'
+					}
+				}
+				asNode().children().last() + {
+					resolveStrategy = Closure.DELEGATE_FIRST
+					organization {
+						name "iSYS Software GmbH"
+						url "https://www.isys-software.de/"
+					}
+					licenses {
+						license {
+							name 'The Apache Software License, Version 2.0'
+							url 'http://www.apache.org/license/LICENSE-2.0.txt'
+							distribution 'repo'
+						}
+					}
+					scm {
+						url "https://github.com/stagemonitor/stagemonitor"
+						connection "scm:git:git://github.com/stagemonitor/stagemonitor"
+						developerConnection "scm:git:git://github.com/stagemonitor/stagemonitor"
+					}
+					issueManagement {
+						system "GitHub Issues"
+						url "https://github.com/stagemonitor/stagemonitor/issues"
+					}
+				}
+			}
+
+			artifact sourcesJar {
+				classifier "sources"
+			}
+		}
+	}
+	repositories {
+		maven {
+			if (project.hasProperty('mvnRepo')) {
+				url mvnRepo
+			}
+		}
+	}
+}
