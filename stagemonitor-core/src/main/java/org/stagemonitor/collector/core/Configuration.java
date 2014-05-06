@@ -51,6 +51,15 @@ public class Configuration {
 	}
 
 	/**
+	 * Whether or not a {@link com.codahale.metrics.Timer} for the cpu time of executions should be created.
+	 *
+	 * @return <code>true</code> if metrics about the cpu time of executions should be collected, <code>false</code> otherwise
+	 */
+	public boolean isCollectCpuTime() {
+		return getBoolean("stagemonitor.monitor.cpuTime", false);
+	}
+
+	/**
 	 * Whether or not HTTP headers should be collected with a call stack.
 	 *
 	 * @return <code>true</code> if HTTP headers should be collected, <code>false</code> otherwise

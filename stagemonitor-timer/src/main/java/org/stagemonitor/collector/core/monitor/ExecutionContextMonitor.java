@@ -16,6 +16,7 @@ import org.stagemonitor.collector.profiler.Profiler;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class ExecutionContextMonitor {
 
@@ -145,10 +147,11 @@ public class ExecutionContextMonitor {
 			if (ei.monitorThisExecution()) {
 				// if forwarded executions are not monitored, ei.executionContext would be null
 				if (!ei.isForwardingExecution()) {
-					long executionTime = System.nanoTime() - ei.start;
+					final long executionTime = System.nanoTime() - ei.start;
+					final long cpuTime = getCpuTime() - ei.startCpu;
 					ei.executionContext.setError(ei.exceptionThrown);
-					ei.executionContext.setExecutionTime(TimeUnit.NANOSECONDS.toMillis(executionTime));
-					ei.executionContext.setCpuTime(TimeUnit.NANOSECONDS.toMillis(getCpuTime() - ei.startCpu));
+					ei.executionContext.setExecutionTime(NANOSECONDS.toMillis(executionTime));
+					ei.executionContext.setCpuTime(NANOSECONDS.toMillis(cpuTime));
 					monitoredExecution.onPostExecute(ei.executionContext);
 
 					if (ei.executionContext.getCallStack() != null) {
@@ -156,7 +159,10 @@ public class ExecutionContextMonitor {
 						reportCallStack(ei.executionContext, configuration.getServerUrl());
 					}
 					if (ei.timer != null) {
-						ei.timer.update(executionTime, TimeUnit.NANOSECONDS);
+						ei.timer.update(executionTime, NANOSECONDS);
+						if (configuration.isCollectCpuTime()) {
+							metricRegistry.timer(name(ei.getTimerName(), "cpu")).update(cpuTime, NANOSECONDS);
+						}
 						if (ei.executionContext.isError()) {
 							metricRegistry.meter(name(ei.getTimerName(), "error")).mark();
 						}
