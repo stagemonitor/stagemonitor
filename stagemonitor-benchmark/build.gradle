@@ -8,9 +8,6 @@ dependencies {
 	compile project(":stagemonitor-timer")
 	compile project(":stagemonitor-aspectj")
 	compile 'com.google.caliper:caliper:1.0-beta-SNAPSHOT'
-	// The AspectJ compiler does't like the jpa annotations to not be present
-	compile "org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final"
-	compile 'com.sun.jersey:jersey-core:1.11'
 }
 
 task simpleProfilerBenchmark(dependsOn: 'classes', type: JavaExec) {
