@@ -19,7 +19,7 @@ public class TimerPlugin implements StageMonitorPlugin {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
 			try {
 				addElasticsearchMapping(serverUrl);
-				RestClient.sendAsJsonAsync(serverUrl + "/kibana-int/dashboard/Recent%20Requests", "PUT",
+				RestClient.sendAsJsonAsync(serverUrl + "/kibana-int/dashboard/Recent%20Requests?version=1", "PUT",
 						getClass().getClassLoader().getResourceAsStream("Recent Requests.json"));
 			} catch (RuntimeException e) {
 				logger.warn("Error while sending data to elasticsearch. Is the server URL (" + serverUrl + ") correct?"

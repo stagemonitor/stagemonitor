@@ -35,7 +35,7 @@ public class ServerPlugin implements StageMonitorPlugin {
 
 		final String serverUrl = conf.getServerUrl();
 		if (serverUrl != null && !serverUrl.isEmpty()) {
-			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/Server", "PUT",
+			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/Server?version=1", "PUT",
 					getClass().getClassLoader().getResourceAsStream("Server.json"));
 		}
 	}
