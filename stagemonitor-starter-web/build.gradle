@@ -3,4 +3,5 @@ dependencies {
 	compile project(":stagemonitor-aspectj")
 	compile project(":stagemonitor-jvm")
 	compile project(":stagemonitor-server")
+	compile project(":stagemonitor-jdbc")
 }

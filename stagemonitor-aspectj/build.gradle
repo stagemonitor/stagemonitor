@@ -1,5 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-timer")
+	compile project(":stagemonitor-jdbc")
 
 	compile 'org.aspectj:aspectjtools:1.7.3'
 	compile 'org.aspectj:aspectjrt:1.7.3'
