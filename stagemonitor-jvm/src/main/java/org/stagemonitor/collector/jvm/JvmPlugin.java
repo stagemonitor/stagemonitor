@@ -36,7 +36,7 @@ public class JvmPlugin implements StageMonitorPlugin {
 				}
 			});
 		} catch (Exception e) {
-			logger.error("Could not register cpu usage. (this exception is ignored)", e);
+			logger.warn("Could not register cpu usage. (this exception is ignored)", e);
 		}
 
 		try {
@@ -64,7 +64,7 @@ public class JvmPlugin implements StageMonitorPlugin {
 				}
 			});
 		} catch (IOException e) {
-			logger.error(e.getMessage() + " (this exception is ignored)", e);
+			logger.warn(e.getMessage() + " (this exception is ignored)", e);
 		}
 
 		final String serverUrl = configuration.getServerUrl();

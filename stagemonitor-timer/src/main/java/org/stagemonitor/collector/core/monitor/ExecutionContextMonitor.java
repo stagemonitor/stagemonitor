@@ -16,7 +16,6 @@ import org.stagemonitor.collector.profiler.Profiler;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
-import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -137,7 +136,7 @@ public class ExecutionContextMonitor {
 				}
 			}
 		} catch (RuntimeException e) {
-			logger.error(e.getMessage() + " (this exception is ignored)", e);
+			logger.warn(e.getMessage() + " (this exception is ignored)", e);
 		}
 	}
 
@@ -174,7 +173,7 @@ public class ExecutionContextMonitor {
 				}
 			}
 		} catch (RuntimeException e) {
-			logger.error(e.getMessage() + " (this exception is ignored)", e);
+			logger.warn(e.getMessage() + " (this exception is ignored)", e);
 		} finally {
 			/*
 			 * the forwarded execution is executed in the same thread
@@ -220,7 +219,7 @@ public class ExecutionContextMonitor {
 		try {
 			return InetAddress.getLocalHost().getHostName();
 		} catch (Exception e) {
-			logger.error("Could not get host name. (this exception is ignored)", e);
+			logger.warn("Could not get host name. (this exception is ignored)", e);
 			return null;
 		}
 	}

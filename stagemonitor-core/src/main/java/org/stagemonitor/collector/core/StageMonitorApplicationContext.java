@@ -58,7 +58,7 @@ public class StageMonitorApplicationContext {
 					}
 				});
 			} catch (RuntimeException e) {
-				logger.error("Exception while applying exclude pattern " + excludePattern + " (this exception is ignored)");
+				logger.warn("Exception while applying exclude pattern " + excludePattern + " (this exception is ignored)");
 			}
 		}
 	}
@@ -69,7 +69,7 @@ public class StageMonitorApplicationContext {
 			try {
 				stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
 			} catch (RuntimeException e) {
-				logger.error("Error while initializing plugin " + stagemonitorPlugin.getClass().getSimpleName() + " (this exception is ignored)", e);
+				logger.warn("Error while initializing plugin " + stagemonitorPlugin.getClass().getSimpleName() + " (this exception is ignored)", e);
 			}
 		}
 	}

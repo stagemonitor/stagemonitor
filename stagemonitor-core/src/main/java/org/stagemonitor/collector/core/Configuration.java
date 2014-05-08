@@ -5,7 +5,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -245,16 +251,16 @@ public class Configuration {
 	private void loadProperties() {
 		Properties defaultProperties = getProperties("stagemonitor.properties");
 		if (defaultProperties == null) {
-			logger.error("Could not find stagemonitor.properties in classpath");
+			logger.warn("Could not find stagemonitor.properties in classpath");
 			defaultProperties = new Properties();
 		}
 		// override values in default properties file
 		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
 		if (stagemonitorPropertyOverridesLocation != null) {
-			logger.info("try loading of default property overrides: '" + stagemonitorPropertyOverridesLocation + "'");
+			logger.warn("try loading of default property overrides: '" + stagemonitorPropertyOverridesLocation + "'");
 			properties = getProperties(stagemonitorPropertyOverridesLocation, defaultProperties);
 			if (properties == null) {
-				logger.error("Could not find " + stagemonitorPropertyOverridesLocation + " in classpath");
+				logger.warn("Could not find " + stagemonitorPropertyOverridesLocation + " in classpath");
 			}
 		} else {
 			properties = defaultProperties;
@@ -281,12 +287,12 @@ public class Configuration {
 				props.load(resourceStream);
 				return props;
 			} catch (IOException e) {
-				logger.error(e.getMessage() + " (this exception is ignored)", e);
+				logger.warn(e.getMessage() + " (this exception is ignored)", e);
 			} finally {
 				try {
 					resourceStream.close();
 				} catch (IOException e) {
-					logger.error(e.getMessage() + " (this exception is ignored)", e);
+					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 				}
 			}
 		}
@@ -330,7 +336,7 @@ public class Configuration {
 			try {
 				patterns.add(Pattern.compile(patternString));
 			} catch (PatternSyntaxException e) {
-				logger.error("Error while compiling pattern " + patternString + " (this exception is ignored)", e);
+				logger.warn("Error while compiling pattern " + patternString + " (this exception is ignored)", e);
 			}
 		}
 		return patterns;
@@ -374,7 +380,7 @@ public class Configuration {
 				try {
 					return Long.parseLong(value);
 				} catch (NumberFormatException e) {
-					logger.error(e.getMessage() + " (this exception is ignored)", e);
+					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 					return defaultValue;
 				}
 			}
@@ -400,7 +406,7 @@ public class Configuration {
 					}
 					return pattenGroupMap;
 				} catch (RuntimeException e) {
-					logger.error("Error while parsing pattern map. Expected format <regex>: <name>[, <regex>: <name>]. " +
+					logger.warn("Error while parsing pattern map. Expected format <regex>: <name>[, <regex>: <name>]. " +
 							"Actual value: " + patternString + " (this exception is ignored)", e);
 					return Collections.emptyMap();
 				}

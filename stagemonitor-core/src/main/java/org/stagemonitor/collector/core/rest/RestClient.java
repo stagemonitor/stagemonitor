@@ -1,6 +1,8 @@
 package org.stagemonitor.collector.core.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 public class RestClient {
+
+	private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -38,7 +42,7 @@ public class RestClient {
 			connection.getContent();
 			final int responseCode = connection.getResponseCode();
 			if (responseCode > 400) {
-				throw new RuntimeException("Received HTTP status " + responseCode);
+				logger.warn("Received HTTP status {} when executing HTTP request: {} {}", responseCode, method, urlString);
 			}
 			return connection;
 		} catch (IOException e) {

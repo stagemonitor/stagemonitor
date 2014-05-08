@@ -22,7 +22,7 @@ public class TimerPlugin implements StageMonitorPlugin {
 				RestClient.sendAsJsonAsync(serverUrl + "/kibana-int/dashboard/Recent%20Requests", "PUT",
 						getClass().getClassLoader().getResourceAsStream("Recent Requests.json"));
 			} catch (RuntimeException e) {
-				logger.error("Error while sending data to elasticsearch. Is the server URL (" + serverUrl + ") correct?"
+				logger.warn("Error while sending data to elasticsearch. Is the server URL (" + serverUrl + ") correct?"
 						+ " (this exception is ignored)", e);
 			}
 		}

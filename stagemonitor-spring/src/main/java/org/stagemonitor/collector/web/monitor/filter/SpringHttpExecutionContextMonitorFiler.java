@@ -34,7 +34,7 @@ public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContext
 		try {
 			servletContext = filterConfig.getServletContext();
 		} catch (RuntimeException e) {
-			logger.error(e.getMessage() + " (this exception is ignored)", e);
+			logger.warn(e.getMessage() + " (this exception is ignored)", e);
 		}
 	}
 
@@ -66,7 +66,7 @@ public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContext
 					try {
 						allHandlerMappings = result = getAllHandlerMappings();
 					} catch (RuntimeException e) {
-						logger.error(e.getMessage() + " (this exception is ignored)", e);
+						logger.warn(e.getMessage() + " (this exception is ignored)", e);
 						allHandlerMappings = result = Collections.emptyList();
 					}
 				}
