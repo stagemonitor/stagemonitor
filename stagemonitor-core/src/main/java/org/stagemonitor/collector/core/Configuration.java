@@ -415,6 +415,7 @@ public class Configuration {
 	}
 
 	private <T> T getAndCache(String key, T defaultValue, PropertyLoader<T> propertyLoader) {
+		@SuppressWarnings("unchecked")
 		T result = (T) propertiesCache.get(key);
 		if (result == null) {
 			result = propertyLoader.load();

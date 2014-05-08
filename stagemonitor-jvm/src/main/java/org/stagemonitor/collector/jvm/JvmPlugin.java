@@ -67,12 +67,9 @@ public class JvmPlugin implements StageMonitorPlugin {
 			logger.warn(e.getMessage() + " (this exception is ignored)", e);
 		}
 
-		final String serverUrl = configuration.getServerUrl();
-		if (serverUrl != null && !serverUrl.isEmpty()) {
-			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/JVM%20Memory?version=1", "PUT",
-					getClass().getClassLoader().getResourceAsStream("JVM Memory.json"));
-			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/JVM%20Overview?version=1", "PUT",
-					getClass().getClassLoader().getResourceAsStream("JVM Overview.json"));
-		}
+		RestClient.sendAsJsonAsync(configuration.getServerUrl(), "/grafana-dash/dashboard/JVM%20Memory/_create", "PUT",
+				getClass().getClassLoader().getResourceAsStream("JVM Memory.json"));
+		RestClient.sendAsJsonAsync(configuration.getServerUrl(), "/grafana-dash/dashboard/JVM%20Overview/_create", "PUT",
+				getClass().getClassLoader().getResourceAsStream("JVM Overview.json"));
 	}
 }

@@ -2,10 +2,17 @@ package org.stagemonitor.collector.core;
 
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ConfigurationTest {
 
@@ -81,7 +88,7 @@ public class ConfigurationTest {
 		assertEquals(true, configuration.isCollectHeaders());
 		assertEquals(Arrays.asList("cookie"), configuration.getExcludedHeaders());
 		final List<Pattern> confidentialQueryParams = configuration.getConfidentialQueryParams();
-		final List<String> confidentialQueryParamsAsString = new ArrayList<>(confidentialQueryParams.size());
+		final List<String> confidentialQueryParamsAsString = new ArrayList<String>(confidentialQueryParams.size());
 		for (Pattern confidentialQueryParam : confidentialQueryParams) {
 			confidentialQueryParamsAsString.add(confidentialQueryParam.toString());
 		}
@@ -101,12 +108,12 @@ public class ConfigurationTest {
 		assertEquals(Collections.emptyList(), configuration.getExcludedMetricsPatterns());
 
 		final Map<Pattern,String> groupUrls = configuration.getGroupUrls();
-		final Map<String, String> groupUrlsAsString = new HashMap<>();
+		final Map<String, String> groupUrlsAsString = new HashMap<String, String>();
 		for (Map.Entry<Pattern, String> entry : groupUrls.entrySet()) {
 			groupUrlsAsString.put(entry.getKey().pattern(), entry.getValue());
 		}
 
-		final Map<String, String> expectedMap = new HashMap<>();
+		final Map<String, String> expectedMap = new HashMap<String, String>();
 		expectedMap.put("/\\d+", "/{id}");
 		expectedMap.put("(.*).js", "*.js");
 		expectedMap.put("(.*).css", "*.css");

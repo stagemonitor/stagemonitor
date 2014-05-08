@@ -14,24 +14,15 @@ public class TimerPlugin implements StageMonitorPlugin {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
-		final String serverUrl = configuration.getServerUrl();
-		if (serverUrl != null && !serverUrl.isEmpty()) {
-			try {
-				addElasticsearchMapping(serverUrl);
-				RestClient.sendAsJsonAsync(serverUrl + "/kibana-int/dashboard/Recent%20Requests?version=1", "PUT",
-						getClass().getClassLoader().getResourceAsStream("Recent Requests.json"));
-			} catch (RuntimeException e) {
-				logger.warn("Error while sending data to elasticsearch. Is the server URL (" + serverUrl + ") correct?"
-						+ " (this exception is ignored)", e);
-			}
-		}
+	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
+		addElasticsearchMapping(config.getServerUrl());
+		RestClient.sendAsJsonAsync(config.getServerUrl(), "/kibana-int/dashboard/Recent%20Requests/_create", "PUT",
+				getClass().getClassLoader().getResourceAsStream("Recent Requests.json"));
 	}
 
 	private void addElasticsearchMapping(String serverUrl) {
 		final InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
 		RestClient.sendAsJson(serverUrl + "/_template/stagemonitor", "PUT", resourceAsStream);
-
 	}
 
 }

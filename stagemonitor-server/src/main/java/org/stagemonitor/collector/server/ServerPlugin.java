@@ -33,11 +33,8 @@ public class ServerPlugin implements StageMonitorPlugin {
 			PooledResourceMetricsRegisterer.registerPooledResources(pools, registry);
 		}
 
-		final String serverUrl = conf.getServerUrl();
-		if (serverUrl != null && !serverUrl.isEmpty()) {
-			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/Server?version=1", "PUT",
-					getClass().getClassLoader().getResourceAsStream("Server.json"));
-		}
+		RestClient.sendAsJsonAsync(conf.getServerUrl(), "/grafana-dash/dashboard/Server/_create", "PUT",
+				getClass().getClassLoader().getResourceAsStream("Server.json"));
 	}
 
 	private String getRequeredProperty(String propertyKey, Configuration conf) {

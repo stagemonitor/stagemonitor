@@ -29,9 +29,13 @@ public class RestClient {
 		}
 	});
 
-	public static HttpURLConnection sendAsJson(final String urlString, final String method, final Object requestBody) {
+	public static void sendAsJson(final String baseUrl, final String path, final String method, final Object requestBody) {
+		if (baseUrl == null || baseUrl.isEmpty()) {
+			return;
+		}
+
 		try {
-			URL url = new URL(urlString);
+			URL url = new URL(baseUrl + path);
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setDoOutput(true);
 			connection.setRequestMethod(method);
@@ -40,13 +44,8 @@ public class RestClient {
 			writeRequestBody(requestBody, connection.getOutputStream());
 
 			connection.getContent();
-			final int responseCode = connection.getResponseCode();
-			if (responseCode > 400) {
-				logger.warn("Received HTTP status {} when executing HTTP request: {} {}", responseCode, method, urlString);
-			}
-			return connection;
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			logger.warn(e.getMessage());
 		}
 	}
 
@@ -65,12 +64,14 @@ public class RestClient {
 		}
 	}
 
-	public static void sendAsJsonAsync(final String urlString, final String method, final Object requestBody) {
-		asyncRestPool.execute(new Runnable() {
-			@Override
-			public void run() {
-				sendAsJson(urlString, method, requestBody);
-			}
-		});
+	public static void sendAsJsonAsync(final String baseUrl, final String path, final String method, final Object requestBody) {
+		if (baseUrl != null && !baseUrl.isEmpty()) {
+			asyncRestPool.execute(new Runnable() {
+				@Override
+				public void run() {
+					sendAsJson(baseUrl, path, method, requestBody);
+				}
+			});
+		}
 	}
 }

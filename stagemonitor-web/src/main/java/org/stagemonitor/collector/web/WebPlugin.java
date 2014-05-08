@@ -9,10 +9,7 @@ public class WebPlugin implements StageMonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
-		final String serverUrl = configuration.getServerUrl();
-		if (serverUrl != null && !serverUrl.isEmpty()) {
-			RestClient.sendAsJsonAsync(serverUrl + "/grafana-dash/dashboard/Request?version=1", "PUT",
-					getClass().getClassLoader().getResourceAsStream("Request.json"));
-		}
+		RestClient.sendAsJsonAsync(configuration.getServerUrl(), "/grafana-dash/dashboard/Request/_create", "PUT",
+				getClass().getClassLoader().getResourceAsStream("Request.json"));
 	}
 }

@@ -193,13 +193,13 @@ public class ExecutionContextMonitor {
 
 	private <T extends ExecutionContext> void reportCallStack(T executionContext, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
-			String url = String.format("%s/stagemonitor-%s/executions/%s", serverUrl,
+			String path = String.format("/stagemonitor-%s/executions/%s", serverUrl,
 					new SimpleDateFormat("yyyy.MM.dd").format(new Date()), executionContext.getId());
 			final String ttl = configuration.getCallStacksTimeToLive();
 			if (ttl != null && !ttl.isEmpty()) {
-				url += "?ttl=" + ttl;
+				path += "?ttl=" + ttl;
 			}
-			RestClient.sendAsJsonAsync(url, "PUT", executionContext);
+			RestClient.sendAsJsonAsync(serverUrl, path, "PUT", executionContext);
 		}
 		if (configuration.isLogCallStacks()) {
 			executionContextLogger.logStats(executionContext);
