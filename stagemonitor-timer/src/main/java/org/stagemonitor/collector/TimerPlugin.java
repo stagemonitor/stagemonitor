@@ -22,7 +22,7 @@ public class TimerPlugin implements StageMonitorPlugin {
 
 	private void addElasticsearchMapping(String serverUrl) {
 		final InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
-		RestClient.sendAsJson(serverUrl + "/_template/stagemonitor", "PUT", resourceAsStream);
+		RestClient.sendAsJson(serverUrl, "/_template/stagemonitor", "PUT", resourceAsStream);
 	}
 
 }
