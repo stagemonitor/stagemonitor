@@ -2,6 +2,8 @@ package org.stagemonitor.collector.core.monitor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.profiler.CallStackElement;
 
@@ -13,9 +15,12 @@ import java.util.UUID;
 
 public class ExecutionContext {
 
+	private static final ObjectMapper MAPPER = new ObjectMapper();
+
 	@JsonIgnore
 	private String id = UUID.randomUUID().toString();
 	private String name;
+	@JsonIgnore
 	private CallStackElement callStack;
 	private long executionTime;
 	private long cpuTime;
@@ -64,6 +69,21 @@ public class ExecutionContext {
 		this.callStack = callStack;
 	}
 
+	@JsonProperty("@message")
+	public String getCallStackAscii() {
+		if (callStack == null) {
+			return null;
+		}
+		return callStack.toString(true);
+	}
+
+	public String getCallStackJson() throws JsonProcessingException {
+		if (callStack == null) {
+			return null;
+		}
+		return MAPPER.writeValueAsString(callStack);
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -102,11 +122,6 @@ public class ExecutionContext {
 
 	public void setParameter(String parameter) {
 		this.parameter = parameter;
-	}
-
-	@JsonProperty("@message")
-	public String getMessage() {
-		return toString(true);
 	}
 
 	public String getApplication() {

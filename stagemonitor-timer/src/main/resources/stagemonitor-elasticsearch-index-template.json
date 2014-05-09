@@ -23,6 +23,9 @@
 					}
 				}
 			} ],
+			"_source" : {
+				"excludes" : ["callStackJson"]
+			},
 			"properties": {
 				"@timestamp": {
 					"type": "date",
@@ -32,8 +35,10 @@
 					"type": "string",
 					"index": "no"
 				},
-				"callStack": {
-					"enabled" : false
+				"callStackJson": {
+					"type": "string",
+					"index": "no",
+					"store": "yes"
 				}
 			}
 		}

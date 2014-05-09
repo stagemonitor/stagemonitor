@@ -193,7 +193,7 @@ public class ExecutionContextMonitor {
 
 	private <T extends ExecutionContext> void reportCallStack(T executionContext, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
-			String path = String.format("/stagemonitor-%s/executions/%s", serverUrl,
+			String path = String.format("/stagemonitor-%s/executions/%s",
 					new SimpleDateFormat("yyyy.MM.dd").format(new Date()), executionContext.getId());
 			final String ttl = configuration.getCallStacksTimeToLive();
 			if (ttl != null && !ttl.isEmpty()) {
