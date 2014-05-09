@@ -21,8 +21,6 @@ import static org.mockito.Mockito.when;
 
 public class SpringMonitoredHttpExecutionTest {
 
-	private static final String IGNORE_NON_MVC_REQUESTS = "stagemonitor.monitor.spring.ignoreNonMvcRequests";
-
 	private MockHttpServletRequest mvcRequest = new MockHttpServletRequest("GET", "/test/requestName");
 	private MockHttpServletRequest nonMvcRequest = new MockHttpServletRequest("GET", "/static/jquery.js");
 	private List<HandlerMapping> handlerMappings;
@@ -67,7 +65,7 @@ public class SpringMonitoredHttpExecutionTest {
 	@Test
 	public void testGetRequestNameWithMvcMapping() throws Exception {
 		Configuration configuration = mock(Configuration.class);
-		when(configuration.getBoolean(IGNORE_NON_MVC_REQUESTS, false)).thenReturn(false);
+		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 		SpringMonitoredHttpExecution springMonitoredHttpExecution = new SpringMonitoredHttpExecution(mvcRequest, null,
 				null, configuration, handlerMappings);
 
@@ -77,7 +75,7 @@ public class SpringMonitoredHttpExecutionTest {
 	@Test
 	public void testGetRequestNameWithoutMvcMappingWithFallback() throws Exception {
 		Configuration configuration = mock(Configuration.class);
-		when(configuration.getBoolean(IGNORE_NON_MVC_REQUESTS, false)).thenReturn(false);
+		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 		SpringMonitoredHttpExecution springMonitoredHttpExecution = new SpringMonitoredHttpExecution(nonMvcRequest,
 				null, null, configuration, handlerMappings);
 
@@ -87,7 +85,7 @@ public class SpringMonitoredHttpExecutionTest {
 	@Test
 	public void testGetRequestNameWithoutMvcMappingWithoutFallback() throws Exception {
 		Configuration configuration = mock(Configuration.class);
-		when(configuration.getBoolean(IGNORE_NON_MVC_REQUESTS, false)).thenReturn(true);
+		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(true);
 		SpringMonitoredHttpExecution springMonitoredHttpExecution = new SpringMonitoredHttpExecution(nonMvcRequest,
 				null, null, configuration, handlerMappings);
 

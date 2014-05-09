@@ -85,6 +85,7 @@ public class ConfigurationTest {
 		assertEquals(0, configuration.getWarmupSeconds());
 		assertEquals(true, configuration.isCollectRequestStats());
 		assertEquals(false, configuration.isCollectCpuTime());
+		assertEquals(false, configuration.isMonitorOnlySpringMvcRequests());
 		assertEquals(true, configuration.isCollectHeaders());
 		assertEquals(Arrays.asList("cookie"), configuration.getExcludedHeaders());
 		final List<Pattern> confidentialQueryParams = configuration.getConfidentialQueryParams();
