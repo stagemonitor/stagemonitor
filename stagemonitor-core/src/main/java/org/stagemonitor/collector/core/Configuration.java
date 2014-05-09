@@ -66,6 +66,19 @@ public class Configuration {
 	}
 
 	/**
+	 * Whether or not requests should be ignored, if they will not be handled by a Spring MVC controller method.
+	 * <p/>
+	 * This is handy, if you are not interested in the performance of serving static files.
+	 * Setting this to <code>true</code> can also significantly reduce the amount of files (and thus storing space)
+	 * Graphite will allocate.
+	 *
+	 * @return true, if non Spring MVC requests should be ignored, false otherwise
+	 */
+	public boolean isMonitorOnlySpringMvcRequests() {
+		return getBoolean("stagemonitor.monitor.spring.monitorOnlySpringMvcRequests", false);
+	}
+
+	/**
 	 * Whether or not HTTP headers should be collected with a call stack.
 	 *
 	 * @return <code>true</code> if HTTP headers should be collected, <code>false</code> otherwise

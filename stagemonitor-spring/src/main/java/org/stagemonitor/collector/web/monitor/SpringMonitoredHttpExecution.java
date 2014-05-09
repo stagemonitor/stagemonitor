@@ -40,7 +40,7 @@ public class SpringMonitoredHttpExecution extends MonitoredHttpExecution {
 				// ignore, try next
 			}
 		}
-		if (!configuration.getBoolean("stagemonitor.monitor.spring.ignoreNonMvcRequests", false)) {
+		if (!configuration.isMonitorOnlySpringMvcRequests()) {
 			name = super.getRequestName();
 		}
 		return name;
