@@ -1,12 +1,13 @@
 {
-	"title": "JDBC Connections",
+	"title": "Server",
 	"services": {
 		"filter": {
 			"list": [
 				{
 					"type": "filter",
 					"name": "application",
-					"query": "stagemonitor.*"
+					"query": "stagemonitor.*",
+					"includeAll": false
 				},
 				{
 					"type": "filter",
@@ -22,20 +23,10 @@
 				},
 				{
 					"type": "filter",
-					"name": "datasource",
-					"query": "stagemonitor.[[application]].[[instance]].[[host]].jdbc.getconnection.*",
-					"includeAll": true
-				},
-				{
-					"type": "filter",
 					"name": "group",
 					"query": "",
 					"includeAll": false,
 					"options": [
-						{
-							"value": 6,
-							"text": "datasource"
-						},
 						{
 							"value": 2,
 							"text": "instance"
@@ -46,8 +37,8 @@
 						}
 					],
 					"current": {
-						"value": 6,
-						"text": "datasource"
+						"value": 2,
+						"text": "instance"
 					}
 				}
 			],
@@ -59,7 +50,7 @@
 	},
 	"rows": [
 		{
-			"title": "sqlgroup-by",
+			"title": "servergroup-by",
 			"height": "250px",
 			"editable": true,
 			"collapse": false,
@@ -74,11 +65,11 @@
 					"y-axis": true,
 					"scale": 1,
 					"grid": {
-						"max": null,
+						"max": 1,
 						"min": 0,
-						"threshold1": null,
-						"threshold2": null,
-						"threshold1Color": "rgba(216, 200, 27, 0.27)",
+						"threshold1": 0.8,
+						"threshold2": 0.95,
+						"threshold1Color": "rgba(223, 241, 30, 0.33)",
 						"threshold2Color": "rgba(234, 112, 112, 0.22)"
 					},
 					"annotate": {
@@ -93,7 +84,7 @@
 					"interval": "10m",
 					"intervals": ["auto", "1s", "1m", "5m", "10m", "30m", "1h", "3h", "12h", "1d", "1w", "1y"],
 					"lines": true,
-					"fill": 1,
+					"fill": 0,
 					"linewidth": 2,
 					"points": false,
 					"pointradius": 5,
@@ -124,15 +115,19 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(nonNegativeDerivative(stagemonitor.[[application]].[[instance]].[[host]].jdbc.getconnection.*.time.count),[[group]],'sum')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].server.threadpool.*.usage,[[group]],'maxSeries')"
+						},
+						{
+							"target": "alias(maxSeries(stagemonitor.[[application]].[[instance]].[[host]].server.threadpool.*.usage),'max')",
+							"hide": true
 						}
 					],
 					"aliasColors": {},
 					"aliasYAxis": {},
-					"title": "Time of getConnection",
+					"title": "Server Thread Pool Usage",
 					"datasource": null,
 					"renderer": "flot",
-					"y_formats": ["ms", "none"],
+					"y_formats": ["none", "none"],
 					"error": "application is not defined"
 				},
 				{
@@ -163,10 +158,10 @@
 					"interval": "10m",
 					"intervals": ["auto", "1s", "1m", "5m", "10m", "30m", "1h", "3h", "12h", "1d", "1w", "1y"],
 					"lines": true,
-					"fill": 1,
+					"fill": 0,
 					"linewidth": 2,
 					"points": false,
-					"pointradius": 5,
+					"pointradius": 1,
 					"bars": false,
 					"stack": false,
 					"spyable": true,
@@ -194,12 +189,16 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(nonNegativeDerivative(stagemonitor.[[application]].[[instance]].[[host]].jdbc.getconnection.*.count.count),[[group]],'sum')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].web.sessions.count,[[group]],'sumSeries')"
+						},
+						{
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].web.sessions.count),'total')",
+							"hide": true
 						}
 					],
 					"aliasColors": {},
 					"aliasYAxis": {},
-					"title": "Calls to getConnection",
+					"title": "Number of Sessions",
 					"datasource": null,
 					"renderer": "flot",
 					"y_formats": ["none", "none"],
@@ -252,6 +251,6 @@
 		"hide": false
 	},
 	"refresh": "1m",
-	"tags": ["jdbc", "db"],
+	"tags": ["server", "pool", "session"],
 	"timezone": "browser"
 }

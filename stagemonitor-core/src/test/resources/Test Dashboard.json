@@ -1,0 +1,10 @@
+{
+	"title": "Test",
+	"editable": true,
+	"failover": false,
+	"panel_hints": true,
+	"style": "dark",
+	"refresh": "1m",
+	"tags": ["jdbc", "db"],
+	"timezone": "browser"
+}

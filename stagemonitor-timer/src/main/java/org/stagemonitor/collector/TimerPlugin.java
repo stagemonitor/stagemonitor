@@ -12,12 +12,13 @@ public class TimerPlugin implements StageMonitorPlugin {
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
 		addElasticsearchMapping(config.getServerUrl());
-		RestClient.sendAsJsonAsync(config.getServerUrl(), "/kibana-int/dashboard/Recent%20Requests/_create", "PUT",
-				getClass().getClassLoader().getResourceAsStream("Recent Requests.json"));
+		RestClient.sendGrafanaDashboardAsync(config.getServerUrl(), "Request.json");
+		RestClient.sendKibanaDashboardAsync(config.getServerUrl(), "Recent Requests.json");
 	}
 
 	private void addElasticsearchMapping(String serverUrl) {
-		final InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
+		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
+		// Sending non-asynchronously to avoid race conditions
 		RestClient.sendAsJson(serverUrl, "/_template/stagemonitor", "PUT", resourceAsStream);
 	}
 

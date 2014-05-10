@@ -69,7 +69,7 @@ public class ExecutionContext {
 		this.callStack = callStack;
 	}
 
-	@JsonProperty("@message")
+	@JsonProperty("message")
 	public String getCallStackAscii() {
 		if (callStack == null) {
 			return null;

@@ -8,7 +8,6 @@ import org.stagemonitor.collector.core.rest.RestClient;
 public class JdbcPlugin implements StageMonitorPlugin {
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		RestClient.sendAsJsonAsync(config.getServerUrl(), "/grafana-dash/dashboard/JDBC%20Connections/_create", "PUT",
-				getClass().getClassLoader().getResourceAsStream("JDBC Connections.json"));
+		RestClient.sendGrafanaDashboardAsync(config.getServerUrl(), "JDBC Connections.json");
 	}
 }

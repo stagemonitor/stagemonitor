@@ -1,4 +1,5 @@
 dependencies {
 	compile project(":stagemonitor-timer")
+	compile project(":stagemonitor-jvm")
 	provided 'javax.servlet:servlet-api:2.5'
 }
