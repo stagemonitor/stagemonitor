@@ -16,6 +16,7 @@ Details about the request including a call stack (rendered with state-of-the-art
  * Requests are grouped by use cases. Usecases are automatically detected if you use Spring MVC. For other technologies, you can group URLs by regular expressions.
  * Call Stacks (aka. Call Trees) analyze the hierarchy of method calls to identify hotspots in your application.
  * Errors
+
 ![request_monitoring](https://cloud.githubusercontent.com/assets/2163464/2939553/a10bd0e8-d94e-11e3-9cd4-5ef34c5ed825.png)
  
 ### JVM Metrics
