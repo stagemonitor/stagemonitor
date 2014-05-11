@@ -116,6 +116,10 @@
 					"targets": [
 						{
 							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm.cpu.process.usage),'cpu')"
+						},
+						{
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].jvm.cpu.process.usage,2,'maxSeries')",
+							"hide": true
 						}
 					],
 					"aliasColors": {},
