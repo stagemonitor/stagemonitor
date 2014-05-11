@@ -128,7 +128,6 @@ public class ExecutionContextMonitor {
 					}
 				}
 				actualRequestName.set(ei.executionContext.getName());
-				ei.executionContext.setName(ei.executionContext.getName());
 				ei.timer = metricRegistry.timer(ei.getTimerName());
 				if (ei.profileThisExecution()) {
 					final CallStackElement root = Profiler.activateProfiling();
@@ -136,7 +135,8 @@ public class ExecutionContextMonitor {
 				}
 			}
 		} catch (RuntimeException e) {
-			logger.warn(e.getMessage() + " (this exception is ignored)", e);
+			logger.warn(e.getMessage() + " (this exception is ignored) actualRequestName=" + actualRequestName.get() +
+					ei.toString(), e);
 		}
 	}
 
@@ -173,7 +173,8 @@ public class ExecutionContextMonitor {
 				}
 			}
 		} catch (RuntimeException e) {
-			logger.warn(e.getMessage() + " (this exception is ignored)", e);
+			logger.warn(e.getMessage() + " (this exception is ignored) actualRequestName=" + actualRequestName.get()
+					+ ei.toString(), e);
 		} finally {
 			/*
 			 * the forwarded execution is executed in the same thread
@@ -269,11 +270,24 @@ public class ExecutionContextMonitor {
 		 * @return true, if this request is a forwarding request, false otherwise
 		 */
 		private boolean isForwardingExecution() {
-			return !actualRequestName.get().equals(executionContext.getName());
+			return !executionContext.getName().equals(actualRequestName.get());
 		}
 
 		public Object getExecutionResult() {
 			return executionResult;
+		}
+
+		@Override
+		public String toString() {
+			return "ExecutionInformation{" +
+					"timer=" + timer +
+					", executionContext=" + executionContext +
+					", exceptionThrown=" + exceptionThrown +
+					", start=" + start +
+					", startCpu=" + startCpu +
+					", forwardedExecution=" + forwardedExecution +
+					", executionResult=" + executionResult +
+					'}';
 		}
 	}
 
