@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.MeasurementSession;
-import org.stagemonitor.collector.core.StageMonitorApplicationContext;
+import org.stagemonitor.collector.core.StageMonitor;
 import org.stagemonitor.collector.core.rest.RestClient;
 import org.stagemonitor.collector.core.util.GraphiteEncoder;
 import org.stagemonitor.collector.profiler.CallStackElement;
@@ -52,19 +52,19 @@ public class ExecutionContextMonitor {
 	private Date endOfWarmup;
 
 	public ExecutionContextMonitor() {
-		this(StageMonitorApplicationContext.getConfiguration());
+		this(StageMonitor.getConfiguration());
 	}
 
 	public ExecutionContextMonitor(Configuration configuration) {
 		warmupRequests = configuration.getNoOfWarmupRequests();
-		this.metricRegistry = StageMonitorApplicationContext.getMetricRegistry();
+		this.metricRegistry = StageMonitor.getMetricRegistry();
 		this.configuration = configuration;
 		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getWarmupSeconds()));
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
 		this.measurementSession = measurementSession;
-		StageMonitorApplicationContext.startMonitoring(measurementSession);
+		StageMonitor.startMonitoring(measurementSession);
 	}
 
 	public <T extends ExecutionContext> ExecutionInformation<T> monitor(MonitoredExecution<T> monitoredExecution) throws Exception {
@@ -101,7 +101,7 @@ public class ExecutionContextMonitor {
 	private synchronized void getInstanceNameFromExecution(MonitoredExecution<?> monitoredExecution) {
 		if (measurementSession.getInstanceName() == null) {
 			measurementSession.setInstanceName(monitoredExecution.getInstanceName());
-			StageMonitorApplicationContext.startMonitoring(measurementSession);
+			StageMonitor.startMonitoring(measurementSession);
 		}
 	}
 

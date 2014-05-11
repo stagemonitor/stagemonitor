@@ -2,7 +2,7 @@ package org.stagemonitor.collector.jdbc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.collector.core.StageMonitorApplicationContext;
+import org.stagemonitor.collector.core.StageMonitor;
 import org.stagemonitor.collector.core.util.GraphiteEncoder;
 
 import javax.sql.DataSource;
@@ -27,9 +27,9 @@ public class ConnectionMonitor {
 		if (connection != null) {
 			ensureUrlExistsForDataSource(dataSource, connection);
 			String url = dataSourceUrlMap.get(dataSource);
-			StageMonitorApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + COUNT).inc();
+			StageMonitor.getMetricRegistry().counter(METRIC_PREFIX + url + COUNT).inc();
 			final long durationMs = TimeUnit.NANOSECONDS.toMillis(duration);
-			StageMonitorApplicationContext.getMetricRegistry().counter(METRIC_PREFIX + url + TIME).inc(durationMs);
+			StageMonitor.getMetricRegistry().counter(METRIC_PREFIX + url + TIME).inc(durationMs);
 		}
 	}
 

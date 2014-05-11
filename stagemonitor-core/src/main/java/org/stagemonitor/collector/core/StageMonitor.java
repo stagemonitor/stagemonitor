@@ -1,11 +1,6 @@
 package org.stagemonitor.collector.core;
 
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Metered;
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.*;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
@@ -19,9 +14,9 @@ import java.util.concurrent.TimeUnit;
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
 
-public class StageMonitorApplicationContext {
+public class StageMonitor {
 
-	private final static Logger logger = LoggerFactory.getLogger(StageMonitorApplicationContext.class);
+	private final static Logger logger = LoggerFactory.getLogger(StageMonitor.class);
 	private static Configuration configuration = new Configuration();
 	private static volatile boolean started = false;
 

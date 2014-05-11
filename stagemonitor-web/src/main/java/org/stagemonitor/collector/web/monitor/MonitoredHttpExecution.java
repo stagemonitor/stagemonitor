@@ -2,7 +2,7 @@ package org.stagemonitor.collector.web.monitor;
 
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.collector.core.Configuration;
-import org.stagemonitor.collector.core.StageMonitorApplicationContext;
+import org.stagemonitor.collector.core.StageMonitor;
 import org.stagemonitor.collector.core.monitor.MonitoredExecution;
 import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
 
@@ -32,7 +32,7 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 		this.filterChain = filterChain;
 		this.statusExposingResponse = statusExposingResponse;
 		this.configuration = configuration;
-		metricRegistry = StageMonitorApplicationContext.getMetricRegistry();
+		metricRegistry = StageMonitor.getMetricRegistry();
 	}
 
 	@Override
