@@ -1,10 +1,16 @@
 package org.stagemonitor.collector.core;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.collector.core.metrics.MetricsWithCountFilter;
+import org.stagemonitor.collector.core.metrics.OrMetricFilter;
+import org.stagemonitor.collector.core.metrics.RegexMetricFilter;
 import org.stagemonitor.collector.core.metrics.SortedTableLogReporter;
 
 import java.net.InetSocketAddress;
@@ -20,42 +26,37 @@ public class StageMonitor {
 	private static Configuration configuration = new Configuration();
 	private static volatile boolean started = false;
 
-	public synchronized static boolean startMonitoring(MeasurementSession measurementSession) {
+	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
 		if (started) {
-			return true;
+			return;
 		}
 		if (measurementSession.isInitialized() && !started) {
-			initializePlugins();
-			applyExcludePatterns();
-
-			reportToGraphite(configuration.getGraphiteReportingInterval(), measurementSession);
-			reportToConsole(configuration.getConsoleReportingInterval());
-			if (configuration.reportToJMX()) {
-				reportToJMX();
+			try {
+				start(measurementSession);
+			} catch (RuntimeException e) {
+				logger.warn("Error while trying to start monitoring. (this exception is ignored)", e);
 			}
-			logger.info("Measurement Session is initialized: " + measurementSession);
-			started = true;
-			return true;
 		} else {
 			logger.warn("Measurement Session is not initialized: " + measurementSession);
-			logger.warn("make sure the properties 'stagemonitor.instanceName' and 'stagemonitor.applicationName' are set and stagemonitor.properties is available in the classpath");
-			return false;
+			logger.warn("make sure the properties 'stagemonitor.instanceName' and 'stagemonitor.applicationName' " +
+					"are set and stagemonitor.properties is available in the classpath");
 		}
 	}
 
-	private static void applyExcludePatterns() {
-		for (final String excludePattern : configuration.getExcludedMetricsPatterns()) {
-			try {
-				getMetricRegistry().removeMatching(new MetricFilter() {
-					@Override
-					public boolean matches(String name, Metric metric) {
-						return name.matches(excludePattern);
-					}
-				});
-			} catch (RuntimeException e) {
-				logger.warn("Exception while applying exclude pattern " + excludePattern + " (this exception is ignored)");
-			}
+	private static void start(MeasurementSession measurementSession) {
+		initializePlugins();
+		RegexMetricFilter regexFilter = new RegexMetricFilter(configuration.getExcludedMetricsPatterns());
+		getMetricRegistry().removeMatching(regexFilter);
+
+		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
+
+		reportToGraphite(configuration.getGraphiteReportingInterval(), measurementSession, allFilters);
+		reportToConsole(configuration.getConsoleReportingInterval(), allFilters);
+		if (configuration.reportToJMX()) {
+			reportToJMX(allFilters);
 		}
+		logger.info("Measurement Session is initialized: " + measurementSession);
+		started = true;
 	}
 
 	private static void initializePlugins() {
@@ -64,7 +65,8 @@ public class StageMonitor {
 			try {
 				stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
 			} catch (RuntimeException e) {
-				logger.warn("Error while initializing plugin " + stagemonitorPlugin.getClass().getSimpleName() + " (this exception is ignored)", e);
+				logger.warn("Error while initializing plugin " + stagemonitorPlugin.getClass().getSimpleName() +
+						" (this exception is ignored)", e);
 			}
 		}
 	}
@@ -73,7 +75,7 @@ public class StageMonitor {
 		return SharedMetricRegistries.getOrCreate("stagemonitor");
 	}
 
-	private static void reportToGraphite(long reportingInterval, MeasurementSession measurementSession) {
+	private static void reportToGraphite(long reportingInterval, MeasurementSession measurementSession, MetricFilter filter) {
 		String graphiteHostName = configuration.getGraphiteHostName();
 		if (graphiteHostName != null && !graphiteHostName.isEmpty()) {
 			final Graphite graphite = new Graphite(new InetSocketAddress(graphiteHostName,
@@ -82,7 +84,7 @@ public class StageMonitor {
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.MINUTES)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
-					.filter(new MetricsWithCountFilter())
+					.filter(filter)
 					.build(graphite)
 					.start(reportingInterval, TimeUnit.SECONDS);
 		}
@@ -95,20 +97,20 @@ public class StageMonitor {
 				encodeForGraphite(measurementSession.getHostName()));
 	}
 
-	private static void reportToConsole(long reportingInterval) {
+	private static void reportToConsole(long reportingInterval, MetricFilter filter) {
 		if (reportingInterval > 0) {
 			SortedTableLogReporter.forRegistry(getMetricRegistry())
 					.convertRatesTo(TimeUnit.MINUTES)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
-					.filter(new MetricsWithCountFilter())
+					.filter(filter)
 					.build()
 					.start(reportingInterval, TimeUnit.SECONDS);
 		}
 	}
 
-	private static void reportToJMX() {
+	private static void reportToJMX(MetricFilter filter) {
 		JmxReporter.forRegistry(getMetricRegistry())
-				.filter(new MetricsWithCountFilter())
+				.filter(filter)
 				.build().start();
 	}
 
@@ -116,13 +118,4 @@ public class StageMonitor {
 		return configuration;
 	}
 
-	private static class MetricsWithCountFilter implements MetricFilter {
-		@Override
-		public boolean matches(String name, Metric metric) {
-			if (metric instanceof Metered) {
-				return ((Metered) metric).getCount() > 0;
-			}
-			return true;
-		}
-	}
 }
