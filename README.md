@@ -44,3 +44,6 @@ All dashboards are customizable - you can add new dashboards, rows and panels to
 ### Low Overhead
 The evaluation of a JMeter loadtest of Stagemonitor integrated in [Spring Petclinic](https://github.com/stagemonitor/spring-petclinic) resulted in a reduction in throughput of only 0.2%.
 The overhead of the profiler is about 30ns and 64byte per method. You can measure it in your own environment by executing the benchmarks in stagemonitor-benchmark.
+
+## Getting Started
+Check the [Installation](https://github.com/stagemonitor/stagemonitor/wiki/Installation) site of the wiki
