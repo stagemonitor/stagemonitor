@@ -33,7 +33,7 @@ public class WebPlugin implements StageMonitorPlugin {
 			PooledResourceMetricsRegisterer.registerPooledResources(pools, registry);
 		}
 
-		RestClient.sendGrafanaDashboardAsync(conf.getServerUrl(), "Server.json");
+		RestClient.sendGrafanaDashboardAsync(conf.getElasticsearchUrl(), "Server.json");
 	}
 
 	private String getRequeredProperty(String propertyKey, Configuration conf) {

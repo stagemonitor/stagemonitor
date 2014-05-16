@@ -105,7 +105,7 @@ public class ConfigurationTest {
 		assertEquals("1w", configuration.getCallStacksTimeToLive());
 		assertEquals(null, configuration.getApplicationName());
 		assertEquals(null, configuration.getInstanceName());
-		assertEquals(null, configuration.getServerUrl());
+		assertEquals(null, configuration.getElasticsearchUrl());
 		assertEquals(Collections.emptyList(), configuration.getExcludedMetricsPatterns());
 
 		final Map<Pattern,String> groupUrls = configuration.getGroupUrls();

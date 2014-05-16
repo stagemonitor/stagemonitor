@@ -155,7 +155,7 @@ public class ExecutionContextMonitor {
 
 					if (ei.executionContext.getCallStack() != null) {
 						Profiler.stop("total");
-						reportCallStack(ei.executionContext, configuration.getServerUrl());
+						reportCallStack(ei.executionContext, configuration.getElasticsearchUrl());
 					}
 					if (ei.timer != null) {
 						ei.timer.update(executionTime, NANOSECONDS);

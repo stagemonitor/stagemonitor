@@ -11,9 +11,9 @@ public class TimerPlugin implements StageMonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		addElasticsearchMapping(config.getServerUrl());
-		RestClient.sendGrafanaDashboardAsync(config.getServerUrl(), "Request.json");
-		RestClient.sendKibanaDashboardAsync(config.getServerUrl(), "Recent Requests.json");
+		addElasticsearchMapping(config.getElasticsearchUrl());
+		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "Request.json");
+		RestClient.sendKibanaDashboardAsync(config.getElasticsearchUrl(), "Recent Requests.json");
 	}
 
 	private void addElasticsearchMapping(String serverUrl) {
