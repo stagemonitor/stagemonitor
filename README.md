@@ -1,4 +1,7 @@
-Stage Monitor [![Build Status](https://travis-ci.org/stagemonitor/stagemonitor.svg?branch=master)](https://travis-ci.org/stagemonitor/stagemonitor) [![Coverage Status](https://coveralls.io/repos/stagemonitor/stagemonitor/badge.png?branch=master)](https://coveralls.io/r/stagemonitor/stagemonitor?branch=master)
+![stagemonitor-150px](https://cloud.githubusercontent.com/assets/2163464/3014702/84cbefd2-df5a-11e3-9ab7-00a88103152a.png)
+
+
+[![Build Status](https://travis-ci.org/stagemonitor/stagemonitor.svg?branch=master)](https://travis-ci.org/stagemonitor/stagemonitor) [![Coverage Status](https://coveralls.io/repos/stagemonitor/stagemonitor/badge.png?branch=master)](https://coveralls.io/r/stagemonitor/stagemonitor?branch=master)
 =================
 
 Stagemonitor is a Java monitoring agent that tightly integrates with the timeseries backend [Graphite](http://graphite.readthedocs.org/en/latest/overview.html), the Graphite dashboard [Grafana](http://grafana.org/) to analyze graphed metrics and [Kibana](http://www.elasticsearch.org/overview/kibana/) to analyze requests and call stacks. It includes preconfigured Grafana and Kibana dashboards that can be customized.
