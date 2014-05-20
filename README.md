@@ -1,4 +1,4 @@
-![stagemonitor-150px](https://cloud.githubusercontent.com/assets/2163464/3014702/84cbefd2-df5a-11e3-9ab7-00a88103152a.png)
+![stagemonitor-h75px](https://cloud.githubusercontent.com/assets/2163464/3024619/70ed9cd0-dffb-11e3-9251-083e62d97f0d.png)
 
 
 [![Build Status](https://travis-ci.org/stagemonitor/stagemonitor.svg?branch=master)](https://travis-ci.org/stagemonitor/stagemonitor) [![Coverage Status](https://coveralls.io/repos/stagemonitor/stagemonitor/badge.png?branch=master)](https://coveralls.io/r/stagemonitor/stagemonitor?branch=master)
