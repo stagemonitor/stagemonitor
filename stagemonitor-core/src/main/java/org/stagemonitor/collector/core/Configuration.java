@@ -5,13 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -227,7 +221,11 @@ public class Configuration {
 	 * @return the server url
 	 */
 	public String getElasticsearchUrl() {
-		return getString("stagemonitor.elasticsearch.url");
+		final String url = getString("stagemonitor.elasticsearch.url");
+		if (url.endsWith("/")) {
+			return url.substring(0, url.length() - 1);
+		}
+		return url;
 	}
 
 	/**

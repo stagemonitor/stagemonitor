@@ -2,17 +2,10 @@ package org.stagemonitor.collector.core;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ConfigurationTest {
 
@@ -80,6 +73,11 @@ public class ConfigurationTest {
 	}
 
 	@Test
+	public void testElasticsearchUrlTrailingSlash() {
+		assertEquals("foo", configuration.getElasticsearchUrl());
+	}
+
+	@Test
 	public void testDefaultValues() {
 		assertEquals(0, configuration.getNoOfWarmupRequests());
 		assertEquals(0, configuration.getWarmupSeconds());
@@ -105,10 +103,9 @@ public class ConfigurationTest {
 		assertEquals("1w", configuration.getCallStacksTimeToLive());
 		assertEquals(null, configuration.getApplicationName());
 		assertEquals(null, configuration.getInstanceName());
-		assertEquals(null, configuration.getElasticsearchUrl());
 		assertEquals(Collections.emptyList(), configuration.getExcludedMetricsPatterns());
 
-		final Map<Pattern,String> groupUrls = configuration.getGroupUrls();
+		final Map<Pattern, String> groupUrls = configuration.getGroupUrls();
 		final Map<String, String> groupUrlsAsString = new HashMap<String, String>();
 		for (Map.Entry<Pattern, String> entry : groupUrls.entrySet()) {
 			groupUrlsAsString.put(entry.getKey().pattern(), entry.getValue());
