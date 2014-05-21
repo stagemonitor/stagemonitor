@@ -107,7 +107,7 @@
 					"timezone": "browser",
 					"percentage": false,
 					"zerofill": true,
-					"nullPointMode": "connected",
+					"nullPointMode": "null",
 					"steppedLine": false,
 					"tooltip": {
 						"value_type": "cumulative",
@@ -181,7 +181,7 @@
 					"timezone": "browser",
 					"percentage": false,
 					"zerofill": true,
-					"nullPointMode": "connected",
+					"nullPointMode": "null",
 					"steppedLine": false,
 					"tooltip": {
 						"value_type": "cumulative",
