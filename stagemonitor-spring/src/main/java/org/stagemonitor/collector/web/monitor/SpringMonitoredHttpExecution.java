@@ -4,7 +4,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.collector.core.Configuration;
-import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
+import org.stagemonitor.collector.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +15,7 @@ public class SpringMonitoredHttpExecution extends MonitoredHttpExecution {
 	private final List<HandlerMapping> allHandlerMappings;
 
 	public SpringMonitoredHttpExecution(HttpServletRequest httpServletRequest,
-										StatusExposingServletResponse statusExposingResponse,
+										StatusExposingByteCountingServletResponse statusExposingResponse,
 										FilterChain filterChain, Configuration configuration,
 										List<HandlerMapping> allHandlerMappings) {
 

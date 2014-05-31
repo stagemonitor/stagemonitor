@@ -15,6 +15,8 @@ public class HttpExecutionContext extends ExecutionContext {
 	private Map<String, String> headers;
 	private String method;
 	private String username;
+	private String clientIp;
+	private int bytesWritten;
 
 	public String getUsername() {
 		return username;
@@ -54,6 +56,22 @@ public class HttpExecutionContext extends ExecutionContext {
 
 	public void setMethod(String method) {
 		this.method = method;
+	}
+
+	public void setClientIp(String clientIp) {
+		this.clientIp = clientIp;
+	}
+
+	public String getClientIp() {
+		return clientIp;
+	}
+
+	public void setBytesWritten(int bytesWritten) {
+		this.bytesWritten = bytesWritten;
+	}
+
+	public int getBytesWritten() {
+		return bytesWritten;
 	}
 
 	@Override

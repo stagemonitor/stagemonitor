@@ -1,13 +1,16 @@
 package org.stagemonitor.collector.web.monitor;
 
 import com.codahale.metrics.MetricRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitor;
 import org.stagemonitor.collector.core.monitor.MonitoredExecution;
-import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
+import org.stagemonitor.collector.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -19,14 +22,16 @@ import static com.codahale.metrics.MetricRegistry.name;
 
 public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionContext> {
 
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
-	protected final StatusExposingServletResponse statusExposingResponse;
+	protected final StatusExposingByteCountingServletResponse statusExposingResponse;
 	protected final Configuration configuration;
 	private final MetricRegistry metricRegistry;
 
 	public MonitoredHttpExecution(HttpServletRequest httpServletRequest,
-								  StatusExposingServletResponse statusExposingResponse,
+								  StatusExposingByteCountingServletResponse statusExposingResponse,
 								  FilterChain filterChain, Configuration configuration) {
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
@@ -46,6 +51,12 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 		executionContext.setName(getRequestName());
 		executionContext.setMethod(httpServletRequest.getMethod());
 		executionContext.setUrl(httpServletRequest.getRequestURI());
+		executionContext.setClientIp(getClientIp(httpServletRequest));
+		try {
+			executionContext.setBytesWritten(statusExposingResponse.getOutputStream().getBytesWritten());
+		} catch (IOException e) {
+			logger.warn(e.getMessage() + " (this exception is ignored)", e);
+		}
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		executionContext.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
@@ -55,6 +66,26 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 			executionContext.setHeaders(getHeaders(httpServletRequest));
 		}
 		return executionContext;
+	}
+
+	private String getClientIp(HttpServletRequest request) {
+		String ip = request.getHeader("X-Forwarded-For");
+		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+			ip = request.getHeader("Proxy-Client-IP");
+		}
+		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+			ip = request.getHeader("WL-Proxy-Client-IP");
+		}
+		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+			ip = request.getHeader("HTTP_CLIENT_IP");
+		}
+		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+			ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+		}
+		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+			ip = request.getRemoteAddr();
+		}
+		return ip;
 	}
 
 	public String getRequestName() {

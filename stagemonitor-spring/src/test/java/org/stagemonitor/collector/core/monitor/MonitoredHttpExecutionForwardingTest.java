@@ -9,7 +9,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.collector.core.StageMonitor;
 import org.stagemonitor.collector.web.monitor.HttpExecutionContext;
 import org.stagemonitor.collector.web.monitor.MonitoredHttpExecution;
-import org.stagemonitor.collector.web.monitor.filter.StatusExposingServletResponse;
+import org.stagemonitor.collector.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -50,9 +50,9 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertEquals("/monitored3", executionInformation3.executionContext.getUrl());
 		assertEquals("GET /monitored3", executionInformation3.executionContext.getName());
 
-		assertNull(getMetricRegistry().getTimers().get(name("request", encodeForGraphite("GET /monitored1"))));
-		assertNull(getMetricRegistry().getTimers().get(name("request", encodeForGraphite("GET /monitored2"))));
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", encodeForGraphite("GET /monitored3"))));
+		assertNull(getMetricRegistry().getTimers().get(name("request", "total", encodeForGraphite("GET /monitored1"))));
+		assertNull(getMetricRegistry().getTimers().get(name("request", "total", encodeForGraphite("GET /monitored2"))));
+		assertNotNull(getMetricRegistry().getTimers().get(name("request", "total", encodeForGraphite("GET /monitored3"))));
 	}
 
 	@Test
@@ -66,9 +66,9 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertEquals("/monitored3", executionInformation3.executionContext.getUrl());
 		assertEquals("GET /monitored3", executionInformation3.executionContext.getName());
 
-		assertNull(getMetricRegistry().getTimers().get(name("request", encodeForGraphite("GET /monitored1"))));
-		assertNull(getMetricRegistry().getTimers().get(name("request", encodeForGraphite("GET /monitored2"))));
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", encodeForGraphite("GET /monitored3"))));
+		assertNull(getMetricRegistry().getTimers().get(name("request", "total", encodeForGraphite("GET /monitored1"))));
+		assertNull(getMetricRegistry().getTimers().get(name("request", "total", encodeForGraphite("GET /monitored2"))));
+		assertNotNull(getMetricRegistry().getTimers().get(name("request", "total", encodeForGraphite("GET /monitored3"))));
 	}
 
 
@@ -81,7 +81,7 @@ public class MonitoredHttpExecutionForwardingTest {
 
 		private void monitored1() throws Exception {
 			executionInformation1 = executionContextMonitor.monitor(new MonitoredHttpExecution(new MockHttpServletRequest("GET", "/monitored1"),
-					new StatusExposingServletResponse(new MockHttpServletResponse()),
+					new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 					new FilterChain() {
 						@Override
 						public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
@@ -96,7 +96,7 @@ public class MonitoredHttpExecutionForwardingTest {
 
 		private void monitored2() throws Exception {
 			executionInformation2 = executionContextMonitor.monitor(new MonitoredHttpExecution(new MockHttpServletRequest("GET", "/monitored2"),
-					new StatusExposingServletResponse(new MockHttpServletResponse()),
+					new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 					new FilterChain() {
 						@Override
 						public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
@@ -111,7 +111,7 @@ public class MonitoredHttpExecutionForwardingTest {
 
 		private void monitored3() throws Exception {
 			executionInformation3 = executionContextMonitor.monitor(new MonitoredHttpExecution(new MockHttpServletRequest("GET", "/monitored3"),
-					new StatusExposingServletResponse(new MockHttpServletResponse()),
+					new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 					new FilterChain() {
 						@Override
 						public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {

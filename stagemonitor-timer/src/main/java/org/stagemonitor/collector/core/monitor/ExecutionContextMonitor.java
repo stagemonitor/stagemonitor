@@ -128,7 +128,7 @@ public class ExecutionContextMonitor {
 					}
 				}
 				actualRequestName.set(ei.executionContext.getName());
-				ei.timer = metricRegistry.timer(ei.getTimerName());
+				ei.timer = metricRegistry.timer(name("request", "total", ei.getTimerName()));
 				if (ei.profileThisExecution()) {
 					final CallStackElement root = Profiler.activateProfiling();
 					ei.executionContext.setCallStack(root);
@@ -160,15 +160,15 @@ public class ExecutionContextMonitor {
 					if (ei.timer != null) {
 						ei.timer.update(executionTime, NANOSECONDS);
 						if (configuration.isCollectCpuTime()) {
-							metricRegistry.timer(name(ei.getTimerName(), "cpu")).update(cpuTime, NANOSECONDS);
+							metricRegistry.timer(name("request", "cpu", ei.getTimerName())).update(cpuTime, NANOSECONDS);
 						}
 						if (ei.executionContext.isError()) {
-							metricRegistry.meter(name(ei.getTimerName(), "error")).mark();
+							metricRegistry.meter(name("request", "error", ei.getTimerName())).mark();
 						}
 					}
 				} else {
 					if (ei.timer.getCount() == 0) {
-						metricRegistry.remove(ei.getTimerName());
+						metricRegistry.remove(name("request", "total", ei.getTimerName()));
 					}
 				}
 			}
@@ -251,7 +251,7 @@ public class ExecutionContextMonitor {
 		}
 
 		private String getTimerName() {
-			return name("request", GraphiteEncoder.encodeForGraphite(executionContext.getName()));
+			return name(GraphiteEncoder.encodeForGraphite(executionContext.getName()));
 		}
 
 		/**

@@ -8,12 +8,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.stagemonitor.collector.web.monitor.SpringMonitoredHttpExecution;
 
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -45,7 +40,7 @@ public class SpringHttpExecutionContextMonitorFiler extends HttpExecutionContext
 
 		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			final StatusExposingServletResponse statusExposingResponse = new StatusExposingServletResponse((HttpServletResponse) response);
+			final StatusExposingByteCountingServletResponse statusExposingResponse = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
 			try {
 				executionContextMonitor.monitor(new SpringMonitoredHttpExecution(httpServletRequest,
 						statusExposingResponse, filterChain, configuration, allHandlerMappings));

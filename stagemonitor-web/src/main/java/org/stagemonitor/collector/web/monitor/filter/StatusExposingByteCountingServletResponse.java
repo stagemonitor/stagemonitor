@@ -4,12 +4,15 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 
-public class StatusExposingServletResponse extends HttpServletResponseWrapper {
+public class StatusExposingByteCountingServletResponse extends HttpServletResponseWrapper {
 	// The Servlet spec says: calling setStatus is optional, if no status is set, the default is 200.
 	private int httpStatus = 200;
 
-	public StatusExposingServletResponse(HttpServletResponse response) {
+	private CountingOutputStream servletOutputStreamWrapper;
+
+	public StatusExposingByteCountingServletResponse(HttpServletResponse response) throws IOException {
 		super(response);
+		servletOutputStreamWrapper = new CountingOutputStream(response.getOutputStream());
 	}
 
 	@Override
@@ -32,5 +35,10 @@ public class StatusExposingServletResponse extends HttpServletResponseWrapper {
 
 	public int getStatus() {
 		return httpStatus;
+	}
+
+	@Override
+	public CountingOutputStream getOutputStream() throws IOException {
+		return servletOutputStreamWrapper;
 	}
 }
