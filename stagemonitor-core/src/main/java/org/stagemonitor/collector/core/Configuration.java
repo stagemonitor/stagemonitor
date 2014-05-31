@@ -82,12 +82,12 @@ public class Configuration {
 	}
 
 	/**
-	 * A list of header names that should not be collected.
+	 * A list of (non case sensitive) header names that should not be collected.
 	 *
 	 * @return list header names not to collect
 	 */
 	public List<String> getExcludedHeaders() {
-		return getLowerStrings("stagemonitor.monitor.http.headers.excluded", "cookie");
+		return getLowerStrings("stagemonitor.monitor.http.headers.excluded", "cookie,Authorization");
 	}
 
 	/**
@@ -222,7 +222,7 @@ public class Configuration {
 	 */
 	public String getElasticsearchUrl() {
 		final String url = getString("stagemonitor.elasticsearch.url");
-		if (url.endsWith("/")) {
+		if (url != null && url.endsWith("/")) {
 			return url.substring(0, url.length() - 1);
 		}
 		return url;
