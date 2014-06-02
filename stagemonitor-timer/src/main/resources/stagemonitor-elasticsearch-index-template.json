@@ -31,7 +31,7 @@
 					"type": "date",
 					"format": "dateOptionalTime"
 				},
-				"@message": {
+				"message": {
 					"type": "string",
 					"index": "no"
 				},

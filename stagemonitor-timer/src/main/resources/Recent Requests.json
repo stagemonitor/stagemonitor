@@ -245,8 +245,8 @@
 					"editable": true,
 					"group": ["default"],
 					"type": "table",
-					"size": 100,
-					"pages": 5,
+					"size": 20,
+					"pages": 2,
 					"offset": 0,
 					"sort": ["@timestamp", "desc"],
 					"style": {
