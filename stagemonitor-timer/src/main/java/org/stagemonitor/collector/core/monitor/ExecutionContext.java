@@ -8,6 +8,8 @@ import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.profiler.CallStackElement;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -37,6 +39,7 @@ public class ExecutionContext {
 	private String host;
 	private String instance;
 	private String exceptionMessage;
+	private String exceptionClass;
 	private String stackTrace;
 
 	public ExecutionContext() {
@@ -169,6 +172,27 @@ public class ExecutionContext {
 
 	public void setStackTrace(String stackTrace) {
 		this.stackTrace = stackTrace;
+	}
+
+	public String getExceptionClass() {
+		return exceptionClass;
+	}
+
+	public void setExceptionClass(String exceptionClass) {
+		this.exceptionClass = exceptionClass;
+	}
+
+	public void setException(Exception e) {
+		error = e != null;
+		if (e != null) {
+			exceptionMessage = e.getMessage();
+			exceptionClass = e.getClass().getCanonicalName();
+
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw, true);
+			e.printStackTrace(pw);
+			stackTrace = sw.getBuffer().toString();
+		}
 	}
 
 	@Override
