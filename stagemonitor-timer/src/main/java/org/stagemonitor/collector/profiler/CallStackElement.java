@@ -1,16 +1,13 @@
 package org.stagemonitor.collector.profiler;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CallStackElement {
 
@@ -23,11 +20,10 @@ public class CallStackElement {
 		horizontalAngle = new String(new char[]{9500, 9472, 9472, ' '});
 	}
 
-	@JsonBackReference
+	@JsonIgnore
 	private CallStackElement parent;
 	private String signature;
 	private long executionTime;
-	@JsonManagedReference
 	private List<CallStackElement> children = new LinkedList<CallStackElement>();
 
 	public CallStackElement() {
