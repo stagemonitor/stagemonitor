@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.profiler.CallStackElement;
 
@@ -16,6 +17,10 @@ import java.util.UUID;
 public class ExecutionContext {
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
+
+	static {
+		MAPPER.registerModule(new AfterburnerModule());
+	}
 
 	@JsonIgnore
 	private String id = UUID.randomUUID().toString();

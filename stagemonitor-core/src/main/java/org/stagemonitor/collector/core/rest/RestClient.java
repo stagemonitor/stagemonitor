@@ -3,6 +3,7 @@ package org.stagemonitor.collector.core.rest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,10 @@ public class RestClient {
 	private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
+
+	static {
+		MAPPER.registerModule(new AfterburnerModule());
+	}
 
 	private static final ExecutorService asyncRestPool = Executors.newSingleThreadExecutor(new ThreadFactory() {
 		@Override
