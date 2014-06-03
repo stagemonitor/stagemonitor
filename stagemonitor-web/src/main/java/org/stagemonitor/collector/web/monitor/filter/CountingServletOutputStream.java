@@ -3,7 +3,7 @@ package org.stagemonitor.collector.web.monitor.filter;
 import javax.servlet.ServletOutputStream;
 import java.io.IOException;
 
-public class CountingOutputStream extends ServletOutputStream {
+public class CountingServletOutputStream extends ServletOutputStream {
 
 	private ServletOutputStream wrappedServletOutputStream;
 	private int bytesWritten = 0;
@@ -12,8 +12,8 @@ public class CountingOutputStream extends ServletOutputStream {
 		return bytesWritten;
 	}
 
-	public CountingOutputStream(ServletOutputStream wrappedServletOutputStream) {
-		CountingOutputStream.this.wrappedServletOutputStream = wrappedServletOutputStream;
+	public CountingServletOutputStream(ServletOutputStream wrappedServletOutputStream) {
+		this.wrappedServletOutputStream = wrappedServletOutputStream;
 	}
 
 	public void write(int b) throws IOException {

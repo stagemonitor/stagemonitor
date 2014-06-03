@@ -3,16 +3,20 @@ package org.stagemonitor.collector.web.monitor.filter;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 public class StatusExposingByteCountingServletResponse extends HttpServletResponseWrapper {
 	// The Servlet spec says: calling setStatus is optional, if no status is set, the default is 200.
 	private int httpStatus = 200;
 
-	private CountingOutputStream servletOutputStreamWrapper;
+	private CountingServletOutputStream servletOutputStreamWrapper;
+
+	private PrintWriter printWriter;
 
 	public StatusExposingByteCountingServletResponse(HttpServletResponse response) throws IOException {
 		super(response);
-		servletOutputStreamWrapper = new CountingOutputStream(response.getOutputStream());
+		servletOutputStreamWrapper = new CountingServletOutputStream(response.getOutputStream());
+		printWriter = new PrintWriter(servletOutputStreamWrapper);
 	}
 
 	@Override
@@ -38,7 +42,12 @@ public class StatusExposingByteCountingServletResponse extends HttpServletRespon
 	}
 
 	@Override
-	public CountingOutputStream getOutputStream() throws IOException {
+	public CountingServletOutputStream getOutputStream() throws IOException {
 		return servletOutputStreamWrapper;
+	}
+
+	@Override
+	public PrintWriter getWriter() throws IOException {
+		return printWriter;
 	}
 }

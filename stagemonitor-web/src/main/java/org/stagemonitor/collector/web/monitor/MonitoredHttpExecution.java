@@ -26,16 +26,16 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
-	protected final StatusExposingByteCountingServletResponse statusExposingResponse;
+	protected final StatusExposingByteCountingServletResponse responseWrapper;
 	protected final Configuration configuration;
 	private final MetricRegistry metricRegistry;
 
 	public MonitoredHttpExecution(HttpServletRequest httpServletRequest,
-								  StatusExposingByteCountingServletResponse statusExposingResponse,
+								  StatusExposingByteCountingServletResponse responseWrapper,
 								  FilterChain filterChain, Configuration configuration) {
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
-		this.statusExposingResponse = statusExposingResponse;
+		this.responseWrapper = responseWrapper;
 		this.configuration = configuration;
 		metricRegistry = StageMonitor.getMetricRegistry();
 	}
@@ -52,11 +52,6 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 		executionContext.setMethod(httpServletRequest.getMethod());
 		executionContext.setUrl(httpServletRequest.getRequestURI());
 		executionContext.setClientIp(getClientIp(httpServletRequest));
-		try {
-			executionContext.setBytesWritten(statusExposingResponse.getOutputStream().getBytesWritten());
-		} catch (IOException e) {
-			logger.warn(e.getMessage() + " (this exception is ignored)", e);
-		}
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		executionContext.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
@@ -143,17 +138,28 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 
 	@Override
 	public Object execute() throws Exception {
-		filterChain.doFilter(httpServletRequest, statusExposingResponse);
+		filterChain.doFilter(httpServletRequest, responseWrapper);
 		return null;
 	}
 
 	@Override
 	public void onPostExecute(HttpExecutionContext executionContext) {
-		int status = statusExposingResponse.getStatus();
+		int status = responseWrapper.getStatus();
 		executionContext.setStatusCode(status);
 		metricRegistry.counter(name("request.statuscode", Integer.toString(status))).inc();
 		if (status >= 400) {
 			executionContext.setError(true);
+		}
+
+		Object exception = httpServletRequest.getAttribute("exception");
+		if (exception instanceof Exception) {
+			executionContext.setException((Exception) exception);
+		}
+
+		try {
+			executionContext.setBytesWritten(responseWrapper.getOutputStream().getBytesWritten());
+		} catch (IOException e) {
+			logger.warn(e.getMessage() + " (this exception is ignored)", e);
 		}
 	}
 

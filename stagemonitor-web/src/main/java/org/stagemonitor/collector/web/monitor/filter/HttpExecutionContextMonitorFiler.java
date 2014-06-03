@@ -38,10 +38,10 @@ public class HttpExecutionContextMonitorFiler extends AbstractExclusionFilter im
 			throws IOException, ServletException {
 		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			final StatusExposingByteCountingServletResponse statusExposingResponse = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
+			final StatusExposingByteCountingServletResponse responseWrapper = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
 			try {
 				executionContextMonitor.monitor(new MonitoredHttpExecution(httpServletRequest,
-						statusExposingResponse, filterChain, configuration));
+						responseWrapper, filterChain, configuration));
 			} catch (Exception e) {
 				handleException(e);
 			}
