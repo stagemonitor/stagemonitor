@@ -13,6 +13,8 @@ import org.stagemonitor.collector.profiler.CallStackElement;
 import org.stagemonitor.collector.profiler.ExecutionContextLogger;
 import org.stagemonitor.collector.profiler.Profiler;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
@@ -85,7 +87,7 @@ public class ExecutionContextMonitor {
 			ei.executionResult = monitoredExecution.execute();
 			return ei;
 		} catch (Exception e) {
-			ei.exceptionThrown = true;
+			ei.exception = e;
 			throw e;
 		} finally {
 			if (monitor) {
@@ -148,7 +150,9 @@ public class ExecutionContextMonitor {
 				if (!ei.isForwardingExecution()) {
 					final long executionTime = System.nanoTime() - ei.start;
 					final long cpuTime = getCpuTime() - ei.startCpu;
-					ei.executionContext.setError(ei.exceptionThrown);
+					ei.executionContext.setError(ei.exception != null);
+					ei.executionContext.setExceptionMessage(ei.exception.getMessage());
+					ei.executionContext.setStackTrace(getStackTraceAsString(ei.exception));
 					ei.executionContext.setExecutionTime(NANOSECONDS.toMillis(executionTime));
 					ei.executionContext.setCpuTime(NANOSECONDS.toMillis(cpuTime));
 					monitoredExecution.onPostExecute(ei.executionContext);
@@ -207,6 +211,13 @@ public class ExecutionContextMonitor {
 		}
 	}
 
+	public static String getStackTraceAsString(Throwable throwable) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw, true);
+		throwable.printStackTrace(pw);
+		return sw.getBuffer().toString();
+	}
+
 	private boolean isWarmedUp() {
 		if (!warmedUp.get()) {
 			warmedUp.set(warmupRequests < noOfRequests.incrementAndGet() && new Date(System.currentTimeMillis() + 1).after(endOfWarmup));
@@ -232,11 +243,11 @@ public class ExecutionContextMonitor {
 	public class ExecutionInformation<T extends ExecutionContext> {
 		Timer timer = null;
 		T executionContext = null;
-		boolean exceptionThrown = false;
 		long start = System.nanoTime();
 		long startCpu = getCpuTime();
 		boolean forwardedExecution = false;
 		Object executionResult = null;
+		Exception exception;
 
 		private boolean profileThisExecution() {
 			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
@@ -282,7 +293,7 @@ public class ExecutionContextMonitor {
 			return "ExecutionInformation{" +
 					"timer=" + timer +
 					", executionContext=" + executionContext +
-					", exceptionThrown=" + exceptionThrown +
+					", exception=" + exception +
 					", start=" + start +
 					", startCpu=" + startCpu +
 					", forwardedExecution=" + forwardedExecution +

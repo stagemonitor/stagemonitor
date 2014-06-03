@@ -31,6 +31,8 @@ public class ExecutionContext {
 	private String application;
 	private String host;
 	private String instance;
+	private String exceptionMessage;
+	private String stackTrace;
 
 	public ExecutionContext() {
 		TimeZone tz = TimeZone.getTimeZone("UTC");
@@ -146,6 +148,22 @@ public class ExecutionContext {
 
 	public void setInstance(String instance) {
 		this.instance = instance;
+	}
+
+	public String getExceptionMessage() {
+		return exceptionMessage;
+	}
+
+	public void setExceptionMessage(String exceptionMessage) {
+		this.exceptionMessage = exceptionMessage;
+	}
+
+	public String getStackTrace() {
+		return stackTrace;
+	}
+
+	public void setStackTrace(String stackTrace) {
+		this.stackTrace = stackTrace;
 	}
 
 	@Override
