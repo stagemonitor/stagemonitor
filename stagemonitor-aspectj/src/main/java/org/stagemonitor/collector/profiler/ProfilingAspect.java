@@ -16,7 +16,11 @@ public abstract class ProfilingAspect {
 	private void stagemonitorCollector() {
 	}
 
-	@Pointcut("methodsToProfile() && !stagemonitorCollector()")
+	@Pointcut("!within(@org.aspectj.lang.annotation.Aspect)")
+	private void dontWeaveInOtherAspects() {
+	}
+
+	@Pointcut("methodsToProfile() && !stagemonitorCollector() && dontWeaveInOtherAspects()")
 	private void applicationMethodsToProfile() {
 	}
 
