@@ -50,3 +50,6 @@ The overhead of the profiler is about 30ns and 64byte per method. You can measur
 
 ## Getting Started
 Check the [Installation](https://github.com/stagemonitor/stagemonitor/wiki/Installation) site of the wiki
+
+## Discuss
+If you want to discuss anything related to stagemontior, you can do so at http://ost.io/@stagemonitor/stagemonitor
