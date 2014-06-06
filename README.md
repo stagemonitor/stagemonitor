@@ -7,7 +7,7 @@
 Stagemonitor is a Java monitoring agent that tightly integrates with the timeseries backend [Graphite](http://graphite.readthedocs.org/en/latest/overview.html), the Graphite dashboard [Grafana](http://grafana.org/) to analyze graphed metrics and [Kibana](http://www.elasticsearch.org/overview/kibana/) to analyze requests and call stacks. It includes preconfigured Grafana and Kibana dashboards that can be customized.
 
 ## Features
-### Analyze Requests and Call Stacks
+### [Analyze Requests and Call Stacks](https://github.com/stagemonitor/stagemonitor/wiki/Request-and-Call-Stack-Dashboard)
 Filter requests by queries or by selecting charts.
 ![recentrequests](https://cloud.githubusercontent.com/assets/2163464/2873213/08c4f504-d399-11e3-99d0-d68bbbf15e18.png)
 Details about the request including a call stack (rendered with state-of-the-art ascii-art).
