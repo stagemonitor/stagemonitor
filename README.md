@@ -13,11 +13,10 @@ Filter requests by queries or by selecting charts.
 Details about the request including a call stack (rendered with state-of-the-art ascii-art).
 ![requestdetails](https://cloud.githubusercontent.com/assets/2163464/2873205/7e24947c-d398-11e3-966b-44bf2468505a.png)
 
-### HTTP Request Metrics
+### [Request Dashboard](https://github.com/stagemonitor/stagemonitor/wiki/Request-Dashboard)
  * Statistical distribution of response times
  * Throughput
  * Requests are grouped by use cases. Usecases are automatically detected if you use Spring MVC. For other technologies, you can group URLs by regular expressions.
- * Call Stacks (aka. Call Trees) analyze the hierarchy of method calls to identify hotspots in your application.
  * Errors
 
 ![request_monitoring](https://cloud.githubusercontent.com/assets/2163464/2939553/a10bd0e8-d94e-11e3-9cd4-5ef34c5ed825.png)
