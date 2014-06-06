@@ -21,14 +21,14 @@ Details about the request including a call stack (rendered with state-of-the-art
 
 ![request dashboard](https://cloud.githubusercontent.com/assets/2163464/3200110/1cf14602-ed77-11e3-8f6b-67251b8b53a2.PNG)
  
-### JVM Metrics
+### [JVM Dashboards](https://github.com/stagemonitor/stagemonitor/wiki/JVM-Dashboards)
  * Utilisation of all memory pools
  * CPU utilisation of the JVM process
 
 ### Resource Pool Metrics
- * Server Thread Pools
+ * [Server Thread Pool](https://github.com/stagemonitor/stagemonitor/wiki/Server-Dashboard)
+ * [JDBC Connection Pools](https://github.com/stagemonitor/stagemonitor/wiki/JDBC-Connections-Dashboard)
  * Application Thread Pools
- * JDBC Connection Pools
  
  
 ### Analyze historical data
