@@ -19,7 +19,7 @@ Details about the request including a call stack (rendered with state-of-the-art
  * Requests are grouped by use cases. Usecases are automatically detected if you use Spring MVC. For other technologies, you can group URLs by regular expressions.
  * Errors
 
-![request_monitoring](https://cloud.githubusercontent.com/assets/2163464/2939553/a10bd0e8-d94e-11e3-9cd4-5ef34c5ed825.png)
+![request dashboard](https://cloud.githubusercontent.com/assets/2163464/3200110/1cf14602-ed77-11e3-8f6b-67251b8b53a2.PNG)
  
 ### JVM Metrics
  * Utilisation of all memory pools
