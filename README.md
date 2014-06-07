@@ -8,15 +8,15 @@ Stagemonitor is a Java monitoring agent that tightly integrates with the timeser
 
 ## Features
 ### [Analyze Requests and Call Stacks](https://github.com/stagemonitor/stagemonitor/wiki/Request-and-Call-Stack-Dashboard)
-Filter requests by queries or by selecting charts.
-![recentrequests](https://cloud.githubusercontent.com/assets/2163464/2873213/08c4f504-d399-11e3-99d0-d68bbbf15e18.png)
-Details about the request including a call stack (rendered with state-of-the-art ascii-art).
-![requestdetails](https://cloud.githubusercontent.com/assets/2163464/2873205/7e24947c-d398-11e3-966b-44bf2468505a.png)
+ * Filter requests by queries or by selecting charts
+ * Details about the request including the call stack (aka call tree) rendered with state-of-the-art ascii-art
+
+![recent requests](https://cloud.githubusercontent.com/assets/2163464/3207952/c2e08e16-ee11-11e3-87fe-4eb2f761931c.png)
 
 ### [Request Dashboard](https://github.com/stagemonitor/stagemonitor/wiki/Request-Dashboard)
  * Statistical distribution of response times
  * Throughput
- * Requests are grouped by use cases. Usecases are automatically detected if you use Spring MVC. For other technologies, you can group URLs by regular expressions.
+ * Requests are grouped by use cases. Usecases are automatically detected if you use Spring MVC. For other technologies, you can group URLs by regular expressions
  * Errors
 
 ![request dashboard](https://cloud.githubusercontent.com/assets/2163464/3200110/1cf14602-ed77-11e3-8f6b-67251b8b53a2.PNG)
