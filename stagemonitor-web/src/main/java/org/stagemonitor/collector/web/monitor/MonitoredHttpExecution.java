@@ -114,7 +114,7 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 	}
 
 	private boolean isParamExcluded(String queryParameter) {
-		final List<Pattern> confidentialQueryParams = configuration.getConfidentialQueryParams();
+		final List<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
 		for (Pattern excludedParam : confidentialQueryParams) {
 			if (excludedParam.matcher(queryParameter).matches()) {
 				return true;

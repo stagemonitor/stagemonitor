@@ -86,7 +86,7 @@ public class ConfigurationTest {
 		assertEquals(false, configuration.isMonitorOnlySpringMvcRequests());
 		assertEquals(true, configuration.isCollectHeaders());
 		assertEquals(Arrays.asList("cookie", "authorization"), configuration.getExcludedHeaders());
-		final List<Pattern> confidentialQueryParams = configuration.getConfidentialQueryParams();
+		final List<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
 		final List<String> confidentialQueryParamsAsString = new ArrayList<String>(confidentialQueryParams.size());
 		for (Pattern confidentialQueryParam : confidentialQueryParams) {
 			confidentialQueryParamsAsString.add(confidentialQueryParam.toString());

@@ -24,7 +24,8 @@ public class Configuration {
 	}
 
 	/**
-	 * Specifies the minimum number of requests that have to be issued against the application before metrics are collected.
+	 * Specifies the minimum number of requests that have to be issued against the application before metrics are
+	 * collected.
 	 *
 	 * @return the number of warmup requests
 	 */
@@ -53,7 +54,8 @@ public class Configuration {
 	/**
 	 * Whether or not a {@link com.codahale.metrics.Timer} for the cpu time of executions should be created.
 	 *
-	 * @return <code>true</code> if metrics about the cpu time of executions should be collected, <code>false</code> otherwise
+	 * @return <code>true</code> if metrics about the cpu time of executions should be collected, <code>false</code>
+	 * otherwise
 	 */
 	public boolean isCollectCpuTime() {
 		return getBoolean("stagemonitor.monitor.cpuTime", false);
@@ -91,12 +93,16 @@ public class Configuration {
 	}
 
 	/**
-	 * A list of query parameter name patterns that should not be collected.
+	 * A list of request parameter name patterns that should not be collected.
+	 * <p/>
+	 * A request parameter is either a query string or a application/x-www-form-urlencoded request body
+	 * (POST form content)
 	 *
-	 * @return list of confidential query parameter names
+	 * @return list of confidential request parameter names
 	 */
-	public List<Pattern> getConfidentialQueryParams() {
-		return getPatterns("stagemonitor.monitor.http.queryparams.confidential.regex", "(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*");
+	public List<Pattern> getConfidentialRequestParams() {
+		return getPatterns("stagemonitor.monitor.http.requestparams.confidential.regex",
+				"(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*");
 	}
 
 	/**
@@ -123,7 +129,8 @@ public class Configuration {
 	/**
 	 * The amount of time between the metrics are reported to graphite (in seconds).
 	 * <p>
-	 * To deactivate graphite reporting, set this to a value below 1, or don't provide stagemonitor.reporting.graphite.hostName.
+	 * To deactivate graphite reporting, set this to a value below 1, or don't provide
+	 * stagemonitor.reporting.graphite.hostName.
 	 * </p>
 	 *
 	 * @return the amount of time between graphite reports in seconds
@@ -204,7 +211,8 @@ public class Configuration {
 
 	/**
 	 * The instance name.
-	 * <p>If this property is not set, the instance name set to the first request's {@link javax.servlet.ServletRequest#getServerName()}<br/>
+	 * <p>If this property is not set, the instance name set to the first request's
+	 * {@link javax.servlet.ServletRequest#getServerName()}<br/>
 	 * <b>that means that the collection of metrics does not start before the first request is executed</b>
 	 * </p>
 	 *
@@ -417,8 +425,8 @@ public class Configuration {
 					}
 					return pattenGroupMap;
 				} catch (RuntimeException e) {
-					logger.warn("Error while parsing pattern map. Expected format <regex>: <name>[, <regex>: <name>]. " +
-							"Actual value: " + patternString + " (this exception is ignored)", e);
+					logger.warn("Error while parsing pattern map. Expected format <regex>: <name>[, <regex>: <name>]. "
+							+ "Actual value: " + patternString + " (this exception is ignored)", e);
 					return Collections.emptyMap();
 				}
 			}
