@@ -18,6 +18,7 @@ import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -176,11 +177,9 @@ public class ExecutionContextMonitor {
 					+ ei.toString(), e);
 		} finally {
 			/*
-			 * the forwarded execution is executed in the same thread
-			 * only remove the thread local on the topmost execution context
+			 * The forwarded execution is executed in the same thread.
+			 * Only remove the thread local on the topmost execution context,
 			 * otherwise ei.isForwardingExecution() doesn't work
-			 *
-			 * TODO really?
 			 */
 			if (!ei.forwardedExecution) {
 				actualRequestName.remove();
@@ -193,8 +192,10 @@ public class ExecutionContextMonitor {
 
 	private <T extends ExecutionContext> void reportCallStack(T executionContext, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
-			String path = String.format("/stagemonitor-%s/executions/%s",
-					new SimpleDateFormat("yyyy.MM.dd").format(new Date()), executionContext.getId());
+			final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+			dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+			String path = String.format("/stagemonitor-%s/executions/%s", dateFormat.format(new Date()),
+					executionContext.getId());
 			final String ttl = configuration.getCallStacksTimeToLive();
 			if (ttl != null && !ttl.isEmpty()) {
 				path += "?ttl=" + ttl;
