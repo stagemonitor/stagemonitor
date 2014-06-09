@@ -43,7 +43,7 @@ public class ExecutionContext {
 	private String stackTrace;
 
 	public ExecutionContext() {
-		TimeZone tz = TimeZone.getTimeZone("UTC");
+		TimeZone tz = TimeZone.getDefault();
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		df.setTimeZone(tz);
 		this.timestamp = df.format(new Date());
