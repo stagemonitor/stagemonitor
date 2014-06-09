@@ -66,6 +66,9 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 	private String getClientIp(HttpServletRequest request) {
 		String ip = request.getHeader("X-Forwarded-For");
 		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+			ip = request.getHeader("X-Real-IP");
+		}
+		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
 			ip = request.getHeader("Proxy-Client-IP");
 		}
 		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
@@ -128,8 +131,8 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 		final Enumeration headerNames = request.getHeaderNames();
 		final List<String> excludedHeaders = configuration.getExcludedHeaders();
 		while (headerNames.hasMoreElements()) {
-			final String headerName = (String) headerNames.nextElement();
-			if (!excludedHeaders.contains(headerName.toLowerCase())) {
+			final String headerName = ((String) headerNames.nextElement()).toLowerCase();
+			if (!excludedHeaders.contains(headerName)) {
 				headers.put(headerName, request.getHeader(headerName));
 			}
 		}
