@@ -29,7 +29,7 @@
 					"type": "date",
 					"format": "dateOptionalTime"
 				},
-				"message": {
+				"callStack": {
 					"type": "string",
 					"index": "no"
 				},
