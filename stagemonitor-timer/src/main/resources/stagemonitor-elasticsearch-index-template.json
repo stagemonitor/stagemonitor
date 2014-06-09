@@ -1,8 +1,6 @@
 {
 	"template": "stagemonitor-*",
 	"settings" : {
-		"number_of_shards" : 1,
-		"number_of_replicas" : 0,
 		"index" : {
 			"store" : { "compress" : { "stored" : true, "tv": true } },
 			"refresh_interval" : "5s"
