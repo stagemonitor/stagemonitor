@@ -84,6 +84,16 @@ public class Configuration {
 	}
 
 	/**
+	 * Whether or not the user-agent header should be parsed and analyzed to get information about the browser,
+	 * device type and operating system.
+	 *
+	 * @return true, if user-agent header should be parsed, false otherwise
+	 */
+	public boolean isParseUserAgent() {
+		return getBoolean("stagemonitor.monitor.http.parseUserAgent", false);
+	}
+
+	/**
 	 * A list of (non case sensitive) header names that should not be collected.
 	 *
 	 * @return list header names not to collect

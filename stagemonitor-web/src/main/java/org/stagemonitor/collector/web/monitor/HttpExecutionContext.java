@@ -1,18 +1,36 @@
 package org.stagemonitor.collector.web.monitor;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import net.sf.uadetector.ReadableUserAgent;
+import net.sf.uadetector.UserAgentStringParser;
+import net.sf.uadetector.service.UADetectorServiceFactory;
+import org.stagemonitor.collector.core.StageMonitor;
 import org.stagemonitor.collector.core.monitor.ExecutionContext;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class HttpExecutionContext extends ExecutionContext {
 
+	private final UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
+	private final static int maxElements = 100;
+	private final static Map<String, ReadableUserAgent> userAgentCache =
+			new LinkedHashMap<String, ReadableUserAgent>(maxElements + 1, 0.75f, true) {
+				@Override
+				protected boolean removeEldestEntry(Map.Entry eldest) {
+					return size() > maxElements;
+				}
+			};
+
 	private String url;
 	private Integer statusCode;
 	private Map<String, String> headers;
+	@JsonIgnore
+	private ReadableUserAgent agent;
 	private String method;
 	private String username;
 	private String clientIp;
@@ -48,6 +66,18 @@ public class HttpExecutionContext extends ExecutionContext {
 
 	public void setHeaders(Map<String, String> headers) {
 		this.headers = headers;
+		if (headers != null && StageMonitor.getConfiguration().isParseUserAgent()) {
+			final String userAgent = headers.get("user-agent");
+			if (userAgent != null) {
+				final ReadableUserAgent readableUserAgent = userAgentCache.get(userAgent);
+				if (readableUserAgent != null) {
+					agent = readableUserAgent;
+				} else {
+					agent = parser.parse(userAgent);
+					userAgentCache.put(userAgent, agent);
+				}
+			}
+		}
 	}
 
 	public String getMethod() {
@@ -72,6 +102,55 @@ public class HttpExecutionContext extends ExecutionContext {
 
 	public int getBytesWritten() {
 		return bytesWritten;
+	}
+
+	public String getBrowser() {
+		if (agent == null) {
+			return null;
+		}
+		return agent.getName();
+	}
+
+	public String getBrowserVersion() {
+		if (agent == null) {
+			return null;
+		}
+		return agent.getVersionNumber().toVersionString();
+	}
+
+	public String getDevice() {
+		if (agent == null) {
+			return null;
+		}
+		return agent.getDeviceCategory().getName();
+	}
+
+	public String getUserAgentType() {
+		if (agent == null) {
+			return null;
+		}
+		return agent.getTypeName();
+	}
+
+	public String getOs() {
+		if (agent == null) {
+			return null;
+		}
+		return agent.getOperatingSystem().getName();
+	}
+
+	public String getOsFamily() {
+		if (agent == null) {
+			return null;
+		}
+		return agent.getOperatingSystem().getFamilyName();
+	}
+
+	public String getOsVersion() {
+		if (agent == null) {
+			return null;
+		}
+		return agent.getOperatingSystem().getVersionNumber().toVersionString();
 	}
 
 	@Override
