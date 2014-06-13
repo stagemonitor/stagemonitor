@@ -5,7 +5,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -336,16 +342,24 @@ public class Configuration {
 		return getAndCache(key, null, new PropertyLoader<String>() {
 			@Override
 			public String load() {
-				return properties.getProperty(key, defaultValue);
+				return getTrimmedProperty(key, defaultValue);
 			}
 		});
+	}
+
+	private String getTrimmedProperty(String key, String defaultValue) {
+		final String property = properties.getProperty(key, defaultValue);
+		if (property != null) {
+			return property.trim();
+		}
+		return property;
 	}
 
 	public List<String> getLowerStrings(final String key, final String defaultValue) {
 		return getAndCache(key, null, new PropertyLoader<List<String>>() {
 			@Override
 			public List<String> load() {
-				String property = properties.getProperty(key, defaultValue);
+				String property = getTrimmedProperty(key, defaultValue);
 				if (property != null && property.length() > 0) {
 					final String[] split = property.split(",");
 					for (int i = 0; i < split.length; i++) {
@@ -375,7 +389,7 @@ public class Configuration {
 		return getAndCache(key, null, new PropertyLoader<List<String>>() {
 			@Override
 			public List<String> load() {
-				String property = properties.getProperty(key, defaultValue);
+				String property = getTrimmedProperty(key, defaultValue);
 				if (property != null && property.length() > 0) {
 					final String[] split = property.split(",");
 					for (int i = 0; i < split.length; i++) {
@@ -392,7 +406,7 @@ public class Configuration {
 		return getAndCache(key, defaultValue, new PropertyLoader<Boolean>() {
 			@Override
 			public Boolean load() {
-				return Boolean.parseBoolean(properties.getProperty(key, Boolean.toString(defaultValue)));
+				return Boolean.parseBoolean(getTrimmedProperty(key, Boolean.toString(defaultValue)));
 			}
 		});
 	}
@@ -405,7 +419,7 @@ public class Configuration {
 		return getAndCache(key, defaultValue, new PropertyLoader<Long>() {
 			@Override
 			public Long load() {
-				String value = properties.getProperty(key, Long.toString(defaultValue));
+				String value = getTrimmedProperty(key, Long.toString(defaultValue));
 				try {
 					return Long.parseLong(value);
 				} catch (NumberFormatException e) {
@@ -420,7 +434,7 @@ public class Configuration {
 		return getAndCache(key, null, new PropertyLoader<Map<Pattern, String>>() {
 			@Override
 			public Map<Pattern, String> load() {
-				String patternString = properties.getProperty(key, defaultValue);
+				String patternString = getTrimmedProperty(key, defaultValue);
 				try {
 					String[] groups = patternString.split(",");
 					Map<Pattern, String> pattenGroupMap = new HashMap<Pattern, String>(groups.length);
