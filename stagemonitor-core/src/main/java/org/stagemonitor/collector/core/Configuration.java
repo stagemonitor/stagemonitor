@@ -275,12 +275,11 @@ public class Configuration {
 	 */
 	public Map<Pattern, String> getGroupUrls() {
 		return getPatternMap("stagemonitor.groupUrls",
-				"/\\d+:     /{id}," +
-						"(.*).js:   *.js," +
-						"(.*).css:  *.css," +
-						"(.*).jpg:  *.jpg," +
-						"(.*).jpeg: *.jpeg," +
-						"(.*).png:  *.png");
+						"(.*).js$:   *.js," +
+						"(.*).css$:  *.css," +
+						"(.*).jpg$:  *.jpg," +
+						"(.*).jpeg$: *.jpeg," +
+						"(.*).png$:  *.png");
 	}
 
 	private void loadProperties() {

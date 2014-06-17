@@ -2,10 +2,17 @@ package org.stagemonitor.collector.core;
 
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ConfigurationTest {
 
@@ -112,12 +119,11 @@ public class ConfigurationTest {
 		}
 
 		final Map<String, String> expectedMap = new HashMap<String, String>();
-		expectedMap.put("/\\d+", "/{id}");
-		expectedMap.put("(.*).js", "*.js");
-		expectedMap.put("(.*).css", "*.css");
-		expectedMap.put("(.*).jpg", "*.jpg");
-		expectedMap.put("(.*).jpeg", "*.jpeg");
-		expectedMap.put("(.*).png", "*.png");
+		expectedMap.put("(.*).js$", "*.js");
+		expectedMap.put("(.*).css$", "*.css");
+		expectedMap.put("(.*).jpg$", "*.jpg");
+		expectedMap.put("(.*).jpeg$", "*.jpeg");
+		expectedMap.put("(.*).png$", "*.png");
 
 		assertEquals(expectedMap, groupUrlsAsString);
 	}
