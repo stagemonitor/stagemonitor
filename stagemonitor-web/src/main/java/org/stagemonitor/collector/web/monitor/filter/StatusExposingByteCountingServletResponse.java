@@ -1,22 +1,19 @@
 package org.stagemonitor.collector.web.monitor.filter;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 public class StatusExposingByteCountingServletResponse extends HttpServletResponseWrapper {
 	// The Servlet spec says: calling setStatus is optional, if no status is set, the default is 200.
 	private int httpStatus = 200;
 
 	private CountingServletOutputStream servletOutputStreamWrapper;
-
-	private PrintWriter printWriter;
+	private int contentLength;
 
 	public StatusExposingByteCountingServletResponse(HttpServletResponse response) throws IOException {
 		super(response);
-		servletOutputStreamWrapper = new CountingServletOutputStream(response.getOutputStream());
-		printWriter = new PrintWriter(servletOutputStreamWrapper);
 	}
 
 	@Override
@@ -42,12 +39,28 @@ public class StatusExposingByteCountingServletResponse extends HttpServletRespon
 	}
 
 	@Override
-	public CountingServletOutputStream getOutputStream() throws IOException {
+	public ServletOutputStream getOutputStream() throws IOException {
+		final ServletOutputStream outputStream = super.getOutputStream();
+		if (servletOutputStreamWrapper == null) {
+			servletOutputStreamWrapper = new CountingServletOutputStream(outputStream);
+
+		}
 		return servletOutputStreamWrapper;
 	}
 
 	@Override
-	public PrintWriter getWriter() throws IOException {
-		return printWriter;
+	public void setContentLength(int len) {
+		super.setContentLength(len);
+		this.contentLength = len;
+	}
+
+	public Integer getContentLength() {
+		if (contentLength > 0) {
+			return contentLength;
+		} else if (servletOutputStreamWrapper != null) {
+			return servletOutputStreamWrapper.getBytesWritten();
+		} else {
+			return null;
+		}
 	}
 }

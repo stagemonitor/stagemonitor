@@ -34,7 +34,7 @@ public class HttpExecutionContext extends ExecutionContext {
 	private String method;
 	private String username;
 	private String clientIp;
-	private int bytesWritten;
+	private Integer bytesWritten;
 
 	public String getUsername() {
 		return username;

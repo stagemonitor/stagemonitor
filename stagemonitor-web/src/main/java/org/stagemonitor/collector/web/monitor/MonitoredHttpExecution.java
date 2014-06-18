@@ -10,7 +10,6 @@ import org.stagemonitor.collector.web.monitor.filter.StatusExposingByteCountingS
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.security.Principal;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -158,12 +157,7 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 		if (exception instanceof Exception) {
 			executionContext.setException((Exception) exception);
 		}
-
-		try {
-			executionContext.setBytesWritten(responseWrapper.getOutputStream().getBytesWritten());
-		} catch (IOException e) {
-			logger.warn(e.getMessage() + " (this exception is ignored)", e);
-		}
+		executionContext.setBytesWritten(responseWrapper.getContentLength());
 	}
 
 	/**
