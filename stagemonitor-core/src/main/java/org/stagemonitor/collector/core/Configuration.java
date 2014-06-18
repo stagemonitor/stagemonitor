@@ -262,6 +262,16 @@ public class Configuration {
 	}
 
 	/**
+	 * A comma separated list of plugin names (the simple class name) that should not be active.
+	 *
+	 * @return the disabled plugin names
+	 * @since 0.3.5
+	 */
+	public List<String> getDisabledPlugins() {
+		return getStrings("stagemonitor.plugins.disabled", "");
+	}
+
+	/**
 	 * Combine url paths by regex to a single url group.
 	 * <p>
 	 * E.g. <code>(.*).js: *.js</code> combines all URLs that end with .js to a group named *.js.
@@ -288,6 +298,7 @@ public class Configuration {
 	 * (the value of the 'name' attribute of the 'ehcache' tag in ehcache.xml)
 	 *
 	 * @return the name of the ehcache to instrument
+	 * @since 0.3.5
 	 */
 	public String getEhCacheName() {
 		return getString("stagemonitor.ehcache.name", null);
@@ -358,7 +369,15 @@ public class Configuration {
 	}
 
 	private String getTrimmedProperty(String key, String defaultValue) {
-		final String property = properties.getProperty(key, defaultValue);
+		String property = null;
+		try {
+			property = System.getProperty(key);
+		} catch (SecurityException e) {
+			logger.warn("Could not get Java system property, because of a SecurityException: {}", e.getMessage());
+		}
+		if (property == null) {
+			property = properties.getProperty(key, defaultValue);
+		}
 		if (property != null) {
 			return property.trim();
 		}

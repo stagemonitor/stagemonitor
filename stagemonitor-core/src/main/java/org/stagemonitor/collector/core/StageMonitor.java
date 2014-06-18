@@ -14,6 +14,7 @@ import org.stagemonitor.collector.core.metrics.RegexMetricFilter;
 import org.stagemonitor.collector.core.metrics.SortedTableLogReporter;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
@@ -60,13 +61,20 @@ public class StageMonitor {
 	}
 
 	private static void initializePlugins() {
+		final List<String> disabledPlugins = configuration.getDisabledPlugins();
 		for (StageMonitorPlugin stagemonitorPlugin : ServiceLoader.load(StageMonitorPlugin.class)) {
-			logger.info("Initializing plugin {}", stagemonitorPlugin.getClass().getSimpleName());
-			try {
-				stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
-			} catch (RuntimeException e) {
-				logger.warn("Error while initializing plugin " + stagemonitorPlugin.getClass().getSimpleName() +
-						" (this exception is ignored)", e);
+			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
+
+			if (disabledPlugins.contains(pluginName)) {
+				logger.info("Not initializing disabled plugin {}", pluginName);
+			} else {
+				logger.info("Initializing plugin {}", pluginName);
+				try {
+					stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
+				} catch (RuntimeException e) {
+					logger.warn("Error while initializing plugin " + pluginName +
+							" (this exception is ignored)", e);
+				}
 			}
 		}
 	}
