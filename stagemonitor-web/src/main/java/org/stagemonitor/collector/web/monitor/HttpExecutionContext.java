@@ -96,11 +96,11 @@ public class HttpExecutionContext extends ExecutionContext {
 		return clientIp;
 	}
 
-	public void setBytesWritten(int bytesWritten) {
+	public void setBytesWritten(Integer bytesWritten) {
 		this.bytesWritten = bytesWritten;
 	}
 
-	public int getBytesWritten() {
+	public Integer getBytesWritten() {
 		return bytesWritten;
 	}
 
