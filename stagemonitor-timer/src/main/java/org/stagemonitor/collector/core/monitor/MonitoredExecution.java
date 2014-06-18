@@ -14,6 +14,13 @@ public interface MonitoredExecution<T extends ExecutionContext> {
 	 * Creates a instance of {@link ExecutionContext} that represents the current execution like a HTTP request.
 	 * If <code>null</code> is returned, or the {@link ExecutionContext#name} is empty, the execution context
 	 * will not be monitored.
+	 * <p/>
+	 * Any exception thrown by this method will be propagated (not ignored). Sometimes, methods that are required to
+	 * create the execution context, like {@link javax.servlet.http.HttpServletRequest#getParameterMap()} can throw
+	 * exceptions (for example, if the maximum number of parameters is exceeded). These exceptions have to be
+	 * propagated and not swallowed.
+	 * <p/>
+	 * So be careful, that no exceptions are thrown due to the implementation of this method.
 	 *
 	 * @return the {@link ExecutionContext}
 	 */

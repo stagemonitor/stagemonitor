@@ -105,11 +105,11 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 					queryStringBuilder.append('&');
 				}
 
-				queryStringBuilder.append(entry.getKey()).append('=');
+				queryStringBuilder.append(entry.getKey());
 				if (paramExcluded) {
-					queryStringBuilder.append("XXXX");
+					queryStringBuilder.append('=').append("XXXX");
 				} else {
-					queryStringBuilder.append(value);
+					queryStringBuilder.append('=').append(value);
 				}
 			}
 		}

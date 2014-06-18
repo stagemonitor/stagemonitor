@@ -117,8 +117,8 @@ public class ExecutionContextMonitor {
 	}
 
 	private <T extends ExecutionContext> void beforeExecution(MonitoredExecution<T> monitoredExecution, ExecutionInformation<T> ei) {
+		ei.executionContext = monitoredExecution.createExecutionContext();
 		try {
-			ei.executionContext = monitoredExecution.createExecutionContext();
 			ei.executionContext.setMeasurementSession(measurementSession);
 			if (ei.monitorThisExecution()) {
 				if (actualRequestName.get() != null) {
