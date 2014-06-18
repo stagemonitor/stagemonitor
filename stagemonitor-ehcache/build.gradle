@@ -1,0 +1,4 @@
+dependencies {
+	compile project(":stagemonitor-core")
+	compile 'net.sf.ehcache:ehcache-core:2.6.6'
+}

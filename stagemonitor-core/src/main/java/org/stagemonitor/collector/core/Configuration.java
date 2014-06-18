@@ -282,6 +282,17 @@ public class Configuration {
 						"(.*).png$:  *.png");
 	}
 
+	/**
+	 * The name of the ehcache to instrument
+	 * <p/>
+	 * (the value of the 'name' attribute of the 'ehcache' tag in ehcache.xml)
+	 *
+	 * @return the name of the ehcache to instrument
+	 */
+	public String getEhCacheName() {
+		return getString("stagemonitor.ehcache.name", null);
+	}
+
 	private void loadProperties() {
 		Properties defaultProperties = getProperties("stagemonitor.properties");
 		if (defaultProperties == null) {

@@ -7,5 +7,6 @@ include 'stagemonitor-core',
 		'stagemonitor-starter-web',
 		'stagemonitor-web',
 		'stagemonitor-jdbc',
+		'stagemonitor-ehcache',
 		'stagemonitor-benchmark',
 			'stagemonitor-benchmark:stagemonitor-instrument-javassist'
