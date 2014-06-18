@@ -6,12 +6,17 @@ import org.stagemonitor.collector.core.StageMonitor;
 import org.stagemonitor.collector.core.monitor.ExecutionContextMonitor;
 import org.stagemonitor.collector.web.monitor.MonitoredHttpExecution;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class HttpExecutionContextMonitorFiler extends AbstractExclusionFilter implements Filter {
+public class HttpExecutionContextMonitorFilter extends AbstractExclusionFilter implements Filter {
 
 	protected Configuration configuration = StageMonitor.getConfiguration();
 	protected ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
