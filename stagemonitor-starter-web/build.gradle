@@ -1,5 +1,0 @@
-dependencies {
-	compile project(":stagemonitor-timer")
-	compile project(":stagemonitor-jvm")
-	compile project(":stagemonitor-jdbc")
-}

@@ -1,4 +1,0 @@
-dependencies {
-	compile project(":stagemonitor-starter-web")
-	compile project(":stagemonitor-spring")
-}
