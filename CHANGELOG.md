@@ -14,3 +14,4 @@
  * optionally parse and analyze user-agent header
  * overwrite properties with Java system properties
  * disable specific plugins with `stagemonitor.plugins.disabled`
+ * annotate methods with @Monitored or make ExecutionContextMonitorAspect concrete in aop.xml to monitor method executions like RMI calls
