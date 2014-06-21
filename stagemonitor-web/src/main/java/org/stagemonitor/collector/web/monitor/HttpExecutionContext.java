@@ -7,7 +7,7 @@ import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
 import org.stagemonitor.collector.core.StageMonitor;
-import org.stagemonitor.collector.core.monitor.ExecutionContext;
+import org.stagemonitor.collector.monitor.ExecutionContext;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

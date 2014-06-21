@@ -1,4 +1,4 @@
-package org.stagemonitor.collector.core.monitor;
+package org.stagemonitor.collector.monitor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

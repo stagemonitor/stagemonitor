@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitor;
-import org.stagemonitor.collector.core.monitor.MonitoredExecution;
+import org.stagemonitor.collector.monitor.MonitoredExecution;
 import org.stagemonitor.collector.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;

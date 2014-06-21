@@ -1,4 +1,4 @@
-package org.stagemonitor.collector.timer;
+package org.stagemonitor.collector.monitor;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

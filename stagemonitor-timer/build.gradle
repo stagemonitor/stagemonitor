@@ -1,5 +1,7 @@
 dependencies {
 	compile project(":stagemonitor-core")
+	compile 'org.aspectj:aspectjtools:1.7.3'
+	compile 'org.aspectj:aspectjrt:1.7.3'
 }
 
 task fatJar(type: Jar) {

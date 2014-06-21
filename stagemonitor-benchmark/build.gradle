@@ -6,7 +6,6 @@ repositories {
 
 dependencies {
 	compile project(":stagemonitor-timer")
-	compile project(":stagemonitor-aspectj")
 	compile 'com.google.caliper:caliper:1.0-beta-SNAPSHOT'
 }
 

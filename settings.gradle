@@ -1,5 +1,4 @@
 include 'stagemonitor-core',
-		'stagemonitor-aspectj',
 		'stagemonitor-jvm',
 		'stagemonitor-timer',
 		'stagemonitor-spring',

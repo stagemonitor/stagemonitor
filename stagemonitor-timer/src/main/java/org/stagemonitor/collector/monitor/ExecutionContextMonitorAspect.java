@@ -1,4 +1,4 @@
-package org.stagemonitor.collector.timer;
+package org.stagemonitor.collector.monitor;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -6,8 +6,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.StageMonitor;
-import org.stagemonitor.collector.core.monitor.ExecutionContextMonitor;
-import org.stagemonitor.collector.core.monitor.MonitoredMethodExecution;
 
 @Aspect
 public abstract class ExecutionContextMonitorAspect {

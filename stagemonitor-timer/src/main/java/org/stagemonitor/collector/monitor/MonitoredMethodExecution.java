@@ -1,4 +1,4 @@
-package org.stagemonitor.collector.core.monitor;
+package org.stagemonitor.collector.monitor;
 
 public class MonitoredMethodExecution implements MonitoredExecution<ExecutionContext> {
 

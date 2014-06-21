@@ -1,4 +1,4 @@
-package org.stagemonitor.collector.core.monitor;
+package org.stagemonitor.collector.monitor;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;

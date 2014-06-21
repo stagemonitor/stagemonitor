@@ -3,7 +3,7 @@ package org.stagemonitor.collector.web.monitor.filter;
 import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.core.StageMonitor;
-import org.stagemonitor.collector.core.monitor.ExecutionContextMonitor;
+import org.stagemonitor.collector.monitor.ExecutionContextMonitor;
 import org.stagemonitor.collector.web.monitor.MonitoredHttpExecution;
 
 import javax.servlet.*;
