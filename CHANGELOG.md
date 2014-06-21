@@ -3,6 +3,8 @@
  * renamed HttpExecutionContextMonitorFiler to HttpExecutionContextMonitorFilter
  * renamed SpringHttpExecutionContextMonitorFiler to SpringHttpExecutionContextMonitorFilter
  * restructured request metric names - you'll need to update the request dashboard
+ * deleted starter projects
+ * renamed stagemonitor-spring to stagemonitor-spring-mvc
 
 ## Top Features
  * support for monitoring ehcache (stagemonitor-ehcache)
