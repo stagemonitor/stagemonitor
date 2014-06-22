@@ -1,4 +1,4 @@
-apply from: 'aspectj.gradle'
+apply from: "$rootDir/gradle/aspectj.gradle"
 
 repositories {
 	maven { url 'https://raw.githubusercontent.com/stagemonitor/mvn-repo/master' }
