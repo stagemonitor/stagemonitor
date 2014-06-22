@@ -6,3 +6,9 @@ dependencies {
 
 	provided 'javax.servlet:servlet-api:2.5'
 }
+
+task fatJar(type: Jar) {
+	baseName = project.name + '-all'
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	with jar
+}

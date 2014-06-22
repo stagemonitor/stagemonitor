@@ -5,3 +5,9 @@ dependencies {
 
 	testCompile 'org.springframework:spring-test:3.1.0.RELEASE'
 }
+
+task fatJar(type: Jar) {
+	baseName = project.name + '-all'
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	with jar
+}
