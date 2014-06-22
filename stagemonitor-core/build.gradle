@@ -2,11 +2,11 @@ apply from: "$rootDir/gradle/aspectj-test.gradle"
 
 dependencies {
 	compile 'org.slf4j:slf4j-api:1.7.7'
-	compile 'com.codahale.metrics:metrics-core:3.0.1'
-	compile 'com.codahale.metrics:metrics-graphite:3.0.1'
-	compile 'com.codahale.metrics:metrics-annotation:3.0.1'
-	compile 'com.fasterxml.jackson.core:jackson-databind:2.3.3'
-	compile 'com.fasterxml.jackson.module:jackson-module-afterburner:2.3.3'
+	compile 'com.codahale.metrics:metrics-core:3.0.2'
+	compile 'com.codahale.metrics:metrics-graphite:3.0.2'
+	compile 'com.codahale.metrics:metrics-annotation:3.0.2'
+	compile 'com.fasterxml.jackson.core:jackson-databind:2.4.0'
+	compile 'com.fasterxml.jackson.module:jackson-module-afterburner:2.4.0'
 	// necessary for load-time-weaving
 	compile 'org.aspectj:aspectjtools:1.7.3'
 	compile 'org.aspectj:aspectjrt:1.7.3'
