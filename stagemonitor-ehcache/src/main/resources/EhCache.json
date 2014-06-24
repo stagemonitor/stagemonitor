@@ -361,7 +361,7 @@
           ],
           "aliasColors": {},
           "aliasYAxis": {},
-          "title": "Gets per Minute"
+          "title": "Gets per Second"
         },
         {
           "span": 4,
@@ -419,7 +419,7 @@
           ],
           "aliasColors": {},
           "aliasYAxis": {},
-          "title": "Expires per Minute"
+          "title": "Expires per Second"
         }
       ],
       "notice": false

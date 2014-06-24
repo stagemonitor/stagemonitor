@@ -5,6 +5,7 @@
  * restructured request metric names - you'll need to update the request dashboard
  * deleted starter projects
  * renamed stagemonitor-spring to stagemonitor-spring-mvc
+ * rates are reported in seconds
 
 ## Top Features
  * support for monitoring ehcache (stagemonitor-ehcache)

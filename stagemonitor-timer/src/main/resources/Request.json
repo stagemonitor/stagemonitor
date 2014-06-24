@@ -234,7 +234,7 @@
 						"failed": "#E24D42"
 					},
 					"aliasYAxis": {},
-					"title": "Requests/Minute",
+					"title": "Requests/Second",
 					"datasource": null,
 					"renderer": "flot",
 					"y_formats": [
@@ -434,7 +434,7 @@
 					"aliasColors": {},
 					"aliasYAxis": {},
 					"title": "Highest Throughput",
-					"leftYAxisLabel": "requests/minute"
+					"leftYAxisLabel": "requests/second"
 				},
 				{
 					"span": 3,
@@ -498,7 +498,7 @@
 					"aliasColors": {},
 					"aliasYAxis": {},
 					"title": "Most Errors",
-					"leftYAxisLabel": "requests/minute"
+					"leftYAxisLabel": "requests/second"
 				}
 			],
 			"notice": false
