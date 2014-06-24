@@ -37,7 +37,7 @@ Because all metrics are persisted in Graphite, you can access a long history of 
 ### Support for cluster environments and multiple applications
 In each dashboard, you can select the application, instance and host you want to see the metrics of. If you don't select a instance and a host, you get aggregated metrics.
 
-### Track your own metrics
+### [Track your own metrics](https://github.com/stagemonitor/stagemonitor/wiki/Track-your-own-metrics)
 Stagemonitor includes the awesome [Metrics](http://metrics.codahale.com/) library. You can use it to track additional metrics.
 
 ### Write your own Dashboards
