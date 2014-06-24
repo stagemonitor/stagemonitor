@@ -8,7 +8,7 @@ import org.stagemonitor.collector.core.StageMonitorPlugin;
 import org.stagemonitor.collector.core.rest.RestClient;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
+import static org.stagemonitor.collector.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 public class EhCachePlugin implements StageMonitorPlugin {
 
@@ -19,7 +19,7 @@ public class EhCachePlugin implements StageMonitorPlugin {
 			final Cache cache = cacheManager.getCache(cacheName);
 			cache.setStatisticsEnabled(true);
 
-			final String metricPrefix = name("cache", encodeForGraphite(cache.getName()));
+			final String metricPrefix = name("cache", sanitizeGraphiteMetricSegment(cache.getName()));
 			final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(metricPrefix, metricRegistry);
 			cache.registerCacheUsageListener(cacheUsageListener);
 			metricRegistry.registerAll(new EhCacheMetricSet(metricPrefix, cache, cacheUsageListener));

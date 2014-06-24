@@ -1,14 +1,27 @@
 package org.stagemonitor.collector.core.metrics;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
-
-import static org.stagemonitor.collector.core.util.GraphiteEncoder.decodeForGraphite;
 
 public class SortedTableLogReporter extends ScheduledReporter {
 	/**
@@ -45,7 +58,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 		}
 
 		/**
-		 * Log to the given {@link Log}.
+		 * Log to the given {@link Logger}.
 		 *
 		 * @param log a {@link Logger} instance.
 		 * @return {@code this}
@@ -237,18 +250,18 @@ public class SortedTableLogReporter extends ScheduledReporter {
 	}
 
 	private void printGauge(String name, Gauge gauge, int maxNameLength, StringBuilder sb) {
-		sb.append(String.format("%" + maxNameLength + "s | ", decodeForGraphite(name)));
+		sb.append(String.format("%" + maxNameLength + "s | ", name));
 		sb.append(gauge.getValue()).append('\n');
 
 	}
 
 	private void printCounter(String name, Counter counter, int maxNameLength, StringBuilder sb) {
-		sb.append(String.format("%" + maxNameLength + "s | ", decodeForGraphite(name)));
+		sb.append(String.format("%" + maxNameLength + "s | ", name));
 		sb.append(counter.getCount()).append('\n');
 	}
 
 	private void printMeter(String name, Meter meter, int maxNameLength, StringBuilder sb) {
-		sb.append(String.format("%" + maxNameLength + "s | ", decodeForGraphite(name)));
+		sb.append(String.format("%" + maxNameLength + "s | ", name));
 		sb.append(String.format(locale, "%,9d | ", meter.getCount()));
 		printMetered(meter, sb);
 		sb.append('\n');
@@ -265,7 +278,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 
 
 	private void printHistogram(String name, Histogram histogram, int maxNameLength, StringBuilder sb) {
-		sb.append(String.format("%" + maxNameLength + "s | ", decodeForGraphite(name)));
+		sb.append(String.format("%" + maxNameLength + "s | ", name));
 		sb.append(String.format(locale, "%,9d | ", histogram.getCount()));
 		printSnapshot(histogram.getSnapshot(), sb);
 		sb.append('\n');
@@ -286,7 +299,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 
 	private void printTimer(String name, Timer timer, int maxNameLength, StringBuilder sb) {
 		final Snapshot snapshot = timer.getSnapshot();
-		sb.append(String.format("%" + maxNameLength + "s | ", decodeForGraphite(name)));
+		sb.append(String.format("%" + maxNameLength + "s | ", name));
 		sb.append(String.format(locale, "%,9d | ", timer.getCount()));
 		printSnapshot(snapshot, sb);
 		printMetered(timer, sb);

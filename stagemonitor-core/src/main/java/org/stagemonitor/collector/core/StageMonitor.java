@@ -19,7 +19,7 @@ import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.collector.core.util.GraphiteEncoder.encodeForGraphite;
+import static org.stagemonitor.collector.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 public class StageMonitor {
 
@@ -100,9 +100,9 @@ public class StageMonitor {
 
 	private static String getGraphitePrefix(MeasurementSession measurementSession) {
 		return name("stagemonitor",
-				encodeForGraphite(measurementSession.getApplicationName()),
-				encodeForGraphite(measurementSession.getInstanceName()),
-				encodeForGraphite(measurementSession.getHostName()));
+				sanitizeGraphiteMetricSegment(measurementSession.getApplicationName()),
+				sanitizeGraphiteMetricSegment(measurementSession.getInstanceName()),
+				sanitizeGraphiteMetricSegment(measurementSession.getHostName()));
 	}
 
 	private static void reportToConsole(long reportingInterval, MetricFilter filter) {

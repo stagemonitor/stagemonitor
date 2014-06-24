@@ -8,7 +8,7 @@ import org.stagemonitor.collector.core.Configuration;
 import org.stagemonitor.collector.core.MeasurementSession;
 import org.stagemonitor.collector.core.StageMonitor;
 import org.stagemonitor.collector.core.rest.RestClient;
-import org.stagemonitor.collector.core.util.GraphiteEncoder;
+import org.stagemonitor.collector.core.util.GraphiteSanitizer;
 import org.stagemonitor.collector.profiler.CallStackElement;
 import org.stagemonitor.collector.profiler.ExecutionContextLogger;
 import org.stagemonitor.collector.profiler.Profiler;
@@ -250,7 +250,7 @@ public class ExecutionContextMonitor {
 		}
 
 		private String getTimerName() {
-			return name(GraphiteEncoder.encodeForGraphite(executionContext.getName()));
+			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(executionContext.getName()));
 		}
 
 		/**

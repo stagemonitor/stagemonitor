@@ -3,7 +3,7 @@ package org.stagemonitor.collector.jdbc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.collector.core.StageMonitor;
-import org.stagemonitor.collector.core.util.GraphiteEncoder;
+import org.stagemonitor.collector.core.util.GraphiteSanitizer;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -38,7 +38,7 @@ public class ConnectionMonitor {
 			final DatabaseMetaData metaData;
 			try {
 				metaData = connection.getMetaData();
-				dataSourceUrlMap.put(dataSource, GraphiteEncoder.encodeForGraphite(metaData.getURL() + "-" + metaData.getUserName()));
+				dataSourceUrlMap.put(dataSource, GraphiteSanitizer.sanitizeGraphiteMetricSegment(metaData.getURL() + "-" + metaData.getUserName()));
 			} catch (SQLException e) {
 				log.warn(e.getMessage(), e);
 			}
