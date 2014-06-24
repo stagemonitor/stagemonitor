@@ -90,7 +90,7 @@ public class StageMonitor {
 					configuration.getGraphitePort()));
 			GraphiteReporter.forRegistry(getMetricRegistry())
 					.prefixedWith(getGraphitePrefix(measurementSession))
-					.convertRatesTo(TimeUnit.MINUTES)
+					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
 					.filter(filter)
 					.build(graphite)
@@ -108,7 +108,7 @@ public class StageMonitor {
 	private static void reportToConsole(long reportingInterval, MetricFilter filter) {
 		if (reportingInterval > 0) {
 			SortedTableLogReporter.forRegistry(getMetricRegistry())
-					.convertRatesTo(TimeUnit.MINUTES)
+					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
 					.filter(filter)
 					.build()
