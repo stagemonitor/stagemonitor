@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * When annotation a type with this annotation, the creation of gauges with
+ * When a type is marked with this annotation, the creation of gauges with
  * @{@link com.codahale.metrics.annotation.Gauge} is activated for that type.
  *
  * <pre><code>
