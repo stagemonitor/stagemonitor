@@ -3,8 +3,8 @@ package org.stagemonitor.benchmark.profiler;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.api.VmOptions;
-import org.stagemonitor.collector.profiler.Profiler;
-import org.stagemonitor.collector.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import java.lang.management.ManagementFactory;
 

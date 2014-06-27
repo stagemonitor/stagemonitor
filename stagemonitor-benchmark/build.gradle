@@ -5,7 +5,7 @@ repositories {
 }
 
 dependencies {
-	compile project(":stagemonitor-timer")
+	compile project(":stagemonitor-requestmonitor")
 	compile 'com.google.caliper:caliper:1.0-beta-SNAPSHOT'
 }
 

@@ -1,5 +1,5 @@
 dependencies {
-	compile project(":stagemonitor-timer")
+	compile project(":stagemonitor-requestmonitor")
 	compile project(":stagemonitor-jvm")
 	compile project(":stagemonitor-jdbc")
 	compile 'net.sf.uadetector:uadetector-resources:2014.05'

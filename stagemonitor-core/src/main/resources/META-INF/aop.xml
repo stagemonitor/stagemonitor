@@ -5,9 +5,9 @@
 	</weaver>
 
 	<aspects>
-		<aspect name="org.stagemonitor.collector.core.metrics.aspects.ExceptionMeteredAspect"/>
-		<aspect name="org.stagemonitor.collector.core.metrics.aspects.GaugeAspect"/>
-		<aspect name="org.stagemonitor.collector.core.metrics.aspects.MeteredAspect"/>
-		<aspect name="org.stagemonitor.collector.core.metrics.aspects.TimedAspect"/>
+		<aspect name="org.stagemonitor.core.metrics.aspects.ExceptionMeteredAspect"/>
+		<aspect name="org.stagemonitor.core.metrics.aspects.GaugeAspect"/>
+		<aspect name="org.stagemonitor.core.metrics.aspects.MeteredAspect"/>
+		<aspect name="org.stagemonitor.core.metrics.aspects.TimedAspect"/>
 	</aspects>
 </aspectj>

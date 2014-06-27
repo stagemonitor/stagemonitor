@@ -1,6 +1,6 @@
 package org.stagemonitor.benchmark.profiler.simple;
 
-import org.stagemonitor.collector.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 public class BeforeAfterProfiler {
 

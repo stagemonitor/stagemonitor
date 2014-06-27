@@ -1,6 +1,6 @@
 include 'stagemonitor-core',
 		'stagemonitor-jvm',
-		'stagemonitor-timer',
+		'stagemonitor-requestmonitor',
 		'stagemonitor-spring-mvc',
 		'stagemonitor-web',
 		'stagemonitor-jdbc',

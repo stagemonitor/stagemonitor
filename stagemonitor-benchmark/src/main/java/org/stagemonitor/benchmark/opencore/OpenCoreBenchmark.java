@@ -1,7 +1,7 @@
 package org.stagemonitor.benchmark.opencore;
 
-import org.stagemonitor.collector.profiler.CallStackElement;
-import org.stagemonitor.collector.profiler.Profiler;
+import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import static java.lang.System.nanoTime;
 

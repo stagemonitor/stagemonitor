@@ -1,8 +1,8 @@
 package org.stagemonitor;
 
-import org.stagemonitor.collector.web.monitor.filter.AbstractExclusionFilter;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.stagemonitor.web.monitor.filter.AbstractExclusionFilter;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;

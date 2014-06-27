@@ -6,6 +6,7 @@
  * deleted starter projects
  * renamed stagemonitor-spring to stagemonitor-spring-mvc
  * rates are reported in seconds
+ * removed collector middle package
 
 ## Top Features
  * support for monitoring ehcache (stagemonitor-ehcache)
