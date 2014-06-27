@@ -1,7 +1,7 @@
 # next
 ## Breaking Changes
- * renamed HttpExecutionContextMonitorFiler to HttpRequestMonitorFilter
- * renamed SpringHttpExecutionContextMonitorFiler to SpringRequestMonitorFilter
+ * renamed HttpExecutionContextMonitorFiler to org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter
+ * renamed SpringHttpExecutionContextMonitorFiler to org.stagemonitor.web.monitor.filter.SpringHttpRequestMonitorFilter
  * restructured request metric names - you'll need to update the request dashboard
  * deleted starter projects
  * renamed stagemonitor-spring to stagemonitor-spring-mvc
