@@ -5,7 +5,9 @@ env:
   global:
     secure: "YQn9t0lo5f1XosuJ7j7bKVHv91WCqruzpIZed+2AxbZyq0e/9aE0GcOydynio3slWZg/b6X/SRg7M52RKPETyc6ZZ72DPVQ1wIb2LkiQ0cTlaxiKqSLgqsVgmZ4lWFgZz9FvF4dHLRx8WKjpqdiy/mQ07TxicUoSqJf2AtuazQs="
 install:
-  - ./gradlew assemble --stacktrace --info
+  - ./gradlew assemble --stacktrace
+script:
+  - ./gradlew check -PtestAspects
 after_success:
   - ./gradlew cobertura coveralls
   - chmod +x etc/publish-to-github-mvn-repo-with-travis.sh

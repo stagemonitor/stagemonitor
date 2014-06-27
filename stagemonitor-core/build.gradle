@@ -13,3 +13,9 @@ dependencies {
 
 	testCompile 'org.slf4j:slf4j-simple:1.7.7'
 }
+
+test {
+	if (!project.hasProperty('testAspects')) {
+		exclude 'org/stagemonitor/core/metrics/aspects/**'
+	}
+}
