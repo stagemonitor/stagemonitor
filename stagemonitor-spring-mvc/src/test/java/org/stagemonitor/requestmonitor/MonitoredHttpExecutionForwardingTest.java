@@ -47,8 +47,8 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertTrue(requestInformation2.forwardedExecution);
 		assertTrue(requestInformation3.forwardedExecution);
 
-		assertEquals("/monitored3", requestInformation3.request.getUrl());
-		assertEquals("GET /monitored3", requestInformation3.request.getName());
+		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
+		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
 
 		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("GET /monitored1"))));
 		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("GET /monitored2"))));
@@ -63,8 +63,8 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertNull(requestInformation2);
 		assertFalse(requestInformation3.forwardedExecution);
 
-		assertEquals("/monitored3", requestInformation3.request.getUrl());
-		assertEquals("GET /monitored3", requestInformation3.request.getName());
+		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
+		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
 
 		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("GET /monitored1"))));
 		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("GET /monitored2"))));

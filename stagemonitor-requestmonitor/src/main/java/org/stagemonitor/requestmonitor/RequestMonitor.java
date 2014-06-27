@@ -85,7 +85,7 @@ public class RequestMonitor {
 			ei.executionResult = monitoredRequest.execute();
 			return ei;
 		} catch (Exception e) {
-			ei.request.setException(e);
+			ei.requestTrace.setException(e);
 			throw e;
 		} finally {
 			if (monitor) {
@@ -116,22 +116,22 @@ public class RequestMonitor {
 	}
 
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> ei) {
-		ei.request = monitoredRequest.createRequest();
+		ei.requestTrace = monitoredRequest.createRequest();
 		try {
-			ei.request.setMeasurementSession(measurementSession);
+			ei.requestTrace.setMeasurementSession(measurementSession);
 			if (ei.monitorThisExecution()) {
 				if (actualRequestName.get() != null) {
 					ei.forwardedExecution = true;
 					if (!monitoredRequest.isMonitorForwardedExecutions()) {
-						ei.request = null;
+						ei.requestTrace = null;
 						return;
 					}
 				}
-				actualRequestName.set(ei.request.getName());
+				actualRequestName.set(ei.requestTrace.getName());
 				ei.timer = metricRegistry.timer(name("request", "total", ei.getTimerName()));
 				if (ei.profileThisExecution()) {
 					final CallStackElement root = Profiler.activateProfiling();
-					ei.request.setCallStack(root);
+					ei.requestTrace.setCallStack(root);
 				}
 			}
 		} catch (RuntimeException e) {
@@ -144,24 +144,24 @@ public class RequestMonitor {
 															 RequestInformation<T> ei) {
 		try {
 			if (ei.monitorThisExecution()) {
-				// if forwarded executions are not monitored, ei.request would be null
+				// if forwarded executions are not monitored, ei.requestTrace would be null
 				if (!ei.isForwardingExecution()) {
 					final long executionTime = System.nanoTime() - ei.start;
 					final long cpuTime = getCpuTime() - ei.startCpu;
-					ei.request.setExecutionTime(NANOSECONDS.toMillis(executionTime));
-					ei.request.setCpuTime(NANOSECONDS.toMillis(cpuTime));
-					monitoredRequest.onPostExecute(ei.request);
+					ei.requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
+					ei.requestTrace.setCpuTime(NANOSECONDS.toMillis(cpuTime));
+					monitoredRequest.onPostExecute(ei.requestTrace);
 
-					if (ei.request.getCallStack() != null) {
+					if (ei.requestTrace.getCallStack() != null) {
 						Profiler.stop("total");
-						reportCallStack(ei.request, configuration.getElasticsearchUrl());
+						reportCallStack(ei.requestTrace, configuration.getElasticsearchUrl());
 					}
 					if (ei.timer != null) {
 						ei.timer.update(executionTime, NANOSECONDS);
 						if (configuration.isCollectCpuTime()) {
 							metricRegistry.timer(name("request", "cpu", ei.getTimerName())).update(cpuTime, NANOSECONDS);
 						}
-						if (ei.request.isError()) {
+						if (ei.requestTrace.isError()) {
 							metricRegistry.meter(name("request", "error", ei.getTimerName())).mark();
 						}
 					}
@@ -183,26 +183,26 @@ public class RequestMonitor {
 			if (!ei.forwardedExecution) {
 				actualRequestName.remove();
 			}
-			if (ei.request != null) {
+			if (ei.requestTrace != null) {
 				Profiler.clearMethodCallParent();
 			}
 		}
 	}
 
-	private <T extends RequestTrace> void reportCallStack(T request, String serverUrl) {
+	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
 			final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
 			dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 			String path = String.format("/stagemonitor-%s/executions/%s", dateFormat.format(new Date()),
-					request.getId());
+					requestTrace.getId());
 			final String ttl = configuration.getCallStacksTimeToLive();
 			if (ttl != null && !ttl.isEmpty()) {
 				path += "?ttl=" + ttl;
 			}
-			RestClient.sendAsJsonAsync(serverUrl, path, "PUT", request);
+			RestClient.sendAsJsonAsync(serverUrl, path, "PUT", requestTrace);
 		}
 		if (configuration.isLogCallStacks()) {
-			requestLogger.logStats(request);
+			requestLogger.logStats(requestTrace);
 		}
 	}
 
@@ -229,12 +229,12 @@ public class RequestMonitor {
 	}
 
 	public class RequestInformation<T extends RequestTrace> {
-		Timer timer = null;
-		T request = null;
-		long start = System.nanoTime();
-		long startCpu = getCpuTime();
+		private Timer timer = null;
+		T requestTrace = null;
+		private long start = System.nanoTime();
+		private long startCpu = getCpuTime();
 		boolean forwardedExecution = false;
-		Object executionResult = null;
+		private Object executionResult = null;
 
 		private boolean profileThisExecution() {
 			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
@@ -245,11 +245,11 @@ public class RequestMonitor {
 		}
 
 		private boolean monitorThisExecution() {
-			return request != null && request.getName() != null && !request.getName().isEmpty();
+			return requestTrace != null && requestTrace.getName() != null && !requestTrace.getName().isEmpty();
 		}
 
 		private String getTimerName() {
-			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(request.getName()));
+			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(requestTrace.getName()));
 		}
 
 		/**
@@ -268,7 +268,7 @@ public class RequestMonitor {
 		 * @return true, if this request is a forwarding request, false otherwise
 		 */
 		private boolean isForwardingExecution() {
-			return !request.getName().equals(actualRequestName.get());
+			return !requestTrace.getName().equals(actualRequestName.get());
 		}
 
 		public Object getExecutionResult() {
@@ -279,7 +279,7 @@ public class RequestMonitor {
 		public String toString() {
 			return "RequestInformation{" +
 					"timer=" + timer +
-					", request=" + request +
+					", requestTrace=" + requestTrace +
 					", start=" + start +
 					", startCpu=" + startCpu +
 					", forwardedExecution=" + forwardedExecution +

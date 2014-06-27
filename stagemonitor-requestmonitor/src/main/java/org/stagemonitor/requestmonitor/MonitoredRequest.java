@@ -11,7 +11,7 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	String getInstanceName();
 
 	/**
-	 * Creates a instance of {@link RequestTrace} that represents the current execution like a HTTP request.
+	 * Creates a instance of {@link RequestTrace} that represents the current request, e.g. a HTTP request.
 	 * If <code>null</code> is returned, or the {@link RequestTrace#name} is empty, the execution context
 	 * will not be monitored.
 	 * <p/>
