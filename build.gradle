@@ -65,7 +65,7 @@ subprojects {
 	}
 
 	if (!project.name.contains("benchmark")) {
-		apply from: "$rootDir/publish-maven.gradle"
+		apply from: "$rootDir/gradle/publish-maven.gradle"
 	}
 }
 
