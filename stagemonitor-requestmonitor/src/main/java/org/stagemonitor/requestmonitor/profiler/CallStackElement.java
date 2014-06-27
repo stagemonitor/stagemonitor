@@ -133,10 +133,15 @@ public class CallStackElement {
 		return sb.toString();
 	}
 
-	public void logStats(long totalExecutionTimeNs, Stack<String> indentationStack, StringBuilder log,
+	public void logStats(long totalExecutionTimeNs, Stack<String> indentationStack, StringBuilder sb,
 						 final boolean asciiArt) {
-		appendTimesPercentTable(totalExecutionTimeNs, log, asciiArt);
-		appendCallTree(indentationStack, log, asciiArt);
+		if (isRoot()) {
+			sb.append("----------------------------------------------------------------------\n");
+			sb.append("Selftime (ms)              Total (ms)                 Method signature\n");
+			sb.append("----------------------------------------------------------------------\n");
+		}
+		appendTimesPercentTable(totalExecutionTimeNs, sb, asciiArt);
+		appendCallTree(indentationStack, sb, asciiArt);
 
 		for (CallStackElement callStats : getChildren()) {
 			if (!isRoot()) {
@@ -146,7 +151,7 @@ public class CallStackElement {
 					indentationStack.push(asciiArt ? horizontal : "|   ");
 				}
 			}
-			callStats.logStats(totalExecutionTimeNs, indentationStack, log, asciiArt);
+			callStats.logStats(totalExecutionTimeNs, indentationStack, sb, asciiArt);
 			if (!isRoot()) indentationStack.pop();
 		}
 	}
@@ -178,7 +183,7 @@ public class CallStackElement {
 			} else if (i == actualBars && includeHalfBarAtEnd) {
 				sb.append(asciiArt ? (char) 9619 : ':'); // ▓
 			} else {
-				sb.append(asciiArt ? (char) 9617 : ' '); // ▒
+				sb.append(asciiArt ? (char) 9617 : '-'); // ▒
 			}
 		}
 		return sb.toString();
