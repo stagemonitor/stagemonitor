@@ -21,6 +21,10 @@ buildscript {
 	}
 }
 
+repositories {
+	mavenCentral()
+}
+
 apply plugin: 'idea'
 apply plugin: 'release'
 apply plugin: 'cobertura'
