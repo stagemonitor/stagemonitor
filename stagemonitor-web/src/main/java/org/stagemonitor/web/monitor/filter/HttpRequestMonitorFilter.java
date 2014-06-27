@@ -3,26 +3,26 @@ package org.stagemonitor.web.monitor.filter;
 import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
-import org.stagemonitor.requestmonitor.ExecutionContextMonitor;
-import org.stagemonitor.web.monitor.MonitoredHttpExecution;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class HttpExecutionContextMonitorFilter extends AbstractExclusionFilter implements Filter {
+public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
 	protected Configuration configuration = StageMonitor.getConfiguration();
-	protected ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
+	protected RequestMonitor requestMonitor = new RequestMonitor(configuration);
 
 	@Override
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
 		MeasurementSession measurementSession = new MeasurementSession();
 		measurementSession.setApplicationName(getApplicationName(filterConfig));
-		measurementSession.setHostName(ExecutionContextMonitor.getHostName());
+		measurementSession.setHostName(RequestMonitor.getHostName());
 		measurementSession.setInstanceName(configuration.getInstanceName());
-		executionContextMonitor.setMeasurementSession(measurementSession);
+		requestMonitor.setMeasurementSession(measurementSession);
 	}
 
 	private String getApplicationName(FilterConfig filterConfig) {
@@ -40,7 +40,7 @@ public class HttpExecutionContextMonitorFilter extends AbstractExclusionFilter i
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 			final StatusExposingByteCountingServletResponse responseWrapper = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
 			try {
-				executionContextMonitor.monitor(new MonitoredHttpExecution(httpServletRequest,
+				requestMonitor.monitor(new MonitoredHttpRequest(httpServletRequest,
 						responseWrapper, filterChain, configuration));
 			} catch (Exception e) {
 				handleException(e);

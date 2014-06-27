@@ -6,7 +6,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.servlet.FrameworkServlet;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-import org.stagemonitor.web.monitor.SpringMonitoredHttpExecution;
+import org.stagemonitor.web.monitor.SpringMonitoredHttpRequest;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
-public class SpringHttpExecutionContextMonitorFilter extends HttpExecutionContextMonitorFilter {
+public class SpringHttpRequestMonitorFilter extends HttpRequestMonitorFilter {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private List<HandlerMapping> allHandlerMappings;
@@ -42,7 +42,7 @@ public class SpringHttpExecutionContextMonitorFilter extends HttpExecutionContex
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 			final StatusExposingByteCountingServletResponse statusExposingResponse = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
 			try {
-				executionContextMonitor.monitor(new SpringMonitoredHttpExecution(httpServletRequest,
+				requestMonitor.monitor(new SpringMonitoredHttpRequest(httpServletRequest,
 						statusExposingResponse, filterChain, configuration, allHandlerMappings));
 			} catch (Exception e) {
 				handleException(e);

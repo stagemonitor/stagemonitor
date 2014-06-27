@@ -7,14 +7,14 @@ import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
 import org.stagemonitor.core.StageMonitor;
-import org.stagemonitor.requestmonitor.ExecutionContext;
+import org.stagemonitor.requestmonitor.RequestTrace;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class HttpExecutionContext extends ExecutionContext {
+public class HttpRequestTrace extends RequestTrace {
 
 	private final UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
 	private final static int maxElements = 100;

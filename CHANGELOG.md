@@ -1,7 +1,7 @@
 # next
 ## Breaking Changes
- * renamed HttpExecutionContextMonitorFiler to HttpExecutionContextMonitorFilter
- * renamed SpringHttpExecutionContextMonitorFiler to SpringHttpExecutionContextMonitorFilter
+ * renamed HttpExecutionContextMonitorFiler to HttpRequestMonitorFilter
+ * renamed SpringHttpExecutionContextMonitorFiler to SpringRequestMonitorFilter
  * restructured request metric names - you'll need to update the request dashboard
  * deleted starter projects
  * renamed stagemonitor-spring to stagemonitor-spring-mvc
@@ -18,5 +18,5 @@
  * optionally parse and analyze user-agent header
  * overwrite properties with Java system properties
  * disable specific plugins with `stagemonitor.plugins.disabled`
- * annotate methods with @Monitored or make ExecutionContextMonitorAspect concrete in aop.xml to monitor method executions like RMI calls
+ * annotate methods with @MonitorRequests or make RequestMonitorAspect concrete in aop.xml to monitor method executions like RMI calls
  * support for metrics-annotations: @Timed, @Metered, @ExceptionMetered, @Gauge (enabled by @MonitorGauges on type)

@@ -10,14 +10,14 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-public class SpringMonitoredHttpExecution extends MonitoredHttpExecution {
+public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
 	private final List<HandlerMapping> allHandlerMappings;
 
-	public SpringMonitoredHttpExecution(HttpServletRequest httpServletRequest,
-										StatusExposingByteCountingServletResponse statusExposingResponse,
-										FilterChain filterChain, Configuration configuration,
-										List<HandlerMapping> allHandlerMappings) {
+	public SpringMonitoredHttpRequest(HttpServletRequest httpServletRequest,
+									  StatusExposingByteCountingServletResponse statusExposingResponse,
+									  FilterChain filterChain, Configuration configuration,
+									  List<HandlerMapping> allHandlerMappings) {
 
 		super(httpServletRequest, statusExposingResponse, filterChain, configuration);
 		this.allHandlerMappings = allHandlerMappings;

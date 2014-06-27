@@ -1,11 +1,11 @@
 package org.stagemonitor.requestmonitor;
 
-public class MonitoredMethodExecution implements MonitoredExecution<ExecutionContext> {
+public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
 	private final String methodSignature;
 	private final MethodExecution methodExecution;
 
-	public MonitoredMethodExecution(String methodSignature, MethodExecution methodExecution) {
+	public MonitoredMethodRequest(String methodSignature, MethodExecution methodExecution) {
 		this.methodSignature = methodSignature;
 		this.methodExecution = methodExecution;
 	}
@@ -16,10 +16,10 @@ public class MonitoredMethodExecution implements MonitoredExecution<ExecutionCon
 	}
 
 	@Override
-	public ExecutionContext createExecutionContext() {
-		ExecutionContext executionContext = new ExecutionContext();
-		executionContext.setName(methodSignature);
-		return executionContext;
+	public RequestTrace createRequest() {
+		RequestTrace requestTrace = new RequestTrace();
+		requestTrace.setName(methodSignature);
+		return requestTrace;
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class MonitoredMethodExecution implements MonitoredExecution<ExecutionCon
 	}
 
 	@Override
-	public void onPostExecute(ExecutionContext executionContext) {
+	public void onPostExecute(RequestTrace requestTrace) {
 	}
 
 	/**
@@ -45,7 +45,7 @@ public class MonitoredMethodExecution implements MonitoredExecution<ExecutionCon
 	 * }
 	 * public void notMonitored() {}
 	 * </code></pre>
-	 * The first two Methods are monitored with a {@link ExecutionContextMonitor}.<br/>
+	 * The first two Methods are monitored with a {@link RequestMonitor}.<br/>
 	 * If method1() is called, we only want to collect metrics for method1() and not for method2().<br/>
 	 * If method2() is called, we want to collect metrics for that method.<br/>
 	 * If notMonitored() is called directly, we don't want to collect metrics.

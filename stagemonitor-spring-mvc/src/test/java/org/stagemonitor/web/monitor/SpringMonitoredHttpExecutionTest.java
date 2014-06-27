@@ -66,7 +66,7 @@ public class SpringMonitoredHttpExecutionTest {
 	public void testGetRequestNameWithMvcMapping() throws Exception {
 		Configuration configuration = mock(Configuration.class);
 		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(false);
-		SpringMonitoredHttpExecution springMonitoredHttpExecution = new SpringMonitoredHttpExecution(mvcRequest, null,
+		SpringMonitoredHttpRequest springMonitoredHttpExecution = new SpringMonitoredHttpRequest(mvcRequest, null,
 				null, configuration, handlerMappings);
 
 		assertEquals("Test Get Request Name", springMonitoredHttpExecution.getRequestName());
@@ -76,7 +76,7 @@ public class SpringMonitoredHttpExecutionTest {
 	public void testGetRequestNameWithoutMvcMappingWithFallback() throws Exception {
 		Configuration configuration = mock(Configuration.class);
 		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(false);
-		SpringMonitoredHttpExecution springMonitoredHttpExecution = new SpringMonitoredHttpExecution(nonMvcRequest,
+		SpringMonitoredHttpRequest springMonitoredHttpExecution = new SpringMonitoredHttpRequest(nonMvcRequest,
 				null, null, configuration, handlerMappings);
 
 		assertEquals("GET /static/jquery.js", springMonitoredHttpExecution.getRequestName());
@@ -86,7 +86,7 @@ public class SpringMonitoredHttpExecutionTest {
 	public void testGetRequestNameWithoutMvcMappingWithoutFallback() throws Exception {
 		Configuration configuration = mock(Configuration.class);
 		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(true);
-		SpringMonitoredHttpExecution springMonitoredHttpExecution = new SpringMonitoredHttpExecution(nonMvcRequest,
+		SpringMonitoredHttpRequest springMonitoredHttpExecution = new SpringMonitoredHttpRequest(nonMvcRequest,
 				null, null, configuration, handlerMappings);
 
 		Assert.assertNull(springMonitoredHttpExecution.getRequestName());

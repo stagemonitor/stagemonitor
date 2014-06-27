@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
-import org.stagemonitor.requestmonitor.MonitoredExecution;
+import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionContext> {
+public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -29,9 +29,9 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 	protected final Configuration configuration;
 	private final MetricRegistry metricRegistry;
 
-	public MonitoredHttpExecution(HttpServletRequest httpServletRequest,
-								  StatusExposingByteCountingServletResponse responseWrapper,
-								  FilterChain filterChain, Configuration configuration) {
+	public MonitoredHttpRequest(HttpServletRequest httpServletRequest,
+								StatusExposingByteCountingServletResponse responseWrapper,
+								FilterChain filterChain, Configuration configuration) {
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
 		this.responseWrapper = responseWrapper;
@@ -45,21 +45,21 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 	}
 
 	@Override
-	public HttpExecutionContext createExecutionContext() {
-		HttpExecutionContext executionContext = new HttpExecutionContext();
-		executionContext.setName(getRequestName());
-		executionContext.setMethod(httpServletRequest.getMethod());
-		executionContext.setUrl(httpServletRequest.getRequestURI());
-		executionContext.setClientIp(getClientIp(httpServletRequest));
+	public HttpRequestTrace createRequest() {
+		HttpRequestTrace request = new HttpRequestTrace();
+		request.setName(getRequestName());
+		request.setMethod(httpServletRequest.getMethod());
+		request.setUrl(httpServletRequest.getRequestURI());
+		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
-		executionContext.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
+		request.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
 		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
-		executionContext.setParameter(getSafeQueryString(parameterMap));
+		request.setParameter(getSafeQueryString(parameterMap));
 		if (configuration.isCollectHeaders()) {
-			executionContext.setHeaders(getHeaders(httpServletRequest));
+			request.setHeaders(getHeaders(httpServletRequest));
 		}
-		return executionContext;
+		return request;
 	}
 
 	private String getClientIp(HttpServletRequest request) {
@@ -145,19 +145,19 @@ public class MonitoredHttpExecution implements MonitoredExecution<HttpExecutionC
 	}
 
 	@Override
-	public void onPostExecute(HttpExecutionContext executionContext) {
+	public void onPostExecute(HttpRequestTrace request) {
 		int status = responseWrapper.getStatus();
-		executionContext.setStatusCode(status);
+		request.setStatusCode(status);
 		metricRegistry.counter(name("request.statuscode", Integer.toString(status))).inc();
 		if (status >= 400) {
-			executionContext.setError(true);
+			request.setError(true);
 		}
 
 		Object exception = httpServletRequest.getAttribute("exception");
 		if (exception instanceof Exception) {
-			executionContext.setException((Exception) exception);
+			request.setException((Exception) exception);
 		}
-		executionContext.setBytesWritten(responseWrapper.getContentLength());
+		request.setBytesWritten(responseWrapper.getContentLength());
 	}
 
 	/**

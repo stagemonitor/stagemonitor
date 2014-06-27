@@ -10,7 +10,6 @@ import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.rest.RestClient;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.profiler.ExecutionContextLogger;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import java.lang.management.ManagementFactory;
@@ -26,10 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-public class ExecutionContextMonitor {
+public class RequestMonitor {
 
-	private static final Logger logger = LoggerFactory.getLogger(ExecutionContextMonitor.class);
-	private final ExecutionContextLogger executionContextLogger = new ExecutionContextLogger();
+	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
+	private final RequestLogger requestLogger = new RequestLogger();
 
 	/**
 	 * Helps to detect, if this request is the 'real' one or just the forwarding one.
@@ -52,11 +51,11 @@ public class ExecutionContextMonitor {
 
 	private Date endOfWarmup;
 
-	public ExecutionContextMonitor() {
+	public RequestMonitor() {
 		this(StageMonitor.getConfiguration());
 	}
 
-	public ExecutionContextMonitor(Configuration configuration) {
+	public RequestMonitor(Configuration configuration) {
 		warmupRequests = configuration.getNoOfWarmupRequests();
 		this.metricRegistry = StageMonitor.getMetricRegistry();
 		this.configuration = configuration;
@@ -68,29 +67,29 @@ public class ExecutionContextMonitor {
 		StageMonitor.startMonitoring(measurementSession);
 	}
 
-	public <T extends ExecutionContext> ExecutionInformation<T> monitor(MonitoredExecution<T> monitoredExecution) throws Exception {
+	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
 		if (measurementSession == null) {
 			createMeasurementSession();
 		}
 
 		if (measurementSession.getInstanceName() == null && noOfRequests.get() == 0) {
-			getInstanceNameFromExecution(monitoredExecution);
+			getInstanceNameFromExecution(monitoredRequest);
 		}
 
-		ExecutionInformation<T> ei = new ExecutionInformation<T>();
+		RequestInformation<T> ei = new RequestInformation<T>();
 		final boolean monitor = configuration.isCollectRequestStats() && isWarmedUp();
 		if (monitor) {
-			beforeExecution(monitoredExecution, ei);
+			beforeExecution(monitoredRequest, ei);
 		}
 		try {
-			ei.executionResult = monitoredExecution.execute();
+			ei.executionResult = monitoredRequest.execute();
 			return ei;
 		} catch (Exception e) {
-			ei.executionContext.setException(e);
+			ei.request.setException(e);
 			throw e;
 		} finally {
 			if (monitor) {
-				afterExecution(monitoredExecution, ei);
+				afterExecution(monitoredRequest, ei);
 			}
 		}
 	}
@@ -99,9 +98,9 @@ public class ExecutionContextMonitor {
 	 * In case the instance name is not set by configuration, try to read from monitored execution
 	 * (e.g. the domain name from a HTTP request)
 	 */
-	private synchronized void getInstanceNameFromExecution(MonitoredExecution<?> monitoredExecution) {
+	private synchronized void getInstanceNameFromExecution(MonitoredRequest<?> monitoredRequest) {
 		if (measurementSession.getInstanceName() == null) {
-			measurementSession.setInstanceName(monitoredExecution.getInstanceName());
+			measurementSession.setInstanceName(monitoredRequest.getInstanceName());
 			StageMonitor.startMonitoring(measurementSession);
 		}
 	}
@@ -116,23 +115,23 @@ public class ExecutionContextMonitor {
 		}
 	}
 
-	private <T extends ExecutionContext> void beforeExecution(MonitoredExecution<T> monitoredExecution, ExecutionInformation<T> ei) {
-		ei.executionContext = monitoredExecution.createExecutionContext();
+	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> ei) {
+		ei.request = monitoredRequest.createRequest();
 		try {
-			ei.executionContext.setMeasurementSession(measurementSession);
+			ei.request.setMeasurementSession(measurementSession);
 			if (ei.monitorThisExecution()) {
 				if (actualRequestName.get() != null) {
 					ei.forwardedExecution = true;
-					if (!monitoredExecution.isMonitorForwardedExecutions()) {
-						ei.executionContext = null;
+					if (!monitoredRequest.isMonitorForwardedExecutions()) {
+						ei.request = null;
 						return;
 					}
 				}
-				actualRequestName.set(ei.executionContext.getName());
+				actualRequestName.set(ei.request.getName());
 				ei.timer = metricRegistry.timer(name("request", "total", ei.getTimerName()));
 				if (ei.profileThisExecution()) {
 					final CallStackElement root = Profiler.activateProfiling();
-					ei.executionContext.setCallStack(root);
+					ei.request.setCallStack(root);
 				}
 			}
 		} catch (RuntimeException e) {
@@ -141,28 +140,28 @@ public class ExecutionContextMonitor {
 		}
 	}
 
-	private <T extends ExecutionContext> void afterExecution(MonitoredExecution<T> monitoredExecution,
-															 ExecutionInformation<T> ei) {
+	private <T extends RequestTrace> void afterExecution(MonitoredRequest<T> monitoredRequest,
+															 RequestInformation<T> ei) {
 		try {
 			if (ei.monitorThisExecution()) {
-				// if forwarded executions are not monitored, ei.executionContext would be null
+				// if forwarded executions are not monitored, ei.request would be null
 				if (!ei.isForwardingExecution()) {
 					final long executionTime = System.nanoTime() - ei.start;
 					final long cpuTime = getCpuTime() - ei.startCpu;
-					ei.executionContext.setExecutionTime(NANOSECONDS.toMillis(executionTime));
-					ei.executionContext.setCpuTime(NANOSECONDS.toMillis(cpuTime));
-					monitoredExecution.onPostExecute(ei.executionContext);
+					ei.request.setExecutionTime(NANOSECONDS.toMillis(executionTime));
+					ei.request.setCpuTime(NANOSECONDS.toMillis(cpuTime));
+					monitoredRequest.onPostExecute(ei.request);
 
-					if (ei.executionContext.getCallStack() != null) {
+					if (ei.request.getCallStack() != null) {
 						Profiler.stop("total");
-						reportCallStack(ei.executionContext, configuration.getElasticsearchUrl());
+						reportCallStack(ei.request, configuration.getElasticsearchUrl());
 					}
 					if (ei.timer != null) {
 						ei.timer.update(executionTime, NANOSECONDS);
 						if (configuration.isCollectCpuTime()) {
 							metricRegistry.timer(name("request", "cpu", ei.getTimerName())).update(cpuTime, NANOSECONDS);
 						}
-						if (ei.executionContext.isError()) {
+						if (ei.request.isError()) {
 							metricRegistry.meter(name("request", "error", ei.getTimerName())).mark();
 						}
 					}
@@ -184,26 +183,26 @@ public class ExecutionContextMonitor {
 			if (!ei.forwardedExecution) {
 				actualRequestName.remove();
 			}
-			if (ei.executionContext != null) {
+			if (ei.request != null) {
 				Profiler.clearMethodCallParent();
 			}
 		}
 	}
 
-	private <T extends ExecutionContext> void reportCallStack(T executionContext, String serverUrl) {
+	private <T extends RequestTrace> void reportCallStack(T request, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
 			final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
 			dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 			String path = String.format("/stagemonitor-%s/executions/%s", dateFormat.format(new Date()),
-					executionContext.getId());
+					request.getId());
 			final String ttl = configuration.getCallStacksTimeToLive();
 			if (ttl != null && !ttl.isEmpty()) {
 				path += "?ttl=" + ttl;
 			}
-			RestClient.sendAsJsonAsync(serverUrl, path, "PUT", executionContext);
+			RestClient.sendAsJsonAsync(serverUrl, path, "PUT", request);
 		}
 		if (configuration.isLogCallStacks()) {
-			executionContextLogger.logStats(executionContext);
+			requestLogger.logStats(request);
 		}
 	}
 
@@ -229,9 +228,9 @@ public class ExecutionContextMonitor {
 		return threadMXBean.isCurrentThreadCpuTimeSupported() ? threadMXBean.getCurrentThreadCpuTime() : 0L;
 	}
 
-	public class ExecutionInformation<T extends ExecutionContext> {
+	public class RequestInformation<T extends RequestTrace> {
 		Timer timer = null;
-		T executionContext = null;
+		T request = null;
 		long start = System.nanoTime();
 		long startCpu = getCpuTime();
 		boolean forwardedExecution = false;
@@ -246,11 +245,11 @@ public class ExecutionContextMonitor {
 		}
 
 		private boolean monitorThisExecution() {
-			return executionContext != null && executionContext.getName() != null && !executionContext.getName().isEmpty();
+			return request != null && request.getName() != null && !request.getName().isEmpty();
 		}
 
 		private String getTimerName() {
-			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(executionContext.getName()));
+			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(request.getName()));
 		}
 
 		/**
@@ -263,13 +262,13 @@ public class ExecutionContextMonitor {
 		 * /a is the forwarding execution, /b is the forwarded execution
 		 * <p/>
 		 * - plain method calls: monitored method a() calls monitored method b()
-		 * (monitored means monitored by {@link ExecutionContextMonitor}).
+		 * (monitored means monitored by {@link RequestMonitor}).
 		 * Method a() is the forwarding execution, Method b() is the forwarded execution.
 		 *
 		 * @return true, if this request is a forwarding request, false otherwise
 		 */
 		private boolean isForwardingExecution() {
-			return !executionContext.getName().equals(actualRequestName.get());
+			return !request.getName().equals(actualRequestName.get());
 		}
 
 		public Object getExecutionResult() {
@@ -278,9 +277,9 @@ public class ExecutionContextMonitor {
 
 		@Override
 		public String toString() {
-			return "ExecutionInformation{" +
+			return "RequestInformation{" +
 					"timer=" + timer +
-					", executionContext=" + executionContext +
+					", request=" + request +
 					", start=" + start +
 					", startCpu=" + startCpu +
 					", forwardedExecution=" + forwardedExecution +

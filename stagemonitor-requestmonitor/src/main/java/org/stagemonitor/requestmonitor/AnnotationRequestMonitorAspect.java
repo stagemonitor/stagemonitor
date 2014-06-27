@@ -4,7 +4,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 
 @Aspect
-public class AnnotationExecutionContextMonitorAspect extends ExecutionContextMonitorAspect {
+public class AnnotationRequestMonitorAspect extends RequestMonitorAspect {
 
 	@Pointcut("within(@org.stagemonitor.requestmonitor.MonitorRequests *)")
 	public void annotatedWithMonitor() {}

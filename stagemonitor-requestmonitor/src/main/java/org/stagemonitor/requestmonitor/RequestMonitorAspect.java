@@ -8,10 +8,10 @@ import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
 
 @Aspect
-public abstract class ExecutionContextMonitorAspect {
+public abstract class RequestMonitorAspect {
 
 	protected Configuration configuration = StageMonitor.getConfiguration();
-	protected ExecutionContextMonitor executionContextMonitor = new ExecutionContextMonitor(configuration);
+	protected RequestMonitor requestMonitor = new RequestMonitor(configuration);
 
 	@Pointcut
 	public abstract void methodsToMonitor();
@@ -21,8 +21,8 @@ public abstract class ExecutionContextMonitorAspect {
 		String className = pjp.getSignature().getDeclaringTypeName();
 		className = className.substring(className.lastIndexOf('.') + 1, className.length());
 		final String methodSignature = className + "#" + pjp.getSignature().getName();
-		return executionContextMonitor.monitor(new MonitoredMethodExecution(methodSignature,
-				new MonitoredMethodExecution.MethodExecution() {
+		return requestMonitor.monitor(new MonitoredMethodRequest(methodSignature,
+				new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
 						try {

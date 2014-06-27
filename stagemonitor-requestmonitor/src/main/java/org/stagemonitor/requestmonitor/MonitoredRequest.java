@@ -1,9 +1,9 @@
 package org.stagemonitor.requestmonitor;
 
-public interface MonitoredExecution<T extends ExecutionContext> {
+public interface MonitoredRequest<T extends RequestTrace> {
 
 	/**
-	 * Optionally, the instance name can be derived from a {@link ExecutionContext}.
+	 * Optionally, the instance name can be derived from a {@link RequestTrace}.
 	 * For instance in a HTTP context you could return the domain name.
 	 *
 	 * @return the instance name
@@ -11,8 +11,8 @@ public interface MonitoredExecution<T extends ExecutionContext> {
 	String getInstanceName();
 
 	/**
-	 * Creates a instance of {@link ExecutionContext} that represents the current execution like a HTTP request.
-	 * If <code>null</code> is returned, or the {@link ExecutionContext#name} is empty, the execution context
+	 * Creates a instance of {@link RequestTrace} that represents the current execution like a HTTP request.
+	 * If <code>null</code> is returned, or the {@link RequestTrace#name} is empty, the execution context
 	 * will not be monitored.
 	 * <p/>
 	 * Any exception thrown by this method will be propagated (not ignored). Sometimes, methods that are required to
@@ -22,9 +22,9 @@ public interface MonitoredExecution<T extends ExecutionContext> {
 	 * <p/>
 	 * So be careful, that no exceptions are thrown due to the implementation of this method.
 	 *
-	 * @return the {@link ExecutionContext}
+	 * @return the {@link RequestTrace}
 	 */
-	T createExecutionContext();
+	T createRequest();
 
 	/**
 	 * Executing this method triggers the execution of the execution context.
@@ -37,9 +37,9 @@ public interface MonitoredExecution<T extends ExecutionContext> {
 	/**
 	 * Implement this method to do actions after the execution context
 	 *
-	 * @param executionContext the execution context
+	 * @param request the execution context
 	 */
-	void onPostExecute(T executionContext);
+	void onPostExecute(T request);
 
 	/**
 	 * If the current execution context triggers another one, the first one is called the forwarding execution and the

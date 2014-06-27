@@ -7,8 +7,8 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.StageMonitor;
-import org.stagemonitor.web.monitor.HttpExecutionContext;
-import org.stagemonitor.web.monitor.MonitoredHttpExecution;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
@@ -24,9 +24,9 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 
 public class MonitoredHttpExecutionForwardingTest {
 
-	private ExecutionContextMonitor.ExecutionInformation<HttpExecutionContext> executionInformation1;
-	private ExecutionContextMonitor.ExecutionInformation<HttpExecutionContext> executionInformation2;
-	private ExecutionContextMonitor.ExecutionInformation<HttpExecutionContext> executionInformation3;
+	private RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation1;
+	private RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation2;
+	private RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation3;
 
 	@Before
 	public void clearState() {
@@ -36,19 +36,19 @@ public class MonitoredHttpExecutionForwardingTest {
 				return true;
 			}
 		});
-		executionInformation1 = executionInformation2 = executionInformation3 = null;
+		requestInformation1 = requestInformation2 = requestInformation3 = null;
 	}
 
 	@Test
 	public void testForwarding() throws Exception {
-		TestObject testObject = new TestObject(new ExecutionContextMonitor());
+		TestObject testObject = new TestObject(new RequestMonitor());
 		testObject.monitored1();
-		assertFalse(executionInformation1.forwardedExecution);
-		assertTrue(executionInformation2.forwardedExecution);
-		assertTrue(executionInformation3.forwardedExecution);
+		assertFalse(requestInformation1.forwardedExecution);
+		assertTrue(requestInformation2.forwardedExecution);
+		assertTrue(requestInformation3.forwardedExecution);
 
-		assertEquals("/monitored3", executionInformation3.executionContext.getUrl());
-		assertEquals("GET /monitored3", executionInformation3.executionContext.getName());
+		assertEquals("/monitored3", requestInformation3.request.getUrl());
+		assertEquals("GET /monitored3", requestInformation3.request.getName());
 
 		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("GET /monitored1"))));
 		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("GET /monitored2"))));
@@ -57,14 +57,14 @@ public class MonitoredHttpExecutionForwardingTest {
 
 	@Test
 	public void testNoForwarding() throws Exception {
-		TestObject testObject = new TestObject(new ExecutionContextMonitor());
+		TestObject testObject = new TestObject(new RequestMonitor());
 		testObject.monitored3();
-		assertNull(executionInformation1);
-		assertNull(executionInformation2);
-		assertFalse(executionInformation3.forwardedExecution);
+		assertNull(requestInformation1);
+		assertNull(requestInformation2);
+		assertFalse(requestInformation3.forwardedExecution);
 
-		assertEquals("/monitored3", executionInformation3.executionContext.getUrl());
-		assertEquals("GET /monitored3", executionInformation3.executionContext.getName());
+		assertEquals("/monitored3", requestInformation3.request.getUrl());
+		assertEquals("GET /monitored3", requestInformation3.request.getName());
 
 		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("GET /monitored1"))));
 		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("GET /monitored2"))));
@@ -73,14 +73,14 @@ public class MonitoredHttpExecutionForwardingTest {
 
 
 	private class TestObject {
-		private final ExecutionContextMonitor executionContextMonitor;
+		private final RequestMonitor requestMonitor;
 
-		private TestObject(ExecutionContextMonitor executionContextMonitor) {
-			this.executionContextMonitor = executionContextMonitor;
+		private TestObject(RequestMonitor requestMonitor) {
+			this.requestMonitor = requestMonitor;
 		}
 
 		private void monitored1() throws Exception {
-			executionInformation1 = executionContextMonitor.monitor(new MonitoredHttpExecution(new MockHttpServletRequest("GET", "/monitored1"),
+			requestInformation1 = requestMonitor.monitor(new MonitoredHttpRequest(new MockHttpServletRequest("GET", "/monitored1"),
 					new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 					new FilterChain() {
 						@Override
@@ -95,7 +95,7 @@ public class MonitoredHttpExecutionForwardingTest {
 		}
 
 		private void monitored2() throws Exception {
-			executionInformation2 = executionContextMonitor.monitor(new MonitoredHttpExecution(new MockHttpServletRequest("GET", "/monitored2"),
+			requestInformation2 = requestMonitor.monitor(new MonitoredHttpRequest(new MockHttpServletRequest("GET", "/monitored2"),
 					new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 					new FilterChain() {
 						@Override
@@ -110,7 +110,7 @@ public class MonitoredHttpExecutionForwardingTest {
 		}
 
 		private void monitored3() throws Exception {
-			executionInformation3 = executionContextMonitor.monitor(new MonitoredHttpExecution(new MockHttpServletRequest("GET", "/monitored3"),
+			requestInformation3 = requestMonitor.monitor(new MonitoredHttpRequest(new MockHttpServletRequest("GET", "/monitored3"),
 					new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 					new FilterChain() {
 						@Override

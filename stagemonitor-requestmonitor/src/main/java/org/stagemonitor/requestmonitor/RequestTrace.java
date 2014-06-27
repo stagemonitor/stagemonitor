@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
 
-public class ExecutionContext {
+public class RequestTrace {
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -42,7 +42,7 @@ public class ExecutionContext {
 	private String exceptionClass;
 	private String stackTrace;
 
-	public ExecutionContext() {
+	public RequestTrace() {
 		TimeZone tz = TimeZone.getDefault();
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		df.setTimeZone(tz);
