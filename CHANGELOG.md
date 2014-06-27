@@ -20,3 +20,4 @@
  * disable specific plugins with `stagemonitor.plugins.disabled`
  * annotate methods with @MonitorRequests or make RequestMonitorAspect concrete in aop.xml to monitor method executions like RMI calls
  * support for metrics-annotations: @Timed, @Metered, @ExceptionMetered, @Gauge (enabled by @MonitorGauges on type)
+ * added copyToLib gradle task. to assemble all libs necessary e.g. to run staemonitor-spring-mvc, execute `./gradlew copyToJar`. Then go to stagemonitor-spring-mvc/build/libs/lib

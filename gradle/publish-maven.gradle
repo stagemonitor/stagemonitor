@@ -1,9 +1,5 @@
 apply plugin: 'maven-publish'
 
-configurations {
-	provided
-	compile.extendsFrom provided
-}
 jar {
 	metaInf { from "$rootDir/LICENSE" }
 }

@@ -31,6 +31,12 @@ apply plugin: 'cobertura'
 apply plugin: 'coveralls'
 
 subprojects {
+	configurations {
+		compileNoLib
+		compile.extendsFrom compileNoLib
+		provided
+		compile.extendsFrom provided
+	}
 	apply plugin: 'idea'
 	apply plugin: 'java'
 	apply plugin: 'cobertura'
@@ -66,6 +72,11 @@ subprojects {
 
 	if (!project.name.contains("benchmark")) {
 		apply from: "$rootDir/gradle/publish-maven.gradle"
+	}
+
+	task copyToLib( type: Copy ) {
+		into "$buildDir/libs/lib"
+		from configurations.runtime - configurations.provided - configurations.compileNoLib
 	}
 }
 
