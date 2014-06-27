@@ -16,7 +16,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	}
 
 	@Override
-	public RequestTrace createRequest() {
+	public RequestTrace createRequestTrace() {
 		RequestTrace requestTrace = new RequestTrace();
 		requestTrace.setName(methodSignature);
 		return requestTrace;

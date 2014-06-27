@@ -116,7 +116,7 @@ public class RequestMonitor {
 	}
 
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> ei) {
-		ei.requestTrace = monitoredRequest.createRequest();
+		ei.requestTrace = monitoredRequest.createRequestTrace();
 		try {
 			ei.requestTrace.setMeasurementSession(measurementSession);
 			if (ei.monitorThisExecution()) {

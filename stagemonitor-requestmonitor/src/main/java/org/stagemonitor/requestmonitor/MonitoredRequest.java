@@ -24,7 +24,7 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	 *
 	 * @return the {@link RequestTrace}
 	 */
-	T createRequest();
+	T createRequestTrace();
 
 	/**
 	 * Executing this method triggers the execution of the execution context.

@@ -45,7 +45,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	@Override
-	public HttpRequestTrace createRequest() {
+	public HttpRequestTrace createRequestTrace() {
 		HttpRequestTrace request = new HttpRequestTrace();
 		request.setName(getRequestName());
 		request.setMethod(httpServletRequest.getMethod());
