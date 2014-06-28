@@ -10,6 +10,12 @@
 		"_default_": {
 			"_ttl" : { "enabled" : true },
 			"dynamic_templates" : [ {
+				"http_headers": {
+					"path_match": "headers.*",
+					"mapping": { "type": "string", "index": "not_analyzed" }
+				}
+			},
+			{
 				"string_fields" : {
 					"match" : "*",
 					"match_mapping_type" : "string",
@@ -37,6 +43,9 @@
 					"type": "string",
 					"index": "no",
 					"store": "yes"
+				},
+				"clientIp": {
+					"type": "ip"
 				}
 			}
 		}

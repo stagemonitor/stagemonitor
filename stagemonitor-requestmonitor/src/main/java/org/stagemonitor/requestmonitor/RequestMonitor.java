@@ -149,7 +149,7 @@ public class RequestMonitor {
 					final long executionTime = System.nanoTime() - ei.start;
 					final long cpuTime = getCpuTime() - ei.startCpu;
 					ei.requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
-					ei.requestTrace.setCpuTime(NANOSECONDS.toMillis(cpuTime));
+					ei.requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
 					monitoredRequest.onPostExecute(ei.requestTrace);
 
 					if (ei.requestTrace.getCallStack() != null) {

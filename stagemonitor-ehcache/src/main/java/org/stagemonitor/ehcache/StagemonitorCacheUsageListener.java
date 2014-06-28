@@ -93,6 +93,7 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 	}
 
 	@Override
+	@Deprecated
 	public void notifyTimeTakenForGet(long millis) {
 	}
 

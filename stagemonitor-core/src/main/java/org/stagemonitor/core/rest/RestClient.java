@@ -109,8 +109,8 @@ public class RestClient {
 		ObjectNode dashboardElasticsearchFormat = MAPPER.createObjectNode();
 		dashboardElasticsearchFormat.put("user", "guest");
 		dashboardElasticsearchFormat.put("group", "guest");
-		dashboardElasticsearchFormat.put("title", dashboard.get("title"));
-		dashboardElasticsearchFormat.put("tags", dashboard.get("tags"));
+		dashboardElasticsearchFormat.set("title", dashboard.get("title"));
+		dashboardElasticsearchFormat.set("tags", dashboard.get("tags"));
 		dashboardElasticsearchFormat.put("dashboard", dashboard.toString());
 		return dashboardElasticsearchFormat;
 	}

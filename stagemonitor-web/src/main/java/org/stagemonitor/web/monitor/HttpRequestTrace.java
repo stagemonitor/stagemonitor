@@ -1,8 +1,5 @@
 package org.stagemonitor.web.monitor;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
@@ -12,8 +9,6 @@ import org.stagemonitor.requestmonitor.RequestTrace;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class HttpRequestTrace extends RequestTrace {
 
 	private final UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
@@ -29,19 +24,56 @@ public class HttpRequestTrace extends RequestTrace {
 	private String url;
 	private Integer statusCode;
 	private Map<String, String> headers;
-	@JsonIgnore
-	private ReadableUserAgent agent;
 	private String method;
-	private String username;
-	private String clientIp;
 	private Integer bytesWritten;
+	private UserAgentInformation userAgent;
 
-	public String getUsername() {
-		return username;
-	}
+	public static class UserAgentInformation {
+		private final String type;
+		private final String device;
+		private final String os;
+		private final String osFamily;
+		private final String osVersion;
+		private final String browser;
+		private final String browserVersion;
 
-	public void setUsername(String username) {
-		this.username = username;
+		public UserAgentInformation(ReadableUserAgent userAgent) {
+			type = userAgent.getTypeName();
+			device = userAgent.getDeviceCategory().getName();
+			os = userAgent.getOperatingSystem().getName();
+			osFamily = userAgent.getOperatingSystem().getFamilyName();
+			osVersion = userAgent.getOperatingSystem().getVersionNumber().toVersionString();
+			browser = userAgent.getName();
+			browserVersion = userAgent.getVersionNumber().toVersionString();
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public String getDevice() {
+			return device;
+		}
+
+		public String getOs() {
+			return os;
+		}
+
+		public String getOsFamily() {
+			return osFamily;
+		}
+
+		public String getOsVersion() {
+			return osVersion;
+		}
+
+		public String getBrowser() {
+			return browser;
+		}
+
+		public String getBrowserVersion() {
+			return browserVersion;
+		}
 	}
 
 	public String getUrl() {
@@ -66,16 +98,19 @@ public class HttpRequestTrace extends RequestTrace {
 
 	public void setHeaders(Map<String, String> headers) {
 		this.headers = headers;
+		setUserAgentInformation(headers);
+	}
+
+	private void setUserAgentInformation(Map<String, String> headers) {
 		if (headers != null && StageMonitor.getConfiguration().isParseUserAgent()) {
 			final String userAgent = headers.get("user-agent");
 			if (userAgent != null) {
-				final ReadableUserAgent readableUserAgent = userAgentCache.get(userAgent);
-				if (readableUserAgent != null) {
-					agent = readableUserAgent;
-				} else {
-					agent = parser.parse(userAgent);
-					userAgentCache.put(userAgent, agent);
+				ReadableUserAgent readableUserAgent = userAgentCache.get(userAgent);
+				if (readableUserAgent == null) {
+					readableUserAgent = parser.parse(userAgent);
+					userAgentCache.put(userAgent, readableUserAgent);
 				}
+				this.userAgent = new UserAgentInformation(readableUserAgent);
 			}
 		}
 	}
@@ -88,14 +123,6 @@ public class HttpRequestTrace extends RequestTrace {
 		this.method = method;
 	}
 
-	public void setClientIp(String clientIp) {
-		this.clientIp = clientIp;
-	}
-
-	public String getClientIp() {
-		return clientIp;
-	}
-
 	public void setBytesWritten(Integer bytesWritten) {
 		this.bytesWritten = bytesWritten;
 	}
@@ -104,53 +131,8 @@ public class HttpRequestTrace extends RequestTrace {
 		return bytesWritten;
 	}
 
-	public String getBrowser() {
-		if (agent == null) {
-			return null;
-		}
-		return agent.getName();
-	}
-
-	public String getBrowserVersion() {
-		if (agent == null) {
-			return null;
-		}
-		return agent.getVersionNumber().toVersionString();
-	}
-
-	public String getDevice() {
-		if (agent == null) {
-			return null;
-		}
-		return agent.getDeviceCategory().getName();
-	}
-
-	public String getUserAgentType() {
-		if (agent == null) {
-			return null;
-		}
-		return agent.getTypeName();
-	}
-
-	public String getOs() {
-		if (agent == null) {
-			return null;
-		}
-		return agent.getOperatingSystem().getName();
-	}
-
-	public String getOsFamily() {
-		if (agent == null) {
-			return null;
-		}
-		return agent.getOperatingSystem().getFamilyName();
-	}
-
-	public String getOsVersion() {
-		if (agent == null) {
-			return null;
-		}
-		return agent.getOperatingSystem().getVersionNumber().toVersionString();
+	public UserAgentInformation getUserAgent() {
+		return userAgent;
 	}
 
 	@Override

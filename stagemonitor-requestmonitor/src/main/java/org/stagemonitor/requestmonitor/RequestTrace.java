@@ -1,6 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +17,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestTrace {
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -30,17 +32,22 @@ public class RequestTrace {
 	@JsonIgnore
 	private CallStackElement callStack;
 	private long executionTime;
-	private long cpuTime;
+	private long executionTimeCpu;
 	private boolean error = false;
 	@JsonProperty("@timestamp")
 	private String timestamp;
 	private String parameter;
+	@JsonProperty("@application")
 	private String application;
+	@JsonProperty("@host")
 	private String host;
+	@JsonProperty("@instance")
 	private String instance;
 	private String exceptionMessage;
 	private String exceptionClass;
-	private String stackTrace;
+	private String exceptionStackTrace;
+	private String username;
+	private String clientIp;
 
 	public RequestTrace() {
 		TimeZone tz = TimeZone.getDefault();
@@ -110,12 +117,12 @@ public class RequestTrace {
 		this.executionTime = executionTime;
 	}
 
-	public long getCpuTime() {
-		return cpuTime;
+	public long getExecutionTimeCpu() {
+		return executionTimeCpu;
 	}
 
-	public void setCpuTime(long cpuTime) {
-		this.cpuTime = cpuTime;
+	public void setExecutionTimeCpu(long executionTimeCpu) {
+		this.executionTimeCpu = executionTimeCpu;
 	}
 
 	public String getTimestamp() {
@@ -166,12 +173,12 @@ public class RequestTrace {
 		this.exceptionMessage = exceptionMessage;
 	}
 
-	public String getStackTrace() {
-		return stackTrace;
+	public String getExceptionStackTrace() {
+		return exceptionStackTrace;
 	}
 
-	public void setStackTrace(String stackTrace) {
-		this.stackTrace = stackTrace;
+	public void setExceptionStackTrace(String exceptionStackTrace) {
+		this.exceptionStackTrace = exceptionStackTrace;
 	}
 
 	public String getExceptionClass() {
@@ -191,8 +198,24 @@ public class RequestTrace {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw, true);
 			e.printStackTrace(pw);
-			stackTrace = sw.getBuffer().toString();
+			exceptionStackTrace = sw.getBuffer().toString();
 		}
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public void setClientIp(String clientIp) {
+		this.clientIp = clientIp;
+	}
+
+	public String getClientIp() {
+		return clientIp;
 	}
 
 	@Override
