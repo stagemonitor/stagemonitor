@@ -19,3 +19,6 @@ test {
 		exclude 'org/stagemonitor/core/metrics/aspects/**'
 	}
 }
+
+// the aspectj compiler and cobertura don't like each other
+cobertura.coverageExcludes = ['.*org.stagemonitor.core.metrics.aspects.*']
