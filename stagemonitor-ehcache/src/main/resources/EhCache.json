@@ -490,9 +490,7 @@
   },
   "refresh": "1m",
   "tags": [
-    "server",
-    "pool",
-    "session"
+    "cache",
   ],
   "timezone": "browser"
 }
