@@ -1,4 +1,6 @@
 # next
+
+# 0.5.0
 ## Breaking Changes
  * renamed HttpExecutionContextMonitorFiler to org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter
  * renamed SpringHttpExecutionContextMonitorFiler to org.stagemonitor.web.monitor.filter.SpringHttpRequestMonitorFilter
