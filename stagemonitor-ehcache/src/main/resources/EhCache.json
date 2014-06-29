@@ -490,7 +490,7 @@
   },
   "refresh": "1m",
   "tags": [
-    "cache",
+    "cache"
   ],
   "timezone": "browser"
 }
