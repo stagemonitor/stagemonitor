@@ -30,6 +30,11 @@ Stagemonitor is a Java monitoring agent that tightly integrates with the timeser
  * [JDBC Connection Pools](https://github.com/stagemonitor/stagemonitor/wiki/JDBC-Connections-Dashboard)
  * Application Thread Pools
  
+### [EhCache Metrics](https://github.com/stagemonitor/stagemonitor/wiki/EhCache-Dashboard)
+Information about the hit-rate, cache size (in bytes), get performance, throughput and expiries of all caches.
+
+### [Metrics about logging](https://github.com/stagemonitor/stagemonitor/wiki/Logging-Dashboard)
+Statistics about the frequency of logs. Optionally append the request-id, application name, instance name and host name to each log statement to easily filter relevant logs.
  
 ### Analyze historical data
 Because all metrics are persisted in Graphite, you can access a long history of the metrics. This helps you to detect regressions in your applications and to analyze the interactions of the metrics if your server crashed.
