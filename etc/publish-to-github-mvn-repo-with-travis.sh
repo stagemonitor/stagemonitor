@@ -12,10 +12,10 @@ if ! grep -Fq SNAPSHOT gradle.properties && [[ "$TRAVIS_BRANCH" =~ [0-9]+\.[0-9]
   git config --global user.email "travis@travis-ci.org"
   git config --global user.name "travis-ci"
   # pssh, don't tell the secret!
-  git clone --quiet https://${GH_TOKEN}@github.com/stagemonitor/mvn-repo > /dev/null
+  git clone --quiet https://${GH_TOKEN}@github.com/stagemonitor/mvn-repo > /dev/null 2>&1
   cd mvn-repo
   cp -R $HOME/repo/* .
   git add .
   git commit -m "release $TRAVIS_REPO_SLUG $TRAVIS_BRANCH"
-  git push -fq origin master > /dev/null  
+  git push -fq origin master > /dev/null 2>&1
 fi
