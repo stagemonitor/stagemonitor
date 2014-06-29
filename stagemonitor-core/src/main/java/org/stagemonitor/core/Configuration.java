@@ -90,7 +90,7 @@ public class Configuration {
 	 * @return true, if user-agent header should be parsed, false otherwise
 	 */
 	public boolean isParseUserAgent() {
-		return getBoolean("stagemonitor.requestmonitor.http.parseUserAgent", false);
+		return getBoolean("stagemonitor.requestmonitor.http.parseUserAgent", true);
 	}
 
 	/**

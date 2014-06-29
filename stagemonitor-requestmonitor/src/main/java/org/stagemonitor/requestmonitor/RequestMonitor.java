@@ -48,8 +48,6 @@ public class RequestMonitor {
 	private Configuration configuration;
 	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
-	private volatile MeasurementSession measurementSession;
-
 	private Date endOfWarmup;
 
 	public RequestMonitor() {
@@ -64,16 +62,15 @@ public class RequestMonitor {
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
-		this.measurementSession = measurementSession;
 		StageMonitor.startMonitoring(measurementSession);
 	}
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
-		if (measurementSession == null) {
+		if (StageMonitor.getMeasurementSession().isNull()) {
 			createMeasurementSession();
 		}
 
-		if (measurementSession.getInstanceName() == null && noOfRequests.get() == 0) {
+		if (StageMonitor.getMeasurementSession().getInstanceName() == null && noOfRequests.get() == 0) {
 			getInstanceNameFromExecution(monitoredRequest);
 		}
 
@@ -100,6 +97,7 @@ public class RequestMonitor {
 	 * (e.g. the domain name from a HTTP request)
 	 */
 	private synchronized void getInstanceNameFromExecution(MonitoredRequest<?> monitoredRequest) {
+		final MeasurementSession measurementSession = StageMonitor.getMeasurementSession();
 		if (measurementSession.getInstanceName() == null) {
 			MeasurementSession session = new MeasurementSession(measurementSession.getApplicationName(), measurementSession.getHostName(),
 					monitoredRequest.getInstanceName());
@@ -108,7 +106,7 @@ public class RequestMonitor {
 	}
 
 	private synchronized void createMeasurementSession() {
-		if (measurementSession == null) {
+		if (StageMonitor.getMeasurementSession().isNull()) {
 			MeasurementSession session = new MeasurementSession(configuration.getApplicationName(), getHostName(),
 					configuration.getInstanceName());
 			setMeasurementSession(session);
@@ -119,7 +117,7 @@ public class RequestMonitor {
 		ei.requestTrace = monitoredRequest.createRequestTrace();
 		requestId.set(ei.requestTrace.getId());
 		try {
-			ei.requestTrace.setMeasurementSession(measurementSession);
+			ei.requestTrace.setMeasurementSession(StageMonitor.getMeasurementSession());
 			if (ei.monitorThisExecution()) {
 				if (actualRequestName.get() != null) {
 					ei.forwardedExecution = true;

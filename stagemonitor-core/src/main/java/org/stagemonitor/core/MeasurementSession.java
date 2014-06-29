@@ -1,12 +1,12 @@
 package org.stagemonitor.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class MeasurementSession {
 
 	private final String applicationName;
 	private final String hostName;
 	private final String instanceName;
+
 	private final String stringRepresentation;
 
 	public MeasurementSession(String applicationName, String hostName, String instanceName) {
@@ -28,9 +28,12 @@ public class MeasurementSession {
 		return instanceName;
 	}
 
-	@JsonIgnore
 	public boolean isInitialized() {
 		return applicationName != null && instanceName != null && hostName != null;
+	}
+
+	public boolean isNull() {
+		return applicationName == null && instanceName == null && hostName == null;
 	}
 
 	@Override

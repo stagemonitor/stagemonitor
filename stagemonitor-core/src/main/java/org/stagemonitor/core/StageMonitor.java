@@ -26,7 +26,7 @@ public class StageMonitor {
 	private final static Logger logger = LoggerFactory.getLogger(StageMonitor.class);
 	private static Configuration configuration = new Configuration();
 	private static volatile boolean started = false;
-	private static MeasurementSession measurementSession = new MeasurementSession(null, null, null);
+	private static volatile MeasurementSession measurementSession = new MeasurementSession(null, null, null);
 
 	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
 		if (started) {
