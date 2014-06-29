@@ -13,12 +13,27 @@ import static com.codahale.metrics.MetricRegistry.name;
 @Aspect
 public class TimedAspect {
 
-	private final MetricRegistry registry = StageMonitor.getMetricRegistry();
+	private final static MetricRegistry registry = StageMonitor.getMetricRegistry();
 
 	@Around(value = "execution(@com.codahale.metrics.annotation.Timed * *(..)) && @annotation(timedAnnotation)")
 	public Object timed(ProceedingJoinPoint pjp, Timed timedAnnotation) throws Throwable {
 		final String signature = SignatureUtils.getSignature(pjp.getSignature(), timedAnnotation.name(),
 				timedAnnotation.absolute());
+		return timeMethodCall(pjp, signature);
+	}
+
+	@Around(value = "execution(@org.springframework.scheduling.annotation.Async * *(..)) " +
+			"|| execution(@org.springframework.scheduling.annotation.Scheduled * *(..)) " +
+			"|| execution(@org.springframework.scheduling.annotation.Schedules * *(..)) " +
+			"|| execution(@javax.ejb.Asynchronous * *(..)) " +
+			"|| execution(@javax.ejb.Schedule * *(..)) " +
+			"|| execution(@javax.ejb.Schedules * *(..))")
+	public Object timeAsyncCall(ProceedingJoinPoint pjp) throws Throwable {
+		final String signature = SignatureUtils.getSignature(pjp.getSignature(), "", false);
+		return timeMethodCall(pjp, signature);
+	}
+
+	public static Object timeMethodCall(ProceedingJoinPoint pjp, String signature) throws Throwable {
 		final Timer.Context time = registry.timer(name("timer", signature)).time();
 		try {
 			return pjp.proceed();
