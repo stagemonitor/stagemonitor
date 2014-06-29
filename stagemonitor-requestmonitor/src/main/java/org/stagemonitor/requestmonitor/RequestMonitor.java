@@ -39,6 +39,7 @@ public class RequestMonitor {
 	 * <code>&lt;dispatcher>FORWARD&lt;/dispatcher></code> in the web.xml filter definition.
 	 */
 	private static ThreadLocal<String> actualRequestName = new ThreadLocal<String>();
+	private static ThreadLocal<String> requestId = new ThreadLocal<String>();
 
 	private int warmupRequests = 0;
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
@@ -100,23 +101,23 @@ public class RequestMonitor {
 	 */
 	private synchronized void getInstanceNameFromExecution(MonitoredRequest<?> monitoredRequest) {
 		if (measurementSession.getInstanceName() == null) {
-			measurementSession.setInstanceName(monitoredRequest.getInstanceName());
-			StageMonitor.startMonitoring(measurementSession);
+			MeasurementSession session = new MeasurementSession(measurementSession.getApplicationName(), measurementSession.getHostName(),
+					monitoredRequest.getInstanceName());
+			StageMonitor.startMonitoring(session);
 		}
 	}
 
 	private synchronized void createMeasurementSession() {
 		if (measurementSession == null) {
-			MeasurementSession session = new MeasurementSession();
-			session.setHostName(getHostName());
-			session.setInstanceName(configuration.getInstanceName());
-			session.setApplicationName(configuration.getApplicationName());
+			MeasurementSession session = new MeasurementSession(configuration.getApplicationName(), getHostName(),
+					configuration.getInstanceName());
 			setMeasurementSession(session);
 		}
 	}
 
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> ei) {
 		ei.requestTrace = monitoredRequest.createRequestTrace();
+		requestId.set(ei.requestTrace.getId());
 		try {
 			ei.requestTrace.setMeasurementSession(measurementSession);
 			if (ei.monitorThisExecution()) {
@@ -185,6 +186,7 @@ public class RequestMonitor {
 			}
 			if (ei.requestTrace != null) {
 				Profiler.clearMethodCallParent();
+				requestId.remove();
 			}
 		}
 	}
@@ -286,6 +288,10 @@ public class RequestMonitor {
 					", executionResult=" + executionResult +
 					'}';
 		}
+	}
+
+	public static String getRequestId() {
+		return requestId.get();
 	}
 
 }

@@ -1,9 +1,10 @@
-include 'stagemonitor-core',
+include'stagemonitor-benchmark',
+		'stagemonitor-benchmark:stagemonitor-instrument-javassist',
+		'stagemonitor-core',
+		'stagemonitor-ehcache',
+		'stagemonitor-jdbc',
 		'stagemonitor-jvm',
+		'stagemonitor-logging',
 		'stagemonitor-requestmonitor',
 		'stagemonitor-spring-mvc',
-		'stagemonitor-web',
-		'stagemonitor-jdbc',
-		'stagemonitor-ehcache',
-		'stagemonitor-benchmark',
-			'stagemonitor-benchmark:stagemonitor-instrument-javassist'
+		'stagemonitor-web'

@@ -18,10 +18,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	@Override
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
-		MeasurementSession measurementSession = new MeasurementSession();
-		measurementSession.setApplicationName(getApplicationName(filterConfig));
-		measurementSession.setHostName(RequestMonitor.getHostName());
-		measurementSession.setInstanceName(configuration.getInstanceName());
+		MeasurementSession measurementSession = new MeasurementSession(getApplicationName(filterConfig),
+				RequestMonitor.getHostName(), configuration.getInstanceName());
 		requestMonitor.setMeasurementSession(measurementSession);
 	}
 

@@ -4,32 +4,28 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class MeasurementSession {
 
-	private String applicationName;
-	private String hostName;
-	private String instanceName;
+	private final String applicationName;
+	private final String hostName;
+	private final String instanceName;
+	private final String stringRepresentation;
+
+	public MeasurementSession(String applicationName, String hostName, String instanceName) {
+		this.applicationName = applicationName;
+		this.hostName = hostName;
+		this.instanceName = instanceName;
+		stringRepresentation = "[application=" + applicationName + "] [instance=" + instanceName + "] [host=" + hostName + "]";
+	}
 
 	public String getApplicationName() {
 		return applicationName;
-	}
-
-	public void setApplicationName(String applicationName) {
-		this.applicationName = applicationName;
 	}
 
 	public String getHostName() {
 		return hostName;
 	}
 
-	public void setHostName(String hostName) {
-		this.hostName = hostName;
-	}
-
 	public String getInstanceName() {
 		return instanceName;
-	}
-
-	public void setInstanceName(String instanceName) {
-		this.instanceName = instanceName;
 	}
 
 	@JsonIgnore
@@ -39,11 +35,6 @@ public class MeasurementSession {
 
 	@Override
 	public String toString() {
-		return "MeasurementSession{" +
-				"applicationName='" + applicationName + '\'' +
-				", hostName='" + hostName + '\'' +
-				", instanceName='" + instanceName + '\'' +
-				'}';
+		return stringRepresentation;
 	}
-
 }
