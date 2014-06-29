@@ -1,13 +1,17 @@
 package org.stagemonitor.requestmonitor;
 
+import java.util.Arrays;
+
 public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
 	private final String methodSignature;
 	private final MethodExecution methodExecution;
+	private final Object[] parameters;
 
-	public MonitoredMethodRequest(String methodSignature, MethodExecution methodExecution) {
+	public MonitoredMethodRequest(String methodSignature, MethodExecution methodExecution, Object... parameters) {
 		this.methodSignature = methodSignature;
 		this.methodExecution = methodExecution;
+		this.parameters = parameters;
 	}
 
 	@Override
@@ -19,6 +23,10 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	public RequestTrace createRequestTrace() {
 		RequestTrace requestTrace = new RequestTrace();
 		requestTrace.setName(methodSignature);
+		if (parameters != null && parameters.length > 1) {
+			final String parameters = Arrays.asList(this.parameters).toString();
+			requestTrace.setParameter(parameters.substring(1, parameters.length() - 1));
+		}
 		return requestTrace;
 	}
 

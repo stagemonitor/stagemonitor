@@ -31,7 +31,7 @@ public abstract class RequestMonitorAspect {
 							return handleThrowable(t);
 						}
 					}
-				})).getExecutionResult();
+				}, pjp.getArgs())).getExecutionResult();
 	}
 
 	private Object handleThrowable(Throwable t) throws Exception {

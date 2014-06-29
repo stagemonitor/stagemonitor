@@ -16,7 +16,7 @@ public class GaugeAspectTest {
 	public void testGaugeAspectDefault() {
 		final MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
 		assertEquals(5, metricRegistry.getGauges().size());
-		Set<String> metricNames = new HashSet<>();
+		Set<String> metricNames = new HashSet<String>();
 		metricNames.add("gauge.GaugeTestObject#gaugeDefault");
 		metricNames.add("gauge.GaugeTestObject#staticGaugeDefault");
 		metricNames.add("gauge.gaugeAbsolute");

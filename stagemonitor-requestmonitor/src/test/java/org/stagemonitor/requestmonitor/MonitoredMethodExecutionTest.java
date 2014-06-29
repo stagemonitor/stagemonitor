@@ -33,6 +33,7 @@ public class MonitoredMethodExecutionTest {
 		assertEquals(1, requestInformation1.getExecutionResult());
 		assertFalse(requestInformation1.forwardedExecution);
 		assertEquals("monitored1()", requestInformation1.requestTrace.getName());
+		assertEquals("1, test", requestInformation1.requestTrace.getParameter());
 		assertTrue(requestInformation2.forwardedExecution);
 		assertNull("monitored2()", requestInformation2.requestTrace); // forwarded method executions are not monitored
 		assertTrue(requestInformation3.forwardedExecution);
@@ -71,7 +72,7 @@ public class MonitoredMethodExecutionTest {
 						public Object execute() throws Exception {
 							return monitored2();
 						}
-					}));
+					}, 1, "test"));
 			return (Integer) requestInformation1.getExecutionResult();
 		}
 
