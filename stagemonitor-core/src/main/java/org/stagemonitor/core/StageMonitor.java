@@ -29,6 +29,10 @@ public class StageMonitor {
 	private static volatile MeasurementSession measurementSession = new MeasurementSession(null, null, null);
 
 	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
+		if (!configuration.isStagemonitorActive()) {
+			logger.info("stagemonitor is deactivated");
+			started = true;
+		}
 		if (started) {
 			return;
 		}

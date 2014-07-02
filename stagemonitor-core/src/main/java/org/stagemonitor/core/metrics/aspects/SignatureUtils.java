@@ -17,7 +17,7 @@ public final class SignatureUtils {
 		String result = nameFromAnnotation.isEmpty() ? methodName : nameFromAnnotation;
 
 		if (!absolute) {
-			result = simpleClassName + "#" + result;
+			result = simpleClassName + "." + result;
 		}
 		return result;
 	}

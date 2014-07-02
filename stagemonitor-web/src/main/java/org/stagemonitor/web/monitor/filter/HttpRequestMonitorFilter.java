@@ -34,7 +34,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	@Override
 	public void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
-		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
+		if (configuration.isStagemonitorActive() && request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 			final StatusExposingByteCountingServletResponse responseWrapper = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
 			try {

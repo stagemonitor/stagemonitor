@@ -9,7 +9,7 @@ import org.stagemonitor.core.StageMonitor;
 public abstract class AbstractLoggingAspect {
 
 	public static final boolean ACTIVE = !StageMonitor.getConfiguration().getDisabledPlugins()
-			.contains(LoggingPlugin.class.getSimpleName());
+			.contains(LoggingPlugin.class.getSimpleName()) && StageMonitor.getConfiguration().isStagemonitorActive();
 
 	protected MetricRegistry registry = StageMonitor.getMetricRegistry();
 

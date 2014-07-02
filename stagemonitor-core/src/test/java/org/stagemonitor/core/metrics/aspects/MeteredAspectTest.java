@@ -39,7 +39,7 @@ public class MeteredAspectTest {
 	@Test
 	public void testMeteredAspectDefault() {
 		testObject.meteredDefault();
-		assertOneTimerExists("meter.MeteredAspectTest$TestObject#meteredDefault");
+		assertOneTimerExists("meter.MeteredAspectTest$TestObject.meteredDefault");
 	}
 
 	@Test
@@ -51,7 +51,7 @@ public class MeteredAspectTest {
 	@Test
 	public void testMeteredName() {
 		testObject.meteredName();
-		assertOneTimerExists("meter.MeteredAspectTest$TestObject#myMeteredName");
+		assertOneTimerExists("meter.MeteredAspectTest$TestObject.myMeteredName");
 	}
 
 	@Test

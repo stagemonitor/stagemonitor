@@ -23,6 +23,10 @@ public class Configuration {
 		loadProperties();
 	}
 
+	public boolean isStagemonitorActive() {
+		return getBoolean("stagemonitor.active", true);
+	}
+
 	/**
 	 * Specifies the minimum number of requests that have to be issued against the application before metrics are
 	 * collected.
@@ -259,7 +263,6 @@ public class Configuration {
 	 * A comma separated list of plugin names (the simple class name) that should not be active.
 	 *
 	 * @return the disabled plugin names
-	 * @since 0.3.5
 	 */
 	public List<String> getDisabledPlugins() {
 		return getStrings("stagemonitor.plugins.disabled", "");
@@ -292,7 +295,6 @@ public class Configuration {
 	 * (the value of the 'name' attribute of the 'ehcache' tag in ehcache.xml)
 	 *
 	 * @return the name of the ehcache to instrument
-	 * @since 0.3.5
 	 */
 	public String getEhCacheName() {
 		return getString("stagemonitor.ehcache.name", null);

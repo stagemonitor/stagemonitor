@@ -1,6 +1,13 @@
 # next
 
 # 0.5.0
+## Features
+ * Single configuration key `stagemonitor.active` to completely disable stagemonitor
+
+# Bug Fixes
+ * fixed wrong groupByNode index in request dashboard
+
+# 0.5.0
 ## Breaking Changes
  * renamed HttpExecutionContextMonitorFiler to org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter
  * renamed SpringHttpExecutionContextMonitorFiler to org.stagemonitor.web.monitor.filter.SpringHttpRequestMonitorFilter

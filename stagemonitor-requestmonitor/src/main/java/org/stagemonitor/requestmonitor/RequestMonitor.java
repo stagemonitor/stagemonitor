@@ -66,6 +66,12 @@ public class RequestMonitor {
 	}
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
+		if (!configuration.isStagemonitorActive()) {
+			RequestInformation<T> ei = new RequestInformation<T>();
+			ei.executionResult = monitoredRequest.execute();
+			return ei;
+		}
+
 		if (StageMonitor.getMeasurementSession().isNull()) {
 			createMeasurementSession();
 		}
