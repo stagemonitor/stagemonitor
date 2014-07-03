@@ -78,6 +78,12 @@ subprojects {
 		into "$buildDir/libs/lib"
 		from configurations.runtime - configurations.provided - configurations.compileNoLib
 	}
+
+	jar {
+		manifest {
+			attributes("Implementation-Version": version)
+		}
+	}
 }
 
 release {

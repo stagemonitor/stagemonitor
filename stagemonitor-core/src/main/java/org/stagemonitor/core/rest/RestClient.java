@@ -1,6 +1,5 @@
 package org.stagemonitor.core.rest;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
@@ -16,12 +15,15 @@ import java.net.URLEncoder;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 public class RestClient {
 
 	private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
+	private static final String STAGEMONITOR_VERSION = getStagemonitorVersion();
 
 	static {
 		MAPPER.registerModule(new AfterburnerModule());
@@ -105,7 +107,8 @@ public class RestClient {
 
 	static ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
 		final InputStream dashboardStram = RestClient.class.getClassLoader().getResourceAsStream(dashboardPath);
-		final JsonNode dashboard = MAPPER.readTree(dashboardStram);
+		final ObjectNode dashboard = (ObjectNode) MAPPER.readTree(dashboardStram);
+		dashboard.put("title", dashboard.get("title").asText() + " " + STAGEMONITOR_VERSION);
 		ObjectNode dashboardElasticsearchFormat = MAPPER.createObjectNode();
 		dashboardElasticsearchFormat.put("user", "guest");
 		dashboardElasticsearchFormat.put("group", "guest");
@@ -113,5 +116,24 @@ public class RestClient {
 		dashboardElasticsearchFormat.set("tags", dashboard.get("tags"));
 		dashboardElasticsearchFormat.put("dashboard", dashboard.toString());
 		return dashboardElasticsearchFormat;
+	}
+
+	private static String getStagemonitorVersion() {
+		Class clazz = RestClient.class;
+		String className = clazz.getSimpleName() + ".class";
+		String classPath = clazz.getResource(className).toString();
+		if (!classPath.startsWith("jar")) {
+			logger.warn("Failed to read stagemonitor version from manifest (class is not in jar)");
+			return "";
+		}
+		String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) + "/META-INF/MANIFEST.MF";
+		try {
+			Manifest manifest = new Manifest(new URL(manifestPath).openStream());
+			Attributes attr = manifest.getMainAttributes();
+			return attr.getValue("Implementation-Version");
+		} catch (IOException e) {
+			logger.warn("Failed to read stagemonitor version from manifest {}", e.getMessage());
+			return "";
+		}
 	}
 }
