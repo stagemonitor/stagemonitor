@@ -23,7 +23,7 @@ public class RestClient {
 	private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
-	private static final String STAGEMONITOR_VERSION = getStagemonitorVersion();
+	private static final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
 
 	static {
 		MAPPER.registerModule(new AfterburnerModule());
@@ -108,7 +108,7 @@ public class RestClient {
 	static ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
 		final InputStream dashboardStram = RestClient.class.getClassLoader().getResourceAsStream(dashboardPath);
 		final ObjectNode dashboard = (ObjectNode) MAPPER.readTree(dashboardStram);
-		dashboard.put("title", dashboard.get("title").asText() + " " + STAGEMONITOR_VERSION);
+		dashboard.put("title", dashboard.get("title").asText() + STAGEMONITOR_MAJOR_MINOR_VERSION);
 		ObjectNode dashboardElasticsearchFormat = MAPPER.createObjectNode();
 		dashboardElasticsearchFormat.put("user", "guest");
 		dashboardElasticsearchFormat.put("group", "guest");
@@ -118,7 +118,7 @@ public class RestClient {
 		return dashboardElasticsearchFormat;
 	}
 
-	private static String getStagemonitorVersion() {
+	private static String getStagemonitorMajorMinorVersion() {
 		Class clazz = RestClient.class;
 		String className = clazz.getSimpleName() + ".class";
 		String classPath = clazz.getResource(className).toString();
@@ -130,10 +130,15 @@ public class RestClient {
 		try {
 			Manifest manifest = new Manifest(new URL(manifestPath).openStream());
 			Attributes attr = manifest.getMainAttributes();
-			return attr.getValue("Implementation-Version");
-		} catch (IOException e) {
+			final String value = attr.getValue("Implementation-Version");
+			return " " + getMajorMinorVersionFromFullVersionString(value);
+		} catch (Exception e) {
 			logger.warn("Failed to read stagemonitor version from manifest {}", e.getMessage());
 			return "";
 		}
+	}
+
+	static String getMajorMinorVersionFromFullVersionString(String value) {
+		return value.substring(0, value.lastIndexOf('.'));
 	}
 }
