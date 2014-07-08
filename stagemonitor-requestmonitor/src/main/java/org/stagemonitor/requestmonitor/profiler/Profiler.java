@@ -22,6 +22,12 @@ public class Profiler {
 		}
 	}
 
+	public static void addCall(String signature, long executionTimeNanos) {
+		final CallStackElement currentCall = methodCallParent.get();
+		CallStackElement call = new CallStackElement(currentCall, executionTimeNanos);
+		call.setSignature(signature);
+	}
+
 	public static boolean isProfilingActive() {
 		return methodCallParent.get() != null;
 	}

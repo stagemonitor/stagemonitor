@@ -1,3 +1,4 @@
 dependencies {
-	compile project(":stagemonitor-core")
+	compile project(":stagemonitor-requestmonitor")
+	compile 'p6spy:p6spy:2.1.0'
 }
