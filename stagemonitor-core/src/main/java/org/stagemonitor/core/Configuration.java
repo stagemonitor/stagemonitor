@@ -200,6 +200,26 @@ public class Configuration {
 	}
 
 	/**
+	 * Whether or not sql statements should be included in the call stack.
+	 *
+	 * @return <code>true</code>, if sql statements should be included in the call stack, <code>false</code> otherwise
+	 */
+	public boolean collectSql() {
+		return getBoolean("stagemonitor.profiler.jdbc.collectSql", true);
+	}
+
+	/**
+	 * Whether or not the prepared statement placeholders (?) should be replaced with the actual parameters.
+	 * <p/>
+	 * Only applies, if {@link #collectSql()} is true.
+	 *
+	 * @return <code>true</code>, if parameters should be collected, <code>false</code> otherwise
+	 */
+	public boolean collectPreparedStatementParameters() {
+		return getBoolean("stagemonitor.profiler.jdbc.collectPreparedStatementParameters", false);
+	}
+
+	/**
 	 * When set, call stacks will be deleted automatically after the specified interval
 	 * <p/>
 	 * In case you do not specify a time unit like d (days), m (minutes), h (hours), ms (milliseconds) or w (weeks),
