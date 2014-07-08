@@ -22,7 +22,7 @@ public class ConnectionMonitor {
 	private static final String COUNT = ".count";
 	private static ConcurrentMap<DataSource, String> dataSourceUrlMap = new ConcurrentHashMap<DataSource, String>();
 
-	public static void monitorGetConnection(Connection connection, DataSource dataSource, long startNanoTime)  {
+	public static void monitorGetConnection(Connection connection, DataSource dataSource, long startNanoTime) {
 		long duration = System.nanoTime() - startNanoTime;
 		if (connection != null) {
 			ensureUrlExistsForDataSource(dataSource, connection);

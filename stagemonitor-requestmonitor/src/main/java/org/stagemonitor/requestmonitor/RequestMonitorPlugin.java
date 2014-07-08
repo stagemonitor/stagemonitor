@@ -18,8 +18,9 @@ public class RequestMonitorPlugin implements StageMonitorPlugin {
 
 	private void addElasticsearchMapping(String serverUrl) {
 		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
-		// Sending non-asynchronously to avoid race conditions
-		RestClient.sendAsJson(serverUrl, "/_template/stagemonitor", "PUT", resourceAsStream);
+		// async, because it is not possible, that request traces are reaching elasticsearch before the mapping is set
+		// that is, because a single thread executor is used that executes the request in a linear queue (LinkedBlockingQueue)
+		RestClient.sendAsJsonAsync(serverUrl, "/_template/stagemonitor", "PUT", resourceAsStream);
 	}
 
 }
