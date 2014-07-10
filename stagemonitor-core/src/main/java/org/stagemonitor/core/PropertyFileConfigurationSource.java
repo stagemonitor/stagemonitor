@@ -14,10 +14,11 @@ public class PropertyFileConfigurationSource implements ConfigurationSource {
 	private Properties properties;
 
 	public PropertyFileConfigurationSource() {
-		loadProperties();
+		reload();
 	}
 
-	private void loadProperties() {
+	@Override
+	public void reload() {
 		Properties defaultProperties = getProperties("stagemonitor.properties");
 		if (defaultProperties == null) {
 			logger.warn("Could not find stagemonitor.properties in classpath");

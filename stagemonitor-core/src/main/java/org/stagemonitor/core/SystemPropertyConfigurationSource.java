@@ -16,4 +16,8 @@ public class SystemPropertyConfigurationSource implements ConfigurationSource {
 			return null;
 		}
 	}
+
+	@Override
+	public void reload() {
+	}
 }

@@ -9,4 +9,9 @@ public interface ConfigurationSource {
 	 * @return the value for the key or <code>null</code> if not found
 	 */
 	String getValue(String key);
+
+	/**
+	 * Reloads the configuration to pick up the latest changes
+	 */
+	void reload();
 }

@@ -28,7 +28,17 @@ public class Configuration {
 		configurationSources.add(new PropertyFileConfigurationSource());
 	}
 
+	public void reload() {
+		for (ConfigurationSource configurationSource : configurationSources) {
+			configurationSource.reload();
+		}
+		propertiesCache.clear();
+	}
+
 	public void addConfigurationSource(ConfigurationSource configurationSource, boolean firstPrio) {
+		if (configurationSource == null) {
+			return;
+		}
 		if (firstPrio) {
 			configurationSources.add(0, configurationSource);
 		} else {
