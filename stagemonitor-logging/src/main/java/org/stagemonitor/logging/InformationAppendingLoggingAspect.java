@@ -5,6 +5,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestTrace;
 
 /**
  * Appends the requestId, application name, instance name and host name to line to each logging statement. Example:
@@ -16,7 +17,8 @@ public class InformationAppendingLoggingAspect extends AbstractLoggingAspect {
 
 	@Around("loggingPointcut()")
 	public Object appendInformation(ProceedingJoinPoint pjp) throws Throwable {
-		final String requestInformation = "[requestId=" + RequestMonitor.getRequestId() + "] " +
+		RequestTrace request = RequestMonitor.getRequest();
+		final String requestInformation = "[requestId=" + (request != null ? request.getId() : "") + "] " +
 				StageMonitor.getMeasurementSession().toString() + " ";
 		final Object[] args = pjp.getArgs();
 		if (args.length == 0) {

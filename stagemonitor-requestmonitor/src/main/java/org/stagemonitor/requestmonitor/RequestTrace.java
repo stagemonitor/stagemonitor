@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 import java.io.PrintWriter;
@@ -27,39 +28,40 @@ public class RequestTrace {
 	}
 
 	@JsonIgnore
-	private String id = UUID.randomUUID().toString();
-	private String name;
+	private final String id = UUID.randomUUID().toString();
+	private final String name;
 	@JsonIgnore
 	private CallStackElement callStack;
 	private long executionTime;
+	private long executionTimeDb;
+	private int executionCountDb;
 	private long executionTimeCpu;
 	private boolean error = false;
 	@JsonProperty("@timestamp")
-	private String timestamp;
+	private final String timestamp;
 	private String parameter;
 	@JsonProperty("@application")
-	private String application;
+	private final String application;
 	@JsonProperty("@host")
-	private String host;
+	private final String host;
 	@JsonProperty("@instance")
-	private String instance;
+	private final String instance;
 	private String exceptionMessage;
 	private String exceptionClass;
 	private String exceptionStackTrace;
 	private String username;
 	private String clientIp;
 
-	public RequestTrace() {
+	public RequestTrace(String name) {
+		MeasurementSession measurementSession = StageMonitor.getMeasurementSession();
+		application = measurementSession.getApplicationName();
+		host = measurementSession.getHostName();
+		instance = measurementSession.getInstanceName();
+		this.name = name;
 		TimeZone tz = TimeZone.getDefault();
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		df.setTimeZone(tz);
 		this.timestamp = df.format(new Date());
-	}
-
-	public void setMeasurementSession(MeasurementSession measurementSession) {
-		application = measurementSession.getApplicationName();
-		host = measurementSession.getHostName();
-		instance = measurementSession.getInstanceName();
 	}
 
 	public boolean isError() {
@@ -72,10 +74,6 @@ public class RequestTrace {
 
 	public String getId() {
 		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
 	}
 
 	public CallStackElement getCallStack() {
@@ -105,10 +103,6 @@ public class RequestTrace {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
 	public long getExecutionTime() {
 		return executionTime;
 	}
@@ -129,10 +123,6 @@ public class RequestTrace {
 		return timestamp;
 	}
 
-	public void setTimestamp(String timestamp) {
-		this.timestamp = timestamp;
-	}
-
 	public String getParameter() {
 		return parameter;
 	}
@@ -145,24 +135,12 @@ public class RequestTrace {
 		return application;
 	}
 
-	public void setApplication(String application) {
-		this.application = application;
-	}
-
 	public String getHost() {
 		return host;
 	}
 
-	public void setHost(String host) {
-		this.host = host;
-	}
-
 	public String getInstance() {
 		return instance;
-	}
-
-	public void setInstance(String instance) {
-		this.instance = instance;
 	}
 
 	public String getExceptionMessage() {
@@ -216,6 +194,19 @@ public class RequestTrace {
 
 	public String getClientIp() {
 		return clientIp;
+	}
+
+	public long getExecutionTimeDb() {
+		return executionTimeDb;
+	}
+
+	public void dbCallCompleted(long executionTimeDb) {
+		this.executionCountDb++;
+		this.executionTimeDb += executionTimeDb;
+	}
+
+	public int getExecutionCountDb() {
+		return executionCountDb;
 	}
 
 	@Override

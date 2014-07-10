@@ -21,12 +21,20 @@ public class HttpRequestTrace extends RequestTrace {
 				}
 			};
 
-	private String url;
+	private final String url;
 	private Integer statusCode;
-	private Map<String, String> headers;
-	private String method;
+	private final  Map<String, String> headers;
+	private final String method;
 	private Integer bytesWritten;
-	private UserAgentInformation userAgent;
+	private final UserAgentInformation userAgent;
+
+	public HttpRequestTrace(String name, String url, Map<String, String> headers, String method) {
+		super(name);
+		this.url = url;
+		this.headers = headers;
+		userAgent = getUserAgentInformation(headers);
+		this.method = method;
+	}
 
 	public static class UserAgentInformation {
 		private final String type;
@@ -80,10 +88,6 @@ public class HttpRequestTrace extends RequestTrace {
 		return url;
 	}
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
-
 	public Integer getStatusCode() {
 		return statusCode;
 	}
@@ -96,12 +100,7 @@ public class HttpRequestTrace extends RequestTrace {
 		return headers;
 	}
 
-	public void setHeaders(Map<String, String> headers) {
-		this.headers = headers;
-		setUserAgentInformation(headers);
-	}
-
-	private void setUserAgentInformation(Map<String, String> headers) {
+	private UserAgentInformation getUserAgentInformation(Map<String, String> headers) {
 		if (headers != null && StageMonitor.getConfiguration().isParseUserAgent()) {
 			final String userAgent = headers.get("user-agent");
 			if (userAgent != null) {
@@ -110,17 +109,14 @@ public class HttpRequestTrace extends RequestTrace {
 					readableUserAgent = parser.parse(userAgent);
 					userAgentCache.put(userAgent, readableUserAgent);
 				}
-				this.userAgent = new UserAgentInformation(readableUserAgent);
+				return new UserAgentInformation(readableUserAgent);
 			}
 		}
+		return null;
 	}
 
 	public String getMethod() {
 		return method;
-	}
-
-	public void setMethod(String method) {
-		this.method = method;
 	}
 
 	public void setBytesWritten(Integer bytesWritten) {

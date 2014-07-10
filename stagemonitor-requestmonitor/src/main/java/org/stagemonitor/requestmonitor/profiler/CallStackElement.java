@@ -1,14 +1,12 @@
 package org.stagemonitor.requestmonitor.profiler;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CallStackElement {
 
 	private static final String horizontal;      // '│   '
@@ -84,6 +82,16 @@ public class CallStackElement {
 
 	public void setSignature(String signature) {
 		this.signature = signature;
+	}
+
+	@JsonIgnore
+	public String getShortSignature() {
+		String[] split = signature.substring(0, signature.indexOf('(')).split("\\.");
+		if (split.length > 1) {
+			return split[split.length - 2] + '#' + split[split.length - 1];
+		} else {
+			return split.length == 1 ? split[0] : "null";
+		}
 	}
 
 	public CallStackElement getParent() {

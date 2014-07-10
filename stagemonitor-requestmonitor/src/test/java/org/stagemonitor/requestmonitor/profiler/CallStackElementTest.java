@@ -12,4 +12,11 @@ public class CallStackElementTest {
 		char[] chars = {9608, 9608, 9608, 9608, 9608, 9619, 9617, 9617, 9617, 9617};
 		Assert.assertEquals(new String(chars), CallStackElement.printPercentAsBar(0.56d, 10, true));
 	}
+
+	@Test
+	public void testGetShortSignature() {
+		CallStackElement callStackElement = new CallStackElement();
+		callStackElement.setSignature("public void org.stagemonitor.requestmonitor.profiler.CallStackElementTest.testGetShortSignature()");
+		Assert.assertEquals("CallStackElementTest#testGetShortSignature", callStackElement.getShortSignature());
+	}
 }

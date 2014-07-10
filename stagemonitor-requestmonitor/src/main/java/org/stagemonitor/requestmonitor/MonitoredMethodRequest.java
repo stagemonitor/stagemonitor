@@ -21,8 +21,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
 	@Override
 	public RequestTrace createRequestTrace() {
-		RequestTrace requestTrace = new RequestTrace();
-		requestTrace.setName(methodSignature);
+		RequestTrace requestTrace = new RequestTrace(methodSignature);
 		if (parameters != null && parameters.length > 1) {
 			 String parameters = Arrays.asList(this.parameters).toString();
 			// remove rectangular brackets ([])

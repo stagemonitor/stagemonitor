@@ -37,9 +37,9 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	/**
 	 * Implement this method to do actions after the execution context
 	 *
-	 * @param request the execution context
+	 * @param requestInformation the execution context
 	 */
-	void onPostExecute(T request);
+	void onPostExecute(RequestMonitor.RequestInformation<T> requestInformation);
 
 	/**
 	 * If the current execution context triggers another one, the first one is called the forwarding execution and the

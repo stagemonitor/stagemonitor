@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
@@ -46,19 +47,20 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 	@Override
 	public HttpRequestTrace createRequestTrace() {
-		HttpRequestTrace request = new HttpRequestTrace();
-		request.setName(getRequestName());
-		request.setMethod(httpServletRequest.getMethod());
-		request.setUrl(httpServletRequest.getRequestURI());
+		Map<String, String> headers = null;
+		if (configuration.isCollectHeaders()) {
+			headers = getHeaders(httpServletRequest);
+		}
+		HttpRequestTrace request = new HttpRequestTrace(getRequestName(), httpServletRequest.getRequestURI(),
+				headers, httpServletRequest.getMethod());
+
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		request.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
 		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
 		request.setParameter(getSafeQueryString(parameterMap));
-		if (configuration.isCollectHeaders()) {
-			request.setHeaders(getHeaders(httpServletRequest));
-		}
+
 		return request;
 	}
 
@@ -145,10 +147,11 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	@Override
-	public void onPostExecute(HttpRequestTrace request) {
+	public void onPostExecute(RequestMonitor.RequestInformation<HttpRequestTrace> info) {
 		int status = responseWrapper.getStatus();
+		HttpRequestTrace request = info.getRequestTrace();
 		request.setStatusCode(status);
-		metricRegistry.counter(name("request.statuscode", Integer.toString(status))).inc();
+		metricRegistry.counter(name("request", info.getTimerName(), "meter", "statuscode", Integer.toString(status))).inc();
 		if (status >= 400) {
 			request.setError(true);
 		}

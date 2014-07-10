@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class RequestMonitor {
@@ -39,7 +40,7 @@ public class RequestMonitor {
 	 * <code>&lt;dispatcher>FORWARD&lt;/dispatcher></code> in the web.xml filter definition.
 	 */
 	private static ThreadLocal<String> actualRequestName = new ThreadLocal<String>();
-	private static ThreadLocal<String> requestId = new ThreadLocal<String>();
+	private static ThreadLocal<RequestTrace> request = new ThreadLocal<RequestTrace>();
 
 	private int warmupRequests = 0;
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
@@ -67,9 +68,9 @@ public class RequestMonitor {
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
 		if (!configuration.isStagemonitorActive()) {
-			RequestInformation<T> ei = new RequestInformation<T>();
-			ei.executionResult = monitoredRequest.execute();
-			return ei;
+			RequestInformation<T> info = new RequestInformation<T>();
+			info.executionResult = monitoredRequest.execute();
+			return info;
 		}
 
 		if (StageMonitor.getMeasurementSession().isNull()) {
@@ -80,20 +81,20 @@ public class RequestMonitor {
 			getInstanceNameFromExecution(monitoredRequest);
 		}
 
-		RequestInformation<T> ei = new RequestInformation<T>();
+		RequestInformation<T> info = new RequestInformation<T>();
 		final boolean monitor = configuration.isCollectRequestStats() && isWarmedUp();
 		if (monitor) {
-			beforeExecution(monitoredRequest, ei);
+			beforeExecution(monitoredRequest, info);
 		}
 		try {
-			ei.executionResult = monitoredRequest.execute();
-			return ei;
+			info.executionResult = monitoredRequest.execute();
+			return info;
 		} catch (Exception e) {
-			ei.requestTrace.setException(e);
+			info.requestTrace.setException(e);
 			throw e;
 		} finally {
 			if (monitor) {
-				afterExecution(monitoredRequest, ei);
+				afterExecution(monitoredRequest, info);
 			}
 		}
 	}
@@ -119,80 +120,95 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> ei) {
-		ei.requestTrace = monitoredRequest.createRequestTrace();
-		requestId.set(ei.requestTrace.getId());
+	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
+		info.requestTrace = monitoredRequest.createRequestTrace();
+		request.set(info.requestTrace);
 		try {
-			ei.requestTrace.setMeasurementSession(StageMonitor.getMeasurementSession());
-			if (ei.monitorThisExecution()) {
+			if (info.monitorThisExecution()) {
 				if (actualRequestName.get() != null) {
-					ei.forwardedExecution = true;
+					info.forwardedExecution = true;
 					if (!monitoredRequest.isMonitorForwardedExecutions()) {
-						ei.requestTrace = null;
+						info.requestTrace = null;
 						return;
 					}
 				}
-				actualRequestName.set(ei.requestTrace.getName());
-				ei.timer = metricRegistry.timer(name("request", "total", ei.getTimerName()));
-				if (ei.profileThisExecution()) {
+				actualRequestName.set(info.requestTrace.getName());
+				info.timer = metricRegistry.timer(getTimerMetricName(info.getTimerName()));
+				if (info.profileThisExecution()) {
 					final CallStackElement root = Profiler.activateProfiling();
-					ei.requestTrace.setCallStack(root);
+					info.requestTrace.setCallStack(root);
 				}
 			}
 		} catch (RuntimeException e) {
 			logger.warn(e.getMessage() + " (this exception is ignored) actualRequestName=" + actualRequestName.get() +
-					ei.toString(), e);
+					info.toString(), e);
 		}
 	}
 
 	private <T extends RequestTrace> void afterExecution(MonitoredRequest<T> monitoredRequest,
-															 RequestInformation<T> ei) {
+															 RequestInformation<T> info) {
 		try {
-			if (ei.monitorThisExecution()) {
-				// if forwarded executions are not monitored, ei.requestTrace would be null
-				if (!ei.isForwardingExecution()) {
-					final long executionTime = System.nanoTime() - ei.start;
-					final long cpuTime = getCpuTime() - ei.startCpu;
-					ei.requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
-					ei.requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
-					monitoredRequest.onPostExecute(ei.requestTrace);
+			if (info.monitorThisExecution()) {
+				// if forwarded executions are not monitored, info.requestTrace would be null
+				if (!info.isForwardingExecution()) {
+					final long executionTime = System.nanoTime() - info.start;
+					final long cpuTime = getCpuTime() - info.startCpu;
+					info.requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
+					info.requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
+					monitoredRequest.onPostExecute(info);
 
-					if (ei.requestTrace.getCallStack() != null) {
+					if (info.requestTrace.getCallStack() != null) {
 						Profiler.stop("total");
-						reportCallStack(ei.requestTrace, configuration.getElasticsearchUrl());
+						reportCallStack(info.requestTrace, configuration.getElasticsearchUrl());
 					}
-					if (ei.timer != null) {
-						ei.timer.update(executionTime, NANOSECONDS);
-						if (configuration.isCollectCpuTime()) {
-							metricRegistry.timer(name("request", "cpu", ei.getTimerName())).update(cpuTime, NANOSECONDS);
-						}
-						if (ei.requestTrace.isError()) {
-							metricRegistry.meter(name("request", "error", ei.getTimerName())).mark();
-						}
-					}
+					trackMetrics(info, executionTime, cpuTime);
 				} else {
-					if (ei.timer.getCount() == 0) {
-						metricRegistry.remove(name("request", "total", ei.getTimerName()));
+					String timerMetricName = getTimerMetricName(info.getTimerName());
+					if (info.timer.getCount() == 0 && metricRegistry.getMetrics().get(timerMetricName) != null) {
+						metricRegistry.remove(timerMetricName);
 					}
 				}
 			}
 		} catch (RuntimeException e) {
 			logger.warn(e.getMessage() + " (this exception is ignored) actualRequestName=" + actualRequestName.get()
-					+ ei.toString(), e);
+					+ info.toString(), e);
 		} finally {
 			/*
 			 * The forwarded execution is executed in the same thread.
 			 * Only remove the thread local on the topmost execution context,
-			 * otherwise ei.isForwardingExecution() doesn't work
+			 * otherwise info.isForwardingExecution() doesn't work
 			 */
-			if (!ei.forwardedExecution) {
+			if (!info.forwardedExecution) {
 				actualRequestName.remove();
 			}
-			if (ei.requestTrace != null) {
+			if (info.requestTrace != null) {
 				Profiler.clearMethodCallParent();
-				requestId.remove();
+				request.remove();
 			}
 		}
+	}
+
+	private <T extends RequestTrace> void trackMetrics(RequestInformation<T> info, long executionTime, long cpuTime) {
+		if (info.timer != null) {
+			info.timer.update(executionTime, NANOSECONDS);
+			String timerName = info.getTimerName();
+			if (configuration.isCollectCpuTime()) {
+				metricRegistry.timer(name("request", timerName, "cpu-time", "server")).update(cpuTime, NANOSECONDS);
+			}
+			T requestTrace = info.requestTrace;
+			if (requestTrace.isError()) {
+				metricRegistry.meter(name("request", timerName, "meter", "error")).mark();
+			}
+			if (requestTrace.getExecutionCountDb() > 0) {
+				metricRegistry.timer(name("request", timerName, "time", "db")).update(requestTrace.getExecutionTimeDb(),
+						MILLISECONDS);
+				metricRegistry.meter(name("request", timerName, "meter", "db")).mark(requestTrace.getExecutionCountDb());
+			}
+		}
+	}
+
+	private <T extends RequestTrace> String getTimerMetricName(String timerName) {
+		return name("request", timerName, "time", "server");
 	}
 
 	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {
@@ -254,8 +270,12 @@ public class RequestMonitor {
 			return requestTrace != null && requestTrace.getName() != null && !requestTrace.getName().isEmpty();
 		}
 
-		private String getTimerName() {
+		public String getTimerName() {
 			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(requestTrace.getName()));
+		}
+
+		public T getRequestTrace() {
+			return requestTrace;
 		}
 
 		/**
@@ -294,8 +314,8 @@ public class RequestMonitor {
 		}
 	}
 
-	public static String getRequestId() {
-		return requestId.get();
+	public static RequestTrace getRequest() {
+		return request.get();
 	}
 
 }
