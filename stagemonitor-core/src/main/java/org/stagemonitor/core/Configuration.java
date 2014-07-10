@@ -3,9 +3,13 @@ package org.stagemonitor.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -16,11 +20,20 @@ import static java.util.Collections.emptyList;
 public class Configuration {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private Properties properties;
 	private ConcurrentMap<String, Object> propertiesCache = new ConcurrentHashMap<String, Object>();
+	private List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
 
 	public Configuration() {
-		loadProperties();
+		configurationSources.add(new SystemPropertyConfigurationSource());
+		configurationSources.add(new PropertyFileConfigurationSource());
+	}
+
+	public void addConfigurationSource(ConfigurationSource configurationSource, boolean firstPrio) {
+		if (firstPrio) {
+			configurationSources.add(0, configurationSource);
+		} else {
+			configurationSources.add(configurationSource);
+		}
 	}
 
 	public boolean isStagemonitorActive() {
@@ -320,56 +333,7 @@ public class Configuration {
 		return getString("stagemonitor.ehcache.name", null);
 	}
 
-	private void loadProperties() {
-		Properties defaultProperties = getProperties("stagemonitor.properties");
-		if (defaultProperties == null) {
-			logger.warn("Could not find stagemonitor.properties in classpath");
-			defaultProperties = new Properties();
-		}
-		// override values in default properties file
-		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
-		if (stagemonitorPropertyOverridesLocation != null) {
-			logger.warn("try loading of default property overrides: '" + stagemonitorPropertyOverridesLocation + "'");
-			properties = getProperties(stagemonitorPropertyOverridesLocation, defaultProperties);
-			if (properties == null) {
-				logger.warn("Could not find " + stagemonitorPropertyOverridesLocation + " in classpath");
-			}
-		} else {
-			properties = defaultProperties;
-		}
-	}
 
-	private Properties getProperties(String classpathLocation) {
-		return getProperties(classpathLocation, null);
-	}
-
-	private Properties getProperties(String classpathLocation, Properties defaultProperties) {
-		if (classpathLocation == null) {
-			return null;
-		}
-		final Properties props;
-		if (defaultProperties != null) {
-			props = new Properties(defaultProperties);
-		} else {
-			props = new Properties();
-		}
-		InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(classpathLocation);
-		if (resourceStream != null) {
-			try {
-				props.load(resourceStream);
-				return props;
-			} catch (IOException e) {
-				logger.warn(e.getMessage() + " (this exception is ignored)", e);
-			} finally {
-				try {
-					resourceStream.close();
-				} catch (IOException e) {
-					logger.warn(e.getMessage() + " (this exception is ignored)", e);
-				}
-			}
-		}
-		return null;
-	}
 
 	public String getString(final String key) {
 		return getString(key, null);
@@ -386,18 +350,17 @@ public class Configuration {
 
 	private String getTrimmedProperty(String key, String defaultValue) {
 		String property = null;
-		try {
-			property = System.getProperty(key);
-		} catch (SecurityException e) {
-			logger.warn("Could not get Java system property, because of a SecurityException: {}", e.getMessage());
-		}
-		if (property == null) {
-			property = properties.getProperty(key, defaultValue);
+		for (ConfigurationSource configurationSource : configurationSources) {
+			property = configurationSource.getValue(key);
+			if (property != null) {
+				break;
+			}
 		}
 		if (property != null) {
 			return property.trim();
+		} else {
+			return defaultValue;
 		}
-		return property;
 	}
 
 	public List<String> getLowerStrings(final String key, final String defaultValue) {
