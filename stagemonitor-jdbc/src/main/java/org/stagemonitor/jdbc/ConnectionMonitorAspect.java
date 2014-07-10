@@ -24,26 +24,28 @@ public class ConnectionMonitorAspect {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final boolean wrapConnections;
+	private final boolean isP6SpyAlreadyConfigured;
 
 	public ConnectionMonitorAspect() {
 		if (ACTIVE && StageMonitor.getConfiguration().collectSql()) {
 			P6SpyLoadableOptions options = P6SpyOptions.getActiveInstance();
 			addStagemonitorLogger(options);
-			wrapConnections = options.getDriverNames() == null || options.getDriverNames().isEmpty();
-			if (!wrapConnections) {
+			isP6SpyAlreadyConfigured = options.getDriverNames() == null || options.getDriverNames().isEmpty();
+			if (!isP6SpyAlreadyConfigured) {
 				logger.info("Stagemonitor will not wrap connections with p6spy wrappers, because p6spy is already " +
 						"configured in your application");
 			}
 			P6Core.initialize();
 		} else {
-			wrapConnections = false;
+			isP6SpyAlreadyConfigured = false;
 		}
 	}
 
 	private void addStagemonitorLogger(P6SpyLoadableOptions options) {
 		P6SpyMultiLogger.addLogger(new StagemonitorP6Logger());
-		P6SpyMultiLogger.addLogger(options.getAppenderInstance());
+		if (isP6SpyAlreadyConfigured) {
+			P6SpyMultiLogger.addLogger(options.getAppenderInstance());
+		}
 		options.setAppender(P6SpyMultiLogger.class.getCanonicalName());
 	}
 
@@ -62,7 +64,7 @@ public class ConnectionMonitorAspect {
 		final long start = System.nanoTime();
 		try {
 			connection = (Connection) pjp.proceed();
-			return wrapConnections ? P6Core.wrapConnection(connection) : connection;
+			return isP6SpyAlreadyConfigured ? P6Core.wrapConnection(connection) : connection;
 		} finally {
 			if (connection != null) {
 				DataSource dataSource = (DataSource) pjp.getTarget();
