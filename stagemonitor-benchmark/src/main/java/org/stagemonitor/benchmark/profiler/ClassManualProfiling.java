@@ -5,83 +5,83 @@ import org.stagemonitor.requestmonitor.profiler.Profiler;
 public class ClassManualProfiling {
 
 	public int method1() {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method1()");
 		try {
 			return method2(1) + method3() + method5();
 		} finally {
-			Profiler.stop("public int ClassToProfile.method1()");
+			Profiler.stop();
 		}
 	}
 
 	private int method2(int i) {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method2(int i)");
 		try {
 			return 1 + i;
 		} finally {
-			Profiler.stop("public int ClassToProfile.method2(int i)");
+			Profiler.stop();
 		}
 	}
 
 	private int method3() {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method3()");
 		try {
 			return method4();
 		} finally {
-			Profiler.stop("public int ClassToProfile.method3()");
+			Profiler.stop();
 		}
 	}
 
 	private int method4() {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method4()");
 		try {
 			return 4;
 		} finally {
-			Profiler.stop("public int ClassToProfile.method4()");
+			Profiler.stop();
 		}
 	}
 
 	private int method5() {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method5()");
 		try {
 			return method6() + method7();
 		} finally {
-			Profiler.stop("public int ClassToProfile.method5()");
+			Profiler.stop();
 		}
 	}
 
 	private int method6() {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method6()");
 		try {
 			return 6;
 		} finally {
-			Profiler.stop("public int ClassToProfile.method6()");
+			Profiler.stop();
 		}
 	}
 
 	private int method7() {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method7()");
 		try {
 			return method8();
 		} finally {
-			Profiler.stop("public int ClassToProfile.method7()");
+			Profiler.stop();
 		}
 	}
 
 	private int method8() {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method8()");
 		try {
 			return method9();
 		} finally {
-			Profiler.stop("public int ClassToProfile.method8()");
+			Profiler.stop();
 		}
 	}
 
 	private int method9() {
-		Profiler.start();
+		Profiler.start("public int ClassToProfile.method9()");
 		try {
 			return 9;
 		} finally {
-			Profiler.stop("public int ClassToProfile.method9()");
+			Profiler.stop();
 		}
 	}
 

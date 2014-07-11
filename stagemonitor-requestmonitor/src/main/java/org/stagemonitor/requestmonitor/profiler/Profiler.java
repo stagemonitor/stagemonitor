@@ -8,24 +8,23 @@ public class Profiler {
 
 	private static final ThreadLocal<CallStackElement> methodCallParent = new ThreadLocal<CallStackElement>();
 
-	public static void start() {
+	public static void start(String signature) {
 		final CallStackElement parent = methodCallParent.get();
 		if (parent != null) {
-			methodCallParent.set(new CallStackElement(parent));
+			methodCallParent.set(new CallStackElement(parent, signature));
 		}
 	}
 
-	public static void stop(String signature) {
+	public static void stop() {
 		final CallStackElement currentElement = methodCallParent.get();
 		if (currentElement != null) {
-			methodCallParent.set(currentElement.executionStopped(signature, System.nanoTime(), MIN_EXECUTION_TIME_NANOS));
+			methodCallParent.set(currentElement.executionStopped(System.nanoTime(), MIN_EXECUTION_TIME_NANOS));
 		}
 	}
 
 	public static void addCall(String signature, long executionTimeNanos) {
 		final CallStackElement currentCall = methodCallParent.get();
-		CallStackElement call = new CallStackElement(currentCall, executionTimeNanos);
-		call.setSignature(signature);
+		new CallStackElement(currentCall, signature, executionTimeNanos);
 	}
 
 	public static boolean isProfilingActive() {
@@ -38,8 +37,8 @@ public class Profiler {
 	 *
 	 * @return the root of the call stack
 	 */
-	public static CallStackElement activateProfiling() {
-		CallStackElement root = new CallStackElement();
+	public static CallStackElement activateProfiling(String signature) {
+		CallStackElement root = new CallStackElement(signature);
 		methodCallParent.set(root);
 		return root;
 	}

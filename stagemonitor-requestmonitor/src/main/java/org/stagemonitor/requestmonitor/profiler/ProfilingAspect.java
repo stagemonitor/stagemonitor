@@ -30,12 +30,12 @@ public abstract class ProfilingAspect {
 	}
 
 	@Before("applicationMethodsToProfile()")
-	public void startProfiling() {
-		Profiler.start();
+	public void startProfiling(JoinPoint.StaticPart joinPoint) {
+		Profiler.start(joinPoint.getSignature().toString());
 	}
 
 	@After("applicationMethodsToProfile()")
-	public void stopProfiling(JoinPoint.StaticPart joinPoint) {
-		Profiler.stop(joinPoint.getSignature().toString());
+	public void stopProfiling() {
+		Profiler.stop();
 	}
 }

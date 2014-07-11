@@ -5,7 +5,11 @@ import com.codahale.metrics.MetricFilter;
 import org.junit.Test;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.stagemonitor.core.StageMonitor.getMetricRegistry;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
@@ -39,10 +43,10 @@ public class MonitoredMethodExecutionTest {
 		assertTrue(requestInformation3.forwardedExecution);
 		assertNull("monitored3()", requestInformation3.requestTrace); // forwarded method executions are not monitored
 
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("monitored1()"))));
-		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("monitored2()"))));
-		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("monitored3()"))));
-		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("notMonitored()"))));
+		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored1()"), "time", "server")));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored2()"), "time", "server")));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored3()"), "time", "server")));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("notMonitored()"), "time", "server")));
 	}
 
 	@Test
@@ -52,10 +56,10 @@ public class MonitoredMethodExecutionTest {
 		testObject.monitored3();
 		assertEquals(1, requestInformation3.getExecutionResult());
 
-		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("monitored1()"))));
-		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("monitored2()"))));
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("monitored3()"))));
-		assertNull(getMetricRegistry().getTimers().get(name("request", "total", sanitizeGraphiteMetricSegment("notMonitored()"))));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored1()"), "time", "server")));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored2()"), "time", "server")));
+		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored3()"), "time", "server")));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("notMonitored()"), "time", "server")));
 	}
 
 	private class TestObject {

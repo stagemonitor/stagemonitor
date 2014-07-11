@@ -22,11 +22,11 @@ public class VariableMethodsBenchmark {
 		int innerIterations = iterations;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
-			root = Profiler.activateProfiling();
+			root = Profiler.activateProfiling("root");
 			for (int j = 0; j < innerIterations; j++) {
 				dummy |= classManualProfiling.method1();
 			}
-			Profiler.stop("root");
+			Profiler.stop();
 		}
 		assertProfilingWorks(root);
 		return dummy;

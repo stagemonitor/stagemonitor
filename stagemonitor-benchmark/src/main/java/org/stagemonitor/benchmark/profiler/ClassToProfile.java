@@ -43,11 +43,11 @@ public class ClassToProfile {
 
 	public static void main(String[] args) {
 		final ClassToProfile classToProfile = new ClassToProfile();
-		Profiler.activateProfiling();
+		Profiler.activateProfiling("root");
 		classToProfile.method1();
 		classToProfile.method1();
 		classToProfile.method1();
-		Profiler.stop("root");
+		Profiler.stop();
 	}
 
 }

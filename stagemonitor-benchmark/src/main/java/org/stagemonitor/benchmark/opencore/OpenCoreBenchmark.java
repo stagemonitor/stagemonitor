@@ -35,10 +35,10 @@ public class OpenCoreBenchmark implements Runnable {
 	}
 
 	public void run() {
-		final CallStackElement root = Profiler.activateProfiling();
+		final CallStackElement root = Profiler.activateProfiling("root");
 		for (int i = 0; i < RUN_COUNT; i++)
 			iterate();
-		Profiler.stop("root");
+		Profiler.stop();
 		System.out.println(root.toString());
 	}
 

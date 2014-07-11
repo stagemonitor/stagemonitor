@@ -6,16 +6,14 @@ public class AroundProfiler {
   static final ThreadLocal<CallStackElement> methodCallParent =
       new ThreadLocal<CallStackElement>();
 
-  public static CallStackElement start() {
-    CallStackElement cse = new CallStackElement(methodCallParent.get());
+  public static CallStackElement start(String signature) {
+    CallStackElement cse = new CallStackElement(methodCallParent.get(), signature);
     methodCallParent.set(cse);
     return cse;
   }
 
-  public static void stop(CallStackElement currentStats,
-                          String signature) {
-    currentStats.executionStopped(signature, System.nanoTime() -
-			currentStats.getExecutionTime());
+  public static void stop(CallStackElement currentStats) {
+    currentStats.executionStopped(System.nanoTime() - currentStats.getExecutionTime());
     methodCallParent.set(currentStats.getParent());
   }
 

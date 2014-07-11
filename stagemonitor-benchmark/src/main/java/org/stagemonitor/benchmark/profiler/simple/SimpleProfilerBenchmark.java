@@ -15,10 +15,10 @@ public class SimpleProfilerBenchmark {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
-			root = new CallStackElement();
+			root = new CallStackElement("root");
 			AroundProfiler.setMethodCallRoot(root);
 			dummy |= aroundProfilerTest.method1();
-			AroundProfiler.stop(root, "root");
+			AroundProfiler.stop(root);
 		}
 		if (!root.getChildren().get(0).getSignature().contains("method1")) {
 			throw new IllegalStateException("profiling did not work");
@@ -31,10 +31,10 @@ public class SimpleProfilerBenchmark {
 		int dummy = 0;
 		CallStackElement root = null;
 		for (int i = 0; i < iter; i++) {
-			root = new CallStackElement();
+			root = new CallStackElement("root");
 			BeforeAfterProfiler.setMethodCallRoot(root);
 			dummy |= beforeAfterProfilerTest.method1();
-			BeforeAfterProfiler.stop("root");
+			BeforeAfterProfiler.stop();
 		}
 		if (!root.getChildren().get(0).getSignature().contains("method1")) {
 			throw new IllegalStateException("profiling did not work");

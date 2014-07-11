@@ -10,59 +10,59 @@ import static org.junit.Assert.assertTrue;
 public class ProfilerTest {
 	private static class TestClass {
 		static CallStackElement method1() {
-			final CallStackElement callStackElement = Profiler.activateProfiling();
+			final CallStackElement callStackElement = Profiler.activateProfiling("method1()");
 			try {
 				method1_1();
 				method1_2();
 				return callStackElement;
 			} finally {
 				final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-				Profiler.stop("method1()");
+				Profiler.stop();
 				thisCallStackElement.setExecutionTime(1000000000);
 			}
 		}
 
 		static void method1_1() {
-			Profiler.start();
+			Profiler.start("method1_1()");
 			try {
 				method1_1_1();
 				method1_1_2();
 			} finally {
 				final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-				Profiler.stop("method1_1()");
+				Profiler.stop();
 				thisCallStackElement.setExecutionTime(500000000);
 
 			}
 		}
 
 		static void method1_1_1() {
-			Profiler.start();
+			Profiler.start("method1_1_1()");
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-			Profiler.stop("method1_1_1()");
+			Profiler.stop();
 			thisCallStackElement.setExecutionTime(200000000);
 
 		}
 
 		static void method1_1_2() {
-			Profiler.start();
+			Profiler.start("method1_1_2()");
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-			Profiler.stop("method1_1_2()");
+			Profiler.stop();
 			thisCallStackElement.setExecutionTime(250000000);
 		}
 
 		static void method1_2() {
-			Profiler.start();
+			Profiler.start("method1_2()");
 			Profiler.addCall("select * from user", 50000000);
 			Profiler.addCall("select * from address", 50000000);
 			method1_2_1();
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-			Profiler.stop("method1_2()");
+			Profiler.stop();
 			thisCallStackElement.setExecutionTime(500000000);
 		}
 		static void method1_2_1() {
-			Profiler.start();
+			Profiler.start("method1_2_1()");
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-			Profiler.stop("method1_2_1()");
+			Profiler.stop();
 			thisCallStackElement.setExecutionTime(250000000);
 		}
 	}
@@ -87,7 +87,7 @@ public class ProfilerTest {
 	@Test
 	public void testProfilerActive() {
 		assertFalse(Profiler.isProfilingActive());
-		Profiler.activateProfiling();
+		Profiler.activateProfiling("");
 		assertTrue(Profiler.isProfilingActive());
 		Profiler.deactivateProfiling();
 		assertFalse(Profiler.isProfilingActive());
@@ -96,9 +96,9 @@ public class ProfilerTest {
 	@Test
 	public void testNoProfilingIfNotActive() {
 		assertFalse(Profiler.isProfilingActive());
-		Profiler.start();
+		Profiler.start("dummy");
 		assertNull(Profiler.getMethodCallParent());
-		Profiler.stop("dummy");
+		Profiler.stop();
 	}
 
 }

@@ -37,7 +37,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	}
 
 	@Override
-	public void onPostExecute(RequestTrace requestTrace) {
+	public void onPostExecute(RequestMonitor.RequestInformation<RequestTrace> requestTrace) {
 	}
 
 	/**

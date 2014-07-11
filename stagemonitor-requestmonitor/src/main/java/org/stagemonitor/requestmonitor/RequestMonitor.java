@@ -135,7 +135,7 @@ public class RequestMonitor {
 				actualRequestName.set(info.requestTrace.getName());
 				info.timer = metricRegistry.timer(getTimerMetricName(info.getTimerName()));
 				if (info.profileThisExecution()) {
-					final CallStackElement root = Profiler.activateProfiling();
+					final CallStackElement root = Profiler.activateProfiling("total");
 					info.requestTrace.setCallStack(root);
 				}
 			}
@@ -158,7 +158,7 @@ public class RequestMonitor {
 					monitoredRequest.onPostExecute(info);
 
 					if (info.requestTrace.getCallStack() != null) {
-						Profiler.stop("total");
+						Profiler.stop();
 						reportCallStack(info.requestTrace, configuration.getElasticsearchUrl());
 					}
 					trackMetrics(info, executionTime, cpuTime);

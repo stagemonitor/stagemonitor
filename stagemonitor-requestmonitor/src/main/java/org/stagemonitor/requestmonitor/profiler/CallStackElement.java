@@ -24,12 +24,12 @@ public class CallStackElement {
 	private long executionTime;
 	private List<CallStackElement> children = new LinkedList<CallStackElement>();
 
-	public CallStackElement() {
-		this(null);
+	public CallStackElement(String signature) {
+		this(null, signature);
 	}
 
-	public CallStackElement(CallStackElement parent) {
-		this(parent, System.nanoTime());
+	public CallStackElement(CallStackElement parent, String signature) {
+		this(parent, signature, System.nanoTime());
 	}
 
 	/**
@@ -37,8 +37,9 @@ public class CallStackElement {
 	 * @param parent the parent
 	 * @param startTimestamp the timestamp at the beginning of the method
 	 */
-	public CallStackElement(CallStackElement parent, long startTimestamp) {
+	public CallStackElement(CallStackElement parent, String signature, long startTimestamp) {
 		executionTime = startTimestamp;
+		this.signature = signature;
 		if (parent != null) {
 			this.parent = parent;
 			parent.getChildren().add(this);
@@ -106,22 +107,19 @@ public class CallStackElement {
 		children.remove(children.size() - 1);
 	}
 
-	public void executionStopped(String signature, long executionTime) {
-		this.signature = signature;
+	public void executionStopped(long executionTime) {
 		this.executionTime = executionTime;
 	}
 
 	/**
 	 *
-	 * @param signature the signature of the profiled method
 	 * @param timestamp the stop timestamp
 	 * @param minExecutionTime the threshold for the minimum execution time
 	 * @return the parent of this {@link CallStackElement}
 	 */
-	public CallStackElement executionStopped(String signature, long timestamp, long minExecutionTime) {
+	public CallStackElement executionStopped(long timestamp, long minExecutionTime) {
 		long executionTime = timestamp - this.executionTime; // executionTime is initialized to start timestamp
 		if (executionTime >= minExecutionTime) {
-			this.signature = signature;
 			this.executionTime = executionTime;
 		} else if (parent != null) {
 			// <this> is always the last entry in parent.getChildren()

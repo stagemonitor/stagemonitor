@@ -15,8 +15,7 @@ public class CallStackElementTest {
 
 	@Test
 	public void testGetShortSignature() {
-		CallStackElement callStackElement = new CallStackElement();
-		callStackElement.setSignature("public void org.stagemonitor.requestmonitor.profiler.CallStackElementTest.testGetShortSignature()");
+		CallStackElement callStackElement = new CallStackElement("public void org.stagemonitor.requestmonitor.profiler.CallStackElementTest.testGetShortSignature()");
 		Assert.assertEquals("CallStackElementTest#testGetShortSignature", callStackElement.getShortSignature());
 	}
 }

@@ -7,9 +7,12 @@ import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import java.util.concurrent.TimeUnit;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 public class StagemonitorP6Logger implements P6Logger {
 
@@ -23,13 +26,19 @@ public class StagemonitorP6Logger implements P6Logger {
 			RequestTrace request = RequestMonitor.getRequest();
 			if (request != null) {
 				request.dbCallCompleted(elapsed);
-//				CallStackElement currentCall = Profiler.getMethodCallParent();
-//				metricRegistry.timer(name("db", currentCall.getShortSignature(), "time.statement"));
-			}
-			if (configuration.collectPreparedStatementParameters()) {
-				Profiler.addCall(sql, TimeUnit.MILLISECONDS.toNanos(elapsed));
-			} else {
-				Profiler.addCall(prepared, TimeUnit.MILLISECONDS.toNanos(elapsed));
+				CallStackElement currentCall = Profiler.getMethodCallParent();
+
+				if (currentCall != null) {
+					metricRegistry
+							.timer(name("db", currentCall.getShortSignature(), "time.statement"))
+							.update(elapsed, TimeUnit.MILLISECONDS);
+				}
+
+				if (configuration.collectPreparedStatementParameters()) {
+					Profiler.addCall(sql, TimeUnit.MILLISECONDS.toNanos(elapsed));
+				} else {
+					Profiler.addCall(prepared, TimeUnit.MILLISECONDS.toNanos(elapsed));
+				}
 			}
 		}
 	}

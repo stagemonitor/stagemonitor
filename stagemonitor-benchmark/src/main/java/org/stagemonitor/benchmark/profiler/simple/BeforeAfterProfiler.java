@@ -6,13 +6,13 @@ public class BeforeAfterProfiler {
 
 	static final ThreadLocal<CallStackElement> methodCallParent = new ThreadLocal<CallStackElement>();
 
-	public static void start() {
-		methodCallParent.set(new CallStackElement(methodCallParent.get()));
+	public static void start(String signature) {
+		methodCallParent.set(new CallStackElement(methodCallParent.get(), signature));
 	}
 
-	public static void stop(String signature) {
+	public static void stop() {
 		CallStackElement currentStats = methodCallParent.get();
-		currentStats.executionStopped(signature, System.nanoTime() - currentStats.getExecutionTime());
+		currentStats.executionStopped(System.nanoTime() - currentStats.getExecutionTime());
 		methodCallParent.set(currentStats.getParent());
 	}
 
