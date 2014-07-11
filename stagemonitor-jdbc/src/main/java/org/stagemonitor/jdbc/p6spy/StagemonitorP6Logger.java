@@ -26,7 +26,7 @@ public class StagemonitorP6Logger implements P6Logger {
 			if (request != null) {
 				request.dbCallCompleted(elapsed);
 				CallStackElement currentCall = Profiler.getMethodCallParent();
-				metricRegistry.timer("db._all.time.statement").update(elapsed, TimeUnit.MILLISECONDS);
+				metricRegistry.timer("db.All.time.statement").update(elapsed, TimeUnit.MILLISECONDS);
 				if (currentCall != null) {
 					metricRegistry
 							.timer(name("db", currentCall.getShortSignature(), "time.statement"))

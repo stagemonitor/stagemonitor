@@ -191,7 +191,7 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void trackMetrics(RequestInformation<T> info, long executionTime, long cpuTime) {
 		if (info.timer != null) {
 			info.timer.update(executionTime, NANOSECONDS);
-			metricRegistry.timer("request._all.time.server").update(executionTime, NANOSECONDS);
+			metricRegistry.timer("request.All.time.server").update(executionTime, NANOSECONDS);
 			String timerName = info.getTimerName();
 			if (configuration.isCollectCpuTime()) {
 				metricRegistry.timer(name("request", timerName, "cpu-time.server")).update(cpuTime, NANOSECONDS);
