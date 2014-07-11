@@ -19,7 +19,6 @@ public class StagemonitorP6Logger implements P6Logger {
 	private final Configuration configuration = StageMonitor.getConfiguration();
 	private final MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
 
-
 	@Override
 	public void logSQL(int connectionId, String now, long elapsed, Category category, String prepared, String sql) {
 		if (sql != null && !sql.isEmpty()) {
@@ -27,7 +26,7 @@ public class StagemonitorP6Logger implements P6Logger {
 			if (request != null) {
 				request.dbCallCompleted(elapsed);
 				CallStackElement currentCall = Profiler.getMethodCallParent();
-
+				metricRegistry.timer("db._all.time.statement").update(elapsed, TimeUnit.MILLISECONDS);
 				if (currentCall != null) {
 					metricRegistry
 							.timer(name("db", currentCall.getShortSignature(), "time.statement"))

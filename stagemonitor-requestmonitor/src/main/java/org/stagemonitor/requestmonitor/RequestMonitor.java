@@ -191,24 +191,25 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void trackMetrics(RequestInformation<T> info, long executionTime, long cpuTime) {
 		if (info.timer != null) {
 			info.timer.update(executionTime, NANOSECONDS);
+			metricRegistry.timer("request._all.time.server").update(executionTime, NANOSECONDS);
 			String timerName = info.getTimerName();
 			if (configuration.isCollectCpuTime()) {
-				metricRegistry.timer(name("request", timerName, "cpu-time", "server")).update(cpuTime, NANOSECONDS);
+				metricRegistry.timer(name("request", timerName, "cpu-time.server")).update(cpuTime, NANOSECONDS);
 			}
 			T requestTrace = info.requestTrace;
 			if (requestTrace.isError()) {
-				metricRegistry.meter(name("request", timerName, "meter", "error")).mark();
+				metricRegistry.meter(name("request", timerName, "meter.error")).mark();
 			}
 			if (requestTrace.getExecutionCountDb() > 0) {
-				metricRegistry.timer(name("request", timerName, "time", "db")).update(requestTrace.getExecutionTimeDb(),
+				metricRegistry.timer(name("request", timerName, "time.db")).update(requestTrace.getExecutionTimeDb(),
 						MILLISECONDS);
-				metricRegistry.meter(name("request", timerName, "meter", "db")).mark(requestTrace.getExecutionCountDb());
+				metricRegistry.meter(name("request", timerName, "meter.db")).mark(requestTrace.getExecutionCountDb());
 			}
 		}
 	}
 
 	private <T extends RequestTrace> String getTimerMetricName(String timerName) {
-		return name("request", timerName, "time", "server");
+		return name("request", timerName, "time.server");
 	}
 
 	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {
