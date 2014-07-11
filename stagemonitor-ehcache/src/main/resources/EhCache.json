@@ -50,7 +50,7 @@
   },
   "rows": [
     {
-      "title": "servergroup-by",
+      "title": "",
       "height": "350px",
       "editable": true,
       "collapse": false,
@@ -131,7 +131,7 @@
           },
           "targets": [
             {
-              "target": "groupByNode(scale(lowestAverage(stagemonitor.[[application]].[[instance]].[[host]].cache.*.access.hit.total.ratio,10),100),5,'[[aggregation]]')"
+              "target": "groupByNode(summarize(scale(lowestAverage(stagemonitor.[[application]].[[instance]].[[host]].cache.*.access.hit.total.ratio,10),100),'10minute','avg'),5,'[[aggregation]]')"
             }
           ],
           "aliasColors": {},
