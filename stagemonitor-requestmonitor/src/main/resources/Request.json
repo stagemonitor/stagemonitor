@@ -24,7 +24,7 @@
 				{
 					"type": "filter",
 					"name": "request",
-					"query": "stagemonitor.[[application]].[[instance]].[[host]].request.total.*",
+					"query": "stagemonitor.[[application]].[[instance]].[[host]].request.*",
 					"includeAll": true
 				}
 			],
@@ -45,7 +45,7 @@
 				{
 					"span": 6,
 					"editable": true,
-					"type": "graphite",
+					"type": "graph",
 					"loadingEditor": false,
 					"x-axis": true,
 					"y-axis": true,
@@ -56,7 +56,11 @@
 						"threshold1": null,
 						"threshold2": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"leftMax": null,
+						"rightMax": null,
+						"leftMin": null,
+						"rightMin": null
 					},
 					"annotate": {
 						"enable": false,
@@ -152,7 +156,7 @@
 				{
 					"span": 6,
 					"editable": true,
-					"type": "graphite",
+					"type": "graph",
 					"loadingEditor": false,
 					"x-axis": true,
 					"y-axis": true,
@@ -163,7 +167,11 @@
 						"threshold1": null,
 						"threshold2": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"leftMax": null,
+						"rightMax": null,
+						"leftMin": null,
+						"rightMin": null
 					},
 					"annotate": {
 						"enable": false,
@@ -256,7 +264,7 @@
 				{
 					"span": 3,
 					"editable": true,
-					"type": "graphite",
+          			"type": "graph",
 					"loadingEditor": false,
 					"datasource": null,
 					"renderer": "flot",
@@ -273,7 +281,11 @@
 						"threshold1": null,
 						"threshold2": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"leftMax": null,
+						"rightMax": null,
+						"leftMin": null,
+						"rightMin": null
 					},
 					"annotate": {
 						"enable": false
@@ -315,7 +327,7 @@
 				{
 					"span": 3,
 					"editable": true,
-					"type": "graphite",
+					"type": "graph",
 					"loadingEditor": false,
 					"datasource": null,
 					"renderer": "flot",
@@ -332,7 +344,11 @@
 						"threshold1": null,
 						"threshold2": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"leftMax": null,
+						"rightMax": null,
+						"leftMin": null,
+						"rightMin": null
 					},
 					"annotate": {
 						"enable": false
@@ -374,7 +390,7 @@
 				{
 					"span": 3,
 					"editable": true,
-					"type": "graphite",
+					"type": "graph",
 					"loadingEditor": false,
 					"datasource": null,
 					"renderer": "flot",
@@ -391,7 +407,11 @@
 						"threshold1": null,
 						"threshold2": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"leftMax": null,
+						"rightMax": null,
+						"leftMin": null,
+						"rightMin": null
 					},
 					"annotate": {
 						"enable": false
@@ -439,7 +459,7 @@
 				{
 					"span": 3,
 					"editable": true,
-					"type": "graphite",
+					"type": "graph",
 					"loadingEditor": false,
 					"datasource": null,
 					"renderer": "flot",
@@ -456,7 +476,11 @@
 						"threshold1": null,
 						"threshold2": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"leftMax": null,
+						"rightMax": null,
+						"leftMin": null,
+						"rightMin": null
 					},
 					"annotate": {
 						"enable": false
