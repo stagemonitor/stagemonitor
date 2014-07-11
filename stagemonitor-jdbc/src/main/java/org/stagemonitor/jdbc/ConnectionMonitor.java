@@ -1,5 +1,6 @@
 package org.stagemonitor.jdbc;
 
+import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.StageMonitor;
@@ -13,23 +14,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
 public class ConnectionMonitor {
 
 	private final static Logger log = LoggerFactory.getLogger(ConnectionMonitor.class);
 
-	private static final String METRIC_PREFIX = "jdbc.getconnection.";
-	private static final String TIME = ".time";
-	private static final String COUNT = ".count";
 	private static ConcurrentMap<DataSource, String> dataSourceUrlMap = new ConcurrentHashMap<DataSource, String>();
+	private static MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
 
-	public static void monitorGetConnection(Connection connection, DataSource dataSource, long startNanoTime) {
-		long duration = System.nanoTime() - startNanoTime;
+	public static void monitorGetConnection(Connection connection, DataSource dataSource, long duration) {
 		if (connection != null) {
 			ensureUrlExistsForDataSource(dataSource, connection);
 			String url = dataSourceUrlMap.get(dataSource);
-			StageMonitor.getMetricRegistry().counter(METRIC_PREFIX + url + COUNT).inc();
-			final long durationMs = TimeUnit.NANOSECONDS.toMillis(duration);
-			StageMonitor.getMetricRegistry().counter(METRIC_PREFIX + url + TIME).inc(durationMs);
+			metricRegistry.timer(name("getConnection", url)).update(duration, TimeUnit.NANOSECONDS);
 		}
 	}
 

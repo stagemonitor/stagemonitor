@@ -199,6 +199,7 @@ public class RequestMonitor {
 			T requestTrace = info.requestTrace;
 			if (requestTrace.isError()) {
 				metricRegistry.meter(name("request", timerName, "meter.error")).mark();
+				metricRegistry.meter(name("request.All.meter.error")).mark();
 			}
 			if (requestTrace.getExecutionCountDb() > 0) {
 				metricRegistry.timer(name("request", timerName, "time.db")).update(requestTrace.getExecutionTimeDb(),

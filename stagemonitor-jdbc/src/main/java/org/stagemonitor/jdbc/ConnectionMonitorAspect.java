@@ -66,9 +66,10 @@ public class ConnectionMonitorAspect {
 			connection = (Connection) pjp.proceed();
 			return isP6SpyAlreadyConfigured ? P6Core.wrapConnection(connection) : connection;
 		} finally {
+			long duration = System.nanoTime() - start;
 			if (connection != null) {
 				DataSource dataSource = (DataSource) pjp.getTarget();
-				ConnectionMonitor.monitorGetConnection(connection, dataSource, start);
+				ConnectionMonitor.monitorGetConnection(connection, dataSource, duration);
 			}
 		}
 	}
