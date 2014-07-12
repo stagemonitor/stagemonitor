@@ -23,7 +23,7 @@
 				},
 				{
 					"type": "filter",
-					"name": "request",
+					"name": "query",
 					"query": "stagemonitor.[[application]].[[instance]].[[host]].db.*",
 					"includeAll": false,
 					"current": {
@@ -125,19 +125,19 @@
 					},
 					"targets": [
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[request]].time.statement.p95),'p95')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[query]].time.statement.p95),'p95')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[request]].time.statement.p75),'p75')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[query]].time.statement.p75),'p75')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[request]].time.statement.p50),'p50')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[query]].time.statement.p50),'p50')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[request]].time.statement.mean),'avg')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[query]].time.statement.mean),'avg')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[request]].time.statement.min),'min')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[query]].time.statement.min),'min')"
 						}
 					],
 					"aliasColors": {
@@ -235,7 +235,7 @@
 					},
 					"targets": [
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[request]].time.statement.m1_rate),'total')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].db.[[query]].time.statement.m1_rate),'total')"
 						}
 					],
 					"aliasColors": {
@@ -505,12 +505,12 @@
 			},
 			"targets": [
 				{
-					"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].getConnection.*.m1_rate,5,'sum')"
+					"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].getConnection.*.p95,5,'maxSeries')"
 				}
 			],
 			"aliasColors": {},
 			"aliasYAxis": {},
-			"title": "Time to getConnection",
+			"title": "Time to getConnection (p95)",
 			"leftYAxisLabel": "ms"
 		}
 			],
