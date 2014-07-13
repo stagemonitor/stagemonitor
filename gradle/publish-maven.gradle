@@ -2,11 +2,13 @@ apply plugin: 'maven-publish'
 
 jar {
 	metaInf { from "$rootDir/LICENSE" }
+	metaInf { from "$rootDir/NOTICE" }
 }
 task sourcesJar(type: Jar, dependsOn: classes) {
 	classifier = 'sources'
 	from sourceSets.main.allSource
 	metaInf { from "$rootDir/LICENSE" }
+	metaInf { from "$rootDir/NOTICE" }
 }
 artifacts {
 	archives sourcesJar
