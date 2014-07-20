@@ -3,13 +3,7 @@ package org.stagemonitor.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -343,7 +337,19 @@ public class Configuration {
 		return getString("stagemonitor.ehcache.name", null);
 	}
 
-
+	/**
+	 * The password that is required to dynamically update the configuration via a query parameter.
+	 * <p/>
+	 * If not set (default) configuration reloading is disabled. If set, you have to include the query parameter
+	 * <code>stagemonitor.configuration.update.password=&lt;password></code>, if you want to dynamically update the
+	 * configuration via query parameters. If set to an empty string, the password is not required.
+	 *
+	 * @return the password that is required to dynamically update the configuration via a query parameter. Returns
+	 * <code>null</code> if not set.
+	 */
+	public String getConfigurationUpdatePassword() {
+		return getString("stagemonitor.configuration.update.password", null);
+	}
 
 	public String getString(final String key) {
 		return getString(key, null);
