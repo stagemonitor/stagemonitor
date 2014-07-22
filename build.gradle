@@ -16,7 +16,7 @@ buildscript {
 
 	dependencies {
 		classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
-		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:0.4.0'
+		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:0.6.1'
 		classpath 'com.github.townsfolk:gradle-release:1.2'
 	}
 }
