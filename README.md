@@ -6,51 +6,8 @@
 
 Stagemonitor is a Java monitoring agent that tightly integrates with the timeseries backend [Graphite](http://graphite.readthedocs.org/en/latest/overview.html), the Graphite dashboard [Grafana](http://grafana.org/) to analyze graphed metrics and [Kibana](http://www.elasticsearch.org/overview/kibana/) to analyze requests and call stacks. It includes preconfigured Grafana and Kibana dashboards that can be customized.
 
-## Features
-### [Analyze Requests and Call Stacks](https://github.com/stagemonitor/stagemonitor/wiki/Request-and-Call-Stack-Dashboard)
- * Filter requests by queries or by selecting charts
- * Details about the request including the call stack (aka call tree) rendered with state-of-the-art ascii-art
-
-![recent requests](https://cloud.githubusercontent.com/assets/2163464/3207952/c2e08e16-ee11-11e3-87fe-4eb2f761931c.png)
-
-### [Request Dashboard](https://github.com/stagemonitor/stagemonitor/wiki/Request-Dashboard)
- * Statistical distribution of response times
- * Throughput
- * Requests are grouped by use cases. Usecases are automatically detected if you use Spring MVC. For other technologies, you can group URLs by regular expressions
- * Errors
-
-![request dashboard](https://cloud.githubusercontent.com/assets/2163464/3200110/1cf14602-ed77-11e3-8f6b-67251b8b53a2.PNG)
- 
-### [JVM Dashboards](https://github.com/stagemonitor/stagemonitor/wiki/JVM-Dashboards)
- * Utilisation of all memory pools
- * CPU utilisation of the JVM process
-
-### Resource Pool Metrics
- * [Server Thread Pool](https://github.com/stagemonitor/stagemonitor/wiki/Server-Dashboard)
- * [JDBC Connection Pools](https://github.com/stagemonitor/stagemonitor/wiki/JDBC-Connections-Dashboard)
- * Application Thread Pools
- 
-### [EhCache Metrics](https://github.com/stagemonitor/stagemonitor/wiki/EhCache-Dashboard)
-Information about the hit-rate, cache size (in bytes), get performance, throughput and expiries of all caches.
-
-### [Metrics about logging](https://github.com/stagemonitor/stagemonitor/wiki/Logging-Dashboard)
-Statistics about the frequency of logs. Optionally append the request-id, application name, instance name and host name to each log statement to easily filter relevant logs.
- 
-### Analyze historical data
-Because all metrics are persisted in Graphite, you can access a long history of the metrics. This helps you to detect regressions in your applications and to analyze the interactions of the metrics if your server crashed.
-
-### Support for cluster environments and multiple applications
-In each dashboard, you can select the application, instance and host you want to see the metrics of. If you don't select a instance and a host, you get aggregated metrics.
-
-### [Track your own metrics](https://github.com/stagemonitor/stagemonitor/wiki/Track-your-own-metrics)
-Stagemonitor includes the awesome [Metrics](http://metrics.codahale.com/) library. You can use it to track additional metrics.
-
-### Write your own Dashboards
-All dashboards are customizable - you can add new dashboards, rows and panels to explore the available metrics or your custom ones.
-
-### Low Overhead
-The evaluation of a JMeter loadtest of Stagemonitor integrated in [Spring Petclinic](https://github.com/stagemonitor/spring-petclinic) resulted in a reduction in throughput of only 0.2%.
-The overhead of the profiler is about 30ns and 64byte per method. You can measure it in your own environment by executing the benchmarks in stagemonitor-benchmark.
+## More Information
+For more information about the project, please see http://stagemonitor.github.io/
 
 ## Getting Started
 Check the [Installation](https://github.com/stagemonitor/stagemonitor/wiki/Installation) site of the wiki
