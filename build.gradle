@@ -16,7 +16,7 @@ buildscript {
 
 	dependencies {
 		classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
-		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:0.6.1'
+		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:1.0.2'
 		classpath 'com.github.townsfolk:gradle-release:1.2'
 	}
 }
@@ -28,7 +28,7 @@ repositories {
 apply plugin: 'idea'
 apply plugin: 'release'
 apply plugin: 'cobertura'
-apply plugin: 'coveralls'
+apply plugin: 'com.github.kt3k.coveralls'
 
 subprojects {
 	configurations {
