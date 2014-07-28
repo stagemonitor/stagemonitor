@@ -54,9 +54,9 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
 		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
 
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored1"), "time", "server")));
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored2"), "time", "server")));
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored3"), "time", "server")));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored1"), "server", "time", "total" )));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored2"), "server", "time", "total" )));
+		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored3"), "server", "time", "total" )));
 	}
 
 	@Test
@@ -70,9 +70,9 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
 		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
 
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored1"), "time", "server")));
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored2"), "time", "server")));
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored3"), "time", "server")));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored1"), "server", "time", "total" )));
+		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored2"), "server", "time", "total" )));
+		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored3"), "server", "time", "total" )));
 	}
 
 
