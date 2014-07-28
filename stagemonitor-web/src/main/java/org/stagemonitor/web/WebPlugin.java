@@ -34,6 +34,7 @@ public class WebPlugin implements StageMonitorPlugin {
 		}
 
 		RestClient.sendGrafanaDashboardAsync(conf.getElasticsearchUrl(), "Server.json");
+		RestClient.sendGrafanaDashboardAsync(conf.getElasticsearchUrl(), "KPIs over Time.json");
 	}
 
 	private String getRequeredProperty(String propertyKey, Configuration conf) {

@@ -3,7 +3,13 @@ package org.stagemonitor.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -246,6 +252,17 @@ public class Configuration {
 	 */
 	public String getCallStacksTimeToLive() {
 		return getString("stagemonitor.requestmonitor.requestTraceTTL", "1w");
+	}
+
+	/**
+	 * Whether or not db execution time should be collected per request
+	 * <p/>
+	 * If set to true, a timer will be created for each request to record the total db time per request.
+	 *
+	 * @return <code>true</code>, if db execution time should be collected per request, <code>false</code> otherwise
+	 */
+	public boolean collectDbTimePerRequest() {
+		return getBoolean("stagemonitor.jdbc.collectDbTimePerRequest", false);
 	}
 
 	/**

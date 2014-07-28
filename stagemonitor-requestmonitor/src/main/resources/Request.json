@@ -123,20 +123,19 @@
 					},
 					"targets": [
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].time.server.p95),'p95')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.p95),'p95')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].time.server.p75),'p75')",
-							"hide": false
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.p75),'p75')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].time.server.p50),'p50')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.p50),'p50')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].time.server.mean),'avg')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.mean),'avg')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].time.server.min),'min')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.min),'min')"
 						}
 					],
 					"aliasColors": {
@@ -156,7 +155,7 @@
 					]
 				},
 				{
-					"span": 6,
+					"span": 3,
 					"editable": true,
 					"type": "graph",
 					"loadingEditor": false,
@@ -232,24 +231,87 @@
 					},
 					"targets": [
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].time.server.m1_rate),'total')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.m1_rate),'total')"
 						},
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].meter.error.m1_rate),'failed')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.meter.error.m1_rate),'failed')"
 						}
 					],
 					"aliasColors": {
 						"failed": "#E24D42"
 					},
 					"aliasYAxis": {},
-					"title": "Requests/Second",
+					"title": "Requests per Second",
 					"datasource": null,
 					"renderer": "flot",
 					"y_formats": [
-						"none",
+						"short",
 						"none"
 					],
 					"leftYAxisLabel": ""
+				},
+				{
+					"span": 3,
+					"editable": true,
+					"type": "graph",
+					"datasource": null,
+					"renderer": "flot",
+					"x-axis": true,
+					"y-axis": true,
+					"scale": 1,
+					"y_formats": [
+						"short",
+						"short"
+					],
+					"grid": {
+						"leftMax": null,
+						"rightMax": null,
+						"leftMin": 0,
+						"rightMin": null,
+						"threshold1": null,
+						"threshold2": null,
+						"threshold1Color": "rgba(216, 200, 27, 0.27)",
+						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+					},
+					"annotate": {
+						"enable": false
+					},
+					"resolution": 100,
+					"lines": true,
+					"fill": 1,
+					"linewidth": 2,
+					"points": false,
+					"pointradius": 5,
+					"bars": false,
+					"stack": false,
+					"legend": {
+						"show": true,
+						"values": false,
+						"min": false,
+						"max": false,
+						"current": false,
+						"total": false,
+						"avg": false
+					},
+					"percentage": false,
+					"zerofill": true,
+					"nullPointMode": "connected",
+					"steppedLine": false,
+					"tooltip": {
+						"value_type": "cumulative",
+						"query_as_alias": true
+					},
+					"targets": [
+						{
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.meter.statuscode.*.m1_rate,9,'avg')"
+						}
+					],
+					"aliasColors": {
+						"200": "#7EB26D",
+						"500": "#E24D42"
+					},
+					"aliasYAxis": {},
+					"title": "Status Codes per Second"
 				}
 			],
 			"notice": false
@@ -264,7 +326,7 @@
 				{
 					"span": 3,
 					"editable": true,
-          			"type": "graph",
+					"type": "graph",
 					"loadingEditor": false,
 					"datasource": null,
 					"renderer": "flot",
@@ -315,7 +377,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.time.server.mean,'All'),5),5,'avg')"
+							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.mean,'All'),5),5,'avg')"
 						}
 					],
 					"aliasColors": {},
@@ -376,7 +438,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.time.server.p95,'All'),5),5,'avg')"
+							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.p95,'All'),5),5,'avg')"
 						}
 					],
 					"aliasColors": {},
@@ -437,11 +499,11 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.time.server.m1_rate,'All'),5),5,'sum')",
+							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.m1_rate,'All'),5),5,'sum')",
 							"hide": false
 						},
 						{
-							"target": "groupByNode(highestAverage(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].time.server.count,'All'),0),5),5,'sum')",
+							"target": "groupByNode(highestAverage(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.count,'All'),0),5),5,'sum')",
 							"hide": true
 						}
 					],
@@ -504,11 +566,11 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.meter.error.count,'All'),0),5),5,'sum')",
+							"target": "groupByNode(highestAverage(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.meter.error.count,'All'),0),5),5,'sum')",
 							"hide": true
 						},
 						{
-							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.meter.error.m1_rate,'All'),5),5,'sum')"
+							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.meter.error.m1_rate,'All'),5),5,'sum')"
 						}
 					],
 					"aliasColors": {},

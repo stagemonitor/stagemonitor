@@ -151,7 +151,8 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		int status = responseWrapper.getStatus();
 		HttpRequestTrace request = info.getRequestTrace();
 		request.setStatusCode(status);
-		metricRegistry.counter(name("request", info.getTimerName(), "meter.statuscode", Integer.toString(status))).inc();
+		metricRegistry.meter(name("request", info.getTimerName(), "server.meter.statuscode", Integer.toString(status))).mark();
+		metricRegistry.meter(name("request.All.server.meter.statuscode", Integer.toString(status))).mark();
 		if (status >= 400) {
 			request.setError(true);
 		}

@@ -190,27 +190,39 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void trackMetrics(RequestInformation<T> info, long executionTime, long cpuTime) {
 		if (info.timer != null) {
-			info.timer.update(executionTime, NANOSECONDS);
-			metricRegistry.timer("request.All.time.server").update(executionTime, NANOSECONDS);
-			String timerName = info.getTimerName();
-			if (configuration.isCollectCpuTime()) {
-				metricRegistry.timer(name("request", timerName, "cpu-time.server")).update(cpuTime, NANOSECONDS);
-			}
 			T requestTrace = info.requestTrace;
+			String timerName = info.getTimerName();
+
+			info.timer.update(executionTime, NANOSECONDS);
+			metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
+
+			if (configuration.isCollectCpuTime()) {
+				metricRegistry.timer(name("request", timerName, ".server.cpu-time.total")).update(cpuTime, NANOSECONDS);
+				metricRegistry.timer("request.All.server.cpu-time.total").update(cpuTime, NANOSECONDS);
+			}
+
 			if (requestTrace.isError()) {
-				metricRegistry.meter(name("request", timerName, "meter.error")).mark();
-				metricRegistry.meter(name("request.All.meter.error")).mark();
+				metricRegistry.meter(name("request", timerName, "server.meter.error")).mark();
+				metricRegistry.meter("request.All.server.meter.error").mark();
 			}
-			if (requestTrace.getExecutionCountDb() > 0) {
-				metricRegistry.timer(name("request", timerName, "time.db")).update(requestTrace.getExecutionTimeDb(),
-						MILLISECONDS);
-				metricRegistry.meter(name("request", timerName, "meter.db")).mark(requestTrace.getExecutionCountDb());
+			trackDbMetrics(timerName, requestTrace);
+		}
+	}
+
+	private <T extends RequestTrace> void trackDbMetrics(String timerName, T requestTrace) {
+		if (requestTrace.getExecutionCountDb() > 0) {
+			if (configuration.collectDbTimePerRequest()) {
+				metricRegistry.timer(name("request", timerName, "server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
+				metricRegistry.timer(name("request.All.server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
 			}
+
+			metricRegistry.meter(name("request", timerName, "server.meter.db")).mark(requestTrace.getExecutionCountDb());
+			metricRegistry.meter("request.All.server.meter.db").mark(requestTrace.getExecutionCountDb());
 		}
 	}
 
 	private <T extends RequestTrace> String getTimerMetricName(String timerName) {
-		return name("request", timerName, "time.server");
+		return name("request", timerName, "server.time.total");
 	}
 
 	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {

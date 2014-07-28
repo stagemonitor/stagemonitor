@@ -29,20 +29,27 @@ public class StagemonitorP6Logger implements P6Logger {
 			RequestTrace request = RequestMonitor.getRequest();
 			if (request != null) {
 				request.dbCallCompleted(elapsed);
-				CallStackElement currentCall = Profiler.getMethodCallParent();
-				metricRegistry.timer("db.All.time.statement").update(elapsed, TimeUnit.MILLISECONDS);
-				if (currentCall != null) {
-					metricRegistry
-							.timer(name("db", currentCall.getShortSignature(), "time.statement"))
-							.update(elapsed, TimeUnit.MILLISECONDS);
-				}
-
-				if (configuration.collectPreparedStatementParameters()) {
-					Profiler.addCall(sql, TimeUnit.MILLISECONDS.toNanos(elapsed));
-				} else {
-					Profiler.addCall(prepared, TimeUnit.MILLISECONDS.toNanos(elapsed));
-				}
+				trackDbMetrics(elapsed);
+				addSqlToCallStack(elapsed, prepared, sql);
 			}
+		}
+	}
+
+	private void trackDbMetrics(long elapsed) {
+		CallStackElement currentCall = Profiler.getMethodCallParent();
+		metricRegistry.timer("db.All.time.statement").update(elapsed, TimeUnit.MILLISECONDS);
+		if (currentCall != null) {
+			metricRegistry
+					.timer(name("db", currentCall.getShortSignature(), "time.statement"))
+					.update(elapsed, TimeUnit.MILLISECONDS);
+		}
+	}
+
+	private void addSqlToCallStack(long elapsed, String prepared, String sql) {
+		if (configuration.collectPreparedStatementParameters()) {
+			Profiler.addCall(sql, TimeUnit.MILLISECONDS.toNanos(elapsed));
+		} else {
+			Profiler.addCall(prepared, TimeUnit.MILLISECONDS.toNanos(elapsed));
 		}
 	}
 
