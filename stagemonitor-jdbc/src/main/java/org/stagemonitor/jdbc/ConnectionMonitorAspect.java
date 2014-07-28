@@ -12,13 +12,13 @@ import java.sql.Connection;
 @Aspect
 public class ConnectionMonitorAspect {
 
-	private static final boolean ACTIVE = ConnectionMonitor.isActive();
+	private static final boolean ACTIVE = ConnectionMonitor.isActive(StageMonitor.getConfiguration());
 
 	private ConnectionMonitor connectionMonitor;
 
 
 	public ConnectionMonitorAspect() {
-		connectionMonitor = new ConnectionMonitor(StageMonitor.getMetricRegistry());
+		connectionMonitor = new ConnectionMonitor(StageMonitor.getConfiguration(), StageMonitor.getMetricRegistry());
 	}
 
 	@Pointcut(value = "call(java.sql.Connection javax.sql.DataSource.getConnection(..)) && !within(javax.sql.DataSource+)")

@@ -6,6 +6,7 @@ import com.p6spy.engine.spy.P6SpyLoadableOptions;
 import com.p6spy.engine.spy.P6SpyOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.jdbc.p6spy.P6SpyMultiLogger;
@@ -23,7 +24,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 
 public class ConnectionMonitor {
 
-	private static final boolean ACTIVE = ConnectionMonitor.isActive();
+	private static final boolean ACTIVE = ConnectionMonitor.isActive(StageMonitor.getConfiguration());
 
 	private final Logger logger = LoggerFactory.getLogger(ConnectionMonitor.class);
 
@@ -33,12 +34,12 @@ public class ConnectionMonitor {
 
 	private final boolean p6SpyAlreadyConfigured;
 
-	public ConnectionMonitor(MetricRegistry metricRegistry) {
+	public ConnectionMonitor(Configuration configuration, MetricRegistry metricRegistry) {
 		this.metricRegistry = metricRegistry;
 
 		if (ACTIVE && StageMonitor.getConfiguration().collectSql()) {
 			P6SpyLoadableOptions options = P6SpyOptions.getActiveInstance();
-			addStagemonitorLogger(options);
+			addStagemonitorLogger(configuration, options);
 			p6SpyAlreadyConfigured = options.getDriverNames() == null || options.getDriverNames().isEmpty();
 			if (!p6SpyAlreadyConfigured) {
 				logger.info("Stagemonitor will not wrap connections with p6spy wrappers, because p6spy is already " +
@@ -50,8 +51,8 @@ public class ConnectionMonitor {
 		}
 	}
 
-	private void addStagemonitorLogger(P6SpyLoadableOptions options) {
-		P6SpyMultiLogger.addLogger(new StagemonitorP6Logger());
+	private void addStagemonitorLogger(Configuration configuration, P6SpyLoadableOptions options) {
+		P6SpyMultiLogger.addLogger(new StagemonitorP6Logger(configuration, metricRegistry));
 		if (p6SpyAlreadyConfigured) {
 			P6SpyMultiLogger.addLogger(options.getAppenderInstance());
 		}
@@ -78,8 +79,8 @@ public class ConnectionMonitor {
 		return dataSource;
 	}
 
-	public static boolean isActive() {
-		return !StageMonitor.getConfiguration().getDisabledPlugins().contains(JdbcPlugin.class.getSimpleName()) &&
-				StageMonitor.getConfiguration().isStagemonitorActive();
+	public static boolean isActive(Configuration configuration) {
+		return !configuration.getDisabledPlugins().contains(JdbcPlugin.class.getSimpleName()) &&
+				configuration.isStagemonitorActive();
 	}
 }
