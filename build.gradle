@@ -61,7 +61,7 @@ subprojects {
 		options.debugOptions.debugLevel = "source,lines,vars"
 	}
 
-	tasks.withType(Compile) {
+	tasks.withType(JavaCompile) {
 		options.encoding = 'UTF-8'
 	}
 
@@ -108,5 +108,5 @@ cobertura {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "1.12"
+	gradleVersion = "2.0"
 }
