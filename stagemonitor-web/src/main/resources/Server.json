@@ -65,7 +65,6 @@
 					"y-axis": true,
 					"scale": 1,
 					"grid": {
-						"min": 0,
 						"threshold1": 0.8,
 						"threshold2": 0.95,
 						"threshold1Color": "rgba(223, 241, 30, 0.33)",
@@ -144,8 +143,6 @@
 					"y-axis": true,
 					"scale": 1,
 					"grid": {
-						"max": null,
-						"min": 0,
 						"threshold1": null,
 						"threshold2": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",

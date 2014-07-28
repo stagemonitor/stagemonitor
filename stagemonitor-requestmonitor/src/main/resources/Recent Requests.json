@@ -78,8 +78,7 @@
 					"scale": 1,
 					"y_format": "none",
 					"grid": {
-						"max": null,
-						"min": 0
+						"leftMin": 0
 					},
 					"annotate": {
 						"enable": false,
