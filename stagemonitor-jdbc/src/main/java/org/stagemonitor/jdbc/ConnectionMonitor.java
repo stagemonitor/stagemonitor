@@ -12,7 +12,10 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.jdbc.p6spy.P6SpyMultiLogger;
 import org.stagemonitor.jdbc.p6spy.StagemonitorP6Logger;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.sql.DataSource;
+import java.lang.management.ManagementFactory;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -38,6 +41,7 @@ public class ConnectionMonitor {
 		this.metricRegistry = metricRegistry;
 
 		if (ACTIVE && StageMonitor.getConfiguration().collectSql()) {
+			unregisterP6SpyMBeans();
 			P6SpyLoadableOptions options = P6SpyOptions.getActiveInstance();
 			addStagemonitorLogger(configuration, options);
 			p6SpyAlreadyConfigured = options.getDriverNames() == null || options.getDriverNames().isEmpty();
@@ -48,6 +52,17 @@ public class ConnectionMonitor {
 			P6Core.initialize();
 		} else {
 			p6SpyAlreadyConfigured = false;
+		}
+	}
+
+	private void unregisterP6SpyMBeans() {
+		final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+		try {
+			for (ObjectName objectName : mbs.queryNames(new ObjectName("com.p6spy.*:name=*"), null)) {
+				mbs.unregisterMBean(objectName);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
