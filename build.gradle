@@ -26,6 +26,7 @@ repositories {
 }
 
 apply plugin: 'idea'
+apply plugin: 'eclipse'
 apply plugin: 'release'
 apply plugin: 'cobertura'
 apply plugin: 'com.github.kt3k.coveralls'
@@ -38,6 +39,7 @@ subprojects {
 		compile.extendsFrom provided
 	}
 	apply plugin: 'idea'
+	apply plugin: 'eclipse'
 	apply plugin: 'java'
 	apply plugin: 'cobertura'
 
