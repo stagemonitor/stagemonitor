@@ -377,7 +377,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.mean,'All'),5),5,'avg')"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.mean,'All'),5,'avg'),5)"
 						}
 					],
 					"aliasColors": {},
@@ -438,7 +438,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.p95,'All'),5),5,'avg')"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.p95,'All'),5,'avg'),5)"
 						}
 					],
 					"aliasColors": {},
@@ -499,11 +499,11 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.m1_rate,'All'),5),5,'sum')",
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.time.total.m1_rate,'All'),5,'sum'),5)",
 							"hide": false
 						},
 						{
-							"target": "groupByNode(highestAverage(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.count,'All'),0),5),5,'sum')",
+							"target": "highestAverage(groupByNode(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.[[request]].server.time.total.count,'All'),0),5,'sum'),5)",
 							"hide": true
 						}
 					],
@@ -566,11 +566,11 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.meter.error.count,'All'),0),5),5,'sum')",
+							"target": "highestAverage(groupByNode(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.meter.error.count,'All'),0),5,'sum'),5)",
 							"hide": true
 						},
 						{
-							"target": "groupByNode(highestAverage(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.meter.error.m1_rate,'All'),5),5,'sum')"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].request.*.server.meter.error.m1_rate,'All'),5,'sum'),5)"
 						}
 					],
 					"aliasColors": {},

@@ -224,7 +224,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(stagemonitor.[[application]].[[instance]].[[host]].cache.*.bytes.used,10),5,'[[aggregation]]')",
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache.*.bytes.used,5,'[[aggregation]]'),10)",
 							"hide": false
 						}
 					],
@@ -303,7 +303,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(stagemonitor.[[application]].[[instance]].[[host]].cache.*.get.p75,10),5,'[[aggregation]]')"
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache.*.get.p75,5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
@@ -364,7 +364,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(stagemonitor.[[application]].[[instance]].[[host]].cache.*.get.m1_rate,10),5,'[[aggregation]]')"
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache.*.get.m1_rate,5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
@@ -424,7 +424,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(highestAverage(stagemonitor.[[application]].[[instance]].[[host]].cache.*.delete.expire.m1_rate,10),5,'[[aggregation]]')"
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache.*.delete.expire.m1_rate,5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
