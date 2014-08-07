@@ -39,9 +39,12 @@ public class StagemonitorP6Logger implements P6Logger {
 		CallStackElement currentCall = Profiler.getMethodCallParent();
 		metricRegistry.timer("db.All.time.statement").update(elapsed, TimeUnit.MILLISECONDS);
 		if (currentCall != null) {
-			metricRegistry
-					.timer(name("db", currentCall.getShortSignature(), "time.statement"))
-					.update(elapsed, TimeUnit.MILLISECONDS);
+			String shortSignature = currentCall.getShortSignature();
+			if (shortSignature != null) {
+				metricRegistry
+						.timer(name("db", shortSignature, "time.statement"))
+						.update(elapsed, TimeUnit.MILLISECONDS);
+			}
 		}
 	}
 
