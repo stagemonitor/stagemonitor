@@ -6,7 +6,7 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 public abstract class SpringProfilingAspect extends ProfilingAspect {
 
-	@Pointcut("execution(* javax.servlet.Servlet+.service(..))")
+	@Pointcut("execution(* javax.servlet.Servlet+.service(..)) || execution(* javax.servlet.http.HttpServlet+.do*(..))")
 	public void servletService() {
 	}
 

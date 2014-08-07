@@ -85,8 +85,18 @@ public class CallStackElement {
 		this.signature = signature;
 	}
 
+	/**
+	 * Returns <code>null</code>, if the signature is no method signature (such as 'total') ClassName#methodName
+	 * otherwise
+	 *
+	 * @return <code>null</code>, if the signature is no method signature (such as 'total') ClassName#methodName
+	 * otherwise
+	 */
 	@JsonIgnore
 	public String getShortSignature() {
+		if (signature.indexOf('(') == -1) {
+			return null;
+		}
 		String[] split = signature.substring(0, signature.indexOf('(')).split("\\.");
 		if (split.length > 1) {
 			return split[split.length - 2] + '#' + split[split.length - 1];
