@@ -133,12 +133,12 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(summarize(scale(lowestAverage(stagemonitor.[[application]].[[instance]].[[host]].cache.*.access.hit.total.ratio,10),100),'10minute','avg'),5,'[[aggregation]]')"
+							"target": "lowestAverage(groupByNode(summarize(scale(stagemonitor.[[application]].[[instance]].[[host]].cache.*.access.hit.total.ratio,100),'10minute','avg'),5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
 					"aliasYAxis": {},
-					"title": "Cache Hit Rate",
+					"title": "Cache Hit Rate (lowest 10)",
 					"datasource": null,
 					"renderer": "flot",
 					"y_formats": [
@@ -232,7 +232,7 @@
 					"aliasYAxis": {
 						"vets": 1
 					},
-					"title": "Cache Size",
+					"title": "Cache Size (highest 10)",
 					"datasource": null,
 					"renderer": "flot",
 					"y_formats": [
@@ -308,7 +308,7 @@
 					],
 					"aliasColors": {},
 					"aliasYAxis": {},
-					"title": "Get Time (p75)",
+					"title": "Get Time p75 (highest 10)",
 					"leftYAxisLabel": "ms"
 				},
 				{
@@ -369,7 +369,7 @@
 					],
 					"aliasColors": {},
 					"aliasYAxis": {},
-					"title": "Gets per Second"
+					"title": "Gets per Second (highest 10)"
 				},
 				{
 					"span": 4,
@@ -429,7 +429,7 @@
 					],
 					"aliasColors": {},
 					"aliasYAxis": {},
-					"title": "Expires per Second"
+					"title": "Expires per Second (highest 10)"
 				}
 			],
 			"notice": false
