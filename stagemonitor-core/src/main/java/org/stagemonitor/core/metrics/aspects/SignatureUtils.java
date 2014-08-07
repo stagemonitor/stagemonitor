@@ -4,6 +4,9 @@ import org.aspectj.lang.Signature;
 
 public final class SignatureUtils {
 
+	private SignatureUtils() {
+	}
+
 	public static String getSignature(Signature signature, String nameFromAnnotation, boolean absolute) {
 		String className = null;
 		if (!absolute) {

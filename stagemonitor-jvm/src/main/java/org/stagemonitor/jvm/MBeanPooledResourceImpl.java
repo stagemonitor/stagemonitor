@@ -97,7 +97,9 @@ public class MBeanPooledResourceImpl implements PooledResource {
 
 	@Override
 	public Integer getThreadPoolNumTasksPending() {
-		if (mbeanQueueAttribute == null) return null;
+		if (mbeanQueueAttribute == null) {
+			return null;
+		}
 		try {
 			return (Integer) server.getAttribute(objectName, mbeanQueueAttribute);
 		} catch (Exception e) {

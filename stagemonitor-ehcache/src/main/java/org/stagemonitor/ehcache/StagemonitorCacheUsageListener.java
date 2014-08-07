@@ -11,6 +11,7 @@ import static com.codahale.metrics.RatioGauge.Ratio;
 
 public class StagemonitorCacheUsageListener implements CacheUsageListener {
 
+	private static final String DELETE = "delete";
 	private final String metricPrefix;
 	private final MetricRegistry registry;
 	final String allCacheHitsMetricName;
@@ -104,17 +105,17 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 
 	@Override
 	public void notifyCacheElementEvicted() {
-		registry.meter(name(metricPrefix, "delete", "eviction")).mark();
+		registry.meter(name(metricPrefix, DELETE, "eviction")).mark();
 	}
 
 	@Override
 	public void notifyCacheElementExpired() {
-		registry.meter(name(metricPrefix, "delete", "expire")).mark();
+		registry.meter(name(metricPrefix, DELETE, "expire")).mark();
 	}
 
 	@Override
 	public void notifyCacheElementRemoved() {
-		registry.meter(name(metricPrefix, "delete", "remove")).mark();
+		registry.meter(name(metricPrefix, DELETE, "remove")).mark();
 	}
 
 	@Override

@@ -57,7 +57,8 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		request.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
-		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
+		// according to javadoc, its always a Map<String, String[]>
+		@SuppressWarnings("unchecked")
 		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
 		request.setParameter(getSafeQueryString(parameterMap));
 
@@ -66,23 +67,20 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 	private String getClientIp(HttpServletRequest request) {
 		String ip = request.getHeader("X-Forwarded-For");
-		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-			ip = request.getHeader("X-Real-IP");
-		}
-		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-			ip = request.getHeader("Proxy-Client-IP");
-		}
-		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-			ip = request.getHeader("WL-Proxy-Client-IP");
-		}
-		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-			ip = request.getHeader("HTTP_CLIENT_IP");
-		}
-		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-			ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-		}
+		ip = getIpFromHeaderIfNotAlreadySet("X-Real-IP", request, ip);
+		ip = getIpFromHeaderIfNotAlreadySet("Proxy-Client-IP", request, ip);
+		ip = getIpFromHeaderIfNotAlreadySet("WL-Proxy-Client-IP", request, ip);
+		ip = getIpFromHeaderIfNotAlreadySet("HTTP_CLIENT_IP", request, ip);
+		ip = getIpFromHeaderIfNotAlreadySet("HTTP_X_FORWARDED_FOR", request, ip);
 		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
 			ip = request.getRemoteAddr();
+		}
+		return ip;
+	}
+
+	private String getIpFromHeaderIfNotAlreadySet(String header, HttpServletRequest request, String ip) {
+		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+			ip = request.getHeader(header);
 		}
 		return ip;
 	}

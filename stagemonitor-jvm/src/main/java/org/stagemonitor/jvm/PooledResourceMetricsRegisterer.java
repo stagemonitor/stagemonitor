@@ -6,7 +6,10 @@ import com.codahale.metrics.RatioGauge;
 
 import java.util.List;
 
-public class PooledResourceMetricsRegisterer {
+public final class PooledResourceMetricsRegisterer {
+
+	private PooledResourceMetricsRegisterer() {
+	}
 
 	public static void registerPooledResources(List<? extends PooledResource> pooledResources, MetricRegistry registry) {
 		for (PooledResource pooledResource : pooledResources) {

@@ -12,12 +12,12 @@ import java.util.Map;
 public class HttpRequestTrace extends RequestTrace {
 
 	private final UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
-	private final static int maxElements = 100;
-	private final static Map<String, ReadableUserAgent> userAgentCache =
-			new LinkedHashMap<String, ReadableUserAgent>(maxElements + 1, 0.75f, true) {
+	private static final int MAX_ELEMENTS = 100;
+	private static final Map<String, ReadableUserAgent> userAgentCache =
+			new LinkedHashMap<String, ReadableUserAgent>(MAX_ELEMENTS + 1, 0.75f, true) {
 				@Override
 				protected boolean removeEldestEntry(Map.Entry eldest) {
-					return size() > maxElements;
+					return size() > MAX_ELEMENTS;
 				}
 			};
 
@@ -102,12 +102,12 @@ public class HttpRequestTrace extends RequestTrace {
 
 	private UserAgentInformation getUserAgentInformation(Map<String, String> headers) {
 		if (headers != null && StageMonitor.getConfiguration().isParseUserAgent()) {
-			final String userAgent = headers.get("user-agent");
-			if (userAgent != null) {
-				ReadableUserAgent readableUserAgent = userAgentCache.get(userAgent);
+			final String userAgentHeader = headers.get("user-agent");
+			if (userAgentHeader != null) {
+				ReadableUserAgent readableUserAgent = userAgentCache.get(userAgentHeader);
 				if (readableUserAgent == null) {
-					readableUserAgent = parser.parse(userAgent);
-					userAgentCache.put(userAgent, readableUserAgent);
+					readableUserAgent = parser.parse(userAgentHeader);
+					userAgentCache.put(userAgentHeader, readableUserAgent);
 				}
 				return new UserAgentInformation(readableUserAgent);
 			}

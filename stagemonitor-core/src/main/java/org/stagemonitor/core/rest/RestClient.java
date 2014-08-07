@@ -20,7 +20,7 @@ import java.util.jar.Manifest;
 
 public class RestClient {
 
-	private final static Logger logger = LoggerFactory.getLogger(RestClient.class);
+	private static final Logger logger = LoggerFactory.getLogger(RestClient.class);
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	private static final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
@@ -38,6 +38,7 @@ public class RestClient {
 			return thread;
 		}
 	});
+	private static final String TITLE = "title";
 
 	public static void sendAsJson(final String baseUrl, final String path, final String method, final Object requestBody) {
 		if (baseUrl == null || baseUrl.isEmpty()) {
@@ -97,7 +98,7 @@ public class RestClient {
 		if (baseUrl != null && !baseUrl.isEmpty()) {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
-				RestClient.sendAsJsonAsync(baseUrl, path + URLEncoder.encode(dashboard.get("title").asText(), "UTF-8") + "/_create",
+				RestClient.sendAsJsonAsync(baseUrl, path + URLEncoder.encode(dashboard.get(TITLE).asText(), "UTF-8") + "/_create",
 						"PUT", dashboard);
 			} catch (IOException e) {
 				logger.warn(e.getMessage(), e);
@@ -108,11 +109,11 @@ public class RestClient {
 	static ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
 		final InputStream dashboardStram = RestClient.class.getClassLoader().getResourceAsStream(dashboardPath);
 		final ObjectNode dashboard = (ObjectNode) MAPPER.readTree(dashboardStram);
-		dashboard.put("title", dashboard.get("title").asText() + STAGEMONITOR_MAJOR_MINOR_VERSION);
+		dashboard.put(TITLE, dashboard.get(TITLE).asText() + STAGEMONITOR_MAJOR_MINOR_VERSION);
 		ObjectNode dashboardElasticsearchFormat = MAPPER.createObjectNode();
 		dashboardElasticsearchFormat.put("user", "guest");
 		dashboardElasticsearchFormat.put("group", "guest");
-		dashboardElasticsearchFormat.set("title", dashboard.get("title"));
+		dashboardElasticsearchFormat.set(TITLE, dashboard.get(TITLE));
 		dashboardElasticsearchFormat.set("tags", dashboard.get("tags"));
 		dashboardElasticsearchFormat.put("dashboard", dashboard.toString());
 		return dashboardElasticsearchFormat;
@@ -126,7 +127,7 @@ public class RestClient {
 			logger.warn("Failed to read stagemonitor version from manifest (class is not in jar)");
 			return "";
 		}
-		String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) + "/META-INF/MANIFEST.MF";
+		String manifestPath = classPath.substring(0, classPath.lastIndexOf('!') + 1) + "/META-INF/MANIFEST.MF";
 		try {
 			Manifest manifest = new Manifest(new URL(manifestPath).openStream());
 			Attributes attr = manifest.getMainAttributes();

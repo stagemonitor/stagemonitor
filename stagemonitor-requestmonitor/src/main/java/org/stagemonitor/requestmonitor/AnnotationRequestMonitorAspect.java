@@ -7,16 +7,20 @@ import org.aspectj.lang.annotation.Pointcut;
 public class AnnotationRequestMonitorAspect extends RequestMonitorAspect {
 
 	@Pointcut("within(@org.stagemonitor.requestmonitor.MonitorRequests *)")
-	public void annotatedWithMonitor() {}
+	public void annotatedWithMonitor() {
+	}
 
 	@Pointcut("execution(public * *(..))")
-	public void publicMethod() {}
+	public void publicMethod() {
+	}
 
 	@Pointcut("publicMethod() && annotatedWithMonitor()")
-	public void publicMethodInsideAClassAnnotatedWithMonitored() {}
+	public void publicMethodInsideAClassAnnotatedWithMonitored() {
+	}
 
 	@Pointcut("execution(@org.stagemonitor.requestmonitor.MonitorRequests * *(..))")
-	public void methodAnnotatedWithMonitored() {}
+	public void methodAnnotatedWithMonitored() {
+	}
 
 	@Override
 	@Pointcut("publicMethodInsideAClassAnnotatedWithMonitored() || methodAnnotatedWithMonitored()")

@@ -2,20 +2,20 @@ package org.stagemonitor.requestmonitor.profiler;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Stack;
 
 public class CallStackElement {
 
-	private static final String horizontal;      // '│   '
-	private static final String angle;           // '└── '
-	private static final String horizontalAngle; // '├── '
+	private static final String HORIZONTAL;       // '│   '
+	private static final String ANGLE;            // '└── '
+	private static final String HORIZONTAL_ANGLE; // '├── '
 	static {
-		horizontal = new String(new char[]{9474, ' ', ' ', ' '});
-		angle = new String(new char[] {9492, 9472, 9472, ' '});
-		horizontalAngle = new String(new char[]{9500, 9472, 9472, ' '});
+		HORIZONTAL = new String(new char[]{9474, ' ', ' ', ' '});
+		ANGLE = new String(new char[] {9492, 9472, 9472, ' '});
+		HORIZONTAL_ANGLE = new String(new char[]{9500, 9472, 9472, ' '});
 	}
 
 	@JsonIgnore
@@ -118,9 +118,10 @@ public class CallStackElement {
 	 * @return the parent of this {@link CallStackElement}
 	 */
 	public CallStackElement executionStopped(long timestamp, long minExecutionTime) {
-		long executionTime = timestamp - this.executionTime; // executionTime is initialized to start timestamp
-		if (executionTime >= minExecutionTime) {
-			this.executionTime = executionTime;
+		// executionTime is initialized to start timestamp
+		long localExecutionTime = timestamp - this.executionTime;
+		if (localExecutionTime >= minExecutionTime) {
+			this.executionTime = localExecutionTime;
 		} else if (parent != null) {
 			// <this> is always the last entry in parent.getChildren()
 			parent.removeLastChild();
@@ -135,11 +136,11 @@ public class CallStackElement {
 
 	public String toString(boolean asciiArt) {
 		final StringBuilder sb = new StringBuilder(3000);
-		logStats(getExecutionTime(), new Stack<String>(), sb, asciiArt);
+		logStats(getExecutionTime(), new LinkedList<String>(), sb, asciiArt);
 		return sb.toString();
 	}
 
-	public void logStats(long totalExecutionTimeNs, Stack<String> indentationStack, StringBuilder sb,
+	public void logStats(long totalExecutionTimeNs, Deque<String> indentationStack, StringBuilder sb,
 						 final boolean asciiArt) {
 		if (isRoot()) {
 			sb.append("----------------------------------------------------------------------\n");
@@ -154,11 +155,13 @@ public class CallStackElement {
 				if (isLastChild()) {
 					indentationStack.push("    ");
 				} else {
-					indentationStack.push(asciiArt ? horizontal : "|   ");
+					indentationStack.push(asciiArt ? HORIZONTAL : "|   ");
 				}
 			}
 			callStats.logStats(totalExecutionTimeNs, indentationStack, sb, asciiArt);
-			if (!isRoot()) indentationStack.pop();
+			if (!isRoot()) {
+				indentationStack.pop();
+			}
 		}
 	}
 
@@ -195,15 +198,15 @@ public class CallStackElement {
 		return sb.toString();
 	}
 
-	private void appendCallTree(Stack<String> indentationStack, StringBuilder sb, final boolean asciiArt) {
+	private void appendCallTree(Deque<String> indentationStack, StringBuilder sb, final boolean asciiArt) {
 		for (String indentation : indentationStack) {
 			sb.append(indentation);
 		}
 		if (!isRoot()) {
 			if (isLastChild()) {
-				sb.append(asciiArt ? angle : "`-- ");
+				sb.append(asciiArt ? ANGLE : "`-- ");
 			} else {
-				sb.append(asciiArt ? horizontalAngle : "|-- ");
+				sb.append(asciiArt ? HORIZONTAL_ANGLE : "|-- ");
 			}
 		}
 
@@ -211,8 +214,9 @@ public class CallStackElement {
 	}
 
 	private boolean isLastChild() {
-		final CallStackElement parent = getParent();
-		if (parent == null) return true;
+		if (parent == null) {
+			return true;
+		}
 		final List<CallStackElement> parentChildren = parent.getChildren();
 		return parentChildren.get(parentChildren.size() - 1) == this;
 	}

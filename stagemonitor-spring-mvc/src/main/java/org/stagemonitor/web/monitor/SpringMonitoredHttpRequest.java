@@ -1,5 +1,7 @@
 package org.stagemonitor.web.monitor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
@@ -11,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final List<HandlerMapping> allHandlerMappings;
 
@@ -29,15 +33,14 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 		for (HandlerMapping handlerMapping : allHandlerMappings) {
 			try {
 				HandlerExecutionChain handler = handlerMapping.getHandler(httpServletRequest);
-				if (handler != null) {
-					if (handler.getHandler() instanceof HandlerMethod) {
-						HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
-						name = handlerMethod.getMethod().getName();
-						return splitCamelCase(capitalize(name));
-					}
+				if (handler != null && handler.getHandler() instanceof HandlerMethod) {
+					HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
+					name = handlerMethod.getMethod().getName();
+					return splitCamelCase(capitalize(name));
 				}
 			} catch (Exception e) {
 				// ignore, try next
+				logger.warn(e.getMessage(), e);
 			}
 		}
 		if (!configuration.isMonitorOnlySpringMvcRequests()) {

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class PropertyFileConfigurationSource implements ConfigurationSource {
+public final class PropertyFileConfigurationSource implements ConfigurationSource {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 

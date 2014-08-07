@@ -29,6 +29,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
+	private static final String REQUEST = "request";
 	private final RequestLogger requestLogger = new RequestLogger();
 
 	/**
@@ -197,12 +198,12 @@ public class RequestMonitor {
 			metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
 
 			if (configuration.isCollectCpuTime()) {
-				metricRegistry.timer(name("request", timerName, ".server.cpu-time.total")).update(cpuTime, NANOSECONDS);
+				metricRegistry.timer(name(REQUEST, timerName, ".server.cpu-time.total")).update(cpuTime, NANOSECONDS);
 				metricRegistry.timer("request.All.server.cpu-time.total").update(cpuTime, NANOSECONDS);
 			}
 
 			if (requestTrace.isError()) {
-				metricRegistry.meter(name("request", timerName, "server.meter.error")).mark();
+				metricRegistry.meter(name(REQUEST, timerName, "server.meter.error")).mark();
 				metricRegistry.meter("request.All.server.meter.error").mark();
 			}
 			trackDbMetrics(timerName, requestTrace);
@@ -212,17 +213,17 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void trackDbMetrics(String timerName, T requestTrace) {
 		if (requestTrace.getExecutionCountDb() > 0) {
 			if (configuration.collectDbTimePerRequest()) {
-				metricRegistry.timer(name("request", timerName, "server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
+				metricRegistry.timer(name(REQUEST, timerName, "server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
 				metricRegistry.timer(name("request.All.server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
 			}
 
-			metricRegistry.meter(name("request", timerName, "server.meter.db")).mark(requestTrace.getExecutionCountDb());
+			metricRegistry.meter(name(REQUEST, timerName, "server.meter.db")).mark(requestTrace.getExecutionCountDb());
 			metricRegistry.meter("request.All.server.meter.db").mark(requestTrace.getExecutionCountDb());
 		}
 	}
 
 	private <T extends RequestTrace> String getTimerMetricName(String timerName) {
-		return name("request", timerName, "server.time.total");
+		return name(REQUEST, timerName, "server.time.total");
 	}
 
 	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {
@@ -274,9 +275,15 @@ public class RequestMonitor {
 
 		private boolean profileThisExecution() {
 			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
-			if (callStackEveryXRequestsToGroup == 1) return true;
-			if (callStackEveryXRequestsToGroup < 1) return false;
-			if (timer.getCount() == 0) return false;
+			if (callStackEveryXRequestsToGroup == 1) {
+				return true;
+			}
+			if (callStackEveryXRequestsToGroup < 1) {
+				return false;
+			}
+			if (timer.getCount() == 0) {
+				return false;
+			}
 			return timer.getCount() % callStackEveryXRequestsToGroup == 0;
 		}
 

@@ -2,8 +2,12 @@ package org.stagemonitor.core.util;
 
 import java.util.regex.Pattern;
 
-public class GraphiteSanitizer {
+public final class GraphiteSanitizer {
+
 	public static final Pattern DISALLOWED_CHARS = Pattern.compile("[^a-zA-Z0-9!#\\$%&\"'\\*\\+\\-:;<=>\\?@\\[\\\\\\]\\^_`\\|~]");
+
+	private GraphiteSanitizer() {
+	}
 
 	/**
 	 * Graphite only supports alphanumeric characters + !#$%&"'*+-.:;<=>?@[\]^_`|~ so each metric name segment has to

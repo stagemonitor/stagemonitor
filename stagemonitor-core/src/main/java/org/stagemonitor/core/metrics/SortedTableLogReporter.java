@@ -1,11 +1,26 @@
 package org.stagemonitor.core.metrics;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 public class SortedTableLogReporter extends ScheduledReporter {
@@ -128,84 +143,99 @@ public class SortedTableLogReporter extends ScheduledReporter {
 		sb.append('\n');
 
 		try {
-
-			if (!gauges.isEmpty()) {
-				printWithBanner("-- Gauges", '-', sb);
-				int maxLength = getMaxLengthOfKeys(gauges);
-				sb.append(String.format("%-" + maxLength + "s | value\n", "name"));
-				for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
-					printGauge(entry.getKey(), entry.getValue(), maxLength, sb);
-				}
-				sb.append('\n');
-			}
-			if (!counters.isEmpty()) {
-				printWithBanner("-- Counters", '-', sb);
-				int maxLength = getMaxLengthOfKeys(counters);
-				sb.append(String.format("%-" + maxLength + "s | count\n", "name"));
-				Map<String, Counter> sortedCounters = sortByValue(counters, new Comparator<Counter>() {
-					@Override
-					public int compare(Counter o1, Counter o2) {
-						return Long.compare(o2.getCount(), o1.getCount());
-					}
-				});
-				for (Map.Entry<String, Counter> entry : sortedCounters.entrySet()) {
-					printCounter(entry.getKey(), entry.getValue(), maxLength, sb);
-				}
-				sb.append('\n');
-			}
-
-			if (!histograms.isEmpty()) {
-				printWithBanner("-- Histograms", '-', sb);
-				int maxLength = getMaxLengthOfKeys(histograms);
-				sb.append(String.format("%-" + maxLength + "s | count     | max       | mean      | min       | stddev    | p50       | p75       | p95       | p98       | p99       | p999\n", "name"));
-				Map<String, Histogram> sortedHistograms = sortByValue(histograms, new Comparator<Histogram>() {
-					@Override
-					public int compare(Histogram o1, Histogram o2) {
-						return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
-					}
-				});
-				for (Map.Entry<String, Histogram> entry : sortedHistograms.entrySet()) {
-					printHistogram(entry.getKey(), entry.getValue(), maxLength, sb);
-				}
-				sb.append('\n');
-			}
-
-			if (!meters.isEmpty()) {
-				printWithBanner("-- Meters", '-', sb);
-				int maxLength = getMaxLengthOfKeys(meters);
-				sb.append(String.format("%-" + maxLength + "s | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name"));
-				Map<String, Meter> sortedMeters = sortByValue(meters, new Comparator<Meter>() {
-					@Override
-					public int compare(Meter o1, Meter o2) {
-						return Long.compare(o2.getCount(), o1.getCount());
-					}
-				});
-				for (Map.Entry<String, Meter> entry : sortedMeters.entrySet()) {
-					printMeter(entry.getKey(), entry.getValue(), maxLength, sb);
-				}
-				sb.append('\n');
-			}
-
-			if (!timers.isEmpty()) {
-				printWithBanner("-- Timers", '-', sb);
-				int maxLength = getMaxLengthOfKeys(timers);
-				sb.append(String.format("%-" + maxLength + "s | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name"));
-				Map<String, Timer> sortedTimers = sortByValue(timers, new Comparator<Timer>() {
-					public int compare(Timer o1, Timer o2) {
-						return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
-					}
-				});
-				for (Map.Entry<String, Timer> entry : sortedTimers.entrySet()) {
-					printTimer(entry.getKey(), entry.getValue(), maxLength, sb);
-				}
-				sb.append('\n');
-			}
-
+			logGauges(gauges, sb);
+			logCounters(counters, sb);
+			logHistograms(histograms, sb);
+			logMeters(meters, sb);
+			logTimers(timers, sb);
 			sb.append('\n');
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error(e.getMessage(), e);
 		} finally {
 			log.info(sb.toString());
+		}
+	}
+
+	private void logGauges(SortedMap<String, Gauge> gauges, StringBuilder sb) {
+		if (!gauges.isEmpty()) {
+			printWithBanner("-- Gauges", '-', sb);
+			int maxLength = getMaxLengthOfKeys(gauges);
+			sb.append(String.format("%-" + maxLength + "s | value\n", "name"));
+			for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+				printGauge(entry.getKey(), entry.getValue(), maxLength, sb);
+			}
+			sb.append('\n');
+		}
+	}
+
+	private void logCounters(SortedMap<String, Counter> counters, StringBuilder sb) {
+		if (!counters.isEmpty()) {
+			printWithBanner("-- Counters", '-', sb);
+			int maxLength = getMaxLengthOfKeys(counters);
+			sb.append(String.format("%-" + maxLength + "s | count\n", "name"));
+			Map<String, Counter> sortedCounters = sortByValue(counters, new Comparator<Counter>() {
+				@Override
+				public int compare(Counter o1, Counter o2) {
+					return Long.compare(o2.getCount(), o1.getCount());
+				}
+			});
+			for (Map.Entry<String, Counter> entry : sortedCounters.entrySet()) {
+				printCounter(entry.getKey(), entry.getValue(), maxLength, sb);
+			}
+			sb.append('\n');
+		}
+	}
+
+	private void logHistograms(SortedMap<String, Histogram> histograms, StringBuilder sb) {
+		if (!histograms.isEmpty()) {
+			printWithBanner("-- Histograms", '-', sb);
+			int maxLength = getMaxLengthOfKeys(histograms);
+			sb.append(String.format("%-" + maxLength + "s | count     | max       | mean      | min       | stddev    | p50       | p75       | p95       | p98       | p99       | p999\n", "name"));
+			Map<String, Histogram> sortedHistograms = sortByValue(histograms, new Comparator<Histogram>() {
+				@Override
+				public int compare(Histogram o1, Histogram o2) {
+					return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
+				}
+			});
+			for (Map.Entry<String, Histogram> entry : sortedHistograms.entrySet()) {
+				printHistogram(entry.getKey(), entry.getValue(), maxLength, sb);
+			}
+			sb.append('\n');
+		}
+	}
+
+	private void logMeters(SortedMap<String, Meter> meters, StringBuilder sb) {
+		if (!meters.isEmpty()) {
+			printWithBanner("-- Meters", '-', sb);
+			int maxLength = getMaxLengthOfKeys(meters);
+			sb.append(String.format("%-" + maxLength + "s | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name"));
+			Map<String, Meter> sortedMeters = sortByValue(meters, new Comparator<Meter>() {
+				@Override
+				public int compare(Meter o1, Meter o2) {
+					return Long.compare(o2.getCount(), o1.getCount());
+				}
+			});
+			for (Map.Entry<String, Meter> entry : sortedMeters.entrySet()) {
+				printMeter(entry.getKey(), entry.getValue(), maxLength, sb);
+			}
+			sb.append('\n');
+		}
+	}
+
+	private void logTimers(SortedMap<String, Timer> timers, StringBuilder sb) {
+		if (!timers.isEmpty()) {
+			printWithBanner("-- Timers", '-', sb);
+			int maxLength = getMaxLengthOfKeys(timers);
+			sb.append(String.format("%-" + maxLength + "s | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name"));
+			Map<String, Timer> sortedTimers = sortByValue(timers, new Comparator<Timer>() {
+				public int compare(Timer o1, Timer o2) {
+					return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
+				}
+			});
+			for (Map.Entry<String, Timer> entry : sortedTimers.entrySet()) {
+				printTimer(entry.getKey(), entry.getValue(), maxLength, sb);
+			}
+			sb.append('\n');
 		}
 	}
 
@@ -213,7 +243,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 		List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());
 		Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
 			public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
-				return (valueComparator.compare(o1.getValue(), o2.getValue()));
+				return valueComparator.compare(o1.getValue(), o2.getValue());
 			}
 		});
 
@@ -247,7 +277,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 
 	private void printMeter(String name, Meter meter, int maxNameLength, StringBuilder sb) {
 		sb.append(String.format("%" + maxNameLength + "s | ", name));
-		sb.append(String.format(locale, "%,9d | ", meter.getCount()));
+		sb.append(formatCount(meter.getCount()));
 		printMetered(meter, sb);
 		sb.append('\n');
 	}
@@ -264,7 +294,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 
 	private void printHistogram(String name, Histogram histogram, int maxNameLength, StringBuilder sb) {
 		sb.append(String.format("%" + maxNameLength + "s | ", name));
-		sb.append(String.format(locale, "%,9d | ", histogram.getCount()));
+		sb.append(formatCount(histogram.getCount()));
 		printSnapshot(histogram.getSnapshot(), sb);
 		sb.append('\n');
 	}
@@ -285,10 +315,14 @@ public class SortedTableLogReporter extends ScheduledReporter {
 	private void printTimer(String name, Timer timer, int maxNameLength, StringBuilder sb) {
 		final Snapshot snapshot = timer.getSnapshot();
 		sb.append(String.format("%" + maxNameLength + "s | ", name));
-		sb.append(String.format(locale, "%,9d | ", timer.getCount()));
+		sb.append(formatCount(timer.getCount()));
 		printSnapshot(snapshot, sb);
 		printMetered(timer, sb);
 		sb.append('\n');
+	}
+
+	private String formatCount(long count) {
+		return String.format(locale, "%,9d | ", count);
 	}
 
 	public void printDouble(double d, StringBuilder sb) {

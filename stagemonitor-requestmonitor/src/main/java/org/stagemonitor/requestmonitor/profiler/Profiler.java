@@ -2,11 +2,14 @@ package org.stagemonitor.requestmonitor.profiler;
 
 import org.stagemonitor.core.StageMonitor;
 
-public class Profiler {
+public final class Profiler {
 
 	public static final long MIN_EXECUTION_TIME_NANOS = StageMonitor.getConfiguration().getMinExecutionTimeNanos();
 
 	private static final ThreadLocal<CallStackElement> methodCallParent = new ThreadLocal<CallStackElement>();
+
+	private Profiler() {
+	}
 
 	public static void start(String signature) {
 		final CallStackElement parent = methodCallParent.get();

@@ -13,7 +13,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 @Aspect
 public class TimedAspect {
 
-	private final static MetricRegistry registry = StageMonitor.getMetricRegistry();
+	private static final MetricRegistry registry = StageMonitor.getMetricRegistry();
 
 	@Around(value = "execution(@com.codahale.metrics.annotation.Timed * *(..)) && @annotation(timedAnnotation)")
 	public Object timed(ProceedingJoinPoint pjp, Timed timedAnnotation) throws Throwable {

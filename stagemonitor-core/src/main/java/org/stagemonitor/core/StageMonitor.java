@@ -21,12 +21,15 @@ import java.util.concurrent.TimeUnit;
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
-public class StageMonitor {
+public final class StageMonitor {
 
-	private final static Logger logger = LoggerFactory.getLogger(StageMonitor.class);
+	private static final Logger logger = LoggerFactory.getLogger(StageMonitor.class);
 	private static Configuration configuration = new Configuration();
 	private static volatile boolean started = false;
 	private static volatile MeasurementSession measurementSession = new MeasurementSession(null, null, null);
+
+	private StageMonitor() {
+	}
 
 	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
 		if (!configuration.isStagemonitorActive()) {
