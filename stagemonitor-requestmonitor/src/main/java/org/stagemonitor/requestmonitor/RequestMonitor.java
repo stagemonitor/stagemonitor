@@ -132,7 +132,7 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		info.requestTrace = monitoredRequest.createRequestTrace();
 		try {
-			detectForwardingExecution(monitoredRequest, info);
+			detectForwardedRequest(monitoredRequest, info);
 			if (!info.monitorThisExecution) {
 				return;
 			}
@@ -148,7 +148,7 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> void detectForwardingExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
+	private <T extends RequestTrace> void detectForwardedRequest(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		if (request.get() != null) {
 			// there is already an request set in this thread -> this execution must have been forwarded
 			info.forwardedExecution = true;
