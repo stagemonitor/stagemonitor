@@ -12,7 +12,7 @@ public abstract class ProfilingAspect {
 	@Pointcut
 	public abstract void methodsToProfile();
 
-	@Pointcut("within(org.stagemonitor.collector..*)")
+	@Pointcut("within(org.stagemonitor..*)")
 	private void stagemonitorCollector() {
 	}
 

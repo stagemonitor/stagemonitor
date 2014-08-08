@@ -12,9 +12,9 @@ import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResp
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -116,7 +116,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	private boolean isParamExcluded(String queryParameter) {
-		final List<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
+		final Collection<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
 		for (Pattern excludedParam : confidentialQueryParams) {
 			if (excludedParam.matcher(queryParameter).matches()) {
 				return true;
@@ -128,7 +128,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	private Map<String, String> getHeaders(HttpServletRequest request) {
 		Map<String, String> headers = new HashMap<String, String>();
 		final Enumeration headerNames = request.getHeaderNames();
-		final List<String> excludedHeaders = configuration.getExcludedHeaders();
+		final Collection<String> excludedHeaders = configuration.getExcludedHeaders();
 		while (headerNames.hasMoreElements()) {
 			final String headerName = ((String) headerNames.nextElement()).toLowerCase();
 			if (!excludedHeaders.contains(headerName)) {
@@ -156,7 +156,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		}
 
 		Object exception = httpServletRequest.getAttribute("exception");
-		if (exception instanceof Exception) {
+		if (exception != null && exception instanceof Exception) {
 			request.setException((Exception) exception);
 		}
 		request.setBytesWritten(responseWrapper.getContentLength());

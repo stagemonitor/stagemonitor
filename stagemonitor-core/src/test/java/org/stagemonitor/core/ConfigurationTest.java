@@ -2,10 +2,18 @@ package org.stagemonitor.core;
 
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ConfigurationTest {
 
@@ -86,7 +94,7 @@ public class ConfigurationTest {
 		assertEquals(false, configuration.isMonitorOnlySpringMvcRequests());
 		assertEquals(true, configuration.isCollectHeaders());
 		assertEquals(Arrays.asList("cookie", "authorization"), configuration.getExcludedHeaders());
-		final List<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
+		final Collection<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
 		final List<String> confidentialQueryParamsAsString = new ArrayList<String>(confidentialQueryParams.size());
 		for (Pattern confidentialQueryParam : confidentialQueryParams) {
 			confidentialQueryParamsAsString.add(confidentialQueryParam.toString());

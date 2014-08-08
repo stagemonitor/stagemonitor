@@ -14,7 +14,7 @@ import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
 import java.net.InetSocketAddress;
-import java.util.List;
+import java.util.Collection;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
@@ -70,7 +70,7 @@ public final class StageMonitor {
 	}
 
 	private static void initializePlugins() {
-		final List<String> disabledPlugins = configuration.getDisabledPlugins();
+		final Collection<String> disabledPlugins = configuration.getDisabledPlugins();
 		for (StageMonitorPlugin stagemonitorPlugin : ServiceLoader.load(StageMonitorPlugin.class)) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 

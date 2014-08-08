@@ -5,9 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
+import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.rest.RestClient;
-import org.stagemonitor.jvm.MBeanPooledResourceImpl;
-import org.stagemonitor.jvm.PooledResourceMetricsRegisterer;
 
 import java.util.List;
 

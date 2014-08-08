@@ -3,10 +3,11 @@ package org.stagemonitor.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 public class Configuration {
 
@@ -125,7 +126,7 @@ public class Configuration {
 	 *
 	 * @return list header names not to collect
 	 */
-	public List<String> getExcludedHeaders() {
+	public Collection<String> getExcludedHeaders() {
 		return getLowerStrings("stagemonitor.requestmonitor.http.headers.excluded", "cookie,Authorization");
 	}
 
@@ -137,7 +138,7 @@ public class Configuration {
 	 *
 	 * @return list of confidential request parameter names
 	 */
-	public List<Pattern> getConfidentialRequestParams() {
+	public Collection<Pattern> getConfidentialRequestParams() {
 		return getPatterns("stagemonitor.requestmonitor.http.requestparams.confidential.regex",
 				"(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*");
 	}
@@ -309,7 +310,7 @@ public class Configuration {
 	 *
 	 * @return a pattern list of excluded metric names
 	 */
-	public List<Pattern> getExcludedMetricsPatterns() {
+	public  Collection<Pattern> getExcludedMetricsPatterns() {
 		return getPatterns("stagemonitor.metrics.excluded.pattern", "");
 	}
 
@@ -318,7 +319,7 @@ public class Configuration {
 	 *
 	 * @return the disabled plugin names
 	 */
-	public List<String> getDisabledPlugins() {
+	public Collection<String> getDisabledPlugins() {
 		return getStrings("stagemonitor.plugins.disabled", "");
 	}
 
@@ -368,6 +369,15 @@ public class Configuration {
 		return getString("stagemonitor.configuration.update.password", null);
 	}
 
+	/**
+	 * If active, stagemonitor will collect internal performance data
+	 *
+	 * @return <code>true</code>, if internal performance data should be collected, false otherwise
+	 */
+	public boolean isInternalMonitoringActive() {
+		return getBoolean("stagemonitor.internal.monitoring", false);
+	}
+
 	public String getString(final String key) {
 		return getString(key, null);
 	}
@@ -396,26 +406,26 @@ public class Configuration {
 		}
 	}
 
-	public List<String> getLowerStrings(final String key, final String defaultValue) {
-		return getAndCache(key, null, new PropertyLoader<List<String>>() {
+	public Collection<String> getLowerStrings(final String key, final String defaultValue) {
+		return getAndCache(key, null, new PropertyLoader<Collection<String>>() {
 			@Override
-			public List<String> load() {
+			public Collection<String> load() {
 				String property = getTrimmedProperty(key, defaultValue);
 				if (property != null && property.length() > 0) {
 					final String[] split = property.split(",");
 					for (int i = 0; i < split.length; i++) {
 						split[i] = split[i].trim().toLowerCase();
 					}
-					return Arrays.asList(split);
+					return new LinkedHashSet<String>(Arrays.asList(split));
 				}
-				return emptyList();
+				return emptySet();
 			}
 		});
 	}
 
-	public List<Pattern> getPatterns(final String key, final String defaultValue) {
-		final List<String> strings = getStrings(key, defaultValue);
-		List<Pattern> patterns = new ArrayList<Pattern>(strings.size());
+	public Collection<Pattern> getPatterns(final String key, final String defaultValue) {
+		final Collection<String> strings = getStrings(key, defaultValue);
+		Collection<Pattern> patterns = new LinkedHashSet<Pattern>((int) Math.ceil(strings.size() / 0.75));
 		for (String patternString : strings) {
 			try {
 				patterns.add(Pattern.compile(patternString));
@@ -426,19 +436,19 @@ public class Configuration {
 		return patterns;
 	}
 
-	public List<String> getStrings(final String key, final String defaultValue) {
-		return getAndCache(key, null, new PropertyLoader<List<String>>() {
+	public Collection<String> getStrings(final String key, final String defaultValue) {
+		return getAndCache(key, null, new PropertyLoader<Collection<String>>() {
 			@Override
-			public List<String> load() {
+			public Collection<String> load() {
 				String property = getTrimmedProperty(key, defaultValue);
 				if (property != null && property.length() > 0) {
 					final String[] split = property.split(",");
 					for (int i = 0; i < split.length; i++) {
 						split[i] = split[i].trim();
 					}
-					return Arrays.asList(split);
+					return new LinkedHashSet<String>(Arrays.asList(split));
 				}
-				return emptyList();
+				return emptySet();
 			}
 		});
 	}

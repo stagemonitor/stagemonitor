@@ -1,4 +1,4 @@
-package org.stagemonitor.jvm;
+package org.stagemonitor.core.pool;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;

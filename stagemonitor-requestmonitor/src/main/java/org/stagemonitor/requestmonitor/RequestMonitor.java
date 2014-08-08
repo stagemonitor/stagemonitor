@@ -15,9 +15,7 @@ import org.stagemonitor.requestmonitor.profiler.Profiler;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,6 +66,7 @@ public class RequestMonitor {
 	}
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
+		long overhead1 = System.nanoTime();
 		if (!configuration.isStagemonitorActive()) {
 			RequestInformation<T> info = new RequestInformation<T>();
 			info.executionResult = monitoredRequest.execute();
@@ -88,14 +87,24 @@ public class RequestMonitor {
 			beforeExecution(monitoredRequest, info);
 		}
 		try {
+			overhead1 = System.nanoTime() - overhead1;
 			info.executionResult = monitoredRequest.execute();
 			return info;
 		} catch (Exception e) {
 			info.requestTrace.setException(e);
 			throw e;
 		} finally {
+			long overhead2 = System.nanoTime();
 			if (monitor) {
 				afterExecution(monitoredRequest, info);
+			}
+
+			if (configuration.isInternalMonitoringActive()) {
+				overhead2 = System.nanoTime() - overhead2;
+				logger.info("overhead1="+overhead1);
+				logger.info("overhead2="+overhead2);
+				metricRegistry.timer("internal.overhead.RequestMonitor")
+						.update(overhead2 + overhead1, NANOSECONDS);
 			}
 		}
 	}
@@ -151,6 +160,7 @@ public class RequestMonitor {
 		try {
 			if (info.monitorThisExecution()) {
 				// if forwarded executions are not monitored, info.requestTrace would be null
+				// and info.monitorThisExecution() would have returned false
 				if (!info.isForwardingExecution()) {
 					final long executionTime = System.nanoTime() - info.start;
 					final long cpuTime = getCpuTime() - info.startCpu;
@@ -228,15 +238,7 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
-			final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
-			dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-			String path = String.format("/stagemonitor-%s/executions/%s", dateFormat.format(new Date()),
-					requestTrace.getId());
-			final String ttl = configuration.getCallStacksTimeToLive();
-			if (ttl != null && !ttl.isEmpty()) {
-				path += "?ttl=" + ttl;
-			}
-			RestClient.sendAsJsonAsync(serverUrl, path, "PUT", requestTrace);
+			RestClient.sendCallStackAsync(requestTrace, requestTrace.getId(), serverUrl);
 		}
 		if (configuration.isLogCallStacks()) {
 			requestLogger.logStats(requestTrace);
