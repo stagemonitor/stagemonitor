@@ -136,7 +136,7 @@ public class HttpRequestTrace extends RequestTrace {
 		return toString(false);
 	}
 
-	public String toString(boolean asciiArt) {
+	public String toString(boolean asciiArt, boolean callStack) {
 		StringBuilder sb = new StringBuilder(3000);
 		sb.append(method).append(' ').append(url);
 		if (getParameter() != null) {
@@ -148,7 +148,9 @@ public class HttpRequestTrace extends RequestTrace {
 		for (Map.Entry<String, String> entry : headers.entrySet()) {
 			sb.append(entry.getKey()).append(": ").append(entry.getValue()).append('\n');
 		}
-		appendCallStack(sb, asciiArt);
+		if (callStack) {
+			appendCallStack(sb, asciiArt);
+		}
 		return sb.toString();
 	}
 }

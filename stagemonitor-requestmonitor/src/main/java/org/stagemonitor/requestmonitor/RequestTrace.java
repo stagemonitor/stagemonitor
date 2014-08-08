@@ -214,14 +214,20 @@ public class RequestTrace {
 		return toString(false);
 	}
 
-	public String toString(boolean asciiArt) {
+	public final String toString(boolean asciiArt) {
+		return toString(asciiArt, true);
+	}
+
+	public String toString(boolean asciiArt, boolean callStack) {
 		StringBuilder sb = new StringBuilder(3000);
 		sb.append("id:     ").append(id).append('\n');
 		sb.append("name:   ").append(name).append('\n');
 		if (getParameter() != null) {
 			sb.append("params: ").append(getParameter()).append('\n');
 		}
-		appendCallStack(sb, asciiArt);
+		if (callStack) {
+			appendCallStack(sb, asciiArt);
+		}
 		return sb.toString();
 	}
 

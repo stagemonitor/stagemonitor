@@ -39,9 +39,9 @@ public class MonitoredMethodExecutionTest {
 		assertEquals("monitored1()", requestInformation1.requestTrace.getName());
 		assertEquals("1, test", requestInformation1.requestTrace.getParameter());
 		assertTrue(requestInformation2.forwardedExecution);
-		assertNull("monitored2()", requestInformation2.requestTrace); // forwarded method executions are not monitored
+		assertFalse("monitored2()", requestInformation2.monitorThisExecution()); // forwarded method executions are not monitored
 		assertTrue(requestInformation3.forwardedExecution);
-		assertNull("monitored3()", requestInformation3.requestTrace); // forwarded method executions are not monitored
+		assertFalse("monitored3()", requestInformation3.monitorThisExecution()); // forwarded method executions are not monitored
 
 		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored1()"), "server", "time", "total" )));
 		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored2()"), "server", "time", "total" )));

@@ -38,7 +38,6 @@ public class RequestMonitor {
 	 * To enable this behaviour in a web environment, make sure to include
 	 * <code>&lt;dispatcher>FORWARD&lt;/dispatcher></code> in the web.xml filter definition.
 	 */
-	private static ThreadLocal<String> actualRequestName = new ThreadLocal<String>();
 	private static ThreadLocal<RequestTrace> request = new ThreadLocal<RequestTrace>();
 
 	private int warmupRequests = 0;
@@ -132,35 +131,52 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		info.requestTrace = monitoredRequest.createRequestTrace();
-		request.set(info.requestTrace);
 		try {
-			if (info.monitorThisExecution()) {
-				if (actualRequestName.get() != null) {
-					info.forwardedExecution = true;
-					if (!monitoredRequest.isMonitorForwardedExecutions()) {
-						info.requestTrace = null;
-						return;
-					}
-				}
-				actualRequestName.set(info.requestTrace.getName());
-				info.timer = metricRegistry.timer(getTimerMetricName(info.getTimerName()));
-				if (info.profileThisExecution()) {
-					final CallStackElement root = Profiler.activateProfiling("total");
-					info.requestTrace.setCallStack(root);
-				}
+			detectForwardingExecution(monitoredRequest, info);
+			if (!info.monitorThisExecution) {
+				return;
+			}
+			request.set(info.requestTrace);
+
+			info.timer = metricRegistry.timer(getTimerMetricName(info.getTimerName()));
+			if (info.profileThisExecution()) {
+				final CallStackElement root = Profiler.activateProfiling("total");
+				info.requestTrace.setCallStack(root);
 			}
 		} catch (RuntimeException e) {
-			logger.warn(e.getMessage() + " (this exception is ignored) actualRequestName=" + actualRequestName.get() +
-					info.toString(), e);
+			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 		}
+	}
+
+	private <T extends RequestTrace> void detectForwardingExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
+		if (request.get() != null) {
+			// there is already an request set in this thread -> this execution must have been forwarded
+			info.forwardedExecution = true;
+			if (!monitoredRequest.isMonitorForwardedExecutions()) {
+				info.monitorThisExecution = false;
+			}
+		}
+	}
+
+	/**
+	 * Determining the request name before the execution starts can be slow. For example
+	 * org.springframework.web.servlet.HandlerMapping#getHandler takes a few milliseconds to return the MVC controller
+	 * method that will handle the request.
+	 * <p/>
+	 * So the request name should only be determined before the execution, if it is really needed.
+	 *
+	 * @return <code>true</code>, if the request name should be determined before the execution of the request,
+	 * <code>false</code> otherwise
+	 */
+	private boolean isDetermineRequestNameBeforeExecution() {
+		return configuration.getCallStackEveryXRequestsToGroup() > 0;
 	}
 
 	private <T extends RequestTrace> void afterExecution(MonitoredRequest<T> monitoredRequest,
 															 RequestInformation<T> info) {
 		try {
 			if (info.monitorThisExecution()) {
-				// if forwarded executions are not monitored, info.requestTrace would be null
-				// and info.monitorThisExecution() would have returned false
+				// if forwarded executions are not monitored, info.monitorThisExecution() would have returned false
 				if (!info.isForwardingExecution()) {
 					final long executionTime = System.nanoTime() - info.start;
 					final long cpuTime = getCpuTime() - info.startCpu;
@@ -181,8 +197,7 @@ public class RequestMonitor {
 				}
 			}
 		} catch (RuntimeException e) {
-			logger.warn(e.getMessage() + " (this exception is ignored) actualRequestName=" + actualRequestName.get()
-					+ info.toString(), e);
+			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 		} finally {
 			/*
 			 * The forwarded execution is executed in the same thread.
@@ -190,11 +205,10 @@ public class RequestMonitor {
 			 * otherwise info.isForwardingExecution() doesn't work
 			 */
 			if (!info.forwardedExecution) {
-				actualRequestName.remove();
+				request.remove();
 			}
 			if (info.requestTrace != null) {
 				Profiler.clearMethodCallParent();
-				request.remove();
 			}
 		}
 	}
@@ -274,6 +288,7 @@ public class RequestMonitor {
 		private long startCpu = getCpuTime();
 		boolean forwardedExecution = false;
 		private Object executionResult = null;
+		private boolean monitorThisExecution = true;
 
 		private boolean profileThisExecution() {
 			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
@@ -289,8 +304,8 @@ public class RequestMonitor {
 			return timer.getCount() % callStackEveryXRequestsToGroup == 0;
 		}
 
-		private boolean monitorThisExecution() {
-			return requestTrace != null && requestTrace.getName() != null && !requestTrace.getName().isEmpty();
+		boolean monitorThisExecution() {
+			return monitorThisExecution;
 		}
 
 		public String getTimerName() {
@@ -317,7 +332,7 @@ public class RequestMonitor {
 		 * @return true, if this request is a forwarding request, false otherwise
 		 */
 		private boolean isForwardingExecution() {
-			return !requestTrace.getName().equals(actualRequestName.get());
+			return !requestTrace.getId().equals(request.get().getId());
 		}
 
 		public Object getExecutionResult() {
