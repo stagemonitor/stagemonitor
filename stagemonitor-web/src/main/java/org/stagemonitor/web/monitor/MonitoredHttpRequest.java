@@ -7,6 +7,7 @@ import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
@@ -51,8 +52,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		if (configuration.isCollectHeaders()) {
 			headers = getHeaders(httpServletRequest);
 		}
-		HttpRequestTrace request = new HttpRequestTrace(getRequestName(), httpServletRequest.getRequestURI(),
-				headers, httpServletRequest.getMethod());
+		HttpRequestTrace request = new HttpRequestTrace(new RequestTrace.GetNameCallback() {
+			@Override
+			public String getName() {
+				return getRequestName();
+			}
+		}, httpServletRequest.getRequestURI(), headers, httpServletRequest.getMethod());
 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();

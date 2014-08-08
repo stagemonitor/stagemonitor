@@ -28,8 +28,8 @@ public class HttpRequestTrace extends RequestTrace {
 	private Integer bytesWritten;
 	private final UserAgentInformation userAgent;
 
-	public HttpRequestTrace(String name, String url, Map<String, String> headers, String method) {
-		super(name);
+	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method) {
+		super(getNameCallback);
 		this.url = url;
 		this.headers = headers;
 		userAgent = getUserAgentInformation(headers);

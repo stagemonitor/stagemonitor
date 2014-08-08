@@ -29,7 +29,8 @@ public class RequestTrace {
 
 	@JsonIgnore
 	private final String id = UUID.randomUUID().toString();
-	private final String name;
+	private final GetNameCallback getNameCallback;
+	private String name;
 	@JsonIgnore
 	private CallStackElement callStack;
 	private long executionTime;
@@ -52,12 +53,12 @@ public class RequestTrace {
 	private String username;
 	private String clientIp;
 
-	public RequestTrace(String name) {
+	public RequestTrace(GetNameCallback getNameCallback) {
 		MeasurementSession measurementSession = StageMonitor.getMeasurementSession();
 		application = measurementSession.getApplicationName();
 		host = measurementSession.getHostName();
 		instance = measurementSession.getInstanceName();
-		this.name = name;
+		this.getNameCallback = getNameCallback;
 		TimeZone tz = TimeZone.getDefault();
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 		df.setTimeZone(tz);
@@ -100,7 +101,14 @@ public class RequestTrace {
 	}
 
 	public String getName() {
+		if (name == null) {
+			name = getNameCallback.getName();
+		}
 		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public long getExecutionTime() {
@@ -221,7 +229,7 @@ public class RequestTrace {
 	public String toString(boolean asciiArt, boolean callStack) {
 		StringBuilder sb = new StringBuilder(3000);
 		sb.append("id:     ").append(id).append('\n');
-		sb.append("name:   ").append(name).append('\n');
+		sb.append("name:   ").append(getName()).append('\n');
 		if (getParameter() != null) {
 			sb.append("params: ").append(getParameter()).append('\n');
 		}
@@ -235,5 +243,24 @@ public class RequestTrace {
 		if (getCallStack() != null) {
 			sb.append(getCallStack().toString(asciiArt));
 		}
+	}
+
+	/**
+	 * Determining the request name before the execution starts can be slow. For example
+	 * org.springframework.web.servlet.HandlerMapping#getHandler takes a few milliseconds to return the MVC controller
+	 * method that will handle the request.
+	 * <p/>
+	 * So the request name should is lazily initialized. If there is no lazy initialisation before the execution, the
+	 * request name can may be determined in a more efficient way, for example by weaving an Aspect around
+	 * HandlerMapping#getHandler that is called by Spring as a part of Spring's dispatching mechanism.
+	 */
+	public interface GetNameCallback {
+
+		/**
+		 * Gets the name of the request.
+		 *
+		 * @return the name of the request. For Example 'Show Item Details'.
+		 */
+		String getName();
 	}
 }

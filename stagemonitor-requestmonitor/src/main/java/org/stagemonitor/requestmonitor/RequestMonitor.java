@@ -138,7 +138,6 @@ public class RequestMonitor {
 			}
 			request.set(info.requestTrace);
 
-			info.timer = metricRegistry.timer(getTimerMetricName(info.getTimerName()));
 			if (info.profileThisExecution()) {
 				final CallStackElement root = Profiler.activateProfiling("total");
 				info.requestTrace.setCallStack(root);
@@ -156,20 +155,6 @@ public class RequestMonitor {
 				info.monitorThisExecution = false;
 			}
 		}
-	}
-
-	/**
-	 * Determining the request name before the execution starts can be slow. For example
-	 * org.springframework.web.servlet.HandlerMapping#getHandler takes a few milliseconds to return the MVC controller
-	 * method that will handle the request.
-	 * <p/>
-	 * So the request name should only be determined before the execution, if it is really needed.
-	 *
-	 * @return <code>true</code>, if the request name should be determined before the execution of the request,
-	 * <code>false</code> otherwise
-	 */
-	private boolean isDetermineRequestNameBeforeExecution() {
-		return configuration.getCallStackEveryXRequestsToGroup() > 0;
 	}
 
 	private <T extends RequestTrace> void afterExecution(MonitoredRequest<T> monitoredRequest,
@@ -190,9 +175,11 @@ public class RequestMonitor {
 					}
 					trackMetrics(info, executionTime, cpuTime);
 				} else {
-					String timerMetricName = getTimerMetricName(info.getTimerName());
-					if (info.timer.getCount() == 0 && metricRegistry.getMetrics().get(timerMetricName) != null) {
-						metricRegistry.remove(timerMetricName);
+					if (info.timerCreated) {
+						String timerMetricName = getTimerMetricName(info.getTimerName());
+						if (info.getRequestTimer().getCount() == 0 && metricRegistry.getMetrics().get(timerMetricName) != null) {
+							metricRegistry.remove(timerMetricName);
+						}
 					}
 				}
 			}
@@ -214,24 +201,22 @@ public class RequestMonitor {
 	}
 
 	private <T extends RequestTrace> void trackMetrics(RequestInformation<T> info, long executionTime, long cpuTime) {
-		if (info.timer != null) {
-			T requestTrace = info.requestTrace;
-			String timerName = info.getTimerName();
+		T requestTrace = info.requestTrace;
+		String timerName = info.getTimerName();
 
-			info.timer.update(executionTime, NANOSECONDS);
-			metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
+		info.getRequestTimer().update(executionTime, NANOSECONDS);
+		metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
 
-			if (configuration.isCollectCpuTime()) {
-				metricRegistry.timer(name(REQUEST, timerName, ".server.cpu-time.total")).update(cpuTime, NANOSECONDS);
-				metricRegistry.timer("request.All.server.cpu-time.total").update(cpuTime, NANOSECONDS);
-			}
-
-			if (requestTrace.isError()) {
-				metricRegistry.meter(name(REQUEST, timerName, "server.meter.error")).mark();
-				metricRegistry.meter("request.All.server.meter.error").mark();
-			}
-			trackDbMetrics(timerName, requestTrace);
+		if (configuration.isCollectCpuTime()) {
+			metricRegistry.timer(name(REQUEST, timerName, ".server.cpu-time.total")).update(cpuTime, NANOSECONDS);
+			metricRegistry.timer("request.All.server.cpu-time.total").update(cpuTime, NANOSECONDS);
 		}
+
+		if (requestTrace.isError()) {
+			metricRegistry.meter(name(REQUEST, timerName, "server.meter.error")).mark();
+			metricRegistry.meter("request.All.server.meter.error").mark();
+		}
+		trackDbMetrics(timerName, requestTrace);
 	}
 
 	private <T extends RequestTrace> void trackDbMetrics(String timerName, T requestTrace) {
@@ -282,27 +267,13 @@ public class RequestMonitor {
 	}
 
 	public class RequestInformation<T extends RequestTrace> {
-		private Timer timer = null;
+		private boolean timerCreated = false;
 		T requestTrace = null;
 		private long start = System.nanoTime();
 		private long startCpu = getCpuTime();
 		boolean forwardedExecution = false;
 		private Object executionResult = null;
 		private boolean monitorThisExecution = true;
-
-		private boolean profileThisExecution() {
-			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
-			if (callStackEveryXRequestsToGroup == 1) {
-				return true;
-			}
-			if (callStackEveryXRequestsToGroup < 1) {
-				return false;
-			}
-			if (timer.getCount() == 0) {
-				return false;
-			}
-			return timer.getCount() % callStackEveryXRequestsToGroup == 0;
-		}
 
 		boolean monitorThisExecution() {
 			return monitorThisExecution;
@@ -314,6 +285,26 @@ public class RequestMonitor {
 
 		public T getRequestTrace() {
 			return requestTrace;
+		}
+
+		public Timer getRequestTimer() {
+			timerCreated = true;
+			return metricRegistry.timer(getTimerMetricName(getTimerName()));
+		}
+
+		private boolean profileThisExecution() {
+			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
+			if (callStackEveryXRequestsToGroup == 1) {
+				return true;
+			}
+			if (callStackEveryXRequestsToGroup < 1) {
+				return false;
+			}
+			Timer requestTimer = getRequestTimer();
+			if (requestTimer.getCount() == 0) {
+				return false;
+			}
+			return requestTimer.getCount() % callStackEveryXRequestsToGroup == 0;
 		}
 
 		/**
@@ -342,8 +333,7 @@ public class RequestMonitor {
 		@Override
 		public String toString() {
 			return "RequestInformation{" +
-					"timer=" + timer +
-					", requestTrace=" + requestTrace +
+					"requestTrace=" + requestTrace +
 					", start=" + start +
 					", startCpu=" + startCpu +
 					", forwardedExecution=" + forwardedExecution +
