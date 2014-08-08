@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -56,15 +57,15 @@ public class ConfigurationTest {
 
 	@Test
 	public void testGetLowerStrings() {
-		assertEquals(Collections.singletonList("foobar"), configuration.getLowerStrings("string", null));
+		assertEquals(Collections.singleton("foobar"), configuration.getLowerStrings("string", null));
 	}
 
 	@Test
 	public void testGetStringsNotExistent() {
-		assertEquals(Collections.emptyList(), configuration.getStrings("testGetStringsNotExistent1", null));
-		assertEquals(Arrays.asList("Foo", "Bar"), configuration.getStrings("testGetStringsNotExistent2", "Foo , Bar"));
-		assertEquals(Collections.emptyList(), configuration.getLowerStrings("testGetStringsNotExistent3", null));
-		assertEquals(Arrays.asList("foo", "bar"), configuration.getLowerStrings("testGetStringsNotExistent4", "Foo , Bar"));
+		assertEquals(Collections.<String>emptySet(), configuration.getStrings("testGetStringsNotExistent1", null));
+		assertEquals(new LinkedHashSet<String>(Arrays.asList("Foo", "Bar")), configuration.getStrings("testGetStringsNotExistent2", "Foo , Bar"));
+		assertEquals(Collections.<String>emptySet(), configuration.getLowerStrings("testGetStringsNotExistent3", null));
+		assertEquals(new LinkedHashSet<String>(Arrays.asList("foo", "bar")), configuration.getLowerStrings("testGetStringsNotExistent4", "Foo , Bar"));
 	}
 
 	@Test
@@ -93,7 +94,7 @@ public class ConfigurationTest {
 		assertEquals(false, configuration.isCollectCpuTime());
 		assertEquals(false, configuration.isMonitorOnlySpringMvcRequests());
 		assertEquals(true, configuration.isCollectHeaders());
-		assertEquals(Arrays.asList("cookie", "authorization"), configuration.getExcludedHeaders());
+		assertEquals(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")), configuration.getExcludedHeaders());
 		final Collection<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
 		final List<String> confidentialQueryParamsAsString = new ArrayList<String>(confidentialQueryParams.size());
 		for (Pattern confidentialQueryParam : confidentialQueryParams) {
@@ -111,7 +112,7 @@ public class ConfigurationTest {
 		assertEquals("1w", configuration.getCallStacksTimeToLive());
 		assertEquals(null, configuration.getApplicationName());
 		assertEquals(null, configuration.getInstanceName());
-		assertEquals(Collections.emptyList(), configuration.getExcludedMetricsPatterns());
+		assertEquals(Collections.<Pattern>emptySet(), configuration.getExcludedMetricsPatterns());
 
 		final Map<Pattern, String> groupUrls = configuration.getGroupUrls();
 		final Map<String, String> groupUrlsAsString = new HashMap<String, String>();
