@@ -11,9 +11,11 @@ import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResp
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
+	public static final Pattern CAMEL_CASE = Pattern.compile("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final List<HandlerMapping> allHandlerMappings;
@@ -29,18 +31,18 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
 	@Override
 	public String getRequestName() {
-		String name = null;
+		String name = "";
 		for (HandlerMapping handlerMapping : allHandlerMappings) {
 			try {
 				HandlerExecutionChain handler = handlerMapping.getHandler(httpServletRequest);
-				if (handler != null && handler.getHandler() instanceof HandlerMethod) {
-					HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
-					name = handlerMethod.getMethod().getName();
-					return splitCamelCase(capitalize(name));
-				}
+				name = getRequestNameFromHandler(handler);
 			} catch (Exception e) {
 				// ignore, try next
 				logger.warn(e.getMessage(), e);
+			}
+
+			if (!name.isEmpty()) {
+				return name;
 			}
 		}
 		if (!configuration.isMonitorOnlySpringMvcRequests()) {
@@ -49,11 +51,19 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 		return name;
 	}
 
+	public static String getRequestNameFromHandler(HandlerExecutionChain handler) {
+		if (handler != null && handler.getHandler() instanceof HandlerMethod) {
+			HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
+			return splitCamelCase(capitalize(handlerMethod.getMethod().getName()));
+		}
+		return "";
+	}
+
 	private static String capitalize(String self) {
 		return Character.toUpperCase(self.charAt(0)) + self.substring(1);
 	}
 
 	private static String splitCamelCase(String s) {
-		return s.replaceAll("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])", " ");
+		return CAMEL_CASE.matcher(s).replaceAll(" ");
 	}
 }

@@ -90,7 +90,7 @@ public class RequestMonitor {
 			info.executionResult = monitoredRequest.execute();
 			return info;
 		} catch (Exception e) {
-			info.requestTrace.setException(e);
+			recordException(info, e);
 			throw e;
 		} finally {
 			long overhead2 = System.nanoTime();
@@ -98,13 +98,22 @@ public class RequestMonitor {
 				afterExecution(monitoredRequest, info);
 			}
 
-			if (configuration.isInternalMonitoringActive()) {
-				overhead2 = System.nanoTime() - overhead2;
-				logger.info("overhead1="+overhead1);
-				logger.info("overhead2="+overhead2);
-				metricRegistry.timer("internal.overhead.RequestMonitor")
-						.update(overhead2 + overhead1, NANOSECONDS);
-			}
+			trackOverhead(overhead1, overhead2);
+		}
+	}
+
+	private void recordException(RequestInformation<?> info, Exception e) throws Exception {
+		if (info.requestTrace != null) {
+			info.requestTrace.setException(e);
+		}
+	}
+
+	private void trackOverhead(long overhead1, long overhead2) {
+		if (configuration.isInternalMonitoringActive()) {
+			overhead2 = System.nanoTime() - overhead2;
+			logger.info("overhead1="+overhead1);
+			logger.info("overhead2="+overhead2);
+			metricRegistry.timer("internal.overhead.RequestMonitor").update(overhead2 + overhead1, NANOSECONDS);
 		}
 	}
 
@@ -159,29 +168,10 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void afterExecution(MonitoredRequest<T> monitoredRequest,
 															 RequestInformation<T> info) {
+		final T requestTrace = info.requestTrace;
 		try {
-			if (info.monitorThisExecution()) {
-				// if forwarded executions are not monitored, info.monitorThisExecution() would have returned false
-				if (!info.isForwardingExecution()) {
-					final long executionTime = System.nanoTime() - info.start;
-					final long cpuTime = getCpuTime() - info.startCpu;
-					info.requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
-					info.requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
-					monitoredRequest.onPostExecute(info);
-
-					if (info.requestTrace.getCallStack() != null) {
-						Profiler.stop();
-						reportCallStack(info.requestTrace, configuration.getElasticsearchUrl());
-					}
-					trackMetrics(info, executionTime, cpuTime);
-				} else {
-					if (info.timerCreated) {
-						String timerMetricName = getTimerMetricName(info.getTimerName());
-						if (info.getRequestTimer().getCount() == 0 && metricRegistry.getMetrics().get(timerMetricName) != null) {
-							metricRegistry.remove(timerMetricName);
-						}
-					}
-				}
+			if (info.monitorThisExecution() && requestTrace.getName() != null && !requestTrace.getName().isEmpty()) {
+				monitorAfterExecution(monitoredRequest, info);
 			}
 		} catch (RuntimeException e) {
 			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
@@ -194,8 +184,37 @@ public class RequestMonitor {
 			if (!info.forwardedExecution) {
 				request.remove();
 			}
-			if (info.requestTrace != null) {
+			if (requestTrace != null) {
 				Profiler.clearMethodCallParent();
+			}
+		}
+	}
+
+	private <T extends RequestTrace> void monitorAfterExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
+		final T requestTrace = info.requestTrace;
+		// if forwarded executions are not monitored, info.monitorThisExecution() would have returned false
+		if (!info.isForwardingExecution()) {
+			final long executionTime = System.nanoTime() - info.start;
+			final long cpuTime = getCpuTime() - info.startCpu;
+			requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
+			requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
+			monitoredRequest.onPostExecute(info);
+
+			if (requestTrace.getCallStack() != null) {
+				Profiler.stop();
+				reportCallStack(requestTrace, configuration.getElasticsearchUrl());
+			}
+			trackMetrics(info, executionTime, cpuTime);
+		} else {
+			removeTimerIfCountIsZero(info);
+		}
+	}
+
+	private <T extends RequestTrace> void removeTimerIfCountIsZero(RequestInformation<T> info) {
+		if (info.timerCreated) {
+			String timerMetricName = getTimerMetricName(info.getTimerName());
+			if (info.getRequestTimer().getCount() == 0 && metricRegistry.getMetrics().get(timerMetricName) != null) {
+				metricRegistry.remove(timerMetricName);
 			}
 		}
 	}

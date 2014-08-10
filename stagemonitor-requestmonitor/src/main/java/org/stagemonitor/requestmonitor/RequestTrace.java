@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
@@ -26,6 +28,8 @@ public class RequestTrace {
 	static {
 		MAPPER.registerModule(new AfterburnerModule());
 	}
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@JsonIgnore
 	private final String id = UUID.randomUUID().toString();
@@ -107,8 +111,21 @@ public class RequestTrace {
 		return name;
 	}
 
-	public void setName(String name) {
+	/**
+	 * Sets the name of the request (e.g. 'Show Item Detail'). It is only possible to set the name, if it has not
+	 * already been set.
+	 *
+	 * @param name the name of the request
+	 * @return <code>true</code>, if the name was successfully set, <code>false</code> if the name could not be set,
+	 * because it has already been set.
+	 */
+	public boolean setName(String name) {
+		if (this.name != null) {
+			logger.warn("Name is already set ({}), can't overwrite it with '{}'.", this.name, name);
+			return false;
+		}
 		this.name = name;
+		return true;
 	}
 
 	public long getExecutionTime() {
@@ -250,7 +267,7 @@ public class RequestTrace {
 	 * org.springframework.web.servlet.HandlerMapping#getHandler takes a few milliseconds to return the MVC controller
 	 * method that will handle the request.
 	 * <p/>
-	 * So the request name should is lazily initialized. If there is no lazy initialisation before the execution, the
+	 * So the request name should be lazily initialized. If there is no lazy initialisation before the execution, the
 	 * request name can may be determined in a more efficient way, for example by weaving an Aspect around
 	 * HandlerMapping#getHandler that is called by Spring as a part of Spring's dispatching mechanism.
 	 */

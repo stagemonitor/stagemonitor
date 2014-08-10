@@ -1,0 +1,7 @@
+<!DOCTYPE aspectj PUBLIC
+		"-//AspectJ//DTD//EN" "http://www.eclipse.org/aspectj/dtd/aspectj.dtd">
+<aspectj>
+	<aspects>
+		<aspect name="org.stagemonitor.web.monitor.SpringMVCRequestNameDeterminerAspect"/>
+	</aspects>
+</aspectj>

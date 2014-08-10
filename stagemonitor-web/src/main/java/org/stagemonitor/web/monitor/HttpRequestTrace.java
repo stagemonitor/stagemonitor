@@ -145,8 +145,10 @@ public class HttpRequestTrace extends RequestTrace {
 		sb.append(" (").append(statusCode).append(")\n");
 		sb.append("id:     ").append(getId()).append('\n');
 		sb.append("name:   ").append(getName()).append('\n');
-		for (Map.Entry<String, String> entry : headers.entrySet()) {
-			sb.append(entry.getKey()).append(": ").append(entry.getValue()).append('\n');
+		if (headers != null) {
+			for (Map.Entry<String, String> entry : headers.entrySet()) {
+				sb.append(entry.getKey()).append(": ").append(entry.getValue()).append('\n');
+			}
 		}
 		if (callStack) {
 			appendCallStack(sb, asciiArt);

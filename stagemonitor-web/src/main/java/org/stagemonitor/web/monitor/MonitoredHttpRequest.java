@@ -91,11 +91,15 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	public String getRequestName() {
-		String requestURI = httpServletRequest.getRequestURI();
+		return getRequestNameByRequest(httpServletRequest, configuration);
+	}
+
+	public static String getRequestNameByRequest(HttpServletRequest request, Configuration configuration) {
+		String requestURI = request.getRequestURI();
 		for (Map.Entry<Pattern, String> entry : configuration.getGroupUrls().entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
-		return httpServletRequest.getMethod() + " " +requestURI;
+		return request.getMethod() + " " +requestURI;
 	}
 
 	private String getSafeQueryString(Map<String, String[]> parameterMap) {
