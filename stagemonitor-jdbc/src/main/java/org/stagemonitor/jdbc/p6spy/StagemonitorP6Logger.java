@@ -66,6 +66,6 @@ public class StagemonitorP6Logger implements P6Logger {
 
 	@Override
 	public boolean isCategoryEnabled(Category category) {
-		return Category.STATEMENT.equals(category);
+		return Category.STATEMENT == category;
 	}
 }

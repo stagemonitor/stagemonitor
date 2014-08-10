@@ -46,6 +46,7 @@ public class RequestMonitor {
 	private MetricRegistry metricRegistry;
 	private Configuration configuration;
 	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+	private final boolean isCurrentThreadCpuTimeSupported = threadMXBean.isCurrentThreadCpuTimeSupported();
 
 	private Date endOfWarmup;
 
@@ -111,8 +112,6 @@ public class RequestMonitor {
 	private void trackOverhead(long overhead1, long overhead2) {
 		if (configuration.isInternalMonitoringActive()) {
 			overhead2 = System.nanoTime() - overhead2;
-			logger.info("overhead1="+overhead1);
-			logger.info("overhead2="+overhead2);
 			metricRegistry.timer("internal.overhead.RequestMonitor").update(overhead2 + overhead1, NANOSECONDS);
 		}
 	}
@@ -282,7 +281,7 @@ public class RequestMonitor {
 	}
 
 	private long getCpuTime() {
-		return threadMXBean.isCurrentThreadCpuTimeSupported() ? threadMXBean.getCurrentThreadCpuTime() : 0L;
+		return isCurrentThreadCpuTimeSupported ? threadMXBean.getCurrentThreadCpuTime() : 0L;
 	}
 
 	public class RequestInformation<T extends RequestTrace> {
