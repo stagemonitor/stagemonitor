@@ -149,7 +149,15 @@ public class SortedTableLogReporter extends ScheduledReporter {
 			final Map<String, Gauge> sortedGauges = sortByValue(gauges, new Comparator<Gauge>() {
 				@Override
 				public int compare(Gauge o1, Gauge o2) {
-					return o2.getValue().toString().compareTo(o1.getValue().toString());
+					Object value2 = o2.getValue();
+					if (value2 == null) {
+						value2 = "";
+					}
+					Object value1 = o1.getValue();
+					if (value1 == null) {
+						value1 = "";
+					}
+					return value2.toString().compareTo(value1.toString());
 				}
 			});
 			for (Map.Entry<String, Gauge> entry : sortedGauges.entrySet()) {

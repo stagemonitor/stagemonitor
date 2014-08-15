@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.util.Locale;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,7 @@ public class SortedTableLogReporterTest {
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.NANOSECONDS)
 				.filter(MetricFilter.ALL)
+				.formattedFor(Locale.US)
 				.build();
 	}
 
@@ -77,8 +79,8 @@ public class SortedTableLogReporterTest {
 				"\n" +
 				"-- Histograms ------------------------------------------------------------------\n" +
 				"name            | count     | mean      | max       | min       | stddev    | p50       | p75       | p95       | p98       | p99       | p999\n" +
-				"test.histogram2 |         1 |      4,00 |      4,00 |      2,00 |      5,00 |      6,00 |      7,00 |      8,00 |      9,00 |     10,00 |     11,00 | \n" +
-				" test.histogram |         1 |      3,00 |      4,00 |      2,00 |      5,00 |      6,00 |      7,00 |      8,00 |      9,00 |     10,00 |     11,00 | \n" +
+				"test.histogram2 |         1 |      4.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 | \n" +
+				" test.histogram |         1 |      3.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 | \n" +
 				"\n" +
 				"\n");
 	}
@@ -120,8 +122,8 @@ public class SortedTableLogReporterTest {
 				"\n" +
 				"-- Meters ----------------------------------------------------------------------\n" +
 				"name        | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n" +
-				"test.meter2 |         2 |      2,00 |      3,00 |      4,00 |      5,00 | second        | nanoseconds\n" +
-				"test.meter1 |         1 |      2,00 |      3,00 |      4,00 |      5,00 | second        | nanoseconds\n" +
+				"test.meter2 |         2 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
+				"test.meter1 |         1 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
 				"\n" +
 				"\n");
 	}
@@ -149,9 +151,9 @@ public class SortedTableLogReporterTest {
 				"\n" +
 				"-- Timers ----------------------------------------------------------------------\n" +
 				"name   | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n" +
-				"timer1 |         1 |      4,00 |      4,00 |      2,00 |      5,00 |      6,00 |      7,00 |      8,00 |      9,00 |     10,00 |     11,00 |      2,00 |      3,00 |      4,00 |      5,00 | second        | nanoseconds\n" +
-				"timer3 |         1 |      3,00 |      4,00 |      2,00 |      5,00 |      6,00 |      7,00 |      8,00 |      9,00 |     10,00 |     11,00 |      2,00 |      3,00 |      4,00 |      5,00 | second        | nanoseconds\n" +
-				"timer2 |         1 |      2,00 |      4,00 |      2,00 |      5,00 |      6,00 |      7,00 |      8,00 |      9,00 |     10,00 |     11,00 |      2,00 |      3,00 |      4,00 |      5,00 | second        | nanoseconds\n" +
+				"timer1 |         1 |      4.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
+				"timer3 |         1 |      3.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
+				"timer2 |         1 |      2.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
 				"\n" +
 				"\n");
 	}
