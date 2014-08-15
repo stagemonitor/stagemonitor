@@ -5,6 +5,9 @@ dependencies {
 	compile 'net.sf.uadetector:uadetector-resources:2014.06'
 
 	provided 'javax.servlet:servlet-api:2.5'
+
+	testCompile 'org.springframework:spring-webmvc:3.1.0.RELEASE'
+	testCompile 'org.springframework:spring-test:3.1.0.RELEASE'
 }
 
 task fatJar(type: Jar) {
