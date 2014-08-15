@@ -24,4 +24,4 @@ addons:
     notification_email: felix.barnsteiner@gmail.com
     build_command_prepend: "./gradlew clean"
     build_command:   "./gradlew compileJava"
-    branch_pattern: master
+    branch_pattern: coverity
