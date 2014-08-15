@@ -1,26 +1,11 @@
 package org.stagemonitor.core.metrics;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Metered;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
-import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class SortedTableLogReporter extends ScheduledReporter {
@@ -161,7 +146,13 @@ public class SortedTableLogReporter extends ScheduledReporter {
 			printWithBanner("-- Gauges", '-', sb);
 			int maxLength = getMaxLengthOfKeys(gauges);
 			sb.append(String.format("%-" + maxLength + "s | value\n", "name"));
-			for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+			final Map<String, Gauge> sortedGauges = sortByValue(gauges, new Comparator<Gauge>() {
+				@Override
+				public int compare(Gauge o1, Gauge o2) {
+					return o2.getValue().toString().compareTo(o1.getValue().toString());
+				}
+			});
+			for (Map.Entry<String, Gauge> entry : sortedGauges.entrySet()) {
 				printGauge(entry.getKey(), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
@@ -190,7 +181,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 		if (!histograms.isEmpty()) {
 			printWithBanner("-- Histograms", '-', sb);
 			int maxLength = getMaxLengthOfKeys(histograms);
-			sb.append(String.format("%-" + maxLength + "s | count     | max       | mean      | min       | stddev    | p50       | p75       | p95       | p98       | p99       | p999\n", "name"));
+			sb.append(String.format("%-" + maxLength + "s | count     | mean      | max       | min       | stddev    | p50       | p75       | p95       | p98       | p99       | p999\n", "name"));
 			Map<String, Histogram> sortedHistograms = sortByValue(histograms, new Comparator<Histogram>() {
 				@Override
 				public int compare(Histogram o1, Histogram o2) {
