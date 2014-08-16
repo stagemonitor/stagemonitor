@@ -55,8 +55,12 @@ public class RequestMonitor {
 	}
 
 	public RequestMonitor(Configuration configuration) {
+		this(configuration, StageMonitor.getMetricRegistry());
+	}
+
+	public RequestMonitor(Configuration configuration, MetricRegistry registry) {
 		warmupRequests = configuration.getNoOfWarmupRequests();
-		this.metricRegistry = StageMonitor.getMetricRegistry();
+		this.metricRegistry = registry;
 		this.configuration = configuration;
 		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getWarmupSeconds()));
 	}

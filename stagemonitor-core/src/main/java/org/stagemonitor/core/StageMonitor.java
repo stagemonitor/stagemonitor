@@ -24,9 +24,13 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 public final class StageMonitor {
 
 	private static Logger logger = LoggerFactory.getLogger(StageMonitor.class);
-	private static Configuration configuration = new Configuration();
-	private static volatile boolean started = false;
-	private static volatile MeasurementSession measurementSession = new MeasurementSession(null, null, null);
+	private static Configuration configuration;
+	private static volatile boolean started;
+	private static volatile MeasurementSession measurementSession;
+
+	static {
+		reset();
+	}
 
 	private StageMonitor() {
 	}
@@ -149,7 +153,10 @@ public final class StageMonitor {
 		StageMonitor.logger = logger;
 	}
 
-	static void reset() {
+	/**
+	 * Should only be used by the internal unit tests
+	 */
+	public static void reset() {
 		configuration = new Configuration();
 		started = false;
 		measurementSession = new MeasurementSession(null, null, null);
