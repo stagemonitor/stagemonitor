@@ -23,7 +23,7 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 
 public final class StageMonitor {
 
-	private static final Logger logger = LoggerFactory.getLogger(StageMonitor.class);
+	private static Logger logger = LoggerFactory.getLogger(StageMonitor.class);
 	private static Configuration configuration = new Configuration();
 	private static volatile boolean started = false;
 	private static volatile MeasurementSession measurementSession = new MeasurementSession(null, null, null);
@@ -47,7 +47,7 @@ public final class StageMonitor {
 				logger.warn("Error while trying to start monitoring. (this exception is ignored)", e);
 			}
 		} else {
-			logger.warn("Measurement Session is not initialized: " + measurementSession);
+			logger.warn("Measurement Session is not initialized: {}", measurementSession);
 			logger.warn("make sure the properties 'stagemonitor.instanceName' and 'stagemonitor.applicationName' " +
 					"are set and stagemonitor.properties is available in the classpath");
 		}
@@ -95,14 +95,12 @@ public final class StageMonitor {
 	private static void reportToGraphite(long reportingInterval, MeasurementSession measurementSession, MetricFilter filter) {
 		String graphiteHostName = configuration.getGraphiteHostName();
 		if (graphiteHostName != null && !graphiteHostName.isEmpty()) {
-			final Graphite graphite = new Graphite(new InetSocketAddress(graphiteHostName,
-					configuration.getGraphitePort()));
 			GraphiteReporter.forRegistry(getMetricRegistry())
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
 					.filter(filter)
-					.build(graphite)
+					.build(new Graphite(new InetSocketAddress(graphiteHostName, configuration.getGraphitePort())))
 					.start(reportingInterval, TimeUnit.SECONDS);
 		}
 	}
@@ -135,7 +133,25 @@ public final class StageMonitor {
 		return configuration;
 	}
 
+	static void setConfiguration(Configuration configuration) {
+		StageMonitor.configuration = configuration;
+	}
+
 	public static MeasurementSession getMeasurementSession() {
 		return measurementSession;
+	}
+
+	static boolean isStarted() {
+		return started;
+	}
+
+	static void setLogger(Logger logger) {
+		StageMonitor.logger = logger;
+	}
+
+	static void reset() {
+		configuration = new Configuration();
+		started = false;
+		measurementSession = new MeasurementSession(null, null, null);
 	}
 }
