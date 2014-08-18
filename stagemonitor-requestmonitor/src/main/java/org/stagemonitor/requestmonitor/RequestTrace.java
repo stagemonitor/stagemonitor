@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,6 +233,12 @@ public class RequestTrace {
 
 	public int getExecutionCountDb() {
 		return executionCountDb;
+	}
+
+	public String toJson() {
+		final ObjectNode jsonNode = MAPPER.valueToTree(this);
+		jsonNode.remove("callStack");
+		return jsonNode.toString();
 	}
 
 	@Override

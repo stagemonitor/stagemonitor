@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>stagemonitor widget</title>
+		<link rel="stylesheet" href="bootstrap.min.css">
+		<link rel="stylesheet" href="bootstrap-theme.min.css">
+		<link rel="stylesheet" href="jquery-treetable/jquery.treetable.css">
+		<link rel="stylesheet" href="jquery-treetable/jquery.treetable.theme.bootstrap.css">
+		<link rel="stylesheet" href="stagemonitor-widget.css">
+		<script src="jquery.1.11.1.min.js"></script>
+		<script src="bootstrap.min.js"></script>
+		<script src="handlebars-v1.3.0.min.js"></script>
+		<script src="jquery-treetable/jquery.treetable.js"></script>
+		<script type="text/javascript" src="stagemonitor-widget.js"></script>
+	</head>
+	<body>
+		<div class="container-fluid">
+			<div class="position-relative">
+				<h1 class="head">
+					<a href="http://www.stagemonitor.org/" target="_blank">
+						<img class="stagemonitor-banner" src="stagemonitor-banner.png" />
+					</a>
+					<button class="close" id="stagemonitor-modal-close"><span>&times;</span></button>
+				</h1>
+
+				<ul class="nav nav-tabs" role="tablist">
+					<li class="active"><a href="#stagemonitor-home" role="tab" data-toggle="tab">Call Tree</a></li>
+					<li><a href="#stagemonitor-request" role="tab" data-toggle="tab">Request</a></li>
+					<li><a href="#stagemonitor-configuration" role="tab" data-toggle="tab">Configuration</a></li>
+				</ul>
+			</div>
+
+			<div class="tab-content">
+				<div class="tab-pane active" id="stagemonitor-home">
+					<table id="stagemonitor-calltree" class="table">
+						<thead>
+							<tr>
+								<th>Signature</th>
+								<th class="stagemonitor-calltree-executiontime">Total time (ms)</th>
+								<th class="stagemonitor-calltree-executiontime">Self time (ms)</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+				<script id="stagemonitor-calltree-template" type="text/x-handlebars-template">
+					{{#each callTreeRows}}
+						<tr class="{{#if executionTimeExceededThreshold}}warning{{/if}}" data-tt-expanded="{{#if executionTimeExceededThreshold}}true{{else}}false{{/if}}" data-tt-parent-id="{{parentId}}" data-tt-id="{{myId}}">
+							<td class="stagemonitor-calltree-signature" title="{{#if isShortened}}{{signature}}{{/if}}">{{shortedSignature}}</td>
+							<td><div class="progress"><div class="progress-bar" style="width: {{executionTimePercent}}%">{{executionTimeInMs}}</div></div></td>
+							<td><div class="progress"><div class="progress-bar" style="width: {{selfExecutionTimePercent}}%">{{selfExecutionTimeInMs}}</div></div></td>
+						</tr>
+					{{/each}}
+				</script>
+
+				<div class="tab-pane" id="stagemonitor-request">
+
+				</div>
+				<script id="stagemonitor-request-template" type="text/x-handlebars-template">
+					<h3>General Information</h3>
+					<table class="table">
+						<thead>
+							<tr>
+								<th class="col-sm-6">Key</th>
+								<th class="col-sm-6">Value</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each metrics}}
+								<tr class="{{#if exceededThreshold}}danger{{/if}}">
+									<td>{{name}} {{#if description}}<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="right" title="{{description}}"></span>{{/if}}</td>
+									<td>{{value}}</td>
+								</tr>
+							{{/each}}
+						</tbody>
+					</table>
+
+					<h3>Headers</h3>
+					<table class="table">
+						<thead>
+							<tr>
+								<th class="col-sm-6">Key</th>
+								<th class="col-sm-6">Value</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each headers}}
+								<tr>
+									<td>{{@key}}</td>
+									<td>{{this}}</td>
+								</tr>
+							{{/each}}
+						</tbody>
+					</table>
+
+					<h3>User Agent Information</h3>
+					<table class="table">
+						<thead>
+							<tr>
+								<th class="col-sm-6">Key</th>
+								<th class="col-sm-6">Value</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each userAgent}}
+								<tr>
+									<td>{{@key}}</td>
+									<td>{{this}}</td>
+								</tr>
+							{{/each}}
+						</tbody>
+					</table>
+				</script>
+
+				<div class="tab-pane" id="stagemonitor-configuration">
+					<form class="form-horizontal" role="form">
+						<h4>Display settings</h4>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">Highlight and expand method calls taking longer than </label>
+							<div class="col-sm-2">
+								<div class="input-group">
+									<input data-stagemonitor-configuration-key="stagemonitor-configuration-execution-threshold-percent" data-stagemonitor-configuration-default-value="5" class="form-control">
+									<div class="input-group-btn-vertical stagemonitor-spinner">
+										<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i></button>
+										<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i></button>
+									</div>
+									<span class="input-group-addon">%</span>
+								</div>
+							</div>
+						</div>
+
+						<h4>Notification thresholds</h4>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">Notify if request took longer than </label>
+							<div class="col-sm-2">
+								<div class="input-group">
+									<input data-stagemonitor-configuration-key="stagemonitor-configuration-execution-threshold-milliseconds" data-stagemonitor-configuration-default-value="1000" class="form-control">
+									<div class="input-group-btn-vertical stagemonitor-spinner">
+										<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i></button>
+										<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i></button>
+									</div>
+									<span class="input-group-addon">ms</span>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">Count of SQL-queries after which you will be notified</label>
+							<div class="col-sm-2">
+								<div class="input-group">
+									<input data-stagemonitor-configuration-key="stagemonitor-configuration-db-count-threshold" data-stagemonitor-configuration-default-value="20" class="form-control">
+									<div class="input-group-btn-vertical stagemonitor-spinner rounded">
+										<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i></button>
+										<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i></button>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-2 col-sm-offset-3">
+								<div class="checkbox">
+									<label>
+										<input data-stagemonitor-configuration-key="stagemonitor-configuration-notify-on-error" data-stagemonitor-configuration-default-value="false" type="checkbox">
+										Notify on error?
+									</label>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-3 col-sm-6">
+								<button type="submit" class="btn btn-primary" id="stagemonitor-configuration-save">Save</button>
+							</div>
+						</div>
+					</form>
+					<div class="row">
+						<p class="col-sm-offset-3 col-sm-6">Changes take effect on the next request</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
