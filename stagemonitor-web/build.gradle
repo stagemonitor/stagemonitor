@@ -2,7 +2,7 @@ dependencies {
 	compile project(":stagemonitor-requestmonitor")
 	compile project(":stagemonitor-jvm")
 	compile project(":stagemonitor-jdbc")
-	compile 'net.sf.uadetector:uadetector-resources:2014.06'
+	compile 'net.sf.uadetector:uadetector-resources:2014.07'
 
 	provided 'javax.servlet:servlet-api:2.5'
 
