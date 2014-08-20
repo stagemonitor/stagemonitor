@@ -39,11 +39,6 @@ public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper
 	}
 
 	@Override
-	public void reset() {
-		super.reset();
-	}
-
-	@Override
 	public void resetBuffer() {
 		output = new CharArrayWriter(INITIAL_SIZE);
 	}
