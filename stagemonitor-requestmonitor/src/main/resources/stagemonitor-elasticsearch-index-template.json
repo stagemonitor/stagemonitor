@@ -45,7 +45,8 @@
 					"store": "yes"
 				},
 				"clientIp": {
-					"type": "ip"
+					"type": "string",
+					"index": "not_analyzed"
 				}
 			}
 		}
