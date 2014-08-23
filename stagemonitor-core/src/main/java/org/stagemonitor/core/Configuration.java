@@ -310,7 +310,7 @@ public class Configuration {
 	 *
 	 * @return a pattern list of excluded metric names
 	 */
-	public  Collection<Pattern> getExcludedMetricsPatterns() {
+	public Collection<Pattern> getExcludedMetricsPatterns() {
 		return getPatterns("stagemonitor.metrics.excluded.pattern", "");
 	}
 
@@ -376,6 +376,16 @@ public class Configuration {
 	 */
 	public boolean isInternalMonitoringActive() {
 		return getBoolean("stagemonitor.internal.monitoring", false);
+	}
+
+	/**
+	 * If active, stagemonitor will inject a widget in the web site containing the calltrace metrics.
+	 * Requires Servlet-Api >= 3.0
+	 *
+	 * @return <code>true</code>, if the widget shall be injected, false otherwise
+	 */
+	public boolean isStagemonitorWidgetEnabled() {
+		return getBoolean("stagemonitor.web.widget.enabled", false);
 	}
 
 	public String getString(final String key) {

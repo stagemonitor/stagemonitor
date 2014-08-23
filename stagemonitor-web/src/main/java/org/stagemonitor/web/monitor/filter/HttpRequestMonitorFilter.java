@@ -1,23 +1,37 @@
 package org.stagemonitor.web.monitor.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.QueryParameterConfigurationSource;
+import org.stagemonitor.web.monitor.servlet.FileServlet;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
+	private static final Logger logger = LoggerFactory.getLogger(HttpRequestMonitorFilter.class);
 	protected final Configuration configuration;
 	protected final RequestMonitor requestMonitor;
 	private final QueryParameterConfigurationSource queryParameterConfigurationSource;
+	private boolean servletApiForWidgetSufficient = true;
 
 	public HttpRequestMonitorFilter() {
 		this(StageMonitor.getConfiguration());
@@ -31,10 +45,49 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	@Override
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
-		MeasurementSession measurementSession = new MeasurementSession(getApplicationName(filterConfig),
+		final MeasurementSession measurementSession = new MeasurementSession(getApplicationName(filterConfig),
 				RequestMonitor.getHostName(), configuration.getInstanceName());
 		requestMonitor.setMeasurementSession(measurementSession);
 		configuration.addConfigurationSource(queryParameterConfigurationSource, true);
+
+		if (configuration.isStagemonitorWidgetEnabled()) {
+			final ServletContext servletContext = filterConfig.getServletContext();
+			if(servletContext.getMajorVersion() >= 3) {
+				servletApiForWidgetSufficient = true;
+				registerWidgetFileServlets(servletContext);
+			} else {
+				servletApiForWidgetSufficient = false;
+				logger.error("stagemonitor.web.widget.enabled is true, but your servlet api version is not supported. " +
+						"The stagemonitor widget requires servlet api 3.");
+			}
+		}
+	}
+
+	private void registerWidgetFileServlets(ServletContext servletContext) {
+		registerFileServlet(servletContext, "/static/fonts/glyphicons-halflings-regular.eot");
+		registerFileServlet(servletContext, "/static/fonts/glyphicons-halflings-regular.svg");
+		registerFileServlet(servletContext, "/static/fonts/glyphicons-halflings-regular.ttf");
+		registerFileServlet(servletContext, "/static/fonts/glyphicons-halflings-regular.woff");
+
+		registerFileServlet(servletContext, "/static/jquery-treetable/jquery.treetable.css");
+		registerFileServlet(servletContext, "/static/jquery-treetable/jquery.treetable.js");
+		registerFileServlet(servletContext, "/static/jquery-treetable/jquery.treetable.theme.bootstrap.css");
+
+		registerFileServlet(servletContext, "/static/bootstrap.min.css");
+		registerFileServlet(servletContext, "/static/bootstrap.min.js");
+		registerFileServlet(servletContext, "/static/bootstrap-theme.min.css");
+		registerFileServlet(servletContext, "/static/handlebars-v1.3.0.min.js");
+		registerFileServlet(servletContext, "/static/jquery.1.11.1.min.js");
+		registerFileServlet(servletContext, "/static/stagemonitor.png");
+		registerFileServlet(servletContext, "/static/stagemonitor-banner.png");
+		registerFileServlet(servletContext, "/static/stagemonitor-modal.html");
+		registerFileServlet(servletContext, "/static/stagemonitor-widget.css");
+		registerFileServlet(servletContext, "/static/stagemonitor-widget.js");
+	}
+
+	private void registerFileServlet(ServletContext context, String resourcePath) {
+		final String mappingPath = "/stagemonitor" + resourcePath;
+		context.addServlet(mappingPath, new FileServlet(resourcePath)).addMapping(mappingPath);
 	}
 
 	private String getApplicationName(FilterConfig filterConfig) {
@@ -46,21 +99,66 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	@Override
-	public void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
+	public final void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
-		if (configuration.isStagemonitorActive() && request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
+		beforeFilter();
+		if (configuration.isStagemonitorActive() && request instanceof HttpServletRequest && response instanceof HttpServletResponse && ! isInternalRequest((HttpServletRequest) request)) {
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			final StatusExposingByteCountingServletResponse responseWrapper = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
+
 			updateConfiguration(httpServletRequest);
+
+			final StatusExposingByteCountingServletResponse responseWrapper;
+			HttpServletResponseBufferWrapper httpServletResponseBufferWrapper = null;
+			if (isStagemonitorWidgetEnabled()) {
+				httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper((HttpServletResponse) response);
+				responseWrapper = new StatusExposingByteCountingServletResponse(httpServletResponseBufferWrapper);
+			} else {
+				responseWrapper = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
+			}
+
 			try {
-				requestMonitor.monitor(new MonitoredHttpRequest(httpServletRequest,
-						responseWrapper, filterChain, configuration));
+				final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = monitorRequest(filterChain, httpServletRequest, responseWrapper);
+				if (isStagemonitorWidgetEnabled()) {
+					injectWidget(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
+				}
 			} catch (Exception e) {
 				handleException(e);
 			}
 		} else {
 			filterChain.doFilter(request, response);
 		}
+	}
+
+	private boolean isStagemonitorWidgetEnabled() {
+		return configuration.isStagemonitorWidgetEnabled() && servletApiForWidgetSufficient;
+	}
+
+	private boolean isInternalRequest(HttpServletRequest request) {
+		return request.getRequestURI().startsWith("/stagemonitor");
+	}
+
+	protected void beforeFilter() {
+	}
+
+	protected RequestMonitor.RequestInformation<HttpRequestTrace> monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
+		final MonitoredHttpRequest monitoredRequest = new MonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
+		return requestMonitor.monitor(monitoredRequest);
+	}
+
+	protected void injectWidget(ServletResponse response, HttpServletRequest httpServletRequest,
+	                            HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
+	                            RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+		final String content;
+		if (httpServletResponseBufferWrapper.getContentType() != null
+				&& httpServletResponseBufferWrapper.getContentType().contains("text/html")
+				&& httpServletRequest.getAttribute("stagemonitorWidgetInjected") == null) {
+			httpServletRequest.setAttribute("stagemonitorWidgetInjected", true);
+			content = injectBeforeClosingBody(httpServletResponseBufferWrapper.getBufferedContent(), buildWidget(requestInformation, httpServletRequest));
+		} else {
+			// passthrough
+			content = httpServletResponseBufferWrapper.getBufferedContent();
+		}
+		IOUtils.write(content, response.getOutputStream());
 	}
 
 	private void updateConfiguration(HttpServletRequest httpServletRequest) {
@@ -82,6 +180,29 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			return strings[0];
 		}
 		return "";
+	}
+
+	private String injectBeforeClosingBody(String unmodifiedContent, String contentToInject) {
+		final int lastClosingBodyIndex = unmodifiedContent.lastIndexOf("</body>");
+		final String modifiedContent;
+		if(lastClosingBodyIndex > -1) {
+			final StringBuilder modifiedContentStringBuilder = new StringBuilder(unmodifiedContent.length() + contentToInject.length());
+			modifiedContentStringBuilder.append(unmodifiedContent.substring(0, lastClosingBodyIndex));
+			modifiedContentStringBuilder.append(contentToInject);
+			modifiedContentStringBuilder.append(unmodifiedContent.substring(lastClosingBodyIndex));
+			modifiedContent = modifiedContentStringBuilder.toString();
+		} else {
+			// no body close tag found - pass through without injection
+			modifiedContent = unmodifiedContent;
+		}
+		return modifiedContent;
+	}
+
+	private String buildWidget(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation, HttpServletRequest httpServletRequest) throws IOException {
+		final InputStream widgetStream = getClass().getClassLoader().getResourceAsStream("stagemonitorWidget.html");
+		return IOUtils.toString(widgetStream)
+				.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson())
+				.replace("@@CONTEXT_PREFIX_PATH@@", httpServletRequest.getContextPath());
 	}
 
 	protected void handleException(Exception e) throws IOException, ServletException  {

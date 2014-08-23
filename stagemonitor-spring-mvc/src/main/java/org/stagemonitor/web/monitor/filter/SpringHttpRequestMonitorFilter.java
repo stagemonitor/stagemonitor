@@ -6,12 +6,15 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.servlet.FrameworkServlet;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.SpringMonitoredHttpRequest;
 
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -34,22 +37,15 @@ public class SpringHttpRequestMonitorFilter extends HttpRequestMonitorFilter {
 	}
 
 	@Override
-	public void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
-			throws IOException, ServletException {
+	protected void beforeFilter() {
 		allHandlerMappings = ensureHandlerMappingsAreInitialized();
+	}
 
-		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
-			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			final StatusExposingByteCountingServletResponse statusExposingResponse = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
-			try {
-				requestMonitor.monitor(new SpringMonitoredHttpRequest(httpServletRequest,
-						statusExposingResponse, filterChain, configuration, allHandlerMappings));
-			} catch (Exception e) {
-				handleException(e);
-			}
-		} else {
-			filterChain.doFilter(request, response);
-		}
+	@Override
+	protected RequestMonitor.RequestInformation<HttpRequestTrace> monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
+		final SpringMonitoredHttpRequest monitoredRequest = new SpringMonitoredHttpRequest(httpServletRequest,
+				responseWrapper, filterChain, configuration, allHandlerMappings);
+		return requestMonitor.monitor(monitoredRequest);
 	}
 
 	private List<HandlerMapping> ensureHandlerMappingsAreInitialized() {
