@@ -10,7 +10,6 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.QueryParameterConfigurationSource;
-import org.stagemonitor.web.monitor.servlet.FileServlet;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -54,40 +53,12 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			final ServletContext servletContext = filterConfig.getServletContext();
 			if(servletContext.getMajorVersion() >= 3) {
 				servletApiForWidgetSufficient = true;
-				registerWidgetFileServlets(servletContext);
 			} else {
 				servletApiForWidgetSufficient = false;
 				logger.error("stagemonitor.web.widget.enabled is true, but your servlet api version is not supported. " +
 						"The stagemonitor widget requires servlet api 3.");
 			}
 		}
-	}
-
-	private void registerWidgetFileServlets(ServletContext servletContext) {
-		registerFileServlet(servletContext, "/static/fonts/glyphicons-halflings-regular.eot");
-		registerFileServlet(servletContext, "/static/fonts/glyphicons-halflings-regular.svg");
-		registerFileServlet(servletContext, "/static/fonts/glyphicons-halflings-regular.ttf");
-		registerFileServlet(servletContext, "/static/fonts/glyphicons-halflings-regular.woff");
-
-		registerFileServlet(servletContext, "/static/jquery-treetable/jquery.treetable.css");
-		registerFileServlet(servletContext, "/static/jquery-treetable/jquery.treetable.js");
-		registerFileServlet(servletContext, "/static/jquery-treetable/jquery.treetable.theme.bootstrap.css");
-
-		registerFileServlet(servletContext, "/static/bootstrap.min.css");
-		registerFileServlet(servletContext, "/static/bootstrap.min.js");
-		registerFileServlet(servletContext, "/static/bootstrap-theme.min.css");
-		registerFileServlet(servletContext, "/static/handlebars-v1.3.0.min.js");
-		registerFileServlet(servletContext, "/static/jquery.1.11.1.min.js");
-		registerFileServlet(servletContext, "/static/stagemonitor.png");
-		registerFileServlet(servletContext, "/static/stagemonitor-banner.png");
-		registerFileServlet(servletContext, "/static/stagemonitor-modal.html");
-		registerFileServlet(servletContext, "/static/stagemonitor-widget.css");
-		registerFileServlet(servletContext, "/static/stagemonitor-widget.js");
-	}
-
-	private void registerFileServlet(ServletContext context, String resourcePath) {
-		final String mappingPath = "/stagemonitor" + resourcePath;
-		context.addServlet(mappingPath, new FileServlet(resourcePath)).addMapping(mappingPath);
 	}
 
 	private String getApplicationName(FilterConfig filterConfig) {

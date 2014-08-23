@@ -50,7 +50,7 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 public class SpringRequestMonitorTest {
 
 	private MockHttpServletRequest mvcRequest = new MockHttpServletRequest("GET", "/test/requestName");
-	private MockHttpServletRequest nonMvcRequest = new MockHttpServletRequest("GET", "/static/jquery.js");
+	private MockHttpServletRequest nonMvcRequest = new MockHttpServletRequest("GET", "/META-INF/resources/stagemonitor/static/jquery.js");
 	private List<HandlerMapping> handlerMappings;
 	private Configuration configuration = mock(Configuration.class);
 	private RequestMonitor requestMonitor = new RequestMonitor(configuration);

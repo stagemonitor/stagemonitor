@@ -153,7 +153,7 @@
         });
       }
 
-      this.indenter[0].style.paddingLeft = "" + (this.level() * settings.indent) + "px";
+      this.treeCell[0].style.paddingLeft = "" + (this.level() * settings.indent) + "px";
 
       return this;
     };

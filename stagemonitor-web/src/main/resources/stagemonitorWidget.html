@@ -17,10 +17,11 @@
 
 					var data = @@JSON_REQUEST_TACE_PLACEHOLDER@@;
 					stagemonitorWindow.stagemonitor.initialize(data);
-					$("#stagemonitor-overlay-show").addClass( stagemonitorWindow.stagemonitor.thresholdExceeded()
-																			? "stagemonitor-threshold-exceeded"
-																			: "stagemonitor-threshold-ok")
-					$("#stagemonitor-overlay-show").on("click", stagemonitorWindow.stagemonitor.openOverlay);
+					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+					var $overlay = $("#stagemonitor-overlay-show");
+					$overlay.addClass(
+							thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok");
+					$overlay.on("click", stagemonitorWindow.stagemonitor.openOverlay);
 				});
 			});
 		}
@@ -58,15 +59,15 @@
 
 	@-webkit-keyframes togglebackground {
 	0%   {background-color: rgba(0, 0, 0, 0.5);}
-	30%  {background-color: red;}
-	60%  {background-color: red;}
+	30%  {background-color: #bf3636}
+	60%  {background-color: #bf3636}
 	100% {background-color: rgba(0, 0, 0, 0.5);}
 	}
 
 	@keyframes togglebackground {
 	0%   {background-color: rgba(0, 0, 0, 0.5);}
-	30%  {background-color: red;}
-	60%  {background-color: red;}
+	30%  {background-color: #bf3636}
+	60%  {background-color: #bf3636}
 	100% {background-color: rgba(0, 0, 0, 0.5);}
 	}
 

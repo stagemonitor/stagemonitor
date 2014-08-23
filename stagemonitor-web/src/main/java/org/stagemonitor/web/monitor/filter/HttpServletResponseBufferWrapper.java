@@ -8,10 +8,10 @@ import java.io.PrintWriter;
 
 public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper {
 
-	private CharArrayWriter output;
+	private static final int INITIAL_SIZE = 50000;
+	private static final int BUFFER_SIZE = 1024*1024*1;
 
-	private final int INITIAL_SIZE = 50000;
-	private final int BUFFER_SIZE = 1024*1024*1;
+	private CharArrayWriter output;
 
 	public HttpServletResponseBufferWrapper(HttpServletResponse response) {
 		super(response);

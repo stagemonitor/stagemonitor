@@ -15,7 +15,7 @@ $(document).ready(function() {
 				default:
 					return false;
 			}
-		}
+		};
 
 		var commonNames = {
 			"name": {name: "Request name", description: "Usecase / Request verb and path"},
@@ -85,25 +85,18 @@ $(document).ready(function() {
 
 			for(var i = 0; i < callArray.length; i++) {
 				var callData = callArray[i];
-				var shortedSignature = callData.signature;
 
 				var executionTimeInMs = Math.round(callData.executionTime / 1000 / 10) / 100;
 				var selfExecutionTimeInMs = Math.round(callData.netExecutionTime / 1000 / 10) / 100;
 				var executionTimePercent = (executionTimeInMs / totalExecutionTimeInMs) * 100;
 				var selfExecutionTimePercent = (selfExecutionTimeInMs / totalExecutionTimeInMs) * 100;
-				var maximumSignatureLength = 100;
-				var isShortened = shortedSignature.length > maximumSignatureLength;
-				if (isShortened) {
-					shortedSignature = shortedSignature.substring(0, maximumSignatureLength) + "...";
-				}
 
 				callTreeRows.push({
 					executionTimeExceededThreshold: executionTimePercent > localStorage.getItem("stagemonitor-configuration-execution-threshold-percent"),
 					parentId: parentId,
 					myId: myId,
 					signature: callData.signature,
-					shortedSignature: shortedSignature,
-					isShortened: isShortened,
+					isShortened: false,
 					executionTimePercent: executionTimePercent,
 					executionTimeInMs: executionTimeInMs,
 					selfExecutionTimePercent: selfExecutionTimePercent,
@@ -120,20 +113,28 @@ $(document).ready(function() {
 		initialize: function(data) {
 			var renderedMetricsTemplate = metricsTemplate(processRequestsMetrics(data));
 			$("#stagemonitor-request").html(renderedMetricsTemplate);
-			$("#stagemonitor-request .glyphicon-info-sign").tooltip();
+			var $calltree = $("#stagemonitor-calltree");
+			$calltree.find(".glyphicon-info-sign").tooltip();
 
-			var callTree = JSON.parse(data.callStackJson);
-			var callTreeRows = processCallTree([callTree]);
-			var renderedCallTree = callTreeTemplate({callTreeRows: callTreeRows});
-			$("#stagemonitor-calltree tbody").html(renderedCallTree);
-			$("#stagemonitor-calltree").treetable({
-				expandable: true,
-				initialState: "expanded",
-				force: true
-			});
-			$("#stagemonitor-calltree tr[data-tt-expanded='false']").each(function() {
-				$("#stagemonitor-calltree").treetable("collapseNode", $(this).attr("data-tt-id"));
-			});
+			if (data.callStackJson !== undefined) {
+				var callTree = JSON.parse(data.callStackJson);
+				var callTreeRows = processCallTree([callTree]);
+				var renderedCallTree = callTreeTemplate({callTreeRows: callTreeRows});
+				$calltree.find("tbody").html(renderedCallTree);
+				$calltree.treetable({
+					expandable: true,
+					initialState: "expanded",
+					force: true
+				});
+				$calltree.find("tr[data-tt-expanded='false']").each(function () {
+					$("#stagemonitor-calltree").treetable("collapseNode", $(this).attr("data-tt-id"));
+				});
+			} else {
+				$("#call-stack-tab").hide();
+				$("#stagemonitor-home").hide();
+				$("#request-tab").addClass('active');
+				$("#stagemonitor-request").addClass('active')
+			}
 		},
 		thresholdExceeded: function() {
 			return thresholdExceededGlobal;
