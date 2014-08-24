@@ -1,4 +1,4 @@
-package org.stagemonitor.web.monitor;
+package org.stagemonitor.web.configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import org.stagemonitor.core.ConfigurationSource;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class QueryParameterConfigurationSource implements ConfigurationSource {
+public class DynamicConfigurationSource implements ConfigurationSource {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -16,7 +16,7 @@ public class QueryParameterConfigurationSource implements ConfigurationSource {
 
 	private final ConcurrentMap<String, String> queryParameterConfiguration = new ConcurrentHashMap<String, String>();
 
-	public QueryParameterConfigurationSource(Configuration configuration) {
+	public DynamicConfigurationSource(Configuration configuration) {
 		this.configuration = configuration;
 	}
 
@@ -34,7 +34,7 @@ public class QueryParameterConfigurationSource implements ConfigurationSource {
 	 */
 	public void updateConfiguration(String key, String value, String configurationUpdatePassword) {
 		if (configuration.getConfigurationUpdatePassword() == null) {
-			logger.warn("stagemonitor.configuration.update.password is not set. " +
+			logger.warn(Configuration.STAGEMONITOR_PASSWORD + " is not set. " +
 					"Dynamic configuration changes are therefore not allowed");
 			return;
 		}

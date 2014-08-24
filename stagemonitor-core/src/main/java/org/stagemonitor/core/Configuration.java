@@ -20,6 +20,7 @@ import static java.util.Collections.emptySet;
 
 public class Configuration {
 
+	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private ConcurrentMap<String, Object> propertiesCache = new ConcurrentHashMap<String, Object>();
 	private List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
@@ -359,14 +360,14 @@ public class Configuration {
 	 * The password that is required to dynamically update the configuration via a query parameter.
 	 * <p/>
 	 * If not set (default) configuration reloading is disabled. If set, you have to include the query parameter
-	 * <code>stagemonitor.configuration.update.password=&lt;password></code>, if you want to dynamically update the
+	 * <code>stagemonitor.password=&lt;password></code>, if you want to dynamically update the
 	 * configuration via query parameters. If set to an empty string, the password is not required.
 	 *
 	 * @return the password that is required to dynamically update the configuration via a query parameter. Returns
 	 * <code>null</code> if not set.
 	 */
 	public String getConfigurationUpdatePassword() {
-		return getString("stagemonitor.configuration.update.password", null);
+		return getString(STAGEMONITOR_PASSWORD, null);
 	}
 
 	/**
