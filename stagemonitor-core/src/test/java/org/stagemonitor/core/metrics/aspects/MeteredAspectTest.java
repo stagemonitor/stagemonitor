@@ -18,6 +18,10 @@ public class MeteredAspectTest {
 		public void meteredDefault() {
 		}
 
+		@Metered
+		private void meteredPrivate() {
+		}
+
 		@Metered(absolute = true)
 		public void meteredAbsolute() {
 		}
@@ -40,6 +44,12 @@ public class MeteredAspectTest {
 	public void testMeteredAspectDefault() {
 		testObject.meteredDefault();
 		assertOneTimerExists("meter.MeteredAspectTest$TestObject.meteredDefault");
+	}
+
+	@Test
+	public void testMeteredAspectPrivate() {
+		testObject.meteredPrivate();
+		assertEquals(0, StageMonitor.getMetricRegistry().getMeters().size());
 	}
 
 	@Test

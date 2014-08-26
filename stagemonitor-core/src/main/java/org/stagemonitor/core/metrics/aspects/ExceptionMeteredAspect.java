@@ -10,11 +10,11 @@ import org.stagemonitor.core.StageMonitor;
 import static com.codahale.metrics.MetricRegistry.name;
 
 @Aspect
-public class ExceptionMeteredAspect {
+public class ExceptionMeteredAspect extends AbstractAspect {
 
 	private final MetricRegistry registry = StageMonitor.getMetricRegistry();
 
-	@AfterThrowing(value = "execution(@com.codahale.metrics.annotation.ExceptionMetered * *(..)) && @annotation(meteredAnnotation)",
+	@AfterThrowing(value = "publicMethod() && execution(@com.codahale.metrics.annotation.ExceptionMetered * *(..)) && @annotation(meteredAnnotation)",
 			throwing = "exception")
 	public void metered(JoinPoint.StaticPart jp, ExceptionMetered meteredAnnotation, Exception exception) throws Throwable {
 		final Class<? extends Throwable> cause = meteredAnnotation.cause();

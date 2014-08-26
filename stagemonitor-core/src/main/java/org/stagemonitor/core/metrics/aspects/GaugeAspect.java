@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
 import static com.codahale.metrics.MetricRegistry.name;
 
 @Aspect
-public class GaugeAspect {
+public class GaugeAspect extends AbstractAspect {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 

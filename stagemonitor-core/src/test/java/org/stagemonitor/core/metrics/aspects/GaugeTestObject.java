@@ -7,9 +7,10 @@ import org.stagemonitor.core.metrics.MonitorGauges;
 public class GaugeTestObject {
 
 	@Gauge
-	public int gaugeDefault() {
+	private int gaugeDefault() {
 		return 1;
 	}
+
 	@Gauge
 	public static int staticGaugeDefault() {
 		return 1;

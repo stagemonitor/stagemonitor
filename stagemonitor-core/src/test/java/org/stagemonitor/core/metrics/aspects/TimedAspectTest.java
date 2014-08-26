@@ -18,6 +18,10 @@ public class TimedAspectTest {
 		public void timedDefault() {
 		}
 
+		@Timed
+		private void timedPrivate() {
+		}
+
 		@Timed(absolute = true)
 		public void timedAbsolute() {
 		}
@@ -40,6 +44,12 @@ public class TimedAspectTest {
 	public void testTimedAspectDefault() {
 		testObject.timedDefault();
 		assertOneTimerExists("timer.TimedAspectTest$TestObject.timedDefault");
+	}
+
+	@Test
+	public void testTimedAspectPrivate() {
+		testObject.timedPrivate();
+		assertEquals(0, StageMonitor.getMetricRegistry().getTimers().size());
 	}
 
 	@Test

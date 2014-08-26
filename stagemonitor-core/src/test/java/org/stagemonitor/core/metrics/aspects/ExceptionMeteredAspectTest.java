@@ -19,6 +19,11 @@ public class ExceptionMeteredAspectTest {
 			throw null;
 		}
 
+		@ExceptionMetered
+		private void exceptionMeteredPrivate() {
+			throw null;
+		}
+
 		@ExceptionMetered(absolute = true)
 		public void exceptionMeteredAbsolute() {
 			throw null;
@@ -71,6 +76,16 @@ public class ExceptionMeteredAspectTest {
 			// ignore
 		}
 		assertOneTimerExists("meter.ExceptionMeteredAspectTest$TestObject.exceptionMeteredDefault.exceptions");
+	}
+
+	@Test
+	public void testExceptionMeteredAspectexceptionMeteredPrivate() {
+		try {
+			testObject.exceptionMeteredPrivate();
+		} catch (Exception e) {
+			// ignore
+		}
+		assertEquals(0, StageMonitor.getMetricRegistry().getMeters().size());
 	}
 
 	@Test

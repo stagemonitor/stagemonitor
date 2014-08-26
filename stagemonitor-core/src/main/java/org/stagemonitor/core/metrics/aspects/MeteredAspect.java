@@ -10,11 +10,11 @@ import org.stagemonitor.core.StageMonitor;
 import static com.codahale.metrics.MetricRegistry.name;
 
 @Aspect
-public class MeteredAspect {
+public class MeteredAspect extends AbstractAspect {
 
 	private final MetricRegistry registry = StageMonitor.getMetricRegistry();
 
-	@Before(value = "execution(@com.codahale.metrics.annotation.Metered * *(..)) && @annotation(meteredAnnotation)")
+	@Before(value = "publicMethod() && execution(@com.codahale.metrics.annotation.Metered * *(..)) && @annotation(meteredAnnotation)")
 	public void metered(JoinPoint.StaticPart jp, Metered meteredAnnotation) throws Throwable {
 		final String signature = SignatureUtils.getSignature(jp.getSignature(), meteredAnnotation.name(),
 				meteredAnnotation.absolute());
