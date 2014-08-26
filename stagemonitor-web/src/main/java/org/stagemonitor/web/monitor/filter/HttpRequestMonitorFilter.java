@@ -20,6 +20,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 			final StatusExposingByteCountingServletResponse responseWrapper;
 			HttpServletResponseBufferWrapper httpServletResponseBufferWrapper = null;
-			if (isStagemonitorWidgetEnabled()) {
+			if (isInjectWidget(httpServletRequest)) {
 				httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper((HttpServletResponse) response);
 				responseWrapper = new StatusExposingByteCountingServletResponse(httpServletResponseBufferWrapper);
 			} else {
@@ -89,7 +90,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 			try {
 				final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = monitorRequest(filterChain, httpServletRequest, responseWrapper);
-				if (isStagemonitorWidgetEnabled()) {
+				if (isInjectWidget(httpServletRequest)) {
 					injectWidget(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
 				}
 			} catch (Exception e) {
@@ -98,6 +99,15 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		} else {
 			filterChain.doFilter(request, response);
 		}
+	}
+
+	private boolean isInjectWidget(HttpServletRequest httpServletRequest) {
+		return isStagemonitorWidgetEnabled() && isHtmlRequested(httpServletRequest);
+	}
+
+	private boolean isHtmlRequested(HttpServletRequest httpServletRequest) {
+		final String accept = httpServletRequest.getHeader("accept");
+		return accept != null && accept.contains("text/html");
 	}
 
 	private boolean isStagemonitorWidgetEnabled() {
@@ -119,17 +129,27 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	protected void injectWidget(ServletResponse response, HttpServletRequest httpServletRequest,
 	                            HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
 	                            RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
-		final String content;
 		if (httpServletResponseBufferWrapper.getContentType() != null
 				&& httpServletResponseBufferWrapper.getContentType().contains("text/html")
-				&& httpServletRequest.getAttribute("stagemonitorWidgetInjected") == null) {
+				&& httpServletRequest.getAttribute("stagemonitorWidgetInjected") == null
+				&& httpServletResponseBufferWrapper.isUsingWriter()) {
+
 			httpServletRequest.setAttribute("stagemonitorWidgetInjected", true);
-			content = injectBeforeClosingBody(httpServletResponseBufferWrapper.getBufferedContent(), buildWidget(requestInformation, httpServletRequest));
+			String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
+			content = injectBeforeClosingBody(content, buildWidget(requestInformation, httpServletRequest));
+			response.getWriter().write(content);
 		} else {
-			// passthrough
-			content = httpServletResponseBufferWrapper.getBufferedContent();
+			passthrough(response, httpServletResponseBufferWrapper);
 		}
-		IOUtils.write(content, response.getOutputStream());
+	}
+
+	private void passthrough(ServletResponse response, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper) throws IOException {
+		if (httpServletResponseBufferWrapper.isUsingWriter()) {
+			response.getWriter().write(httpServletResponseBufferWrapper.getWriter().getOutput().toString());
+		} else {
+			ByteArrayOutputStream output = httpServletResponseBufferWrapper.getOutputStream().getOutput();
+			output.writeTo(response.getOutputStream());
+		}
 	}
 
 	private void updateConfiguration(HttpServletRequest httpServletRequest) {
