@@ -45,6 +45,24 @@ public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper
 		return servletOutputStream;
 	}
 
+	@Override
+	public void flushBuffer() throws IOException {
+		// the purpose of this wrapper is to buffer all the content
+	}
+
+	@Override
+	public void setBufferSize(int size) {
+		// ignore
+	}
+
+	@Override
+	public void resetBuffer() {
+		servletOutputStream = null;
+		usingOutputStream = false;
+		printWriter = null;
+		usingWriter = false;
+	}
+
 	public boolean isUsingWriter() {
 		return usingWriter;
 	}
