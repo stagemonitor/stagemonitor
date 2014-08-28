@@ -40,10 +40,16 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		final String html = "<html><body></body></html>";
 
-		httpRequestMonitorFilter.doFilter(new MockHttpServletRequest(), servletResponse, writeInResponseWhenCallingDoFilter(html));
+		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(html));
 
 		final String expected = "<html><body><!-- injection-placeholder --></body></html>";
 		Assert.assertEquals(expected, servletResponse.getContentAsString());
+	}
+
+	private MockHttpServletRequest requestWithAccept(String accept) {
+		final MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.addHeader("accept", accept);
+		return mockHttpServletRequest;
 	}
 
 	@Test
@@ -53,7 +59,19 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		final String html = "<html><body></body></html>";
 
-		httpRequestMonitorFilter.doFilter(new MockHttpServletRequest(), servletResponse, writeInResponseWhenCallingDoFilter(html));
+		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(html));
+
+		final String expected = "<html><body></body></html>";
+		Assert.assertEquals(expected, servletResponse.getContentAsString());
+	}
+
+	@Test
+	public void testWidgetShouldNotBeInjectedIfHtmlIsNotAcceptable() throws IOException, ServletException {
+		final HttpRequestMonitorFilter httpRequestMonitorFilter = spy(new HttpRequestMonitorFilter(configuration));
+		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
+		final String html = "<html><body></body></html>";
+
+		httpRequestMonitorFilter.doFilter(requestWithAccept("application/json"), servletResponse, writeInResponseWhenCallingDoFilter(html));
 
 		final String expected = "<html><body></body></html>";
 		Assert.assertEquals(expected, servletResponse.getContentAsString());
@@ -65,7 +83,7 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		final String html = "<html><body></body><body></body><body></body><body>asdf</body></html>";
 
-		httpRequestMonitorFilter.doFilter(new MockHttpServletRequest(), servletResponse, writeInResponseWhenCallingDoFilter(html));
+		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(html));
 
 		final String expected = "<html><body></body><body></body><body></body><body>asdf<!-- injection-placeholder --></body></html>";
 		Assert.assertEquals(expected, servletResponse.getContentAsString());
