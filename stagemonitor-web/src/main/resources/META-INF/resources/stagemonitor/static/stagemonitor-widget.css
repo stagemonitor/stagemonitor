@@ -103,3 +103,7 @@ body {
 .indenter {
 	display: inline !important
 }
+
+.expander {
+	margin-left: -19px;
+}

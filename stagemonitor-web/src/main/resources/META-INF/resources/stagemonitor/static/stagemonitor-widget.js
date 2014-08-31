@@ -112,7 +112,8 @@ $(document).ready(function() {
 				$calltree.treetable({
 					expandable: true,
 					force: true,
-					indent: 25
+					indent: 25,
+					expanderTemplate: "<a class='expander' href='#'>&nbsp;</a>"
 				});
 				$calltree.find("tr[data-tt-expanded='true']").each(function () {
 					$("#stagemonitor-calltree").treetable("expandNode", $(this).attr("data-tt-id"));
