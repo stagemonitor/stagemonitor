@@ -64,55 +64,36 @@ $(document).ready(function() {
 			headers: requestData["headers"]
 		};
 	};
-	var processCallTree = function() {
-		if(arguments.length === 1) {
-			// first call
-			var rootCallTreeArray = arguments[0];
-			var parentId = null;
-			var rootId = 1;
-			var rootCallTreeEntry = rootCallTreeArray[0];
-			var totalExecutionTimeInMs = rootCallTreeEntry.executionTime / 1000 / 1000;
-			var callTreeRows = [];
-			var totalExecutionTimeInNs = rootCallTreeEntry.executionTime;
-			processCallTree(rootCallTreeArray, parentId, rootId, totalExecutionTimeInMs, callTreeRows, totalExecutionTimeInNs);
-			return callTreeRows;
-		} else {
-			// recursion
-			var callArray = arguments[0],
-				parentId = arguments[1],
-				myId = arguments[2],
-				totalExecutionTimeInMs = arguments[3],
-				callTreeRows = arguments[4];
-				totalExecutionTimeInNs = arguments[5];
+	var processCallTree = function(callTreeRows, callArray, parentId, myId, totalExecutionTimeInNs) {
+		const thresholdPercent = localStorage.getItem("stagemonitor-configuration-execution-threshold-percent");
+		const totalExecutionTimeInMs = totalExecutionTimeInNs / 1000 / 1000;
+		for(var i = 0; i < callArray.length; i++) {
+			var callData = callArray[i];
 
-			const thresholdPercent = localStorage.getItem("stagemonitor-configuration-execution-threshold-percent");
-			for(var i = 0; i < callArray.length; i++) {
-				var callData = callArray[i];
+			var executionTimeInMs = Math.round(callData.executionTime / 1000 / 10) / 100;
+			var selfExecutionTimeInMs = Math.round(callData.netExecutionTime / 1000 / 10) / 100;
+			var executionTimePercent = (executionTimeInMs / totalExecutionTimeInMs) * 100;
+			var selfExecutionTimePercent = (selfExecutionTimeInMs / totalExecutionTimeInMs) * 100;
+			var anyChildExceedsThreshold = $.grep(callData.children, function (e) {
+				return (e.executionTime / totalExecutionTimeInNs * 100) > thresholdPercent;
+			}).length > 0;
 
-				var executionTimeInMs = Math.round(callData.executionTime / 1000 / 10) / 100;
-				var selfExecutionTimeInMs = Math.round(callData.netExecutionTime / 1000 / 10) / 100;
-				var executionTimePercent = (executionTimeInMs / totalExecutionTimeInMs) * 100;
-				var selfExecutionTimePercent = (selfExecutionTimeInMs / totalExecutionTimeInMs) * 100;
-				var anyChildExceedsThreshold = $.grep(callData.children, function(e){
-					return (e.executionTime / totalExecutionTimeInNs * 100) > thresholdPercent;}).length > 0;
+			callTreeRows.push({
+				executionTimeExceededThreshold: executionTimePercent > thresholdPercent,
+				anyChildExceedsThreshold: anyChildExceedsThreshold,
+				parentId: parentId,
+				myId: myId,
+				signature: callData.signature,
+				isShortened: false,
+				executionTimePercent: executionTimePercent,
+				executionTimeInMs: executionTimeInMs,
+				selfExecutionTimePercent: selfExecutionTimePercent,
+				selfExecutionTimeInMs: selfExecutionTimeInMs
+			});
 
-				callTreeRows.push({
-					executionTimeExceededThreshold: executionTimePercent > thresholdPercent,
-					anyChildExceedsThreshold: anyChildExceedsThreshold,
-					parentId: parentId,
-					myId: myId,
-					signature: callData.signature,
-					isShortened: false,
-					executionTimePercent: executionTimePercent,
-					executionTimeInMs: executionTimeInMs,
-					selfExecutionTimePercent: selfExecutionTimePercent,
-					selfExecutionTimeInMs: selfExecutionTimeInMs
-				});
-
-				myId = processCallTree(callData.children, myId, myId + 1, totalExecutionTimeInMs, callTreeRows, totalExecutionTimeInNs);
-			}
-			return myId;
+			myId = processCallTree(callTreeRows, callData.children, myId, myId + 1, totalExecutionTimeInNs);
 		}
+		return myId;
 	};
 
 	window.stagemonitor = {
@@ -124,7 +105,8 @@ $(document).ready(function() {
 
 			if (data.callStackJson !== undefined) {
 				var callTree = JSON.parse(data.callStackJson);
-				var callTreeRows = processCallTree([callTree]);
+				var callTreeRows = [];
+				processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);
 				var renderedCallTree = callTreeTemplate({callTreeRows: callTreeRows});
 				$calltree.find("tbody").html(renderedCallTree);
 				$calltree.treetable({
