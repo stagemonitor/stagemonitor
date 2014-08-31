@@ -155,7 +155,7 @@
 		expanderIndent = 0;
 	  }
 
-      this.treeCell[0].style.paddingLeft = "" + (this.level() * settings.indent + expanderIndent) + "px";
+      this.treeCell[0].style.paddingLeft = "" + ((this.level() + 1) * settings.indent + expanderIndent) + "px";
 
       return this;
     };
