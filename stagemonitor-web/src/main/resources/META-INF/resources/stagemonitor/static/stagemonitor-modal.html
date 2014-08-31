@@ -29,7 +29,7 @@
 				<ul class="nav nav-tabs" role="tablist">
 					<li id="call-stack-tab" class="active"><a href="#stagemonitor-home" role="tab" data-toggle="tab">Call Tree</a></li>
 					<li id="request-tab"><a href="#stagemonitor-request" role="tab" data-toggle="tab">Request</a></li>
-					<li id="config-tab"><a href="#stagemonitor-configuration" role="tab" data-toggle="tab">Configuration</a></li>
+					<li id="config-tab"><a href="#stagemonitor-configuration" role="tab" data-toggle="tab">Widget Settings</a></li>
 				</ul>
 			</div>
 
@@ -118,7 +118,6 @@
 
 				<div class="tab-pane" id="stagemonitor-configuration">
 					<form class="form-horizontal" role="form">
-						<h4>Display settings</h4>
 						<div class="form-group">
 							<label class="col-sm-3 control-label">Highlight and expand method calls taking longer than </label>
 							<div class="col-sm-2">
@@ -133,7 +132,6 @@
 							</div>
 						</div>
 
-						<h4>Notification thresholds</h4>
 						<div class="form-group">
 							<label class="col-sm-3 control-label">Notify if request took longer than </label>
 							<div class="col-sm-2">
@@ -147,6 +145,7 @@
 								</div>
 							</div>
 						</div>
+
 						<div class="form-group">
 							<label class="col-sm-3 control-label">Count of SQL-queries after which you will be notified</label>
 							<div class="col-sm-2">
@@ -160,13 +159,9 @@
 							</div>
 						</div>
 						<div class="form-group">
-							<div class="col-sm-2 col-sm-offset-3">
-								<div class="checkbox">
-									<label>
-										<input data-stagemonitor-configuration-key="stagemonitor-configuration-notify-on-error" data-stagemonitor-configuration-default-value="false" type="checkbox">
-										Notify on error?
-									</label>
-								</div>
+							<label class="col-sm-3 control-label">Notify on error</label>
+							<div class="col-sm-2">
+								<input data-stagemonitor-configuration-key="stagemonitor-configuration-notify-on-error" data-stagemonitor-configuration-default-value="false" type="checkbox" class="checkbox">
 							</div>
 						</div>
 						<div class="form-group">
