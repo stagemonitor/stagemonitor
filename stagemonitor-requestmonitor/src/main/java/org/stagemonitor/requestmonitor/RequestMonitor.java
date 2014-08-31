@@ -205,6 +205,7 @@ public class RequestMonitor {
 
 			if (requestTrace.getCallStack() != null) {
 				Profiler.stop();
+				requestTrace.getCallStack().setSignature(requestTrace.getName());
 				reportCallStack(requestTrace, configuration.getElasticsearchUrl());
 			}
 			trackMetrics(info, executionTime, cpuTime);
