@@ -73,7 +73,8 @@ $(document).ready(function() {
 			var rootCallTreeEntry = rootCallTreeArray[0];
 			var totalExecutionTimeInMs = rootCallTreeEntry.executionTime / 1000 / 1000;
 			var callTreeRows = [];
-			processCallTree(rootCallTreeArray, parentId, rootId, totalExecutionTimeInMs, callTreeRows);
+			var totalExecutionTimeInNs = rootCallTreeEntry.executionTime;
+			processCallTree(rootCallTreeArray, parentId, rootId, totalExecutionTimeInMs, callTreeRows, totalExecutionTimeInNs);
 			return callTreeRows;
 		} else {
 			// recursion
@@ -82,7 +83,9 @@ $(document).ready(function() {
 				myId = arguments[2],
 				totalExecutionTimeInMs = arguments[3],
 				callTreeRows = arguments[4];
+				totalExecutionTimeInNs = arguments[5];
 
+			const thresholdPercent = localStorage.getItem("stagemonitor-configuration-execution-threshold-percent");
 			for(var i = 0; i < callArray.length; i++) {
 				var callData = callArray[i];
 
@@ -90,9 +93,12 @@ $(document).ready(function() {
 				var selfExecutionTimeInMs = Math.round(callData.netExecutionTime / 1000 / 10) / 100;
 				var executionTimePercent = (executionTimeInMs / totalExecutionTimeInMs) * 100;
 				var selfExecutionTimePercent = (selfExecutionTimeInMs / totalExecutionTimeInMs) * 100;
+				var anyChildExceedsThreshold = $.grep(callData.children, function(e){
+					return (e.executionTime / totalExecutionTimeInNs * 100) > thresholdPercent;}).length > 0;
 
 				callTreeRows.push({
-					executionTimeExceededThreshold: executionTimePercent > localStorage.getItem("stagemonitor-configuration-execution-threshold-percent"),
+					executionTimeExceededThreshold: executionTimePercent > thresholdPercent,
+					anyChildExceedsThreshold: anyChildExceedsThreshold,
 					parentId: parentId,
 					myId: myId,
 					signature: callData.signature,
@@ -103,7 +109,7 @@ $(document).ready(function() {
 					selfExecutionTimeInMs: selfExecutionTimeInMs
 				});
 
-				myId = processCallTree(callData.children, myId, myId + 1, totalExecutionTimeInMs, callTreeRows);
+				myId = processCallTree(callData.children, myId, myId + 1, totalExecutionTimeInMs, callTreeRows, totalExecutionTimeInNs);
 			}
 			return myId;
 		}
@@ -123,13 +129,13 @@ $(document).ready(function() {
 				$calltree.find("tbody").html(renderedCallTree);
 				$calltree.treetable({
 					expandable: true,
-					initialState: "expanded",
 					force: true,
 					indent: 25
 				});
-				$calltree.find("tr[data-tt-expanded='false']").each(function () {
-					$("#stagemonitor-calltree").treetable("collapseNode", $(this).attr("data-tt-id"));
+				$calltree.find("tr[data-tt-expanded='true']").each(function () {
+					$("#stagemonitor-calltree").treetable("expandNode", $(this).attr("data-tt-id"));
 				});
+
 			} else {
 				$("#call-stack-tab").hide();
 				$("#stagemonitor-home").hide();
