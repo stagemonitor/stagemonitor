@@ -124,7 +124,8 @@ $(document).ready(function() {
 				$calltree.treetable({
 					expandable: true,
 					initialState: "expanded",
-					force: true
+					force: true,
+					indent: 25
 				});
 				$calltree.find("tr[data-tt-expanded='false']").each(function () {
 					$("#stagemonitor-calltree").treetable("collapseNode", $(this).attr("data-tt-id"));

@@ -136,6 +136,7 @@
           settings = this.settings,
           target;
 
+	  var expanderIndent = 19;
       if (settings.expandable === true && this.isBranchNode()) {
         handler = function(e) {
           $(this).parents("table").treetable("node", $(this).parents("tr").data(settings.nodeIdAttr)).toggle();
@@ -151,9 +152,10 @@
             handler.apply(this, [e]);
           }
         });
-      }
+		expanderIndent = 0;
+	  }
 
-      this.treeCell[0].style.paddingLeft = "" + (this.level() * settings.indent) + "px";
+      this.treeCell[0].style.paddingLeft = "" + (this.level() * settings.indent + expanderIndent) + "px";
 
       return this;
     };

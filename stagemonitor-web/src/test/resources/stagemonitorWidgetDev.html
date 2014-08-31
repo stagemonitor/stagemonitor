@@ -1,0 +1,95 @@
+<script src="../../main/resources/META-INF/resources/stagemonitor/static/jquery.1.11.1.min.js"></script>
+<script type="text/javascript">
+	(function($) {
+		window.StageMonitorLoaded = function() {
+			$(document).ready(function() {
+				$("#stagemonitor-modal").load(function() {
+					var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
+
+					$.extend(stagemonitorWindow.stagemonitor, {
+						openOverlay: function() {
+							$("#stagemonitor-overlay").show();
+						},
+						closeOverlay: function() {
+							$("#stagemonitor-overlay").hide();
+						}
+					});
+
+					var data = {"name":"Show Owner","executionTime":19,"executionTimeDb":1,"executionCountDb":3,"executionTimeCpu":31,"error":false,"parameter":"","clientIp":"127.0.0.1","url":"/petclinic/owners/2.html","statusCode":200,"headers":{"cache-control":"max-age=0","connection":"keep-alive","accept-language":"de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4","host":"localhost:8888","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8","user-agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36","accept-encoding":"gzip,deflate,sdch","referer":"http://localhost:8888/petclinic/owners.html?lastName="},"method":"GET","userAgent":{"type":"Browser","device":"Personal computer","os":"Windows 7","osFamily":"Windows","osVersion":"6.1","browser":"Chrome","browserVersion":"36.0.1985.143"},"callStackJson":"{\"signature\":\"total\",\"executionTime\":17963684,\"children\":[{\"signature\":\"void org.springframework.web.servlet.FrameworkServlet.service(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17887032,\"children\":[{\"signature\":\"void org.springframework.web.servlet.FrameworkServlet.doGet(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17878840,\"children\":[{\"signature\":\"void org.springframework.web.servlet.DispatcherServlet.doService(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17771175,\"children\":[{\"signature\":\"void org.springframework.web.servlet.DispatcherServlet.doDispatch(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17745136,\"children\":[{\"signature\":\"ModelAndView org.springframework.samples.petclinic.web.OwnerController.showOwner(int)\",\"executionTime\":8723212,\"children\":[{\"signature\":\"Owner org.springframework.samples.petclinic.service.ClinicServiceImpl.findOwnerById(int)\",\"executionTime\":7555865,\"children\":[{\"signature\":\"Owner org.springframework.samples.petclinic.repository.jpa.JpaOwnerRepositoryImpl.findById(int)\",\"executionTime\":7486234,\"children\":[{\"signature\":\"select owner0_.id as id1_0_0_, pets1_.id as id1_1_1_, owner0_.first_name as first_na2_0_0_, owner0_.last_name as last_nam3_0_0_, owner0_.address as address4_0_0_, owner0_.city as city5_0_0_, owner0_.telephone as telephon6_0_0_, pets1_.name as name2_1_1_, pets1_.birth_date as birth_da3_1_1_, pets1_.owner_id as owner_id4_1_1_, pets1_.type_id as type_id5_1_1_, pets1_.owner_id as owner_id4_0_0__, pets1_.id as id1_1_0__ from owners owner0_ left outer join pets pets1_ on owner0_.id=pets1_.owner_id where owner0_.id=?\",\"executionTime\":1000000,\"children\":[],\"netExecutionTime\":1000000},{\"signature\":\"select pettype0_.id as id1_3_0_, pettype0_.name as name2_3_0_ from types pettype0_ where pettype0_.id=?\",\"executionTime\":0,\"children\":[],\"netExecutionTime\":0},{\"signature\":\"select visits0_.pet_id as pet_id4_1_0_, visits0_.id as id1_6_0_, visits0_.id as id1_6_1_, visits0_.visit_date as visit_da2_6_1_, visits0_.description as descript3_6_1_, visits0_.pet_id as pet_id4_6_1_ from visits visits0_ where visits0_.pet_id=?\",\"executionTime\":0,\"children\":[],\"netExecutionTime\":0}],\"netExecutionTime\":6486234}],\"netExecutionTime\":69631}],\"netExecutionTime\":1167347},{\"signature\":\"View org.springframework.web.servlet.view.ContentNegotiatingViewResolver.resolveViewName(String, Locale)\",\"executionTime\":267992,\"children\":[],\"netExecutionTime\":267992},{\"signature\":\"void org.springframework.web.servlet.view.AbstractView.render(Map, HttpServletRequest, HttpServletResponse)\",\"executionTime\":7218827,\"children\":[],\"netExecutionTime\":7218827}],\"netExecutionTime\":1535105}],\"netExecutionTime\":26039}],\"netExecutionTime\":107665}],\"netExecutionTime\":8192}],\"netExecutionTime\":76652}","@timestamp":"2014-08-23T13:11:50.796+0200","@application":"Spring PetClinic","@host":"Felix-PC","@instance":"localhost"};
+					stagemonitorWindow.stagemonitor.initialize(data);
+					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+					var $overlay = $("#stagemonitor-overlay-show");
+					$overlay.addClass(
+							thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok");
+					$overlay.on("click", stagemonitorWindow.stagemonitor.openOverlay);
+				});
+			});
+		}
+	})(jQuery.noConflict(true));
+</script>
+<style>
+	#stagemonitor-overlay {
+	display: none;
+	position: fixed;
+	background-color: rgba(0, 0, 0, 0.5);
+	width: 100%;
+	height: 100%;
+	z-index: 100;
+	top: 0;
+	left: 0;
+	}
+
+	#stagemonitor-overlay-show {
+	position: fixed;
+	right: 3em;
+	bottom: 3em;
+	border-radius: 1em;
+	padding: 0.5em;
+	cursor: pointer;
+	}
+
+	.stagemonitor-threshold-ok {
+	background-color: rgba(0, 0, 0, 0.5);
+	}
+
+	.stagemonitor-threshold-exceeded {
+	-webkit-animation: togglebackground 4s infinite;
+	animation: togglebackground 4s infinite;
+	}
+
+	@-webkit-keyframes togglebackground {
+	0%   {background-color: rgba(0, 0, 0, 0.5);}
+	30%  {background-color: #bf3636}
+	60%  {background-color: #bf3636}
+	100% {background-color: rgba(0, 0, 0, 0.5);}
+	}
+
+	@keyframes togglebackground {
+	0%   {background-color: rgba(0, 0, 0, 0.5);}
+	30%  {background-color: #bf3636}
+	60%  {background-color: #bf3636}
+	100% {background-color: rgba(0, 0, 0, 0.5);}
+	}
+
+	#stagemonitor-modal {
+	border: 1px solid rgba(0, 0, 0, 0.2);
+	border-radius: 6px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+	height: 80%;
+	left: 50%;
+	margin-left: -45%;
+	min-width: 1000px;
+	position: fixed;
+	top: 10%;
+	width: 90%;
+	}
+</style>
+
+<div id="stagemonitor-overlay">
+	<iframe id="stagemonitor-modal" src="../../main/resources/META-INF/resources/stagemonitor/static/stagemonitor-modal.html"></iframe>
+</div>
+
+<div id="stagemonitor-overlay-show">
+	<img src="../../main/resources/META-INF/resources/stagemonitor/static/stagemonitor.png" />
+</div>
+
