@@ -151,6 +151,10 @@ $(document).ready(function() {
 				localStorage.setItem(key, value);
 			}
 		});
+		$("#stagemonitor-configuration-save").removeClass("btn-primary").addClass("btn-success");
+		$(".submit-response").css("display", "inline").fadeOut(3000, function () {
+			$("#stagemonitor-configuration-save").removeClass("btn-success").addClass("btn-primary");
+		});
 		return false;
 	});
 
