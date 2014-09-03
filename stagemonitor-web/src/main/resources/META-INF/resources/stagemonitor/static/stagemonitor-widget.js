@@ -65,8 +65,8 @@ $(document).ready(function() {
 		};
 	};
 	var processCallTree = function(callTreeRows, callArray, parentId, myId, totalExecutionTimeInNs) {
-		const thresholdPercent = localStorage.getItem("stagemonitor-configuration-execution-threshold-percent");
-		const totalExecutionTimeInMs = totalExecutionTimeInNs / 1000 / 1000;
+		var thresholdPercent = localStorage.getItem("stagemonitor-configuration-execution-threshold-percent");
+		var totalExecutionTimeInMs = totalExecutionTimeInNs / 1000 / 1000;
 		for(var i = 0; i < callArray.length; i++) {
 			var callData = callArray[i];
 
