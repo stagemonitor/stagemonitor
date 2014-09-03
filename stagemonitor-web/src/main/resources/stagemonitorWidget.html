@@ -42,59 +42,59 @@
 </script>
 <style>
 	#stagemonitor-overlay {
-	display: none;
-	position: fixed;
-	background-color: rgba(0, 0, 0, 0.5);
-	width: 100%;
-	height: 100%;
-	z-index: 100;
-	top: 0;
-	left: 0;
+		display: none;
+		position: fixed;
+		background-color: rgba(0, 0, 0, 0.5);
+		width: 100%;
+		height: 100%;
+		z-index: 100;
+		top: 0;
+		left: 0;
 	}
 
 	#stagemonitor-overlay-show {
-	position: fixed;
-	right: 3em;
-	bottom: 3em;
-	border-radius: 1em;
-	padding: 0.5em;
-	cursor: pointer;
+		position: fixed;
+		right: 3em;
+		bottom: 3em;
+		border-radius: 1em;
+		padding: 0.5em;
+		cursor: pointer;
 	}
 
 	.stagemonitor-threshold-ok {
-	background-color: rgba(0, 0, 0, 0.5);
+		background-color: rgba(0, 0, 0, 0.5);
 	}
 
 	.stagemonitor-threshold-exceeded {
-	-webkit-animation: togglebackground 4s infinite;
-	animation: togglebackground 4s infinite;
+		-webkit-animation: togglebackground 4s infinite;
+		animation: togglebackground 4s infinite;
 	}
 
 	@-webkit-keyframes togglebackground {
-	0%   {background-color: rgba(0, 0, 0, 0.5);}
-	30%  {background-color: #bf3636}
-	60%  {background-color: #bf3636}
-	100% {background-color: rgba(0, 0, 0, 0.5);}
+		0%   {background-color: rgba(0, 0, 0, 0.5);}
+		30%  {background-color: #bf3636}
+		60%  {background-color: #bf3636}
+		100% {background-color: rgba(0, 0, 0, 0.5);}
 	}
 
 	@keyframes togglebackground {
-	0%   {background-color: rgba(0, 0, 0, 0.5);}
-	30%  {background-color: #bf3636}
-	60%  {background-color: #bf3636}
-	100% {background-color: rgba(0, 0, 0, 0.5);}
+		0%   {background-color: rgba(0, 0, 0, 0.5);}
+		30%  {background-color: #bf3636}
+		60%  {background-color: #bf3636}
+		100% {background-color: rgba(0, 0, 0, 0.5);}
 	}
 
 	#stagemonitor-modal {
-	border: 1px solid rgba(0, 0, 0, 0.2);
-	border-radius: 6px;
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-	height: 80%;
-	left: 50%;
-	margin-left: -45%;
-	min-width: 1000px;
-	position: fixed;
-	top: 10%;
-	width: 90%;
+		border: 1px solid rgba(0, 0, 0, 0.2);
+		border-radius: 6px;
+		box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+		height: 80%;
+		left: 50%;
+		margin-left: -45%;
+		min-width: 1000px;
+		position: fixed;
+		top: 10%;
+		width: 90%;
 	}
 </style>
 

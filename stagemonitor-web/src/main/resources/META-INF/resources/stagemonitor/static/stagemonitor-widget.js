@@ -99,15 +99,16 @@ $(document).ready(function() {
 	window.stagemonitor = {
 		initialize: function(data) {
 			var renderedMetricsTemplate = metricsTemplate(processRequestsMetrics(data));
-			$("#stagemonitor-request").html(renderedMetricsTemplate);
-			var $calltree = $("#stagemonitor-calltree");
-			$calltree.find(".glyphicon-info-sign").tooltip();
+			var $stagemonitorRequest = $("#stagemonitor-request");
+			$stagemonitorRequest.html(renderedMetricsTemplate);
+			$stagemonitorRequest.find(".glyphicon-info-sign").tooltip();
 
 			if (data.callStackJson !== undefined) {
 				var callTree = JSON.parse(data.callStackJson);
 				var callTreeRows = [];
 				processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);
 				var renderedCallTree = callTreeTemplate({callTreeRows: callTreeRows});
+				var $calltree = $("#stagemonitor-calltree");
 				$calltree.find("tbody").html(renderedCallTree);
 				$calltree.treetable({
 					expandable: true,
@@ -116,7 +117,7 @@ $(document).ready(function() {
 					expanderTemplate: "<a class='expander' href='#'>&nbsp;</a>"
 				});
 				$calltree.find("tr[data-tt-expanded='true']").each(function () {
-					$("#stagemonitor-calltree").treetable("expandNode", $(this).attr("data-tt-id"));
+					$calltree.treetable("expandNode", $(this).attr("data-tt-id"));
 				});
 
 			} else {
@@ -152,7 +153,7 @@ $(document).ready(function() {
 			}
 		});
 		$("#stagemonitor-configuration-save").removeClass("btn-primary").addClass("btn-success");
-		$(".submit-response").css("display", "inline").fadeOut(3000, function () {
+		$(".submit-response").show().fadeOut(3000, function () {
 			$("#stagemonitor-configuration-save").removeClass("btn-success").addClass("btn-primary");
 		});
 		return false;
