@@ -1,31 +1,44 @@
-<script src="@@CONTEXT_PREFIX_PATH@@/stagemonitor/static/jquery.1.11.1.min.js"></script>
 <script type="text/javascript">
-	(function($) {
-		window.StageMonitorLoaded = function() {
-			$(document).ready(function() {
-				$("#stagemonitor-modal").load(function() {
-					var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
-
-					$.extend(stagemonitorWindow.stagemonitor, {
-						openOverlay: function() {
-							$("#stagemonitor-overlay").show();
-						},
-						closeOverlay: function() {
-							$("#stagemonitor-overlay").hide();
+	(function () {
+		window.StageMonitorLoaded = function () {
+			var executeOnDomReady = [],
+				isDomReady = function () {
+					return document.readyState === "interactive";
+				},
+				executeCallbacksOnceIfDomReady = function () {
+					if (isDomReady()) {
+						while (executeOnDomReady.length > 0) {
+							var fn = executeOnDomReady.pop();
+							fn();
 						}
-					});
+					}
+				};
 
-					var data = @@JSON_REQUEST_TACE_PLACEHOLDER@@;
-					stagemonitorWindow.stagemonitor.initialize(data);
-					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
-					var $overlay = $("#stagemonitor-overlay-show");
-					$overlay.addClass(
-							thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok");
-					$overlay.on("click", stagemonitorWindow.stagemonitor.openOverlay);
-				});
+			executeOnDomReady.push(function () {
+				var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow,
+					stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
+					stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
+					data = @@JSON_REQUEST_TACE_PLACEHOLDER@@;
+
+				stagemonitorWindow.stagemonitor.openOverlay = function () {
+					stagemonitorOverlay.style.display = "block";
+				};
+
+				stagemonitorWindow.stagemonitor.closeOverlay = function () {
+					stagemonitorOverlay.style.display = "none";
+				};
+
+				stagemonitorWindow.stagemonitor.initialize(data);
+				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+				var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
+				stagemonitorOverlayShow.classList.add(clazz);
+				stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
 			});
-		}
-	})(jQuery.noConflict(true));
+
+			document.onreadystatechange = executeCallbacksOnceIfDomReady;
+			executeCallbacksOnceIfDomReady();
+		};
+	}());
 </script>
 <style>
 	#stagemonitor-overlay {
