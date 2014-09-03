@@ -7,6 +7,7 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
 	private static final Logger logger = LoggerFactory.getLogger(HttpRequestMonitorFilter.class);
+	private static final String CONFIGURATION_ENDPOINT = "/stagemonitor/configuration";
 	protected final Configuration configuration;
 	protected final RequestMonitor requestMonitor;
 	private boolean servletApiForWidgetSufficient = true;
@@ -46,19 +48,24 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		final MeasurementSession measurementSession = new MeasurementSession(getApplicationName(filterConfig),
 				RequestMonitor.getHostName(), configuration.getInstanceName());
 		requestMonitor.setMeasurementSession(measurementSession);
+		final ServletContext servletContext = filterConfig.getServletContext();
+		servletApiForWidgetSufficient = servletContext.getMajorVersion() >= 3;
 
-		if (configuration.isStagemonitorWidgetEnabled()) {
-			final ServletContext servletContext = filterConfig.getServletContext();
-			if(servletContext.getMajorVersion() >= 3) {
-				servletApiForWidgetSufficient = true;
-				filterConfig.getServletContext()
-						.addServlet("stagemonitor-config-servlet", new ConfigurationServlet(configuration))
-						.addMapping("/stagemonitor/configuration");
-			} else {
-				servletApiForWidgetSufficient = false;
+		if(servletApiForWidgetSufficient) {
+			logger.info("Registering configuration Endpoint {}. You can dynamically change the configuration by " +
+					"issuing a POST request to {}?configKey=configValue&stagemonitor.password=password. " +
+					"If the password is not set, dynamically changing the configuration is not available. " +
+					"The password can be omitted if set to an empty string.",
+					CONFIGURATION_ENDPOINT);
+			filterConfig.getServletContext()
+					.addServlet("stagemonitor-config-servlet", new ConfigurationServlet(configuration))
+					.addMapping(CONFIGURATION_ENDPOINT);
+		} else {
+			if (configuration.getBoolean(WebPlugin.WIDGET_ENABLED)) {
 				logger.error("stagemonitor.web.widget.enabled is true, but your servlet api version is not supported. " +
 						"The stagemonitor widget requires servlet api 3.");
 			}
+			logger.warn("The configuration endptiont {} could not me registered, as it requires servlet api 3.", CONFIGURATION_ENDPOINT);
 		}
 
 		try {
@@ -115,7 +122,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private boolean isStagemonitorWidgetEnabled() {
-		return configuration.isStagemonitorWidgetEnabled() && servletApiForWidgetSufficient;
+		return configuration.getBoolean(WebPlugin.WIDGET_ENABLED) && servletApiForWidgetSufficient;
 	}
 
 	private boolean isInternalRequest(HttpServletRequest request) {

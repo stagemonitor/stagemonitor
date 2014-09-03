@@ -6,6 +6,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.core.Configuration;
+import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
@@ -45,7 +46,7 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 				return name;
 			}
 		}
-		if (!configuration.isMonitorOnlySpringMvcRequests()) {
+		if (!configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)) {
 			name = super.getRequestName();
 		}
 		return name;

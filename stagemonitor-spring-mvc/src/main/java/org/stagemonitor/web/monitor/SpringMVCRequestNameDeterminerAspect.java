@@ -7,6 +7,7 @@ import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.springmvc.SpringMvcPlugin;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -40,7 +41,7 @@ public class SpringMVCRequestNameDeterminerAspect {
 		if (handler != null) {
 			requestName = SpringMonitoredHttpRequest.getRequestNameFromHandler(handler);
 		}
-		if (requestName.isEmpty() && !configuration.isMonitorOnlySpringMvcRequests()) {
+		if (requestName.isEmpty() && !configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)) {
 			requestName = MonitoredHttpRequest.getRequestNameByRequest(request , configuration);
 		}
 		RequestMonitor.getRequest().setName(requestName);

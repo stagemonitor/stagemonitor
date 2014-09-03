@@ -18,6 +18,8 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.core.Configuration;
+import org.stagemonitor.springmvc.SpringMvcPlugin;
+import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.SpringMVCRequestNameDeterminerAspect;
 import org.stagemonitor.web.monitor.SpringMonitoredHttpRequest;
@@ -83,8 +85,9 @@ public class SpringRequestMonitorTest {
 			}
 		});
 		when(configuration.isStagemonitorActive()).thenReturn(true);
-		when(configuration.isCollectRequestStats()).thenReturn(true);
-		when(configuration.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
+		when(configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS)).thenReturn(true);
+		when(configuration.getPatternMap(WebPlugin.STAGEMONITOR_GROUP_URLS
+		)).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 	}
 
 	@After
@@ -121,7 +124,7 @@ public class SpringRequestMonitorTest {
 
 	@Test
 	public void testRequestMonitorMvcRequest() throws Exception {
-		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(false);
+		when(configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)).thenReturn(false);
 
 		SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(mvcRequest);
 		registerAspect(monitoredRequest, mvcRequest, handlerMappings.get(2).getHandler(mvcRequest));
@@ -141,7 +144,7 @@ public class SpringRequestMonitorTest {
 
 	@Test
 	public void testRequestMonitorNonMvcRequestDoMonitor() throws Exception {
-		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(false);
+		when(configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)).thenReturn(false);
 
 		final SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(nonMvcRequest);
 		registerAspect(monitoredRequest, nonMvcRequest, null);
@@ -157,7 +160,7 @@ public class SpringRequestMonitorTest {
 
 	@Test
 	public void testRequestMonitorNonMvcRequestDontMonitor() throws Exception {
-		when(configuration.isMonitorOnlySpringMvcRequests()).thenReturn(true);
+		when(configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)).thenReturn(true);
 
 		final SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(nonMvcRequest);
 		registerAspect(monitoredRequest, nonMvcRequest, null);

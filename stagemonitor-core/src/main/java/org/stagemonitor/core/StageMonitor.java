@@ -59,6 +59,7 @@ public final class StageMonitor {
 
 	private static void start(MeasurementSession measurementSession) {
 		initializePlugins();
+		// TODO do on each reporting
 		RegexMetricFilter regexFilter = new RegexMetricFilter(configuration.getExcludedMetricsPatterns());
 		getMetricRegistry().removeMatching(regexFilter);
 

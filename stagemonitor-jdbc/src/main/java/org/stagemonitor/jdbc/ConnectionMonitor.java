@@ -40,7 +40,7 @@ public class ConnectionMonitor {
 	public ConnectionMonitor(Configuration configuration, MetricRegistry metricRegistry) {
 		this.metricRegistry = metricRegistry;
 
-		if (ACTIVE && StageMonitor.getConfiguration().collectSql()) {
+		if (ACTIVE && StageMonitor.getConfiguration().getBoolean(JdbcPlugin.COLLECT_SQL)) {
 			unregisterP6SpyMBeans();
 			P6SpyLoadableOptions options = P6SpyOptions.getActiveInstance();
 			addStagemonitorLogger(configuration, options);

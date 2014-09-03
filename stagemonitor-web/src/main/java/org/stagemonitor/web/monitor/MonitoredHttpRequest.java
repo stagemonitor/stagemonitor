@@ -8,6 +8,7 @@ import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
@@ -49,7 +50,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	@Override
 	public HttpRequestTrace createRequestTrace() {
 		Map<String, String> headers = null;
-		if (configuration.isCollectHeaders()) {
+		if (configuration.getBoolean(WebPlugin.HTTP_COLLECT_HEADERS)) {
 			headers = getHeaders(httpServletRequest);
 		}
 		HttpRequestTrace request = new HttpRequestTrace(new RequestTrace.GetNameCallback() {
@@ -96,7 +97,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 	public static String getRequestNameByRequest(HttpServletRequest request, Configuration configuration) {
 		String requestURI = request.getRequestURI();
-		for (Map.Entry<Pattern, String> entry : configuration.getGroupUrls().entrySet()) {
+		for (Map.Entry<Pattern, String> entry : configuration.getPatternMap(WebPlugin.STAGEMONITOR_GROUP_URLS).entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
 		return request.getMethod() + " " +requestURI;
@@ -125,7 +126,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	private boolean isParamExcluded(String queryParameter) {
-		final Collection<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
+		final Collection<Pattern> confidentialQueryParams = configuration.getPatterns(WebPlugin.HTTP_REQUESTPARAMS_CONFIDENTIAL_REGEX);
 		for (Pattern excludedParam : confidentialQueryParams) {
 			if (excludedParam.matcher(queryParameter).matches()) {
 				return true;
@@ -137,7 +138,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	private Map<String, String> getHeaders(HttpServletRequest request) {
 		Map<String, String> headers = new HashMap<String, String>();
 		final Enumeration headerNames = request.getHeaderNames();
-		final Collection<String> excludedHeaders = configuration.getExcludedHeaders();
+		final Collection<String> excludedHeaders = configuration.getLowerStrings(WebPlugin.HTTP_HEADERS_EXCLUDED);
 		while (headerNames.hasMoreElements()) {
 			final String headerName = ((String) headerNames.nextElement()).toLowerCase();
 			if (!excludedHeaders.contains(headerName)) {

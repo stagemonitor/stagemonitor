@@ -12,8 +12,15 @@ import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class RequestMonitorTest {
 
@@ -25,7 +32,7 @@ public class RequestMonitorTest {
 	public void before() {
 		StageMonitor.reset();
 		when(configuration.isStagemonitorActive()).thenReturn(true);
-		when(configuration.isCollectRequestStats()).thenReturn(true);
+		when(configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS)).thenReturn(true);
 		when(registry.timer(anyString())).thenReturn(mock(Timer.class));
 		when(registry.meter(anyString())).thenReturn(mock(Meter.class));
 	}
@@ -47,7 +54,7 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testNotWarmedUp() throws Exception {
-		when(configuration.getNoOfWarmupRequests()).thenReturn(2);
+		when(configuration.getInt(RequestMonitorPlugin.NO_OF_WARMUP_REQUESTS)).thenReturn(2);
 		requestMonitor = new RequestMonitor(configuration, registry);
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(requestInformation.getRequestTrace());
@@ -86,7 +93,7 @@ public class RequestMonitorTest {
 	}
 
 	private void internalMonitoringTestHelper(boolean active) throws Exception {
-		when(configuration.isInternalMonitoringActive()).thenReturn(active);
+		when(configuration.getBoolean(Configuration.INTERNAL_MONITORING)).thenReturn(active);
 		requestMonitor.monitor(createMonitoredRequest());
 		verify(registry, times(active ? 1 : 0)).timer("internal.overhead.RequestMonitor");
 	}
@@ -106,14 +113,14 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testProfileThisExecutionDeactive() throws Exception {
-		when(configuration.getCallStackEveryXRequestsToGroup()).thenReturn(0);
+		when(configuration.getInt(RequestMonitorPlugin.CALL_STACK_EVERY_XREQUESTS_TO_GROUP)).thenReturn(0);
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getRequestTrace().getCallStack());
 	}
 
 	@Test
 	public void testProfileThisExecutionAlwaysActive() throws Exception {
-		when(configuration.getCallStackEveryXRequestsToGroup()).thenReturn(1);
+		when(configuration.getInt(RequestMonitorPlugin.CALL_STACK_EVERY_XREQUESTS_TO_GROUP)).thenReturn(1);
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNotNull(monitor.getRequestTrace().getCallStack());
 	}
@@ -128,7 +135,7 @@ public class RequestMonitorTest {
 	}
 
 	private void testProfileThisExecutionHelper(int callStackEveryXRequestsToGroup, long timerCount, boolean callStackExpected) throws Exception {
-		when(configuration.getCallStackEveryXRequestsToGroup()).thenReturn(callStackEveryXRequestsToGroup);
+		when(configuration.getInt(RequestMonitorPlugin.CALL_STACK_EVERY_XREQUESTS_TO_GROUP)).thenReturn(callStackEveryXRequestsToGroup);
 		final Timer timer = mock(Timer.class);
 		when(timer.getCount()).thenReturn(timerCount);
 		when(registry.timer("request.test.server.time.total")).thenReturn(timer);

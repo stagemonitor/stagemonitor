@@ -47,7 +47,7 @@ public class RestClient {
 
 	static {
 		MAPPER.registerModule(new AfterburnerModule());
-		if (StageMonitor.getConfiguration().isInternalMonitoringActive()) {
+		if (StageMonitor.getConfiguration().getBoolean(Configuration.INTERNAL_MONITORING)) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, StageMonitor.getMetricRegistry());
 		}
@@ -99,14 +99,14 @@ public class RestClient {
 		}
 	}
 
-	public static  void sendCallStackAsync(final Object requestTrace, final String requestTraceId, final String serverUrl) {
+	public static  void sendCallStackAsync(final Object requestTrace, final String requestTraceId,
+										   final String serverUrl, final String ttl) {
 		asyncRestPool.execute(new Runnable() {
 			@Override
 			public void run() {
 				final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
 				dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 				String path = String.format("/stagemonitor-%s/executions/%s", dateFormat.format(new Date()), requestTraceId);
-				final String ttl = configuration.getCallStacksTimeToLive();
 				if (ttl != null && !ttl.isEmpty()) {
 					path += "?ttl=" + ttl;
 				}

@@ -59,10 +59,10 @@ public class RequestMonitor {
 	}
 
 	public RequestMonitor(Configuration configuration, MetricRegistry registry) {
-		warmupRequests = configuration.getNoOfWarmupRequests();
+		warmupRequests = configuration.getInt(RequestMonitorPlugin.NO_OF_WARMUP_REQUESTS);
 		this.metricRegistry = registry;
 		this.configuration = configuration;
-		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getWarmupSeconds()));
+		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getInt(RequestMonitorPlugin.WARMUP_SECONDS)));
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
@@ -86,7 +86,7 @@ public class RequestMonitor {
 		}
 
 		RequestInformation<T> info = new RequestInformation<T>();
-		final boolean monitor = configuration.isCollectRequestStats() && isWarmedUp();
+		final boolean monitor = configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS) && isWarmedUp();
 		if (monitor) {
 			beforeExecution(monitoredRequest, info);
 		}
@@ -114,7 +114,7 @@ public class RequestMonitor {
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {
-		if (configuration.isInternalMonitoringActive()) {
+		if (configuration.getBoolean(Configuration.INTERNAL_MONITORING)) {
 			overhead2 = System.nanoTime() - overhead2;
 			metricRegistry.timer("internal.overhead.RequestMonitor").update(overhead2 + overhead1, NANOSECONDS);
 		}
@@ -230,7 +230,7 @@ public class RequestMonitor {
 		info.getRequestTimer().update(executionTime, NANOSECONDS);
 		metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
 
-		if (configuration.isCollectCpuTime()) {
+		if (configuration.getBoolean(RequestMonitorPlugin.CPU_TIME)) {
 			metricRegistry.timer(name(REQUEST, timerName, ".server.cpu-time.total")).update(cpuTime, NANOSECONDS);
 			metricRegistry.timer("request.All.server.cpu-time.total").update(cpuTime, NANOSECONDS);
 		}
@@ -244,7 +244,7 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void trackDbMetrics(String timerName, T requestTrace) {
 		if (requestTrace.getExecutionCountDb() > 0) {
-			if (configuration.collectDbTimePerRequest()) {
+			if (configuration.getBoolean(RequestMonitorPlugin.COLLECT_DB_TIME_PER_REQUEST)) {
 				metricRegistry.timer(name(REQUEST, timerName, "server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
 				metricRegistry.timer(name("request.All.server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
 			}
@@ -260,9 +260,9 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
-			RestClient.sendCallStackAsync(requestTrace, requestTrace.getId(), serverUrl);
+			RestClient.sendCallStackAsync(requestTrace, requestTrace.getId(), serverUrl, configuration.getString(RequestMonitorPlugin.REQUEST_TRACE_TTL));
 		}
-		if (configuration.isLogCallStacks()) {
+		if (configuration.getBoolean(RequestMonitorPlugin.LOG_CALL_STACKS)) {
 			requestLogger.logStats(requestTrace);
 		}
 	}
@@ -316,7 +316,7 @@ public class RequestMonitor {
 		}
 
 		private boolean profileThisExecution() {
-			int callStackEveryXRequestsToGroup = configuration.getCallStackEveryXRequestsToGroup();
+			int callStackEveryXRequestsToGroup = configuration.getInt(RequestMonitorPlugin.CALL_STACK_EVERY_XREQUESTS_TO_GROUP);
 			if (callStackEveryXRequestsToGroup == 1) {
 				return true;
 			}

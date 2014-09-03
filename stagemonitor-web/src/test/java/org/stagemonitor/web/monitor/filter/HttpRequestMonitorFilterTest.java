@@ -8,6 +8,8 @@ import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.Configuration;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.web.WebPlugin;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -28,10 +30,10 @@ public class HttpRequestMonitorFilterTest {
 
 	@Before
 	public void before() throws Exception {
-		when(configuration.isStagemonitorWidgetEnabled()).thenReturn(true);
+		when(configuration.getBoolean(WebPlugin.WIDGET_ENABLED)).thenReturn(true);
 		when(configuration.isStagemonitorActive()).thenReturn(true);
-		when(configuration.isCollectRequestStats()).thenReturn(true);
-		when(configuration.getCallStackEveryXRequestsToGroup()).thenReturn(1);
+		when(configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS)).thenReturn(true);
+		when(configuration.getInt(RequestMonitorPlugin.CALL_STACK_EVERY_XREQUESTS_TO_GROUP)).thenReturn(1);
 	}
 
 	@Test
@@ -54,7 +56,7 @@ public class HttpRequestMonitorFilterTest {
 
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
-		when(configuration.isStagemonitorWidgetEnabled()).thenReturn(false);
+		when(configuration.getBoolean(WebPlugin.WIDGET_ENABLED)).thenReturn(false);
 		final HttpRequestMonitorFilter httpRequestMonitorFilter = spy(new HttpRequestMonitorFilter(configuration));
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		final String html = "<html><body></body></html>";

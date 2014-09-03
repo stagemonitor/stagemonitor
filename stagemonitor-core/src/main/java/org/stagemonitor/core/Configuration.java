@@ -20,14 +20,128 @@ import static java.util.Collections.emptySet;
 
 public class Configuration {
 
-	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
+	private static final String STAGEMONITOR_ACTIVE = "stagemonitor.active";
+	public static final String INTERNAL_MONITORING = "stagemonitor.internal.monitoring";
+	private static final String REPORTING_INTERVAL_CONSOLE = "stagemonitor.reporting.interval.console";
+	private static final String REPORTING_JMX = "stagemonitor.reporting.jmx";
+	private static final String REPORTING_INTERVAL_GRAPHITE = "stagemonitor.reporting.interval.graphite";
+	private static final String REPORTING_GRAPHITE_HOST_NAME = "stagemonitor.reporting.graphite.hostName";
+	private static final String REPORTING_GRAPHITE_PORT = "stagemonitor.reporting.graphite.port";
+	private static final String APPLICATION_NAME = "stagemonitor.applicationName";
+	private static final String INSTANCE_NAME = "stagemonitor.instanceName";
+	private static final String ELASTICSEARCH_URL = "stagemonitor.elasticsearch.url";
+	private static final String METRICS_EXCLUDED_PATTERN = "stagemonitor.metrics.excluded.pattern";
+	private static final String DISABLED_PLUGINS = "stagemonitor.plugins.disabled";
+
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private ConcurrentMap<String, Object> propertiesCache = new ConcurrentHashMap<String, Object>();
 	private List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
+	private Map<String, ConfigurationOption> configurationOptions = new ConcurrentHashMap<String, ConfigurationOption>();
 
 	public Configuration() {
 		configurationSources.add(new SystemPropertyConfigurationSource());
 		configurationSources.add(new PropertyFileConfigurationSource());
+		addCoreConfigurationOptions();
+	}
+
+	private void addCoreConfigurationOptions() {
+		add(ConfigurationOption.builder()
+				.key(STAGEMONITOR_ACTIVE)
+				.dynamic(true)
+				.label("Activate stagemonitor")
+				.description("If set to 'false' stagemonitor will be completely deactivated.")
+				.defaultValue("true")
+				.build());
+		add(ConfigurationOption.builder()
+				.key(INTERNAL_MONITORING)
+				.dynamic(true)
+				.label("Internal monitoring")
+				.description("If active, stagemonitor will collect internal performance data")
+				.defaultValue("false")
+				.build());
+		add(ConfigurationOption.builder()
+				.key(REPORTING_INTERVAL_CONSOLE)
+				.dynamic(false)
+				.label("Reporting interval console")
+				.description("The amount of time between console reports (in seconds). " +
+						"To deactivate console reports, set this to a value below 1.")
+				.defaultValue("60")
+				.build());
+		add(ConfigurationOption.builder()
+				.key(REPORTING_JMX)
+				.dynamic(false)
+				.label("Expose MBeans")
+				.description("Whether or not to expose all metrics as MBeans.")
+				.defaultValue("true")
+				.build());
+		add(ConfigurationOption.builder()
+				.key(REPORTING_INTERVAL_GRAPHITE)
+				.dynamic(false)
+				.label("Reporting interval graphite")
+				.description("The amount of time between the metrics are reported to graphite (in seconds).\n" +
+						"To deactivate graphite reporting, set this to a value below 1, or don't provide " +
+						"stagemonitor.reporting.graphite.hostName.")
+				.defaultValue("60")
+				.build());
+		add(ConfigurationOption.builder()
+				.key(REPORTING_GRAPHITE_HOST_NAME)
+				.dynamic(false)
+				.label("Graphite host name")
+				.description("The name of the host where graphite is running. This setting is mandatory, if you want " +
+						"to use the grafana dashboards.")
+				.defaultValue(null)
+				.build());
+		add(ConfigurationOption.builder()
+				.key(REPORTING_GRAPHITE_PORT)
+				.dynamic(false)
+				.label("Carbon port")
+				.description("The port where carbon is listening.")
+				.defaultValue("2003")
+				.build());
+		add(ConfigurationOption.builder()
+				.key(APPLICATION_NAME)
+				.dynamic(false)
+				.label("Application name")
+				.description("The name of the application.\n" +
+						"Either this property or the display-name in web.xml is mandatory!")
+				.defaultValue(null)
+				.build());
+		add(ConfigurationOption.builder()
+				.key(INSTANCE_NAME)
+				.dynamic(false)
+				.label("Instance name")
+				.description("The instance name.\n" +
+						"If this property is not set, the instance name set to the first request's " +
+						"javax.servlet.ServletRequest#getServerName()\n" +
+						"That means that the collection of metrics does not start before the first request is executed!")
+				.defaultValue(null)
+				.build());
+		add(ConfigurationOption.builder()
+				.key(ELASTICSEARCH_URL)
+				.dynamic(true)
+				.label("Elasticsearch URL")
+				.description("The URL of the elasticsearch server that stores the call stacks. If the URL is not " +
+						"provided, the call stacks won't get stored.")
+				.defaultValue(null)
+				.build());
+		add(ConfigurationOption.builder()
+				.key(METRICS_EXCLUDED_PATTERN)
+				.dynamic(true)
+				.label("Excluded metrics (regex)")
+				.description("A comma separated list of metric names that should not be collected.")
+				.defaultValue("")
+				.build());
+		add(ConfigurationOption.builder()
+				.key(DISABLED_PLUGINS)
+				.dynamic(false)
+				.label("Disabled plugins")
+				.description("A comma separated list of plugin names (the simple class name) that should not be active.")
+				.defaultValue("")
+				.build());
+	}
+
+	public void add(ConfigurationOption configurationOption) {
+		configurationOptions.put(configurationOption.getKey(), configurationOption);
 	}
 
 	public void reload() {
@@ -49,99 +163,7 @@ public class Configuration {
 	}
 
 	public boolean isStagemonitorActive() {
-		return getBoolean("stagemonitor.active", true);
-	}
-
-	/**
-	 * Specifies the minimum number of requests that have to be issued against the application before metrics are
-	 * collected.
-	 *
-	 * @return the number of warmup requests
-	 */
-	public int getNoOfWarmupRequests() {
-		return getInt("stagemonitor.requestmonitor.noOfWarmupRequests", 0);
-	}
-
-	/**
-	 * A timespan in seconds after the start of the server where no metrics are collected.
-	 *
-	 * @return the warmups in seconds
-	 */
-	public int getWarmupSeconds() {
-		return getInt("stagemonitor.requestmonitor.warmupSeconds", 0);
-	}
-
-	/**
-	 * Whether or not metrics about requests (Call Stacks, response times, errors status codes) should be collected.
-	 *
-	 * @return <code>true</code> if metrics about requests should be collected, <code>false</code> otherwise
-	 */
-	public boolean isCollectRequestStats() {
-		return getBoolean("stagemonitor.requestmonitor.collectRequestStats", true);
-	}
-
-	/**
-	 * Whether or not a {@link com.codahale.metrics.Timer} for the cpu time of executions should be created.
-	 *
-	 * @return <code>true</code> if metrics about the cpu time of executions should be collected, <code>false</code>
-	 * otherwise
-	 */
-	public boolean isCollectCpuTime() {
-		return getBoolean("stagemonitor.requestmonitor.cpuTime", false);
-	}
-
-	/**
-	 * Whether or not requests should be ignored, if they will not be handled by a Spring MVC controller method.
-	 * <p/>
-	 * This is handy, if you are not interested in the performance of serving static files.
-	 * Setting this to <code>true</code> can also significantly reduce the amount of files (and thus storing space)
-	 * Graphite will allocate.
-	 *
-	 * @return true, if non Spring MVC requests should be ignored, false otherwise
-	 */
-	public boolean isMonitorOnlySpringMvcRequests() {
-		return getBoolean("stagemonitor.requestmonitor.spring.monitorOnlySpringMvcRequests", false);
-	}
-
-	/**
-	 * Whether or not HTTP headers should be collected with a call stack.
-	 *
-	 * @return <code>true</code> if HTTP headers should be collected, <code>false</code> otherwise
-	 */
-	public boolean isCollectHeaders() {
-		return getBoolean("stagemonitor.requestmonitor.http.collectHeaders", true);
-	}
-
-	/**
-	 * Whether or not the user-agent header should be parsed and analyzed to get information about the browser,
-	 * device type and operating system.
-	 *
-	 * @return true, if user-agent header should be parsed, false otherwise
-	 */
-	public boolean isParseUserAgent() {
-		return getBoolean("stagemonitor.requestmonitor.http.parseUserAgent", true);
-	}
-
-	/**
-	 * A list of (non case sensitive) header names that should not be collected.
-	 *
-	 * @return list header names not to collect
-	 */
-	public Collection<String> getExcludedHeaders() {
-		return getLowerStrings("stagemonitor.requestmonitor.http.headers.excluded", "cookie,Authorization");
-	}
-
-	/**
-	 * A list of request parameter name patterns that should not be collected.
-	 * <p/>
-	 * A request parameter is either a query string or a application/x-www-form-urlencoded request body
-	 * (POST form content)
-	 *
-	 * @return list of confidential request parameter names
-	 */
-	public Collection<Pattern> getConfidentialRequestParams() {
-		return getPatterns("stagemonitor.requestmonitor.http.requestparams.confidential.regex",
-				"(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*");
+		return getBoolean(STAGEMONITOR_ACTIVE);
 	}
 
 	/**
@@ -153,7 +175,7 @@ public class Configuration {
 	 * @return the amount of time between console reports in seconds
 	 */
 	public long getConsoleReportingInterval() {
-		return getLong("stagemonitor.reporting.interval.console", 60L);
+		return getLong(REPORTING_INTERVAL_CONSOLE);
 	}
 
 	/**
@@ -162,7 +184,7 @@ public class Configuration {
 	 * @return <code>true</code>, if all metrics should be exposed as MBeans, <code>false</code> otherwise
 	 */
 	public boolean reportToJMX() {
-		return getBoolean("stagemonitor.reporting.jmx", true);
+		return getBoolean(REPORTING_JMX);
 	}
 
 	/**
@@ -175,7 +197,7 @@ public class Configuration {
 	 * @return the amount of time between graphite reports in seconds
 	 */
 	public long getGraphiteReportingInterval() {
-		return getLong("stagemonitor.reporting.interval.graphite", 60);
+		return getLong(REPORTING_INTERVAL_GRAPHITE);
 	}
 
 	/**
@@ -185,7 +207,7 @@ public class Configuration {
 	 * @return graphite's host's name
 	 */
 	public String getGraphiteHostName() {
-		return getString("stagemonitor.reporting.graphite.hostName");
+		return getString(REPORTING_GRAPHITE_HOST_NAME);
 	}
 
 	/**
@@ -194,77 +216,7 @@ public class Configuration {
 	 * @return the graphite carbon port
 	 */
 	public int getGraphitePort() {
-		return getInt("stagemonitor.reporting.graphite.port", 2003);
-	}
-
-	/**
-	 * The minimal inclusive execution time of a method before it is included in a call stack.
-	 *
-	 * @return the minimal execution time
-	 */
-	public long getMinExecutionTimeNanos() {
-		return getLong("stagemonitor.profiler.minExecutionTimeNanos", 100000L);
-	}
-
-	/**
-	 * Defines after how many requests to a URL group a call stack should be collected.
-	 *
-	 * @return the number of requests to a URL group after a call stack should be collected
-	 */
-	public int getCallStackEveryXRequestsToGroup() {
-		return getInt("stagemonitor.profiler.callStackEveryXRequestsToGroup", 1);
-	}
-
-	/**
-	 * Whether or not call stacks should be logged.
-	 *
-	 * @return <code>true</code>, if call stacks should be logged, <code>false</code> otherwise
-	 */
-	public boolean isLogCallStacks() {
-		return getBoolean("stagemonitor.profiler.logCallStacks", true);
-	}
-
-	/**
-	 * Whether or not sql statements should be included in the call stack.
-	 *
-	 * @return <code>true</code>, if sql statements should be included in the call stack, <code>false</code> otherwise
-	 */
-	public boolean collectSql() {
-		return getBoolean("stagemonitor.profiler.jdbc.collectSql", true);
-	}
-
-	/**
-	 * Whether or not the prepared statement placeholders (?) should be replaced with the actual parameters.
-	 * <p/>
-	 * Only applies, if {@link #collectSql()} is true.
-	 *
-	 * @return <code>true</code>, if parameters should be collected, <code>false</code> otherwise
-	 */
-	public boolean collectPreparedStatementParameters() {
-		return getBoolean("stagemonitor.profiler.jdbc.collectPreparedStatementParameters", false);
-	}
-
-	/**
-	 * When set, call stacks will be deleted automatically after the specified interval
-	 * <p/>
-	 * In case you do not specify a time unit like d (days), m (minutes), h (hours), ms (milliseconds) or w (weeks),
-	 * milliseconds is used as default unit.
-	 *
-	 * @return the time to live interval for a call stack
-	 */
-	public String getCallStacksTimeToLive() {
-		return getString("stagemonitor.requestmonitor.requestTraceTTL", "1w");
-	}
-
-	/**
-	 * Whether or not db execution time should be collected per request
-	 * <p/>
-	 * If set to true, a timer will be created for each request to record the total db time per request.
-	 *
-	 * @return <code>true</code>, if db execution time should be collected per request, <code>false</code> otherwise
-	 */
-	public boolean collectDbTimePerRequest() {
-		return getBoolean("stagemonitor.jdbc.collectDbTimePerRequest", false);
+		return getInt(REPORTING_GRAPHITE_PORT);
 	}
 
 	/**
@@ -276,7 +228,7 @@ public class Configuration {
 	 * @return the application name
 	 */
 	public String getApplicationName() {
-		return getString("stagemonitor.applicationName");
+		return getString(APPLICATION_NAME);
 	}
 
 	/**
@@ -289,7 +241,7 @@ public class Configuration {
 	 * @return
 	 */
 	public String getInstanceName() {
-		return getString("stagemonitor.instanceName");
+		return getString(INSTANCE_NAME);
 	}
 
 	/**
@@ -299,7 +251,7 @@ public class Configuration {
 	 * @return the server url
 	 */
 	public String getElasticsearchUrl() {
-		final String url = getString("stagemonitor.elasticsearch.url");
+		final String url = getString(ELASTICSEARCH_URL);
 		if (url != null && url.endsWith("/")) {
 			return url.substring(0, url.length() - 1);
 		}
@@ -312,7 +264,7 @@ public class Configuration {
 	 * @return a pattern list of excluded metric names
 	 */
 	public Collection<Pattern> getExcludedMetricsPatterns() {
-		return getPatterns("stagemonitor.metrics.excluded.pattern", "");
+		return getPatterns(METRICS_EXCLUDED_PATTERN);
 	}
 
 	/**
@@ -321,88 +273,19 @@ public class Configuration {
 	 * @return the disabled plugin names
 	 */
 	public Collection<String> getDisabledPlugins() {
-		return getStrings("stagemonitor.plugins.disabled", "");
-	}
-
-	/**
-	 * Combine url paths by regex to a single url group.
-	 * <p>
-	 * E.g. <code>(.*).js: *.js</code> combines all URLs that end with .js to a group named *.js.
-	 * The metrics for all URLs matching the pattern are consolidated and shown in one row in the request table.
-	 * </p>
-	 * <p>
-	 * The syntax is <code>&lt;regex>: &lt;group name>[, &lt;regex>: &lt;group name>]*</code>
-	 * </p>
-	 *
-	 * @return the url groups definition
-	 */
-	public Map<Pattern, String> getGroupUrls() {
-		return getPatternMap("stagemonitor.groupUrls",
-						"(.*).js$:   *.js," +
-						"(.*).css$:  *.css," +
-						"(.*).jpg$:  *.jpg," +
-						"(.*).jpeg$: *.jpeg," +
-						"(.*).png$:  *.png");
-	}
-
-	/**
-	 * The name of the ehcache to instrument
-	 * <p/>
-	 * (the value of the 'name' attribute of the 'ehcache' tag in ehcache.xml)
-	 *
-	 * @return the name of the ehcache to instrument
-	 */
-	public String getEhCacheName() {
-		return getString("stagemonitor.ehcache.name", null);
-	}
-
-	/**
-	 * The password that is required to dynamically update the configuration via a query parameter.
-	 * <p/>
-	 * If not set (default) configuration reloading is disabled. If set, you have to include the query parameter
-	 * <code>stagemonitor.password=&lt;password></code>, if you want to dynamically update the
-	 * configuration via query parameters. If set to an empty string, the password is not required.
-	 *
-	 * @return the password that is required to dynamically update the configuration via a query parameter. Returns
-	 * <code>null</code> if not set.
-	 */
-	public String getConfigurationUpdatePassword() {
-		return getString(STAGEMONITOR_PASSWORD, null);
-	}
-
-	/**
-	 * If active, stagemonitor will collect internal performance data
-	 *
-	 * @return <code>true</code>, if internal performance data should be collected, false otherwise
-	 */
-	public boolean isInternalMonitoringActive() {
-		return getBoolean("stagemonitor.internal.monitoring", false);
-	}
-
-	/**
-	 * If active, stagemonitor will inject a widget in the web site containing the calltrace metrics.
-	 * Requires Servlet-Api >= 3.0
-	 *
-	 * @return <code>true</code>, if the widget shall be injected, false otherwise
-	 */
-	public boolean isStagemonitorWidgetEnabled() {
-		return getBoolean("stagemonitor.web.widget.enabled", false);
+		return getStrings(DISABLED_PLUGINS);
 	}
 
 	public String getString(final String key) {
-		return getString(key, null);
-	}
-
-	public String getString(final String key, final String defaultValue) {
-		return getAndCache(key, null, new PropertyLoader<String>() {
+		return getAndCache(key, new PropertyLoader<String>() {
 			@Override
 			public String load() {
-				return getTrimmedProperty(key, defaultValue);
+				return getTrimmedProperty(key);
 			}
 		});
 	}
 
-	private String getTrimmedProperty(String key, String defaultValue) {
+	private String getTrimmedProperty(String key) {
 		String property = null;
 		for (ConfigurationSource configurationSource : configurationSources) {
 			property = configurationSource.getValue(key);
@@ -413,15 +296,20 @@ public class Configuration {
 		if (property != null) {
 			return property.trim();
 		} else {
-			return defaultValue;
+			final ConfigurationOption configurationOption = configurationOptions.get(key);
+			if (configurationOption == null) {
+				logger.error("Configuration option with key '{}' ist not registered!");
+				return "";
+			}
+			return configurationOption.getDefaultValue();
 		}
 	}
 
-	public Collection<String> getLowerStrings(final String key, final String defaultValue) {
-		return getAndCache(key, null, new PropertyLoader<Collection<String>>() {
+	public Collection<String> getLowerStrings(final String key) {
+		return getAndCache(key, new PropertyLoader<Collection<String>>() {
 			@Override
 			public Collection<String> load() {
-				String property = getTrimmedProperty(key, defaultValue);
+				String property = getTrimmedProperty(key);
 				if (property != null && property.length() > 0) {
 					final String[] split = property.split(",");
 					for (int i = 0; i < split.length; i++) {
@@ -434,8 +322,8 @@ public class Configuration {
 		});
 	}
 
-	public Collection<Pattern> getPatterns(final String key, final String defaultValue) {
-		final Collection<String> strings = getStrings(key, defaultValue);
+	public Collection<Pattern> getPatterns(final String key) {
+		final Collection<String> strings = getStrings(key);
 		Collection<Pattern> patterns = new LinkedHashSet<Pattern>((int) Math.ceil(strings.size() / 0.75));
 		for (String patternString : strings) {
 			try {
@@ -447,11 +335,11 @@ public class Configuration {
 		return patterns;
 	}
 
-	public Collection<String> getStrings(final String key, final String defaultValue) {
-		return getAndCache(key, null, new PropertyLoader<Collection<String>>() {
+	public Collection<String> getStrings(final String key) {
+		return getAndCache(key, new PropertyLoader<Collection<String>>() {
 			@Override
 			public Collection<String> load() {
-				String property = getTrimmedProperty(key, defaultValue);
+				String property = getTrimmedProperty(key);
 				if (property != null && property.length() > 0) {
 					final String[] split = property.split(",");
 					for (int i = 0; i < split.length; i++) {
@@ -464,39 +352,39 @@ public class Configuration {
 		});
 	}
 
-	public boolean getBoolean(final String key, final boolean defaultValue) {
-		return getAndCache(key, defaultValue, new PropertyLoader<Boolean>() {
+	public boolean getBoolean(final String key) {
+		return getAndCache(key, new PropertyLoader<Boolean>() {
 			@Override
 			public Boolean load() {
-				return Boolean.parseBoolean(getTrimmedProperty(key, Boolean.toString(defaultValue)));
+				return Boolean.parseBoolean(getTrimmedProperty(key));
 			}
 		});
 	}
 
-	public int getInt(String key, int defaultValue) {
-		return (int) getLong(key, defaultValue);
+	public int getInt(String key) {
+		return (int) getLong(key);
 	}
 
-	public long getLong(final String key, final long defaultValue) {
-		return getAndCache(key, defaultValue, new PropertyLoader<Long>() {
+	public long getLong(final String key) {
+		return getAndCache(key, new PropertyLoader<Long>() {
 			@Override
 			public Long load() {
-				String value = getTrimmedProperty(key, Long.toString(defaultValue));
+				String value = getTrimmedProperty(key);
 				try {
 					return Long.parseLong(value);
 				} catch (NumberFormatException e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
-					return defaultValue;
+					return -1L;
 				}
 			}
 		});
 	}
 
-	public Map<Pattern, String> getPatternMap(final String key, final String defaultValue) {
-		return getAndCache(key, null, new PropertyLoader<Map<Pattern, String>>() {
+	public Map<Pattern, String> getPatternMap(final String key) {
+		return getAndCache(key, new PropertyLoader<Map<Pattern, String>>() {
 			@Override
 			public Map<Pattern, String> load() {
-				String patternString = getTrimmedProperty(key, defaultValue);
+				String patternString = getTrimmedProperty(key);
 				try {
 					String[] groups = patternString.split(",");
 					Map<Pattern, String> pattenGroupMap = new HashMap<Pattern, String>(groups.length);
@@ -519,14 +407,11 @@ public class Configuration {
 		});
 	}
 
-	private <T> T getAndCache(String key, T defaultValue, PropertyLoader<T> propertyLoader) {
+	private <T> T getAndCache(String key, PropertyLoader<T> propertyLoader) {
 		@SuppressWarnings("unchecked")
 		T result = (T) propertiesCache.get(key);
 		if (result == null) {
 			result = propertyLoader.load();
-			if (result == null) {
-				result = defaultValue;
-			}
 			if (result != null) {
 				propertiesCache.put(key, result);
 			}

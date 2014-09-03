@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.p6spy.engine.logging.Category;
 import com.p6spy.engine.spy.appender.P6Logger;
 import org.stagemonitor.core.Configuration;
+import org.stagemonitor.jdbc.JdbcPlugin;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
@@ -49,7 +50,7 @@ public class StagemonitorP6Logger implements P6Logger {
 	}
 
 	private void addSqlToCallStack(long elapsed, String prepared, String sql) {
-		if (configuration.collectPreparedStatementParameters()) {
+		if (configuration.getBoolean(JdbcPlugin.COLLECT_PREPARED_STATEMENT_PARAMETERS)) {
 			Profiler.addCall(sql, TimeUnit.MILLISECONDS.toNanos(elapsed));
 		} else {
 			Profiler.addCall(prepared, TimeUnit.MILLISECONDS.toNanos(elapsed));
