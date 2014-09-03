@@ -1,87 +1,100 @@
-<script src="@@CONTEXT_PREFIX_PATH@@/stagemonitor/static/jquery.1.11.1.min.js"></script>
 <script type="text/javascript">
-	(function($) {
-		window.StageMonitorLoaded = function() {
-			$(document).ready(function() {
-				$("#stagemonitor-modal").load(function() {
-					var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
-
-					$.extend(stagemonitorWindow.stagemonitor, {
-						openOverlay: function() {
-							$("#stagemonitor-overlay").show();
-						},
-						closeOverlay: function() {
-							$("#stagemonitor-overlay").hide();
+	(function () {
+		window.StageMonitorLoaded = function () {
+			var executeOnDomReady = [],
+				isDomReady = function () {
+					return document.readyState === "interactive";
+				},
+				executeCallbacksOnceIfDomReady = function () {
+					if (isDomReady()) {
+						while (executeOnDomReady.length > 0) {
+							var fn = executeOnDomReady.pop();
+							fn();
 						}
-					});
+					}
+				};
 
-					var data = @@JSON_REQUEST_TACE_PLACEHOLDER@@;
-					stagemonitorWindow.stagemonitor.initialize(data);
-					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
-					var $overlay = $("#stagemonitor-overlay-show");
-					$overlay.addClass(
-							thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok");
-					$overlay.on("click", stagemonitorWindow.stagemonitor.openOverlay);
-				});
+			executeOnDomReady.push(function () {
+				var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow,
+					stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
+					stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
+					data = @@JSON_REQUEST_TACE_PLACEHOLDER@@;
+
+				stagemonitorWindow.stagemonitor.openOverlay = function () {
+					stagemonitorOverlay.style.display = "block";
+				};
+
+				stagemonitorWindow.stagemonitor.closeOverlay = function () {
+					stagemonitorOverlay.style.display = "none";
+				};
+
+				stagemonitorWindow.stagemonitor.initialize(data);
+				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+				var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
+				stagemonitorOverlayShow.classList.add(clazz);
+				stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
 			});
-		}
-	})(jQuery.noConflict(true));
+
+			document.onreadystatechange = executeCallbacksOnceIfDomReady;
+			executeCallbacksOnceIfDomReady();
+		};
+	}());
 </script>
 <style>
 	#stagemonitor-overlay {
-	display: none;
-	position: fixed;
-	background-color: rgba(0, 0, 0, 0.5);
-	width: 100%;
-	height: 100%;
-	z-index: 100;
-	top: 0;
-	left: 0;
+		display: none;
+		position: fixed;
+		background-color: rgba(0, 0, 0, 0.5);
+		width: 100%;
+		height: 100%;
+		z-index: 100000;
+		top: 0;
+		left: 0;
 	}
 
 	#stagemonitor-overlay-show {
-	position: fixed;
-	right: 3em;
-	bottom: 3em;
-	border-radius: 1em;
-	padding: 0.5em;
-	cursor: pointer;
+		position: fixed;
+		right: 3em;
+		bottom: 3em;
+		border-radius: 1em;
+		padding: 0.5em;
+		cursor: pointer;
 	}
 
 	.stagemonitor-threshold-ok {
-	background-color: rgba(0, 0, 0, 0.5);
+		background-color: rgba(0, 0, 0, 0.5);
 	}
 
 	.stagemonitor-threshold-exceeded {
-	-webkit-animation: togglebackground 4s infinite;
-	animation: togglebackground 4s infinite;
+		-webkit-animation: togglebackground 4s infinite;
+		animation: togglebackground 4s infinite;
 	}
 
 	@-webkit-keyframes togglebackground {
-	0%   {background-color: rgba(0, 0, 0, 0.5);}
-	30%  {background-color: #bf3636}
-	60%  {background-color: #bf3636}
-	100% {background-color: rgba(0, 0, 0, 0.5);}
+		0%   {background-color: rgba(0, 0, 0, 0.5);}
+		30%  {background-color: #bf3636}
+		60%  {background-color: #bf3636}
+		100% {background-color: rgba(0, 0, 0, 0.5);}
 	}
 
 	@keyframes togglebackground {
-	0%   {background-color: rgba(0, 0, 0, 0.5);}
-	30%  {background-color: #bf3636}
-	60%  {background-color: #bf3636}
-	100% {background-color: rgba(0, 0, 0, 0.5);}
+		0%   {background-color: rgba(0, 0, 0, 0.5);}
+		30%  {background-color: #bf3636}
+		60%  {background-color: #bf3636}
+		100% {background-color: rgba(0, 0, 0, 0.5);}
 	}
 
 	#stagemonitor-modal {
-	border: 1px solid rgba(0, 0, 0, 0.2);
-	border-radius: 6px;
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-	height: 80%;
-	left: 50%;
-	margin-left: -45%;
-	min-width: 1000px;
-	position: fixed;
-	top: 10%;
-	width: 90%;
+		border: 1px solid rgba(0, 0, 0, 0.2);
+		border-radius: 6px;
+		box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+		height: 80%;
+		left: 50%;
+		margin-left: -45%;
+		min-width: 1000px;
+		position: fixed;
+		top: 10%;
+		width: 90%;
 	}
 </style>
 
