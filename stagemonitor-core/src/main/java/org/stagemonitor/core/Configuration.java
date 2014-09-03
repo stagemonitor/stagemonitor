@@ -299,7 +299,7 @@ public class Configuration {
 			final ConfigurationOption configurationOption = configurationOptions.get(key);
 			if (configurationOption == null) {
 				logger.error("Configuration option with key '{}' ist not registered!");
-				return "";
+				return null;
 			}
 			return configurationOption.getDefaultValue();
 		}
@@ -374,7 +374,12 @@ public class Configuration {
 					return Long.parseLong(value);
 				} catch (NumberFormatException e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
-					return -1L;
+					try {
+						return Long.parseLong(configurationOptions.get(key).getDefaultValue());
+					} catch (RuntimeException e2) {
+						logger.warn(e2.getMessage() + " (this exception is ignored)", e);
+						return -1L;
+					}
 				}
 			}
 		});

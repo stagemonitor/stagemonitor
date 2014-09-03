@@ -36,7 +36,7 @@ public class ConfigurationTest {
 
 	@Test
 	public void testGetInvalidLong() {
-		assertEquals(2L, configuration.getLong("invalidLong"));
+		assertEquals(-1, configuration.getLong("invalidLong"));
 	}
 
 	@Test
@@ -55,15 +55,9 @@ public class ConfigurationTest {
 	}
 
 	@Test
-	public void testGetStringsNotExistent() {
-		assertEquals(Collections.<String>emptySet(), configuration.getStrings("testGetStringsNotExistent1"));
-		assertEquals(new LinkedHashSet<String>(Arrays.asList("Foo", "Bar")), configuration.getStrings("testGetStringsNotExistent2"));
-		assertEquals(Collections.<String>emptySet(), configuration.getLowerStrings("testGetStringsNotExistent3"));
-		assertEquals(new LinkedHashSet<String>(Arrays.asList("foo", "bar")), configuration.getLowerStrings("testGetStringsNotExistent4"));
-	}
-
-	@Test
 	public void testCaching() {
+		// TODO
+		configuration.add(ConfigurationOption.builder().key("testCaching").defaultValue("testCaching").build());
 		assertEquals("testCaching", configuration.getString("testCaching"));
 		assertEquals("testCaching", configuration.getString("testCaching2"));
 	}
@@ -72,7 +66,7 @@ public class ConfigurationTest {
 	public void testGetBoolean() {
 		assertTrue(configuration.getBoolean("boolean.true"));
 		assertFalse(configuration.getBoolean("boolean.false"));
-		assertTrue(configuration.getBoolean("nonExistent"));
+		assertFalse(configuration.getBoolean("nonExistent"));
 	}
 
 	@Test
