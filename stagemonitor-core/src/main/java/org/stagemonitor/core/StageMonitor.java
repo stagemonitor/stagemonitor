@@ -12,6 +12,7 @@ import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
+import org.stagemonitor.core.util.StringUtils;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -84,9 +85,6 @@ public final class StageMonitor {
 			} else {
 				logger.info("Initializing plugin {}", pluginName);
 				try {
-					for (ConfigurationOption configurationOption : stagemonitorPlugin.getConfigurationOptions()) {
-						configuration.add(pluginName, configurationOption);
-					}
 					stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
 				} catch (RuntimeException e) {
 					logger.warn("Error while initializing plugin " + pluginName +
@@ -164,5 +162,23 @@ public final class StageMonitor {
 		configuration = new Configuration();
 		started = false;
 		measurementSession = new MeasurementSession(null, null, null);
+		registerConfigurationOptions();
+	}
+
+	private static void registerConfigurationOptions() {
+		final Collection<String> disabledPlugins = configuration.getDisabledPlugins();
+		for (StageMonitorPlugin stagemonitorPlugin : ServiceLoader.load(StageMonitorPlugin.class)) {
+			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
+			if (!disabledPlugins.contains(pluginName)) {
+				try {
+					for (ConfigurationOption configurationOption : stagemonitorPlugin.getConfigurationOptions()) {
+						configuration.add(StringUtils.splitCamelCase(pluginName), configurationOption);
+					}
+				} catch (RuntimeException e) {
+					logger.warn("Error while initializing plugin " + pluginName +
+							" (this exception is ignored)", e);
+				}
+			}
+		}
 	}
 }

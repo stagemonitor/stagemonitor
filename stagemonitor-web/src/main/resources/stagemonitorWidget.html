@@ -18,8 +18,9 @@
 				var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow,
 					stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
 					stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
-					data = @@JSON_REQUEST_TACE_PLACEHOLDER@@;
-
+					data = @@JSON_REQUEST_TACE_PLACEHOLDER@@,
+					configurationOptions = @@CONFIGURATION_OPTIONS@@;
+				
 				stagemonitorWindow.stagemonitor.openOverlay = function () {
 					stagemonitorOverlay.style.display = "block";
 				};
@@ -28,7 +29,7 @@
 					stagemonitorOverlay.style.display = "none";
 				};
 
-				stagemonitorWindow.stagemonitor.initialize(data);
+				stagemonitorWindow.stagemonitor.initialize(data, configurationOptions, "@@CONTEXT_PREFIX_PATH@@");
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
 				var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 				stagemonitorOverlayShow.classList.add(clazz);

@@ -6,6 +6,7 @@ import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
@@ -71,6 +72,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			this.widgetTemplate = buildWidgetTemplate(filterConfig.getServletContext().getContextPath());
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
+			this.widgetTemplate = "";
 		}
 	}
 
@@ -177,14 +179,15 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 		return modifiedContent;
 	}
-	
+
 	private String buildWidget(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
-		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson());
+		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson())
+				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByPlugin()));
 	}
 
 	private String buildWidgetTemplate(String contextPath) throws IOException {
-		final String widget = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("stagemonitorWidget.html"));
-		return widget.replace("@@CONTEXT_PREFIX_PATH@@", contextPath);
+		return IOUtils.toString(getClass().getClassLoader().getResourceAsStream("stagemonitorWidget.html"))
+				.replace("@@CONTEXT_PREFIX_PATH@@", contextPath);
 	}
 
 	protected void handleException(Exception e) throws IOException, ServletException  {

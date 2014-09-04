@@ -5,7 +5,9 @@ repositories {
 }
 
 dependencies {
-	compile project(":stagemonitor-requestmonitor")
+	compile project(":stagemonitor-spring-mvc")
+	compile project(":stagemonitor-logging")
+	compile project(":stagemonitor-ehcache")
 	compile 'com.google.caliper:caliper:1.0-beta-SNAPSHOT'
 }
 

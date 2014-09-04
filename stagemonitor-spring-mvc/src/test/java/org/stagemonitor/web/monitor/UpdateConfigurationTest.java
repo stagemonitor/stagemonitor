@@ -12,7 +12,6 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.web.WebPlugin.STAGEMONITOR_PASSWORD;
 
@@ -29,25 +28,40 @@ public class UpdateConfigurationTest {
 
 	@Test
 	public void testUpdateConfigurationWithoutPasswordSet() throws IOException, ServletException {
-		assertNull(configuration.getString("stagemonitor.testUpdateConfiguration"));
+		assertEquals("false", configuration.getString("stagemonitor.internal.monitoring"));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitor.testUpdateConfiguration", "test");
+		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
+		request.addParameter("stagemonitorConfigValue", "true");
 		configurationServlet.service(request, new MockHttpServletResponse());
 
-		assertNull(configuration.getString("stagemonitor.testUpdateConfiguration"));
+		assertEquals("false", configuration.getString("stagemonitor.internal.monitoring"));
 	}
 
 	@Test
 	public void testUpdateConfiguration() throws IOException, ServletException {
 		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("");
-		assertNull(configuration.getString("stagemonitor.testUpdateConfiguration"));
+		assertEquals("false", configuration.getString("stagemonitor.internal.monitoring"));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitor.testUpdateConfiguration", "test");
+		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
+		request.addParameter("stagemonitorConfigValue", "true");
 		configurationServlet.service(request, new MockHttpServletResponse());
 
-		assertEquals("test", configuration.getString("stagemonitor.testUpdateConfiguration"));
+		assertEquals("true", configuration.getString("stagemonitor.internal.monitoring"));
+	}
+
+	@Test
+	public void testUpdateConfigurationNonDynamic() throws IOException, ServletException {
+		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("");
+		assertEquals("60", configuration.getString("stagemonitor.reporting.interval.console"));
+
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
+		request.addParameter("stagemonitorConfigKey", "stagemonitor.reporting.interval.console");
+		request.addParameter("stagemonitorConfigValue", "1");
+		configurationServlet.service(request, new MockHttpServletResponse());
+
+		assertEquals("60", configuration.getString("stagemonitor.reporting.interval.console"));
 	}
 
 	@Test
@@ -56,7 +70,8 @@ public class UpdateConfigurationTest {
 		assertEquals("", configuration.getString(STAGEMONITOR_PASSWORD));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter(STAGEMONITOR_PASSWORD, "pwd");
+		request.addParameter("stagemonitorConfigKey", STAGEMONITOR_PASSWORD);
+		request.addParameter("stagemonitorConfigValue", "pwd");
 		configurationServlet.service(request, new MockHttpServletResponse());
 
 		assertEquals("", configuration.getString(STAGEMONITOR_PASSWORD));
@@ -65,25 +80,27 @@ public class UpdateConfigurationTest {
 	@Test
 	public void testUpdateConfigurationWithoutPassword() throws IOException, ServletException {
 		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("pwd");
-		assertNull(configuration.getString("stagemonitor.testUpdateConfigurationWithoutPassword"));
+		assertEquals("false", configuration.getString("stagemonitor.internal.monitoring"));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitor.testUpdateConfigurationWithoutPassword", "test");
+		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
+		request.addParameter("stagemonitorConfigValue", "true");
 		configurationServlet.service(request, new MockHttpServletResponse());
 
-		assertNull(configuration.getString("stagemonitor.testUpdateConfigurationWithoutPassword"));
+		assertEquals("false", configuration.getString("stagemonitor.internal.monitoring"));
 	}
 
 	@Test
 	public void testUpdateConfigurationWithPassword() throws IOException, ServletException {
 		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("pwd");
-		assertNull(configuration.getString("stagemonitor.testUpdateConfigurationWithPassword"));
+		assertEquals("false", configuration.getString("stagemonitor.internal.monitoring"));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitor.testUpdateConfigurationWithPassword", "test");
+		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
+		request.addParameter("stagemonitorConfigValue", "true");
 		request.addParameter(STAGEMONITOR_PASSWORD, "pwd");
 		configurationServlet.service(request, new MockHttpServletResponse());
 
-		assertEquals("test", configuration.getString("stagemonitor.testUpdateConfigurationWithPassword"));
+		assertEquals("true", configuration.getString("stagemonitor.internal.monitoring"));
 	}
 }

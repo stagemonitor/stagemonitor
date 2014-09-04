@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
 
 public class ConfigurationServlet extends HttpServlet {
 
@@ -25,34 +24,30 @@ public class ConfigurationServlet extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		super.doGet(req, resp);    //To change body of overridden methods use File | Settings | File Templates.
+		reloadConfigIfRequested(req);
+	}
+
+	private void reloadConfigIfRequested(HttpServletRequest req) {
+		if (req.getParameter("stagemonitorReloadConfig") != null) {
+			configuration.reload();
+		}
 	}
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		updateConfiguration(req);
-		resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-	}
+		reloadConfigIfRequested(req);
 
-	private void updateConfiguration(HttpServletRequest httpServletRequest) {
-		@SuppressWarnings("unchecked")
-		final Map<String, String[]> parameterMap = httpServletRequest.getParameterMap();
-
-		final String configurationUpdatePassword = getFirstOrEmpty(parameterMap.get(WebPlugin.STAGEMONITOR_PASSWORD));
-		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
-			if ("stagemonitorReloadConfig".equals(entry.getKey())) {
-				configuration.reload();
-			} else if (entry.getKey().startsWith("stagemonitor.")) {
-				dynamicConfigurationSource.updateConfiguration(entry.getKey(), getFirstOrEmpty(entry.getValue()), configurationUpdatePassword);
+		String configurationUpdatePassword = req.getParameter(WebPlugin.STAGEMONITOR_PASSWORD);
+		if (configurationUpdatePassword == null) {
+			configurationUpdatePassword = "";
+		}
+		final String key = req.getParameter("stagemonitorConfigKey");
+		if (key != null) {
+			if (!dynamicConfigurationSource.updateConfiguration(key, req.getParameter("stagemonitorConfigValue"), configurationUpdatePassword)) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			}
 		}
-	}
-
-	private String getFirstOrEmpty(String[] strings) {
-		if (strings != null && strings.length > 0) {
-			return strings[0];
-		}
-		return "";
+		resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 	}
 
 }

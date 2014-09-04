@@ -7,6 +7,7 @@ public class ConfigurationOption {
 	private final String label;
 	private final String description;
 	private final String defaultValue;
+	private ConfigurationSource currentValueSource;
 
 	public static ConfigurationOptionBuilder builder() {
 		return new ConfigurationOptionBuilder();
@@ -38,6 +39,14 @@ public class ConfigurationOption {
 
 	public String getDefaultValue() {
 		return defaultValue;
+	}
+
+	public String getCurrentValue() {
+		return currentValueSource.getValue(key);
+	}
+
+	public void setCurrentValueSource(ConfigurationSource currentValueSource) {
+		this.currentValueSource = currentValueSource;
 	}
 
 	public static class ConfigurationOptionBuilder {

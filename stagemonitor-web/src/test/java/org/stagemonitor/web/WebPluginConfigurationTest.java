@@ -1,9 +1,9 @@
 package org.stagemonitor.web;
 
-import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.ConfigurationOption;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.stagemonitor.web.WebPlugin.GROUP_URLS;
 import static org.stagemonitor.web.WebPlugin.HTTP_COLLECT_HEADERS;
 import static org.stagemonitor.web.WebPlugin.HTTP_HEADERS_EXCLUDED;
@@ -29,12 +28,13 @@ public class WebPluginConfigurationTest {
 	@Before
 	public void before() {
 		final WebPlugin webPlugin = new WebPlugin();
-		webPlugin.initializePlugin(mock(MetricRegistry.class), configuration);
+		for (ConfigurationOption configurationOption : webPlugin.getConfigurationOptions()) {
+			configuration.add("Test", configurationOption);
+		}
 	}
 
 	@Test
 	public void testDefaultValues() {
-//		assertEquals(false, configuration.getisMonitorOnlySpringMvcRequests());
 		assertEquals(true, configuration.getBoolean(HTTP_COLLECT_HEADERS));
 		assertEquals(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")), configuration.getLowerStrings(HTTP_HEADERS_EXCLUDED));
 		final Collection<Pattern> confidentialQueryParams = configuration.getPatterns(HTTP_REQUESTPARAMS_CONFIDENTIAL_REGEX);

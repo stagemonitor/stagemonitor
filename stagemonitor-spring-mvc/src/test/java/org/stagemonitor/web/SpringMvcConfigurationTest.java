@@ -1,13 +1,12 @@
 package org.stagemonitor.web;
 
-import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.ConfigurationOption;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 
 
 public class SpringMvcConfigurationTest {
@@ -17,7 +16,9 @@ public class SpringMvcConfigurationTest {
 	@Before
 	public void before() {
 		final SpringMvcPlugin springMvcPlugin = new SpringMvcPlugin();
-		springMvcPlugin.initializePlugin(mock(MetricRegistry.class), configuration);
+		for (ConfigurationOption configurationOption : springMvcPlugin.getConfigurationOptions()) {
+			configuration.add("Test", configurationOption);
+		}
 	}
 
 	@Test

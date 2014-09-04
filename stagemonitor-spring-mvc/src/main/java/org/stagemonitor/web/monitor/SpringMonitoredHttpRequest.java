@@ -6,17 +6,16 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
-	public static final Pattern CAMEL_CASE = Pattern.compile("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final List<HandlerMapping> allHandlerMappings;
@@ -55,16 +54,9 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 	public static String getRequestNameFromHandler(HandlerExecutionChain handler) {
 		if (handler != null && handler.getHandler() instanceof HandlerMethod) {
 			HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
-			return splitCamelCase(capitalize(handlerMethod.getMethod().getName()));
+			return StringUtils.splitCamelCase(StringUtils.capitalize(handlerMethod.getMethod().getName()));
 		}
 		return "";
 	}
 
-	private static String capitalize(String self) {
-		return Character.toUpperCase(self.charAt(0)) + self.substring(1);
-	}
-
-	private static String splitCamelCase(String s) {
-		return CAMEL_CASE.matcher(s).replaceAll(" ");
-	}
 }

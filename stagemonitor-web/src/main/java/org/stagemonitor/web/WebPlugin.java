@@ -71,17 +71,6 @@ public class WebPlugin implements StageMonitorPlugin {
 				.defaultValue("false")
 				.build());
 		config.add(ConfigurationOption.builder()
-				.key(STAGEMONITOR_PASSWORD)
-				.dynamic(false)
-				.label("Password for dynamic configuration changes")
-				.description("The password that is required to dynamically update the configuration via the configuration endpoint.\n" +
-						"If not set (default) configuration reloading is disabled. If set, you have to include " +
-						"parameter stagemonitor.password=password, if you want to dynamically update the " +
-						"configuration. If set to an empty string, the password parameter is not required.\n" +
-						"Requires Servlet-Api >= 3.0")
-				.defaultValue("false")
-				.build());
-		config.add(ConfigurationOption.builder()
 				.key(GROUP_URLS)
 				.dynamic(true)
 				.label("Group URLs regex")

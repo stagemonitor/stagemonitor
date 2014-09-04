@@ -1,7 +1,5 @@
 package org.stagemonitor.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,7 +145,21 @@ public class Configuration {
 				.build());
 	}
 
-	void add(String pluginName, final ConfigurationOption configurationOption) {
+	/**
+	 * Must only be called by tests or StageMonitor class
+	 *
+	 * @param pluginName the name of the plugin which registers the configuration option
+	 * @param configurationOption the configuration option to register
+	 */
+	public void add(String pluginName, final ConfigurationOption configurationOption) {
+		configurationOption.setCurrentValueSource(new ConfigurationSource() {
+			public String getValue(String key) {
+				return getTrimmedProperty(key);
+			}
+
+			public void reload() {
+			}
+		});
 		configurationOptionsByKey.put(configurationOption.getKey(), configurationOption);
 		if (configurationOptionsByPlugin.containsKey(pluginName)) {
 			configurationOptionsByPlugin.get(pluginName).add(configurationOption);
@@ -158,12 +170,12 @@ public class Configuration {
 		}
 	}
 
-	public Map<String, List<ConfigurationOption>> getConfigurationOptions() {
+	public Map<String, List<ConfigurationOption>> getConfigurationOptionsByPlugin() {
 		return Collections.unmodifiableMap(configurationOptionsByPlugin);
 	}
 
-	public static void main(String[] args) throws JsonProcessingException {
-		System.out.println(new ObjectMapper().writeValueAsString(new Configuration().getConfigurationOptions()));
+	public Map<String, ConfigurationOption> getConfigurationOptionsByKey() {
+		return Collections.unmodifiableMap(configurationOptionsByKey);
 	}
 
 	public void reload() {
@@ -392,6 +404,9 @@ public class Configuration {
 			@Override
 			public Long load() {
 				String value = getTrimmedProperty(key);
+				if (value == null) {
+					return null;
+				}
 				try {
 					return Long.parseLong(value);
 				} catch (NumberFormatException e) {
