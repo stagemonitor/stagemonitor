@@ -86,7 +86,7 @@ public class SpringRequestMonitorTest {
 		});
 		when(configuration.isStagemonitorActive()).thenReturn(true);
 		when(configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS)).thenReturn(true);
-		when(configuration.getPatternMap(WebPlugin.STAGEMONITOR_GROUP_URLS
+		when(configuration.getPatternMap(WebPlugin.GROUP_URLS
 		)).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 	}
 

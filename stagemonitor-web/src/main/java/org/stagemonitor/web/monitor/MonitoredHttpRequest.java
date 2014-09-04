@@ -97,7 +97,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 	public static String getRequestNameByRequest(HttpServletRequest request, Configuration configuration) {
 		String requestURI = request.getRequestURI();
-		for (Map.Entry<Pattern, String> entry : configuration.getPatternMap(WebPlugin.STAGEMONITOR_GROUP_URLS).entrySet()) {
+		for (Map.Entry<Pattern, String> entry : configuration.getPatternMap(WebPlugin.GROUP_URLS).entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
 		return request.getMethod() + " " +requestURI;

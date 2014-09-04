@@ -21,7 +21,7 @@ public class WebPlugin implements StageMonitorPlugin {
 	public static final String HTTP_REQUESTPARAMS_CONFIDENTIAL_REGEX = "stagemonitor.requestmonitor.http.requestparams.confidential.regex";
 	public static final String WIDGET_ENABLED = "stagemonitor.web.widget.enabled";
 	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
-	public static final String STAGEMONITOR_GROUP_URLS = "stagemonitor.groupUrls";
+	public static final String GROUP_URLS = "stagemonitor.groupUrls";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	boolean requiredPropertiesSet = true;
@@ -89,7 +89,7 @@ public class WebPlugin implements StageMonitorPlugin {
 				.defaultValue("false")
 				.build());
 		config.add(ConfigurationOption.builder()
-				.key(STAGEMONITOR_GROUP_URLS)
+				.key(GROUP_URLS)
 				.dynamic(true)
 				.label("Group URLs regex")
 				.description("Combine url paths by regex to a single url group.\n" +

@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,7 +37,7 @@ public class Configuration {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private ConcurrentMap<String, Object> propertiesCache = new ConcurrentHashMap<String, Object>();
 	private List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
-	private Map<String, ConfigurationOption> configurationOptions = new ConcurrentHashMap<String, ConfigurationOption>();
+	private Map<String, ConfigurationOption> configurationOptions = new LinkedHashMap<String, ConfigurationOption>();
 
 	public Configuration() {
 		configurationSources.add(new SystemPropertyConfigurationSource());
@@ -298,7 +299,7 @@ public class Configuration {
 		} else {
 			final ConfigurationOption configurationOption = configurationOptions.get(key);
 			if (configurationOption == null) {
-				logger.error("Configuration option with key '{}' ist not registered!");
+				logger.error("Configuration option with key '{}' ist not registered!", key);
 				return null;
 			}
 			return configurationOption.getDefaultValue();

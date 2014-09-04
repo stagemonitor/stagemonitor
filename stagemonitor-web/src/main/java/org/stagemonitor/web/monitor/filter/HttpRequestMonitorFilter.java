@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
@@ -31,7 +30,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private static final String CONFIGURATION_ENDPOINT = "/stagemonitor/configuration";
 	protected final Configuration configuration;
 	protected final RequestMonitor requestMonitor;
-	private boolean servletApiForWidgetSufficient = true;
+	private boolean servletApiForWidgetSufficient = false;
 	private String widgetTemplate;
 
 	public HttpRequestMonitorFilter() {
@@ -184,8 +183,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private String buildWidgetTemplate(String contextPath) throws IOException {
-		final InputStream widgetStream = getClass().getClassLoader().getResourceAsStream("stagemonitorWidget.html");
-		return IOUtils.toString(widgetStream).replace("@@CONTEXT_PREFIX_PATH@@", contextPath);
+		final String widget = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("stagemonitorWidget.html"));
+		return widget.replace("@@CONTEXT_PREFIX_PATH@@", contextPath);
 	}
 
 	protected void handleException(Exception e) throws IOException, ServletException  {

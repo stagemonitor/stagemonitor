@@ -1,10 +1,12 @@
 package org.stagemonitor.core;
 
+import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -13,6 +15,34 @@ import static org.junit.Assert.assertTrue;
 public class ConfigurationTest {
 
 	private Configuration configuration = new Configuration();
+
+	private Map<String, String> config = new HashMap<String, String>() {{
+		put("invalidLong", "two");
+		put("stagemonitor.elasticsearch.url", "foo/");
+	}};
+
+	@Before
+	public void before() {
+		configuration.addConfigurationSource(new ConfigurationSource() {
+			public String getValue(String key) {
+				return config.get(key);
+			}
+			public void reload() {
+			}
+		}, true);
+
+		configuration.add(ConfigurationOption.builder().key("invalidPatternMap").defaultValue("(.*).js: *.js (.*).css:  *.css").build());
+		configuration.add(ConfigurationOption.builder().key("invalidPatternSyntax").defaultValue("(.*.js").build());
+		configuration.add(ConfigurationOption.builder().key("long").defaultValue("2").build());
+		configuration.add(ConfigurationOption.builder().key("invalidLong").defaultValue("2").build());
+		configuration.add(ConfigurationOption.builder().key("invalidLongDefault").defaultValue("two").build());
+		configuration.add(ConfigurationOption.builder().key("string").defaultValue("fooBar").build());
+		configuration.add(ConfigurationOption.builder().key("strings").defaultValue("fooBar , barFoo").build());
+		configuration.add(ConfigurationOption.builder().key("boolean.true").defaultValue("true").build());
+		configuration.add(ConfigurationOption.builder().key("boolean.false").defaultValue("false").build());
+		configuration.add(ConfigurationOption.builder().key("boolean.invalid").defaultValue("ture").build());
+		configuration.add(ConfigurationOption.builder().key("testCaching").defaultValue("testCaching").build());
+	}
 
 	@Test
 	public void testInvalidPatterns() {
@@ -36,7 +66,8 @@ public class ConfigurationTest {
 
 	@Test
 	public void testGetInvalidLong() {
-		assertEquals(-1, configuration.getLong("invalidLong"));
+		assertEquals(2, configuration.getLong("invalidLong"));
+		assertEquals(-1, configuration.getLong("invalidLongDefault"));
 	}
 
 	@Test
@@ -55,11 +86,12 @@ public class ConfigurationTest {
 	}
 
 	@Test
-	public void testCaching() {
-		// TODO
-		configuration.add(ConfigurationOption.builder().key("testCaching").defaultValue("testCaching").build());
+	public void testCachingAndReload() {
 		assertEquals("testCaching", configuration.getString("testCaching"));
-		assertEquals("testCaching", configuration.getString("testCaching2"));
+		config.put("testCaching", "testCaching2");
+		assertEquals("testCaching", configuration.getString("testCaching"));
+		configuration.reload();
+		assertEquals("testCaching2", configuration.getString("testCaching"));
 	}
 
 	@Test
@@ -74,47 +106,15 @@ public class ConfigurationTest {
 		assertEquals("foo", configuration.getElasticsearchUrl());
 	}
 
-//	@Test
-//	public void testDefaultValues() {
-//		assertEquals(0, configuration.getNoOfWarmupRequests());
-//		assertEquals(0, configuration.getWarmupSeconds());
-//		assertEquals(true, configuration.isCollectRequestStats());
-//		assertEquals(false, configuration.isCollectCpuTime());
-//		assertEquals(false, configuration.isMonitorOnlySpringMvcRequests());
-//		assertEquals(true, configuration.isCollectHeaders());
-//		assertEquals(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")), configuration.getExcludedHeaders());
-//		final Collection<Pattern> confidentialQueryParams = configuration.getConfidentialRequestParams();
-//		final List<String> confidentialQueryParamsAsString = new ArrayList<String>(confidentialQueryParams.size());
-//		for (Pattern confidentialQueryParam : confidentialQueryParams) {
-//			confidentialQueryParamsAsString.add(confidentialQueryParam.toString());
-//		}
-//		assertEquals(Arrays.asList("(?i).*pass.*", "(?i).*credit.*", "(?i).*pwd.*"), confidentialQueryParamsAsString);
-//		assertEquals(60L, configuration.getConsoleReportingInterval());
-//		assertEquals(true, configuration.reportToJMX());
-//		assertEquals(60, configuration.getGraphiteReportingInterval());
-//		assertEquals(null, configuration.getGraphiteHostName());
-//		assertEquals(2003, configuration.getGraphitePort());
-//		assertEquals(100000L, configuration.getMinExecutionTimeNanos());
-//		assertEquals(1, configuration.getCallStackEveryXRequestsToGroup());
-//		assertEquals(true, configuration.isLogCallStacks());
-//		assertEquals("1w", configuration.getCallStacksTimeToLive());
-//		assertEquals(null, configuration.getApplicationName());
-//		assertEquals(null, configuration.getInstanceName());
-//		assertEquals(Collections.<Pattern>emptySet(), configuration.getExcludedMetricsPatterns());
-//
-//		final Map<Pattern, String> groupUrls = configuration.getGroupUrls();
-//		final Map<String, String> groupUrlsAsString = new HashMap<String, String>();
-//		for (Map.Entry<Pattern, String> entry : groupUrls.entrySet()) {
-//			groupUrlsAsString.put(entry.getKey().pattern(), entry.getValue());
-//		}
-//
-//		final Map<String, String> expectedMap = new HashMap<String, String>();
-//		expectedMap.put("(.*).js$", "*.js");
-//		expectedMap.put("(.*).css$", "*.css");
-//		expectedMap.put("(.*).jpg$", "*.jpg");
-//		expectedMap.put("(.*).jpeg$", "*.jpeg");
-//		expectedMap.put("(.*).png$", "*.png");
-//
-//		assertEquals(expectedMap, groupUrlsAsString);
-//	}
+	@Test
+	public void testDefaultValues() {
+		assertEquals(60L, configuration.getConsoleReportingInterval());
+		assertEquals(true, configuration.reportToJMX());
+		assertEquals(60, configuration.getGraphiteReportingInterval());
+		assertEquals(null, configuration.getGraphiteHostName());
+		assertEquals(2003, configuration.getGraphitePort());
+		assertEquals(null, configuration.getApplicationName());
+		assertEquals(null, configuration.getInstanceName());
+		assertEquals(Collections.<Pattern>emptySet(), configuration.getExcludedMetricsPatterns());
+	}
 }

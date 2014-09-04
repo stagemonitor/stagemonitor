@@ -2,7 +2,9 @@ package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
+import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.core.Configuration;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
@@ -10,6 +12,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.StageMonitor.getMetricRegistry;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
@@ -18,8 +22,14 @@ public class MonitoredMethodExecutionTest {
 	private RequestMonitor.RequestInformation<RequestTrace> requestInformation1;
 	private RequestMonitor.RequestInformation<RequestTrace> requestInformation2;
 	private RequestMonitor.RequestInformation<RequestTrace> requestInformation3;
+	private Configuration configuration = mock(Configuration.class);
+	private TestObject testObject = new TestObject(new RequestMonitor(configuration));
 
+	@Before
 	public void clearState() {
+		when(configuration.getInt(RequestMonitorPlugin.NO_OF_WARMUP_REQUESTS)).thenReturn(0);
+		when(configuration.isStagemonitorActive()).thenReturn(true);
+		when(configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS)).thenReturn(true);
 		getMetricRegistry().removeMatching(new MetricFilter() {
 			@Override
 			public boolean matches(String name, Metric metric) {
@@ -31,8 +41,6 @@ public class MonitoredMethodExecutionTest {
 
 	@Test
 	public void testDoubleForwarding() throws Exception {
-		clearState();
-		TestObject testObject = new TestObject(new RequestMonitor());
 		testObject.monitored1();
 		assertEquals(1, requestInformation1.getExecutionResult());
 		assertFalse(requestInformation1.forwardedExecution);
@@ -51,8 +59,6 @@ public class MonitoredMethodExecutionTest {
 
 	@Test
 	public void testNormalForwarding() throws Exception {
-		clearState();
-		TestObject testObject = new TestObject(new RequestMonitor());
 		testObject.monitored3();
 		assertEquals(1, requestInformation3.getExecutionResult());
 
