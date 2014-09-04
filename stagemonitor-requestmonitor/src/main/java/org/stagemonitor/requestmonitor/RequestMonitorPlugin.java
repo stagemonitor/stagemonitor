@@ -7,6 +7,8 @@ import org.stagemonitor.core.StageMonitorPlugin;
 import org.stagemonitor.core.rest.RestClient;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RequestMonitorPlugin implements StageMonitorPlugin {
 
@@ -21,14 +23,8 @@ public class RequestMonitorPlugin implements StageMonitorPlugin {
 	public static final String COLLECT_DB_TIME_PER_REQUEST = "stagemonitor.jdbc.collectDbTimePerRequest";
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		addConfigOptions(config);
-		addElasticsearchMapping(config.getElasticsearchUrl());
-		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "Request.json");
-		RestClient.sendKibanaDashboardAsync(config.getElasticsearchUrl(), "Recent Requests.json");
-	}
-
-	private void addConfigOptions(Configuration config) {
+	public List<ConfigurationOption> getConfigurationOptions() {
+		List<ConfigurationOption> config = new ArrayList<ConfigurationOption>();
 		config.add(ConfigurationOption.builder()
 				.key(NO_OF_WARMUP_REQUESTS)
 				.dynamic(false)
@@ -87,6 +83,14 @@ public class RequestMonitorPlugin implements StageMonitorPlugin {
 						"ms (milliseconds) or w (weeks), milliseconds is used as default unit.")
 				.defaultValue("1w")
 				.build());
+		return config;
+	}
+
+	@Override
+	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
+		addElasticsearchMapping(config.getElasticsearchUrl());
+		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "Request.json");
+		RestClient.sendKibanaDashboardAsync(config.getElasticsearchUrl(), "Recent Requests.json");
 	}
 
 	private void addElasticsearchMapping(String serverUrl) {

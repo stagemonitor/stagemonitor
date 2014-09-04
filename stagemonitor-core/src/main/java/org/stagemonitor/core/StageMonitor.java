@@ -84,6 +84,9 @@ public final class StageMonitor {
 			} else {
 				logger.info("Initializing plugin {}", pluginName);
 				try {
+					for (ConfigurationOption configurationOption : stagemonitorPlugin.getConfigurationOptions()) {
+						configuration.add(pluginName, configurationOption);
+					}
 					stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
 				} catch (RuntimeException e) {
 					logger.warn("Error while initializing plugin " + pluginName +

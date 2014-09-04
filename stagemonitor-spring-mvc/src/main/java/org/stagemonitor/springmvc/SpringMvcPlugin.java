@@ -5,13 +5,17 @@ import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.ConfigurationOption;
 import org.stagemonitor.core.StageMonitorPlugin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SpringMvcPlugin implements StageMonitorPlugin {
 
 	public static final String MONITOR_ONLY_SPRING_MVC_REQUESTS = "stagemonitor.requestmonitor.spring.monitorOnlySpringMvcRequests";
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
-		configuration.add(ConfigurationOption.builder()
+	public List<ConfigurationOption> getConfigurationOptions() {
+		List<ConfigurationOption> config = new ArrayList<ConfigurationOption>();
+		config.add(ConfigurationOption.builder()
 				.key(MONITOR_ONLY_SPRING_MVC_REQUESTS)
 				.dynamic(true)
 				.label("Monitor only SpringMVC requests")
@@ -21,5 +25,10 @@ public class SpringMvcPlugin implements StageMonitorPlugin {
 						"Graphite will allocate.")
 				.defaultValue("false")
 				.build());
+		return config;
+	}
+
+	@Override
+	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
 	}
 }

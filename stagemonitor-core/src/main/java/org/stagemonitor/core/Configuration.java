@@ -1,8 +1,11 @@
 package org.stagemonitor.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,11 +36,14 @@ public class Configuration {
 	private static final String ELASTICSEARCH_URL = "stagemonitor.elasticsearch.url";
 	private static final String METRICS_EXCLUDED_PATTERN = "stagemonitor.metrics.excluded.pattern";
 	private static final String DISABLED_PLUGINS = "stagemonitor.plugins.disabled";
+	private static final String CORE_PLUGIN_NAME = "Core";
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private ConcurrentMap<String, Object> propertiesCache = new ConcurrentHashMap<String, Object>();
 	private List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
-	private Map<String, ConfigurationOption> configurationOptions = new LinkedHashMap<String, ConfigurationOption>();
+
+	private Map<String, ConfigurationOption> configurationOptionsByKey = new LinkedHashMap<String, ConfigurationOption>();
+	private Map<String, List<ConfigurationOption>> configurationOptionsByPlugin = new LinkedHashMap<String, List<ConfigurationOption>>();
 
 	public Configuration() {
 		configurationSources.add(new SystemPropertyConfigurationSource());
@@ -46,21 +52,21 @@ public class Configuration {
 	}
 
 	private void addCoreConfigurationOptions() {
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(STAGEMONITOR_ACTIVE)
 				.dynamic(true)
 				.label("Activate stagemonitor")
 				.description("If set to 'false' stagemonitor will be completely deactivated.")
 				.defaultValue("true")
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(INTERNAL_MONITORING)
 				.dynamic(true)
 				.label("Internal monitoring")
 				.description("If active, stagemonitor will collect internal performance data")
 				.defaultValue("false")
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(REPORTING_INTERVAL_CONSOLE)
 				.dynamic(false)
 				.label("Reporting interval console")
@@ -68,14 +74,14 @@ public class Configuration {
 						"To deactivate console reports, set this to a value below 1.")
 				.defaultValue("60")
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(REPORTING_JMX)
 				.dynamic(false)
 				.label("Expose MBeans")
 				.description("Whether or not to expose all metrics as MBeans.")
 				.defaultValue("true")
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(REPORTING_INTERVAL_GRAPHITE)
 				.dynamic(false)
 				.label("Reporting interval graphite")
@@ -84,7 +90,7 @@ public class Configuration {
 						"stagemonitor.reporting.graphite.hostName.")
 				.defaultValue("60")
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(REPORTING_GRAPHITE_HOST_NAME)
 				.dynamic(false)
 				.label("Graphite host name")
@@ -92,14 +98,14 @@ public class Configuration {
 						"to use the grafana dashboards.")
 				.defaultValue(null)
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(REPORTING_GRAPHITE_PORT)
 				.dynamic(false)
 				.label("Carbon port")
 				.description("The port where carbon is listening.")
 				.defaultValue("2003")
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(APPLICATION_NAME)
 				.dynamic(false)
 				.label("Application name")
@@ -107,7 +113,7 @@ public class Configuration {
 						"Either this property or the display-name in web.xml is mandatory!")
 				.defaultValue(null)
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(INSTANCE_NAME)
 				.dynamic(false)
 				.label("Instance name")
@@ -117,7 +123,7 @@ public class Configuration {
 						"That means that the collection of metrics does not start before the first request is executed!")
 				.defaultValue(null)
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(ELASTICSEARCH_URL)
 				.dynamic(true)
 				.label("Elasticsearch URL")
@@ -125,14 +131,14 @@ public class Configuration {
 						"provided, the call stacks won't get stored.")
 				.defaultValue(null)
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(METRICS_EXCLUDED_PATTERN)
 				.dynamic(true)
 				.label("Excluded metrics (regex)")
 				.description("A comma separated list of metric names that should not be collected.")
 				.defaultValue("")
 				.build());
-		add(ConfigurationOption.builder()
+		add(CORE_PLUGIN_NAME, ConfigurationOption.builder()
 				.key(DISABLED_PLUGINS)
 				.dynamic(false)
 				.label("Disabled plugins")
@@ -141,8 +147,23 @@ public class Configuration {
 				.build());
 	}
 
-	public void add(ConfigurationOption configurationOption) {
-		configurationOptions.put(configurationOption.getKey(), configurationOption);
+	void add(String pluginName, final ConfigurationOption configurationOption) {
+		configurationOptionsByKey.put(configurationOption.getKey(), configurationOption);
+		if (configurationOptionsByPlugin.containsKey(pluginName)) {
+			configurationOptionsByPlugin.get(pluginName).add(configurationOption);
+		} else {
+			configurationOptionsByPlugin.put(pluginName, new ArrayList<ConfigurationOption>() {{
+				add(configurationOption);
+			}});
+		}
+	}
+
+	public Map<String, List<ConfigurationOption>> getConfigurationOptions() {
+		return Collections.unmodifiableMap(configurationOptionsByPlugin);
+	}
+
+	public static void main(String[] args) throws JsonProcessingException {
+		System.out.println(new ObjectMapper().writeValueAsString(new Configuration().getConfigurationOptions()));
 	}
 
 	public void reload() {
@@ -297,7 +318,7 @@ public class Configuration {
 		if (property != null) {
 			return property.trim();
 		} else {
-			final ConfigurationOption configurationOption = configurationOptions.get(key);
+			final ConfigurationOption configurationOption = configurationOptionsByKey.get(key);
 			if (configurationOption == null) {
 				logger.error("Configuration option with key '{}' ist not registered!", key);
 				return null;
@@ -376,7 +397,7 @@ public class Configuration {
 				} catch (NumberFormatException e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 					try {
-						return Long.parseLong(configurationOptions.get(key).getDefaultValue());
+						return Long.parseLong(configurationOptionsByKey.get(key).getDefaultValue());
 					} catch (RuntimeException e2) {
 						logger.warn(e2.getMessage() + " (this exception is ignored)", e);
 						return -1L;

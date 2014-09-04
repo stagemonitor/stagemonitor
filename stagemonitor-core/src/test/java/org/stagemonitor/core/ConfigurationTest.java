@@ -31,17 +31,17 @@ public class ConfigurationTest {
 			}
 		}, true);
 
-		configuration.add(ConfigurationOption.builder().key("invalidPatternMap").defaultValue("(.*).js: *.js (.*).css:  *.css").build());
-		configuration.add(ConfigurationOption.builder().key("invalidPatternSyntax").defaultValue("(.*.js").build());
-		configuration.add(ConfigurationOption.builder().key("long").defaultValue("2").build());
-		configuration.add(ConfigurationOption.builder().key("invalidLong").defaultValue("2").build());
-		configuration.add(ConfigurationOption.builder().key("invalidLongDefault").defaultValue("two").build());
-		configuration.add(ConfigurationOption.builder().key("string").defaultValue("fooBar").build());
-		configuration.add(ConfigurationOption.builder().key("strings").defaultValue("fooBar , barFoo").build());
-		configuration.add(ConfigurationOption.builder().key("boolean.true").defaultValue("true").build());
-		configuration.add(ConfigurationOption.builder().key("boolean.false").defaultValue("false").build());
-		configuration.add(ConfigurationOption.builder().key("boolean.invalid").defaultValue("ture").build());
-		configuration.add(ConfigurationOption.builder().key("testCaching").defaultValue("testCaching").build());
+		configuration.add("test", ConfigurationOption.builder().key("invalidPatternMap").defaultValue("(.*).js: *.js (.*).css:  *.css").build());
+		configuration.add("test", ConfigurationOption.builder().key("invalidPatternSyntax").defaultValue("(.*.js").build());
+		configuration.add("test", ConfigurationOption.builder().key("long").defaultValue("2").build());
+		configuration.add("test", ConfigurationOption.builder().key("invalidLong").defaultValue("2").build());
+		configuration.add("test", ConfigurationOption.builder().key("invalidLongDefault").defaultValue("two").build());
+		configuration.add("test", ConfigurationOption.builder().key("string").defaultValue("fooBar").build());
+		configuration.add("test", ConfigurationOption.builder().key("strings").defaultValue("fooBar , barFoo").build());
+		configuration.add("test", ConfigurationOption.builder().key("boolean.true").defaultValue("true").build());
+		configuration.add("test", ConfigurationOption.builder().key("boolean.false").defaultValue("false").build());
+		configuration.add("test", ConfigurationOption.builder().key("boolean.invalid").defaultValue("ture").build());
+		configuration.add("test", ConfigurationOption.builder().key("testCaching").defaultValue("testCaching").build());
 	}
 
 	@Test

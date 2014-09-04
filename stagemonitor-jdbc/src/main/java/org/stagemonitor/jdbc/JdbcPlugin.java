@@ -7,18 +7,16 @@ import org.stagemonitor.core.StageMonitorPlugin;
 import org.stagemonitor.core.rest.RestClient;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class JdbcPlugin implements StageMonitorPlugin {
 	public static final String COLLECT_SQL = "stagemonitor.profiler.jdbc.collectSql";
 	public static final String COLLECT_PREPARED_STATEMENT_PARAMETERS = "stagemonitor.profiler.jdbc.collectPreparedStatementParameters";
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		addConfigOptions(config);
-
-		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "DB Queries.json");
-	}
-
-	private void addConfigOptions(Configuration config) {
+	public List<ConfigurationOption> getConfigurationOptions() {
+		List<ConfigurationOption> config = new ArrayList<ConfigurationOption>();
 		config.add(ConfigurationOption.builder()
 				.key(COLLECT_SQL)
 				.dynamic(false)
@@ -41,5 +39,11 @@ public class JdbcPlugin implements StageMonitorPlugin {
 						"If set to true, a timer will be created for each request to record the total db time per request.")
 				.defaultValue("false")
 				.build());
+		return config;
+	}
+
+	@Override
+	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
+		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "DB Queries.json");
 	}
 }

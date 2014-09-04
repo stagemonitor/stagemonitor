@@ -10,6 +10,7 @@ import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.rest.RestClient;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class WebPlugin implements StageMonitorPlugin {
@@ -27,16 +28,8 @@ public class WebPlugin implements StageMonitorPlugin {
 	boolean requiredPropertiesSet = true;
 
 	@Override
-	public void initializePlugin(MetricRegistry registry, Configuration conf) {
-		addConfigOptions(conf);
-
-		monitorServerThreadPool(registry, conf);
-
-		RestClient.sendGrafanaDashboardAsync(conf.getElasticsearchUrl(), "Server.json");
-		RestClient.sendGrafanaDashboardAsync(conf.getElasticsearchUrl(), "KPIs over Time.json");
-	}
-
-	private void addConfigOptions(Configuration config) {
+	public List<ConfigurationOption> getConfigurationOptions() {
+		List<ConfigurationOption> config = new ArrayList<ConfigurationOption>();
 		config.add(ConfigurationOption.builder()
 				.key(HTTP_COLLECT_HEADERS)
 				.dynamic(true)
@@ -102,6 +95,14 @@ public class WebPlugin implements StageMonitorPlugin {
 						"(.*).jpeg$: *.jpeg," +
 						"(.*).png$:  *.png")
 				.build());
+		return config;
+	}
+
+	@Override
+	public void initializePlugin(MetricRegistry registry, Configuration conf) {
+		monitorServerThreadPool(registry, conf);
+		RestClient.sendGrafanaDashboardAsync(conf.getElasticsearchUrl(), "Server.json");
+		RestClient.sendGrafanaDashboardAsync(conf.getElasticsearchUrl(), "KPIs over Time.json");
 	}
 
 	private void monitorServerThreadPool(MetricRegistry registry, Configuration conf) {
