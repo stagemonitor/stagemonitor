@@ -1,17 +1,17 @@
-package org.stagemonitor.core.converter;
+package org.stagemonitor.core.configuration.converter;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class IntegerValueConverterTest {
+public class LongValueConverterTest {
 
-	private final IntegerValueConverter converter = new IntegerValueConverter();
+	private final LongValueConverter converter = new LongValueConverter();
 
 	@Test
 	public void testConvert() throws Exception {
-		assertEquals(Integer.valueOf(Integer.MAX_VALUE), converter.convert(Integer.toString(Integer.MAX_VALUE)));
+		assertEquals(Long.valueOf(Long.MAX_VALUE), converter.convert(Long.toString(Long.MAX_VALUE)));
 	}
 
 	@Test(expected = IllegalArgumentException.class)

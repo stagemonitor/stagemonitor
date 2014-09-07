@@ -1,4 +1,4 @@
-package org.stagemonitor.core.converter;
+package org.stagemonitor.core.configuration.converter;
 
 import org.junit.Test;
 

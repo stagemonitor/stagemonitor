@@ -1,4 +1,4 @@
-package org.stagemonitor.core.converter;
+package org.stagemonitor.core.configuration.converter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +17,7 @@ public class RegexListValueConverter implements ValueConverter<List<Pattern>> {
 			try {
 				result.add(Pattern.compile(string));
 			} catch (RuntimeException e) {
-				throw new IllegalArgumentException("Could not compile pattern '" + s + "'", e);
+				throw new IllegalArgumentException("Could not compile pattern '" + s + "'.", e);
 			}
 		}
 		return result;

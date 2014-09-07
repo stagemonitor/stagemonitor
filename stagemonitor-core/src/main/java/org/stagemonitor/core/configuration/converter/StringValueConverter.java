@@ -1,4 +1,4 @@
-package org.stagemonitor.core.converter;
+package org.stagemonitor.core.configuration.converter;
 
 public class StringValueConverter implements ValueConverter<String> {
 

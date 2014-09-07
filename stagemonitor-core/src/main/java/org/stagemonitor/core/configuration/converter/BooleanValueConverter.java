@@ -1,4 +1,4 @@
-package org.stagemonitor.core.converter;
+package org.stagemonitor.core.configuration.converter;
 
 public class BooleanValueConverter implements ValueConverter<Boolean> {
 
@@ -10,7 +10,7 @@ public class BooleanValueConverter implements ValueConverter<Boolean> {
 		if (TRUE.equals(s) || FALSE.equals(s)) {
 			return Boolean.valueOf(s);
 		}
-		throw new IllegalArgumentException("Can't convert '" + s + "' to Boolean");
+		throw new IllegalArgumentException("Can't convert '" + s + "' to Boolean.");
 	}
 
 	@Override

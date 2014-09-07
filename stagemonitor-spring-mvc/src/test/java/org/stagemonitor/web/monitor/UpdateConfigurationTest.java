@@ -8,6 +8,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StageMonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.SimpleSource;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 
 import javax.servlet.ServletException;
@@ -15,8 +16,8 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 import static org.stagemonitor.web.WebPlugin.STAGEMONITOR_PASSWORD;
 
 public class UpdateConfigurationTest {
@@ -39,74 +40,90 @@ public class UpdateConfigurationTest {
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
 		request.addParameter("stagemonitorConfigValue", "true");
-		configurationServlet.service(request, new MockHttpServletResponse());
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+		configurationServlet.service(request, res);
 
+		assertEquals(401, res.getStatus());
+		assertEquals("Update configuration password is not set. Dynamic configuration changes are therefore not allowed.", res.getErrorMessage());
 		assertFalse(corePlugin.isInternalMonitoringActive());
 	}
 
 	@Test
 	public void testUpdateConfiguration() throws IOException, ServletException {
-		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("");
+		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, ""));
 		assertFalse(corePlugin.isInternalMonitoringActive());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
 		request.addParameter("stagemonitorConfigValue", "true");
-		configurationServlet.service(request, new MockHttpServletResponse());
+		final MockHttpServletResponse response = new MockHttpServletResponse();
+		configurationServlet.service(request, response);
 
+		assertNull(response.getErrorMessage());
+		assertEquals(204, response.getStatus());
 		assertTrue(corePlugin.isInternalMonitoringActive());
 	}
 
 	@Test
 	public void testUpdateConfigurationNonDynamic() throws IOException, ServletException {
-		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("");
+		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, ""));
 		assertEquals(60, corePlugin.getConsoleReportingInterval());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("stagemonitorConfigKey", "stagemonitor.reporting.interval.console");
 		request.addParameter("stagemonitorConfigValue", "1");
-		configurationServlet.service(request, new MockHttpServletResponse());
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+		configurationServlet.service(request, res);
 
+		assertEquals(400, res.getStatus());
+		assertEquals("Configuration option is not dynamic.", res.getErrorMessage());
 		assertEquals(60, corePlugin.getConsoleReportingInterval());
 	}
 
 	@Test
 	public void testSetNewPasswordViaQueryParamsShouldFail() throws IOException, ServletException {
-		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("");
-		assertEquals("", configuration.getString(STAGEMONITOR_PASSWORD));
+		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, ""));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("stagemonitorConfigKey", STAGEMONITOR_PASSWORD);
 		request.addParameter("stagemonitorConfigValue", "pwd");
-		configurationServlet.service(request, new MockHttpServletResponse());
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+		configurationServlet.service(request, res);
 
-		assertEquals("", configuration.getString(STAGEMONITOR_PASSWORD));
+		assertEquals(400, res.getStatus());
+		assertEquals("Config key 'stagemonitor.password' does not exist.", res.getErrorMessage());
 	}
 
 	@Test
 	public void testUpdateConfigurationWithoutPassword() throws IOException, ServletException {
-		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("pwd");
+		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, "pwd"));
 		assertFalse(corePlugin.isInternalMonitoringActive());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
 		request.addParameter("stagemonitorConfigValue", "true");
-		configurationServlet.service(request, new MockHttpServletResponse());
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+		configurationServlet.service(request, res);
 
+		assertEquals(401, res.getStatus());
+		assertEquals("Wrong password for updating configuration.", res.getErrorMessage());
 		assertFalse(corePlugin.isInternalMonitoringActive());
 	}
 
 	@Test
 	public void testUpdateConfigurationWithPassword() throws IOException, ServletException {
-		when(configuration.getString(STAGEMONITOR_PASSWORD)).thenReturn("pwd");
+		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, "pwd"));
 		assertFalse(corePlugin.isInternalMonitoringActive());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
 		request.addParameter("stagemonitorConfigValue", "true");
 		request.addParameter(STAGEMONITOR_PASSWORD, "pwd");
-		configurationServlet.service(request, new MockHttpServletResponse());
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+		configurationServlet.service(request, res);
 
+		assertEquals(204, res.getStatus());
+		assertNull(res.getErrorMessage());
 		assertTrue(corePlugin.isInternalMonitoringActive());
 	}
 }

@@ -66,7 +66,6 @@ public class Configuration {
 
 	private void add(final ConfigurationOption configurationOption) {
 		configurationOption.setConfigurationSources(configurationSources);
-		configurationOption.reload();
 
 		configurationOptionsByKey.put(configurationOption.getKey(), configurationOption);
 		addConfigurationOptionByPlugin(configurationOption.getPluginName(), configurationOption);
@@ -88,6 +87,10 @@ public class Configuration {
 
 	public Map<String, ConfigurationOption> getConfigurationOptionsByKey() {
 		return Collections.unmodifiableMap(configurationOptionsByKey);
+	}
+
+	public ConfigurationOption getConfigurationOptionByKey(String key) {
+		return configurationOptionsByKey.get(key);
 	}
 
 	public void reload(String key) {
@@ -121,9 +124,7 @@ public class Configuration {
 		reload();
 	}
 
-
-	@Deprecated
-	public String getString(String key) {
+	String getString(String key) {
 		String property = null;
 		for (ConfigurationSource configurationSource : configurationSources) {
 			property = configurationSource.getValue(key);
@@ -142,5 +143,4 @@ public class Configuration {
 			return configurationOption.getDefaultValueAsString();
 		}
 	}
-
 }

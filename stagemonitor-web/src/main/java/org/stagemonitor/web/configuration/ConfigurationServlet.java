@@ -1,6 +1,7 @@
 package org.stagemonitor.web.configuration;
 
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.DynamicConfigurationSource;
 import org.stagemonitor.web.WebPlugin;
 
 import javax.servlet.ServletException;
@@ -17,7 +18,7 @@ public class ConfigurationServlet extends HttpServlet {
 
 	public ConfigurationServlet(Configuration configuration) {
 		this.configuration = configuration;
-		dynamicConfigurationSource = new DynamicConfigurationSource(configuration);
+		dynamicConfigurationSource = new DynamicConfigurationSource(configuration, WebPlugin.STAGEMONITOR_PASSWORD);
 		configuration.addConfigurationSource(dynamicConfigurationSource, true);
 
 	}
@@ -43,11 +44,17 @@ public class ConfigurationServlet extends HttpServlet {
 		}
 		final String key = req.getParameter("stagemonitorConfigKey");
 		if (key != null) {
-			if (!dynamicConfigurationSource.updateConfiguration(key, req.getParameter("stagemonitorConfigValue"), configurationUpdatePassword)) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			try {
+				dynamicConfigurationSource.updateConfiguration(key, req.getParameter("stagemonitorConfigValue"), configurationUpdatePassword);
+				resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+			} catch (IllegalArgumentException e) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+			} catch (IllegalStateException e) {
+				resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
 			}
+		} else {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter stagemonitorConfigKey");
 		}
-		resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 	}
 
 }

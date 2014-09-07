@@ -1,4 +1,4 @@
-package org.stagemonitor.core.converter;
+package org.stagemonitor.core.configuration.converter;
 
 public class IntegerValueConverter implements ValueConverter<Integer> {
 
@@ -7,7 +7,7 @@ public class IntegerValueConverter implements ValueConverter<Integer> {
 		try {
 			return Integer.valueOf(s);
 		} catch (RuntimeException e) {
-			throw new IllegalArgumentException("Can't '" + s + "' to Long", e);
+			throw new IllegalArgumentException("Can't '" + s + "' to Long.", e);
 		}
 	}
 

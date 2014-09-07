@@ -33,7 +33,7 @@ public class ConfigurationTest {
 	private final ConfigurationOption<Boolean> booleanTrue = ConfigurationOption.booleanOption().key("boolean.true").build();
 	private final ConfigurationOption<Boolean> booleanFalse = ConfigurationOption.booleanOption().key("boolean.false").build();
 	private final ConfigurationOption<Boolean> booleanInvalid = ConfigurationOption.booleanOption().key("boolean.invalid").build();
-	private final ConfigurationOption<String> testCaching = ConfigurationOption.stringOption().key("testCaching").build();
+	private final ConfigurationOption<String> testCaching = ConfigurationOption.stringOption().key("testCaching").dynamic(true).build();
 	private Configuration configuration = new Configuration(StageMonitorPlugin.class);
 	private CorePlugin corePlugin;
 	private SimpleSource configSource = SimpleSource

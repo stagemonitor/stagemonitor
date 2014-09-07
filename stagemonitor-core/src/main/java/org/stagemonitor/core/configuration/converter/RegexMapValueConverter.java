@@ -1,4 +1,4 @@
-package org.stagemonitor.core.converter;
+package org.stagemonitor.core.configuration.converter;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -28,7 +28,7 @@ public class RegexMapValueConverter implements ValueConverter<Map<Pattern, Strin
 			return pattenGroupMap;
 		} catch (RuntimeException e) {
 			throw new IllegalArgumentException("Error while parsing pattern map. " +
-					"Expected format <regex>: <name>[, <regex>: <name>]. Actual value: '" + s + "'", e);
+					"Expected format <regex>: <name>[, <regex>: <name>]. Actual value: '" + s + ".'", e);
 		}
 	}
 
