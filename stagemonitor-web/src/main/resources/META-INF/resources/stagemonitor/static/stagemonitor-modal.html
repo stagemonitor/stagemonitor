@@ -242,8 +242,10 @@
 													<div class="form-group">
 														<label class="col-sm-3 control-label">
 															{{label}}
-															<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="bottom" title="{{key}}"
-																  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', '{{key}}');" style="cursor: pointer;"></span>
+															<span class="wide-tooltip">
+																<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="bottom" title="{{key}}"
+																	  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', '{{key}}');" style="cursor: pointer;"></span>
+															</span>
 															<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="{{description}}"></span>
 															<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="left" title="The source of this value is '{{nameOfCurrentConfigurationSource}}'"></span>
 															{{#if errorMessage}}

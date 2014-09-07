@@ -108,6 +108,6 @@ body {
 	margin-left: -19px;
 }
 
-div.tooltip-inner {
-	max-width: 350px;
+.wide-tooltip div.tooltip-inner {
+	max-width: 500px;
 }
