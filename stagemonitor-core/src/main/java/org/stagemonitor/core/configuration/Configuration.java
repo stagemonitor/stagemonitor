@@ -19,8 +19,8 @@ public class Configuration {
 	private List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
 
 	private Map<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider> pluginConfiguration = new HashMap<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider>();
-	private Map<String, ConfigurationOption> configurationOptionsByKey = new LinkedHashMap<String, ConfigurationOption>();
-	private Map<String, List<ConfigurationOption>> configurationOptionsByPlugin = new LinkedHashMap<String, List<ConfigurationOption>>();
+	private Map<String, ConfigurationOption<?>> configurationOptionsByKey = new LinkedHashMap<String, ConfigurationOption<?>>();
+	private Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new LinkedHashMap<String, List<ConfigurationOption<?>>>();
 
 	public Configuration() {
 		this(ConfigurationOptionProvider.class);
@@ -55,7 +55,7 @@ public class Configuration {
 
 	private void registerPluginConfiguration(ConfigurationOptionProvider configurationOptionProvider) {
 		pluginConfiguration.put(configurationOptionProvider.getClass(), configurationOptionProvider);
-		for (ConfigurationOption configurationOption : configurationOptionProvider.getConfigurationOptions()) {
+		for (ConfigurationOption<?> configurationOption : configurationOptionProvider.getConfigurationOptions()) {
 			add(configurationOption);
 		}
 	}
@@ -64,32 +64,40 @@ public class Configuration {
 		return (T) pluginConfiguration.get(configClass);
 	}
 
-	private void add(final ConfigurationOption configurationOption) {
+	private void add(final ConfigurationOption<?> configurationOption) {
 		configurationOption.setConfigurationSources(configurationSources);
 
 		configurationOptionsByKey.put(configurationOption.getKey(), configurationOption);
 		addConfigurationOptionByPlugin(configurationOption.getPluginName(), configurationOption);
 	}
 
-	private void addConfigurationOptionByPlugin(String pluginName, final ConfigurationOption configurationOption) {
+	private void addConfigurationOptionByPlugin(String pluginName, final ConfigurationOption<?> configurationOption) {
 		if (configurationOptionsByPlugin.containsKey(pluginName)) {
 			configurationOptionsByPlugin.get(pluginName).add(configurationOption);
 		} else {
-			configurationOptionsByPlugin.put(pluginName, new ArrayList<ConfigurationOption>() {{
+			configurationOptionsByPlugin.put(pluginName, new ArrayList<ConfigurationOption<?>>() {{
 				add(configurationOption);
 			}});
 		}
 	}
 
-	public Map<String, List<ConfigurationOption>> getConfigurationOptionsByPlugin() {
+	public Map<String, List<ConfigurationOption<?>>> getConfigurationOptionsByPlugin() {
 		return Collections.unmodifiableMap(configurationOptionsByPlugin);
 	}
 
-	public Map<String, ConfigurationOption> getConfigurationOptionsByKey() {
+	public Map<String, ConfigurationOption<?>> getConfigurationOptionsByKey() {
 		return Collections.unmodifiableMap(configurationOptionsByKey);
 	}
 
-	public ConfigurationOption getConfigurationOptionByKey(String key) {
+	public List<String> getNamesOfConfigurationSources() {
+		final ArrayList<String> result = new ArrayList<String>(this.configurationSources.size());
+		for (ConfigurationSource configurationSource : configurationSources) {
+			result.add(configurationSource.getName());
+		}
+		return result;
+	}
+
+	public ConfigurationOption<?> getConfigurationOptionByKey(String key) {
 		return configurationOptionsByKey.get(key);
 	}
 
@@ -103,7 +111,7 @@ public class Configuration {
 		for (ConfigurationSource configurationSource : configurationSources) {
 			configurationSource.reload();
 		}
-		for (ConfigurationOption configurationOption : configurationOptionsByKey.values()) {
+		for (ConfigurationOption<?> configurationOption : configurationOptionsByKey.values()) {
 			configurationOption.reload();
 		}
 	}
@@ -135,7 +143,7 @@ public class Configuration {
 		if (property != null) {
 			return property.trim();
 		} else {
-			final ConfigurationOption configurationOption = configurationOptionsByKey.get(key);
+			final ConfigurationOption<?> configurationOption = configurationOptionsByKey.get(key);
 			if (configurationOption == null) {
 				logger.error("Configuration option with key '{}' ist not registered!", key);
 				return null;

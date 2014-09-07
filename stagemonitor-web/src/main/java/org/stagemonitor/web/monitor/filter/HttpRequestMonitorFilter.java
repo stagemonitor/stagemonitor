@@ -187,7 +187,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	private String buildWidget(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
 		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson())
-				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByPlugin()));
+				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByPlugin()))
+				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()));
 	}
 
 	private String buildWidgetTemplate(String contextPath) throws IOException {

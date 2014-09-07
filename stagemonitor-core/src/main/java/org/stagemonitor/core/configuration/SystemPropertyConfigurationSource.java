@@ -23,6 +23,6 @@ public class SystemPropertyConfigurationSource implements ConfigurationSource {
 
 	@Override
 	public String getName() {
-		return "Java System Property";
+		return "Java System Properties";
 	}
 }

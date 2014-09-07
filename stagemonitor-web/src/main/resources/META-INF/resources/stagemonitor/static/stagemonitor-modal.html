@@ -192,7 +192,12 @@
 						</div>
 						<form class="form-horizontal" role="form">
 							<div class="form-group">
-								<label class="col-sm-3 control-label">Reload configuration sources</label>
+								<label class="col-sm-3 control-label">
+									Reload configuration sources
+									<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip"
+										  data-placement="left"
+										  title="The currently registered configuration sources are: {{#csv configurationSources}}{{this}}{{/csv}}"></span>
+								</label>
 								<div class="col-sm-9">
 									<input type="hidden" name="stagemonitorReloadConfig" value="">
 									<button type="submit" class="btn btn-primary save-configuration">Reload</button>

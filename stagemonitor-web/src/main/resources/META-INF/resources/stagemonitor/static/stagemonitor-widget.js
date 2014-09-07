@@ -21,6 +21,9 @@ $(document).ready(function() {
 				return options.inverse(this);
 		}
 	});
+	Handlebars.registerHelper('csv', function(items, options) {
+		return options.fn(items.join(', '));
+	});
 	var thresholdExceededGlobal = false;
 	var callTreeTemplate = Handlebars.compile($("#stagemonitor-calltree-template").html());
 	var metricsTemplate = Handlebars.compile($("#stagemonitor-request-template").html());
@@ -120,13 +123,13 @@ $(document).ready(function() {
 	};
 
 	window.stagemonitor = {
-		initialize: function(data, configurationOptions, contextPathPrefix) {
+		initialize: function(data, configurationSources, configurationOptions, contextPathPrefix) {
 			var renderedMetricsTemplate = metricsTemplate(processRequestsMetrics(data));
 			var $stagemonitorRequest = $("#stagemonitor-request");
 			$stagemonitorRequest.html(renderedMetricsTemplate);
 
 			var $configTab = $("#stagemonitor-configuration");
-			$configTab.html(configurationTemplate({configurationOptions: configurationOptions}));
+			$configTab.html(configurationTemplate({configurationOptions: configurationOptions, configurationSources: configurationSources}));
 			$configTab.on("click", ".save-configuration", function () {
 				var $button = $(this);
 				$.post(contextPathPrefix + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
