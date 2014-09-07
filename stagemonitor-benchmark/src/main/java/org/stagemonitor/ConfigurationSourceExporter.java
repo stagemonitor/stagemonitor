@@ -1,14 +1,17 @@
 package org.stagemonitor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.StageMonitor;
+import org.apache.commons.io.FileUtils;
+import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.JsonUtils;
+
+import java.io.File;
+import java.io.IOException;
 
 public class ConfigurationSourceExporter {
 
-	public static void main(String[] args) throws JsonProcessingException {
-		StageMonitor.startMonitoring(new MeasurementSession("test", "test", "test"));
-		System.out.println(JsonUtils.toJson(StageMonitor.getConfiguration().getConfigurationOptionsByPlugin()));
+	public static void main(String[] args) throws IOException {
+		final String json = JsonUtils.toJson(new Configuration(StageMonitorPlugin.class).getConfigurationOptionsByPlugin());
+		FileUtils.writeStringToFile(new File(args[0]), json);
 	}
 }

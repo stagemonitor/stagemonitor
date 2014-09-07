@@ -26,17 +26,23 @@ public class ConfigurationServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		reloadConfigIfRequested(req);
+		resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 	}
 
-	private void reloadConfigIfRequested(HttpServletRequest req) {
+	private boolean reloadConfigIfRequested(HttpServletRequest req) {
 		if (req.getParameter("stagemonitorReloadConfig") != null) {
 			configuration.reload();
+			return true;
 		}
+		return false;
 	}
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		reloadConfigIfRequested(req);
+		if (reloadConfigIfRequested(req)) {
+			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+			return;
+		}
 
 		String configurationUpdatePassword = req.getParameter(WebPlugin.STAGEMONITOR_PASSWORD);
 		if (configurationUpdatePassword == null) {
@@ -48,13 +54,18 @@ public class ConfigurationServlet extends HttpServlet {
 				dynamicConfigurationSource.updateConfiguration(key, req.getParameter("stagemonitorConfigValue"), configurationUpdatePassword);
 				resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 			} catch (IllegalArgumentException e) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
 			} catch (IllegalStateException e) {
-				resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+				sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
 			}
 		} else {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter stagemonitorConfigKey");
+			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter stagemonitorConfigKey");
 		}
+	}
+
+	private void sendError(HttpServletResponse response, int status, String message) throws IOException {
+		response.setStatus(status);
+		response.getWriter().print(message);
 	}
 
 }

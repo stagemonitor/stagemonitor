@@ -1,5 +1,6 @@
 package org.stagemonitor.core.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.converter.BooleanValueConverter;
@@ -203,6 +204,7 @@ public class ConfigurationOption<T> {
 	 *
 	 * @return the current value
 	 */
+	@JsonIgnore
 	public T getValue() {
 		return value;
 	}
@@ -271,6 +273,7 @@ public class ConfigurationOption<T> {
 				return;
 			}
 		}
+		valueAsString = defaultValueAsString;
 		value = defaultValue;
 		nameOfCurrentConfigurationSource = "Default Value";
 	}

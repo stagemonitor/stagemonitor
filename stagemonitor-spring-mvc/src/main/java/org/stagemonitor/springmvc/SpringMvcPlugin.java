@@ -16,7 +16,7 @@ public class SpringMvcPlugin implements StageMonitorPlugin {
 			.label("Monitor only SpringMVC requests")
 			.description("Whether or not requests should be ignored, if they will not be handled by a Spring MVC controller method.\n" +
 					"This is handy, if you are not interested in the performance of serving static files. " +
-					"Setting this to <code>true</code> can also significantly reduce the amount of files (and thus storing space) " +
+					"Setting this to true can also significantly reduce the amount of files (and thus storing space) " +
 					"Graphite will allocate.")
 			.defaultValue(false)
 			.pluginName("Spring MVC Plugin")

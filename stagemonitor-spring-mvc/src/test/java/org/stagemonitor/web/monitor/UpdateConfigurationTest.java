@@ -13,10 +13,10 @@ import org.stagemonitor.web.configuration.ConfigurationServlet;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.stagemonitor.web.WebPlugin.STAGEMONITOR_PASSWORD;
 
@@ -44,7 +44,7 @@ public class UpdateConfigurationTest {
 		configurationServlet.service(request, res);
 
 		assertEquals(401, res.getStatus());
-		assertEquals("Update configuration password is not set. Dynamic configuration changes are therefore not allowed.", res.getErrorMessage());
+		assertEquals("Update configuration password is not set. Dynamic configuration changes are therefore not allowed.", res.getContentAsString());
 		assertFalse(corePlugin.isInternalMonitoringActive());
 	}
 
@@ -59,7 +59,7 @@ public class UpdateConfigurationTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		configurationServlet.service(request, response);
 
-		assertNull(response.getErrorMessage());
+		assertEquals("", response.getContentAsString());
 		assertEquals(204, response.getStatus());
 		assertTrue(corePlugin.isInternalMonitoringActive());
 	}
@@ -76,7 +76,7 @@ public class UpdateConfigurationTest {
 		configurationServlet.service(request, res);
 
 		assertEquals(400, res.getStatus());
-		assertEquals("Configuration option is not dynamic.", res.getErrorMessage());
+		assertEquals("Configuration option is not dynamic.", res.getContentAsString());
 		assertEquals(60, corePlugin.getConsoleReportingInterval());
 	}
 
@@ -91,7 +91,7 @@ public class UpdateConfigurationTest {
 		configurationServlet.service(request, res);
 
 		assertEquals(400, res.getStatus());
-		assertEquals("Config key 'stagemonitor.password' does not exist.", res.getErrorMessage());
+		assertEquals("Config key 'stagemonitor.password' does not exist.", res.getContentAsString());
 	}
 
 	@Test
@@ -106,7 +106,7 @@ public class UpdateConfigurationTest {
 		configurationServlet.service(request, res);
 
 		assertEquals(401, res.getStatus());
-		assertEquals("Wrong password for updating configuration.", res.getErrorMessage());
+		assertEquals("Wrong password for updating configuration.", res.getContentAsString());
 		assertFalse(corePlugin.isInternalMonitoringActive());
 	}
 
@@ -123,7 +123,19 @@ public class UpdateConfigurationTest {
 		configurationServlet.service(request, res);
 
 		assertEquals(204, res.getStatus());
-		assertNull(res.getErrorMessage());
+		assertEquals("", res.getContentAsString());
 		assertTrue(corePlugin.isInternalMonitoringActive());
+	}
+
+	@Test
+	public void testReload() throws IOException, ServletException {
+		for (String method : Arrays.asList("POST", "GET")) {
+			MockHttpServletRequest request = new MockHttpServletRequest(method, "/stagemonitor/configuration");
+			request.addParameter("stagemonitorReloadConfig", "");
+			final MockHttpServletResponse res = new MockHttpServletResponse();
+			configurationServlet.service(request, res);
+			assertEquals(204, res.getStatus());
+			assertEquals("", res.getContentAsString());
+		}
 	}
 }

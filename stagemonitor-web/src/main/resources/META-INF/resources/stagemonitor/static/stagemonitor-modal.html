@@ -73,7 +73,7 @@
 						<tbody>
 							{{#each metrics}}
 								<tr class="{{#if exceededThreshold}}danger{{/if}}">
-									<td>{{name}} {{#if description}}<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="right" title="{{description}}"></span>{{/if}}</td>
+									<td>{{name}} {{#if description}}<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right" title="{{description}}"></span>{{/if}}</td>
 									<td>{{value}}</td>
 								</tr>
 							{{/each}}
@@ -179,10 +179,20 @@
 
 				<div class="tab-pane" id="stagemonitor-configuration">
 					<script id="stagemonitor-configuration-template" type="text/x-handlebars-template">
-						<h3>Reload Configuration</h3>
+						<div class="alert alert-info alert-dismissible" role="alert">
+							<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+							<p>
+								In this tab you can dynamically change stagemonitor's configuration or reload the
+								configuration sources (e.g. property files).
+							</p>
+							<p>
+								Notice, however, that any changes you make won't be persisted. So on application restart
+								any changes you make will get lost.
+							</p>
+						</div>
 						<form class="form-horizontal" role="form">
 							<div class="form-group">
-								<label class="col-sm-3 control-label">Reload stagemonitor property files</label>
+								<label class="col-sm-3 control-label">Reload configuration sources</label>
 								<div class="col-sm-9">
 									<input type="hidden" name="stagemonitorReloadConfig" value="">
 									<button type="submit" class="btn btn-primary save-configuration">Reload</button>
@@ -197,59 +207,88 @@
 								</div>
 							</div>
 						</form>
-						<h3>Configuration Update Password</h3>
 						<form id="password-form" class="form-horizontal" role="form">
 							<div class="form-group">
 								<label class="col-sm-3 control-label">
 									Configuration Update Password
-									<span class="glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="right" title="stagemonitor.password"></span>
-								<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="left" title="
+									<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" title="stagemonitor.password"
+										  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', 'stagemonitor.password');" style="cursor: pointer;"></span>
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="
 														The password that is required to dynamically update the configuration via the configuration endpoint.
 														If not set (default) configuration reloading is disabled. If set, you have to include
 														the password here in order to update the configuration.
-														If the password is set to an empty string, the password is not required.">
-								</span>
+														If the password is set to an empty string, the password is not required."></span>
 								</label>
 								<div class="col-sm-2">
 									<input class="form-control rounded" name="stagemonitor.password">
 								</div>
 							</div>
 						</form>
-						{{#each configurationOptions}}
-							<h3>{{@key}} Configuration</h3>
-							{{#each this}}
-								<form class="form-horizontal" role="form">
-									<div class="form-group">
-										<label class="col-sm-3 control-label">
-											{{label}}
-											<span class="glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="right" title="{{key}}"></span>
-											<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="left" title="{{description}}"></span>
-										</label>
-										<div class="col-sm-2">
-											<input type="hidden" name="stagemonitorConfigKey" value="{{key}}">
-											{{#ifCond currentValue.length '<' 50}}
-												<input class="form-control rounded" name="stagemonitorConfigValue" value="{{currentValue}}" {{#unless dynamic}}disabled{{/unless}}>
-											{{else}}
-												<textarea class="form-control rounded" name="stagemonitorConfigValue" {{#unless dynamic}}disabled{{/unless}}>
-													{{currentValue}}
-												</textarea>
-											{{/ifCond}}
-										</div>
-										{{#if dynamic}}
-											<button type="submit" class="btn btn-primary save-configuration">Save</button>
-											<span class="submit-response-ok text-success" style="display: none;">
-												<span class="glyphicon glyphicon-ok"></span>
-												<span>Successfully saved</span>
-											</span>
-											<span class="submit-response-failed text-danger" style="display: none;">
-												<span class="glyphicon glyphicon-remove"></span>
-												<span>Failed to save. Did you specify the configuration update password?</span>
-											</span>
-										{{/if}}
+
+						<div class="panel-group" id="accordion">
+							{{#each configurationOptions}}
+								<div class="panel panel-default">
+
+									<div class="panel-heading">
+										<h4 class="panel-title">
+											<a data-toggle="collapse" data-parent="#accordion" href="#collapse{{@index}}">{{@key}} Configuration</a>
+										</h4>
 									</div>
-								</form>
+
+									<div id="collapse{{@index}}" class="panel-collapse collapse">
+										<div class="panel-body">
+											{{#each this}}
+												<form class="form-horizontal" role="form">
+													<div class="form-group">
+														<label class="col-sm-3 control-label">
+															{{label}}
+															<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="bottom" title="{{key}}"
+																  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', '{{key}}');" style="cursor: pointer;"></span>
+															<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="{{description}}"></span>
+															<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="left" title="The source of this value is '{{nameOfCurrentConfigurationSource}}'"></span>
+															{{#if errorMessage}}
+															<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="top" title="{{errorMessage}}"></span>
+															{{/if}}
+														</label>
+														<div class="col-sm-2">
+															<input type="hidden" name="stagemonitorConfigKey" value="{{key}}">
+															{{#ifCond valueAsString.length '<' 50}}
+																<input name="stagemonitorConfigValue" value="{{valueAsString}}"
+																	{{#ifCond valueType '==' 'Integer'}}type="number"{{/ifCond}}
+																	{{#ifCond valueType '==' 'Long'}}type="number"{{/ifCond}}
+																	{{#ifCond valueType '==' 'Boolean'}}
+																		class="rounded" type="checkbox"
+																		{{#ifCond valueAsString '==' 'true'}}checked{{/ifCond}}
+																	{{else}}
+																		class="form-control rounded"
+																	{{/ifCond}}
+																	{{#unless dynamic}}disabled title="This configuration option is not dynamic"{{/unless}}>
+															{{else}}
+																<textarea class="form-control rounded" name="stagemonitorConfigValue"
+																	{{#unless dynamic}}disabled title="This configuration option is not dynamic"{{/unless}}>{{valueAsString}}</textarea>
+															{{/ifCond}}
+														</div>
+														{{#if dynamic}}
+															<button type="submit" class="btn btn-primary save-configuration">Save</button>
+															<span class="submit-response-ok text-success" style="display: none;">
+																<span class="glyphicon glyphicon-ok"></span>
+																<span>Successfully saved</span>
+															</span>
+															<span class="submit-response-failed text-danger" style="display: none;">
+																<span class="glyphicon glyphicon-remove"></span>
+																<span>Failed to save. Did you specify the configuration update password?</span>
+															</span>
+														{{/if}}
+													</div>
+												</form>
+											{{/each}}
+										</div>
+									</div>
+
+								</div>
 							{{/each}}
-						{{/each}}
+						</div>
+
 					</script>
 				</div>
 

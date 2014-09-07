@@ -105,7 +105,7 @@ public class CorePlugin implements StageMonitorPlugin {
 			.build();
 	private final ConfigurationOption<List<Pattern>> excludedMetrics = ConfigurationOption.regexListOption()
 			.key("stagemonitor.metrics.excluded.pattern")
-			.dynamic(true)
+			.dynamic(false)
 			.label("Excluded metrics (regex)")
 			.description("A comma separated list of metric names that should not be collected.")
 			.defaultValue(Collections.<Pattern>emptyList())

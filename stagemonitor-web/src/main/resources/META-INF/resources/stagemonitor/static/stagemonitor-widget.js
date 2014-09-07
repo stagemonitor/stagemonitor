@@ -135,16 +135,18 @@ $(document).ready(function() {
 						$button.nextAll(".submit-response-ok").show().fadeOut(3000, function () {
 							$button.removeClass("btn-success").addClass("btn-primary");
 						});
-					}).fail(function () {
+					}).fail(function (xhr) {
 						$button.removeClass("btn-primary").addClass("btn-danger");
-						$button.nextAll(".submit-response-failed").show().fadeOut(3000, function () {
+						var errorSpan = $button.nextAll(".submit-response-failed");
+						errorSpan.html(xhr.responseText || 'Failed to save.');
+						errorSpan.show().fadeOut(3000, function () {
 							$button.removeClass("btn-danger").addClass("btn-primary");
 						});
 					});
 				return false;
 			});
 
-			$(".glyphicon-info-sign, .glyphicon-cog").tooltip();
+			$(".tip").tooltip();
 
 			if (data.callStackJson !== undefined) {
 				var callTree = JSON.parse(data.callStackJson);
@@ -228,6 +230,23 @@ $(document).ready(function() {
 		var $input = $(this).parent().prev();
 		$input.val( parseInt($input.val(), 10) - 1);
 		return false;
+	});
+
+	// serialize checkboxes as true/false
+	var originalSerializeArray = $.fn.serializeArray;
+	$.fn.extend({
+		serializeArray: function () {
+			var brokenSerialization = originalSerializeArray.apply(this);
+			var checkboxValues = $(this).find('input[type=checkbox]').map(function () {
+				return { 'name': this.name, 'value': this.checked };
+			}).get();
+			var checkboxKeys = $.map(checkboxValues, function (element) { return element.name; });
+			var withoutCheckboxes = $.grep(brokenSerialization, function (element) {
+				return $.inArray(element.name, checkboxKeys) == -1;
+			});
+
+			return $.merge(withoutCheckboxes, checkboxValues);
+		}
 	});
 
 	window.parent.StageMonitorLoaded();
