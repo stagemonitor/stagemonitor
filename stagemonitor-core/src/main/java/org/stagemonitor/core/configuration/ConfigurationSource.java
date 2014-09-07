@@ -1,4 +1,4 @@
-package org.stagemonitor.core;
+package org.stagemonitor.core.configuration;
 
 public interface ConfigurationSource {
 
@@ -14,4 +14,12 @@ public interface ConfigurationSource {
 	 * Reloads the configuration to pick up the latest changes
 	 */
 	void reload();
+
+	/**
+	 * Returns the name of the configuration source.
+	 * For a properties file 'name.properties' could be returned.
+	 *
+	 * @return the name of the configuration source
+	 */
+	String getName();
 }

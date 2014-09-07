@@ -1,42 +1,45 @@
 package org.stagemonitor.requestmonitor;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.Configuration;
-import org.stagemonitor.core.ConfigurationOption;
+import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
+
+import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertEquals;
-import static org.stagemonitor.requestmonitor.RequestMonitorPlugin.CALL_STACK_EVERY_XREQUESTS_TO_GROUP;
-import static org.stagemonitor.requestmonitor.RequestMonitorPlugin.COLLECT_REQUEST_STATS;
-import static org.stagemonitor.requestmonitor.RequestMonitorPlugin.CPU_TIME;
-import static org.stagemonitor.requestmonitor.RequestMonitorPlugin.LOG_CALL_STACKS;
-import static org.stagemonitor.requestmonitor.RequestMonitorPlugin.NO_OF_WARMUP_REQUESTS;
-import static org.stagemonitor.requestmonitor.RequestMonitorPlugin.PROFILER_MIN_EXECUTION_TIME_NANOS;
-import static org.stagemonitor.requestmonitor.RequestMonitorPlugin.REQUEST_TRACE_TTL;
-import static org.stagemonitor.requestmonitor.RequestMonitorPlugin.WARMUP_SECONDS;
 
 public class RequestMonitorPluginConfigurationTest {
 
-	private Configuration configuration = new Configuration();
+	private RequestMonitorPlugin config;
 
 	@Before
-	public void before() {
-		final RequestMonitorPlugin requestMonitorPlugin = new RequestMonitorPlugin();
-		for (ConfigurationOption configurationOption : requestMonitorPlugin.getConfigurationOptions()) {
-			configuration.add("Request Monitor Plugin Test", configurationOption);
-		}
+	public void before() throws Exception {
+		StageMonitor.reset();
+		Configuration configuration = new Configuration(StageMonitorPlugin.class);
+		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerPluginConfiguration", ConfigurationOptionProvider.class);
+		registerPluginConfiguration.setAccessible(true);
+		registerPluginConfiguration.invoke(configuration, new RequestMonitorPlugin());
+		config = configuration.getConfig(RequestMonitorPlugin.class);
+	}
+
+	@After
+	public void cleanUp() {
+		StageMonitor.reset();
 	}
 
 	@Test
 	public void testDefaultValues() {
-		assertEquals(0, configuration.getInt(NO_OF_WARMUP_REQUESTS));
-		assertEquals(0, configuration.getInt(WARMUP_SECONDS));
-		assertEquals(true, configuration.getBoolean(COLLECT_REQUEST_STATS));
-		assertEquals(false, configuration.getBoolean(CPU_TIME));
+		assertEquals(0, config.getNoOfWarmupRequests());
+		assertEquals(0, config.getNoOfWarmupRequests());
+		assertEquals(true, config.isCollectRequestStats());
+		assertEquals(false, config.isCollectCpuTime());
 
-		assertEquals(100000L, configuration.getLong(PROFILER_MIN_EXECUTION_TIME_NANOS));
-		assertEquals(1, configuration.getInt(CALL_STACK_EVERY_XREQUESTS_TO_GROUP));
-		assertEquals(true, configuration.getBoolean(LOG_CALL_STACKS));
-		assertEquals("1w", configuration.getString(REQUEST_TRACE_TTL));
+		assertEquals(1, config.getCallStackEveryXRequestsToGroup());
+		assertEquals(true, config.isLogCallStacks());
+		assertEquals("1w", config.getRequestTraceTtl());
 	}
 }

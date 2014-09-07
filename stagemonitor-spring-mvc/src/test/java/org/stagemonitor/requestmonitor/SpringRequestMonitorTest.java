@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,7 +18,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
@@ -45,7 +47,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.StageMonitor.getMetricRegistry;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 @RunWith(value = Parameterized.class)
@@ -55,8 +56,13 @@ public class SpringRequestMonitorTest {
 	private MockHttpServletRequest nonMvcRequest = new MockHttpServletRequest("GET", "/META-INF/resources/stagemonitor/static/jquery.js");
 	private List<HandlerMapping> handlerMappings;
 	private Configuration configuration = mock(Configuration.class);
-	private RequestMonitor requestMonitor = new RequestMonitor(configuration);
-	private SpringMVCRequestNameDeterminerAspect springMVCRequestNameDeterminerAspect = Mockito.spy(new SpringMVCRequestNameDeterminerAspect(configuration));
+	private SpringMvcPlugin mvcPlugin = mock(SpringMvcPlugin.class);
+	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+	private WebPlugin webPlugin = mock(WebPlugin.class);
+	private CorePlugin corePlugin = mock(CorePlugin.class);
+	private RequestMonitor requestMonitor;
+	private MetricRegistry registry = new MetricRegistry();
+	private SpringMVCRequestNameDeterminerAspect springMVCRequestNameDeterminerAspect;
 	private final boolean useNameDeterminerAspect;
 
 	public SpringRequestMonitorTest(boolean useNameDeterminerAspect) {
@@ -78,16 +84,21 @@ public class SpringRequestMonitorTest {
 				createHandlerMappingNotReturningHandlerMethod(),
 				createHandlerMapping(mvcRequest, Test.class.getMethod("testGetRequestName"))
 		);
-		getMetricRegistry().removeMatching(new MetricFilter() {
+		registry.removeMatching(new MetricFilter() {
 			@Override
 			public boolean matches(String name, Metric metric) {
 				return true;
 			}
 		});
-		when(configuration.isStagemonitorActive()).thenReturn(true);
-		when(configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS)).thenReturn(true);
-		when(configuration.getPatternMap(WebPlugin.GROUP_URLS
-		)).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
+		when(configuration.getConfig(SpringMvcPlugin.class)).thenReturn(mvcPlugin);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
+		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
+		requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
+		springMVCRequestNameDeterminerAspect = Mockito.spy(new SpringMVCRequestNameDeterminerAspect(mvcPlugin, webPlugin));
 	}
 
 	@After
@@ -124,7 +135,7 @@ public class SpringRequestMonitorTest {
 
 	@Test
 	public void testRequestMonitorMvcRequest() throws Exception {
-		when(configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)).thenReturn(false);
+		when(mvcPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 
 		SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(mvcRequest);
 		registerAspect(monitoredRequest, mvcRequest, handlerMappings.get(2).getHandler(mvcRequest));
@@ -137,14 +148,14 @@ public class SpringRequestMonitorTest {
 		assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
 		assertEquals("GET", requestInformation.getRequestTrace().getMethod());
 		Assert.assertNull(requestInformation.getExecutionResult());
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", "Test-Get-Request-Name", "server", "time", "total")));
+		assertNotNull(registry.getTimers().get(name("request", "Test-Get-Request-Name", "server", "time", "total")));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
 	}
 
 	@Test
 	public void testRequestMonitorNonMvcRequestDoMonitor() throws Exception {
-		when(configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)).thenReturn(false);
+		when(mvcPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 
 		final SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(nonMvcRequest);
 		registerAspect(monitoredRequest, nonMvcRequest, null);
@@ -153,21 +164,21 @@ public class SpringRequestMonitorTest {
 		assertEquals(1, requestInformation.getRequestTimer().getCount());
 		assertEquals("GET-*:js", requestInformation.getTimerName());
 		assertEquals("GET *.js", requestInformation.getRequestTrace().getName());
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", "GET-*:js", "server", "time", "total")));
+		assertNotNull(registry.getTimers().get(name("request", "GET-*:js", "server", "time", "total")));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
 	}
 
 	@Test
 	public void testRequestMonitorNonMvcRequestDontMonitor() throws Exception {
-		when(configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)).thenReturn(true);
+		when(mvcPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(true);
 
 		final SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(nonMvcRequest);
 		registerAspect(monitoredRequest, nonMvcRequest, null);
 		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		Assert.assertEquals("", requestInformation.getRequestTrace().getName());
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET *.js"), "server", "time", "total")));
+		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET *.js"), "server", "time", "total")));
 		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
 	}

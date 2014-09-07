@@ -8,7 +8,8 @@ import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 
@@ -33,23 +34,30 @@ import static org.mockito.Mockito.when;
 public class HttpRequestMonitorFilterTest {
 
 	private Configuration configuration = mock(Configuration.class);
-	final HttpRequestMonitorFilter httpRequestMonitorFilter = spy(new HttpRequestMonitorFilter(configuration));
+	private WebPlugin webPlugin = mock(WebPlugin.class);
+	private CorePlugin corePlugin = mock(CorePlugin.class);
+	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+	private HttpRequestMonitorFilter httpRequestMonitorFilter;
 	private String testHtml = "<html><body></body></html>";
 
 	@Before
 	public void before() throws Exception {
-		when(configuration.getBoolean(WebPlugin.WIDGET_ENABLED)).thenReturn(true);
-		when(configuration.isStagemonitorActive()).thenReturn(true);
-		when(configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS)).thenReturn(true);
-		when(configuration.getInt(RequestMonitorPlugin.CALL_STACK_EVERY_XREQUESTS_TO_GROUP)).thenReturn(1);
-		when(configuration.getApplicationName()).thenReturn("testApplication");
-		when(configuration.getInstanceName()).thenReturn("testInstance");
+		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(webPlugin.isWidgetEnabled()).thenReturn(true);
+		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
+		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
+		when(corePlugin.getApplicationName()).thenReturn("testApplication");
+		when(corePlugin.getInstanceName()).thenReturn("testInstance");
 		final ServletContext servlet3Context = mock(ServletContext.class);
 		when(servlet3Context.getMajorVersion()).thenReturn(3);
 		when(servlet3Context.getContextPath()).thenReturn("");
 		when(servlet3Context.addServlet(anyString(), any(Servlet.class))).thenReturn(mock(ServletRegistration.Dynamic.class));
 		final FilterConfig filterConfig = spy(new MockFilterConfig());
 		when(filterConfig.getServletContext()).thenReturn(servlet3Context);
+		httpRequestMonitorFilter = spy(new HttpRequestMonitorFilter(configuration));
 		httpRequestMonitorFilter.initInternal(filterConfig);
 	}
 
@@ -70,7 +78,7 @@ public class HttpRequestMonitorFilterTest {
 
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
-		when(configuration.getBoolean(WebPlugin.WIDGET_ENABLED)).thenReturn(false);
+		when(webPlugin.isWidgetEnabled()).thenReturn(false);
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 

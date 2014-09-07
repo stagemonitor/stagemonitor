@@ -3,8 +3,8 @@ package org.stagemonitor.web.monitor;
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
@@ -29,7 +29,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
-	protected final Configuration configuration;
+	protected final WebPlugin webPlugin;
 	private final MetricRegistry metricRegistry;
 
 	public MonitoredHttpRequest(HttpServletRequest httpServletRequest,
@@ -38,7 +38,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
 		this.responseWrapper = responseWrapper;
-		this.configuration = configuration;
+		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		metricRegistry = StageMonitor.getMetricRegistry();
 	}
 
@@ -50,7 +50,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	@Override
 	public HttpRequestTrace createRequestTrace() {
 		Map<String, String> headers = null;
-		if (configuration.getBoolean(WebPlugin.HTTP_COLLECT_HEADERS)) {
+		if (webPlugin.isCollectHttpHeaders()) {
 			headers = getHeaders(httpServletRequest);
 		}
 		HttpRequestTrace request = new HttpRequestTrace(new RequestTrace.GetNameCallback() {
@@ -92,12 +92,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	public String getRequestName() {
-		return getRequestNameByRequest(httpServletRequest, configuration);
+		return getRequestNameByRequest(httpServletRequest, webPlugin);
 	}
 
-	public static String getRequestNameByRequest(HttpServletRequest request, Configuration configuration) {
+	public static String getRequestNameByRequest(HttpServletRequest request, WebPlugin webPlugin) {
 		String requestURI = request.getRequestURI();
-		for (Map.Entry<Pattern, String> entry : configuration.getPatternMap(WebPlugin.GROUP_URLS).entrySet()) {
+		for (Map.Entry<Pattern, String> entry : webPlugin.getGroupUrls().entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
 		return request.getMethod() + " " +requestURI;
@@ -126,7 +126,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	private boolean isParamExcluded(String queryParameter) {
-		final Collection<Pattern> confidentialQueryParams = configuration.getPatterns(WebPlugin.HTTP_REQUESTPARAMS_CONFIDENTIAL_REGEX);
+		final Collection<Pattern> confidentialQueryParams = webPlugin.getRequestParamsConfidential();
 		for (Pattern excludedParam : confidentialQueryParams) {
 			if (excludedParam.matcher(queryParameter).matches()) {
 				return true;
@@ -138,7 +138,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	private Map<String, String> getHeaders(HttpServletRequest request) {
 		Map<String, String> headers = new HashMap<String, String>();
 		final Enumeration headerNames = request.getHeaderNames();
-		final Collection<String> excludedHeaders = configuration.getLowerStrings(WebPlugin.HTTP_HEADERS_EXCLUDED);
+		final Collection<String> excludedHeaders = webPlugin.getExcludeHeaders();
 		while (headerNames.hasMoreElements()) {
 			final String headerName = ((String) headerNames.nextElement()).toLowerCase();
 			if (!excludedHeaders.contains(headerName)) {

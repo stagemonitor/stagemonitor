@@ -4,9 +4,10 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.rest.RestClient;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
@@ -44,7 +45,8 @@ public class RequestMonitor {
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
 	private AtomicInteger noOfRequests = new AtomicInteger(0);
 	private MetricRegistry metricRegistry;
-	private Configuration configuration;
+	private CorePlugin corePlugin;
+	private RequestMonitorPlugin requestMonitorPlugin;
 	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 	private final boolean isCurrentThreadCpuTimeSupported = threadMXBean.isCurrentThreadCpuTimeSupported();
 
@@ -59,10 +61,15 @@ public class RequestMonitor {
 	}
 
 	public RequestMonitor(Configuration configuration, MetricRegistry registry) {
-		warmupRequests = configuration.getInt(RequestMonitorPlugin.NO_OF_WARMUP_REQUESTS);
+		this(configuration.getConfig(CorePlugin.class), registry, configuration.getConfig(RequestMonitorPlugin.class));
+	}
+
+	public RequestMonitor(CorePlugin corePlugin, MetricRegistry registry, RequestMonitorPlugin requestMonitorPlugin) {
 		this.metricRegistry = registry;
-		this.configuration = configuration;
-		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(configuration.getInt(RequestMonitorPlugin.WARMUP_SECONDS)));
+		this.corePlugin = corePlugin;
+		this.requestMonitorPlugin = requestMonitorPlugin;
+		warmupRequests = requestMonitorPlugin.getNoOfWarmupRequests();
+		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
@@ -71,7 +78,7 @@ public class RequestMonitor {
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
 		long overhead1 = System.nanoTime();
-		if (!configuration.isStagemonitorActive()) {
+		if (!corePlugin.isStagemonitorActive()) {
 			RequestInformation<T> info = new RequestInformation<T>();
 			info.executionResult = monitoredRequest.execute();
 			return info;
@@ -86,7 +93,7 @@ public class RequestMonitor {
 		}
 
 		RequestInformation<T> info = new RequestInformation<T>();
-		final boolean monitor = configuration.getBoolean(RequestMonitorPlugin.COLLECT_REQUEST_STATS) && isWarmedUp();
+		final boolean monitor = requestMonitorPlugin.isCollectRequestStats() && isWarmedUp();
 		if (monitor) {
 			beforeExecution(monitoredRequest, info);
 		}
@@ -114,7 +121,7 @@ public class RequestMonitor {
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {
-		if (configuration.getBoolean(Configuration.INTERNAL_MONITORING)) {
+		if (corePlugin.isInternalMonitoringActive()) {
 			overhead2 = System.nanoTime() - overhead2;
 			metricRegistry.timer("internal.overhead.RequestMonitor").update(overhead2 + overhead1, NANOSECONDS);
 		}
@@ -135,8 +142,8 @@ public class RequestMonitor {
 
 	private synchronized void createMeasurementSession() {
 		if (StageMonitor.getMeasurementSession().isNull()) {
-			MeasurementSession session = new MeasurementSession(configuration.getApplicationName(), getHostName(),
-					configuration.getInstanceName());
+			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), getHostName(),
+					corePlugin.getInstanceName());
 			setMeasurementSession(session);
 		}
 	}
@@ -206,7 +213,7 @@ public class RequestMonitor {
 			if (requestTrace.getCallStack() != null) {
 				Profiler.stop();
 				requestTrace.getCallStack().setSignature(requestTrace.getName());
-				reportCallStack(requestTrace, configuration.getElasticsearchUrl());
+				reportCallStack(requestTrace, corePlugin.getElasticsearchUrl());
 			}
 			trackMetrics(info, executionTime, cpuTime);
 		} else {
@@ -230,7 +237,7 @@ public class RequestMonitor {
 		info.getRequestTimer().update(executionTime, NANOSECONDS);
 		metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
 
-		if (configuration.getBoolean(RequestMonitorPlugin.CPU_TIME)) {
+		if (requestMonitorPlugin.isCollectCpuTime()) {
 			metricRegistry.timer(name(REQUEST, timerName, ".server.cpu-time.total")).update(cpuTime, NANOSECONDS);
 			metricRegistry.timer("request.All.server.cpu-time.total").update(cpuTime, NANOSECONDS);
 		}
@@ -244,7 +251,7 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void trackDbMetrics(String timerName, T requestTrace) {
 		if (requestTrace.getExecutionCountDb() > 0) {
-			if (configuration.getBoolean(RequestMonitorPlugin.COLLECT_DB_TIME_PER_REQUEST)) {
+			if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
 				metricRegistry.timer(name(REQUEST, timerName, "server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
 				metricRegistry.timer(name("request.All.server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
 			}
@@ -260,9 +267,9 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {
 		if (serverUrl != null && !serverUrl.isEmpty()) {
-			RestClient.sendCallStackAsync(requestTrace, requestTrace.getId(), serverUrl, configuration.getString(RequestMonitorPlugin.REQUEST_TRACE_TTL));
+			RestClient.sendCallStackAsync(requestTrace, requestTrace.getId(), serverUrl, requestMonitorPlugin.getRequestTraceTtl());
 		}
-		if (configuration.getBoolean(RequestMonitorPlugin.LOG_CALL_STACKS)) {
+		if (requestMonitorPlugin.isLogCallStacks()) {
 			requestLogger.logStats(requestTrace);
 		}
 	}
@@ -316,7 +323,7 @@ public class RequestMonitor {
 		}
 
 		private boolean profileThisExecution() {
-			int callStackEveryXRequestsToGroup = configuration.getInt(RequestMonitorPlugin.CALL_STACK_EVERY_XREQUESTS_TO_GROUP);
+			int callStackEveryXRequestsToGroup = requestMonitorPlugin.getCallStackEveryXRequestsToGroup();
 			if (callStackEveryXRequestsToGroup == 1) {
 				return true;
 			}

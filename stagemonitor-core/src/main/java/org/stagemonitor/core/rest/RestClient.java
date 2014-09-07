@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
@@ -44,7 +44,7 @@ public class RestClient {
 	});
 
 	static {
-		if (StageMonitor.getConfiguration().getBoolean(Configuration.INTERNAL_MONITORING)) {
+		if (StageMonitor.getConfiguration(CorePlugin.class).isInternalMonitoringActive()) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, StageMonitor.getMetricRegistry());
 		}

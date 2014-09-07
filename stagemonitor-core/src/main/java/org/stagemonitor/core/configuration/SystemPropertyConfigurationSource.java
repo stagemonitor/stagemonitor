@@ -1,4 +1,4 @@
-package org.stagemonitor.core;
+package org.stagemonitor.core.configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,5 +19,10 @@ public class SystemPropertyConfigurationSource implements ConfigurationSource {
 
 	@Override
 	public void reload() {
+	}
+
+	@Override
+	public String getName() {
+		return "Java System Property";
 	}
 }

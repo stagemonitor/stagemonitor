@@ -2,9 +2,9 @@ package org.stagemonitor.web.configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Configuration;
-import org.stagemonitor.core.ConfigurationOption;
-import org.stagemonitor.core.ConfigurationSource;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.configuration.ConfigurationSource;
 import org.stagemonitor.web.WebPlugin;
 
 import java.util.Map;
@@ -54,7 +54,7 @@ public class DynamicConfigurationSource implements ConfigurationSource {
 		final Map<String,ConfigurationOption> configurationOptionsByKey = configuration.getConfigurationOptionsByKey();
 		if (configurationOptionsByKey.containsKey(key) && configurationOptionsByKey.get(key).isDynamic()) {
 			queryParameterConfiguration.put(key, value);
-			configuration.reload();
+			configuration.reload(key);
 			logger.info("Updated configuration: {}={}", key, value);
 			return true;
 		}
@@ -63,5 +63,10 @@ public class DynamicConfigurationSource implements ConfigurationSource {
 
 	@Override
 	public void reload() {
+	}
+
+	@Override
+	public String getName() {
+		return "Dynamic Configuration";
 	}
 }

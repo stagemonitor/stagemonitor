@@ -1,6 +1,6 @@
 package org.stagemonitor.web.configuration;
 
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.web.WebPlugin;
 
 import javax.servlet.ServletException;

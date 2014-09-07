@@ -2,9 +2,10 @@ package org.stagemonitor.web.monitor.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -30,6 +31,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private static final Logger logger = LoggerFactory.getLogger(HttpRequestMonitorFilter.class);
 	private static final String CONFIGURATION_ENDPOINT = "/stagemonitor/configuration";
 	protected final Configuration configuration;
+	protected final CorePlugin corePlugin;
+	protected final WebPlugin webPlugin;
 	protected final RequestMonitor requestMonitor;
 	private boolean servletApiForWidgetSufficient = false;
 	private String widgetTemplate;
@@ -40,13 +43,15 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	public HttpRequestMonitorFilter(Configuration configuration) {
 		this.configuration = configuration;
+		this.webPlugin = configuration.getConfig(WebPlugin.class);
+		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		requestMonitor = new RequestMonitor(configuration);
 	}
 
 	@Override
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
 		final MeasurementSession measurementSession = new MeasurementSession(getApplicationName(filterConfig),
-				RequestMonitor.getHostName(), configuration.getInstanceName());
+				RequestMonitor.getHostName(), corePlugin.getInstanceName());
 		requestMonitor.setMeasurementSession(measurementSession);
 		final ServletContext servletContext = filterConfig.getServletContext();
 		servletApiForWidgetSufficient = servletContext.getMajorVersion() >= 3;
@@ -61,7 +66,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 					.addServlet("stagemonitor-config-servlet", new ConfigurationServlet(configuration))
 					.addMapping(CONFIGURATION_ENDPOINT);
 		} else {
-			if (configuration.getBoolean(WebPlugin.WIDGET_ENABLED)) {
+			if (webPlugin.isWidgetEnabled()) {
 				logger.error("stagemonitor.web.widget.enabled is true, but your servlet api version is not supported. " +
 						"The stagemonitor widget requires servlet api 3.");
 			}
@@ -77,7 +82,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private String getApplicationName(FilterConfig filterConfig) {
-		String name = configuration.getApplicationName();
+		String name = corePlugin.getApplicationName();
 		if (name == null || name.isEmpty()) {
 			name = filterConfig.getServletContext().getServletContextName();
 		}
@@ -88,7 +93,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	public final void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
 		beforeFilter();
-		if (configuration.isStagemonitorActive() && request instanceof HttpServletRequest && response instanceof HttpServletResponse && ! isInternalRequest((HttpServletRequest) request)) {
+		if (corePlugin.isStagemonitorActive() && request instanceof HttpServletRequest && response instanceof HttpServletResponse && ! isInternalRequest((HttpServletRequest) request)) {
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 
 			final StatusExposingByteCountingServletResponse responseWrapper;
@@ -123,7 +128,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private boolean isStagemonitorWidgetEnabled() {
-		return configuration.getBoolean(WebPlugin.WIDGET_ENABLED) && servletApiForWidgetSufficient;
+		return webPlugin.isWidgetEnabled() && servletApiForWidgetSufficient;
 	}
 
 	private boolean isInternalRequest(HttpServletRequest request) {

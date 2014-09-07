@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -19,6 +19,7 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final List<HandlerMapping> allHandlerMappings;
+	private final SpringMvcPlugin mvcPlugin;
 
 	public SpringMonitoredHttpRequest(HttpServletRequest httpServletRequest,
 									  StatusExposingByteCountingServletResponse statusExposingResponse,
@@ -26,6 +27,7 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 									  List<HandlerMapping> allHandlerMappings) {
 
 		super(httpServletRequest, statusExposingResponse, filterChain, configuration);
+		mvcPlugin = configuration.getConfig(SpringMvcPlugin.class);
 		this.allHandlerMappings = allHandlerMappings;
 	}
 
@@ -45,7 +47,7 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 				return name;
 			}
 		}
-		if (!configuration.getBoolean(SpringMvcPlugin.MONITOR_ONLY_SPRING_MVC_REQUESTS)) {
+		if (!mvcPlugin.isMonitorOnlySpringMvcRequests()) {
 			name = super.getRequestName();
 		}
 		return name;

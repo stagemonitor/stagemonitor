@@ -4,19 +4,27 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
+import org.stagemonitor.core.configuration.Configuration;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class StageMonitorTest {
 
 	private Configuration configuration = mock(Configuration.class);
+	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private Logger logger = mock(Logger.class);
 
 	@Before
 	public void before() {
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		StageMonitor.reset();
 		StageMonitor.setConfiguration(configuration);
 		StageMonitor.setLogger(logger);
@@ -31,7 +39,7 @@ public class StageMonitorTest {
 
 	@Test
 	public void testStartMonitoring() throws Exception {
-		when(configuration.isStagemonitorActive()).thenReturn(true);
+		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 
 		final MeasurementSession measurementSession = new MeasurementSession("testApp", "testHost", "testInstance");
 		StageMonitor.startMonitoring(measurementSession);
@@ -46,7 +54,7 @@ public class StageMonitorTest {
 
 	@Test
 	public void testStartMonitoringNotActive() throws Exception {
-		when(configuration.isStagemonitorActive()).thenReturn(false);
+		when(corePlugin.isStagemonitorActive()).thenReturn(false);
 		StageMonitor.setConfiguration(configuration);
 
 		final MeasurementSession measurementSession = new MeasurementSession("testApp", "testHost", "testInstance");
@@ -60,8 +68,8 @@ public class StageMonitorTest {
 
 	@Test
 	public void testDisabledPlugin() {
-		when(configuration.isStagemonitorActive()).thenReturn(true);
-		when(configuration.getDisabledPlugins()).thenReturn(Arrays.asList("TestExceptionPlugin"));
+		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		when(corePlugin.getDisabledPlugins()).thenReturn(Arrays.asList("TestExceptionPlugin"));
 
 		StageMonitor.startMonitoring(new MeasurementSession("testApp", "testHost", "testInstance"));
 
@@ -72,7 +80,7 @@ public class StageMonitorTest {
 
 	@Test
 	public void testNotInitialized() {
-		when(configuration.isStagemonitorActive()).thenReturn(true);
+		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 
 		final MeasurementSession measurementSession = new MeasurementSession(null, "testHost", "testInstance");
 		StageMonitor.startMonitoring(measurementSession);

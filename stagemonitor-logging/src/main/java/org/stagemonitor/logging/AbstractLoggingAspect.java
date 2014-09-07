@@ -3,13 +3,14 @@ package org.stagemonitor.logging;
 import com.codahale.metrics.MetricRegistry;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StageMonitor;
 
 @Aspect
 public abstract class AbstractLoggingAspect {
 
-	public static final boolean ACTIVE = !StageMonitor.getConfiguration().getDisabledPlugins()
-			.contains(LoggingPlugin.class.getSimpleName()) && StageMonitor.getConfiguration().isStagemonitorActive();
+	public static final boolean ACTIVE = !StageMonitor.getConfiguration(CorePlugin.class).getDisabledPlugins()
+			.contains(LoggingPlugin.class.getSimpleName()) && StageMonitor.getConfiguration(CorePlugin.class).isStagemonitorActive();
 
 	protected MetricRegistry registry = StageMonitor.getMetricRegistry();
 

@@ -2,9 +2,11 @@ package org.stagemonitor.web;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.Configuration;
-import org.stagemonitor.core.ConfigurationOption;
+import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,36 +17,32 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
-import static org.stagemonitor.web.WebPlugin.GROUP_URLS;
-import static org.stagemonitor.web.WebPlugin.HTTP_COLLECT_HEADERS;
-import static org.stagemonitor.web.WebPlugin.HTTP_HEADERS_EXCLUDED;
-import static org.stagemonitor.web.WebPlugin.HTTP_REQUESTPARAMS_CONFIDENTIAL_REGEX;
-
 
 public class WebPluginConfigurationTest {
 
-	private Configuration configuration = new Configuration();
+	private WebPlugin config;
 
 	@Before
-	public void before() {
-		final WebPlugin webPlugin = new WebPlugin();
-		for (ConfigurationOption configurationOption : webPlugin.getConfigurationOptions()) {
-			configuration.add("Test", configurationOption);
-		}
+	public void before() throws Exception {
+		Configuration configuration = new Configuration(StageMonitorPlugin.class);
+		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerPluginConfiguration", ConfigurationOptionProvider.class);
+		registerPluginConfiguration.setAccessible(true);
+		registerPluginConfiguration.invoke(configuration, new WebPlugin());
+		config = configuration.getConfig(WebPlugin.class);
 	}
 
 	@Test
 	public void testDefaultValues() {
-		assertEquals(true, configuration.getBoolean(HTTP_COLLECT_HEADERS));
-		assertEquals(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")), configuration.getLowerStrings(HTTP_HEADERS_EXCLUDED));
-		final Collection<Pattern> confidentialQueryParams = configuration.getPatterns(HTTP_REQUESTPARAMS_CONFIDENTIAL_REGEX);
+		assertEquals(true, config.isCollectHttpHeaders());
+		assertEquals(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")), config.getExcludeHeaders());
+		final Collection<Pattern> confidentialQueryParams = config.getRequestParamsConfidential();
 		final List<String> confidentialQueryParamsAsString = new ArrayList<String>(confidentialQueryParams.size());
 		for (Pattern confidentialQueryParam : confidentialQueryParams) {
 			confidentialQueryParamsAsString.add(confidentialQueryParam.toString());
 		}
 		assertEquals(Arrays.asList("(?i).*pass.*", "(?i).*credit.*", "(?i).*pwd.*"), confidentialQueryParamsAsString);
 
-		final Map<Pattern, String> groupUrls = configuration.getPatternMap(GROUP_URLS);
+		final Map<Pattern, String> groupUrls = config.getGroupUrls();
 		final Map<String, String> groupUrlsAsString = new HashMap<String, String>();
 		for (Map.Entry<Pattern, String> entry : groupUrls.entrySet()) {
 			groupUrlsAsString.put(entry.getKey().pattern(), entry.getValue());

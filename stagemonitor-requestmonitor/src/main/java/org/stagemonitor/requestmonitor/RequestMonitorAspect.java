@@ -4,8 +4,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.configuration.Configuration;
 
 @Aspect
 public abstract class RequestMonitorAspect {

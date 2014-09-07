@@ -1,10 +1,19 @@
 package org.stagemonitor.core;
 
+import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
+import org.stagemonitor.core.configuration.SimpleSource;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -14,107 +23,110 @@ import static org.junit.Assert.assertTrue;
 
 public class ConfigurationTest {
 
-	private Configuration configuration = new Configuration();
-
-	private Map<String, String> config = new HashMap<String, String>() {{
-		put("invalidLong", "two");
-		put("stagemonitor.elasticsearch.url", "foo/");
-	}};
+	private final ConfigurationOption<Map<Pattern,String>> invalidPatternMap = ConfigurationOption.regexMapOption().key("invalidPatternMap").build();
+	private final ConfigurationOption<List<Pattern>> invalidPatternSyntax = ConfigurationOption.regexListOption().key("invalidPatternSyntax").build();
+	private final ConfigurationOption<Long> aLong = ConfigurationOption.longOption().key("long").build();
+	private final ConfigurationOption<Long> invalidLong = ConfigurationOption.longOption().key("invalidLong").defaultValue(2L).build();
+	private final ConfigurationOption<String> string = ConfigurationOption.stringOption().key("string").build();
+	private final ConfigurationOption<Collection<String>> lowerStrings = ConfigurationOption.lowerStringsOption().key("lowerStrings").build();
+	private final ConfigurationOption<Collection<String>> strings = ConfigurationOption.stringsOption().key("strings").build();
+	private final ConfigurationOption<Boolean> booleanTrue = ConfigurationOption.booleanOption().key("boolean.true").build();
+	private final ConfigurationOption<Boolean> booleanFalse = ConfigurationOption.booleanOption().key("boolean.false").build();
+	private final ConfigurationOption<Boolean> booleanInvalid = ConfigurationOption.booleanOption().key("boolean.invalid").build();
+	private final ConfigurationOption<String> testCaching = ConfigurationOption.stringOption().key("testCaching").build();
+	private Configuration configuration = new Configuration(StageMonitorPlugin.class);
+	private CorePlugin corePlugin;
+	private SimpleSource configSource = SimpleSource
+			.of("invalidLong", "two")
+			.add("stagemonitor.elasticsearch.url", "foo/")
+			.add("invalidPatternMap", "(.*).js: *.js (.*).css:  *.css")
+			.add("invalidPatternSyntax", "(.*.js")
+			.add("long", "2")
+			.add("string", "fooBar")
+			.add("lowerStrings", "fooBar")
+			.add("strings", "fooBar , barFoo")
+			.add("boolean.true", "true")
+			.add("boolean.false", "false")
+			.add("boolean.invalid", "ture")
+			.add("testCaching", "testCaching");
 
 	@Before
-	public void before() {
-		configuration.addConfigurationSource(new ConfigurationSource() {
-			public String getValue(String key) {
-				return config.get(key);
-			}
-			public void reload() {
-			}
-		}, true);
+	public void before() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+		corePlugin = configuration.getConfig(CorePlugin.class);
+		configuration.addConfigurationSource(configSource);
 
-		configuration.add("test", ConfigurationOption.builder().key("invalidPatternMap").defaultValue("(.*).js: *.js (.*).css:  *.css").build());
-		configuration.add("test", ConfigurationOption.builder().key("invalidPatternSyntax").defaultValue("(.*.js").build());
-		configuration.add("test", ConfigurationOption.builder().key("long").defaultValue("2").build());
-		configuration.add("test", ConfigurationOption.builder().key("invalidLong").defaultValue("2").build());
-		configuration.add("test", ConfigurationOption.builder().key("invalidLongDefault").defaultValue("two").build());
-		configuration.add("test", ConfigurationOption.builder().key("string").defaultValue("fooBar").build());
-		configuration.add("test", ConfigurationOption.builder().key("strings").defaultValue("fooBar , barFoo").build());
-		configuration.add("test", ConfigurationOption.builder().key("boolean.true").defaultValue("true").build());
-		configuration.add("test", ConfigurationOption.builder().key("boolean.false").defaultValue("false").build());
-		configuration.add("test", ConfigurationOption.builder().key("boolean.invalid").defaultValue("ture").build());
-		configuration.add("test", ConfigurationOption.builder().key("testCaching").defaultValue("testCaching").build());
+		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerPluginConfiguration", ConfigurationOptionProvider.class);
+		registerPluginConfiguration.setAccessible(true);
+		registerPluginConfiguration.invoke(configuration, new StageMonitorPlugin() {
+			public List<ConfigurationOption<?>> getConfigurationOptions() {
+				return Arrays.<ConfigurationOption<?>>asList(invalidPatternMap, invalidPatternSyntax, aLong, invalidLong, string,
+						lowerStrings, strings, booleanTrue, booleanFalse, booleanInvalid, testCaching);
+			}
+
+			public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
+			}
+		});
 	}
 
 	@Test
 	public void testInvalidPatterns() {
-		assertTrue(configuration.getPatternMap("invalidPatternMap").isEmpty());
+		assertTrue(invalidPatternMap.getValue().isEmpty());
 	}
 
 	@Test
 	public void testInvalidPatternSyntax() {
-		assertTrue(configuration.getPatterns("invalidPatternSyntax").isEmpty());
+		assertTrue(invalidPatternSyntax.getValue().isEmpty());
 	}
 
 	@Test
 	public void testGetInt() {
-		assertEquals(2, configuration.getInt("long"));
-	}
-
-	@Test
-	public void testGetLong() {
-		assertEquals(2L, configuration.getLong("long"));
+		assertEquals(Long.valueOf(2L), aLong.getValue());
 	}
 
 	@Test
 	public void testGetInvalidLong() {
-		assertEquals(2, configuration.getLong("invalidLong"));
-		assertEquals(-1, configuration.getLong("invalidLongDefault"));
+		assertEquals(Long.valueOf(2L), invalidLong.getValue());
 	}
 
 	@Test
 	public void testGetString() {
-		assertEquals("fooBar", configuration.getString("string"));
-	}
-
-	@Test
-	public void testGetStringNotExistent() {
-		assertEquals(null, configuration.getString("testGetStringNotExistent"));
+		assertEquals("fooBar", string.getValue());
 	}
 
 	@Test
 	public void testGetLowerStrings() {
-		assertEquals(Collections.singleton("foobar"), configuration.getLowerStrings("string"));
+		assertEquals(Collections.singleton("foobar"), lowerStrings.getValue());
 	}
 
 	@Test
 	public void testCachingAndReload() {
-		assertEquals("testCaching", configuration.getString("testCaching"));
-		config.put("testCaching", "testCaching2");
-		assertEquals("testCaching", configuration.getString("testCaching"));
+		assertEquals("testCaching", testCaching.getValue());
+		configSource.add("testCaching", "testCaching2");
+		assertEquals("testCaching", testCaching.getValue());
 		configuration.reload();
-		assertEquals("testCaching2", configuration.getString("testCaching"));
+		assertEquals("testCaching2", testCaching.getValue());
 	}
 
 	@Test
 	public void testGetBoolean() {
-		assertTrue(configuration.getBoolean("boolean.true"));
-		assertFalse(configuration.getBoolean("boolean.false"));
-		assertFalse(configuration.getBoolean("nonExistent"));
+		assertTrue(booleanTrue.getValue());
+		assertFalse(booleanFalse.getValue());
 	}
 
 	@Test
 	public void testElasticsearchUrlTrailingSlash() {
-		assertEquals("foo", configuration.getElasticsearchUrl());
+		assertEquals("foo", corePlugin.getElasticsearchUrl());
 	}
 
 	@Test
 	public void testDefaultValues() {
-		assertEquals(60L, configuration.getConsoleReportingInterval());
-		assertEquals(true, configuration.reportToJMX());
-		assertEquals(60, configuration.getGraphiteReportingInterval());
-		assertEquals(null, configuration.getGraphiteHostName());
-		assertEquals(2003, configuration.getGraphitePort());
-		assertEquals(null, configuration.getApplicationName());
-		assertEquals(null, configuration.getInstanceName());
-		assertEquals(Collections.<Pattern>emptySet(), configuration.getExcludedMetricsPatterns());
+		assertEquals(60L, corePlugin.getConsoleReportingInterval());
+		assertEquals(true, corePlugin.reportToJMX());
+		assertEquals(60, corePlugin.getGraphiteReportingInterval());
+		assertEquals(null, corePlugin.getGraphiteHostName());
+		assertEquals(2003, corePlugin.getGraphitePort());
+		assertEquals(null, corePlugin.getApplicationName());
+		assertEquals(null, corePlugin.getInstanceName());
+		assertEquals(Collections.<Pattern>emptyList(), corePlugin.getExcludedMetricsPatterns());
 	}
 }
