@@ -3,11 +3,15 @@ package org.stagemonitor.core.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Properties;
 
-public final class PropertyFileConfigurationSource implements ConfigurationSource {
+public final class PropertyFileConfigurationSource extends AbstractConfigurationSource {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -61,4 +65,30 @@ public final class PropertyFileConfigurationSource implements ConfigurationSourc
 	public String getValue(String key) {
 		return properties.getProperty(key);
 	}
+
+	@Override
+	public boolean isSavingPossible() {
+		return true;
+	}
+
+	@Override
+	public void save(String key, String value) throws IOException {
+		synchronized (this) {
+			properties.put(key, value);
+			try {
+				final URL resource = getClass().getClassLoader().getResource(location);
+				if (resource == null) {
+					throw new IOException();
+				}
+				File file = new File(resource.toURI());
+				final FileOutputStream out = new FileOutputStream(file);
+				properties.store(out, null);
+				out.flush();
+				out.close();
+			} catch (URISyntaxException e) {
+				throw new IOException(e);
+			}
+		}
+	}
+
 }

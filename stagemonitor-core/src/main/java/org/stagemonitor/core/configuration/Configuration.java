@@ -3,6 +3,7 @@ package org.stagemonitor.core.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,24 +15,38 @@ import java.util.ServiceLoader;
 
 public class Configuration {
 
-
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
+	private final String updateConfigPasswordKey;
+	private final List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
 
 	private Map<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider> pluginConfiguration = new HashMap<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider>();
 	private Map<String, ConfigurationOption<?>> configurationOptionsByKey = new LinkedHashMap<String, ConfigurationOption<?>>();
 	private Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new LinkedHashMap<String, List<ConfigurationOption<?>>>();
 
-	public Configuration() {
-		this(ConfigurationOptionProvider.class);
+	/**
+	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
+	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
+	 */
+	public Configuration(String updateConfigPasswordKey) {
+		this(ConfigurationOptionProvider.class, updateConfigPasswordKey);
 	}
 
 	/**
-	 *
-	 * @param optionProviderClass the class that should be used to lookup instances of
-	 * {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
+	 * @param optionProviderClass     the class that should be used to lookup instances of
+	 *                                {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
 	 */
 	public Configuration(Class<? extends ConfigurationOptionProvider> optionProviderClass) {
+		this(optionProviderClass, null);
+	}
+
+	/**
+	 * @param optionProviderClass     the class that should be used to lookup instances of
+	 *                                {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
+	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
+	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
+	 */
+	public Configuration(Class<? extends ConfigurationOptionProvider> optionProviderClass, String updateConfigPasswordKey) {
+		this.updateConfigPasswordKey = updateConfigPasswordKey;
 		configurationSources.add(new SystemPropertyConfigurationSource());
 		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
 		if (stagemonitorPropertyOverridesLocation != null) {
@@ -89,10 +104,10 @@ public class Configuration {
 		return Collections.unmodifiableMap(configurationOptionsByKey);
 	}
 
-	public List<String> getNamesOfConfigurationSources() {
-		final ArrayList<String> result = new ArrayList<String>(this.configurationSources.size());
+	public Map<String, Boolean> getNamesOfConfigurationSources() {
+		final Map<String, Boolean> result = new LinkedHashMap<String, Boolean>();
 		for (ConfigurationSource configurationSource : configurationSources) {
-			result.add(configurationSource.getName());
+			result.put(configurationSource.getName(), configurationSource.isSavingPossible());
 		}
 		return result;
 	}
@@ -132,7 +147,65 @@ public class Configuration {
 		reload();
 	}
 
-	String getString(String key) {
+	/**
+	 * Dynamically updates a configuration key.
+	 *
+	 * @param key                         the configuration key
+	 * @param value                       the configuration value
+	 * @param configurationSourceName     the {@link org.stagemonitor.core.configuration.ConfigurationSource#getName()}
+	 *                                    of the configuration source the value should be stored to
+	 * @param configurationUpdatePassword the password (must not be null)
+	 * @throws IOException                   if there was an error saving the key to the source
+	 * @throws IllegalStateException         if the update configuration password did not match
+	 * @throws IllegalArgumentException      if there was a error processing the configuration key or value or the
+	 *                                       configurationSourceName did not match any of the available configuration
+	 *                                       sources
+	 * @throws UnsupportedOperationException if saving values is not possible with this configuration source
+	 */
+	public void save(String key, String value, String configurationSourceName, String configurationUpdatePassword) throws IOException,
+			IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
+
+		String updateConfigPassword = getString(updateConfigPasswordKey);
+		if (updateConfigPassword == null) {
+			throw new IllegalStateException("Update configuration password is not set. " +
+					"Dynamic configuration changes are therefore not allowed.");
+		}
+
+		if (updateConfigPassword.equals(configurationUpdatePassword)) {
+			validate(key, value);
+			saveToConfigurationSource(key, value, configurationSourceName);
+		} else {
+			throw new IllegalStateException("Wrong password for updating configuration.");
+		}
+	}
+
+	private void validate(String key, String value) throws IllegalArgumentException {
+		final ConfigurationOption configurationOption = getConfigurationOptionByKey(key);
+		if (configurationOption != null) {
+			if (!configurationOption.isDynamic()) {
+				throw new IllegalArgumentException("Configuration option is not dynamic.");
+			}
+			configurationOption.assertValid(value);
+
+		} else {
+			throw new IllegalArgumentException("Config key '" + key + "' does not exist.");
+		}
+	}
+
+	private void saveToConfigurationSource(String key, String value, String configurationSourceName) throws IOException {
+		for (ConfigurationSource configurationSource : configurationSources) {
+			if (configurationSource.getName().equals(configurationSourceName)) {
+				System.out.println(configurationSource.getName() + " == " + configurationSourceName);
+				configurationSource.save(key, value);
+				reload(key);
+				logger.info("Updated configuration: {}={} ({})", key, value, configurationSourceName);
+				return;
+			}
+		}
+		throw new IllegalArgumentException("Configuration source '"+configurationSourceName+"' does not exist.");
+	}
+
+	private String getString(String key) {
 		String property = null;
 		for (ConfigurationSource configurationSource : configurationSources) {
 			property = configurationSource.getValue(key);
@@ -151,4 +224,6 @@ public class Configuration {
 			return configurationOption.getDefaultValueAsString();
 		}
 	}
+
+
 }

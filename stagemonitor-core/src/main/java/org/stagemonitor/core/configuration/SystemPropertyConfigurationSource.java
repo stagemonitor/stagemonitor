@@ -3,7 +3,7 @@ package org.stagemonitor.core.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SystemPropertyConfigurationSource implements ConfigurationSource {
+public class SystemPropertyConfigurationSource extends AbstractConfigurationSource {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 

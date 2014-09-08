@@ -21,7 +21,6 @@ import java.util.regex.Pattern;
 
 public class WebPlugin implements StageMonitorPlugin {
 
-	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
 	public static final String WEB_PLUGIN = "Web Plugin";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	boolean requiredPropertiesSet = true;

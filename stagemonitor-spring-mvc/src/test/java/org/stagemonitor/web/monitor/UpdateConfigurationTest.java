@@ -18,7 +18,7 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.web.WebPlugin.STAGEMONITOR_PASSWORD;
+import static org.stagemonitor.core.StageMonitor.STAGEMONITOR_PASSWORD;
 
 public class UpdateConfigurationTest {
 
@@ -28,7 +28,7 @@ public class UpdateConfigurationTest {
 
 	@Before
 	public void initFilter() throws ServletException {
-		configuration = Mockito.spy(new Configuration(StageMonitorPlugin.class));
+		configuration = Mockito.spy(new Configuration(StageMonitorPlugin.class, STAGEMONITOR_PASSWORD));
 		corePlugin = configuration.getConfig(CorePlugin.class);
 		configurationServlet = new ConfigurationServlet(configuration);
 	}
@@ -38,8 +38,9 @@ public class UpdateConfigurationTest {
 		assertFalse(corePlugin.isInternalMonitoringActive());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
-		request.addParameter("stagemonitorConfigValue", "true");
+		request.addParameter("key", "stagemonitor.internal.monitoring");
+		request.addParameter("value", "true");
+		request.addParameter("configurationSource", "Transient Configuration Source");
 		final MockHttpServletResponse res = new MockHttpServletResponse();
 		configurationServlet.service(request, res);
 
@@ -50,12 +51,13 @@ public class UpdateConfigurationTest {
 
 	@Test
 	public void testUpdateConfiguration() throws IOException, ServletException {
-		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, ""));
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
 		assertFalse(corePlugin.isInternalMonitoringActive());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
-		request.addParameter("stagemonitorConfigValue", "true");
+		request.addParameter("key", "stagemonitor.internal.monitoring");
+		request.addParameter("value", "true");
+		request.addParameter("configurationSource", "Transient Configuration Source");
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		configurationServlet.service(request, response);
 
@@ -65,13 +67,64 @@ public class UpdateConfigurationTest {
 	}
 
 	@Test
+	public void testUpdateConfigurationWithoutConfigurationSource() throws IOException, ServletException {
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
+		assertFalse(corePlugin.isInternalMonitoringActive());
+
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
+		request.addParameter("key", "stagemonitor.internal.monitoring");
+		request.addParameter("value", "true");
+		final MockHttpServletResponse response = new MockHttpServletResponse();
+		configurationServlet.service(request, response);
+
+		assertEquals("Missing parameter 'configurationSource'", response.getContentAsString());
+		assertEquals(400, response.getStatus());
+		assertFalse(corePlugin.isInternalMonitoringActive());
+	}
+
+	@Test
+	public void testUpdateConfigurationWrongConfigurationSource() throws IOException, ServletException {
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
+		assertFalse(corePlugin.isInternalMonitoringActive());
+
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
+		request.addParameter("key", "stagemonitor.internal.monitoring");
+		request.addParameter("value", "true");
+		request.addParameter("configurationSource", "foo");
+		final MockHttpServletResponse response = new MockHttpServletResponse();
+		configurationServlet.service(request, response);
+
+		assertEquals("Configuration source 'foo' does not exist.", response.getContentAsString());
+		assertEquals(400, response.getStatus());
+		assertFalse(corePlugin.isInternalMonitoringActive());
+	}
+
+	@Test
+	public void testUpdateConfigurationNotSaveableConfigurationSource() throws IOException, ServletException {
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
+		assertFalse(corePlugin.isInternalMonitoringActive());
+
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
+		request.addParameter("key", "stagemonitor.internal.monitoring");
+		request.addParameter("value", "true");
+		request.addParameter("configurationSource", "Java System Properties");
+		final MockHttpServletResponse response = new MockHttpServletResponse();
+		configurationServlet.service(request, response);
+
+		assertEquals("Saving to Java System Properties is not possible.", response.getContentAsString());
+		assertEquals(400, response.getStatus());
+		assertFalse(corePlugin.isInternalMonitoringActive());
+	}
+
+	@Test
 	public void testUpdateConfigurationNonDynamic() throws IOException, ServletException {
-		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, ""));
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
 		assertEquals(60, corePlugin.getConsoleReportingInterval());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitorConfigKey", "stagemonitor.reporting.interval.console");
-		request.addParameter("stagemonitorConfigValue", "1");
+		request.addParameter("key", "stagemonitor.reporting.interval.console");
+		request.addParameter("value", "1");
+		request.addParameter("configurationSource", "Transient Configuration Source");
 		final MockHttpServletResponse res = new MockHttpServletResponse();
 		configurationServlet.service(request, res);
 
@@ -82,11 +135,12 @@ public class UpdateConfigurationTest {
 
 	@Test
 	public void testSetNewPasswordViaQueryParamsShouldFail() throws IOException, ServletException {
-		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, ""));
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitorConfigKey", STAGEMONITOR_PASSWORD);
-		request.addParameter("stagemonitorConfigValue", "pwd");
+		request.addParameter("key", STAGEMONITOR_PASSWORD);
+		request.addParameter("value", "pwd");
+		request.addParameter("configurationSource", "Transient Configuration Source");
 		final MockHttpServletResponse res = new MockHttpServletResponse();
 		configurationServlet.service(request, res);
 
@@ -96,12 +150,13 @@ public class UpdateConfigurationTest {
 
 	@Test
 	public void testUpdateConfigurationWithoutPassword() throws IOException, ServletException {
-		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, "pwd"));
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, "pwd"));
 		assertFalse(corePlugin.isInternalMonitoringActive());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
-		request.addParameter("stagemonitorConfigValue", "true");
+		request.addParameter("key", "stagemonitor.internal.monitoring");
+		request.addParameter("value", "true");
+		request.addParameter("configurationSource", "Transient Configuration Source");
 		final MockHttpServletResponse res = new MockHttpServletResponse();
 		configurationServlet.service(request, res);
 
@@ -112,18 +167,19 @@ public class UpdateConfigurationTest {
 
 	@Test
 	public void testUpdateConfigurationWithPassword() throws IOException, ServletException {
-		configuration.addConfigurationSource(SimpleSource.of(STAGEMONITOR_PASSWORD, "pwd"));
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, "pwd"));
 		assertFalse(corePlugin.isInternalMonitoringActive());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
-		request.addParameter("stagemonitorConfigKey", "stagemonitor.internal.monitoring");
-		request.addParameter("stagemonitorConfigValue", "true");
+		request.addParameter("key", "stagemonitor.internal.monitoring");
+		request.addParameter("value", "true");
+		request.addParameter("configurationSource", "Transient Configuration Source");
 		request.addParameter(STAGEMONITOR_PASSWORD, "pwd");
 		final MockHttpServletResponse res = new MockHttpServletResponse();
 		configurationServlet.service(request, res);
 
-		assertEquals(204, res.getStatus());
 		assertEquals("", res.getContentAsString());
+		assertEquals(204, res.getStatus());
 		assertTrue(corePlugin.isInternalMonitoringActive());
 	}
 
@@ -131,7 +187,7 @@ public class UpdateConfigurationTest {
 	public void testReload() throws IOException, ServletException {
 		for (String method : Arrays.asList("POST", "GET")) {
 			MockHttpServletRequest request = new MockHttpServletRequest(method, "/stagemonitor/configuration");
-			request.addParameter("stagemonitorReloadConfig", "");
+			request.addParameter("reload", "");
 			final MockHttpServletResponse res = new MockHttpServletResponse();
 			configurationServlet.service(request, res);
 			assertEquals(204, res.getStatus());

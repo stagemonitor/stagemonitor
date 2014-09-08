@@ -1,8 +1,10 @@
 package org.stagemonitor.web.configuration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.DynamicConfigurationSource;
-import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.core.configuration.SimpleSource;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -12,15 +14,13 @@ import java.io.IOException;
 
 public class ConfigurationServlet extends HttpServlet {
 
-	private final Configuration configuration;
-	private final DynamicConfigurationSource dynamicConfigurationSource;
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
+	private final Configuration configuration;
 
 	public ConfigurationServlet(Configuration configuration) {
 		this.configuration = configuration;
-		dynamicConfigurationSource = new DynamicConfigurationSource(configuration, WebPlugin.STAGEMONITOR_PASSWORD);
-		configuration.addConfigurationSource(dynamicConfigurationSource, true);
-
+		configuration.addConfigurationSource(new SimpleSource(), true);
 	}
 
 	@Override
@@ -30,7 +30,7 @@ public class ConfigurationServlet extends HttpServlet {
 	}
 
 	private boolean reloadConfigIfRequested(HttpServletRequest req) {
-		if (req.getParameter("stagemonitorReloadConfig") != null) {
+		if (req.getParameter("reload") != null) {
 			configuration.reload();
 			return true;
 		}
@@ -44,22 +44,36 @@ public class ConfigurationServlet extends HttpServlet {
 			return;
 		}
 
-		String configurationUpdatePassword = req.getParameter(WebPlugin.STAGEMONITOR_PASSWORD);
+		String configurationUpdatePassword = req.getParameter(StageMonitor.STAGEMONITOR_PASSWORD);
 		if (configurationUpdatePassword == null) {
 			configurationUpdatePassword = "";
 		}
-		final String key = req.getParameter("stagemonitorConfigKey");
-		if (key != null) {
-			try {
-				dynamicConfigurationSource.updateConfiguration(key, req.getParameter("stagemonitorConfigValue"), configurationUpdatePassword);
-				resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
-			} catch (IllegalArgumentException e) {
-				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
-			} catch (IllegalStateException e) {
-				sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
-			}
+		final String key = req.getParameter("key");
+		final String configurationSource = req.getParameter("configurationSource");
+		if (key != null && configurationSource != null) {
+			tryToSaveAndHandleErrors(req, resp, configurationUpdatePassword, key, configurationSource);
 		} else {
-			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter stagemonitorConfigKey");
+			if (key == null) {
+				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'key'");
+			} else {
+				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'configurationSource'");
+			}
+		}
+	}
+
+	private void tryToSaveAndHandleErrors(HttpServletRequest req, HttpServletResponse resp, String configurationUpdatePassword, String key, String configurationSource) throws IOException {
+		try {
+			configuration.save(key, req.getParameter("value"), configurationSource, configurationUpdatePassword);
+			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+		} catch (IllegalArgumentException e) {
+			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+		} catch (IllegalStateException e) {
+			sendError(resp, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+		} catch (UnsupportedOperationException e) {
+			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal Error. Check your server logs.");
 		}
 	}
 

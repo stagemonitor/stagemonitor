@@ -1,5 +1,7 @@
 package org.stagemonitor.core.configuration;
 
+import java.io.IOException;
+
 public interface ConfigurationSource {
 
 	/**
@@ -22,4 +24,22 @@ public interface ConfigurationSource {
 	 * @return the name of the configuration source
 	 */
 	String getName();
+
+	/**
+	 * Returns whether or not it is possible to save values with the {@link #save(String, String, String)} method.
+	 * <p/>
+	 * If this method returns false, {@link #save(String, String, String)} must throw a {@link UnsupportedOperationException}
+	 *
+	 * @return <code>true</code>, if saving is possible, <code>false</code> otherwise
+	 */
+	boolean isSavingPossible();
+
+	/**
+	 * Directly saves the value to the configuration source without checking passwords
+	 *
+	 * @param key a existing config key
+	 * @param value a valid value to save
+	 * @throws IOException if there was an error saving the key to the configuration source
+	 */
+	void save(String key, String value) throws IOException;
 }

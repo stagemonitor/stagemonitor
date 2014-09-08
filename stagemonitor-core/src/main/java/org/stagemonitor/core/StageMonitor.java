@@ -24,6 +24,7 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 
 public final class StageMonitor {
 
+	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
 	private static Logger logger = LoggerFactory.getLogger(StageMonitor.class);
 	private static Configuration configuration;
 	private static volatile boolean started;
@@ -164,7 +165,7 @@ public final class StageMonitor {
 	 * Should only be used by the internal unit tests
 	 */
 	public static void reset() {
-		configuration = new Configuration(StageMonitorPlugin.class);
+		configuration = new Configuration(StageMonitorPlugin.class, STAGEMONITOR_PASSWORD);
 		started = false;
 		measurementSession = new MeasurementSession(null, null, null);
 	}

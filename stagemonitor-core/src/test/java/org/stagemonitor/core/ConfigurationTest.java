@@ -37,7 +37,7 @@ public class ConfigurationTest {
 	private Configuration configuration = new Configuration(StageMonitorPlugin.class);
 	private CorePlugin corePlugin;
 	private SimpleSource configSource = SimpleSource
-			.of("invalidLong", "two")
+			.forTest("invalidLong", "two")
 			.add("stagemonitor.elasticsearch.url", "foo/")
 			.add("invalidPatternMap", "(.*).js: *.js (.*).css:  *.css")
 			.add("invalidPatternSyntax", "(.*.js")
