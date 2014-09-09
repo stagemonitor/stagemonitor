@@ -27,10 +27,19 @@
 				</h1>
 
 				<ul class="nav nav-tabs" role="tablist">
-					<li id="call-stack-tab" class="active"><a href="#stagemonitor-home" role="tab" data-toggle="tab">Call Tree</a></li>
-					<li id="request-tab"><a href="#stagemonitor-request" role="tab" data-toggle="tab">Request</a></li>
-					<li id="widget-settings-tab"><a href="#widget-settings" role="tab" data-toggle="tab">Widget Settings</a></li>
-					<li id="config-tab"><a href="#stagemonitor-configuration" role="tab" data-toggle="tab">Configuration</a></li>
+					<li id="call-stack-tab" class="active"><a href="#stagemonitor-home" role="tab" data-toggle="tab"
+															  class="tip" data-placement="bottom"
+															  title="View method call tree of the current request including SQL statements">Call Tree</a></li>
+					<li id="request-tab"><a href="#stagemonitor-request" role="tab" data-toggle="tab"
+											class="tip" data-placement="bottom"
+											title="View request trace including server and DB execution times">Request</a></li>
+					<li id="widget-settings-tab"><a href="#widget-settings" role="tab" data-toggle="tab"
+													class="tip" data-placement="bottom"
+													title="Edit notification settings and call tree highlighting">Widget Settings</a></li>
+					<li id="config-tab"><a href="#stagemonitor-configuration" role="tab" data-toggle="tab"
+										   class="tip" data-placement="bottom"
+										   title="Dynamically change stagemonitor's configuration
+										   or reload configuration sources (e.g. property files).">Configuration</a></li>
 				</ul>
 			</div>
 
@@ -179,13 +188,6 @@
 
 				<div class="tab-pane" id="stagemonitor-configuration">
 					<script id="stagemonitor-configuration-template" type="text/x-handlebars-template">
-						<div class="alert alert-info alert-dismissible" role="alert">
-							<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-							<p>
-								In this tab you can dynamically change stagemonitor's configuration or reload the
-								configuration sources (e.g. property files).
-							</p>
-						</div>
 						<form class="form-horizontal" role="form">
 							<div class="form-group">
 								<label class="col-sm-3 control-label">
@@ -228,8 +230,8 @@
 										  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', 'stagemonitor.password');" style="cursor: pointer;"></span>
 									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="
 														The password that is required to dynamically update the configuration via the configuration endpoint.
-														If not set (default) configuration reloading is disabled. If set, you have to include
-														the password here in order to update the configuration.
+														If not set (default) updating the configuration is disabled (reloading is always enabled, though).
+														If set, you have to include the password here in order to update the configuration.
 														If the password is set to an empty string, the password is not required."></span>
 								</label>
 								<div class="col-sm-2">
@@ -260,7 +262,7 @@
 																	  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', '{{key}}');" style="cursor: pointer;"></span>
 															</span>
 															<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="{{description}}"></span>
-															<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="left" title="The source of this value is '{{nameOfCurrentConfigurationSource}}'"></span>
+															<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="left" title="The current source of this value is '{{nameOfCurrentConfigurationSource}}'"></span>
 															{{#if errorMessage}}
 															<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="top" title="{{errorMessage}}"></span>
 															{{/if}}
