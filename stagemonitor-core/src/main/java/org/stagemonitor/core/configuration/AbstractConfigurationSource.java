@@ -17,4 +17,9 @@ public abstract class AbstractConfigurationSource implements ConfigurationSource
 	@Override
 	public void reload() {
 	}
+
+	@Override
+	public boolean isSavingPersistent() {
+		return false;
+	}
 }

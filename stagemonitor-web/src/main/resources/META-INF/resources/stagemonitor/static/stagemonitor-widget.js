@@ -134,15 +134,15 @@ $(document).ready(function() {
 				var $button = $(this);
 				$.post(contextPathPrefix + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
 					.done(function () {
-						$button.removeClass("btn-primary").addClass("btn-success");
+						$button.removeClass("btn-primary");
 						$button.nextAll(".submit-response-ok").show().fadeOut(3000, function () {
-							$button.removeClass("btn-success").addClass("btn-primary");
+							$button.addClass("btn-primary");
 						});
 					}).fail(function (xhr) {
 						$button.removeClass("btn-primary").addClass("btn-danger");
 						var errorSpan = $button.nextAll(".submit-response-failed");
 						errorSpan.html(xhr.responseText || 'Failed to save.');
-						errorSpan.show().fadeOut(3000, function () {
+						errorSpan.show().fadeOut(4000, function () {
 							$button.removeClass("btn-danger").addClass("btn-primary");
 						});
 					});
@@ -200,10 +200,7 @@ $(document).ready(function() {
 				localStorage.setItem(key, value);
 			}
 		});
-		$("#widget-settings-save").removeClass("btn-primary").addClass("btn-success");
-		$("#submit-response").show().fadeOut(3000, function () {
-			$("#widget-settings-save").removeClass("btn-success").addClass("btn-primary");
-		});
+		$("#submit-response").show().fadeOut(3000);
 		return false;
 	});
 

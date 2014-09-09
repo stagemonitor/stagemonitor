@@ -38,8 +38,7 @@
 													title="Edit notification settings and call tree highlighting">Widget Settings</a></li>
 					<li id="config-tab"><a href="#stagemonitor-configuration" role="tab" data-toggle="tab"
 										   class="tip" data-placement="bottom"
-										   title="Dynamically change stagemonitor's configuration
-										   or reload configuration sources (e.g. property files).">Configuration</a></li>
+										   title="Dynamically change or reload configuration.">Configuration</a></li>
 				</ul>
 			</div>
 
@@ -192,6 +191,9 @@
 							<div class="form-group">
 								<label class="col-sm-3 control-label">
 									Reload configuration sources
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left"
+										  title="Reload all config sources to pick up
+										  changes not initiated through this ui."></span>
 								</label>
 								<div class="col-sm-9">
 									<input type="hidden" name="reload" value="">
@@ -213,7 +215,7 @@
 									Save changes to this configuration source
 									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left"
 										  title="This dropdown lists all currently available configuration sources.
-										  Sources which cant't be written to are not selectable."></span>
+										  Those which cant't be written to are not selectable."></span>
 								</label>
 								<div class="col-sm-2">
 									<select class="form-control rounded" name="configurationSource">
@@ -226,7 +228,7 @@
 							<div class="form-group">
 								<label class="col-sm-3 control-label">
 									Configuration Update Password
-									<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" title="stagemonitor.password"
+									<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="right" title="Click to copy config key stagemonitor.password"
 										  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', 'stagemonitor.password');" style="cursor: pointer;"></span>
 									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="
 														The password that is required to dynamically update the configuration via the configuration endpoint.
@@ -258,13 +260,13 @@
 														<label class="col-sm-3 control-label">
 															{{label}}
 															<span class="wide-tooltip">
-																<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="bottom" title="{{key}}"
+																<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="right" title="Click to copy config key {{key}}"
 																	  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', '{{key}}');" style="cursor: pointer;"></span>
 															</span>
 															<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="{{description}}"></span>
 															<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="left" title="The current source of this value is '{{nameOfCurrentConfigurationSource}}'"></span>
 															{{#if errorMessage}}
-															<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="top" title="{{errorMessage}}"></span>
+															<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="left" title="{{errorMessage}}"></span>
 															{{/if}}
 														</label>
 														<div class="col-sm-2">
@@ -278,24 +280,32 @@
 																		{{#ifCond valueAsString '==' 'true'}}checked{{/ifCond}}
 																	{{else}}
 																		class="form-control rounded"
-																	{{/ifCond}}
-																	{{#unless dynamic}}disabled title="This configuration option is not dynamic"{{/unless}}>
+																	{{/ifCond}}>
 															{{else}}
-																<textarea class="form-control rounded" name="value"
-																	{{#unless dynamic}}disabled title="This configuration option is not dynamic"{{/unless}}>{{valueAsString}}</textarea>
+																<textarea class="form-control rounded" name="value">{{valueAsString}}</textarea>
 															{{/ifCond}}
 														</div>
 														{{#if dynamic}}
-															<button type="submit" class="btn btn-primary save-configuration">Save</button>
-															<span class="submit-response-ok text-success" style="display: none;">
-																<span class="glyphicon glyphicon-ok"></span>
-																<span>Successfully saved</span>
-															</span>
-															<span class="submit-response-failed text-danger" style="display: none;">
-																<span class="glyphicon glyphicon-remove"></span>
-																<span>Failed to save. Did you specify the configuration update password?</span>
-															</span>
+														<button type="submit" class="tip btn btn-primary save-configuration"
+																data-toggle="tooltip" data-placement="top"
+																title="This configuration option is dynamic.
+																Changes apply immediately.">Save</button>
+														{{else}}
+														<button type="submit" class="tip btn btn-warning save-configuration"
+																data-toggle="tooltip" data-placement="top"
+																title="This configuration option is not dynamic.
+																Changes will apply after a restart of the application.
+																Therefore it is only possible to save to persistent configuration sources.">Save</button>
 														{{/if}}
+
+														<span class="submit-response-ok text-success" style="display: none;">
+															<span class="glyphicon glyphicon-ok"></span>
+															<span>Successfully saved</span>
+														</span>
+														<span class="submit-response-failed text-danger" style="display: none;">
+															<span class="glyphicon glyphicon-remove"></span>
+															<span>Failed to save. Did you specify the configuration update password?</span>
+														</span>
 													</div>
 												</form>
 											{{/each}}

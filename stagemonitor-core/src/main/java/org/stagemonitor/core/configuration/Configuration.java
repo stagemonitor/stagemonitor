@@ -46,14 +46,19 @@ public class Configuration {
 	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
 	 */
 	public Configuration(Class<? extends ConfigurationOptionProvider> optionProviderClass, String updateConfigPasswordKey) {
+		this(optionProviderClass, Collections.<ConfigurationSource>emptyList(), updateConfigPasswordKey);
+	}
+
+	/**
+	 * @param optionProviderClass     the class that should be used to lookup instances of
+	 *                                {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
+	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
+	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
+	 */
+	public Configuration(Class<? extends ConfigurationOptionProvider> optionProviderClass,
+						 List<ConfigurationSource> configSources, String updateConfigPasswordKey) {
 		this.updateConfigPasswordKey = updateConfigPasswordKey;
-		configurationSources.add(new SystemPropertyConfigurationSource());
-		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
-		if (stagemonitorPropertyOverridesLocation != null) {
-			logger.info("try loading of default property overrides: '" + stagemonitorPropertyOverridesLocation + "'");
-			configurationSources.add(new PropertyFileConfigurationSource(stagemonitorPropertyOverridesLocation));
-		}
-		configurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
+		configurationSources.addAll(configSources);
 		registerConfigurationOptions(optionProviderClass);
 	}
 
@@ -172,30 +177,27 @@ public class Configuration {
 		}
 
 		if (updateConfigPassword.equals(configurationUpdatePassword)) {
-			validate(key, value);
-			saveToConfigurationSource(key, value, configurationSourceName);
+			final ConfigurationOption<?> configurationOption = validateConfigurationOption(key, value);
+			saveToConfigurationSource(key, value, configurationSourceName, configurationOption);
 		} else {
 			throw new IllegalStateException("Wrong password for updating configuration.");
 		}
 	}
 
-	private void validate(String key, String value) throws IllegalArgumentException {
+	private ConfigurationOption<?> validateConfigurationOption(String key, String value) throws IllegalArgumentException {
 		final ConfigurationOption configurationOption = getConfigurationOptionByKey(key);
 		if (configurationOption != null) {
-			if (!configurationOption.isDynamic()) {
-				throw new IllegalArgumentException("Configuration option is not dynamic.");
-			}
 			configurationOption.assertValid(value);
-
+			return configurationOption;
 		} else {
 			throw new IllegalArgumentException("Config key '" + key + "' does not exist.");
 		}
 	}
 
-	private void saveToConfigurationSource(String key, String value, String configurationSourceName) throws IOException {
+	private void saveToConfigurationSource(String key, String value, String configurationSourceName, ConfigurationOption<?> configurationOption) throws IOException {
 		for (ConfigurationSource configurationSource : configurationSources) {
 			if (configurationSource.getName().equals(configurationSourceName)) {
-				System.out.println(configurationSource.getName() + " == " + configurationSourceName);
+				validateConfigurationSource(configurationSource, configurationOption);
 				configurationSource.save(key, value);
 				reload(key);
 				logger.info("Updated configuration: {}={} ({})", key, value, configurationSourceName);
@@ -203,6 +205,12 @@ public class Configuration {
 			}
 		}
 		throw new IllegalArgumentException("Configuration source '"+configurationSourceName+"' does not exist.");
+	}
+
+	private void validateConfigurationSource(ConfigurationSource configurationSource, ConfigurationOption<?> configurationOption) {
+		if (!configurationOption.isDynamic() && !configurationSource.isSavingPersistent()) {
+			throw new IllegalArgumentException("Non dynamic options can't be saved to a transient configuration source.");
+		}
 	}
 
 	private String getString(String key) {

@@ -34,6 +34,11 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 	}
 
 	@Override
+	public boolean isSavingPersistent() {
+		return true;
+	}
+
+	@Override
 	public String getName() {
 		return location;
 	}

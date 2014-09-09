@@ -9,13 +9,18 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationSource;
+import org.stagemonitor.core.configuration.PropertyFileConfigurationSource;
+import org.stagemonitor.core.configuration.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
@@ -165,7 +170,15 @@ public final class StageMonitor {
 	 * Should only be used by the internal unit tests
 	 */
 	public static void reset() {
-		configuration = new Configuration(StageMonitorPlugin.class, STAGEMONITOR_PASSWORD);
+		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
+		configurationSources.add(new SystemPropertyConfigurationSource());
+		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
+		if (stagemonitorPropertyOverridesLocation != null) {
+			logger.info("try loading of default property overrides: '" + stagemonitorPropertyOverridesLocation + "'");
+			configurationSources.add(new PropertyFileConfigurationSource(stagemonitorPropertyOverridesLocation));
+		}
+		configurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
+		configuration = new Configuration(StageMonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
 		started = false;
 		measurementSession = new MeasurementSession(null, null, null);
 	}

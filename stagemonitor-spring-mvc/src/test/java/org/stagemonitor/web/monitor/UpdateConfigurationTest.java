@@ -8,7 +8,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StageMonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationSource;
 import org.stagemonitor.core.configuration.SimpleSource;
+import org.stagemonitor.core.configuration.SystemPropertyConfigurationSource;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 
 import javax.servlet.ServletException;
@@ -18,6 +20,9 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.StageMonitor.STAGEMONITOR_PASSWORD;
 
 public class UpdateConfigurationTest {
@@ -102,6 +107,7 @@ public class UpdateConfigurationTest {
 	@Test
 	public void testUpdateConfigurationNotSaveableConfigurationSource() throws IOException, ServletException {
 		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
+		configuration.addConfigurationSource(new SystemPropertyConfigurationSource());
 		assertFalse(corePlugin.isInternalMonitoringActive());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
@@ -117,7 +123,7 @@ public class UpdateConfigurationTest {
 	}
 
 	@Test
-	public void testUpdateConfigurationNonDynamic() throws IOException, ServletException {
+	public void testUpdateConfigurationNonDynamicTransient() throws IOException, ServletException {
 		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
 		assertEquals(60, corePlugin.getConsoleReportingInterval());
 
@@ -129,8 +135,30 @@ public class UpdateConfigurationTest {
 		configurationServlet.service(request, res);
 
 		assertEquals(400, res.getStatus());
-		assertEquals("Configuration option is not dynamic.", res.getContentAsString());
+		assertEquals("Non dynamic options can't be saved to a transient configuration source.", res.getContentAsString());
 		assertEquals(60, corePlugin.getConsoleReportingInterval());
+	}
+
+	@Test
+	public void testUpdateConfigurationNonDynamicPersistent() throws IOException, ServletException {
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
+		final ConfigurationSource persistentSourceMock = mock(ConfigurationSource.class);
+		when(persistentSourceMock.isSavingPossible()).thenReturn(true);
+		when(persistentSourceMock.isSavingPersistent()).thenReturn(true);
+		when(persistentSourceMock.getName()).thenReturn("Test Persistent");
+		configuration.addConfigurationSource(persistentSourceMock);
+		assertEquals(60, corePlugin.getConsoleReportingInterval());
+
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
+		request.addParameter("key", "stagemonitor.reporting.interval.console");
+		request.addParameter("value", "1");
+		request.addParameter("configurationSource", "Test Persistent");
+		final MockHttpServletResponse res = new MockHttpServletResponse();
+		configurationServlet.service(request, res);
+
+		assertEquals("", res.getContentAsString());
+		assertEquals(204, res.getStatus());
+		verify(persistentSourceMock).save("stagemonitor.reporting.interval.console", "1");
 	}
 
 	@Test

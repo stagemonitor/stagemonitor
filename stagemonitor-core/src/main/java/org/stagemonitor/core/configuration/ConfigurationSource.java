@@ -35,6 +35,13 @@ public interface ConfigurationSource {
 	boolean isSavingPossible();
 
 	/**
+	 *
+	 *
+	 * @return <code>true</code>, if saving to this configuration source is persistent, <false>otherwise</false>
+	 */
+	boolean isSavingPersistent();
+
+	/**
 	 * Directly saves the value to the configuration source without checking passwords
 	 *
 	 * @param key a existing config key

@@ -48,17 +48,18 @@ public class ConfigurationServlet extends HttpServlet {
 		if (configurationUpdatePassword == null) {
 			configurationUpdatePassword = "";
 		}
+
 		final String key = req.getParameter("key");
-		final String configurationSource = req.getParameter("configurationSource");
-		if (key != null && configurationSource != null) {
-			tryToSaveAndHandleErrors(req, resp, configurationUpdatePassword, key, configurationSource);
-		} else {
-			if (key == null) {
-				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'key'");
-			} else {
-				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'configurationSource'");
-			}
+		if (key == null) {
+			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'key'");
+			return;
 		}
+		final String configurationSource = req.getParameter("configurationSource");
+		if (configurationSource == null) {
+			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'configurationSource'");
+			return;
+		}
+		tryToSaveAndHandleErrors(req, resp, configurationUpdatePassword, key, configurationSource);
 	}
 
 	private void tryToSaveAndHandleErrors(HttpServletRequest req, HttpServletResponse resp, String configurationUpdatePassword, String key, String configurationSource) throws IOException {
