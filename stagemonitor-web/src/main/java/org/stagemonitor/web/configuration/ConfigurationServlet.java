@@ -44,11 +44,6 @@ public class ConfigurationServlet extends HttpServlet {
 			return;
 		}
 
-		String configurationUpdatePassword = req.getParameter(StageMonitor.STAGEMONITOR_PASSWORD);
-		if (configurationUpdatePassword == null) {
-			configurationUpdatePassword = "";
-		}
-
 		final String key = req.getParameter("key");
 		if (key == null) {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'key'");
@@ -59,7 +54,7 @@ public class ConfigurationServlet extends HttpServlet {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'configurationSource'");
 			return;
 		}
-		tryToSaveAndHandleErrors(req, resp, configurationUpdatePassword, key, configurationSource);
+		tryToSaveAndHandleErrors(req, resp, req.getParameter(StageMonitor.STAGEMONITOR_PASSWORD), key, configurationSource);
 	}
 
 	private void tryToSaveAndHandleErrors(HttpServletRequest req, HttpServletResponse resp, String configurationUpdatePassword, String key, String configurationSource) throws IOException {

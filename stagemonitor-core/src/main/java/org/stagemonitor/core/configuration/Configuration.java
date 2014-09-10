@@ -57,13 +57,18 @@ public class Configuration {
 	 */
 	public Configuration(Class<? extends ConfigurationOptionProvider> optionProviderClass,
 						 List<ConfigurationSource> configSources, String updateConfigPasswordKey) {
-		this.updateConfigPasswordKey = updateConfigPasswordKey;
-		configurationSources.addAll(configSources);
-		registerConfigurationOptions(optionProviderClass);
+		this(ServiceLoader.load(optionProviderClass), configSources, updateConfigPasswordKey);
 	}
 
-	private void registerConfigurationOptions(Class<? extends ConfigurationOptionProvider> optionProviderClass) {
-		for (ConfigurationOptionProvider configurationOptionProvider : ServiceLoader.load(optionProviderClass)) {
+	public Configuration(Iterable<? extends ConfigurationOptionProvider> optionProviders,
+						 List<ConfigurationSource> configSources, String updateConfigPasswordKey) {
+		this.updateConfigPasswordKey = updateConfigPasswordKey;
+		configurationSources.addAll(configSources);
+		registerConfigurationOptions(optionProviders);
+	}
+
+	private void registerConfigurationOptions(Iterable<? extends ConfigurationOptionProvider> optionProviders) {
+		for (ConfigurationOptionProvider configurationOptionProvider : optionProviders) {
 			try {
 				registerPluginConfiguration(configurationOptionProvider);
 			} catch (RuntimeException e) {
@@ -169,7 +174,9 @@ public class Configuration {
 	 */
 	public void save(String key, String value, String configurationSourceName, String configurationUpdatePassword) throws IOException,
 			IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
-
+		if (configurationUpdatePassword == null) {
+			configurationUpdatePassword = "";
+		}
 		String updateConfigPassword = getString(updateConfigPasswordKey);
 		if (updateConfigPassword == null) {
 			throw new IllegalStateException("Update configuration password is not set. " +
@@ -221,16 +228,7 @@ public class Configuration {
 				break;
 			}
 		}
-		if (property != null) {
-			return property.trim();
-		} else {
-			final ConfigurationOption<?> configurationOption = configurationOptionsByKey.get(key);
-			if (configurationOption == null) {
-				logger.error("Configuration option with key '{}' ist not registered!", key);
-				return null;
-			}
-			return configurationOption.getDefaultValueAsString();
-		}
+		return property;
 	}
 
 
