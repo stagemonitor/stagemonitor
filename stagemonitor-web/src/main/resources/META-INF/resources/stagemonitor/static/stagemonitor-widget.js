@@ -1,17 +1,43 @@
 $(document).ready(function() {
+	Handlebars.registerHelper('ifCond', function (v1, operator, v2, options) {
+		switch (operator) {
+			case '==':
+				return (v1 == v2) ? options.fn(this) : options.inverse(this);
+			case '===':
+				return (v1 === v2) ? options.fn(this) : options.inverse(this);
+			case '<':
+				return (v1 < v2) ? options.fn(this) : options.inverse(this);
+			case '<=':
+				return (v1 <= v2) ? options.fn(this) : options.inverse(this);
+			case '>':
+				return (v1 > v2) ? options.fn(this) : options.inverse(this);
+			case '>=':
+				return (v1 >= v2) ? options.fn(this) : options.inverse(this);
+			case '&&':
+				return (v1 && v2) ? options.fn(this) : options.inverse(this);
+			case '||':
+				return (v1 || v2) ? options.fn(this) : options.inverse(this);
+			default:
+				return options.inverse(this);
+		}
+	});
+	Handlebars.registerHelper('csv', function(items, options) {
+		return options.fn(items.join(', '));
+	});
 	var thresholdExceededGlobal = false;
 	var callTreeTemplate = Handlebars.compile($("#stagemonitor-calltree-template").html());
 	var metricsTemplate = Handlebars.compile($("#stagemonitor-request-template").html());
+	var configurationTemplate = Handlebars.compile($("#stagemonitor-configuration-template").html());
 
 	var processRequestsMetrics = function(requestData) {
 		var exceededThreshold = function(key, value) {
 			switch(key) {
 				case "executionCountDb":
-					return value > localStorage.getItem("stagemonitor-configuration-db-count-threshold");
+					return value > localStorage.getItem("widget-settings-db-count-threshold");
 				case "executionTime":
-					return value > localStorage.getItem("stagemonitor-configuration-execution-threshold-milliseconds");
+					return value > localStorage.getItem("widget-settings-execution-threshold-milliseconds");
 				case "error":
-					return value && localStorage.getItem("stagemonitor-configuration-notify-on-error") != "false";
+					return value && localStorage.getItem("widget-settings-notify-on-error") != "false";
 				default:
 					return false;
 			}
@@ -65,7 +91,7 @@ $(document).ready(function() {
 		};
 	};
 	var processCallTree = function(callTreeRows, callArray, parentId, myId, totalExecutionTimeInNs) {
-		var thresholdPercent = localStorage.getItem("stagemonitor-configuration-execution-threshold-percent");
+		var thresholdPercent = localStorage.getItem("widget-settings-execution-threshold-percent");
 		var totalExecutionTimeInMs = totalExecutionTimeInNs / 1000 / 1000;
 		for(var i = 0; i < callArray.length; i++) {
 			var callData = callArray[i];
@@ -97,11 +123,33 @@ $(document).ready(function() {
 	};
 
 	window.stagemonitor = {
-		initialize: function(data) {
+		initialize: function(data, configurationSources, configurationOptions, contextPathPrefix) {
 			var renderedMetricsTemplate = metricsTemplate(processRequestsMetrics(data));
 			var $stagemonitorRequest = $("#stagemonitor-request");
 			$stagemonitorRequest.html(renderedMetricsTemplate);
-			$stagemonitorRequest.find(".glyphicon-info-sign").tooltip();
+
+			var $configTab = $("#stagemonitor-configuration");
+			$configTab.html(configurationTemplate({configurationOptions: configurationOptions, configurationSources: configurationSources}));
+			$configTab.on("click", ".save-configuration", function () {
+				var $button = $(this);
+				$.post(contextPathPrefix + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
+					.done(function () {
+						$button.removeClass("btn-primary");
+						$button.nextAll(".submit-response-ok").show().fadeOut(3000, function () {
+							$button.addClass("btn-primary");
+						});
+					}).fail(function (xhr) {
+						$button.removeClass("btn-primary").addClass("btn-danger");
+						var errorSpan = $button.nextAll(".submit-response-failed");
+						errorSpan.html(xhr.responseText || 'Failed to save.');
+						errorSpan.show().fadeOut(4000, function () {
+							$button.removeClass("btn-danger").addClass("btn-primary");
+						});
+					});
+				return false;
+			});
+
+			$(".tip").tooltip();
 
 			if (data.callStackJson !== undefined) {
 				var callTree = JSON.parse(data.callStackJson);
@@ -141,9 +189,9 @@ $(document).ready(function() {
 		return false;
 	});
 
-	$("#stagemonitor-configuration-save").on("click", function() {
-		$("input[data-stagemonitor-configuration-key]").each(function() {
-			var key = $(this).attr("data-stagemonitor-configuration-key");
+	$("#widget-settings-save").on("click", function() {
+		$("input[data-widget-settings-key]").each(function() {
+			var key = $(this).attr("data-widget-settings-key");
 			if ($(this).attr("type") === "checkbox") {
 				var value = $(this).prop("checked");
 				localStorage.setItem(key, value);
@@ -152,18 +200,15 @@ $(document).ready(function() {
 				localStorage.setItem(key, value);
 			}
 		});
-		$("#stagemonitor-configuration-save").removeClass("btn-primary").addClass("btn-success");
-		$(".submit-response").show().fadeOut(3000, function () {
-			$("#stagemonitor-configuration-save").removeClass("btn-success").addClass("btn-primary");
-		});
+		$("#submit-response").show().fadeOut(3000);
 		return false;
 	});
 
-	$("input[data-stagemonitor-configuration-key]").each(function() {
-		var key = $(this).attr("data-stagemonitor-configuration-key");
+	$("input[data-widget-settings-key]").each(function() {
+		var key = $(this).attr("data-widget-settings-key");
 		var value = localStorage.getItem(key);
 		if (value == null) {
-			var defaultValue = $(this).attr("data-stagemonitor-configuration-default-value");
+			var defaultValue = $(this).attr("data-widget-settings-default-value");
 			value = defaultValue;
 			localStorage.setItem(key, defaultValue);
 		}
@@ -185,6 +230,23 @@ $(document).ready(function() {
 		var $input = $(this).parent().prev();
 		$input.val( parseInt($input.val(), 10) - 1);
 		return false;
+	});
+
+	// serialize checkboxes as true/false
+	var originalSerializeArray = $.fn.serializeArray;
+	$.fn.extend({
+		serializeArray: function () {
+			var brokenSerialization = originalSerializeArray.apply(this);
+			var checkboxValues = $(this).find('input[type=checkbox]').map(function () {
+				return { 'name': this.name, 'value': this.checked };
+			}).get();
+			var checkboxKeys = $.map(checkboxValues, function (element) { return element.name; });
+			var withoutCheckboxes = $.grep(brokenSerialization, function (element) {
+				return $.inArray(element.name, checkboxKeys) == -1;
+			});
+
+			return $.merge(withoutCheckboxes, checkboxValues);
+		}
 	});
 
 	window.parent.StageMonitorLoaded();

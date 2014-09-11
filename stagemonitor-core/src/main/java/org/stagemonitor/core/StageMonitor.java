@@ -8,13 +8,19 @@ import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationSource;
+import org.stagemonitor.core.configuration.PropertyFileConfigurationSource;
+import org.stagemonitor.core.configuration.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +29,7 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 
 public final class StageMonitor {
 
+	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
 	private static Logger logger = LoggerFactory.getLogger(StageMonitor.class);
 	private static Configuration configuration;
 	private static volatile boolean started;
@@ -36,7 +43,7 @@ public final class StageMonitor {
 	}
 
 	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
-		if (!configuration.isStagemonitorActive()) {
+		if (!getConfiguration(CorePlugin.class).isStagemonitorActive()) {
 			logger.info("stagemonitor is deactivated");
 			started = true;
 		}
@@ -58,23 +65,24 @@ public final class StageMonitor {
 	}
 
 	private static void start(MeasurementSession measurementSession) {
-		initializePlugins();
-		RegexMetricFilter regexFilter = new RegexMetricFilter(configuration.getExcludedMetricsPatterns());
+		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
+		initializePlugins(corePlugin);
+		RegexMetricFilter regexFilter = new RegexMetricFilter(corePlugin.getExcludedMetricsPatterns());
 		getMetricRegistry().removeMatching(regexFilter);
 
 		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
 
-		reportToGraphite(configuration.getGraphiteReportingInterval(), measurementSession, allFilters);
-		reportToConsole(configuration.getConsoleReportingInterval(), allFilters);
-		if (configuration.reportToJMX()) {
+		reportToGraphite(corePlugin.getGraphiteReportingInterval(), measurementSession, allFilters, corePlugin);
+		reportToConsole(corePlugin.getConsoleReportingInterval(), allFilters);
+		if (corePlugin.reportToJMX()) {
 			reportToJMX(allFilters);
 		}
 		logger.info("Measurement Session is initialized: " + measurementSession);
 		started = true;
 	}
 
-	private static void initializePlugins() {
-		final Collection<String> disabledPlugins = configuration.getDisabledPlugins();
+	private static void initializePlugins(CorePlugin corePlugin) {
+		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
 		for (StageMonitorPlugin stagemonitorPlugin : ServiceLoader.load(StageMonitorPlugin.class)) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 
@@ -96,15 +104,16 @@ public final class StageMonitor {
 		return SharedMetricRegistries.getOrCreate("stagemonitor");
 	}
 
-	private static void reportToGraphite(long reportingInterval, MeasurementSession measurementSession, MetricFilter filter) {
-		String graphiteHostName = configuration.getGraphiteHostName();
+	private static void reportToGraphite(long reportingInterval, MeasurementSession measurementSession,
+										 MetricFilter filter, CorePlugin corePlugin) {
+		String graphiteHostName = corePlugin.getGraphiteHostName();
 		if (graphiteHostName != null && !graphiteHostName.isEmpty()) {
 			GraphiteReporter.forRegistry(getMetricRegistry())
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
 					.filter(filter)
-					.build(new Graphite(new InetSocketAddress(graphiteHostName, configuration.getGraphitePort())))
+					.build(new Graphite(new InetSocketAddress(graphiteHostName, corePlugin.getGraphitePort())))
 					.start(reportingInterval, TimeUnit.SECONDS);
 		}
 	}
@@ -137,6 +146,10 @@ public final class StageMonitor {
 		return configuration;
 	}
 
+	public static <T extends StageMonitorPlugin> T getConfiguration(Class<T> plugin) {
+		return configuration.getConfig(plugin);
+	}
+
 	static void setConfiguration(Configuration configuration) {
 		StageMonitor.configuration = configuration;
 	}
@@ -157,7 +170,15 @@ public final class StageMonitor {
 	 * Should only be used by the internal unit tests
 	 */
 	public static void reset() {
-		configuration = new Configuration();
+		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
+		configurationSources.add(new SystemPropertyConfigurationSource());
+		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
+		if (stagemonitorPropertyOverridesLocation != null) {
+			logger.info("try loading of default property overrides: '" + stagemonitorPropertyOverridesLocation + "'");
+			configurationSources.add(new PropertyFileConfigurationSource(stagemonitorPropertyOverridesLocation));
+		}
+		configurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
+		configuration = new Configuration(StageMonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
 		started = false;
 		measurementSession = new MeasurementSession(null, null, null);
 	}

@@ -1,87 +1,103 @@
-<script src="../../main/resources/META-INF/resources/stagemonitor/static/jquery.1.11.1.min.js"></script>
 <script type="text/javascript">
-	(function($) {
-		window.StageMonitorLoaded = function() {
-			$(document).ready(function() {
-				$("#stagemonitor-modal").load(function() {
-					var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
-
-					$.extend(stagemonitorWindow.stagemonitor, {
-						openOverlay: function() {
-							$("#stagemonitor-overlay").show();
-						},
-						closeOverlay: function() {
-							$("#stagemonitor-overlay").hide();
+	(function () {
+		window.StageMonitorLoaded = function () {
+			var executeOnDomReady = [],
+					isDomReady = function () {
+						return document.readyState === "interactive";
+					},
+					executeCallbacksOnceIfDomReady = function () {
+						if (isDomReady()) {
+							while (executeOnDomReady.length > 0) {
+								var fn = executeOnDomReady.pop();
+								fn();
+							}
 						}
-					});
+					};
 
-					var data = {"name":"Show Owner","executionTime":19,"executionTimeDb":1,"executionCountDb":3,"executionTimeCpu":31,"error":false,"parameter":"","clientIp":"127.0.0.1","url":"/petclinic/owners/2.html","statusCode":200,"headers":{"cache-control":"max-age=0","connection":"keep-alive","accept-language":"de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4","host":"localhost:8888","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8","user-agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36","accept-encoding":"gzip,deflate,sdch","referer":"http://localhost:8888/petclinic/owners.html?lastName="},"method":"GET","userAgent":{"type":"Browser","device":"Personal computer","os":"Windows 7","osFamily":"Windows","osVersion":"6.1","browser":"Chrome","browserVersion":"36.0.1985.143"},"callStackJson":"{\"signature\":\"total\",\"executionTime\":17963684,\"children\":[{\"signature\":\"void org.springframework.web.servlet.FrameworkServlet.service(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17887032,\"children\":[{\"signature\":\"void org.springframework.web.servlet.FrameworkServlet.doGet(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17878840,\"children\":[{\"signature\":\"void org.springframework.web.servlet.DispatcherServlet.doService(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17771175,\"children\":[{\"signature\":\"void org.springframework.web.servlet.DispatcherServlet.doDispatch(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17745136,\"children\":[{\"signature\":\"ModelAndView org.springframework.samples.petclinic.web.OwnerController.showOwner(int)\",\"executionTime\":8723212,\"children\":[{\"signature\":\"Owner org.springframework.samples.petclinic.service.ClinicServiceImpl.findOwnerById(int)\",\"executionTime\":7555865,\"children\":[{\"signature\":\"Owner org.springframework.samples.petclinic.repository.jpa.JpaOwnerRepositoryImpl.findById(int)\",\"executionTime\":7486234,\"children\":[{\"signature\":\"select owner0_.id as id1_0_0_, pets1_.id as id1_1_1_, owner0_.first_name as first_na2_0_0_, owner0_.last_name as last_nam3_0_0_, owner0_.address as address4_0_0_, owner0_.city as city5_0_0_, owner0_.telephone as telephon6_0_0_, pets1_.name as name2_1_1_, pets1_.birth_date as birth_da3_1_1_, pets1_.owner_id as owner_id4_1_1_, pets1_.type_id as type_id5_1_1_, pets1_.owner_id as owner_id4_0_0__, pets1_.id as id1_1_0__ from owners owner0_ left outer join pets pets1_ on owner0_.id=pets1_.owner_id where owner0_.id=?\",\"executionTime\":1000000,\"children\":[],\"netExecutionTime\":1000000},{\"signature\":\"select pettype0_.id as id1_3_0_, pettype0_.name as name2_3_0_ from types pettype0_ where pettype0_.id=?\",\"executionTime\":0,\"children\":[],\"netExecutionTime\":0},{\"signature\":\"select visits0_.pet_id as pet_id4_1_0_, visits0_.id as id1_6_0_, visits0_.id as id1_6_1_, visits0_.visit_date as visit_da2_6_1_, visits0_.description as descript3_6_1_, visits0_.pet_id as pet_id4_6_1_ from visits visits0_ where visits0_.pet_id=?\",\"executionTime\":0,\"children\":[],\"netExecutionTime\":0}],\"netExecutionTime\":6486234}],\"netExecutionTime\":69631}],\"netExecutionTime\":1167347},{\"signature\":\"View org.springframework.web.servlet.view.ContentNegotiatingViewResolver.resolveViewName(String, Locale)\",\"executionTime\":267992,\"children\":[],\"netExecutionTime\":267992},{\"signature\":\"void org.springframework.web.servlet.view.AbstractView.render(Map, HttpServletRequest, HttpServletResponse)\",\"executionTime\":7218827,\"children\":[],\"netExecutionTime\":7218827}],\"netExecutionTime\":1535105}],\"netExecutionTime\":26039}],\"netExecutionTime\":107665}],\"netExecutionTime\":8192}],\"netExecutionTime\":76652}","@timestamp":"2014-08-23T13:11:50.796+0200","@application":"Spring PetClinic","@host":"Felix-PC","@instance":"localhost"};
-					stagemonitorWindow.stagemonitor.initialize(data);
-					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
-					var $overlay = $("#stagemonitor-overlay-show");
-					$overlay.addClass(
-							thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok");
-					$overlay.on("click", stagemonitorWindow.stagemonitor.openOverlay);
-				});
+			executeOnDomReady.push(function () {
+				var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow,
+					stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
+					stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
+					data = {"name":"Show Owner","executionTime":19,"executionTimeDb":1,"executionCountDb":3,"executionTimeCpu":31,"error":false,"parameter":"","clientIp":"127.0.0.1","url":"/petclinic/owners/2.html","statusCode":200,"headers":{"cache-control":"max-age=0","connection":"keep-alive","accept-language":"de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4","host":"localhost:8888","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8","user-agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36","accept-encoding":"gzip,deflate,sdch","referer":"http://localhost:8888/petclinic/owners.html?lastName="},"method":"GET","userAgent":{"type":"Browser","device":"Personal computer","os":"Windows 7","osFamily":"Windows","osVersion":"6.1","browser":"Chrome","browserVersion":"36.0.1985.143"},"callStackJson":"{\"signature\":\"total\",\"executionTime\":17963684,\"children\":[{\"signature\":\"void org.springframework.web.servlet.FrameworkServlet.service(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17887032,\"children\":[{\"signature\":\"void org.springframework.web.servlet.FrameworkServlet.doGet(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17878840,\"children\":[{\"signature\":\"void org.springframework.web.servlet.DispatcherServlet.doService(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17771175,\"children\":[{\"signature\":\"void org.springframework.web.servlet.DispatcherServlet.doDispatch(HttpServletRequest, HttpServletResponse)\",\"executionTime\":17745136,\"children\":[{\"signature\":\"ModelAndView org.springframework.samples.petclinic.web.OwnerController.showOwner(int)\",\"executionTime\":8723212,\"children\":[{\"signature\":\"Owner org.springframework.samples.petclinic.service.ClinicServiceImpl.findOwnerById(int)\",\"executionTime\":7555865,\"children\":[{\"signature\":\"Owner org.springframework.samples.petclinic.repository.jpa.JpaOwnerRepositoryImpl.findById(int)\",\"executionTime\":7486234,\"children\":[{\"signature\":\"select owner0_.id as id1_0_0_, pets1_.id as id1_1_1_, owner0_.first_name as first_na2_0_0_, owner0_.last_name as last_nam3_0_0_, owner0_.address as address4_0_0_, owner0_.city as city5_0_0_, owner0_.telephone as telephon6_0_0_, pets1_.name as name2_1_1_, pets1_.birth_date as birth_da3_1_1_, pets1_.owner_id as owner_id4_1_1_, pets1_.type_id as type_id5_1_1_, pets1_.owner_id as owner_id4_0_0__, pets1_.id as id1_1_0__ from owners owner0_ left outer join pets pets1_ on owner0_.id=pets1_.owner_id where owner0_.id=?\",\"executionTime\":1000000,\"children\":[],\"netExecutionTime\":1000000},{\"signature\":\"select pettype0_.id as id1_3_0_, pettype0_.name as name2_3_0_ from types pettype0_ where pettype0_.id=?\",\"executionTime\":0,\"children\":[],\"netExecutionTime\":0},{\"signature\":\"select visits0_.pet_id as pet_id4_1_0_, visits0_.id as id1_6_0_, visits0_.id as id1_6_1_, visits0_.visit_date as visit_da2_6_1_, visits0_.description as descript3_6_1_, visits0_.pet_id as pet_id4_6_1_ from visits visits0_ where visits0_.pet_id=?\",\"executionTime\":0,\"children\":[],\"netExecutionTime\":0}],\"netExecutionTime\":6486234}],\"netExecutionTime\":69631}],\"netExecutionTime\":1167347},{\"signature\":\"View org.springframework.web.servlet.view.ContentNegotiatingViewResolver.resolveViewName(String, Locale)\",\"executionTime\":267992,\"children\":[],\"netExecutionTime\":267992},{\"signature\":\"void org.springframework.web.servlet.view.AbstractView.render(Map, HttpServletRequest, HttpServletResponse)\",\"executionTime\":7218827,\"children\":[],\"netExecutionTime\":7218827}],\"netExecutionTime\":1535105}],\"netExecutionTime\":26039}],\"netExecutionTime\":107665}],\"netExecutionTime\":8192}],\"netExecutionTime\":76652}","@timestamp":"2014-08-23T13:11:50.796+0200","@application":"Spring PetClinic","@host":"Felix-PC","@instance":"localhost"},
+					configurationSources = {"Dynamic Configuration Source":true,"Java System Properties":false,"stagemonitor.properties":true},
+					configurationOptions = {"Spring MVC Plugin":[{"dynamic":true,"key":"stagemonitor.requestmonitor.spring.monitorOnlySpringMvcRequests","label":"Monitor only SpringMVC requests","description":"Whether or not requests should be ignored, if they will not be handled by a Spring MVC controller method.\nThis is handy, if you are not interested in the performance of serving static files. Setting this to <code>true</code> can also significantly reduce the amount of files (and thus storing space) Graphite will allocate.","defaultValueAsString":"false","pluginName":"Spring MVC Plugin","valueType":"Boolean","valueAsString":"false","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null}],"EhCache Plugin":[{"dynamic":false,"key":"stagemonitor.ehcache.name","label":"EhCache cache name","description":"The name of the ehcache to instrument (the value of the 'name' attribute of the 'ehcache' tag in ehcache.xml)","defaultValueAsString":null,"pluginName":"EhCache Plugin","valueType":"String","valueAsString":null,"nameOfCurrentConfigurationSource":"Default Value","errorMessage":null}],"Web Plugin":[{"dynamic":true,"key":"stagemonitor.requestmonitor.http.collectHeaders","label":"Collect HTTP headers","description":"Whether or not HTTP headers should be collected with a call stack.","defaultValueAsString":"true","pluginName":"Web Plugin","valueType":"Boolean","valueAsString":"true","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.requestmonitor.http.parseUserAgent","label":"Analyze user agent","description":"Whether or not the user-agent header should be parsed and analyzed to get information about the browser, device type and operating system.","defaultValueAsString":"true","pluginName":"Web Plugin","valueType":"Boolean","valueAsString":"true","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.requestmonitor.http.headers.excluded","label":"Do not collect headers","description":"A list of (case insensitive) header names that should not be collected.","defaultValueAsString":"cookie, authorization","pluginName":"Web Plugin","valueType":"Collection","valueAsString":"cookie, authorization","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.requestmonitor.http.requestparams.confidential.regex","label":"Confidential request parameters (regex)","description":"A list of request parameter name patterns that should not be collected.\nA request parameter is either a query string or a application/x-www-form-urlencoded request body (POST form content)","defaultValueAsString":"(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*","pluginName":"Web Plugin","valueType":"List","valueAsString":"(?i).*pass.*, (?i).*credit.*, (?i).*pwd.*","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.web.widget.enabled","label":"In browser widget enabled","description":"If active, stagemonitor will inject a widget in the web site containing the calltrace metrics.\nRequires Servlet-Api >= 3.0","defaultValueAsString":"false","pluginName":"Web Plugin","valueType":"Boolean","valueAsString":"false","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.groupUrls","label":"Group URLs regex","description":"Combine url paths by regex to a single url group.\nE.g. '(.*).js: *.js' combines all URLs that end with .js to a group named *.js. The metrics for all URLs matching the pattern are consolidated and shown in one row in the request table. The syntax is '<regex>: <group name>[, <regex>: <group name>]*'","defaultValueAsString":"(.*).js$: *.js,\n(.*).css$: *.css,\n(.*).jpg$: *.jpg,\n(.*).jpeg$: *.jpeg,\n(.*).png$: *.png","pluginName":"Web Plugin","valueType":"Map","valueAsString":"(.*).js$: *.js,\n(.*).css$: *.css,\n(.*).jpg$: *.jpg,\n(.*).jpeg$: *.jpeg,\n(.*).png$: *.png","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null}],"Request Monitor Plugin":[{"dynamic":false,"key":"stagemonitor.requestmonitor.noOfWarmupRequests","label":"Number of warmup requests","description":"the minimum number of requests that have to be issued against the application before metrics are collected","defaultValueAsString":"0","pluginName":"Request Monitor Plugin","valueType":"Integer","valueAsString":"0","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.requestmonitor.warmupSeconds","label":"Number of warmup seconds","description":"A timespan in seconds after the start of the server where no metrics are collected.","defaultValueAsString":"0","pluginName":"Request Monitor Plugin","valueType":"Integer","valueAsString":"0","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.requestmonitor.collectRequestStats","label":"Collect request stats","description":"Whether or not metrics about requests (Call Stacks, response times, errors status codes) should be collected.","defaultValueAsString":"true","pluginName":"Request Monitor Plugin","valueType":"Boolean","valueAsString":"true","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.requestmonitor.cpuTime","label":"Collect CPU time","description":"Whether or not a timer for the cpu time of executions should be created.","defaultValueAsString":"false","pluginName":"Request Monitor Plugin","valueType":"Boolean","valueAsString":"false","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.profiler.minExecutionTimeNanos","label":"Min execution time (nanos)","description":"The minimal inclusive execution time in nanoseconds of a method to be included in a call stack.","defaultValueAsString":"100000","pluginName":"Request Monitor Plugin","valueType":"Long","valueAsString":"100000","nameOfCurrentConfigurationSource":"Default Value","errorMessage":"Error in stagemonitor.properties: Can't convert '1ms' to Long."},{"dynamic":true,"key":"stagemonitor.profiler.callStackEveryXRequestsToGroup","label":"Gather call tree every x requests to URL group","description":"Defines after how many requests to a URL group a call tree should be collected.","defaultValueAsString":"1","pluginName":"Request Monitor Plugin","valueType":"Integer","valueAsString":"1","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.profiler.logCallStacks","label":"Log call tree","description":"Whether or not call stacks should be logged.","defaultValueAsString":"true","pluginName":"Request Monitor Plugin","valueType":"Boolean","valueAsString":"true","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.requestmonitor.requestTraceTTL","label":"Request trace ttl","description":"When set, call stacks will be deleted automatically after the specified interval\nIn case you do not specify a time unit like d (days), m (minutes), h (hours), ms (milliseconds) or w (weeks), milliseconds is used as default unit.","defaultValueAsString":"1w","pluginName":"Request Monitor Plugin","valueType":"String","valueAsString":"1w","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.jdbc.collectDbTimePerRequest","label":"Collect db time per request group","description":"Whether or not db execution time should be collected per request group\nIf set to true, a timer will be created for each request to record the total db time per request.","defaultValueAsString":"false","pluginName":"Request Monitor Plugin","valueType":"Boolean","valueAsString":"false","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null}],"Core":[{"dynamic":true,"key":"stagemonitor.active","label":"Activate stagemonitor","description":"If set to 'false' stagemonitor will be completely deactivated.","defaultValueAsString":"true","pluginName":"Core","valueType":"Boolean","valueAsString":"true","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.internal.monitoring","label":"Internal monitoring","description":"If active, stagemonitor will collect internal performance data","defaultValueAsString":"false","pluginName":"Core","valueType":"Boolean","valueAsString":"false","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.reporting.interval.console","label":"Reporting interval console","description":"The amount of time between console reports (in seconds). To deactivate console reports, set this to a value below 1.","defaultValueAsString":"60","pluginName":"Core","valueType":"Integer","valueAsString":"60","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.reporting.jmx","label":"Expose MBeans","description":"Whether or not to expose all metrics as MBeans.","defaultValueAsString":"true","pluginName":"Core","valueType":"Boolean","valueAsString":"true","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.reporting.interval.graphite","label":"Reporting interval graphite","description":"The amount of time between the metrics are reported to graphite (in seconds).\nTo deactivate graphite reporting, set this to a value below 1, or don't provide stagemonitor.reporting.graphite.hostName.","defaultValueAsString":"60","pluginName":"Core","valueType":"Integer","valueAsString":"60","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.reporting.graphite.hostName","label":"Graphite host name","description":"The name of the host where graphite is running. This setting is mandatory, if you want to use the grafana dashboards.","defaultValueAsString":null,"pluginName":"Core","valueType":"String","valueAsString":null,"nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.reporting.graphite.port","label":"Carbon port","description":"The port where carbon is listening.","defaultValueAsString":"2003","pluginName":"Core","valueType":"Integer","valueAsString":"2003","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.applicationName","label":"Application name","description":"The name of the application.\nEither this property or the display-name in web.xml is mandatory!","defaultValueAsString":null,"pluginName":"Core","valueType":"String","valueAsString":null,"nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.instanceName","label":"Instance name","description":"The instance name.\nIf this property is not set, the instance name set to the first request's javax.servlet.ServletRequest#getServerName()\nThat means that the collection of metrics does not start before the first request is executed!","defaultValueAsString":null,"pluginName":"Core","valueType":"String","valueAsString":null,"nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.elasticsearch.url","label":"Elasticsearch URL","description":"The URL of the elasticsearch server that stores the call stacks. If the URL is not provided, the call stacks won't get stored.","defaultValueAsString":null,"pluginName":"Core","valueType":"String","valueAsString":null,"nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.metrics.excluded.pattern","label":"Excluded metrics (regex)","description":"A comma separated list of metric names that should not be collected.","defaultValueAsString":"","pluginName":"Core","valueType":"List","valueAsString":"","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":false,"key":"stagemonitor.plugins.disabled","label":"Disabled plugins","description":"A comma separated list of plugin names (the simple class name) that should not be active.","defaultValueAsString":"","pluginName":"Core","valueType":"Collection","valueAsString":"","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null}],"JDBC Plugin":[{"dynamic":false,"key":"stagemonitor.profiler.jdbc.collectSql","label":"Collect SQLs in call tree","description":"Whether or not sql statements should be included in the call stack.","defaultValueAsString":"true","pluginName":"JDBC Plugin","valueType":"Boolean","valueAsString":"true","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null},{"dynamic":true,"key":"stagemonitor.profiler.jdbc.collectPreparedStatementParameters","label":"Collect prepared statement parameters","description":"Whether or not the prepared statement placeholders (?) should be replaced with the actual parameters.","defaultValueAsString":"false","pluginName":"JDBC Plugin","valueType":"Boolean","valueAsString":"false","nameOfCurrentConfigurationSource":"Default Value","errorMessage":null}]};
+
+
+				stagemonitorWindow.stagemonitor.openOverlay = function () {
+					stagemonitorOverlay.style.display = "block";
+				};
+
+				stagemonitorWindow.stagemonitor.closeOverlay = function () {
+					stagemonitorOverlay.style.display = "none";
+				};
+
+				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "");
+				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+				var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
+				stagemonitorOverlayShow.classList.add(clazz);
+				stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
 			});
-		}
-	})(jQuery.noConflict(true));
+
+			document.onreadystatechange = executeCallbacksOnceIfDomReady;
+			executeCallbacksOnceIfDomReady();
+		};
+	}());
 </script>
 <style>
 	#stagemonitor-overlay {
-	display: none;
-	position: fixed;
-	background-color: rgba(0, 0, 0, 0.5);
-	width: 100%;
-	height: 100%;
-	z-index: 100;
-	top: 0;
-	left: 0;
+		display: none;
+		position: fixed;
+		background-color: rgba(0, 0, 0, 0.5);
+		width: 100%;
+		height: 100%;
+		z-index: 100000;
+		top: 0;
+		left: 0;
 	}
 
 	#stagemonitor-overlay-show {
-	position: fixed;
-	right: 3em;
-	bottom: 3em;
-	border-radius: 1em;
-	padding: 0.5em;
-	cursor: pointer;
+		position: fixed;
+		right: 3em;
+		bottom: 3em;
+		border-radius: 1em;
+		padding: 0.5em;
+		cursor: pointer;
 	}
 
 	.stagemonitor-threshold-ok {
-	background-color: rgba(0, 0, 0, 0.5);
+		background-color: rgba(0, 0, 0, 0.5);
 	}
 
 	.stagemonitor-threshold-exceeded {
-	-webkit-animation: togglebackground 4s infinite;
-	animation: togglebackground 4s infinite;
+		-webkit-animation: togglebackground 4s infinite;
+		animation: togglebackground 4s infinite;
 	}
 
 	@-webkit-keyframes togglebackground {
-	0%   {background-color: rgba(0, 0, 0, 0.5);}
-	30%  {background-color: #bf3636}
-	60%  {background-color: #bf3636}
-	100% {background-color: rgba(0, 0, 0, 0.5);}
+		0%   {background-color: rgba(0, 0, 0, 0.5);}
+		30%  {background-color: #bf3636}
+		60%  {background-color: #bf3636}
+		100% {background-color: rgba(0, 0, 0, 0.5);}
 	}
 
 	@keyframes togglebackground {
-	0%   {background-color: rgba(0, 0, 0, 0.5);}
-	30%  {background-color: #bf3636}
-	60%  {background-color: #bf3636}
-	100% {background-color: rgba(0, 0, 0, 0.5);}
+		0%   {background-color: rgba(0, 0, 0, 0.5);}
+		30%  {background-color: #bf3636}
+		60%  {background-color: #bf3636}
+		100% {background-color: rgba(0, 0, 0, 0.5);}
 	}
 
 	#stagemonitor-modal {
-	border: 1px solid rgba(0, 0, 0, 0.2);
-	border-radius: 6px;
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-	height: 80%;
-	left: 50%;
-	margin-left: -45%;
-	min-width: 1000px;
-	position: fixed;
-	top: 10%;
-	width: 90%;
+		border: 1px solid rgba(0, 0, 0, 0.2);
+		border-radius: 6px;
+		box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+		height: 80%;
+		left: 50%;
+		margin-left: -45%;
+		min-width: 1000px;
+		position: fixed;
+		top: 10%;
+		width: 90%;
 	}
 </style>
 

@@ -4,6 +4,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StageMonitor;
 
 import javax.sql.DataSource;
@@ -12,7 +13,7 @@ import java.sql.Connection;
 @Aspect
 public class ConnectionMonitorAspect {
 
-	private static final boolean ACTIVE = ConnectionMonitor.isActive(StageMonitor.getConfiguration());
+	private static final boolean ACTIVE = ConnectionMonitor.isActive(StageMonitor.getConfiguration(CorePlugin.class));
 
 	private ConnectionMonitor connectionMonitor;
 

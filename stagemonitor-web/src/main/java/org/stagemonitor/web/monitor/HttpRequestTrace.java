@@ -5,6 +5,7 @@ import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.web.WebPlugin;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -101,7 +102,7 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	private UserAgentInformation getUserAgentInformation(Map<String, String> headers) {
-		if (headers != null && StageMonitor.getConfiguration().isParseUserAgent()) {
+		if (headers != null && StageMonitor.getConfiguration(WebPlugin.class).isParseUserAgent()) {
 			final String userAgentHeader = headers.get("user-agent");
 			if (userAgentHeader != null) {
 				ReadableUserAgent readableUserAgent = userAgentCache.get(userAgentHeader);

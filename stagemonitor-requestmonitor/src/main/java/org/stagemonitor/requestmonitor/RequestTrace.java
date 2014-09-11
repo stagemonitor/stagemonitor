@@ -3,14 +3,11 @@ package org.stagemonitor.requestmonitor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 import java.io.PrintWriter;
@@ -23,12 +20,6 @@ import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestTrace {
-
-	private static final ObjectMapper MAPPER = new ObjectMapper();
-
-	static {
-		MAPPER.registerModule(new AfterburnerModule());
-	}
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -98,11 +89,8 @@ public class RequestTrace {
 		return callStack.toString(true);
 	}
 
-	public String getCallStackJson() throws JsonProcessingException {
-		if (callStack == null) {
-			return null;
-		}
-		return MAPPER.writeValueAsString(callStack);
+	public String getCallStackJson() {
+		return JsonUtils.toJson(callStack);
 	}
 
 	public String getName() {
@@ -236,9 +224,7 @@ public class RequestTrace {
 	}
 
 	public String toJson() {
-		final ObjectNode jsonNode = MAPPER.valueToTree(this);
-		jsonNode.remove("callStack");
-		return jsonNode.toString();
+		return JsonUtils.toJson(this, "callStack");
 	}
 
 	@Override

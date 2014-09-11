@@ -6,8 +6,9 @@ import com.p6spy.engine.spy.P6SpyLoadableOptions;
 import com.p6spy.engine.spy.P6SpyOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.jdbc.p6spy.P6SpyMultiLogger;
 import org.stagemonitor.jdbc.p6spy.StagemonitorP6Logger;
@@ -27,7 +28,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 
 public class ConnectionMonitor {
 
-	private static final boolean ACTIVE = ConnectionMonitor.isActive(StageMonitor.getConfiguration());
+	private static final boolean ACTIVE = ConnectionMonitor.isActive(StageMonitor.getConfiguration(CorePlugin.class));
 
 	private final Logger logger = LoggerFactory.getLogger(ConnectionMonitor.class);
 
@@ -40,7 +41,7 @@ public class ConnectionMonitor {
 	public ConnectionMonitor(Configuration configuration, MetricRegistry metricRegistry) {
 		this.metricRegistry = metricRegistry;
 
-		if (ACTIVE && StageMonitor.getConfiguration().collectSql()) {
+		if (ACTIVE && configuration.getConfig(JdbcPlugin.class).isCollectSql()) {
 			unregisterP6SpyMBeans();
 			P6SpyLoadableOptions options = P6SpyOptions.getActiveInstance();
 			addStagemonitorLogger(configuration, options);
@@ -94,8 +95,8 @@ public class ConnectionMonitor {
 		return dataSource;
 	}
 
-	public static boolean isActive(Configuration configuration) {
-		return !configuration.getDisabledPlugins().contains(JdbcPlugin.class.getSimpleName()) &&
-				configuration.isStagemonitorActive();
+	public static boolean isActive(CorePlugin corePlugin) {
+		return !corePlugin.getDisabledPlugins().contains(JdbcPlugin.class.getSimpleName()) &&
+				corePlugin.isStagemonitorActive();
 	}
 }

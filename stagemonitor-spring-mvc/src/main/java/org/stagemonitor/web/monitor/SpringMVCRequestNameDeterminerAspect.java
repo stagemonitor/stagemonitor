@@ -4,23 +4,31 @@ import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.web.servlet.HandlerExecutionChain;
-import org.stagemonitor.core.Configuration;
 import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.springmvc.SpringMvcPlugin;
+import org.stagemonitor.web.WebPlugin;
 
 import javax.servlet.http.HttpServletRequest;
 
 @Aspect
 public class SpringMVCRequestNameDeterminerAspect {
 
-	private final Configuration configuration;
+	private final SpringMvcPlugin mvcConfig;
+	private final WebPlugin webPlugin;
 
 	public SpringMVCRequestNameDeterminerAspect() {
 		this(StageMonitor.getConfiguration());
 	}
 
 	public SpringMVCRequestNameDeterminerAspect(Configuration configuration) {
-		this.configuration = configuration;
+		this(configuration.getConfig(SpringMvcPlugin.class), configuration.getConfig(WebPlugin.class));
+	}
+
+	public SpringMVCRequestNameDeterminerAspect(SpringMvcPlugin mvcConfig, WebPlugin webPlugin) {
+		this.mvcConfig = mvcConfig;
+		this.webPlugin = webPlugin;
 	}
 
 	@Pointcut("execution(* org.springframework.web.servlet.DispatcherServlet+.getHandler(javax.servlet.http.HttpServletRequest))")
@@ -40,8 +48,8 @@ public class SpringMVCRequestNameDeterminerAspect {
 		if (handler != null) {
 			requestName = SpringMonitoredHttpRequest.getRequestNameFromHandler(handler);
 		}
-		if (requestName.isEmpty() && !configuration.isMonitorOnlySpringMvcRequests()) {
-			requestName = MonitoredHttpRequest.getRequestNameByRequest(request , configuration);
+		if (requestName.isEmpty() && !mvcConfig.isMonitorOnlySpringMvcRequests()) {
+			requestName = MonitoredHttpRequest.getRequestNameByRequest(request , webPlugin);
 		}
 		RequestMonitor.getRequest().setName(requestName);
 	}

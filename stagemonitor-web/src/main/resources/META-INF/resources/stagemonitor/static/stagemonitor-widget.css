@@ -107,3 +107,7 @@ body {
 .expander {
 	margin-left: -19px;
 }
+
+.wide-tooltip div.tooltip-inner {
+	max-width: 500px;
+}

@@ -2,13 +2,13 @@ package org.stagemonitor.core.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Configuration;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
+import org.stagemonitor.core.util.JsonUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,10 +29,8 @@ import java.util.jar.Manifest;
 public class RestClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(RestClient.class);
-	private static final ObjectMapper MAPPER = new ObjectMapper();
 	private static final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
 	private static final String TITLE = "title";
-	private static final Configuration configuration = StageMonitor.getConfiguration();
 
 	private static final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
 			new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
@@ -46,8 +44,7 @@ public class RestClient {
 	});
 
 	static {
-		MAPPER.registerModule(new AfterburnerModule());
-		if (StageMonitor.getConfiguration().isInternalMonitoringActive()) {
+		if (StageMonitor.getConfiguration(CorePlugin.class).isInternalMonitoringActive()) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, StageMonitor.getMetricRegistry());
 		}
@@ -82,7 +79,7 @@ public class RestClient {
 					os.write(buf, 0, n);
 				}
 			} else {
-				MAPPER.writeValue(os, requestBody);
+				JsonUtils.writeJsonToOutputStream(requestBody, os);
 			}
 			os.flush();
 		}
@@ -99,14 +96,14 @@ public class RestClient {
 		}
 	}
 
-	public static  void sendCallStackAsync(final Object requestTrace, final String requestTraceId, final String serverUrl) {
+	public static  void sendCallStackAsync(final Object requestTrace, final String requestTraceId,
+										   final String serverUrl, final String ttl) {
 		asyncRestPool.execute(new Runnable() {
 			@Override
 			public void run() {
 				final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
 				dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 				String path = String.format("/stagemonitor-%s/executions/%s", dateFormat.format(new Date()), requestTraceId);
-				final String ttl = configuration.getCallStacksTimeToLive();
 				if (ttl != null && !ttl.isEmpty()) {
 					path += "?ttl=" + ttl;
 				}
@@ -136,10 +133,11 @@ public class RestClient {
 	}
 
 	static ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
+		final ObjectMapper mapper = JsonUtils.getMapper();
 		final InputStream dashboardStram = RestClient.class.getClassLoader().getResourceAsStream(dashboardPath);
-		final ObjectNode dashboard = (ObjectNode) MAPPER.readTree(dashboardStram);
+		final ObjectNode dashboard = (ObjectNode) mapper.readTree(dashboardStram);
 		dashboard.put(TITLE, dashboard.get(TITLE).asText() + STAGEMONITOR_MAJOR_MINOR_VERSION);
-		ObjectNode dashboardElasticsearchFormat = MAPPER.createObjectNode();
+		ObjectNode dashboardElasticsearchFormat = mapper.createObjectNode();
 		dashboardElasticsearchFormat.put("user", "guest");
 		dashboardElasticsearchFormat.put("group", "guest");
 		dashboardElasticsearchFormat.set(TITLE, dashboard.get(TITLE));
