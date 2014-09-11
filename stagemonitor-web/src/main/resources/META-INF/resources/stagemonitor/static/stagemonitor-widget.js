@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
 	Handlebars.registerHelper('ifCond', function (v1, operator, v2, options) {
 		switch (operator) {
 			case '==':
@@ -21,7 +21,7 @@ $(document).ready(function() {
 				return options.inverse(this);
 		}
 	});
-	Handlebars.registerHelper('csv', function(items, options) {
+	Handlebars.registerHelper('csv', function (items, options) {
 		return options.fn(items.join(', '));
 	});
 	var thresholdExceededGlobal = false;
@@ -29,9 +29,9 @@ $(document).ready(function() {
 	var metricsTemplate = Handlebars.compile($("#stagemonitor-request-template").html());
 	var configurationTemplate = Handlebars.compile($("#stagemonitor-configuration-template").html());
 
-	var processRequestsMetrics = function(requestData) {
-		var exceededThreshold = function(key, value) {
-			switch(key) {
+	var processRequestsMetrics = function (requestData) {
+		var exceededThreshold = function (key, value) {
+			switch (key) {
 				case "executionCountDb":
 					return value > localStorage.getItem("widget-settings-db-count-threshold");
 				case "executionTime":
@@ -47,7 +47,7 @@ $(document).ready(function() {
 			"name": {name: "Request name", description: "Usecase / Request verb and path"},
 			"executionTime": {name: "Execution time in ms", description: "The time in ms it took to process the request in the server."},
 			"executionTimeDb": {name: "Execution time for SQL-Queries in ms", description: ""},
-			"executionTimeCpu":  {name: "Execution time for the CPU", description: "The amount of time in ms it took the CPU to process the request."},
+			"executionTimeCpu": {name: "Execution time for the CPU", description: "The amount of time in ms it took the CPU to process the request."},
 			"executionCountDb": {name: "Number of SQL-Queries", description: "The number of SQL-Queries. Lower is better."},
 			"error": {name: "Error", description: "true, if there was an error while processing the request, false otherwise."},
 			"exceptionClass": {name: "Exception class", description: "The class of the thrown exception. (Only present, if there was a exception)"},
@@ -66,9 +66,9 @@ $(document).ready(function() {
 		};
 		var excludedProperties = ["callStackJson", "headers", "userAgent"];
 		var metrics = [];
-		for(var key in requestData) {
+		for (var key in requestData) {
 			var isKeyIncluded = excludedProperties.indexOf(key) === -1;
-			if(isKeyIncluded) {
+			if (isKeyIncluded) {
 				var nameAndDescription = commonNames[key] || {name: key, description: ""};
 				var thresholdExceeded = exceededThreshold(key, requestData[key])
 				if (thresholdExceeded) {
@@ -90,17 +90,17 @@ $(document).ready(function() {
 			headers: requestData["headers"]
 		};
 	};
-	var processCallTree = function(callTreeRows, callArray, parentId, myId, totalExecutionTimeInNs) {
+	var processCallTree = function (callTreeRows, callArray, parentId, myId, totalExecutionTimeInNs) {
 		var thresholdPercent = localStorage.getItem("widget-settings-execution-threshold-percent");
 		var totalExecutionTimeInMs = totalExecutionTimeInNs / 1000 / 1000;
-		for(var i = 0; i < callArray.length; i++) {
+		for (var i = 0; i < callArray.length; i++) {
 			var callData = callArray[i];
 
 			var executionTimeInMs = Math.round(callData.executionTime / 1000 / 10) / 100;
 			var selfExecutionTimeInMs = Math.round(callData.netExecutionTime / 1000 / 10) / 100;
 			var executionTimePercent = (executionTimeInMs / totalExecutionTimeInMs) * 100;
 			var selfExecutionTimePercent = (selfExecutionTimeInMs / totalExecutionTimeInMs) * 100;
-			var anyChildExceedsThreshold = $.grep(callData.children, function (e) {
+			var anyChildExceedsThreshold = $.grep(callData.children,function (e) {
 				return (e.executionTime / totalExecutionTimeInNs * 100) > thresholdPercent;
 			}).length > 0;
 
@@ -123,21 +123,22 @@ $(document).ready(function() {
 	};
 
 	window.stagemonitor = {
-		initialize: function(data, configurationSources, configurationOptions, contextPathPrefix) {
+		initialize: function (data, configurationSources, configurationOptions, contextPathPrefix, passwordSet) {
 			var renderedMetricsTemplate = metricsTemplate(processRequestsMetrics(data));
 			var $stagemonitorRequest = $("#stagemonitor-request");
 			$stagemonitorRequest.html(renderedMetricsTemplate);
 
 			var $configTab = $("#stagemonitor-configuration");
-			$configTab.html(configurationTemplate({configurationOptions: configurationOptions, configurationSources: configurationSources}));
+			$configTab.html(configurationTemplate({
+				configurationOptions: configurationOptions,
+				configurationSources: configurationSources,
+				passwordSet: passwordSet
+			}));
 			$configTab.on("click", ".save-configuration", function () {
 				var $button = $(this);
 				$.post(contextPathPrefix + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
 					.done(function () {
-						$button.removeClass("btn-primary");
-						$button.nextAll(".submit-response-ok").show().fadeOut(3000, function () {
-							$button.addClass("btn-primary");
-						});
+						$button.nextAll(".submit-response-ok").show().fadeOut(3000);
 					}).fail(function (xhr) {
 						$button.removeClass("btn-primary").addClass("btn-danger");
 						var errorSpan = $button.nextAll(".submit-response-failed");
@@ -175,12 +176,12 @@ $(document).ready(function() {
 				$("#stagemonitor-request").addClass('active')
 			}
 		},
-		thresholdExceeded: function() {
+		thresholdExceeded: function () {
 			return thresholdExceededGlobal;
 		}
 	};
 
-	$("#stagemonitor-modal-close").on("click", function() {
+	$("#stagemonitor-modal-close").on("click", function () {
 		window.stagemonitor.closeOverlay();
 	});
 
@@ -189,8 +190,8 @@ $(document).ready(function() {
 		return false;
 	});
 
-	$("#widget-settings-save").on("click", function() {
-		$("input[data-widget-settings-key]").each(function() {
+	$("#widget-settings-save").on("click", function () {
+		$("input[data-widget-settings-key]").each(function () {
 			var key = $(this).attr("data-widget-settings-key");
 			if ($(this).attr("type") === "checkbox") {
 				var value = $(this).prop("checked");
@@ -204,7 +205,7 @@ $(document).ready(function() {
 		return false;
 	});
 
-	$("input[data-widget-settings-key]").each(function() {
+	$("input[data-widget-settings-key]").each(function () {
 		var key = $(this).attr("data-widget-settings-key");
 		var value = localStorage.getItem(key);
 		if (value == null) {
@@ -221,14 +222,14 @@ $(document).ready(function() {
 	});
 
 	// spinner
-	$('.stagemonitor-spinner .btn:first-of-type').on('click', function() {
+	$('.stagemonitor-spinner .btn:first-of-type').on('click', function () {
 		var $input = $(this).parent().prev();
-		$input.val( parseInt($input.val(), 10) + 1);
+		$input.val(parseInt($input.val(), 10) + 1);
 		return false;
 	});
-	$('.stagemonitor-spinner .btn:last-of-type').on('click', function() {
+	$('.stagemonitor-spinner .btn:last-of-type').on('click', function () {
 		var $input = $(this).parent().prev();
-		$input.val( parseInt($input.val(), 10) - 1);
+		$input.val(parseInt($input.val(), 10) - 1);
 		return false;
 	});
 
@@ -240,7 +241,9 @@ $(document).ready(function() {
 			var checkboxValues = $(this).find('input[type=checkbox]').map(function () {
 				return { 'name': this.name, 'value': this.checked };
 			}).get();
-			var checkboxKeys = $.map(checkboxValues, function (element) { return element.name; });
+			var checkboxKeys = $.map(checkboxValues, function (element) {
+				return element.name;
+			});
 			var withoutCheckboxes = $.grep(brokenSerialization, function (element) {
 				return $.inArray(element.name, checkboxKeys) == -1;
 			});

@@ -235,13 +235,18 @@
 														If not set (default) updating the configuration is disabled (reloading is always enabled, though).
 														If set, you have to include the password here in order to update the configuration.
 														If the password is set to an empty string, the password is not required."></span>
+									{{#unless passwordSet}}
+									<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="left"
+										  title="The password is not set, so saving is not possible.
+												To resolve this, add 'stagemonitor.password=<your_pwd>' in stagemonitor.properties, click on 'Reload' and refresh the page.
+												Then enter the password in the password input."></span>
+									{{/unless}}
 								</label>
 								<div class="col-sm-2">
-									<input class="form-control rounded" name="stagemonitor.password">
+									<input type="password" class="form-control rounded" name="stagemonitor.password">
 								</div>
 							</div>
 						</form>
-
 						<div class="panel-group" id="accordion">
 							{{#each configurationOptions}}
 								<div class="panel panel-default">
@@ -285,19 +290,29 @@
 																<textarea class="form-control rounded" name="value">{{valueAsString}}</textarea>
 															{{/ifCond}}
 														</div>
-														{{#if dynamic}}
-														<button type="submit" class="tip btn btn-primary save-configuration"
-																data-toggle="tooltip" data-placement="top"
-																title="This configuration option is dynamic.
-																Changes apply immediately.">Save</button>
-														{{else}}
-														<button type="submit" class="tip btn btn-warning save-configuration"
-																data-toggle="tooltip" data-placement="top"
-																title="This configuration option is not dynamic.
-																Changes will apply after a restart of the application.
-																Therefore it is only possible to save to persistent configuration sources.">Save</button>
-														{{/if}}
+														<div style="display: inline-block"
+															 class="tip" data-toggle="tooltip" data-placement="top"
+																{{#unless ../../passwordSet}}
+																	 title="The password is not set, so saving is not possible.
+																			To resolve this, add 'stagemonitor.password=<your_pwd>' in stagemonitor.properties, click on 'Reload' and refresh the page.
+																			Then enter the password in the password input."
+																{{/unless}}>
 
+														<button type="submit" class="tip btn save-configuration {{#if dynamic}}btn-primary{{else}}btn-warning{{/if}}"
+																data-toggle="tooltip" data-placement="top"
+															{{#if ../../passwordSet}}
+																{{#if dynamic}}
+																	title="This configuration option is dynamic.
+																	Changes apply immediately."
+																{{else}}
+																	title="This configuration option is not dynamic.
+																	Changes will apply after a restart of the application.
+																	Therefore it is only possible to save to persistent configuration sources."
+																{{/if}}
+															{{else}}
+																disabled
+															{{/if}}
+															>Save</button>
 														<span class="submit-response-ok text-success" style="display: none;">
 															<span class="glyphicon glyphicon-ok"></span>
 															<span>Successfully saved</span>
@@ -306,6 +321,7 @@
 															<span class="glyphicon glyphicon-remove"></span>
 															<span>Failed to save. Did you specify the configuration update password?</span>
 														</span>
+														</div>
 													</div>
 												</form>
 											{{/each}}

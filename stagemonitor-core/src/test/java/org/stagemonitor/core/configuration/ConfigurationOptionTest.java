@@ -1,12 +1,10 @@
-package org.stagemonitor.core;
+package org.stagemonitor.core.configuration;
 
 import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
-import org.stagemonitor.core.configuration.SimpleSource;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.StageMonitorPlugin;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -21,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class ConfigurationTest {
+public class ConfigurationOptionTest {
 
 	private final ConfigurationOption<Map<Pattern,String>> invalidPatternMap = ConfigurationOption.regexMapOption().key("invalidPatternMap").build();
 	private final ConfigurationOption<List<Pattern>> invalidPatternSyntax = ConfigurationOption.regexListOption().key("invalidPatternSyntax").build();

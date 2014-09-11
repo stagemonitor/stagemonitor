@@ -158,6 +158,16 @@ public class Configuration {
 	}
 
 	/**
+	 * Returns <code>true</code>, if the password that is required to {@link #save(String, String, String, String)} settings is
+	 * set (not <code>null</code>), <code>false</code> otherwise
+	 *
+	 * @return <code>true</code>, if the update configuration password is set, <code>false</code> otherwise
+	 */
+	public boolean isPasswordSet() {
+		return getString(updateConfigPasswordKey) != null;
+	}
+
+	/**
 	 * Dynamically updates a configuration key.
 	 *
 	 * @param key                         the configuration key
@@ -221,6 +231,9 @@ public class Configuration {
 	}
 
 	private String getString(String key) {
+		if (key == null || key.isEmpty()) {
+			return null;
+		}
 		String property = null;
 		for (ConfigurationSource configurationSource : configurationSources) {
 			property = configurationSource.getValue(key);

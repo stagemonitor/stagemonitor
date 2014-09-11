@@ -148,4 +148,17 @@ public class ConfigurationTest {
 
 		assertEquals(Collections.singletonMap("Transient Configuration Source", true), configuration.getNamesOfConfigurationSources());
 	}
+
+	@Test
+	public void testIsPasswordSetTrue() throws Exception {
+		Configuration configuration = new Configuration("pwd");
+		configuration.addConfigurationSource(SimpleSource.forTest("pwd", ""));
+		assertTrue(configuration.isPasswordSet());
+	}
+
+	@Test
+	public void testIsPasswordSetFalse() throws Exception {
+		Configuration configuration = new Configuration("pwd");
+		assertFalse(configuration.isPasswordSet());
+	}
 }

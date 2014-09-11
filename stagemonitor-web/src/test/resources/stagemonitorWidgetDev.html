@@ -31,7 +31,7 @@
 					stagemonitorOverlay.style.display = "none";
 				};
 
-				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "");
+				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "", true);
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
 				var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 				stagemonitorOverlayShow.classList.add(clazz);
