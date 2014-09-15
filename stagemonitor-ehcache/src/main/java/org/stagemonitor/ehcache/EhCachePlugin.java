@@ -26,6 +26,16 @@ public class EhCachePlugin implements StageMonitorPlugin {
 			.defaultValue(null)
 			.pluginName("EhCache Plugin")
 			.build();
+	private final ConfigurationOption<Boolean> timeGet = ConfigurationOption.booleanOption()
+			.key("stagemonitor.ehcache.get.timer")
+			.dynamic(true)
+			.label("Create timer for cache gets")
+			.description("If set to true, a timer for each cache will be created which measures the time to get a " +
+					"element from the cache. If you have a lot of caches, that could lead to a increased network and " +
+					"disk utilisation. If set to false, only a meter (which measures the rate) will be created")
+			.defaultValue(true)
+			.pluginName("EhCache Plugin")
+			.build();
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
@@ -47,7 +57,8 @@ public class EhCachePlugin implements StageMonitorPlugin {
 			cache.setStatisticsEnabled(true);
 
 			final String metricPrefix = name("cache", sanitizeGraphiteMetricSegment(cache.getName()));
-			final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(metricPrefix, metricRegistry);
+			final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(metricPrefix,
+					metricRegistry, timeGet.getValue());
 			cache.registerCacheUsageListener(cacheUsageListener);
 			metricRegistry.registerAll(new EhCacheMetricSet(metricPrefix, cache, cacheUsageListener));
 		}

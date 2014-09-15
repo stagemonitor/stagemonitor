@@ -14,13 +14,15 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 	private static final String DELETE = "delete";
 	private final String metricPrefix;
 	private final MetricRegistry registry;
+	private final boolean timeGet;
 	final String allCacheHitsMetricName;
 	final String allCacheMissesMetricName;
 
 
-	public StagemonitorCacheUsageListener(String metricPrefix, MetricRegistry registry) {
+	public StagemonitorCacheUsageListener(String metricPrefix, MetricRegistry registry, boolean timeGet) {
 		this.metricPrefix = metricPrefix;
 		this.registry = registry;
+		this.timeGet = timeGet;
 		allCacheHitsMetricName = name(metricPrefix, "access.hit.total");
 		allCacheMissesMetricName = name(metricPrefix, "access.miss.total");
 	}
@@ -83,14 +85,17 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 
 	@Override
 	public void notifyCacheMissInMemory() {
+		notifyAllCacheMisses();
 	}
 
 	@Override
 	public void notifyCacheMissOffHeap() {
+		notifyAllCacheMisses();
 	}
 
 	@Override
 	public void notifyCacheMissOnDisk() {
+		notifyAllCacheMisses();
 	}
 
 	@Override
@@ -100,7 +105,11 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 
 	@Override
 	public void notifyGetTimeNanos(long nanos) {
-		registry.timer(name(metricPrefix, "get")).update(nanos, TimeUnit.NANOSECONDS);
+		if (timeGet) {
+			registry.timer(name(metricPrefix, "get")).update(nanos, TimeUnit.NANOSECONDS);
+		} else {
+			registry.meter(name(metricPrefix, "get")).mark();
+		}
 	}
 
 	@Override
