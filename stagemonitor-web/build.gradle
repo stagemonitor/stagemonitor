@@ -2,7 +2,7 @@ dependencies {
 	compile project(":stagemonitor-requestmonitor")
 	compile project(":stagemonitor-jvm")
 	compile project(":stagemonitor-jdbc")
-	compile 'net.sf.uadetector:uadetector-resources:2014.07'
+	compile 'net.sf.uadetector:uadetector-resources:2014.08'
 	provided 'javax.servlet:javax.servlet-api:3.0.1'
 
 	testCompile 'org.springframework:spring-webmvc:3.1.0.RELEASE'
