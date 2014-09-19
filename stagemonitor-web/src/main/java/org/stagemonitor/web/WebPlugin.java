@@ -126,28 +126,50 @@ public class WebPlugin implements StageMonitorPlugin {
 			.label("Server Thread Pool MBean Queue Attribute")
 			.description("")
 			.pluginName(WEB_PLUGIN)
-			.build(); 
+			.build();
+	private final ConfigurationOption<Boolean> rumEnabled = ConfigurationOption.booleanOption()
+			.key("stagemonitor.web.rum.enabled")
+			.dynamic(false)
+			.label("Enable Real User Monitoring")
+			.description("The Real User Monitoring feature collects the browser, network and overall percieved " +
+					"execution time from the user's perspective. When activated, a piece of javascript will be " +
+					"injected to each html page that collects the data from real users and sends it back " +
+					"to the server. Servlet API 3.0 or higher is required for this.")
+			.defaultValue(true)
+			.pluginName(WEB_PLUGIN)
+			.build();
+	private final ConfigurationOption<Boolean> collectPageLoadTimesPerRequest = ConfigurationOption.booleanOption()
+			.key("stagemonitor.web.collectPageLoadTimesPerRequest")
+			.dynamic(true)
+			.label("Collect Page Load Time data per request group")
+			.description("Whether or not browser, network and overall execution time should be collected per request group.\n" +
+					"If set to true, four additional timers will be created for each request group to record the page " +
+					"rendering time, dom processing time, network time and overall time per request. " +
+					"If set to false, the times of all requests will be aggregated.")
+			.defaultValue(false)
+			.pluginName(WEB_PLUGIN)
+			.build();
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Arrays.<ConfigurationOption<?>>asList(collectHttpHeaders, parseUserAgent, excludeHeaders, 
-				requestParamsConfidential, widgetEnabled, groupUrls);
+				requestParamsConfidential, widgetEnabled, groupUrls, rumEnabled, collectPageLoadTimesPerRequest);
 	}
 
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration config) {
 		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
-		monitorServerThreadPool(registry, config);
+		monitorServerThreadPool(registry);
 		RestClient.sendGrafanaDashboardAsync(corePlugin.getElasticsearchUrl(), "Server.json");
 		RestClient.sendGrafanaDashboardAsync(corePlugin.getElasticsearchUrl(), "KPIs over Time.json");
 	}
 
-	private void monitorServerThreadPool(MetricRegistry registry, Configuration conf) {
-		final String objectName = getRequeredProperty(serverThreadPoolObjectName, conf);
-		final String mbeanKeyPropertyName = getRequeredProperty(serverThreadPoolMBeanPropertyName, conf);
-		final String mbeanActiveAttribute = getRequeredProperty(serverThreadPoolMBeanActiveAttribute, conf);
-		final String mbeanCountAttribute = getRequeredProperty(serverThreadPoolMBeanCountAttribute, conf);
-		final String mbeanMaxAttribute = getRequeredProperty(serverThreadPoolMBeanMaxAttribute, conf);
+	private void monitorServerThreadPool(MetricRegistry registry) {
+		final String objectName = getRequeredProperty(serverThreadPoolObjectName);
+		final String mbeanKeyPropertyName = getRequeredProperty(serverThreadPoolMBeanPropertyName);
+		final String mbeanActiveAttribute = getRequeredProperty(serverThreadPoolMBeanActiveAttribute);
+		final String mbeanCountAttribute = getRequeredProperty(serverThreadPoolMBeanCountAttribute);
+		final String mbeanMaxAttribute = getRequeredProperty(serverThreadPoolMBeanMaxAttribute);
 		final String mbeanQueueAttribute = serverThreadPoolMBeanQueueAttribute.getValue();
 		if (requiredPropertiesSet) {
 			final List<MBeanPooledResourceImpl> pools = MBeanPooledResourceImpl.of(objectName,
@@ -157,7 +179,7 @@ public class WebPlugin implements StageMonitorPlugin {
 		}
 	}
 
-	private String getRequeredProperty(ConfigurationOption<String> option, Configuration conf) {
+	private String getRequeredProperty(ConfigurationOption<String> option) {
 		String requredProperty = option.getValue();
 		if (requredProperty == null || requredProperty.isEmpty()) {
 			logger.info(option.getKey() + " is empty, Server Plugin deactivated");
@@ -188,5 +210,13 @@ public class WebPlugin implements StageMonitorPlugin {
 
 	public List<Pattern> getRequestParamsConfidential() {
 		return requestParamsConfidential.getValue();
+	}
+
+	public boolean isRealUserMonitoringEnabled() {
+		return rumEnabled.getValue();
+	}
+
+	public boolean isCollectPageLoadTimesPerRequest() {
+		return collectPageLoadTimesPerRequest.getValue();
 	}
 }

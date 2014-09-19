@@ -15,3 +15,6 @@ stagemonitor-web/src/main/resources/static/handlebars-v1.3.0.min.js
 
 This product bundles jQuery 1.11.1, which is available under the "MIT" license. For details, see
 stagemonitor-web/src/main/resources/static/jquery.1.11.1.min.js
+
+This product bundles boomerang 0.9, which is available under the "BSD" license. For details, see
+stagemonitor-web/src/main/resources/static/bommerang.js

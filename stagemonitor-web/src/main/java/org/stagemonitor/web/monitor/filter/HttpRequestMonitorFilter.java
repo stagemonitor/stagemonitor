@@ -1,18 +1,20 @@
 package org.stagemonitor.web.monitor.filter;
 
+import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
+import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
+import org.stagemonitor.web.monitor.widget.StagemonitorWidgetHtmlInjector;
+import org.stagemonitor.web.monitor.rum.RumServlet;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -25,6 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
@@ -34,18 +38,20 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	protected final CorePlugin corePlugin;
 	protected final WebPlugin webPlugin;
 	protected final RequestMonitor requestMonitor;
+	protected final MetricRegistry metricRegistry;
+	private final List<HtmlInjector> htmlInjectors = new ArrayList<HtmlInjector>();
 	private boolean servletApiForWidgetSufficient = false;
-	private String widgetTemplate;
 
 	public HttpRequestMonitorFilter() {
-		this(StageMonitor.getConfiguration());
+		this(StageMonitor.getConfiguration(), new RequestMonitor(StageMonitor.getConfiguration()), StageMonitor.getMetricRegistry());
 	}
 
-	public HttpRequestMonitorFilter(Configuration configuration) {
+	public HttpRequestMonitorFilter(Configuration configuration, RequestMonitor requestMonitor, MetricRegistry metricRegistry) {
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
-		requestMonitor = new RequestMonitor(configuration);
+		this.requestMonitor = requestMonitor;
+		this.metricRegistry = metricRegistry;
 	}
 
 	@Override
@@ -56,29 +62,36 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		final ServletContext servletContext = filterConfig.getServletContext();
 		servletApiForWidgetSufficient = servletContext.getMajorVersion() >= 3;
 
-		if(servletApiForWidgetSufficient) {
+		htmlInjectors.add(new BommerangJsHtmlInjector(webPlugin, servletContext.getContextPath()));
+		htmlInjectors.add(new StagemonitorWidgetHtmlInjector(configuration, webPlugin, servletContext.getContextPath()));
+
+
+		if (servletApiForWidgetSufficient) {
 			logger.info("Registering configuration Endpoint {}. You can dynamically change the configuration by " +
-					"issuing a POST request to {}?configKey=configValue&stagemonitor.password=password. " +
+					"issuing a POST request to {}?key=stagemonitor.config.key&value=configValue&stagemonitor.password=password. " +
 					"If the password is not set, dynamically changing the configuration is not available. " +
 					"The password can be omitted if set to an empty string.",
-					CONFIGURATION_ENDPOINT);
+					CONFIGURATION_ENDPOINT, CONFIGURATION_ENDPOINT);
 			filterConfig.getServletContext()
 					.addServlet("stagemonitor-config-servlet", new ConfigurationServlet(configuration))
 					.addMapping(CONFIGURATION_ENDPOINT);
+			if (webPlugin.isRealUserMonitoringEnabled()) {
+				filterConfig.getServletContext()
+						.addServlet("stagemonitor-rum-servlet", new RumServlet(metricRegistry, webPlugin))
+						.addMapping("/stagemonitor/rum");
+			}
 		} else {
 			if (webPlugin.isWidgetEnabled()) {
-				logger.error("stagemonitor.web.widget.enabled is true, but your servlet api version is not supported. " +
+				logger.warn("stagemonitor.web.widget.enabled is true, but your servlet api version is not supported. " +
 						"The stagemonitor widget requires servlet api 3.");
+			}
+			if (webPlugin.isRealUserMonitoringEnabled()) {
+				logger.warn("stagemonitor.web.rum.enabled is true but your servlet api version is not supported. " +
+						"The Real User Monitoring feature requires servlet api 3.");
 			}
 			logger.warn("The configuration endptiont {} could not me registered, as it requires servlet api 3.", CONFIGURATION_ENDPOINT);
 		}
 
-		try {
-			this.widgetTemplate = buildWidgetTemplate(filterConfig.getServletContext().getContextPath());
-		} catch (IOException e) {
-			logger.warn(e.getMessage(), e);
-			this.widgetTemplate = "";
-		}
 	}
 
 	private String getApplicationName(FilterConfig filterConfig) {
@@ -92,13 +105,14 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	@Override
 	public final void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
+		setCachingHeadersForBommerangJs(request, response);
 		beforeFilter();
-		if (corePlugin.isStagemonitorActive() && request instanceof HttpServletRequest && response instanceof HttpServletResponse && ! isInternalRequest((HttpServletRequest) request)) {
+		if (corePlugin.isStagemonitorActive() && request instanceof HttpServletRequest && response instanceof HttpServletResponse && !isInternalRequest((HttpServletRequest) request)) {
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 
 			final StatusExposingByteCountingServletResponse responseWrapper;
 			HttpServletResponseBufferWrapper httpServletResponseBufferWrapper = null;
-			if (isInjectWidget(httpServletRequest)) {
+			if (isInjectContentToHtml(httpServletRequest)) {
 				httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper((HttpServletResponse) response);
 				responseWrapper = new StatusExposingByteCountingServletResponse(httpServletResponseBufferWrapper);
 			} else {
@@ -107,8 +121,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 			try {
 				final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = monitorRequest(filterChain, httpServletRequest, responseWrapper);
-				if (isInjectWidget(httpServletRequest)) {
-					injectWidget(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
+				if (isInjectContentToHtml(httpServletRequest)) {
+					injectHtml(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
 				}
 			} catch (Exception e) {
 				handleException(e);
@@ -118,17 +132,32 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 	}
 
-	private boolean isInjectWidget(HttpServletRequest httpServletRequest) {
-		return isStagemonitorWidgetEnabled() && isHtmlRequested(httpServletRequest);
+	private void setCachingHeadersForBommerangJs(ServletRequest request, ServletResponse response) {
+		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
+			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+			if (httpServletRequest.getRequestURI().endsWith(BommerangJsHtmlInjector.BOOMERANG_FILENAME)) {
+				final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+				httpServletResponse.setHeader("cache-control", "public, max-age=315360000");
+			}
+		}
+	}
+
+	private boolean isInjectContentToHtml(HttpServletRequest httpServletRequest) {
+		return servletApiForWidgetSufficient && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive() ;
+	}
+
+	private boolean isAtLeastOneHtmlInjectorActive() {
+		for (HtmlInjector htmlInjector : htmlInjectors) {
+			if (htmlInjector.isActive()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean isHtmlRequested(HttpServletRequest httpServletRequest) {
 		final String accept = httpServletRequest.getHeader("accept");
 		return accept != null && accept.contains("text/html");
-	}
-
-	private boolean isStagemonitorWidgetEnabled() {
-		return webPlugin.isWidgetEnabled() && servletApiForWidgetSufficient;
 	}
 
 	private boolean isInternalRequest(HttpServletRequest request) {
@@ -143,17 +172,20 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		return requestMonitor.monitor(monitoredRequest);
 	}
 
-	protected void injectWidget(ServletResponse response, HttpServletRequest httpServletRequest,
-	                            HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
-	                            RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+	protected void injectHtml(ServletResponse response, HttpServletRequest httpServletRequest,
+							  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
+							  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
 		if (httpServletResponseBufferWrapper.getContentType() != null
 				&& httpServletResponseBufferWrapper.getContentType().contains("text/html")
-				&& httpServletRequest.getAttribute("stagemonitorWidgetInjected") == null
+				&& httpServletRequest.getAttribute("stagemonitorInjected") == null
 				&& httpServletResponseBufferWrapper.isUsingWriter()) {
-
-			httpServletRequest.setAttribute("stagemonitorWidgetInjected", true);
+			httpServletRequest.setAttribute("stagemonitorInjected", true);
 			String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
-			content = injectBeforeClosingBody(content, buildWidget(requestInformation));
+			for (HtmlInjector htmlInjector : htmlInjectors) {
+				if (htmlInjector.isActive()) {
+					content = injectBeforeClosingBody(content, htmlInjector.build(requestInformation));
+				}
+			}
 			response.getWriter().write(content);
 		} else {
 			passthrough(response, httpServletResponseBufferWrapper);
@@ -172,7 +204,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private String injectBeforeClosingBody(String unmodifiedContent, String contentToInject) {
 		final int lastClosingBodyIndex = unmodifiedContent.lastIndexOf("</body>");
 		final String modifiedContent;
-		if(lastClosingBodyIndex > -1) {
+		if (lastClosingBodyIndex > -1) {
 			final StringBuilder modifiedContentStringBuilder = new StringBuilder(unmodifiedContent.length() + contentToInject.length());
 			modifiedContentStringBuilder.append(unmodifiedContent.substring(0, lastClosingBodyIndex));
 			modifiedContentStringBuilder.append(contentToInject);
@@ -185,19 +217,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		return modifiedContent;
 	}
 
-	private String buildWidget(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
-		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson())
-				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByPlugin()))
-				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))
-				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()));
-	}
-
-	private String buildWidgetTemplate(String contextPath) throws IOException {
-		return IOUtils.toString(getClass().getClassLoader().getResourceAsStream("stagemonitorWidget.html"))
-				.replace("@@CONTEXT_PREFIX_PATH@@", contextPath);
-	}
-
-	protected void handleException(Exception e) throws IOException, ServletException  {
+	protected void handleException(Exception e) throws IOException, ServletException {
 		if (e instanceof IOException) {
 			throw (IOException) e;
 		}

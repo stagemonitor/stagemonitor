@@ -56,5 +56,8 @@ public class WebPluginConfigurationTest {
 		expectedMap.put("(.*).png$", "*.png");
 
 		assertEquals(expectedMap, groupUrlsAsString);
+
+		assertEquals(true, config.isRealUserMonitoringEnabled());
+		assertEquals(false, config.isCollectPageLoadTimesPerRequest());
 	}
 }

@@ -96,11 +96,22 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	public static String getRequestNameByRequest(HttpServletRequest request, WebPlugin webPlugin) {
-		String requestURI = request.getRequestURI();
+		String requestURI = removeSemicolonContent(request.getRequestURI());
 		for (Map.Entry<Pattern, String> entry : webPlugin.getGroupUrls().entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
 		return request.getMethod() + " " +requestURI;
+	}
+
+	private static String removeSemicolonContent(String requestUri) {
+		int semicolonIndex = requestUri.indexOf(';');
+		while (semicolonIndex != -1) {
+			int slashIndex = requestUri.indexOf('/', semicolonIndex);
+			String start = requestUri.substring(0, semicolonIndex);
+			requestUri = (slashIndex != -1) ? start + requestUri.substring(slashIndex) : start;
+			semicolonIndex = requestUri.indexOf(';', semicolonIndex);
+		}
+		return requestUri;
 	}
 
 	private String getSafeQueryString(Map<String, String[]> parameterMap) {

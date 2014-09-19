@@ -1,5 +1,6 @@
 package org.stagemonitor.web.monitor.filter;
 
+import com.codahale.metrics.MetricRegistry;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,8 +11,12 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.MonitoredRequest;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
+import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -24,6 +29,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -37,6 +44,8 @@ public class HttpRequestMonitorFilterTest {
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+	private RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
+	private HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
 	private HttpRequestMonitorFilter httpRequestMonitorFilter;
 	private String testHtml = "<html><body></body></html>";
 
@@ -57,7 +66,19 @@ public class HttpRequestMonitorFilterTest {
 		when(servlet3Context.addServlet(anyString(), any(Servlet.class))).thenReturn(mock(ServletRegistration.Dynamic.class));
 		final FilterConfig filterConfig = spy(new MockFilterConfig());
 		when(filterConfig.getServletContext()).thenReturn(servlet3Context);
-		httpRequestMonitorFilter = spy(new HttpRequestMonitorFilter(configuration));
+		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
+		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<RequestMonitor.RequestInformation<?>>() {
+			@Override
+			public RequestMonitor.RequestInformation<?> answer(InvocationOnMock invocation) throws Throwable {
+				MonitoredRequest<?> request = (MonitoredRequest<?>) invocation.getArguments()[0];
+				request.execute();
+				when(requestTrace.toJson()).thenReturn("");
+				when(requestTrace.getName()).thenReturn("testName");
+				when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
+				return requestInformation;
+			}
+		});
+		httpRequestMonitorFilter = new HttpRequestMonitorFilter(configuration, requestMonitor, mock(MetricRegistry.class));
 		httpRequestMonitorFilter.initInternal(filterConfig);
 	}
 
@@ -78,6 +99,7 @@ public class HttpRequestMonitorFilterTest {
 
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
+		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(false);
 		when(webPlugin.isWidgetEnabled()).thenReturn(false);
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
@@ -120,4 +142,25 @@ public class HttpRequestMonitorFilterTest {
 		}).when(filterChain).doFilter(any(ServletRequest.class), any(ServletResponse.class));
 		return filterChain;
 	}
+
+	@Test
+	public void testRUM() throws Exception {
+		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(true);
+		when(webPlugin.isWidgetEnabled()).thenReturn(false);
+
+		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
+		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
+
+		Assert.assertEquals("<html><body><script src=\"/stagemonitor/static/rum/" + BommerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
+				"<script>\n" +
+				"   BOOMR.init({\n" +
+				"      beacon_url: \"/stagemonitor/rum\",\n" +
+				"      log: null\n" +
+				"   });\n" +
+				"   BOOMR.addVar(\"requestId\", \"null\");\n" +
+				"   BOOMR.addVar(\"requestName\", \"testName\");\n" +
+				"   BOOMR.addVar(\"serverTime\", 0);\n" +
+				"</script></body></html>", servletResponse.getContentAsString());
+	}
+
 }

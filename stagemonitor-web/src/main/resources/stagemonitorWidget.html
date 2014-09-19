@@ -1,5 +1,19 @@
 <script type="text/javascript">
 	(function () {
+		if (typeof(BOOMR) != 'undefined') {
+			BOOMR.subscribe('before_beacon', function(data) {
+				if (data.totalPageLoadTime) {
+					var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
+					stagemonitorWindow.stagemonitor.renderPageLoadTime(data);
+					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+					var stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show");
+					stagemonitorOverlayShow.classList.remove("stagemonitor-threshold-exceeded");
+					stagemonitorOverlayShow.classList.remove("stagemonitor-threshold-ok");
+					var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
+					document.getElementById("stagemonitor-overlay-show").classList.add(clazz);
+				}
+			});
+		}
 		window.StageMonitorLoaded = function () {
 			var executeOnDomReady = [],
 				isDomReady = function () {
