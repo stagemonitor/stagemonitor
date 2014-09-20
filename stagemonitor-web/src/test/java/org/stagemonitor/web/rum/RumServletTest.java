@@ -56,6 +56,11 @@ public class RumServletTest {
 		// t_page + t_resp
 		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get("request.GET-|test:html.total.time.total").getSnapshot().getMax());
 		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get("request.All.total.time.total").getSnapshot().getMax());
+
+		assertNotNull(registry.getTimers().get("request.GET-|test:html.server-rum.time.total"));
+		assertNotNull(registry.getTimers().get("request.All.server-rum.time.total"));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get("request.GET-|test:html.server-rum.time.total").getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get("request.All.server-rum.time.total").getSnapshot().getMax());
 	}
 
 	@Test
@@ -89,6 +94,10 @@ public class RumServletTest {
 		assertNotNull(registry.getTimers().get("request.All.total.time.total"));
 		// t_page + t_resp
 		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get("request.All.total.time.total").getSnapshot().getMax());
+
+		assertNull(registry.getTimers().get("request.GET-|test:html.server-rum.time.total"));
+		assertNotNull(registry.getTimers().get("request.All.server-rum.time.total"));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get("request.All.server-rum.time.total").getSnapshot().getMax());
 	}
 
 	@Test(expected = IllegalArgumentException.class)

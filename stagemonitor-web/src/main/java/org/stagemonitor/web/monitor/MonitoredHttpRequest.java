@@ -1,8 +1,6 @@
 package org.stagemonitor.web.monitor;
 
 import com.codahale.metrics.MetricRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
@@ -23,8 +21,6 @@ import java.util.regex.Pattern;
 import static com.codahale.metrics.MetricRegistry.name;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
-
-	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;

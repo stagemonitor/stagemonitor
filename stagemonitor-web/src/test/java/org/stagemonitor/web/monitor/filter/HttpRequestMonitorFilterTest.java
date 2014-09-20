@@ -29,8 +29,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -60,6 +60,10 @@ public class HttpRequestMonitorFilterTest {
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
 		when(corePlugin.getApplicationName()).thenReturn("testApplication");
 		when(corePlugin.getInstanceName()).thenReturn("testInstance");
+		initFilter();
+	}
+
+	private void initFilter() throws Exception {
 		final ServletContext servlet3Context = mock(ServletContext.class);
 		when(servlet3Context.getMajorVersion()).thenReturn(3);
 		when(servlet3Context.getContextPath()).thenReturn("");
@@ -87,8 +91,10 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		final String expected = "<html><body><!-- injection-placeholder --></body></html>";
-		Assert.assertEquals(expected, servletResponse.getContentAsString());
+		assertTrue(servletResponse.getContentAsString().startsWith("<html><body>"));
+		assertTrue(servletResponse.getContentAsString().endsWith("</body></html>"));
+		assertFalse(servletResponse.getContentAsString().contains("beacon_url"));
+		assertTrue(servletResponse.getContentAsString().contains("window.StageMonitorLoaded"));
 	}
 
 	private MockHttpServletRequest requestWithAccept(String accept) {
@@ -124,8 +130,10 @@ public class HttpRequestMonitorFilterTest {
 
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(html));
 
-		final String expected = "<html><body></body><body></body><body></body><body>asdf<!-- injection-placeholder --></body></html>";
-		Assert.assertEquals(expected, servletResponse.getContentAsString());
+		assertTrue(servletResponse.getContentAsString().startsWith("<html><body></body><body></body><body></body><body>asdf"));
+		assertTrue(servletResponse.getContentAsString().endsWith("</body></html>"));
+		assertFalse(servletResponse.getContentAsString().contains("beacon_url"));
+		assertTrue(servletResponse.getContentAsString().contains("window.StageMonitorLoaded"));
 	}
 
 	private FilterChain writeInResponseWhenCallingDoFilter(final String html) throws IOException, ServletException {
@@ -147,6 +155,7 @@ public class HttpRequestMonitorFilterTest {
 	public void testRUM() throws Exception {
 		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(true);
 		when(webPlugin.isWidgetEnabled()).thenReturn(false);
+		initFilter();
 
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
@@ -154,7 +163,7 @@ public class HttpRequestMonitorFilterTest {
 		Assert.assertEquals("<html><body><script src=\"/stagemonitor/static/rum/" + BommerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
-				"      beacon_url: \"/stagemonitor/rum\",\n" +
+				"      beacon_url: '/stagemonitor/rum',\n" +
 				"      log: null\n" +
 				"   });\n" +
 				"   BOOMR.addVar(\"requestId\", \"null\");\n" +

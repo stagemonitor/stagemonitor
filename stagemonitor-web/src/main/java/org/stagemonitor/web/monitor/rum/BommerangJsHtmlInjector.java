@@ -1,18 +1,11 @@
 package org.stagemonitor.web.monitor.rum;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
 public class BommerangJsHtmlInjector implements HtmlInjector {
-
-	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public static final String BOOMERANG_FILENAME = "boomerang-56c823668fc.min.js";
 	private final WebPlugin webPlugin;
@@ -24,10 +17,12 @@ public class BommerangJsHtmlInjector implements HtmlInjector {
 	}
 
 	private String buildBoomerangTemplate(String contextPath) {
+		String beaconUrl = webPlugin.isRealUserMonitoringEnabled() ?
+				"      beacon_url: " + "'" + contextPath + "/stagemonitor/rum'" + ",\n" : "";
 		return "<script src=\"" + contextPath + "/stagemonitor/static/rum/" + BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
-				"      beacon_url: \"" + contextPath + "/stagemonitor/rum\",\n" +
+				beaconUrl +
 				"      log: null\n" +
 				"   });\n" +
 				"   BOOMR.addVar(\"requestId\", \"${requestId}\");\n" +
@@ -38,20 +33,17 @@ public class BommerangJsHtmlInjector implements HtmlInjector {
 
 	@Override
 	public boolean isActive() {
-		return webPlugin.isRealUserMonitoringEnabled();
+		// if widget is enabled, inject as well to render page load time statistics in widget
+		// metrics won't be collected in this case, because the beacon_url is then set to null
+		return webPlugin.isRealUserMonitoringEnabled() || webPlugin.isWidgetEnabled();
 	}
 
 	@Override
 	public String build(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
 		final HttpRequestTrace requestTrace = requestInformation.getRequestTrace();
-		try {
-			return boomerangTemplate.replace("${requestId}", String.valueOf(requestTrace.getId()))
-					.replace("${requestName}", URLEncoder.encode(requestTrace.getName(), "UTF-8"))
-					.replace("${serverTime}", Long.toString(requestTrace.getExecutionTime()));
-		} catch (UnsupportedEncodingException e) {
-			logger.warn(e.getMessage(), e);
-			return "";
-		}
+		return boomerangTemplate.replace("${requestId}", String.valueOf(requestTrace.getId()))
+				.replace("${requestName}", requestTrace.getName())
+				.replace("${serverTime}", Long.toString(requestTrace.getExecutionTime()));
 	}
 
 }

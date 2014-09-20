@@ -13,8 +13,8 @@ import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
-import org.stagemonitor.web.monitor.widget.StagemonitorWidgetHtmlInjector;
 import org.stagemonitor.web.monitor.rum.RumServlet;
+import org.stagemonitor.web.monitor.widget.StagemonitorWidgetHtmlInjector;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -107,28 +107,32 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			throws IOException, ServletException {
 		setCachingHeadersForBommerangJs(request, response);
 		beforeFilter();
-		if (corePlugin.isStagemonitorActive() && request instanceof HttpServletRequest && response instanceof HttpServletResponse && !isInternalRequest((HttpServletRequest) request)) {
-			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-
-			final StatusExposingByteCountingServletResponse responseWrapper;
-			HttpServletResponseBufferWrapper httpServletResponseBufferWrapper = null;
-			if (isInjectContentToHtml(httpServletRequest)) {
-				httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper((HttpServletResponse) response);
-				responseWrapper = new StatusExposingByteCountingServletResponse(httpServletResponseBufferWrapper);
-			} else {
-				responseWrapper = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
-			}
-
-			try {
-				final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = monitorRequest(filterChain, httpServletRequest, responseWrapper);
-				if (isInjectContentToHtml(httpServletRequest)) {
-					injectHtml(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
-				}
-			} catch (Exception e) {
-				handleException(e);
-			}
+		if (corePlugin.isStagemonitorActive() && request instanceof HttpServletRequest &&
+				response instanceof HttpServletResponse && !isInternalRequest((HttpServletRequest) request)) {
+			doMonitor((HttpServletRequest) request, response, filterChain);
 		} else {
 			filterChain.doFilter(request, response);
+		}
+	}
+
+	private void doMonitor(HttpServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+
+		final StatusExposingByteCountingServletResponse responseWrapper;
+		HttpServletResponseBufferWrapper httpServletResponseBufferWrapper = null;
+		if (isInjectContentToHtml(request)) {
+			httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper((HttpServletResponse) response);
+			responseWrapper = new StatusExposingByteCountingServletResponse(httpServletResponseBufferWrapper);
+		} else {
+			responseWrapper = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
+		}
+
+		try {
+			final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = monitorRequest(filterChain, request, responseWrapper);
+			if (isInjectContentToHtml(request)) {
+				injectHtml(response, request, httpServletResponseBufferWrapper, requestInformation);
+			}
+		} catch (Exception e) {
+			handleException(e);
 		}
 	}
 

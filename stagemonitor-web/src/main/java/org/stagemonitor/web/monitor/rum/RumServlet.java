@@ -11,9 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * The Real User Monitoring Servlet handles boomerang beacons (see http://www.lognormal.com/boomerang/doc/)
@@ -42,11 +40,13 @@ public class RumServlet extends HttpServlet {
 		metricRegistry.timer("request.All.browser.time.page-rendering").update(pageRendering, MILLISECONDS);
 		metricRegistry.timer("request.All.network.time.total").update(networkTime, MILLISECONDS);
 		metricRegistry.timer("request.All.total.time.total").update(totalTime, MILLISECONDS);
+		metricRegistry.timer("request.All.server-rum.time.total").update(serverTime, MILLISECONDS);
 		if (webPlugin.isCollectPageLoadTimesPerRequest()) {
 			metricRegistry.timer(name("request", timerName, "browser.time.dom-processing")).update(domProcessing, MILLISECONDS);
 			metricRegistry.timer(name("request", timerName, "browser.time.page-rendering")).update(pageRendering, MILLISECONDS);
 			metricRegistry.timer(name("request", timerName, "network.time.total")).update(networkTime, MILLISECONDS);
 			metricRegistry.timer(name("request", timerName, "total.time.total")).update(totalTime, MILLISECONDS);
+			metricRegistry.timer(name("request", timerName, "server-rum.time.total")).update(serverTime, MILLISECONDS);
 		}
 	}
 
