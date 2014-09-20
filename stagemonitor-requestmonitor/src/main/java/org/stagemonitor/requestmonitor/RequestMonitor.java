@@ -238,7 +238,7 @@ public class RequestMonitor {
 		metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
 
 		if (requestMonitorPlugin.isCollectCpuTime()) {
-			metricRegistry.timer(name(REQUEST, timerName, ".server.cpu-time.total")).update(cpuTime, NANOSECONDS);
+			metricRegistry.timer(name(REQUEST, timerName, "server.cpu-time.total")).update(cpuTime, NANOSECONDS);
 			metricRegistry.timer("request.All.server.cpu-time.total").update(cpuTime, NANOSECONDS);
 		}
 
