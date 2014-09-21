@@ -7,7 +7,7 @@ import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
 public class BommerangJsHtmlInjector implements HtmlInjector {
 
-	public static final String BOOMERANG_FILENAME = "boomerang-56c823668fc.min.js";
+	public static final String BOOMERANG_FILENAME = "boomerang-b2eae213cfd.min.js";
 	private final WebPlugin webPlugin;
 	private String boomerangTemplate;
 
