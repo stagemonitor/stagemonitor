@@ -19,7 +19,7 @@ public class BommerangJsHtmlInjectorTest {
 		final InputStream inputStream = getClass().getResourceAsStream(location);
 		assertNotNull(inputStream);
 
-		String contentHash = toSHA1(IOUtils.toString(inputStream).getBytes()).substring(0, 11);
+		String contentHash = toSHA1(IOUtils.toString(inputStream).replace("\r\n", "\n").getBytes()).substring(0, 11);
 		assertEquals("boomerang-" + contentHash + ".min.js", BommerangJsHtmlInjector.BOOMERANG_FILENAME);
 	}
 
