@@ -3,6 +3,7 @@ package org.stagemonitor.core;
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.rest.RestClient;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -122,6 +123,7 @@ public class CorePlugin implements StageMonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
+		RestClient.sendGrafanaDashboardAsync(configuration.getConfig(CorePlugin.class).getElasticsearchUrl(), "Custom Metrics.json");
 	}
 
 	@Override
