@@ -163,9 +163,9 @@ public class CallStackElement {
 		for (CallStackElement callStats : getChildren()) {
 			if (!isRoot()) {
 				if (isLastChild()) {
-					indentationStack.push("    ");
+					indentationStack.add("    ");
 				} else {
-					indentationStack.push(asciiArt ? HORIZONTAL : "|   ");
+					indentationStack.add(asciiArt ? HORIZONTAL : "|   ");
 				}
 			}
 			callStats.logStats(totalExecutionTimeNs, indentationStack, sb, asciiArt);
