@@ -165,7 +165,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private boolean isInternalRequest(HttpServletRequest request) {
-		return request.getRequestURI().startsWith("/stagemonitor");
+		return request.getRequestURI().startsWith(request.getContextPath() + "/stagemonitor");
 	}
 
 	protected void beforeFilter() {
