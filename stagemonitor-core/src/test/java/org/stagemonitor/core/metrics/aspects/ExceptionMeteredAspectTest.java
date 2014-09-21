@@ -75,7 +75,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneTimerExists("meter.ExceptionMeteredAspectTest$TestObject.exceptionMeteredDefault.exceptions");
+		assertOneTimerExists("meter.ExceptionMeteredAspectTest$TestObject#exceptionMeteredDefault.exceptions");
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneTimerExists("meter.ExceptionMeteredAspectTest$TestObject.myExceptionMeteredName.exceptions");
+		assertOneTimerExists("meter.ExceptionMeteredAspectTest$TestObject#myExceptionMeteredName.exceptions");
 	}
 
 	@Test
