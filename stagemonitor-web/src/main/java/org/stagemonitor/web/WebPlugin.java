@@ -159,18 +159,18 @@ public class WebPlugin implements StageMonitorPlugin {
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration config) {
 		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
-		monitorServerThreadPool(registry);
+		monitorServerThreadPool(registry, config.getConfig(WebPlugin.class));
 		RestClient.sendGrafanaDashboardAsync(corePlugin.getElasticsearchUrl(), "Server.json");
 		RestClient.sendGrafanaDashboardAsync(corePlugin.getElasticsearchUrl(), "KPIs over Time.json");
 	}
 
-	private void monitorServerThreadPool(MetricRegistry registry) {
-		final String objectName = getRequeredProperty(serverThreadPoolObjectName);
-		final String mbeanKeyPropertyName = getRequeredProperty(serverThreadPoolMBeanPropertyName);
-		final String mbeanActiveAttribute = getRequeredProperty(serverThreadPoolMBeanActiveAttribute);
-		final String mbeanCountAttribute = getRequeredProperty(serverThreadPoolMBeanCountAttribute);
-		final String mbeanMaxAttribute = getRequeredProperty(serverThreadPoolMBeanMaxAttribute);
-		final String mbeanQueueAttribute = serverThreadPoolMBeanQueueAttribute.getValue();
+	private void monitorServerThreadPool(MetricRegistry registry, WebPlugin webPlugin) {
+		final String objectName = getRequeredProperty(webPlugin.serverThreadPoolObjectName);
+		final String mbeanKeyPropertyName = getRequeredProperty(webPlugin.serverThreadPoolMBeanPropertyName);
+		final String mbeanActiveAttribute = getRequeredProperty(webPlugin.serverThreadPoolMBeanActiveAttribute);
+		final String mbeanCountAttribute = getRequeredProperty(webPlugin.serverThreadPoolMBeanCountAttribute);
+		final String mbeanMaxAttribute = getRequeredProperty(webPlugin.serverThreadPoolMBeanMaxAttribute);
+		final String mbeanQueueAttribute = webPlugin.serverThreadPoolMBeanQueueAttribute.getValue();
 		if (requiredPropertiesSet) {
 			final List<MBeanPooledResourceImpl> pools = MBeanPooledResourceImpl.of(objectName,
 					"server.threadpool", mbeanKeyPropertyName, mbeanActiveAttribute, mbeanCountAttribute,

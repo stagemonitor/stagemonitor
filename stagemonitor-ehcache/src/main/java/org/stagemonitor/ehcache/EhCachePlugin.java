@@ -9,7 +9,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.rest.RestClient;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.codahale.metrics.MetricRegistry.name;
@@ -39,9 +39,7 @@ public class EhCachePlugin implements StageMonitorPlugin {
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		List<ConfigurationOption<?>> config = new ArrayList<ConfigurationOption<?>>();
-		config.add(ehCacheNameOption);
-		return config;
+		return Arrays.<ConfigurationOption<?>>asList(ehCacheNameOption, timeGet);
 	}
 
 	public String getEhcacheName() {
