@@ -43,7 +43,7 @@ public class TimedAspectTest {
 	@Test
 	public void testTimedAspectDefault() {
 		testObject.timedDefault();
-		assertOneTimerExists("timer.TimedAspectTest$TestObject.timedDefault");
+		assertOneTimerExists("timer.TimedAspectTest$TestObject#timedDefault");
 	}
 
 	@Test
@@ -61,7 +61,7 @@ public class TimedAspectTest {
 	@Test
 	public void testTimedName() {
 		testObject.timedName();
-		assertOneTimerExists("timer.TimedAspectTest$TestObject.myTimedName");
+		assertOneTimerExists("timer.TimedAspectTest$TestObject#myTimedName");
 	}
 
 	@Test
