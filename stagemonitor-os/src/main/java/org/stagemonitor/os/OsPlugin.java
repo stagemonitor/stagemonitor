@@ -39,7 +39,9 @@ public class OsPlugin implements StageMonitorPlugin {
 		metricRegistry.registerAll(new CpuMetricSet(sigar.getCpuPerc(), sigar.getCpuInfoList()[0]));
 		metricRegistry.registerAll(new MemoryMetricSet(sigar.getMem()));
 		metricRegistry.registerAll(new SwapMetricSet(sigar.getSwap()));
-		metricRegistry.registerAll(new NetworkMetricSet(sigar.getTcp()));
+		for (String ifname : sigar.getNetInterfaceList()) {
+			metricRegistry.registerAll(new NetworkMetricSet(ifname, sigar.getNetInterfaceStat(ifname)));
+		}
 		for (Map.Entry<String, FileSystem> e : (Set<Map.Entry<String, FileSystem>>) sigar.getFileSystemMap().entrySet()) {
 			final FileSystem fs = e.getValue();
 			if (fs.getType() == FileSystem.TYPE_LOCAL_DISK) {
