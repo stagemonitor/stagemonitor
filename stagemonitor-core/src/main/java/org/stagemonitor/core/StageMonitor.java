@@ -92,7 +92,7 @@ public final class StageMonitor {
 				logger.info("Initializing plugin {}", pluginName);
 				try {
 					stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
-				} catch (RuntimeException e) {
+				} catch (Exception e) {
 					logger.warn("Error while initializing plugin " + pluginName +
 							" (this exception is ignored)", e);
 				}
@@ -178,6 +178,7 @@ public final class StageMonitor {
 			configurationSources.add(new PropertyFileConfigurationSource(stagemonitorPropertyOverridesLocation));
 		}
 		configurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
+		configurationSources.add(new SystemPropertyConfigurationSource());
 		configuration = new Configuration(StageMonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
 		started = false;
 		measurementSession = new MeasurementSession(null, null, null);
