@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationSource;
+import org.stagemonitor.core.configuration.EnvironmentVariableConfigurationSource;
 import org.stagemonitor.core.configuration.PropertyFileConfigurationSource;
 import org.stagemonitor.core.configuration.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
@@ -19,7 +20,9 @@ import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +37,7 @@ public final class StageMonitor {
 	private static Configuration configuration;
 	private static volatile boolean started;
 	private static volatile MeasurementSession measurementSession;
+	private static List<ConfigurationSource> additionalConfigurationSources = Collections.emptyList();
 
 	static {
 		reset();
@@ -42,7 +46,8 @@ public final class StageMonitor {
 	private StageMonitor() {
 	}
 
-	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
+	public synchronized static void startMonitoring(MeasurementSession measurementSession,
+													ConfigurationSource... additionalConfigurationSources) {
 		if (!getConfiguration(CorePlugin.class).isStagemonitorActive()) {
 			logger.info("stagemonitor is deactivated");
 			started = true;
@@ -53,6 +58,10 @@ public final class StageMonitor {
 		StageMonitor.measurementSession = measurementSession;
 		if (measurementSession.isInitialized() && !started) {
 			try {
+				if (additionalConfigurationSources.length > 0) {
+					StageMonitor.additionalConfigurationSources = Arrays.asList(additionalConfigurationSources);
+					reloadConfiguration();
+				}
 				start(measurementSession);
 			} catch (RuntimeException e) {
 				logger.warn("Error while trying to start monitoring. (this exception is ignored)", e);
@@ -170,7 +179,14 @@ public final class StageMonitor {
 	 * Should only be used by the internal unit tests
 	 */
 	public static void reset() {
+		reloadConfiguration();
+		started = false;
+		measurementSession = new MeasurementSession(null, null, null);
+	}
+
+	private static void reloadConfiguration() {
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
+		configurationSources.addAll(additionalConfigurationSources);
 		configurationSources.add(new SystemPropertyConfigurationSource());
 		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
 		if (stagemonitorPropertyOverridesLocation != null) {
@@ -178,9 +194,7 @@ public final class StageMonitor {
 			configurationSources.add(new PropertyFileConfigurationSource(stagemonitorPropertyOverridesLocation));
 		}
 		configurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
-		configurationSources.add(new SystemPropertyConfigurationSource());
+		configurationSources.add(new EnvironmentVariableConfigurationSource());
 		configuration = new Configuration(StageMonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
-		started = false;
-		measurementSession = new MeasurementSession(null, null, null);
 	}
 }

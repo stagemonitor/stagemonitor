@@ -2,10 +2,10 @@ package org.stagemonitor.os;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricSet;
 import org.hyperic.sigar.CpuInfo;
 import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,16 +15,20 @@ import java.lang.management.OperatingSystemMXBean;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CpuMetricSet implements MetricSet {
+public class CpuMetricSet extends AbstractSigarMetricSet<CpuPerc> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-
-	private final CpuPerc cpuPerc;
+	
 	private final CpuInfo cpuInfo;
 
-	public CpuMetricSet(CpuPerc cpuPerc, CpuInfo cpuInfo) {
-		this.cpuPerc = cpuPerc;
+	public CpuMetricSet(Sigar sigar, CpuInfo cpuInfo) {
+		super(sigar);
 		this.cpuInfo = cpuInfo;
+	}
+
+	@Override
+	protected CpuPerc loadSnapshot(Sigar sigar) throws SigarException{
+		return sigar.getCpuPerc();
 	}
 
 	@Override
@@ -33,19 +37,49 @@ public class CpuMetricSet implements MetricSet {
 		metrics.put("os.cpu.usage.sys", new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return cpuPerc.getSys();
+				return getSnapshot().getSys();
 			}
 		});
 		metrics.put("os.cpu.usage.user", new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return cpuPerc.getUser();
+				return getSnapshot().getUser();
 			}
 		});
 		metrics.put("os.cpu.usage.idle", new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return cpuPerc.getIdle();
+				return getSnapshot().getIdle();
+			}
+		});
+		metrics.put("os.cpu.usage.nice", new Gauge<Double>() {
+			@Override
+			public Double getValue() {
+				return getSnapshot().getNice();
+			}
+		});
+		metrics.put("os.cpu.usage.wait", new Gauge<Double>() {
+			@Override
+			public Double getValue() {
+				return getSnapshot().getWait();
+			}
+		});
+		metrics.put("os.cpu.usage.interrupt", new Gauge<Double>() {
+			@Override
+			public Double getValue() {
+				return getSnapshot().getIrq();
+			}
+		});
+		metrics.put("os.cpu.usage.soft-interrupt", new Gauge<Double>() {
+			@Override
+			public Double getValue() {
+				return getSnapshot().getSoftIrq();
+			}
+		});
+		metrics.put("os.cpu.usage.stolen", new Gauge<Double>() {
+			@Override
+			public Double getValue() {
+				return getSnapshot().getStolen();
 			}
 		});
 

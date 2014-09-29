@@ -2,9 +2,9 @@ package org.stagemonitor.os;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricSet;
-import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.FileSystemUsage;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 
 import java.util.HashMap;
@@ -12,14 +12,15 @@ import java.util.Map;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-public class FileSystemMetricSet implements MetricSet {
+public class FileSystemMetricSet extends AbstractSigarMetricSet<FileSystemUsage> {
 
 	private final String baseName;
-	private final FileSystemUsage fileSystem;
+	private String fileSystemName;
 
-	public FileSystemMetricSet(String fileSystemName, FileSystemUsage fileSystem) {
-		this.baseName = name("os.fs", GraphiteSanitizer.sanitizeGraphiteMetricSegment(fileSystemName));
-		this.fileSystem = fileSystem;
+	public FileSystemMetricSet(String fileSystemName, Sigar sigar) throws SigarException {
+		super(sigar);
+		this.fileSystemName = fileSystemName;
+		this.baseName = name("os.fs", GraphiteSanitizer.sanitizeGraphiteMetricSegment(fileSystemName.replace("\\", "")));
 	}
 
 	@Override
@@ -28,47 +29,52 @@ public class FileSystemMetricSet implements MetricSet {
 		metrics.put(name(baseName, "usage.total"), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return fileSystem.getTotal();
+				return getSnapshot().getTotal();
 			}
 		});
 		metrics.put(name(baseName, "usage.free"), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return fileSystem.getFree();
+				return getSnapshot().getFree();
 			}
 		});
 		metrics.put(name(baseName, "usage.used"), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return fileSystem.getUsed();
+				return getSnapshot().getUsed();
 			}
 		});
 		metrics.put(name(baseName, "reads.bytes"), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return fileSystem.getDiskReadBytes();
+				return getSnapshot().getDiskReadBytes();
 			}
 		});
 		metrics.put(name(baseName, "writes.bytes"), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return fileSystem.getDiskWriteBytes();
+				return getSnapshot().getDiskWriteBytes();
 			}
 		});
 		metrics.put(name(baseName, "disk.queue"), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return fileSystem.getDiskQueue();
+				return getSnapshot().getDiskQueue();
 			}
 		});
-		if (fileSystem.getDiskServiceTime() >= 0) {
+		if (getSnapshot().getDiskServiceTime() >= 0) {
 			metrics.put(name(baseName, "disk.serviceTime"), new Gauge<Double>() {
 				@Override
 				public Double getValue() {
-					return fileSystem.getDiskServiceTime();
+					return getSnapshot().getDiskServiceTime();
 				}
 			});
 		}
 		return metrics;
+	}
+
+	@Override
+	FileSystemUsage loadSnapshot(Sigar sigar) throws SigarException {
+		return sigar.getFileSystemUsage(fileSystemName);
 	}
 }

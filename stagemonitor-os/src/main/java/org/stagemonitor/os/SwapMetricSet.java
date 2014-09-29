@@ -2,18 +2,22 @@ package org.stagemonitor.os;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricSet;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.Swap;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class SwapMetricSet implements MetricSet {
+public class SwapMetricSet extends AbstractSigarMetricSet<Swap> {
 
-	private final Swap swap;
+	public SwapMetricSet(Sigar sigar) {
+		super(sigar);
+	}
 
-	public SwapMetricSet(Swap swap) {
-		this.swap = swap;
+	@Override
+	Swap loadSnapshot(Sigar sigar) throws SigarException {
+		return sigar.getSwap();
 	}
 
 	@Override
@@ -22,32 +26,32 @@ public class SwapMetricSet implements MetricSet {
 		metrics.put("os.swap.usage.free", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return swap.getFree();
+				return getSnapshot().getFree();
 			}
 		});
 		metrics.put("os.swap.usage.used", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return swap.getUsed();
+				return getSnapshot().getUsed();
 			}
 		});
 		metrics.put("os.swap.usage.total", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return swap.getTotal();
+				return getSnapshot().getTotal();
 			}
 		});
 
 		metrics.put("os.swap.page.in", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return swap.getPageIn();
+				return getSnapshot().getPageIn();
 			}
 		});
 		metrics.put("os.swap.page.out", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return swap.getPageOut();
+				return getSnapshot().getPageOut();
 			}
 		});
 		return metrics;

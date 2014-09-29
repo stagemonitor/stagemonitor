@@ -73,7 +73,7 @@ subprojects {
 		coverageIgnoreTrivial = true
 	}
 
-	if (!project.name =~ "benchmark|stagemonitor-os") {
+	if (!project.name =~ "benchmark") {
 		apply from: "$rootDir/gradle/publish-maven.gradle"
 	}
 

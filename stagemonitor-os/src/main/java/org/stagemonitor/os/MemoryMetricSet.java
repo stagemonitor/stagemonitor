@@ -2,18 +2,22 @@ package org.stagemonitor.os;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricSet;
 import org.hyperic.sigar.Mem;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MemoryMetricSet implements MetricSet {
+public class MemoryMetricSet extends AbstractSigarMetricSet<Mem> {
 
-	private final Mem mem;
+	public MemoryMetricSet(Sigar sigar) {
+		super(sigar);
+	}
 
-	public MemoryMetricSet(Mem mem) {
-		this.mem = mem;
+	@Override
+	Mem loadSnapshot(Sigar sigar) throws SigarException {
+		return sigar.getMem();
 	}
 
 	@Override
@@ -22,19 +26,19 @@ public class MemoryMetricSet implements MetricSet {
 		metrics.put("os.mem.usage.free", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return mem.getFree();
+				return getSnapshot().getFree();
 			}
 		});
 		metrics.put("os.mem.usage.used", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return mem.getUsed();
+				return getSnapshot().getUsed();
 			}
 		});
 		metrics.put("os.mem.usage.total", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return mem.getTotal();
+				return getSnapshot().getTotal();
 			}
 		});
 		return metrics;

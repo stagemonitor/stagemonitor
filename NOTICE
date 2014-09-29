@@ -18,3 +18,6 @@ stagemonitor-web/src/main/resources/static/jquery.1.11.1.min.js
 
 This product bundles boomerang 0.9, which is available under the "BSD" license. For details, see
 stagemonitor-web/src/main/resources/static/bommerang.js
+
+This product native sigar bindings, which are available under the "Apache 2.0" license. For details, see
+stagemonitor-os/src/main/resources/sigar
