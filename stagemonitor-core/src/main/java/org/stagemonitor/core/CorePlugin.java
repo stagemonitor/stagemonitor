@@ -142,6 +142,7 @@ public class CorePlugin implements StageMonitorPlugin {
 	}
 
 	public long getConsoleReportingInterval() {
+		System.out.println(reportingIntervalConsole.getValue());
 		return reportingIntervalConsole.getValue();
 	}
 

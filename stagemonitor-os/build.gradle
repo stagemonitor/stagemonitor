@@ -6,24 +6,10 @@ repositories {
 
 dependencies {
 	compile project(":stagemonitor-core")
-	compile 'sigar:sigar:1.6.4'
+	compile 'org.fusesource:sigar:1.6.4'
 	compile 'org.slf4j:log4j-over-slf4j:1.7.7'
 	compile 'org.slf4j:slf4j-simple:1.7.7'
 
-	runtime files('lib/sigar/libsigar-amd64-freebsd-6.so')
-	runtime files('lib/sigar/libsigar-amd64-linux.so')
-	runtime files('lib/sigar/libsigar-amd64-solaris.so')
-	runtime files('lib/sigar/libsigar-ia64-linux.so')
-	runtime files('lib/sigar/libsigar-sparc64-solaris.so')
-	runtime files('lib/sigar/libsigar-sparc-solaris.so')
-	runtime files('lib/sigar/libsigar-universal64-macosx.dylib')
-	runtime files('lib/sigar/libsigar-universal-macosx.dylib')
-	runtime files('lib/sigar/libsigar-x86-freebsd-5.so')
-	runtime files('lib/sigar/libsigar-x86-freebsd-6.so')
-	runtime files('lib/sigar/libsigar-x86-linux.so')
-	runtime files('lib/sigar/libsigar-x86-solaris.so')
-	runtime files('lib/sigar/sigar-amd64-winnt.dll')
-	runtime files('lib/sigar/sigar-x86-winnt.dll')
 }
 
 configurations {
