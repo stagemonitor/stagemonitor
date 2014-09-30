@@ -88,7 +88,7 @@ public class OsPluginTest {
 	@Test
 	public void testFileSystemMetrics() throws Exception {
 		String baseName = getFsBaseName();
-		assertTrue(getDoubleGauge(name(baseName, "usage-percent")) >= 0);
+		assertTrue(metricRegistry.getGauges().keySet().toString(), getDoubleGauge(name(baseName, "usage-percent")) >= 0);
 		assertTrue(getDoubleGauge(name(baseName, "usage-percent")) <= 1);
 		assertTrue(getLongGauge(name(baseName, "reads.bytes")) >= 0);
 		assertTrue(getLongGauge(name(baseName, "writes.bytes")) >= 0);
