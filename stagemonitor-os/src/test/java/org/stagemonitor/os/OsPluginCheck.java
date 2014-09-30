@@ -11,10 +11,8 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
 import java.io.IOException;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -22,7 +20,7 @@ import static org.mockito.Mockito.when;
  * This class must not end with 'Test'
  * Travis build container don't have a exposed network interfance, so this test is excluded for Travis builds (see .travis.yml)
  */
-public class NetworkMetricCheck {
+public class OsPluginCheck {
 
 	private final MetricRegistry metricRegistry = new MetricRegistry();
 	private static Sigar sigar;
@@ -56,6 +54,12 @@ public class NetworkMetricCheck {
 		assertTrue(getLongGauge(name(baseName, "write.packets")) >= 0);
 		assertTrue(getLongGauge(name(baseName, "write.errors")) >= 0);
 		assertTrue(getLongGauge(name(baseName, "write.dropped")) >= 0);
+	}
+
+	@Test
+	public void testGetHostname() {
+		assertNotNull(OsPlugin.getHostName());
+		assertNotNull(OsPlugin.getHostNameFromEnv());
 	}
 
 	private long getLongGauge(String gaugeName) {

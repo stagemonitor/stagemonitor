@@ -15,7 +15,6 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,14 +64,14 @@ public class OsPluginTest {
 
 	@Test
 	public void testFileSystemUsage() throws Exception {
-		String baseName = name("os.fs", GraphiteSanitizer.sanitizeGraphiteMetricSegment(sigar.getFileSystemList()[0].getDirName().replace("\\", "")));
+		String baseName = name("os.fs", GraphiteSanitizer.sanitizeGraphiteMetricSegment(sigar.getFileSystemList()[0].getDevName().replace("\\", "")));
 		assertEquals(getLongGauge(name(baseName, "usage.total")),
 				getLongGauge(name(baseName, "usage.free")) + getLongGauge(name(baseName, "usage.used")));
 	}
 
 	@Test
 	public void testFileSystemMetrics() throws Exception {
-		String baseName = name("os.fs", GraphiteSanitizer.sanitizeGraphiteMetricSegment(sigar.getFileSystemList()[0].getDirName().replace("\\", "")));
+		String baseName = name("os.fs", GraphiteSanitizer.sanitizeGraphiteMetricSegment(sigar.getFileSystemList()[0].getDevName().replace("\\", "")));
 		assertTrue(getDoubleGauge(name(baseName, "usage-percent")) >= 0);
 		assertTrue(getDoubleGauge(name(baseName, "usage-percent")) <= 1);
 		assertTrue(getLongGauge(name(baseName, "reads.bytes")) >= 0);
@@ -109,12 +108,6 @@ public class OsPluginTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testGetConfigurationInvalid() throws Exception {
 		OsPlugin.getConfiguration(new String[]{"foo"});
-	}
-
-	@Test
-	public void testGetHostname() {
-		assertNotNull(OsPlugin.getHostName());
-		assertNotNull(OsPlugin.getHostNameFromEnv());
 	}
 
 	@Test
