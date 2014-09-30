@@ -1,4 +1,4 @@
-package org.stagemonitor.os;
+package org.stagemonitor.os.metrics;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class MemoryMetricSet extends AbstractSigarMetricSet<Mem> {
 
-	public MemoryMetricSet(Sigar sigar) {
+	public MemoryMetricSet(Sigar sigar) throws SigarException {
 		super(sigar);
 	}
 
@@ -39,6 +39,12 @@ public class MemoryMetricSet extends AbstractSigarMetricSet<Mem> {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getTotal();
+			}
+		});
+		metrics.put("os.mem.usage-percent", new Gauge<Double>() {
+			@Override
+			public Double getValue() {
+				return getSnapshot().getUsedPercent();
 			}
 		});
 		return metrics;

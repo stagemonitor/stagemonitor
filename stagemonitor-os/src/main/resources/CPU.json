@@ -43,7 +43,17 @@
 					"type": "filter",
 					"name": "host",
 					"query": "stagemonitor.[[application]].[[instance]].*",
-					"includeAll": true
+					"includeAll": true,
+					"options": [
+						{
+							"text": "All",
+							"value": "*"
+						}
+					],
+					"current": {
+						"text": "All",
+						"value": "*"
+					}
 				}
 			],
 			"time": {
@@ -103,7 +113,7 @@
 						"total": false,
 						"avg": false
 					},
-					"percentage": false,
+					"percentage": true,
 					"zerofill": true,
 					"nullPointMode": "connected",
 					"steppedLine": false,
@@ -113,10 +123,10 @@
 					},
 					"targets": [
 						{
-							"target": "sortByMinima(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.usage.*,'idle'),7,'sum'))"
+							"target": "sortByMinima(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.usage.*,'idle'),7,'maxSeries'))"
 						},
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.usage.idle,7,'sum')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.usage.idle,7,'maxSeries')"
 						}
 					],
 					"aliasColors": {},

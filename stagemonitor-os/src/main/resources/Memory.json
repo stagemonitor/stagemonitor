@@ -43,7 +43,17 @@
 					"type": "filter",
 					"name": "host",
 					"query": "stagemonitor.[[application]].[[instance]].*",
-					"includeAll": true
+					"includeAll": true,
+					"options": [
+						{
+							"text": "All",
+							"value": "*"
+						}
+					],
+					"current": {
+						"text": "All",
+						"value": "*"
+					}
 				}
 			],
 			"time": {

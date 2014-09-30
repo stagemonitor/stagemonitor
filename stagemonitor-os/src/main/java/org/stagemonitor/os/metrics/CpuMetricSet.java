@@ -1,4 +1,4 @@
-package org.stagemonitor.os;
+package org.stagemonitor.os.metrics;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
@@ -21,7 +21,7 @@ public class CpuMetricSet extends AbstractSigarMetricSet<CpuPerc> {
 	
 	private final CpuInfo cpuInfo;
 
-	public CpuMetricSet(Sigar sigar, CpuInfo cpuInfo) {
+	public CpuMetricSet(Sigar sigar, CpuInfo cpuInfo) throws SigarException {
 		super(sigar);
 		this.cpuInfo = cpuInfo;
 	}
@@ -80,6 +80,12 @@ public class CpuMetricSet extends AbstractSigarMetricSet<CpuPerc> {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getStolen();
+			}
+		});
+		metrics.put("os.cpu.usage-percent", new Gauge<Double>() {
+			@Override
+			public Double getValue() {
+				return getSnapshot().getCombined();
 			}
 		});
 

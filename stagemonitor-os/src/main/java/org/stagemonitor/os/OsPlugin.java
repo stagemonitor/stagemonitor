@@ -14,6 +14,12 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.ConfigurationSource;
 import org.stagemonitor.core.configuration.SimpleSource;
 import org.stagemonitor.core.rest.RestClient;
+import org.stagemonitor.os.metrics.AbstractSigarMetricSet;
+import org.stagemonitor.os.metrics.CpuMetricSet;
+import org.stagemonitor.os.metrics.FileSystemMetricSet;
+import org.stagemonitor.os.metrics.MemoryMetricSet;
+import org.stagemonitor.os.metrics.NetworkMetricSet;
+import org.stagemonitor.os.metrics.SwapMetricSet;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -31,8 +37,9 @@ public class OsPlugin implements StageMonitorPlugin {
 
 	private final Sigar sigar;
 
-	public OsPlugin() {
-		this(new Sigar());
+	public OsPlugin() throws IOException {
+		System.setProperty("java.library.path", NativeUtils.getLibraryPath(getSigarBindings(), "sigar"));
+		this.sigar = new Sigar();
 	}
 
 	public OsPlugin(Sigar sigar) {
@@ -49,23 +56,31 @@ public class OsPlugin implements StageMonitorPlugin {
 		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "OS Overview.json");
 
 		try {
-			metricRegistry.registerAll(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0]));
-			metricRegistry.registerAll(new MemoryMetricSet(sigar));
-			metricRegistry.registerAll(new SwapMetricSet(sigar));
+			metricRegistry.registerAll(init(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0])));
+			metricRegistry.registerAll(init(new MemoryMetricSet(sigar)));
+			metricRegistry.registerAll(init(new SwapMetricSet(sigar)));
 			for (String ifname : sigar.getNetInterfaceList()) {
-				metricRegistry.registerAll(new NetworkMetricSet(ifname, sigar));
+				metricRegistry.registerAll(init(new NetworkMetricSet(ifname, sigar)));
 			}
 			@SuppressWarnings("unchecked")
 			final Set<Map.Entry<String, FileSystem>> entries = (Set<Map.Entry<String, FileSystem>>) sigar.getFileSystemMap().entrySet();
 			for (Map.Entry<String, FileSystem> e : entries) {
 				final FileSystem fs = e.getValue();
 				if (fs.getType() == FileSystem.TYPE_LOCAL_DISK) {
-					metricRegistry.registerAll(new FileSystemMetricSet(e.getKey(), sigar));
+					metricRegistry.registerAll(init(new FileSystemMetricSet(e.getKey(), sigar)));
 				}
 			}
 		} catch (UnsatisfiedLinkError e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/*
+	 * initializing by calling getSnapshot helps to avoid a strange npe
+	 */
+	private <T extends AbstractSigarMetricSet<?>> T init(T metrics) {
+		metrics.getSnapshot();
+		return metrics;
 	}
 
 	@Override
@@ -74,7 +89,6 @@ public class OsPlugin implements StageMonitorPlugin {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
-		System.setProperty("java.library.path", NativeUtils.getLibraryPath(getSigarBindings(), "sigar"));
 
 		final CorePlugin corePlugin = StageMonitor.getConfiguration(CorePlugin.class);
 		String applicationName = corePlugin.getApplicationName() != null ? corePlugin.getApplicationName() : "os";

@@ -43,13 +43,33 @@
 					"type": "filter",
 					"name": "host",
 					"query": "stagemonitor.[[application]].[[instance]].*",
-					"includeAll": true
+					"includeAll": true,
+					"options": [
+						{
+							"text": "All",
+							"value": "*"
+						}
+					],
+					"current": {
+						"text": "All",
+						"value": "*"
+					}
 				},
 				{
 					"type": "filter",
 					"name": "filesystem",
 					"query": "stagemonitor.[[application]].[[instance]].[[host]].os.fs.*",
-					"includeAll": true
+					"includeAll": true,
+					"options": [
+						{
+							"text": "All",
+							"value": "*"
+						}
+					],
+					"current": {
+						"text": "All",
+						"value": "*"
+					}
 				}
 			],
 			"time": {
@@ -321,7 +341,9 @@
 	"refresh": "1m",
 	"tags": [
 		"os",
-		"filesystem"
+		"filesystem",
+		"i/o",
+		"io"
 	],
 	"timezone": "browser"
 }

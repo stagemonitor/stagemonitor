@@ -1,4 +1,4 @@
-package org.stagemonitor.os;
+package org.stagemonitor.os.metrics;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;

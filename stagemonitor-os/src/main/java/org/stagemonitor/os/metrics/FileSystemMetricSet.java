@@ -1,4 +1,4 @@
-package org.stagemonitor.os;
+package org.stagemonitor.os.metrics;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
@@ -29,19 +29,25 @@ public class FileSystemMetricSet extends AbstractSigarMetricSet<FileSystemUsage>
 		metrics.put(name(baseName, "usage.total"), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return getSnapshot().getTotal();
+				return getSnapshot().getTotal() * 1024;
 			}
 		});
 		metrics.put(name(baseName, "usage.free"), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return getSnapshot().getFree();
+				return getSnapshot().getFree()* 1024;
 			}
 		});
 		metrics.put(name(baseName, "usage.used"), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return getSnapshot().getUsed();
+				return getSnapshot().getUsed()* 1024;
+			}
+		});
+		metrics.put(name(baseName, "usage-percent"), new Gauge<Double>() {
+			@Override
+			public Double getValue() {
+				return getSnapshot().getUsePercent();
 			}
 		});
 		metrics.put(name(baseName, "reads.bytes"), new Gauge<Long>() {

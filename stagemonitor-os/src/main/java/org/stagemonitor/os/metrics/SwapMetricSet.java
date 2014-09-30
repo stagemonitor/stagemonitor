@@ -1,7 +1,8 @@
-package org.stagemonitor.os;
+package org.stagemonitor.os.metrics;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
+import com.codahale.metrics.RatioGauge;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.Swap;
@@ -11,7 +12,7 @@ import java.util.Map;
 
 public class SwapMetricSet extends AbstractSigarMetricSet<Swap> {
 
-	public SwapMetricSet(Sigar sigar) {
+	public SwapMetricSet(Sigar sigar) throws SigarException{
 		super(sigar);
 	}
 
@@ -39,6 +40,12 @@ public class SwapMetricSet extends AbstractSigarMetricSet<Swap> {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getTotal();
+			}
+		});
+		metrics.put("os.swap.usage-percent", new RatioGauge() {
+			@Override
+			protected Ratio getRatio() {
+				return Ratio.of(getSnapshot().getUsed(), getSnapshot().getTotal());
 			}
 		});
 

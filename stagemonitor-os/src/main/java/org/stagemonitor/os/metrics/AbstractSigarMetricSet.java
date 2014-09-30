@@ -1,4 +1,4 @@
-package org.stagemonitor.os;
+package org.stagemonitor.os.metrics;
 
 import com.codahale.metrics.CachedGauge;
 import com.codahale.metrics.MetricSet;
@@ -12,7 +12,7 @@ public abstract class AbstractSigarMetricSet<T> implements MetricSet {
 	private final Sigar sigar;
 
 	/*
-	 * The CachedGauge is used as a cache, to ensure, that a single report gets a single instance of the metric snapshot
+	 * The CachedGauge is used as a cache, to ensure that a single report gets a single instance of the metric snapshot
 	 */
 	private CachedGauge<T> sigarMetricSnapshot = new CachedGauge<T>(900, TimeUnit.MILLISECONDS) {
 		@Override
@@ -27,8 +27,6 @@ public abstract class AbstractSigarMetricSet<T> implements MetricSet {
 
 	protected AbstractSigarMetricSet(Sigar sigar) throws SigarException {
 		this.sigar = sigar;
-		// this avoids a strange npe
-		loadSnapshot(sigar);
 	}
 
 	abstract T loadSnapshot(Sigar sigar) throws SigarException;
@@ -38,7 +36,7 @@ public abstract class AbstractSigarMetricSet<T> implements MetricSet {
 	 *
 	 * @return a snapshot of {@link T}
 	 */
-	protected T getSnapshot() {
+	public T getSnapshot() {
 		return sigarMetricSnapshot.getValue();
 	}
 
