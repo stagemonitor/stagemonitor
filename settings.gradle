@@ -5,6 +5,7 @@ include'stagemonitor-benchmark',
 		'stagemonitor-jdbc',
 		'stagemonitor-jvm',
 		'stagemonitor-logging',
+		'stagemonitor-os',
 		'stagemonitor-requestmonitor',
 		'stagemonitor-spring-mvc',
 		'stagemonitor-web'

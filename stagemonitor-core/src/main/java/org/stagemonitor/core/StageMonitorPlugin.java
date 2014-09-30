@@ -14,5 +14,5 @@ public interface StageMonitorPlugin extends ConfigurationOptionProvider {
 	 * Implementing classes have to initialize the plugin by registering their metrics the
 	 * {@link com.codahale.metrics.MetricRegistry}
 	 */
-	void initializePlugin(MetricRegistry metricRegistry, Configuration configuration);
+	void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception;
 }
