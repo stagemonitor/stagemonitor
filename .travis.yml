@@ -10,7 +10,8 @@ env:
 install:
   - ./gradlew assemble --stacktrace
 script:
-  - ./gradlew check
+  # exclude NetworkMetricCheck, because it fails on travis (travis build containers don't have a exposed network interface)
+  - ./gradlew test --tests *Test
 after_success:
   - ./gradlew cobertura coveralls -PexcludeAspectTests
   - chmod +x etc/publish-to-github-mvn-repo-with-travis.sh

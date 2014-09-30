@@ -15,6 +15,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -87,21 +88,6 @@ public class OsPluginTest {
 		final double usage = getDoubleGauge("os.mem.usage-percent");
 		assertTrue(Double.toString(usage), usage >= 0);
 		assertTrue(Double.toString(usage), usage <= 1);
-	}
-
-	@Test
-	public void testNetworkMetrics() throws Exception {
-		String baseName = name("os.net", GraphiteSanitizer.sanitizeGraphiteMetricSegment(sigar.getNetInterfaceList()[0]));
-
-		assertTrue(getLongGauge(name(baseName, "read.bytes")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "read.packets")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "read.errors")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "read.dropped")) >= 0);
-
-		assertTrue(getLongGauge(name(baseName, "write.bytes")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "write.packets")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "write.errors")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "write.dropped")) >= 0);
 	}
 
 	@Test

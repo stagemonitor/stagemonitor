@@ -25,7 +25,7 @@ public abstract class AbstractSigarMetricSet<T> implements MetricSet {
 		}
 	};
 
-	protected AbstractSigarMetricSet(Sigar sigar) throws SigarException {
+	protected AbstractSigarMetricSet(Sigar sigar) {
 		this.sigar = sigar;
 	}
 

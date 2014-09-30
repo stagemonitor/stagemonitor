@@ -1,8 +1,10 @@
 package org.stagemonitor.os;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.MetricSet;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -16,6 +18,7 @@ import org.stagemonitor.core.configuration.SimpleSource;
 import org.stagemonitor.core.rest.RestClient;
 import org.stagemonitor.os.metrics.AbstractSigarMetricSet;
 import org.stagemonitor.os.metrics.CpuMetricSet;
+import org.stagemonitor.os.metrics.EmptySigarMetricSet;
 import org.stagemonitor.os.metrics.FileSystemMetricSet;
 import org.stagemonitor.os.metrics.MemoryMetricSet;
 import org.stagemonitor.os.metrics.NetworkMetricSet;
@@ -85,9 +88,14 @@ public class OsPlugin implements StageMonitorPlugin {
 	/*
 	 * initializing by calling getSnapshot helps to avoid a strange npe
 	 */
-	private <T extends AbstractSigarMetricSet<?>> T init(T metrics) {
-		metrics.getSnapshot();
-		return metrics;
+	private AbstractSigarMetricSet<?> init(AbstractSigarMetricSet<?> metrics) {
+		try {
+			metrics.getSnapshot();
+			return metrics;
+		} catch (RuntimeException e) {
+			logger.warn(e.getMessage() + ". (This exception is ignored)", e);
+			return new EmptySigarMetricSet();
+		}
 	}
 
 	@Override
