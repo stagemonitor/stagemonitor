@@ -1,21 +1,15 @@
 package org.stagemonitor.os;
 
 import com.codahale.metrics.MetricRegistry;
-import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.GraphiteSanitizer;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -64,35 +58,6 @@ public class OsPluginTest {
 	public void testCpuInfo() throws Exception {
 		assertTrue(getIntGauge("os.cpu.info.mhz") > 0);
 		assertTrue(getIntGauge("os.cpu.info.cores") > 0);
-	}
-
-	@Test
-	public void testFileSystemUsage() throws Exception {
-		String baseName = getFsBaseName();
-		assertEquals(getLongGauge(name(baseName, "usage.total")),
-				getLongGauge(name(baseName, "usage.free")) + getLongGauge(name(baseName, "usage.used")));
-	}
-
-	private String getFsBaseName() throws SigarException {
-		String fsName = "";
-		@SuppressWarnings("unchecked")
-		final Set<Map.Entry<String, FileSystem>> entries = (Set<Map.Entry<String, FileSystem>>) sigar.getFileSystemMap().entrySet();
-		for (Map.Entry<String, FileSystem> e : entries) {
-			if (e.getValue().getType() == FileSystem.TYPE_LOCAL_DISK) {
-				fsName = e.getKey();
-			}
-		}
-		return name("os.fs", GraphiteSanitizer.sanitizeGraphiteMetricSegment(fsName.replace("\\", "")));
-	}
-
-	@Test
-	public void testFileSystemMetrics() throws Exception {
-		String baseName = getFsBaseName();
-		assertTrue(metricRegistry.getGauges().keySet().toString(), getDoubleGauge(name(baseName, "usage-percent")) >= 0);
-		assertTrue(getDoubleGauge(name(baseName, "usage-percent")) <= 1);
-		assertTrue(getLongGauge(name(baseName, "reads.bytes")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "writes.bytes")) >= 0);
-		assertTrue(getDoubleGauge(name(baseName, "disk.queue")) >= 0);
 	}
 
 	@Test
