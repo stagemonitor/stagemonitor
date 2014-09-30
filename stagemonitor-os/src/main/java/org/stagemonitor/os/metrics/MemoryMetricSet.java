@@ -44,7 +44,7 @@ public class MemoryMetricSet extends AbstractSigarMetricSet<Mem> {
 		metrics.put("os.mem.usage-percent", new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getUsedPercent();
+				return getSnapshot().getUsedPercent() / 100;
 			}
 		});
 		return metrics;

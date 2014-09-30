@@ -38,8 +38,12 @@ public class OsPlugin implements StageMonitorPlugin {
 	private final Sigar sigar;
 
 	public OsPlugin() throws IOException {
+		this.sigar = newSigar();
+	}
+
+	public static Sigar newSigar() throws IOException {
 		System.setProperty("java.library.path", NativeUtils.getLibraryPath(getSigarBindings(), "sigar"));
-		this.sigar = new Sigar();
+		return new Sigar();
 	}
 
 	public OsPlugin(Sigar sigar) {
@@ -49,11 +53,14 @@ public class OsPlugin implements StageMonitorPlugin {
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
 		final CorePlugin config = configuration.getConfig(CorePlugin.class);
-		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "CPU.json");
-		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "Filesystem.json");
-		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "Memory.json");
-		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "Network.json");
-		RestClient.sendGrafanaDashboardAsync(config.getElasticsearchUrl(), "OS Overview.json");
+		final String elasticsearchUrl = config.getElasticsearchUrl();
+		if (elasticsearchUrl != null && !elasticsearchUrl.isEmpty()) {
+			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "CPU.json");
+			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "Filesystem.json");
+			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "Memory.json");
+			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "Network.json");
+			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "OS Overview.json");
+		}
 
 		try {
 			metricRegistry.registerAll(init(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0])));
@@ -89,18 +96,20 @@ public class OsPlugin implements StageMonitorPlugin {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
-
-		final CorePlugin corePlugin = StageMonitor.getConfiguration(CorePlugin.class);
-		String applicationName = corePlugin.getApplicationName() != null ? corePlugin.getApplicationName() : "os";
-		String instanceName = corePlugin.getInstanceName() != null ? corePlugin.getApplicationName() : "host";
-		StageMonitor.startMonitoring(new MeasurementSession(applicationName, getHostName(), instanceName), getConfiguration(args));
-
+		StageMonitor.startMonitoring(getMeasurementSession(), getConfiguration(args));
 		while (!Thread.currentThread().isInterrupted()) {
 			Thread.sleep(100);
 		}
 	}
 
-	private static ConfigurationSource getConfiguration(String[] args) {
+	static MeasurementSession getMeasurementSession() {
+		final CorePlugin corePlugin = StageMonitor.getConfiguration(CorePlugin.class);
+		String applicationName = corePlugin.getApplicationName() != null ? corePlugin.getApplicationName() : "os";
+		String instanceName = corePlugin.getInstanceName() != null ? corePlugin.getInstanceName() : "host";
+		return new MeasurementSession(applicationName, getHostName(), instanceName);
+	}
+
+	static ConfigurationSource getConfiguration(String[] args) {
 		final SimpleSource source = new SimpleSource("Process Arguments");
 		for (String arg : args) {
 			if (!arg.matches("(.+)=(.+)")) {
@@ -113,21 +122,25 @@ public class OsPlugin implements StageMonitorPlugin {
 		return source;
 	}
 
-	private static String getHostName() {
+	static String getHostName() {
 		try {
 			return InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException e) {
-			// try environment properties.
-			String host = System.getenv("COMPUTERNAME");
-			if (host != null) {
-				return host;
-			}
-			host = System.getenv("HOSTNAME");
-			if (host != null) {
-				return host;
-			}
-			return null;
+			return getHostNameFromEnv();
 		}
+	}
+
+	static String getHostNameFromEnv() {
+		// try environment properties.
+		String host = System.getenv("COMPUTERNAME");
+		if (host != null) {
+			return host;
+		}
+		host = System.getenv("HOSTNAME");
+		if (host != null) {
+			return host;
+		}
+		return null;
 	}
 
 	private static List<String> getSigarBindings() {

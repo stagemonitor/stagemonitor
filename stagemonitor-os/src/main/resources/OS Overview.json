@@ -157,7 +157,7 @@
 					"grid": {
 						"leftMax": null,
 						"rightMax": null,
-						"leftMin": null,
+						"leftMin": 0,
 						"rightMin": null,
 						"threshold1": null,
 						"threshold2": null,
@@ -194,10 +194,10 @@
 					},
 					"targets": [
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.*.read.bytes),'1min','last'),0),'read')"
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.*.read.bytes),'1min','last'),0),'receive')"
 						},
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.*.write.bytes),'1min','last'),0),'write')"
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.*.write.bytes),'1min','last'),0),'send')"
 						}
 					],
 					"aliasColors": {},
@@ -230,7 +230,7 @@
 					"grid": {
 						"leftMax": null,
 						"rightMax": null,
-						"leftMin": null,
+						"leftMin": 0,
 						"rightMin": null,
 						"threshold1": null,
 						"threshold2": null,
