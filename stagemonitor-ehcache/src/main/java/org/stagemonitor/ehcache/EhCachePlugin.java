@@ -42,21 +42,18 @@ public class EhCachePlugin implements StageMonitorPlugin {
 		return Arrays.<ConfigurationOption<?>>asList(ehCacheNameOption, timeGet);
 	}
 
-	public String getEhcacheName() {
-		return ehCacheNameOption.getValue();
-	}
-
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
 		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
-		final CacheManager cacheManager = CacheManager.getCacheManager(getEhcacheName());
+		final EhCachePlugin chCacheConfig = configuration.getConfig(EhCachePlugin.class);
+		final CacheManager cacheManager = CacheManager.getCacheManager(chCacheConfig.ehCacheNameOption.getValue());
 		for (String cacheName : cacheManager.getCacheNames()) {
 			final Cache cache = cacheManager.getCache(cacheName);
 			cache.setStatisticsEnabled(true);
 
 			final String metricPrefix = name("cache", sanitizeGraphiteMetricSegment(cache.getName()));
 			final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(metricPrefix,
-					metricRegistry, timeGet.getValue());
+					metricRegistry, chCacheConfig.timeGet.getValue());
 			cache.registerCacheUsageListener(cacheUsageListener);
 			metricRegistry.registerAll(new EhCacheMetricSet(metricPrefix, cache, cacheUsageListener));
 		}
