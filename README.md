@@ -12,5 +12,5 @@ For more information about the project, please see http://www.stagemonitor.org
 ## Getting Started
 Check the [Installation](https://github.com/stagemonitor/stagemonitor/wiki/Installation) site of the wiki
 
-## Discuss
-If you want to discuss anything related to stagemontior, you can do so at http://ost.io/@stagemonitor/stagemonitor
+## Issues
+If you encounter any issues or if you have a question, don't hesitate to create an issue.
