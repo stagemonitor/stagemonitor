@@ -19,7 +19,7 @@ publishing {
 			from components.java
 			pom.withXml {
 				asNode().dependencies.first().dependency.each {
-					if (it.artifactId.text() == 'servlet-api') {
+					if (it.artifactId.text().contains('servlet-api')) {
 						it.scope.first().value = 'provided'
 					} else {
 						it.scope.first().value = 'compile'
