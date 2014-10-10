@@ -54,7 +54,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 			public String getName() {
 				return getRequestName();
 			}
-		}, httpServletRequest.getRequestURI(), headers, httpServletRequest.getMethod());
+		}, httpServletRequest.getRequestURI(), headers, httpServletRequest.getMethod(), httpServletRequest.getRequestedSessionId());
 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();

@@ -96,22 +96,6 @@ public class RestClient {
 		}
 	}
 
-	public static  void sendCallStackAsync(final Object requestTrace, final String requestTraceId,
-										   final String serverUrl, final String ttl) {
-		asyncRestPool.execute(new Runnable() {
-			@Override
-			public void run() {
-				final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
-				dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-				String path = String.format("/stagemonitor-%s/executions/%s", dateFormat.format(new Date()), requestTraceId);
-				if (ttl != null && !ttl.isEmpty()) {
-					path += "?ttl=" + ttl;
-				}
-				sendAsJson(serverUrl, path, "PUT", requestTrace);
-			}
-		});
-	}
-
 	public static void sendGrafanaDashboardAsync(final String baseUrl, String dashboardPath) {
 		sendDashboardAsync(baseUrl, "/grafana-dash/dashboard/", dashboardPath);
 	}

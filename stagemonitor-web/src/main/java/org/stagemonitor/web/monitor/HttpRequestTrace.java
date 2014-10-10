@@ -28,11 +28,13 @@ public class HttpRequestTrace extends RequestTrace {
 	private final String method;
 	private Integer bytesWritten;
 	private final UserAgentInformation userAgent;
+	private final String sessionId;
 
-	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method) {
+	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method, String sessionId) {
 		super(getNameCallback);
 		this.url = url;
 		this.headers = headers;
+		this.sessionId = sessionId;
 		userAgent = getUserAgentInformation(headers);
 		this.method = method;
 	}
@@ -130,6 +132,10 @@ public class HttpRequestTrace extends RequestTrace {
 
 	public UserAgentInformation getUserAgent() {
 		return userAgent;
+	}
+
+	public String getSessionId() {
+		return sessionId;
 	}
 
 	@Override

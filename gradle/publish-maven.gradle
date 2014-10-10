@@ -19,7 +19,8 @@ publishing {
 			from components.java
 			pom.withXml {
 				asNode().dependencies.first().dependency.each {
-					if (it.artifactId.text().contains('servlet-api')) {
+					final artifactId = it.artifactId.text()
+					if (artifactId.contains('servlet-api') || artifactId == 'javax.websocket-api') {
 						it.scope.first().value = 'provided'
 					} else {
 						it.scope.first().value = 'compile'
