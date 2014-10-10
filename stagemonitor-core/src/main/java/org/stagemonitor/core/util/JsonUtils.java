@@ -1,6 +1,7 @@
 package org.stagemonitor.core.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
@@ -17,7 +18,13 @@ public class JsonUtils {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	static {
-		MAPPER.registerModule(new AfterburnerModule());
+		// Avoiding java.lang.NoSuchMethodError: com.fasterxml.jackson.databind.ser.BeanPropertyWriter.isUnwrapping()
+		// This happens, if the version of jackson databind is < 2.3.0.
+		// Because maven resolves a version conflict with the nearest-wins strategy it is possible that
+		// jackson-module-afterburner is in a higher version that jackson-databind and jackson-core
+		if (MAPPER.version().compareTo(new Version(2, 3, 0, null, "com.fasterxml.jackson.core", "jackson-databind")) >= 0) {
+			MAPPER.registerModule(new AfterburnerModule());
+		}
 	}
 
 	public static String toJson(Object o) {
