@@ -8,7 +8,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.rest.RestClient;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
@@ -16,12 +15,12 @@ import org.stagemonitor.requestmonitor.profiler.Profiler;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,8 +46,8 @@ public class RequestMonitor {
 	private static ThreadLocal<RequestTrace> request = new ThreadLocal<RequestTrace>();
 
 	private static final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>(){{
-		add(new ElasticsearchRequestTraceReporter());
 		add(new LogRequestTraceReporter());
+		add(new ElasticsearchRequestTraceReporter());
 	}};
 
 	private static ExecutorService asyncRequestTraceReporterPool = Executors.newSingleThreadExecutor(new ThreadFactory() {
@@ -286,16 +285,24 @@ public class RequestMonitor {
 	}
 
 	private <T extends RequestTrace> void reportRequestTrace(final T requestTrace) {
-		asyncRequestTraceReporterPool.submit(new Runnable() {
-			@Override
-			public void run() {
-				for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
-					if (requestTraceReporter.isActive()) {
-						requestTraceReporter.reportRequestTrace(requestTrace);
+		try {
+			asyncRequestTraceReporterPool.submit(new Runnable() {
+				@Override
+				public void run() {
+					for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
+						if (requestTraceReporter.isActive()) {
+							try {
+								requestTraceReporter.reportRequestTrace(requestTrace);
+							} catch (Exception e) {
+								logger.warn(e.getMessage() + " (this exception is ignored)", e);
+							}
+						}
 					}
 				}
-			}
-		});
+			});
+		} catch (RejectedExecutionException e) {
+			logger.warn(e.getMessage() + " (this exception is ignored)", e);
+		}
 	}
 
 	private boolean isWarmedUp() {
@@ -409,7 +416,7 @@ public class RequestMonitor {
 	 * @param requestTraceReporter the {@link RequestTraceReporter} to add
 	 */
 	public static void addRequestTraceReporter(RequestTraceReporter requestTraceReporter) {
-		requestTraceReporters.add(requestTraceReporter);
+		requestTraceReporters.add(0, requestTraceReporter);
 	}
 
 }

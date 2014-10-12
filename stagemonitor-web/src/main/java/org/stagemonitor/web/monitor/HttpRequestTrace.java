@@ -24,17 +24,20 @@ public class HttpRequestTrace extends RequestTrace {
 
 	private final String url;
 	private Integer statusCode;
-	private final  Map<String, String> headers;
+	private final Map<String, String> headers;
 	private final String method;
 	private Integer bytesWritten;
 	private final UserAgentInformation userAgent;
 	private final String sessionId;
+	private final String websocketConnectionId;
 
-	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method, String sessionId) {
+	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
+							String sessionId, String websocketConnectionId) {
 		super(getNameCallback);
 		this.url = url;
 		this.headers = headers;
 		this.sessionId = sessionId;
+		this.websocketConnectionId = websocketConnectionId;
 		userAgent = getUserAgentInformation(headers);
 		this.method = method;
 	}
@@ -134,8 +137,21 @@ public class HttpRequestTrace extends RequestTrace {
 		return userAgent;
 	}
 
+	/**
+	 * @return the http session id, <code>null</code> if there is no session associated with the request
+	 */
 	public String getSessionId() {
 		return sessionId;
+	}
+
+	/**
+	 * The websocket connection id is used to associate a http request with a websocket {@link javax.websocket.Session}
+	 * which is used to push request traces of ajax requests to the in browser widget.
+	 *
+	 * @return the websocket connection id
+	 */
+	public String getWebsocketConnectionId() {
+		return websocketConnectionId;
 	}
 
 	@Override

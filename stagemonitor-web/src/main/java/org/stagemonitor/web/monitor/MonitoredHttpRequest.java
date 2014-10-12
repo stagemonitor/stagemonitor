@@ -8,6 +8,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
+import org.stagemonitor.web.monitor.widget.RequestTracePushEndpoint;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -49,12 +50,17 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		if (webPlugin.isCollectHttpHeaders()) {
 			headers = getHeaders(httpServletRequest);
 		}
-		HttpRequestTrace request = new HttpRequestTrace(new RequestTrace.GetNameCallback() {
+		final String url = httpServletRequest.getRequestURI();
+		final String method = httpServletRequest.getMethod();
+		final String sessionId = httpServletRequest.getRequestedSessionId();
+		final String connectionId = httpServletRequest.getHeader(RequestTracePushEndpoint.CONNECTION_ID);
+		final RequestTrace.GetNameCallback nameCallback = new RequestTrace.GetNameCallback() {
 			@Override
 			public String getName() {
 				return getRequestName();
 			}
-		}, httpServletRequest.getRequestURI(), headers, httpServletRequest.getMethod(), httpServletRequest.getRequestedSessionId());
+		};
+		HttpRequestTrace request = new HttpRequestTrace(nameCallback, url, headers, method, sessionId, connectionId);
 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
