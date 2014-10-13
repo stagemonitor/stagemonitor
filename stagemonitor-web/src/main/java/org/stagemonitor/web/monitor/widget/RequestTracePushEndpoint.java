@@ -74,9 +74,7 @@ public class RequestTracePushEndpoint implements RequestTraceReporter, ServerApp
 				final Session session = connectionIdToWebsocketSessionMap.get(connectionId);
 				if (session == null) {
 					logger.warn("no session found for connection id {}", connectionId);
-					return;
-				}
-				if (session.isOpen()) {
+				} else if (session.isOpen()) {
 					pushRequestTrace(requestTrace, session);
 				} else {
 					removeSession(session);

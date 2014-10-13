@@ -3,7 +3,11 @@ var noOfRequestTraces = 0;
 listenForAjaxRequestTraces = function (rootRequest, websocketConnectionId) {
 	rootRequestTrace = rootRequest;
 	try {
-		var webSocket = new WebSocket("ws://" + window.location.host + "/stagemonitor/request-trace/" + websocketConnectionId);
+		var wsProtocol = "ws://";
+		if (window.location.protocol == "https:") {
+			wsProtocol = "wss://";
+		}
+		var webSocket = new WebSocket(wsProtocol + window.location.host + "/stagemonitor/request-trace/" + websocketConnectionId);
 		webSocket.onmessage = function (event) {
 			var data = JSON.parse(event.data);
 			addAjaxRequestTrace(data);
@@ -68,9 +72,6 @@ $(document).ready(function () {
 			'data-toggle="tooltip" data-placement="right" title="Select row to analyze a particular ajax request. Deselect to analyze the root request."></span>');
 	}
 	addToolbar();
-	// TODO testcode
-//	addAjaxRequestTrace(rootRequestTrace);
-//	addAjaxRequestTrace(rootRequestTrace);
 });
 
 addAjaxRequestTrace = function (data) {
