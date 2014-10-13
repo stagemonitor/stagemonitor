@@ -6,10 +6,12 @@ import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
+import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
 import java.io.IOException;
@@ -23,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(ConditionalTravisTestRunner.class)
 public class OsPluginTest {
 
 	private final MetricRegistry metricRegistry = new MetricRegistry();

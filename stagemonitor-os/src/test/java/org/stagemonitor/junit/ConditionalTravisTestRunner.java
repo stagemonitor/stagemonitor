@@ -16,7 +16,7 @@ public class ConditionalTravisTestRunner extends BlockJUnit4ClassRunner {
 		ExcludeOnTravis condition = method.getAnnotation(ExcludeOnTravis.class);
 		if (condition == null) {
 			super.runChild(method, notifier);
-		} else if ("true".equals(System.getenv("TRAVIS"))) {
+		} else if (System.getenv("TRAVIS") != null) {
 			notifier.fireTestIgnored(describeChild(method));
 		} else {
 			super.runChild(method, notifier);
