@@ -111,3 +111,11 @@ body {
 .wide-tooltip div.tooltip-inner {
 	max-width: 500px;
 }
+
+.toolbar {
+
+}
+
+.toolbar .active {
+	color: #428bca;
+}

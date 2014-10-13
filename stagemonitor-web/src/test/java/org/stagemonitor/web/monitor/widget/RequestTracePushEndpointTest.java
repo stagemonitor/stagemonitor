@@ -30,26 +30,26 @@ import static org.junit.Assert.assertNotNull;
 
 public class RequestTracePushEndpointTest {
 
-	private int port = 9090;
+	private int port;
 	private Server server;
 	private Session session;
 	private String connectionId;
 	private RequestTracePushEndpoint requestTracePushEndpoint;
 	private WebSocketClient webSocketClient;
 
+
 	@Before
 	public void before() throws Exception {
 		setUpServer();
 		setUpClient();
 		requestTracePushEndpoint = RequestTracePushEndpoint.instance;
-
 	}
 
 	private void setUpServer() throws Exception {
 		try {
 			server = new Server();
 			ServerConnector connector = new ServerConnector(server);
-//			port = getAvailablePort();
+			port = getAvailablePort();
 			connector.setPort(port);
 			server.addConnector(connector);
 
@@ -101,7 +101,7 @@ public class RequestTracePushEndpointTest {
 			}
 		}, "/test", Collections.<String, String>emptyMap(), "GET", null, connectionId));
 
-		Thread.sleep(100);
+		Thread.sleep(200);
 
 		assertNotNull(webSocketClient.message);
 		final JsonNode httpRequestTrace = new ObjectMapper().readTree(webSocketClient.message);
