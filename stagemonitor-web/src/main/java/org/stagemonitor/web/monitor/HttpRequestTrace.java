@@ -1,5 +1,6 @@
 package org.stagemonitor.web.monitor;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
@@ -29,15 +30,16 @@ public class HttpRequestTrace extends RequestTrace {
 	private Integer bytesWritten;
 	private final UserAgentInformation userAgent;
 	private final String sessionId;
-	private final String websocketConnectionId;
+	@JsonIgnore
+	private final String connectionId;
 
 	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
-							String sessionId, String websocketConnectionId) {
+							String sessionId, String connectionId) {
 		super(getNameCallback);
 		this.url = url;
 		this.headers = headers;
 		this.sessionId = sessionId;
-		this.websocketConnectionId = websocketConnectionId;
+		this.connectionId = connectionId;
 		userAgent = getUserAgentInformation(headers);
 		this.method = method;
 	}
@@ -145,13 +147,15 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	/**
-	 * The websocket connection id is used to associate a http request with a websocket {@link javax.websocket.Session}
-	 * which is used to push request traces of ajax requests to the in browser widget.
+	 * The connection id is used to associate ajax requests with a particular browser window in which the
+	 * stagemonitor widget is running.
+	 * <p/>
+	 * It is used to to push request traces of ajax requests to the in browser widget.
 	 *
-	 * @return the websocket connection id
+	 * @return the connection id
 	 */
-	public String getWebsocketConnectionId() {
-		return websocketConnectionId;
+	public String getConnectionId() {
+		return connectionId;
 	}
 
 	@Override

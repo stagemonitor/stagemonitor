@@ -1,24 +1,17 @@
 var rootRequestTrace;
 var noOfRequestTraces = 0;
-listenForAjaxRequestTraces = function (rootRequest, websocketConnectionId) {
+listenForAjaxRequestTraces = function (rootRequest, connectionId, contextPathPrefix) {
 	rootRequestTrace = rootRequest;
-	try {
-		var wsProtocol = "ws://";
-		if (window.location.protocol == "https:") {
-			wsProtocol = "wss://";
-		}
-		var webSocket = new WebSocket(wsProtocol + window.location.host + "/stagemonitor/request-trace/" + websocketConnectionId);
-		webSocket.onmessage = function (event) {
-			var data = JSON.parse(event.data);
-			addAjaxRequestTrace(data);
-		};
-
-	} catch (e) {
-		// no websocket support
-		console.log(e);
-	}
+	$.get(contextPathPrefix + "/stagemonitor/request-traces?connectionId=" + connectionId)
+		.always(function (requestTraces) {
+			if (requestTraces) {
+				for (var i = 0; i < requestTraces.length; i++) {
+					addAjaxRequestTrace(requestTraces[i]);
+				}
+			}
+			listenForAjaxRequestTraces(rootRequest, connectionId, contextPathPrefix);
+		});
 };
-
 
 $(document).ready(function () {
 	var table = $("#ajax-table").dataTable({
@@ -61,7 +54,7 @@ $(document).ready(function () {
 		toolbar.append('<span id="autoscoll-ajax" class="tip glyphicon glyphicon-chevron-down" data-toggle="tooltip" ' +
 			'data-placement="right" title="Auto select latest ajax request"></span> ');
 		var $autoscoll = $("#autoscoll-ajax");
-		if ("true" == localStorage.getItem("stagemonitor-widget-ajax-autoscroll")) {
+		if (JSON.parse(localStorage.getItem("stagemonitor-widget-ajax-autoscroll"))) {
 			$autoscoll.addClass('active');
 		}
 		$autoscoll.click(function () {
@@ -80,11 +73,15 @@ addAjaxRequestTrace = function (data) {
 		$("#ajax-badge").html(noOfRequestTraces);
 		$("#ajax-tab-link").removeClass("hidden");
 	}
-	var node = $("#ajax-table").DataTable().row.add(data).draw().node();
-	if ("true" == localStorage.getItem("stagemonitor-widget-ajax-autoscroll")) {
+	var dataTable = $("#ajax-table").DataTable();
+	var node = dataTable.row.add(data).draw().node();
+	if (JSON.parse(localStorage.getItem("stagemonitor-widget-ajax-autoscroll"))) {
 		renderRequestTab(data);
 		renderCallTree(data);
-		$("#ajax-table").find("tr.selected").removeClass('selected');
+		var nodes = dataTable.rows().nodes();
+		for (var i = 0; i < nodes.length; i++) {
+			$(nodes[i]).removeClass('selected');
+		}
 		$(node).addClass('selected');
 	}
 };

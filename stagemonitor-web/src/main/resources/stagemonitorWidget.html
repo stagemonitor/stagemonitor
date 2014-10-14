@@ -36,9 +36,9 @@
 					configurationSources = @@CONFIGURATION_SOURCES@@,
 					configurationOptions = @@CONFIGURATION_OPTIONS@@;
 
-				var websocketConnectionId = generateUUID();
+				var connectionId = generateUUID();
 				addXMLRequestCallback( function( xhr ) {
-					xhr.setRequestHeader("x-stagemonitor-ws-connection-id", websocketConnectionId);
+					xhr.setRequestHeader("x-stagemonitor-connection-id", connectionId);
 				});
 				
 				stagemonitorWindow.stagemonitor.openOverlay = function () {
@@ -49,7 +49,7 @@
 					stagemonitorOverlay.style.display = "none";
 				};
 
-				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "@@CONTEXT_PREFIX_PATH@@", @@CONFIGURATION_PWD_SET@@, websocketConnectionId);
+				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "@@CONTEXT_PREFIX_PATH@@", @@CONFIGURATION_PWD_SET@@, connectionId);
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
 				var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 				stagemonitorOverlayShow.classList.add(clazz);

@@ -4,8 +4,8 @@ $(document).ready(function () {
 
 
 	window.stagemonitor = {
-		initialize: function (data, configurationSources, configurationOptions, contextPathPrefix, passwordSet, websocketConnectionId) {
-			listenForAjaxRequestTraces(data, websocketConnectionId);
+		initialize: function (data, configurationSources, configurationOptions, contextPathPrefix, passwordSet, connectionId) {
+			listenForAjaxRequestTraces(data, connectionId, contextPathPrefix);
 			thresholdExceededGlobal = renderRequestTab(data);
 			renderConfigTab(configurationSources, configurationOptions, passwordSet, contextPathPrefix);
 			renderCallTree(data);

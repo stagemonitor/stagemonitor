@@ -6,10 +6,8 @@ dependencies {
 	provided 'javax.servlet:javax.servlet-api:3.0.1'
 	provided 'javax.websocket:javax.websocket-api:1.0'
 
-	testCompile 'org.springframework:spring-webmvc:3.1.0.RELEASE'
-	testCompile 'org.springframework:spring-test:3.1.0.RELEASE'
-	testCompile 'org.eclipse.jetty.websocket:javax-websocket-client-impl:9.2.2.v20140723'
-	testCompile 'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.2.2.v20140723'
+	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
+	testCompile 'org.springframework:spring-test:4.1.0.RELEASE'
 }
 
 task fatJar(type: Jar) {

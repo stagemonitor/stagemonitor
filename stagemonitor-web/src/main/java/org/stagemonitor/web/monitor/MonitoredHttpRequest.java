@@ -8,7 +8,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-import org.stagemonitor.web.monitor.widget.RequestTracePushEndpoint;
+import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +53,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		final String url = httpServletRequest.getRequestURI();
 		final String method = httpServletRequest.getMethod();
 		final String sessionId = httpServletRequest.getRequestedSessionId();
-		final String connectionId = httpServletRequest.getHeader(RequestTracePushEndpoint.CONNECTION_ID);
+		final String connectionId = httpServletRequest.getHeader(RequestTraceServlet.CONNECTION_ID);
 		final RequestTrace.GetNameCallback nameCallback = new RequestTrace.GetNameCallback() {
 			@Override
 			public String getName() {

@@ -7,7 +7,7 @@ public interface RequestTraceReporter {
 	 *
 	 * @param requestTrace the {@link RequestTrace} of the current request
 	 */
-	public <T extends RequestTrace> void reportRequestTrace(T requestTrace);
+	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) throws Exception;
 
 	/**
 	 * Whether this {@link RequestTraceReporter} is active
