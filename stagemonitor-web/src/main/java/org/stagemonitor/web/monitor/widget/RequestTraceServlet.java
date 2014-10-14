@@ -1,5 +1,7 @@
 package org.stagemonitor.web.monitor.widget;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -33,17 +36,15 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	private static final long ASYNC_TIMEOUT = TimeUnit.SECONDS.toMillis(25);
 	private static final long MAX_REQUEST_TRACE_BUFFERING_TIME = 60 * 1000;
 
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final WebPlugin webPlugin;
-
 	private ConcurrentMap<String, ConcurrentLinkedQueue<HttpRequestTrace>> connectionIdToRequestTracesMap =
 			new ConcurrentHashMap<String, ConcurrentLinkedQueue<HttpRequestTrace>>();
-
 	private ConcurrentMap<String, AsyncContext> connectionIdToAsyncContextMap =
 			new ConcurrentHashMap<String, AsyncContext>();
 
-	/*
-	 * Clears old request traces that are buffered in connectionIdToRequestTracesMap to prevent a memory leak
-	 * if the client never picks up the request traces
+	/**
+	 * see {@link OldRequestTraceRemover}
 	 */
 	private ScheduledExecutorService oldRequestTracesRemoverPool = Executors.newScheduledThreadPool(1);
 
@@ -55,20 +56,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	public RequestTraceServlet(WebPlugin webPlugin) {
 		RequestMonitor.addRequestTraceReporter(this);
 		this.webPlugin = webPlugin;
-		oldRequestTracesRemoverPool.schedule(new Runnable() {
-			@Override
-			public void run() {
-				for (ConcurrentLinkedQueue<HttpRequestTrace> httpRequestTraces : connectionIdToRequestTracesMap.values()) {
-					for (Iterator<HttpRequestTrace> iterator = httpRequestTraces.iterator(); iterator.hasNext(); ) {
-						HttpRequestTrace httpRequestTrace = iterator.next();
-						final long timeInBuffer = System.currentTimeMillis() - httpRequestTrace.getTimestampEnd();
-						if (timeInBuffer > MAX_REQUEST_TRACE_BUFFERING_TIME) {
-							iterator.remove();
-						}
-					}
-				}
-			}
-		}, MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
+		oldRequestTracesRemoverPool.schedule(new OldRequestTraceRemover(), MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
 	}
 
 	@Override
@@ -80,6 +68,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 		final String connectionId = req.getParameter("connectionId");
 		if (connectionId != null && !connectionId.trim().isEmpty()) {
 			if (connectionIdToRequestTracesMap.containsKey(connectionId)) {
+				logger.debug("picking up buffered requests");
 				writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
 			} else {
 				startAsync(connectionId, req, resp);
@@ -95,15 +84,14 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 		asyncContext.addListener(new AsyncListener() {
 			@Override
 			public void onComplete(AsyncEvent event) throws IOException {
-				connectionIdToAsyncContextMap.remove(connectionId);
 			}
 
 			@Override
 			public void onTimeout(AsyncEvent event) throws IOException {
+				connectionIdToAsyncContextMap.remove(connectionId, event.getAsyncContext());
 				final HttpServletResponse response = (HttpServletResponse) event.getSuppliedResponse();
 				response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 				response.flushBuffer();
-				connectionIdToAsyncContextMap.remove(connectionId);
 			}
 
 			@Override
@@ -126,9 +114,10 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 
 			final String connectionId = httpRequestTrace.getConnectionId();
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
+				logger.debug("reportRequestTrace {} ({})", requestTrace.getName(), requestTrace.getTimestamp());
 				final AsyncContext asyncContext = connectionIdToAsyncContextMap.remove(connectionId);
-				if (asyncContext != null) {
-
+				if (asyncContext != null && !asyncContext.getResponse().isCommitted()) {
+					logger.debug("asyncContext {}", httpRequestTrace.getConnectionId());
 					writeRequestTracesToResponse((HttpServletResponse) asyncContext.getResponse(), getAllRequestTraces(httpRequestTrace, connectionId));
 					asyncContext.complete();
 				} else {
@@ -150,6 +139,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	}
 
 	private void bufferRequestTrace(String connectionId, HttpRequestTrace requestTrace) {
+		logger.debug("bufferRequestTrace {} ({})", requestTrace.getName(), requestTrace.getTimestamp());
 		ConcurrentLinkedQueue<HttpRequestTrace> httpRequestTraces = new ConcurrentLinkedQueue<HttpRequestTrace>();
 		httpRequestTraces.add(requestTrace);
 
@@ -168,13 +158,49 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 
 		final ArrayList<String> jsonResponse = new ArrayList<String>(requestTraces.size());
 		for (HttpRequestTrace requestTrace : requestTraces) {
+			logger.debug("writeRequestTracesToResponse {} ({})", requestTrace.getName(), requestTrace.getTimestamp());
 			jsonResponse.add(requestTrace.toJson());
 		}
-		response.getWriter().append(jsonResponse.toString());
+		response.getOutputStream().print(jsonResponse.toString());
+		response.getOutputStream().flush();
+		response.getOutputStream().close();
+		response.flushBuffer();
 	}
 
 	@Override
 	public boolean isActive() {
 		return webPlugin.isWidgetEnabled();
+	}
+
+	/**
+	 * Clears old request traces that are buffered in {@link #connectionIdToRequestTracesMap} but are never picked up
+	 * to prevent a memory leak
+	 */
+	private class OldRequestTraceRemover implements Runnable {
+		@Override
+		public void run() {
+			for (Map.Entry<String, ConcurrentLinkedQueue<HttpRequestTrace>> entry : connectionIdToRequestTracesMap.entrySet()) {
+				final ConcurrentLinkedQueue<HttpRequestTrace> httpRequestTraces = entry.getValue();
+				removeOldRequestTraces(httpRequestTraces);
+				if (httpRequestTraces.isEmpty()) {
+					removeOrphanEntry(entry);
+				}
+			}
+		}
+
+		private void removeOldRequestTraces(ConcurrentLinkedQueue<HttpRequestTrace> httpRequestTraces) {
+			for (Iterator<HttpRequestTrace> iterator = httpRequestTraces.iterator(); iterator.hasNext(); ) {
+				HttpRequestTrace httpRequestTrace = iterator.next();
+				final long timeInBuffer = System.currentTimeMillis() - httpRequestTrace.getTimestampEnd();
+				if (timeInBuffer > MAX_REQUEST_TRACE_BUFFERING_TIME) {
+					iterator.remove();
+				}
+			}
+		}
+
+		private void removeOrphanEntry(Map.Entry<String, ConcurrentLinkedQueue<HttpRequestTrace>> entry) {
+			// to eliminate race conditions remove only if queue is still empty
+			connectionIdToRequestTracesMap.remove(entry.getKey(), new ConcurrentLinkedQueue<HttpRequestTrace>());
+		}
 	}
 }

@@ -2,8 +2,7 @@ var rootRequestTrace;
 var noOfRequestTraces = 0;
 listenForAjaxRequestTraces = function (rootRequest, connectionId, contextPathPrefix) {
 	rootRequestTrace = rootRequest;
-	$.get(contextPathPrefix + "/stagemonitor/request-traces?connectionId=" + connectionId)
-		.always(function (requestTraces) {
+	$.getJSON(contextPathPrefix + "/stagemonitor/request-traces", {"connectionId": connectionId}, function (requestTraces) {
 			if (requestTraces) {
 				for (var i = 0; i < requestTraces.length; i++) {
 					addAjaxRequestTrace(requestTraces[i]);

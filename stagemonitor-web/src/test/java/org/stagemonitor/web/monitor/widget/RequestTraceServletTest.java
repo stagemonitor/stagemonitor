@@ -61,7 +61,7 @@ public class RequestTraceServletTest {
 
 		requestTraceServlet.service(request, response);
 
-		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace, httpRequestTrace)), response.getContentAsString());
+		Assert.assertEquals(Arrays.asList(httpRequestTrace.toJson(), httpRequestTrace.toJson()).toString(), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
 	}
 
