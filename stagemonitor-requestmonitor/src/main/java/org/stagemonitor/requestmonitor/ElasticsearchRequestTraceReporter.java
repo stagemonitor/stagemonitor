@@ -34,7 +34,7 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 		if (ttl != null && !ttl.isEmpty()) {
 			path += "?ttl=" + ttl;
 		}
-		RestClient.sendAsJson(corePlugin.getElasticsearchUrl(), path, "PUT", requestTrace);
+		RestClient.sendAsJsonAsync(corePlugin.getElasticsearchUrl(), path, "PUT", requestTrace);
 	}
 
 	@Override
