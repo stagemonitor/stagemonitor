@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class RequestTraceServlet extends HttpServlet implements RequestTraceReporter {
 
 	public static final String CONNECTION_ID = "x-stagemonitor-connection-id";
-	private static final long ASYNC_TIMEOUT = TimeUnit.SECONDS.toMillis(25);
+	private static final long REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(25);
 	private static final long MAX_REQUEST_TRACE_BUFFERING_TIME = 60 * 1000;
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -42,6 +43,8 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			new ConcurrentHashMap<String, ConcurrentLinkedQueue<HttpRequestTrace>>();
 	private ConcurrentMap<String, AsyncContext> connectionIdToAsyncContextMap =
 			new ConcurrentHashMap<String, AsyncContext>();
+	private ConcurrentMap<String, Object> connectionIdToLockMap =
+			new ConcurrentHashMap<String, Object>();
 
 	/**
 	 * see {@link OldRequestTraceRemover}
@@ -62,7 +65,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if (!webPlugin.isWidgetEnabled()) {
-			resp.sendError(404);
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
 		final String connectionId = req.getParameter("connectionId");
@@ -71,40 +74,63 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 				logger.debug("picking up buffered requests");
 				writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
 			} else {
-				startAsync(connectionId, req, resp);
+				if (!startAsync(connectionId, req, resp)) {
+					blockingWaitForRequestTrace(connectionId, resp);
+				}
 			}
 		} else {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 		}
 	}
 
-	private void startAsync(final String connectionId, HttpServletRequest req, HttpServletResponse response) {
+	private void blockingWaitForRequestTrace(String connectionId, HttpServletResponse resp) throws IOException {
+		logger.warn("Request does not support async processing. Falling back to blocking. Please mark your filters with <async-supported>true</async-supported>.");
+		Object lock = new Object();
+		synchronized (lock) {
+			if (connectionIdToLockMap.putIfAbsent(connectionId, lock) == null) {
+				try {
+					lock.wait(REQUEST_TIMEOUT);
+					connectionIdToLockMap.remove(connectionId);
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+				if (connectionIdToRequestTracesMap.containsKey(connectionId)) {
+					writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
+				} else {
+					writeEmptyResponse(resp);
+				}
+			}
+		}
+	}
+
+	private boolean startAsync(final String connectionId, HttpServletRequest req, HttpServletResponse response) {
 		req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", Boolean.TRUE);
-		final AsyncContext asyncContext = req.startAsync(req, response);
-		asyncContext.addListener(new AsyncListener() {
-			@Override
-			public void onComplete(AsyncEvent event) throws IOException {
-			}
+		if (req.isAsyncSupported()) {
+			final AsyncContext asyncContext = req.startAsync(req, response);
+			asyncContext.addListener(new AsyncListener() {
+				@Override
+				public void onComplete(AsyncEvent event) throws IOException {
+				}
 
-			@Override
-			public void onTimeout(AsyncEvent event) throws IOException {
-				connectionIdToAsyncContextMap.remove(connectionId, event.getAsyncContext());
-				final HttpServletResponse response = (HttpServletResponse) event.getSuppliedResponse();
-				response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-				response.flushBuffer();
-			}
+				@Override
+				public void onTimeout(AsyncEvent event) throws IOException {
+					connectionIdToAsyncContextMap.remove(connectionId, event.getAsyncContext());
+					writeEmptyResponse((HttpServletResponse)event.getSuppliedResponse());
+				}
 
-			@Override
-			public void onError(AsyncEvent event) throws IOException {
-				onTimeout(event);
-			}
+				@Override
+				public void onError(AsyncEvent event) throws IOException {
+					onTimeout(event);
+				}
 
-			@Override
-			public void onStartAsync(AsyncEvent event) throws IOException {
-			}
-		});
-		asyncContext.setTimeout(ASYNC_TIMEOUT);
-		connectionIdToAsyncContextMap.put(connectionId, asyncContext);
+				@Override
+				public void onStartAsync(AsyncEvent event) throws IOException {
+				}
+			});
+			asyncContext.setTimeout(REQUEST_TIMEOUT);
+			connectionIdToAsyncContextMap.put(connectionId, asyncContext);
+		}
+		return req.isAsyncSupported();
 	}
 
 	@Override
@@ -122,6 +148,13 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 					asyncContext.complete();
 				} else {
 					bufferRequestTrace(connectionId, httpRequestTrace);
+				}
+
+				final Object lock = connectionIdToLockMap.remove(connectionId);
+				if (lock != null) {
+					synchronized (lock) {
+						lock.notifyAll();
+					}
 				}
 			}
 		}
@@ -162,9 +195,10 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			jsonResponse.add(requestTrace.toJson());
 		}
 		response.getOutputStream().print(jsonResponse.toString());
-		response.getOutputStream().flush();
-		response.getOutputStream().close();
-		response.flushBuffer();
+	}
+
+	private void writeEmptyResponse(HttpServletResponse resp) throws IOException {
+		writeRequestTracesToResponse(resp, Collections.<HttpRequestTrace>emptyList());
 	}
 
 	@Override

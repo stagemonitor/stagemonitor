@@ -75,6 +75,30 @@ public class RequestTraceServletTest {
 
 		requestTraceServlet.reportRequestTrace(httpRequestTrace);
 
+		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
+		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
+	}
+
+	@Test
+	public void testRequestTraceAfterRequestAsyncNotSupported() throws Exception {
+		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
+		request.addParameter("connectionId", connectionId);
+		request.setAsyncSupported(false);
+		final MockHttpServletResponse response = new MockHttpServletResponse();
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					requestTraceServlet.service(request, response);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+
+		Thread.sleep(500);
+		requestTraceServlet.reportRequestTrace(httpRequestTrace);
+		Thread.sleep(500);
 
 		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
