@@ -28,6 +28,9 @@ public class RumServlet extends HttpServlet {
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// Boomerang is requesting a image, so set appropriate header to not confuse browsers
+		resp.setContentType("image/png");
+
 		final String timerName = name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(getRequiredParam(req, "requestName")));
 		final long serverTime = Long.parseLong(getRequiredParam(req, "serverTime"));
 		final long timeToFirstByte = Long.parseLong(getRequiredParam(req, "timeToFirstByte"));
