@@ -9,11 +9,9 @@ import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
-import org.stagemonitor.web.monitor.rum.RumServlet;
 import org.stagemonitor.web.monitor.widget.StagemonitorWidgetHtmlInjector;
 
 import javax.servlet.Filter;
@@ -33,14 +31,13 @@ import java.util.List;
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
 	private static final Logger logger = LoggerFactory.getLogger(HttpRequestMonitorFilter.class);
-	private static final String CONFIGURATION_ENDPOINT = "/stagemonitor/configuration";
 	protected final Configuration configuration;
 	protected final CorePlugin corePlugin;
 	protected final WebPlugin webPlugin;
 	protected final RequestMonitor requestMonitor;
 	protected final MetricRegistry metricRegistry;
 	private final List<HtmlInjector> htmlInjectors = new ArrayList<HtmlInjector>();
-	private boolean servletApiForWidgetSufficient = false;
+	private boolean atLeastServletApi3 = false;
 
 	public HttpRequestMonitorFilter() {
 		this(StageMonitor.getConfiguration(), new RequestMonitor(StageMonitor.getConfiguration()), StageMonitor.getMetricRegistry());
@@ -60,38 +57,10 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 				RequestMonitor.getHostName(), corePlugin.getInstanceName());
 		requestMonitor.setMeasurementSession(measurementSession);
 		final ServletContext servletContext = filterConfig.getServletContext();
-		servletApiForWidgetSufficient = servletContext.getMajorVersion() >= 3;
+		atLeastServletApi3 = servletContext.getMajorVersion() >= 3;
 
 		htmlInjectors.add(new BommerangJsHtmlInjector(webPlugin, servletContext.getContextPath()));
 		htmlInjectors.add(new StagemonitorWidgetHtmlInjector(configuration, webPlugin, servletContext.getContextPath()));
-
-
-		if (servletApiForWidgetSufficient) {
-			logger.info("Registering configuration Endpoint {}. You can dynamically change the configuration by " +
-					"issuing a POST request to {}?key=stagemonitor.config.key&value=configValue&stagemonitor.password=password. " +
-					"If the password is not set, dynamically changing the configuration is not available. " +
-					"The password can be omitted if set to an empty string.",
-					CONFIGURATION_ENDPOINT, CONFIGURATION_ENDPOINT);
-			filterConfig.getServletContext()
-					.addServlet("stagemonitor-config-servlet", new ConfigurationServlet(configuration))
-					.addMapping(CONFIGURATION_ENDPOINT);
-			if (webPlugin.isRealUserMonitoringEnabled()) {
-				filterConfig.getServletContext()
-						.addServlet("stagemonitor-rum-servlet", new RumServlet(metricRegistry, webPlugin))
-						.addMapping("/stagemonitor/rum");
-			}
-		} else {
-			if (webPlugin.isWidgetEnabled()) {
-				logger.warn("stagemonitor.web.widget.enabled is true, but your servlet api version is not supported. " +
-						"The stagemonitor widget requires servlet api 3.");
-			}
-			if (webPlugin.isRealUserMonitoringEnabled()) {
-				logger.warn("stagemonitor.web.rum.enabled is true but your servlet api version is not supported. " +
-						"The Real User Monitoring feature requires servlet api 3.");
-			}
-			logger.warn("The configuration endptiont {} could not me registered, as it requires servlet api 3.", CONFIGURATION_ENDPOINT);
-		}
-
 	}
 
 	private String getApplicationName(FilterConfig filterConfig) {
@@ -147,7 +116,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private boolean isInjectContentToHtml(HttpServletRequest httpServletRequest) {
-		return servletApiForWidgetSufficient && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive() ;
+		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive() ;
 	}
 
 	private boolean isAtLeastOneHtmlInjectorActive() {

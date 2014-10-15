@@ -12,6 +12,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationSource;
 import org.stagemonitor.core.configuration.EnvironmentVariableConfigurationSource;
 import org.stagemonitor.core.configuration.PropertyFileConfigurationSource;
+import org.stagemonitor.core.configuration.SimpleSource;
 import org.stagemonitor.core.configuration.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
@@ -187,6 +188,7 @@ public final class StageMonitor {
 	private static void reloadConfiguration() {
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
 		configurationSources.addAll(additionalConfigurationSources);
+		configurationSources.add(new SimpleSource());
 		configurationSources.add(new SystemPropertyConfigurationSource());
 		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
 		if (stagemonitorPropertyOverridesLocation != null) {

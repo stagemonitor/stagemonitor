@@ -4,23 +4,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.SimpleSource;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+@WebServlet(ConfigurationServlet.CONFIGURATION_ENDPOINT)
 public class ConfigurationServlet extends HttpServlet {
+
+	public static final String CONFIGURATION_ENDPOINT = "/stagemonitor/configuration";
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final Configuration configuration;
 
+	public ConfigurationServlet() {
+		this(StageMonitor.getConfiguration());
+	}
+
 	public ConfigurationServlet(Configuration configuration) {
 		this.configuration = configuration;
-		configuration.addConfigurationSource(new SimpleSource(), true);
+		logger.info("Registering configuration Endpoint {}. You can dynamically change the configuration by " +
+				"issuing a POST request to {}?key=stagemonitor.config.key&value=configValue&stagemonitor.password=password. " +
+				"If the password is not set, dynamically changing the configuration is not available. " +
+				"The password can be omitted if set to an empty string.",
+				ConfigurationServlet.CONFIGURATION_ENDPOINT, ConfigurationServlet.CONFIGURATION_ENDPOINT);
 	}
 
 	@Override
