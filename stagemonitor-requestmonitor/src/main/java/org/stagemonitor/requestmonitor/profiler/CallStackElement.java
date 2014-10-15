@@ -170,7 +170,7 @@ public class CallStackElement {
 			}
 			callStats.logStats(totalExecutionTimeNs, indentationStack, sb, asciiArt);
 			if (!isRoot()) {
-				indentationStack.pop();
+				indentationStack.pollLast();
 			}
 		}
 	}

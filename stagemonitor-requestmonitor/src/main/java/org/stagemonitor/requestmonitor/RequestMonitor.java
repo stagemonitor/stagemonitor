@@ -8,7 +8,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.rest.RestClient;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
@@ -17,6 +16,12 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +34,6 @@ public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
 	private static final String REQUEST = "request";
-	private final RequestLogger requestLogger = new RequestLogger();
 
 	/**
 	 * Helps to detect, if this request is the 'real' one or just the forwarding one.
@@ -40,6 +44,21 @@ public class RequestMonitor {
 	 * <code>&lt;dispatcher>FORWARD&lt;/dispatcher></code> in the web.xml filter definition.
 	 */
 	private static ThreadLocal<RequestTrace> request = new ThreadLocal<RequestTrace>();
+
+	private static final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>(){{
+		add(new LogRequestTraceReporter());
+		add(new ElasticsearchRequestTraceReporter());
+	}};
+
+	private static ExecutorService asyncRequestTraceReporterPool = Executors.newSingleThreadExecutor(new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r);
+			thread.setDaemon(true);
+			thread.setName("async-request-reporter");
+			return thread;
+		}
+	});
 
 	private int warmupRequests = 0;
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
@@ -213,7 +232,7 @@ public class RequestMonitor {
 			if (requestTrace.getCallStack() != null) {
 				Profiler.stop();
 				requestTrace.getCallStack().setSignature(requestTrace.getName());
-				reportCallStack(requestTrace, corePlugin.getElasticsearchUrl());
+				reportRequestTrace(requestTrace);
 			}
 			trackMetrics(info, executionTime, cpuTime);
 		} else {
@@ -265,12 +284,24 @@ public class RequestMonitor {
 		return name(REQUEST, timerName, "server.time.total");
 	}
 
-	private <T extends RequestTrace> void reportCallStack(T requestTrace, String serverUrl) {
-		if (serverUrl != null && !serverUrl.isEmpty()) {
-			RestClient.sendCallStackAsync(requestTrace, requestTrace.getId(), serverUrl, requestMonitorPlugin.getRequestTraceTtl());
-		}
-		if (requestMonitorPlugin.isLogCallStacks()) {
-			requestLogger.logStats(requestTrace);
+	private <T extends RequestTrace> void reportRequestTrace(final T requestTrace) {
+		try {
+			asyncRequestTraceReporterPool.submit(new Runnable() {
+				@Override
+				public void run() {
+					for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
+						if (requestTraceReporter.isActive()) {
+							try {
+								requestTraceReporter.reportRequestTrace(requestTrace);
+							} catch (Exception e) {
+								logger.warn(e.getMessage() + " (this exception is ignored)", e);
+							}
+						}
+					}
+				}
+			});
+		} catch (RejectedExecutionException e) {
+			logger.warn(e.getMessage() + " (this exception is ignored)", e);
 		}
 	}
 
@@ -372,8 +403,20 @@ public class RequestMonitor {
 		}
 	}
 
+	/**
+	 * @return the {@link RequestTrace} of the current request
+	 */
 	public static RequestTrace getRequest() {
 		return request.get();
+	}
+
+	/**
+	 * Adds a {@link RequestTraceReporter}
+	 *
+	 * @param requestTraceReporter the {@link RequestTraceReporter} to add
+	 */
+	public static void addRequestTraceReporter(RequestTraceReporter requestTraceReporter) {
+		requestTraceReporters.add(0, requestTraceReporter);
 	}
 
 }

@@ -35,6 +35,11 @@
 					data = @@JSON_REQUEST_TACE_PLACEHOLDER@@,
 					configurationSources = @@CONFIGURATION_SOURCES@@,
 					configurationOptions = @@CONFIGURATION_OPTIONS@@;
+
+				var connectionId = generateUUID();
+				addXMLRequestCallback( function( xhr ) {
+					xhr.setRequestHeader("x-stagemonitor-connection-id", connectionId);
+				});
 				
 				stagemonitorWindow.stagemonitor.openOverlay = function () {
 					stagemonitorOverlay.style.display = "block";
@@ -44,7 +49,7 @@
 					stagemonitorOverlay.style.display = "none";
 				};
 
-				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "@@CONTEXT_PREFIX_PATH@@", @@CONFIGURATION_PWD_SET@@);
+				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "@@CONTEXT_PREFIX_PATH@@", @@CONFIGURATION_PWD_SET@@, connectionId);
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
 				var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 				stagemonitorOverlayShow.classList.add(clazz);
@@ -54,6 +59,43 @@
 			document.onreadystatechange = executeCallbacksOnceIfDomReady;
 			executeCallbacksOnceIfDomReady();
 		};
+
+		function generateUUID(){
+			var d = new Date().getTime();
+			return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+				var r = (d + Math.random() * 16) % 16 | 0;
+				d = Math.floor(d / 16);
+				return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
+			});
+		}
+
+		function addXMLRequestCallback(callback){
+			var oldSend, i;
+			if( XMLHttpRequest.callbacks ) {
+				// we've already overridden send() so just add the callback
+				XMLHttpRequest.callbacks.push( callback );
+			} else {
+				// create a callback queue
+				XMLHttpRequest.callbacks = [callback];
+				// store the native send()
+				oldSend = XMLHttpRequest.prototype.send;
+				// override the native send()
+				XMLHttpRequest.prototype.send = function(){
+					// process the callback queue
+					// the xhr instance is passed into each callback but seems pretty useless
+					// you can't tell what its destination is or call abort() without an error
+					// so only really good for logging that a request has happened
+					// I could be wrong, I hope so...
+					// EDIT: I suppose you could override the onreadystatechange handler though
+					for( i = 0; i < XMLHttpRequest.callbacks.length; i++ ) {
+						XMLHttpRequest.callbacks[i]( this );
+					}
+					// call the native send()
+					oldSend.apply(this, arguments);
+				}
+			}
+		}
+
 	}());
 </script>
 <style>

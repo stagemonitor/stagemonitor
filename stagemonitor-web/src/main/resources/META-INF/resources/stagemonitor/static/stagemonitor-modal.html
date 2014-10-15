@@ -5,16 +5,26 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>stagemonitor widget</title>
-		<link rel="stylesheet" href="bootstrap.min.css">
-		<link rel="stylesheet" href="bootstrap-theme.min.css">
+		<link rel="stylesheet" href="bootstrap/bootstrap.min.css">
+		<link rel="stylesheet" href="bootstrap/bootstrap-theme.min.css">
 		<link rel="stylesheet" href="jquery-treetable/jquery.treetable.css">
 		<link rel="stylesheet" href="jquery-treetable/jquery.treetable.theme.bootstrap.css">
+		<link rel="stylesheet" href="datatables/jquery.dataTables.min.css">
+		<link rel="stylesheet" href="datatables/dataTables.bootstrap.css">
 		<link rel="stylesheet" href="stagemonitor-widget.css">
 		<script src="jquery.1.11.1.min.js"></script>
-		<script src="bootstrap.min.js"></script>
+		<script src="bootstrap/bootstrap.min.js"></script>
+		<script src="datatables/jquery.dataTables.min.js"></script>
+		<script src="datatables/dataTables.bootstrap.js"></script>
 		<script src="handlebars-v1.3.0.min.js"></script>
+		<script src="handlebars-helpers.js"></script>
 		<script src="jquery-treetable/jquery.treetable.js"></script>
 		<script type="text/javascript" src="stagemonitor-widget.js"></script>
+		<script type="text/javascript" src="tabs/config-tab.js"></script>
+		<script type="text/javascript" src="tabs/call-tree-tab.js"></script>
+		<script type="text/javascript" src="tabs/request-tab.js"></script>
+		<script type="text/javascript" src="tabs/widget-settings-tab.js"></script>
+		<script type="text/javascript" src="tabs/ajax-requests.js"></script>
 	</head>
 	<body>
 		<div class="container-fluid">
@@ -27,43 +37,62 @@
 				</h1>
 
 				<ul class="nav nav-tabs" role="tablist">
-					<li id="call-stack-tab" class="active"><a href="#stagemonitor-home" role="tab" data-toggle="tab"
-															  class="tip" data-placement="bottom"
-															  title="View method call tree of the current request including SQL statements">Call Tree</a></li>
-					<li id="request-tab"><a href="#stagemonitor-request" role="tab" data-toggle="tab"
-											class="tip" data-placement="bottom"
-											title="View request trace including server and DB execution times">Request</a></li>
-					<li id="widget-settings-tab"><a href="#widget-settings" role="tab" data-toggle="tab"
-													class="tip" data-placement="bottom"
-													title="Edit notification settings and call tree highlighting">Widget Settings</a></li>
-					<li id="config-tab"><a href="#stagemonitor-configuration" role="tab" data-toggle="tab"
-										   class="tip" data-placement="bottom"
-										   title="Dynamically change or reload configuration.">Configuration</a></li>
+					<li id="call-stack-tab" class="active">
+						<a href="#stagemonitor-home" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
+						 					title="View method call tree of the current request including SQL statements">
+							Call Tree
+						</a>
+					</li>
+					<li id="request-tab">
+						<a href="#stagemonitor-request" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
+											title="View request trace including server and DB execution times">
+							Request
+						</a>
+					</li>
+					<li id="widget-settings-tab">
+						<a href="#widget-settings" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
+											title="Edit notification settings and call tree highlighting">
+							Widget Settings
+						</a>
+					</li>
+					<li id="config-tab">
+						<a href="#stagemonitor-configuration" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
+											title="Dynamically change or reload configuration.">
+							Configuration
+						</a>
+					</li>
+					<li id="ajax-tab">
+						<a href="#stagemonitor-ajax" id="ajax-tab-link" role="tab" data-toggle="tab" class="tip hidden" data-placement="bottom"
+											title="Select a ajax request to analyze its call tree and request trace.">
+							Ajax Requests <span id="ajax-badge" class="badge"></span>
+						</a>
+					</li>
 				</ul>
 			</div>
 
 			<div class="tab-content">
 				<div class="tab-pane active" id="stagemonitor-home">
+				</div>
+
+				<script id="stagemonitor-calltree-template" type="text/x-handlebars-template">
 					<table id="stagemonitor-calltree" class="table">
 						<thead>
-							<tr>
-								<th>Signature</th>
-								<th class="stagemonitor-calltree-executiontime">Total time (ms)</th>
-								<th class="stagemonitor-calltree-executiontime">Self time (ms)</th>
-							</tr>
+						<tr>
+							<th>Signature</th>
+							<th class="stagemonitor-calltree-executiontime">Total time (ms)</th>
+							<th class="stagemonitor-calltree-executiontime">Self time (ms)</th>
+						</tr>
 						</thead>
 						<tbody>
+						{{#each callTreeRows}}
+							<tr class="{{#if executionTimeExceededThreshold}}warning{{/if}}" data-tt-expanded="{{#if anyChildExceedsThreshold}}true{{else}}false{{/if}}" data-tt-parent-id="{{parentId}}" data-tt-id="{{myId}}">
+								<td class="stagemonitor-calltree-signature">{{signature}}</td>
+								<td><div class="progress"><div class="progress-bar" style="width: {{executionTimePercent}}%">{{executionTimeInMs}}</div></div></td>
+								<td><div class="progress"><div class="progress-bar" style="width: {{selfExecutionTimePercent}}%">{{selfExecutionTimeInMs}}</div></div></td>
+							</tr>
+						{{/each}}
 						</tbody>
 					</table>
-				</div>
-				<script id="stagemonitor-calltree-template" type="text/x-handlebars-template">
-					{{#each callTreeRows}}
-						<tr class="{{#if executionTimeExceededThreshold}}warning{{/if}}" data-tt-expanded="{{#if anyChildExceedsThreshold}}true{{else}}false{{/if}}" data-tt-parent-id="{{parentId}}" data-tt-id="{{myId}}">
-							<td class="stagemonitor-calltree-signature">{{signature}}</td>
-							<td><div class="progress"><div class="progress-bar" style="width: {{executionTimePercent}}%">{{executionTimeInMs}}</div></div></td>
-							<td><div class="progress"><div class="progress-bar" style="width: {{selfExecutionTimePercent}}%">{{selfExecutionTimeInMs}}</div></div></td>
-						</tr>
-					{{/each}}
 				</script>
 
 				<div class="tab-pane" id="stagemonitor-request">
@@ -194,7 +223,7 @@
 							<label class="col-sm-3 control-label">Notify if request took longer than </label>
 							<div class="col-sm-2">
 								<div class="input-group">
-									<input data-widget-settings-key="widget-settings-execution-threshold-milliseconds" data-widget-settings-default-value="1000" class="form-control">
+									<input data-widget-settings-key="widget-settings-execution-threshold-milliseconds" data-widget-settings-default-value="2000" class="form-control">
 									<div class="input-group-btn-vertical stagemonitor-spinner">
 										<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i></button>
 										<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i></button>
@@ -384,8 +413,24 @@
 					</script>
 				</div>
 
-
+				<div class="tab-pane" id="stagemonitor-ajax">
+					<table id="ajax-table" class="display" cellspacing="0" width="100%">
+						<thead>
+						<tr>
+							<th>Timestamp</th>
+							<th>Name</th>
+							<th>URL</th>
+							<th>Execution Time</th>
+							<th>Status</th>
+							<th>Method</th>
+						</tr>
+						</thead>
+					</table>
+				</div>
 			</div>
+			<!--<div class="position-relative">-->
+
+			<!--</div>-->
 		</div>
 	</body>
 </html>

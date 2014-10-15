@@ -36,6 +36,8 @@ public class RequestTrace {
 	private boolean error = false;
 	@JsonProperty("@timestamp")
 	private final String timestamp;
+	@JsonIgnore
+	private long timestampEnd;
 	private String parameter;
 	@JsonProperty("@application")
 	private final String application;
@@ -123,6 +125,7 @@ public class RequestTrace {
 
 	public void setExecutionTime(long executionTime) {
 		this.executionTime = executionTime;
+		timestampEnd = System.currentTimeMillis();
 	}
 
 	public long getExecutionTimeCpu() {
@@ -221,6 +224,10 @@ public class RequestTrace {
 
 	public int getExecutionCountDb() {
 		return executionCountDb;
+	}
+
+	public long getTimestampEnd() {
+		return timestampEnd;
 	}
 
 	public String toJson() {

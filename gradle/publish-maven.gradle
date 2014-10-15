@@ -18,12 +18,12 @@ publishing {
 		maven(MavenPublication) {
 			from components.java
 			pom.withXml {
-				asNode().dependencies.first().dependency.each {
-					if (it.artifactId.text().contains('servlet-api')) {
-						it.scope.first().value = 'provided'
-					} else {
-						it.scope.first().value = 'compile'
+				asNode().dependencies.'*'.findAll() {
+					it.scope.text() == 'runtime'  && project.configurations.provided.allDependencies.find { dep ->
+						dep.name == it.artifactId.text()
 					}
+				}.each() {
+					it.scope*.value = 'provided'
 				}
 				asNode().children().last() + {
 					resolveStrategy = Closure.DELEGATE_FIRST

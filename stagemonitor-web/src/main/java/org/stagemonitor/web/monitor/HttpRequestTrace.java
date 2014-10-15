@@ -1,5 +1,6 @@
 package org.stagemonitor.web.monitor;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
@@ -24,15 +25,21 @@ public class HttpRequestTrace extends RequestTrace {
 
 	private final String url;
 	private Integer statusCode;
-	private final  Map<String, String> headers;
+	private final Map<String, String> headers;
 	private final String method;
 	private Integer bytesWritten;
 	private final UserAgentInformation userAgent;
+	private final String sessionId;
+	@JsonIgnore
+	private final String connectionId;
 
-	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method) {
+	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
+							String sessionId, String connectionId) {
 		super(getNameCallback);
 		this.url = url;
 		this.headers = headers;
+		this.sessionId = sessionId;
+		this.connectionId = connectionId;
 		userAgent = getUserAgentInformation(headers);
 		this.method = method;
 	}
@@ -130,6 +137,25 @@ public class HttpRequestTrace extends RequestTrace {
 
 	public UserAgentInformation getUserAgent() {
 		return userAgent;
+	}
+
+	/**
+	 * @return the http session id, <code>null</code> if there is no session associated with the request
+	 */
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	/**
+	 * The connection id is used to associate ajax requests with a particular browser window in which the
+	 * stagemonitor widget is running.
+	 * <p/>
+	 * It is used to to push request traces of ajax requests to the in browser widget.
+	 *
+	 * @return the connection id
+	 */
+	public String getConnectionId() {
+		return connectionId;
 	}
 
 	@Override
