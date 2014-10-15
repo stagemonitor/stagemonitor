@@ -129,7 +129,7 @@ public class WebPlugin implements StageMonitorPlugin {
 			.build();
 	private final ConfigurationOption<Boolean> rumEnabled = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.rum.enabled")
-			.dynamic(false)
+			.dynamic(true)
 			.label("Enable Real User Monitoring")
 			.description("The Real User Monitoring feature collects the browser, network and overall percieved " +
 					"execution time from the user's perspective. When activated, a piece of javascript will be " +

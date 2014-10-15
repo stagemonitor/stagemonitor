@@ -1,6 +1,7 @@
 package org.stagemonitor.web.rum;
 
 import com.codahale.metrics.MetricRegistry;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -21,6 +22,11 @@ public class RumServletTest {
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private RumServlet rumServlet = new RumServlet(registry, webPlugin);
 
+	@Before
+	public void setUp() throws Exception {
+		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(true);
+	}
+
 	@Test
 	public void testBeaconPerRequest() throws Exception {
 		when(webPlugin.isCollectPageLoadTimesPerRequest()).thenReturn(true);
@@ -35,6 +41,7 @@ public class RumServletTest {
 		rumServlet.doGet(req, resp);
 
 		assertEquals(200, resp.getStatus());
+		assertEquals("image/png", resp.getContentType());
 
 		assertNotNull(registry.getTimers().get("request.GET-|test:html.browser.time.dom-processing"));
 		assertNotNull(registry.getTimers().get("request.GET-|test:html.browser.time.page-rendering"));
@@ -109,5 +116,15 @@ public class RumServletTest {
 		req.addParameter("pageRendering", "30");
 
 		rumServlet.doGet(req, new MockHttpServletResponse());
+	}
+
+	@Test
+	public void testRumDisabled() throws Exception {
+		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(false);
+		final MockHttpServletRequest req = new MockHttpServletRequest();
+		final MockHttpServletResponse resp = new MockHttpServletResponse();
+		rumServlet.doGet(req, resp);
+
+		assertEquals(404, resp.getStatus());
 	}
 }
