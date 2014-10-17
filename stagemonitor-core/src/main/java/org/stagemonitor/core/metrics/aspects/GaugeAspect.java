@@ -8,7 +8,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 import java.lang.reflect.Method;
 
@@ -19,7 +19,7 @@ public class GaugeAspect extends AbstractAspect {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final MetricRegistry registry = StageMonitor.getMetricRegistry();
+	private final MetricRegistry registry = Stagemonitor.getMetricRegistry();
 
 	@Pointcut("execution((@org.stagemonitor.core.metrics.MonitorGauges *).new(..))")
 	public void constructorCallsOfTypesAnnotatedWithMonitorGauges() {

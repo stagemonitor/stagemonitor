@@ -1,6 +1,6 @@
 package org.stagemonitor.web.session;
 
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSessionEvent;
@@ -11,11 +11,11 @@ public class SessionCounter implements HttpSessionListener {
 
 	@Override
 	public void sessionCreated(HttpSessionEvent se) {
-		StageMonitor.getMetricRegistry().counter("web.sessions").inc();
+		Stagemonitor.getMetricRegistry().counter("web.sessions").inc();
 	}
 
 	@Override
 	public void sessionDestroyed(HttpSessionEvent se) {
-		StageMonitor.getMetricRegistry().counter("web.sessions").dec();
+		Stagemonitor.getMetricRegistry().counter("web.sessions").dec();
 	}
 }

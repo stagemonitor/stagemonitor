@@ -6,14 +6,14 @@ import com.codahale.metrics.annotation.Timed;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
 @Aspect
 public class TimedAspect extends AbstractAspect {
 
-	private static final MetricRegistry registry = StageMonitor.getMetricRegistry();
+	private static final MetricRegistry registry = Stagemonitor.getMetricRegistry();
 
 	@Around(value = "publicMethod() && execution(@com.codahale.metrics.annotation.Timed * *(..)) && @annotation(timedAnnotation)")
 	public Object timed(ProceedingJoinPoint pjp, Timed timedAnnotation) throws Throwable {

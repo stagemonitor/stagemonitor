@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class CorePlugin implements StageMonitorPlugin {
+public class CorePlugin implements StagemonitorPlugin {
 
 	private static final String CORE_PLUGIN_NAME = "Core";
 

@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -32,7 +32,7 @@ public class ConfigurationOptionTest {
 	private final ConfigurationOption<Boolean> booleanFalse = ConfigurationOption.booleanOption().key("boolean.false").build();
 	private final ConfigurationOption<Boolean> booleanInvalid = ConfigurationOption.booleanOption().key("boolean.invalid").build();
 	private final ConfigurationOption<String> testCaching = ConfigurationOption.stringOption().key("testCaching").dynamic(true).build();
-	private Configuration configuration = new Configuration(StageMonitorPlugin.class);
+	private Configuration configuration = new Configuration(StagemonitorPlugin.class);
 	private CorePlugin corePlugin;
 	private SimpleSource configSource = SimpleSource
 			.forTest("invalidLong", "two")
@@ -55,7 +55,7 @@ public class ConfigurationOptionTest {
 
 		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerPluginConfiguration", ConfigurationOptionProvider.class);
 		registerPluginConfiguration.setAccessible(true);
-		registerPluginConfiguration.invoke(configuration, new StageMonitorPlugin() {
+		registerPluginConfiguration.invoke(configuration, new StagemonitorPlugin() {
 			public List<ConfigurationOption<?>> getConfigurationOptions() {
 				return Arrays.<ConfigurationOption<?>>asList(invalidPatternMap, invalidPatternSyntax, aLong, invalidLong, string,
 						lowerStrings, strings, booleanTrue, booleanFalse, booleanInvalid, testCaching);

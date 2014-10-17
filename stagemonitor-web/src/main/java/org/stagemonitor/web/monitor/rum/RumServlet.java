@@ -1,7 +1,7 @@
 package org.stagemonitor.web.monitor.rum;
 
 import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.web.WebPlugin;
 
@@ -25,7 +25,7 @@ public class RumServlet extends HttpServlet {
 	private final WebPlugin webPlugin;
 
 	public RumServlet() {
-		this(StageMonitor.getMetricRegistry(), StageMonitor.getConfiguration(WebPlugin.class));
+		this(Stagemonitor.getMetricRegistry(), Stagemonitor.getConfiguration(WebPlugin.class));
 	}
 
 	public RumServlet(MetricRegistry metricRegistry, WebPlugin webPlugin) {

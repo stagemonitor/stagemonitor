@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
@@ -72,11 +72,11 @@ public class RequestMonitor {
 	private Date endOfWarmup;
 
 	public RequestMonitor() {
-		this(StageMonitor.getConfiguration());
+		this(Stagemonitor.getConfiguration());
 	}
 
 	public RequestMonitor(Configuration configuration) {
-		this(configuration, StageMonitor.getMetricRegistry());
+		this(configuration, Stagemonitor.getMetricRegistry());
 	}
 
 	public RequestMonitor(Configuration configuration, MetricRegistry registry) {
@@ -92,7 +92,7 @@ public class RequestMonitor {
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
-		StageMonitor.startMonitoring(measurementSession);
+		Stagemonitor.startMonitoring(measurementSession);
 	}
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
@@ -103,11 +103,11 @@ public class RequestMonitor {
 			return info;
 		}
 
-		if (StageMonitor.getMeasurementSession().isNull()) {
+		if (Stagemonitor.getMeasurementSession().isNull()) {
 			createMeasurementSession();
 		}
 
-		if (StageMonitor.getMeasurementSession().getInstanceName() == null && noOfRequests.get() == 0) {
+		if (Stagemonitor.getMeasurementSession().getInstanceName() == null && noOfRequests.get() == 0) {
 			getInstanceNameFromExecution(monitoredRequest);
 		}
 
@@ -151,16 +151,16 @@ public class RequestMonitor {
 	 * (e.g. the domain name from a HTTP request)
 	 */
 	private synchronized void getInstanceNameFromExecution(MonitoredRequest<?> monitoredRequest) {
-		final MeasurementSession measurementSession = StageMonitor.getMeasurementSession();
+		final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
 		if (measurementSession.getInstanceName() == null) {
 			MeasurementSession session = new MeasurementSession(measurementSession.getApplicationName(), measurementSession.getHostName(),
 					monitoredRequest.getInstanceName());
-			StageMonitor.startMonitoring(session);
+			Stagemonitor.startMonitoring(session);
 		}
 	}
 
 	private synchronized void createMeasurementSession() {
-		if (StageMonitor.getMeasurementSession().isNull()) {
+		if (Stagemonitor.getMeasurementSession().isNull()) {
 			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), getHostName(),
 					corePlugin.getInstanceName());
 			setMeasurementSession(session);

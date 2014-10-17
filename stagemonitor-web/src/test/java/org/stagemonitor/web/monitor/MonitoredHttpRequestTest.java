@@ -6,13 +6,16 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.util.HashSet;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class MonitoredHttpRequestTest {
 
@@ -20,7 +23,7 @@ public class MonitoredHttpRequestTest {
 
 	@Before
 	public void setUp() throws Exception {
-		StageMonitor.startMonitoring(new MeasurementSession("testApp", "testHost", "testInstance"));
+		Stagemonitor.startMonitoring(new MeasurementSession("testApp", "testHost", "testInstance"));
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
 		request.addParameter("foo", "bar");
 		request.addParameter("bla", "blubb");
@@ -33,7 +36,7 @@ public class MonitoredHttpRequestTest {
 				request,
 				new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 				new MockFilterChain(),
-				StageMonitor.getConfiguration());
+				Stagemonitor.getConfiguration());
 	}
 
 	@Test

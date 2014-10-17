@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -23,7 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.core.StageMonitor.getMetricRegistry;
+import static org.stagemonitor.core.Stagemonitor.getMetricRegistry;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 public class MonitoredHttpExecutionForwardingTest {
@@ -95,7 +95,7 @@ public class MonitoredHttpExecutionForwardingTest {
 								e.printStackTrace();
 							}
 						}
-					}, StageMonitor.getConfiguration()));
+					}, Stagemonitor.getConfiguration()));
 		}
 
 		private void monitored2() throws Exception {
@@ -110,7 +110,7 @@ public class MonitoredHttpExecutionForwardingTest {
 								e.printStackTrace();
 							}
 						}
-					}, StageMonitor.getConfiguration()));
+					}, Stagemonitor.getConfiguration()));
 		}
 
 		private void monitored3() throws Exception {
@@ -121,7 +121,7 @@ public class MonitoredHttpExecutionForwardingTest {
 						public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
 							// actual work
 						}
-					}, StageMonitor.getConfiguration()));
+					}, Stagemonitor.getConfiguration()));
 		}
 
 	}

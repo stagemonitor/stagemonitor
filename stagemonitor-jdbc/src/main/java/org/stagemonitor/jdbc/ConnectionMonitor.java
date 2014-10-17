@@ -7,7 +7,7 @@ import com.p6spy.engine.spy.P6SpyOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.jdbc.p6spy.P6SpyMultiLogger;
@@ -28,7 +28,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 
 public class ConnectionMonitor {
 
-	private static final boolean ACTIVE = ConnectionMonitor.isActive(StageMonitor.getConfiguration(CorePlugin.class));
+	private static final boolean ACTIVE = ConnectionMonitor.isActive(Stagemonitor.getConfiguration(CorePlugin.class));
 
 	private final Logger logger = LoggerFactory.getLogger(ConnectionMonitor.class);
 

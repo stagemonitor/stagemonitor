@@ -5,7 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.Metered;
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 import static org.junit.Assert.assertEquals;
 
@@ -37,7 +37,7 @@ public class MeteredAspectTest {
 
 	@Before
 	public void before() {
-		StageMonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
+		Stagemonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
 	}
 
 	@Test
@@ -49,7 +49,7 @@ public class MeteredAspectTest {
 	@Test
 	public void testMeteredAspectPrivate() {
 		testObject.meteredPrivate();
-		assertEquals(0, StageMonitor.getMetricRegistry().getMeters().size());
+		assertEquals(0, Stagemonitor.getMetricRegistry().getMeters().size());
 	}
 
 	@Test
@@ -71,7 +71,7 @@ public class MeteredAspectTest {
 	}
 
 	private void assertOneTimerExists(String name) {
-		final MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
+		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
 		assertEquals(1, metricRegistry.getMeters().size());
 		assertEquals(name, metricRegistry.getMeters().keySet().iterator().next());
 

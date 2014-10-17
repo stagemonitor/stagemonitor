@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
@@ -47,7 +47,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private final MonitoredHttpRequestFactory monitoredHttpRequestFactory;
 
 	public HttpRequestMonitorFilter() {
-		this(StageMonitor.getConfiguration(), new RequestMonitor(StageMonitor.getConfiguration()), StageMonitor.getMetricRegistry());
+		this(Stagemonitor.getConfiguration(), new RequestMonitor(Stagemonitor.getConfiguration()), Stagemonitor.getMetricRegistry());
 	}
 
 	public HttpRequestMonitorFilter(Configuration configuration, RequestMonitor requestMonitor, MetricRegistry metricRegistry) {

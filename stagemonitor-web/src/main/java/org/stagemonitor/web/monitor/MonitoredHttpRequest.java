@@ -1,7 +1,7 @@
 package org.stagemonitor.web.monitor;
 
 import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -36,7 +36,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		this.filterChain = filterChain;
 		this.responseWrapper = responseWrapper;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
-		metricRegistry = StageMonitor.getMetricRegistry();
+		metricRegistry = Stagemonitor.getMetricRegistry();
 	}
 
 	@Override

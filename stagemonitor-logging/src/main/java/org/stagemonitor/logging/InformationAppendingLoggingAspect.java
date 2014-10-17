@@ -3,7 +3,7 @@ package org.stagemonitor.logging;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
@@ -19,7 +19,7 @@ public class InformationAppendingLoggingAspect extends AbstractLoggingAspect {
 	public Object appendInformation(ProceedingJoinPoint pjp) throws Throwable {
 		RequestTrace request = RequestMonitor.getRequest();
 		final String requestInformation = "[requestId=" + (request != null ? request.getId() : "") + "] " +
-				StageMonitor.getMeasurementSession().toString() + " ";
+				Stagemonitor.getMeasurementSession().toString() + " ";
 		final Object[] args = pjp.getArgs();
 		if (args.length == 0) {
 			return pjp.proceed();

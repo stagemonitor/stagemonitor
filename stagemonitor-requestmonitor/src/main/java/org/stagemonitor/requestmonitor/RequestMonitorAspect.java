@@ -4,13 +4,13 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 
 @Aspect
 public abstract class RequestMonitorAspect {
 
-	protected Configuration configuration = StageMonitor.getConfiguration();
+	protected Configuration configuration = Stagemonitor.getConfiguration();
 	protected RequestMonitor requestMonitor = new RequestMonitor(configuration);
 
 	@Pointcut

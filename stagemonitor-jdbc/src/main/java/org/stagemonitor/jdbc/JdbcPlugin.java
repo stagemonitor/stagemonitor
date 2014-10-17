@@ -2,7 +2,7 @@ package org.stagemonitor.jdbc;
 
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.rest.RestClient;
@@ -10,7 +10,7 @@ import org.stagemonitor.core.rest.RestClient;
 import java.util.Arrays;
 import java.util.List;
 
-public class JdbcPlugin implements StageMonitorPlugin {
+public class JdbcPlugin implements StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
 	private final ConfigurationOption<Boolean> collectSql = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.jdbc.collectSql")

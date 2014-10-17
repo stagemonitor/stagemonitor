@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.rest.RestClient;
@@ -15,7 +15,7 @@ import java.util.List;
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
-public class EhCachePlugin implements StageMonitorPlugin {
+public class EhCachePlugin implements StagemonitorPlugin {
 
 	private final ConfigurationOption<String> ehCacheNameOption = ConfigurationOption.stringOption()
 			.key("stagemonitor.ehcache.name")

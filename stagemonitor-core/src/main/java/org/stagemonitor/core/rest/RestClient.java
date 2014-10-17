@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.JsonUtils;
@@ -16,9 +16,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -44,9 +41,9 @@ public class RestClient {
 	});
 
 	static {
-		if (StageMonitor.getConfiguration(CorePlugin.class).isInternalMonitoringActive()) {
+		if (Stagemonitor.getConfiguration(CorePlugin.class).isInternalMonitoringActive()) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
-			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, StageMonitor.getMetricRegistry());
+			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetricRegistry());
 		}
 	}
 

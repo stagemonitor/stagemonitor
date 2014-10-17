@@ -3,8 +3,8 @@ package org.stagemonitor.requestmonitor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.StageMonitor;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 
@@ -18,8 +18,8 @@ public class RequestMonitorPluginConfigurationTest {
 
 	@Before
 	public void before() throws Exception {
-		StageMonitor.reset();
-		Configuration configuration = new Configuration(StageMonitorPlugin.class);
+		Stagemonitor.reset();
+		Configuration configuration = new Configuration(StagemonitorPlugin.class);
 		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerPluginConfiguration", ConfigurationOptionProvider.class);
 		registerPluginConfiguration.setAccessible(true);
 		registerPluginConfiguration.invoke(configuration, new RequestMonitorPlugin());
@@ -28,7 +28,7 @@ public class RequestMonitorPluginConfigurationTest {
 
 	@After
 	public void cleanUp() {
-		StageMonitor.reset();
+		Stagemonitor.reset();
 	}
 
 	@Test

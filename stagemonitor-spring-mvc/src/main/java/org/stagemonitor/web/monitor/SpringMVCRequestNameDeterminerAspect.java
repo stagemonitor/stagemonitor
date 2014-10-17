@@ -4,7 +4,7 @@ import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.web.servlet.HandlerExecutionChain;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
@@ -19,7 +19,7 @@ public class SpringMVCRequestNameDeterminerAspect {
 	private final WebPlugin webPlugin;
 
 	public SpringMVCRequestNameDeterminerAspect() {
-		this(StageMonitor.getConfiguration());
+		this(Stagemonitor.getConfiguration());
 	}
 
 	public SpringMVCRequestNameDeterminerAspect(Configuration configuration) {

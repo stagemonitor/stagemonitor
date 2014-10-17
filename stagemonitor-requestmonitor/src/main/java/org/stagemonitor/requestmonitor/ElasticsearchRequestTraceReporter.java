@@ -1,7 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.rest.RestClient;
 
 import java.text.SimpleDateFormat;
@@ -17,7 +17,7 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 	private final RequestMonitorPlugin requestMonitorPlugin;
 
 	public ElasticsearchRequestTraceReporter() {
-		this(StageMonitor.getConfiguration(CorePlugin.class), StageMonitor.getConfiguration(RequestMonitorPlugin.class));
+		this(Stagemonitor.getConfiguration(CorePlugin.class), Stagemonitor.getConfiguration(RequestMonitorPlugin.class));
 	}
 
 	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin) {

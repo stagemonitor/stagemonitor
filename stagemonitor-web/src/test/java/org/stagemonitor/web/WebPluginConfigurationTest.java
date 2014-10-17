@@ -2,7 +2,7 @@ package org.stagemonitor.web;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 
@@ -24,7 +24,7 @@ public class WebPluginConfigurationTest {
 
 	@Before
 	public void before() throws Exception {
-		Configuration configuration = new Configuration(StageMonitorPlugin.class);
+		Configuration configuration = new Configuration(StagemonitorPlugin.class);
 		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerPluginConfiguration", ConfigurationOptionProvider.class);
 		registerPluginConfiguration.setAccessible(true);
 		registerPluginConfiguration.invoke(configuration, new WebPlugin());

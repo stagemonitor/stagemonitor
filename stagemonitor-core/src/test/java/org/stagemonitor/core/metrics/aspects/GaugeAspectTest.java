@@ -2,7 +2,7 @@ package org.stagemonitor.core.metrics.aspects;
 
 import com.codahale.metrics.MetricRegistry;
 import org.junit.Test;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,7 +14,7 @@ public class GaugeAspectTest {
 
 	@Test
 	public void testGaugeAspectDefault() {
-		final MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
+		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
 		assertEquals(5, metricRegistry.getGauges().size());
 		Set<String> metricNames = new HashSet<String>();
 		metricNames.add("gauge.GaugeTestObject#gaugeDefault");

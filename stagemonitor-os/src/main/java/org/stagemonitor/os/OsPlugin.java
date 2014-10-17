@@ -1,16 +1,14 @@
 package org.stagemonitor.os;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.MetricSet;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.StageMonitor;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.ConfigurationSource;
@@ -34,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class OsPlugin implements StageMonitorPlugin {
+public class OsPlugin implements StagemonitorPlugin {
 
 	private final static Logger logger = LoggerFactory.getLogger(OsPlugin.class);
 
@@ -104,14 +102,14 @@ public class OsPlugin implements StageMonitorPlugin {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
-		StageMonitor.startMonitoring(getMeasurementSession(), getConfiguration(args));
+		Stagemonitor.startMonitoring(getMeasurementSession(), getConfiguration(args));
 		while (!Thread.currentThread().isInterrupted()) {
 			Thread.sleep(100);
 		}
 	}
 
 	static MeasurementSession getMeasurementSession() {
-		final CorePlugin corePlugin = StageMonitor.getConfiguration(CorePlugin.class);
+		final CorePlugin corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 		String applicationName = corePlugin.getApplicationName() != null ? corePlugin.getApplicationName() : "os";
 		String instanceName = corePlugin.getInstanceName() != null ? corePlugin.getInstanceName() : "host";
 		return new MeasurementSession(applicationName, getHostName(), instanceName);

@@ -5,14 +5,14 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
 @Aspect
 public class ExceptionMeteredAspect extends AbstractAspect {
 
-	private final MetricRegistry registry = StageMonitor.getMetricRegistry();
+	private final MetricRegistry registry = Stagemonitor.getMetricRegistry();
 
 	@AfterThrowing(value = "publicMethod() && execution(@com.codahale.metrics.annotation.ExceptionMetered * *(..)) && @annotation(meteredAnnotation)",
 			throwing = "exception")

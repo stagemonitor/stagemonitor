@@ -52,5 +52,5 @@ $(document).ready(function () {
 		}
 	});
 
-	window.parent.StageMonitorLoaded();
+	window.parent.StagemonitorLoaded();
 });

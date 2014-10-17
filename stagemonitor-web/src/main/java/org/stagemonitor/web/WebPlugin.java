@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class WebPlugin implements StageMonitorPlugin {
+public class WebPlugin implements StagemonitorPlugin {
 
 	public static final String WEB_PLUGIN = "Web Plugin";
 	private final Logger logger = LoggerFactory.getLogger(getClass());

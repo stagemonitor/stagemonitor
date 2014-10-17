@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.rest.RestClient;
@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
-public class RequestMonitorPlugin implements StageMonitorPlugin {
+public class RequestMonitorPlugin implements StagemonitorPlugin {
 
 	public static final String REQUEST_MONITOR_PLUGIN = "Request Monitor Plugin";
 	private final ConfigurationOption<Integer> noOfWarmupRequests = ConfigurationOption.integerOption()

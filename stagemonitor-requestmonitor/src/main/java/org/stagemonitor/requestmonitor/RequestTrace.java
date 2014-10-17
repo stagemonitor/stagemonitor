@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
@@ -52,7 +52,7 @@ public class RequestTrace {
 	private String clientIp;
 
 	public RequestTrace(GetNameCallback getNameCallback) {
-		MeasurementSession measurementSession = StageMonitor.getMeasurementSession();
+		MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
 		application = measurementSession.getApplicationName();
 		host = measurementSession.getHostName();
 		instance = measurementSession.getInstanceName();

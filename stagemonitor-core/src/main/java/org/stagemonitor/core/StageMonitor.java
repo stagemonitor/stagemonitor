@@ -31,10 +31,10 @@ import java.util.concurrent.TimeUnit;
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
-public final class StageMonitor {
+public final class Stagemonitor {
 
 	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
-	private static Logger logger = LoggerFactory.getLogger(StageMonitor.class);
+	private static Logger logger = LoggerFactory.getLogger(Stagemonitor.class);
 	private static Configuration configuration;
 	private static volatile boolean started;
 	private static volatile MeasurementSession measurementSession;
@@ -44,7 +44,7 @@ public final class StageMonitor {
 		reset();
 	}
 
-	private StageMonitor() {
+	private Stagemonitor() {
 	}
 
 	public synchronized static void startMonitoring(MeasurementSession measurementSession,
@@ -56,11 +56,11 @@ public final class StageMonitor {
 		if (started) {
 			return;
 		}
-		StageMonitor.measurementSession = measurementSession;
+		Stagemonitor.measurementSession = measurementSession;
 		if (measurementSession.isInitialized() && !started) {
 			try {
 				if (additionalConfigurationSources.length > 0) {
-					StageMonitor.additionalConfigurationSources = Arrays.asList(additionalConfigurationSources);
+					Stagemonitor.additionalConfigurationSources = Arrays.asList(additionalConfigurationSources);
 					reloadConfiguration();
 				}
 				start(measurementSession);
@@ -93,7 +93,7 @@ public final class StageMonitor {
 
 	private static void initializePlugins(CorePlugin corePlugin) {
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
-		for (StageMonitorPlugin stagemonitorPlugin : ServiceLoader.load(StageMonitorPlugin.class)) {
+		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class)) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 
 			if (disabledPlugins.contains(pluginName)) {
@@ -156,12 +156,12 @@ public final class StageMonitor {
 		return configuration;
 	}
 
-	public static <T extends StageMonitorPlugin> T getConfiguration(Class<T> plugin) {
+	public static <T extends StagemonitorPlugin> T getConfiguration(Class<T> plugin) {
 		return configuration.getConfig(plugin);
 	}
 
 	static void setConfiguration(Configuration configuration) {
-		StageMonitor.configuration = configuration;
+		Stagemonitor.configuration = configuration;
 	}
 
 	public static MeasurementSession getMeasurementSession() {
@@ -173,7 +173,7 @@ public final class StageMonitor {
 	}
 
 	static void setLogger(Logger logger) {
-		StageMonitor.logger = logger;
+		Stagemonitor.logger = logger;
 	}
 
 	/**
@@ -197,6 +197,6 @@ public final class StageMonitor {
 		}
 		configurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
 		configurationSources.add(new EnvironmentVariableConfigurationSource());
-		configuration = new Configuration(StageMonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
+		configuration = new Configuration(StagemonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
 	}
 }

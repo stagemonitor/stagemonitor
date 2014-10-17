@@ -10,7 +10,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -31,7 +31,7 @@ public class RequestMonitorTest {
 
 	@Before
 	public void before() {
-		StageMonitor.reset();
+		Stagemonitor.reset();
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(registry.timer(anyString())).thenReturn(mock(Timer.class));
@@ -40,7 +40,7 @@ public class RequestMonitorTest {
 
 	@After
 	public void after() {
-		StageMonitor.reset();
+		Stagemonitor.reset();
 	}
 
 	@Test
@@ -154,6 +154,6 @@ public class RequestMonitorTest {
 		final MonitoredRequest<RequestTrace> monitoredRequest = createMonitoredRequest();
 		when(monitoredRequest.getInstanceName()).thenReturn("testInstance");
 		requestMonitor.monitor(monitoredRequest);
-		assertEquals("testInstance", StageMonitor.getMeasurementSession().getInstanceName());
+		assertEquals("testInstance", Stagemonitor.getMeasurementSession().getInstanceName());
 	}
 }

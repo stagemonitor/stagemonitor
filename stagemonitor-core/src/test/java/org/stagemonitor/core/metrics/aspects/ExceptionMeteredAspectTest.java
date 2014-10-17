@@ -5,7 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 import static org.junit.Assert.assertEquals;
 
@@ -65,7 +65,7 @@ public class ExceptionMeteredAspectTest {
 
 	@Before
 	public void before() {
-		StageMonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
+		Stagemonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
 	}
 
 	@Test
@@ -85,7 +85,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertEquals(0, StageMonitor.getMetricRegistry().getMeters().size());
+		assertEquals(0, Stagemonitor.getMetricRegistry().getMeters().size());
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		final MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
+		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
 		assertEquals(0, metricRegistry.getMeters().size());
 	}
 
@@ -156,7 +156,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		final MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
+		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
 		assertEquals(0, metricRegistry.getMeters().size());
 	}
 
@@ -167,12 +167,12 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		final MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
+		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
 		assertEquals(0, metricRegistry.getMeters().size());
 	}
 
 	private void assertOneTimerExists(String timerName) {
-		final MetricRegistry metricRegistry = StageMonitor.getMetricRegistry();
+		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
 		assertEquals(1, metricRegistry.getMeters().size());
 		assertEquals(timerName, metricRegistry.getMeters().keySet().iterator().next());
 	}

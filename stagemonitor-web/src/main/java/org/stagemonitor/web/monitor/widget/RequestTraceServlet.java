@@ -2,7 +2,7 @@ package org.stagemonitor.web.monitor.widget;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.RequestTraceReporter;
@@ -53,7 +53,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 
 
 	public RequestTraceServlet() {
-		this(StageMonitor.getConfiguration(WebPlugin.class));
+		this(Stagemonitor.getConfiguration(WebPlugin.class));
 	}
 
 	public RequestTraceServlet(WebPlugin webPlugin) {

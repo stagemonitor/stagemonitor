@@ -94,7 +94,7 @@ public class HttpRequestMonitorFilterTest {
 		assertTrue(servletResponse.getContentAsString().startsWith("<html><body>"));
 		assertTrue(servletResponse.getContentAsString().endsWith("</body></html>"));
 		assertFalse(servletResponse.getContentAsString().contains("beacon_url"));
-		assertTrue(servletResponse.getContentAsString().contains("window.StageMonitorLoaded"));
+		assertTrue(servletResponse.getContentAsString().contains("window.StagemonitorLoaded"));
 	}
 
 	private MockHttpServletRequest requestWithAccept(String accept) {
@@ -133,7 +133,7 @@ public class HttpRequestMonitorFilterTest {
 		assertTrue(servletResponse.getContentAsString().startsWith("<html><body></body><body></body><body></body><body>asdf"));
 		assertTrue(servletResponse.getContentAsString().endsWith("</body></html>"));
 		assertFalse(servletResponse.getContentAsString().contains("beacon_url"));
-		assertTrue(servletResponse.getContentAsString().contains("window.StageMonitorLoaded"));
+		assertTrue(servletResponse.getContentAsString().contains("window.StagemonitorLoaded"));
 	}
 
 	private FilterChain writeInResponseWhenCallingDoFilter(final String html) throws IOException, ServletException {

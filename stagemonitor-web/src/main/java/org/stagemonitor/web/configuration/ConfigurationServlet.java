@@ -2,7 +2,7 @@ package org.stagemonitor.web.configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 
 import javax.servlet.ServletException;
@@ -22,7 +22,7 @@ public class ConfigurationServlet extends HttpServlet {
 	private final Configuration configuration;
 
 	public ConfigurationServlet() {
-		this(StageMonitor.getConfiguration());
+		this(Stagemonitor.getConfiguration());
 	}
 
 	public ConfigurationServlet(Configuration configuration) {
@@ -65,7 +65,7 @@ public class ConfigurationServlet extends HttpServlet {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'configurationSource'");
 			return;
 		}
-		tryToSaveAndHandleErrors(req, resp, req.getParameter(StageMonitor.STAGEMONITOR_PASSWORD), key, configurationSource);
+		tryToSaveAndHandleErrors(req, resp, req.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD), key, configurationSource);
 	}
 
 	private void tryToSaveAndHandleErrors(HttpServletRequest req, HttpServletResponse resp, String configurationUpdatePassword, String key, String configurationSource) throws IOException {

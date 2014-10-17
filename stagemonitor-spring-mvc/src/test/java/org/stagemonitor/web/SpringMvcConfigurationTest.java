@@ -2,7 +2,7 @@ package org.stagemonitor.web;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.StageMonitorPlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 
 public class SpringMvcConfigurationTest {
 
-	private Configuration configuration = new Configuration(StageMonitorPlugin.class);
+	private Configuration configuration = new Configuration(StagemonitorPlugin.class);
 
 	@Before
 	public void before() throws Exception{

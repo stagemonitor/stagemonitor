@@ -4,15 +4,15 @@ import com.codahale.metrics.MetricRegistry;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 
 @Aspect
 public abstract class AbstractLoggingAspect {
 
-	public static final boolean ACTIVE = !StageMonitor.getConfiguration(CorePlugin.class).getDisabledPlugins()
-			.contains(LoggingPlugin.class.getSimpleName()) && StageMonitor.getConfiguration(CorePlugin.class).isStagemonitorActive();
+	public static final boolean ACTIVE = !Stagemonitor.getConfiguration(CorePlugin.class).getDisabledPlugins()
+			.contains(LoggingPlugin.class.getSimpleName()) && Stagemonitor.getConfiguration(CorePlugin.class).isStagemonitorActive();
 
-	protected MetricRegistry registry = StageMonitor.getMetricRegistry();
+	protected MetricRegistry registry = Stagemonitor.getMetricRegistry();
 
 	@Pointcut("execution(* org.slf4j.Logger+.trace(..)) || execution(* org.slf4j.Logger+.debug(..)) " +
 			"|| execution(* org.slf4j.Logger+.info(..)) || execution(* org.slf4j.Logger+.warn(..)) " +

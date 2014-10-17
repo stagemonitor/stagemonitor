@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
-import org.stagemonitor.core.StageMonitor;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 
@@ -109,7 +109,7 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	private UserAgentInformation getUserAgentInformation(Map<String, String> headers) {
-		if (headers != null && StageMonitor.getConfiguration(WebPlugin.class).isParseUserAgent()) {
+		if (headers != null && Stagemonitor.getConfiguration(WebPlugin.class).isParseUserAgent()) {
 			final String userAgentHeader = headers.get("user-agent");
 			if (userAgentHeader != null) {
 				ReadableUserAgent readableUserAgent = userAgentCache.get(userAgentHeader);
