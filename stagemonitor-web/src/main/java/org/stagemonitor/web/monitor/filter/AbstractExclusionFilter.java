@@ -1,11 +1,16 @@
 package org.stagemonitor.web.monitor.filter;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Adds support for excluding specific url prefixes of a filter-mapping.
@@ -30,8 +35,14 @@ import java.util.List;
  */
 public abstract class AbstractExclusionFilter implements Filter {
 
-	private List<String> excludedPaths;
+	private Collection<String> excludedPaths;
 
+	protected AbstractExclusionFilter() {
+	}
+
+	protected AbstractExclusionFilter(Collection<String> excludedPaths) {
+		setExcludedPaths(excludedPaths);
+	}
 
 	@Override
 	public final void init(FilterConfig filterConfig) throws ServletException {
@@ -87,7 +98,7 @@ public abstract class AbstractExclusionFilter implements Filter {
 										  FilterChain filterChain) throws IOException, ServletException;
 
 
-	private void setExcludedPaths(List<String> excludedPaths) {
+	private void setExcludedPaths(Collection<String> excludedPaths) {
 		this.excludedPaths = new ArrayList<String>(excludedPaths.size());
 		for (String exclude : excludedPaths) {
 			exclude = exclude.trim();

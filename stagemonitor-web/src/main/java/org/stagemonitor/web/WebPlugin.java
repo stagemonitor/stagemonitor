@@ -13,6 +13,7 @@ import org.stagemonitor.core.rest.RestClient;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -149,11 +150,22 @@ public class WebPlugin implements StageMonitorPlugin {
 			.defaultValue(false)
 			.pluginName(WEB_PLUGIN)
 			.build();
+	private final ConfigurationOption<Collection<String>> excludedRequestPaths = ConfigurationOption.stringsOption()
+			.key("stagemonitor.web.paths.excluded")
+			.dynamic(false)
+			.label("Excluded paths")
+			.description("Request paths that should not be monitored. " +
+					"A value of '/aaa' means, that all paths starting with '/aaa' should not be monitored." +
+					" It's recommended to not monitor static resources, as they are typically not interesting to " +
+					"monitor but consume resources when you do.")
+			.defaultValue(Collections.<String>emptyList())
+			.pluginName(WEB_PLUGIN)
+			.build();
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Arrays.<ConfigurationOption<?>>asList(collectHttpHeaders, parseUserAgent, excludeHeaders, 
-				requestParamsConfidential, widgetEnabled, groupUrls, rumEnabled, collectPageLoadTimesPerRequest);
+				requestParamsConfidential, widgetEnabled, groupUrls, rumEnabled, collectPageLoadTimesPerRequest, excludedRequestPaths);
 	}
 
 	@Override
@@ -218,5 +230,9 @@ public class WebPlugin implements StageMonitorPlugin {
 
 	public boolean isCollectPageLoadTimesPerRequest() {
 		return collectPageLoadTimesPerRequest.getValue();
+	}
+
+	public Collection<String> getExcludedRequestPaths() {
+		return excludedRequestPaths.getValue();
 	}
 }

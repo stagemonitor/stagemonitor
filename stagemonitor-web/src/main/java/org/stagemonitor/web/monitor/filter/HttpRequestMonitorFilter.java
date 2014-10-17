@@ -9,8 +9,10 @@ import org.stagemonitor.core.StageMonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.DefaultMonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
+import org.stagemonitor.web.monitor.MonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
 import org.stagemonitor.web.monitor.widget.StagemonitorWidgetHtmlInjector;
 
@@ -21,13 +23,17 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ServiceLoader;
 
+@WebFilter(urlPatterns = "/*", asyncSupported = true)
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
 	private static final Logger logger = LoggerFactory.getLogger(HttpRequestMonitorFilter.class);
@@ -38,17 +44,26 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	protected final MetricRegistry metricRegistry;
 	private final List<HtmlInjector> htmlInjectors = new ArrayList<HtmlInjector>();
 	private boolean atLeastServletApi3 = false;
+	private final MonitoredHttpRequestFactory monitoredHttpRequestFactory;
 
 	public HttpRequestMonitorFilter() {
 		this(StageMonitor.getConfiguration(), new RequestMonitor(StageMonitor.getConfiguration()), StageMonitor.getMetricRegistry());
 	}
 
 	public HttpRequestMonitorFilter(Configuration configuration, RequestMonitor requestMonitor, MetricRegistry metricRegistry) {
+		super(configuration.getConfig(WebPlugin.class).getExcludedRequestPaths());
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		this.requestMonitor = requestMonitor;
 		this.metricRegistry = metricRegistry;
+
+		final Iterator<MonitoredHttpRequestFactory> requestFactoryIterator = ServiceLoader.load(MonitoredHttpRequestFactory.class).iterator();
+		if (!requestFactoryIterator.hasNext()) {
+			this.monitoredHttpRequestFactory = new DefaultMonitoredHttpRequestFactory();
+		} else {
+			this.monitoredHttpRequestFactory = requestFactoryIterator.next();
+		}
 	}
 
 	@Override
@@ -141,7 +156,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	protected RequestMonitor.RequestInformation<HttpRequestTrace> monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
-		final MonitoredHttpRequest monitoredRequest = new MonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
+		final MonitoredHttpRequest monitoredRequest = monitoredHttpRequestFactory.createMonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
 		return requestMonitor.monitor(monitoredRequest);
 	}
 

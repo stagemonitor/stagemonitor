@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor;
+package org.stagemonitor.web.monitor;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
@@ -20,11 +20,10 @@ import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
-import org.stagemonitor.web.monitor.SpringMVCRequestNameDeterminerAspect;
-import org.stagemonitor.web.monitor.SpringMonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import javax.servlet.http.HttpServletRequest;
@@ -84,6 +83,7 @@ public class SpringRequestMonitorTest {
 				createHandlerMappingNotReturningHandlerMethod(),
 				createHandlerMapping(mvcRequest, Test.class.getMethod("testGetRequestName"))
 		);
+		SpringMonitoredHttpRequest.HandlerMappingServletContextListener.setAllHandlerMappings(handlerMappings);
 		registry.removeMatching(new MetricFilter() {
 			@Override
 			public boolean matches(String name, Metric metric) {
@@ -201,6 +201,6 @@ public class SpringRequestMonitorTest {
 
 	private SpringMonitoredHttpRequest createSpringMonitoredHttpRequest(HttpServletRequest request) throws IOException {
 		final StatusExposingByteCountingServletResponse response = new StatusExposingByteCountingServletResponse(new MockHttpServletResponse());
-		return Mockito.spy(new SpringMonitoredHttpRequest(request, response, new MockFilterChain(), configuration, handlerMappings));
+		return Mockito.spy(new SpringMonitoredHttpRequest(request, response, new MockFilterChain(), configuration));
 	}
 }

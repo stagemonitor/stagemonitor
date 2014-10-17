@@ -20,7 +20,23 @@ public abstract class ProfilingAspect {
 	private void dontWeaveInOtherAspects() {
 	}
 
-	@Pointcut("methodsToProfile() && !stagemonitorCollector() && dontWeaveInOtherAspects()")
+	@Pointcut("execution(* javax.servlet.Servlet+.service(..)) || execution(* javax.servlet.http.HttpServlet+.do*(..))")
+	public void servletService() {
+	}
+
+	@Pointcut("execution(* org.springframework.web.servlet.View+.render(..))")
+	public void renderView() {
+	}
+
+	@Pointcut("execution(* org.springframework.web.servlet.ViewResolver+.resolveViewName(..))")
+	public void resolveView() {
+	}
+
+	@Pointcut("servletService() || renderView() || (resolveView() && !cflowbelow(resolveView()))")
+	public void webMethods() {
+	}
+
+	@Pointcut("(methodsToProfile() || webMethods()) && !stagemonitorCollector() && dontWeaveInOtherAspects()")
 	private void applicationMethodsToProfile() {
 	}
 
