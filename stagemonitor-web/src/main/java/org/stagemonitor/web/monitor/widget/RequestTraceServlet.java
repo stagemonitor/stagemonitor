@@ -84,7 +84,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	}
 
 	private void blockingWaitForRequestTrace(String connectionId, HttpServletResponse resp) throws IOException {
-		logger.warn("Request does not support async processing. Falling back to blocking. Please mark your filters with <async-supported>true</async-supported>.");
+		logger.info("Request does not support async processing. Falling back to blocking processor thread. Please mark your filters with <async-supported>true</async-supported>.");
 		Object lock = new Object();
 		synchronized (lock) {
 			if (connectionIdToLockMap.putIfAbsent(connectionId, lock) == null) {

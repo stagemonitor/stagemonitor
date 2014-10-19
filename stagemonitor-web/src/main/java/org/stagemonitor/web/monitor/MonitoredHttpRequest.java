@@ -54,12 +54,23 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		final String method = httpServletRequest.getMethod();
 		final String sessionId = httpServletRequest.getRequestedSessionId();
 		final String connectionId = httpServletRequest.getHeader(RequestTraceServlet.CONNECTION_ID);
-		final RequestTrace.GetNameCallback nameCallback = new RequestTrace.GetNameCallback() {
-			@Override
-			public String getName() {
-				return getRequestName();
-			}
-		};
+		final RequestTrace.GetNameCallback nameCallback;
+		if (determineRequestNameImmediately()) {
+			final String requestName = getRequestName();
+			nameCallback = new RequestTrace.GetNameCallback() {
+				@Override
+				public String getName() {
+					return requestName;
+				}
+			};
+		} else {
+			nameCallback = new RequestTrace.GetNameCallback() {
+				@Override
+				public String getName() {
+					return getRequestName();
+				}
+			};
+		}
 		HttpRequestTrace request = new HttpRequestTrace(nameCallback, url, headers, method, sessionId, connectionId);
 
 		request.setClientIp(getClientIp(httpServletRequest));
@@ -71,6 +82,21 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		request.setParameter(getSafeQueryString(parameterMap));
 
 		return request;
+	}
+
+	/**
+	 * In some servers, like WildFly, it is not possible to determine the request name later, because the
+	 * {@link HttpServletRequest} is in a different state.
+	 *
+	 * For example: {@link javax.servlet.http.HttpServletRequest#getRequestURI()} initially returns '/owners/find.html',
+	 * but after the execution, the request has a {@link javax.servlet.http.HttpServletRequest#getDispatcherType()} of
+	 * {@link javax.servlet.DispatcherType#FORWARD} and {@link javax.servlet.http.HttpServletRequest#getRequestURI()}
+	 * returns '/WEB-INF/jsp/owners/findOwners.jsp'
+	 *
+	 * @return <code>true</code>, if the request name has to be determined immediately, <code>false</code> otherwise
+	 */
+	private boolean determineRequestNameImmediately() {
+		return httpServletRequest.getServletContext().getServerInfo().contains("WildFly");
 	}
 
 	private String getClientIp(HttpServletRequest request) {

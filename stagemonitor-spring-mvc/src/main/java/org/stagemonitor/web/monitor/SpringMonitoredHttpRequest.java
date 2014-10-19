@@ -17,6 +17,8 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.servlet.ServletRequestEvent;
+import javax.servlet.ServletRequestListener;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -69,17 +71,21 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 	}
 
 	@WebListener
-	public static class HandlerMappingServletContextListener implements ServletContextListener {
+	public static class HandlerMappingServletContextListener implements ServletContextListener, ServletRequestListener {
 
 		private static List<HandlerMapping> allHandlerMappings = Collections.emptyList();
+		private ServletContext servletContext;
 
 		@Override
 		public void contextInitialized(ServletContextEvent sce) {
-			setAllHandlerMappings(getAllHandlerMappings(sce.getServletContext()));
+			servletContext = sce.getServletContext();
+
 		}
 
-		static void setAllHandlerMappings(List<HandlerMapping> allHandlerMappings) {
-			HandlerMappingServletContextListener.allHandlerMappings = allHandlerMappings;
+		synchronized static void setAllHandlerMappings(List<HandlerMapping> allHandlerMappings) {
+			if (HandlerMappingServletContextListener.allHandlerMappings.isEmpty()) {
+				HandlerMappingServletContextListener.allHandlerMappings = allHandlerMappings;
+			}
 		}
 
 		private List<HandlerMapping> getAllHandlerMappings(ServletContext servletContext) {
@@ -96,7 +102,18 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 		}
 
 		@Override
+		public void requestInitialized(ServletRequestEvent sre) {
+			if (allHandlerMappings.isEmpty()) {
+				setAllHandlerMappings(getAllHandlerMappings(servletContext));
+			}
+		}
+
+		@Override
 		public void contextDestroyed(ServletContextEvent sce) {
+		}
+
+		@Override
+		public void requestDestroyed(ServletRequestEvent sre) {
 		}
 	}
 }
