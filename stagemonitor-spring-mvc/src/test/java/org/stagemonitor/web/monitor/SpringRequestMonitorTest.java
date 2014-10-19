@@ -3,12 +3,15 @@ package org.stagemonitor.web.monitor;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -53,7 +56,6 @@ public class SpringRequestMonitorTest {
 
 	private MockHttpServletRequest mvcRequest = new MockHttpServletRequest("GET", "/test/requestName");
 	private MockHttpServletRequest nonMvcRequest = new MockHttpServletRequest("GET", "/META-INF/resources/stagemonitor/static/jquery.js");
-	private List<HandlerMapping> handlerMappings;
 	private Configuration configuration = mock(Configuration.class);
 	private SpringMvcPlugin mvcPlugin = mock(SpringMvcPlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
@@ -63,6 +65,7 @@ public class SpringRequestMonitorTest {
 	private MetricRegistry registry = new MetricRegistry();
 	private SpringMVCRequestNameDeterminerAspect springMVCRequestNameDeterminerAspect;
 	private final boolean useNameDeterminerAspect;
+	private HandlerMapping getRequestNameHandlerMapping;
 
 	public SpringRequestMonitorTest(boolean useNameDeterminerAspect) {
 		this.useNameDeterminerAspect = useNameDeterminerAspect;
@@ -77,11 +80,12 @@ public class SpringRequestMonitorTest {
 	@Before
 	public void before() throws Exception {
 		// the purpose of this class is to obtain a instance to a Method, because Method objects can't be mocked as they are final
-		class Test { public void testGetRequestName() {} }
-		handlerMappings = Arrays.asList(
+		class TestController { public void testGetRequestName() {} }
+		getRequestNameHandlerMapping = createHandlerMapping(mvcRequest, TestController.class.getMethod("testGetRequestName"));
+		List<HandlerMapping> handlerMappings = Arrays.asList(
 				createExceptionThrowingHandlerMapping(),
 				createHandlerMappingNotReturningHandlerMethod(),
-				createHandlerMapping(mvcRequest, Test.class.getMethod("testGetRequestName"))
+				getRequestNameHandlerMapping
 		);
 		SpringMonitoredHttpRequest.HandlerMappingServletContextListener.setAllHandlerMappings(handlerMappings);
 		registry.removeMatching(new MetricFilter() {
@@ -109,7 +113,7 @@ public class SpringRequestMonitorTest {
 
 	private HandlerMapping createExceptionThrowingHandlerMapping() throws Exception {
 		HandlerMapping requestMappingHandlerMapping = mock(HandlerMapping.class);
-		when(requestMappingHandlerMapping.getHandler((HttpServletRequest) any())).thenThrow(new Exception());
+		when(requestMappingHandlerMapping.getHandler((HttpServletRequest) any())).thenThrow(new Exception("This is a test exeption"));
 		return requestMappingHandlerMapping;
 	}
 
@@ -123,22 +127,37 @@ public class SpringRequestMonitorTest {
 	}
 
 	private HandlerMapping createHandlerMapping(MockHttpServletRequest request, Method requestMappingMethod) throws Exception {
+		System.out.println("createHandlerMapping"+request);
 		HandlerMapping requestMappingHandlerMapping = mock(HandlerMapping.class);
 		HandlerExecutionChain handlerExecutionChain = mock(HandlerExecutionChain.class);
 		HandlerMethod handlerMethod = mock(HandlerMethod.class);
 
 		when(handlerMethod.getMethod()).thenReturn(requestMappingMethod);
 		when(handlerExecutionChain.getHandler()).thenReturn(handlerMethod);
-		when(requestMappingHandlerMapping.getHandler(request)).thenReturn(handlerExecutionChain);
+		when(requestMappingHandlerMapping.getHandler(Matchers.argThat(new Matcher<HttpServletRequest>() {
+			@Override
+			public boolean matches(Object item) {
+				return ((HttpServletRequest) item).getRequestURI().equals("/test/requestName");
+			}
+
+			@Override
+			public void _dont_implement_Matcher___instead_extend_BaseMatcher_() {
+			}
+
+			@Override
+			public void describeTo(Description description) {
+			}
+		}))).thenReturn(handlerExecutionChain);
 		return requestMappingHandlerMapping;
 	}
 
 	@Test
 	public void testRequestMonitorMvcRequest() throws Exception {
+		System.out.println("useNameDeterminerAspect="+useNameDeterminerAspect);
 		when(mvcPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 
 		SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(mvcRequest);
-		registerAspect(monitoredRequest, mvcRequest, handlerMappings.get(2).getHandler(mvcRequest));
+		registerAspect(monitoredRequest, mvcRequest, getRequestNameHandlerMapping.getHandler(mvcRequest));
 		final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals(1, requestInformation.getRequestTimer().getCount());

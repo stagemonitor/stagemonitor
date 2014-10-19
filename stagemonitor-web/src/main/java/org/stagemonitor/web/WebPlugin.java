@@ -161,11 +161,22 @@ public class WebPlugin implements StagemonitorPlugin {
 			.defaultValue(Collections.<String>emptyList())
 			.pluginName(WEB_PLUGIN)
 			.build();
+	private final ConfigurationOption<Boolean> monitorOnlyForwardedRequests = ConfigurationOption.booleanOption()
+			.key("stagemonitor.web.monitorOnlyForwardedRequests")
+			.dynamic(true)
+			.label("Monitor only forwarded requests")
+			.description("Sometimes you only want to monitor forwarded requests, for example if you have a rewrite " +
+					"filter that translates a external URI (/a) to a internal URI (/b). If only /b should be monitored," +
+					"set the value to true.")
+			.defaultValue(false)
+			.pluginName(WEB_PLUGIN)
+			.build();
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Arrays.<ConfigurationOption<?>>asList(collectHttpHeaders, parseUserAgent, excludeHeaders, 
-				requestParamsConfidential, widgetEnabled, groupUrls, rumEnabled, collectPageLoadTimesPerRequest, excludedRequestPaths);
+				requestParamsConfidential, widgetEnabled, groupUrls, rumEnabled, collectPageLoadTimesPerRequest,
+				excludedRequestPaths, monitorOnlyForwardedRequests);
 	}
 
 	@Override
@@ -234,5 +245,9 @@ public class WebPlugin implements StagemonitorPlugin {
 
 	public Collection<String> getExcludedRequestPaths() {
 		return excludedRequestPaths.getValue();
+	}
+
+	public boolean isMonitorOnlyForwardedRequests() {
+		return monitorOnlyForwardedRequests.getValue();
 	}
 }

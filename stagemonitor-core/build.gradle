@@ -8,8 +8,6 @@ dependencies {
 	// necessary for load-time-weaving
 	compile 'org.aspectj:aspectjtools:1.8.2'
 	compile 'org.aspectj:aspectjrt:1.8.2'
-
-	testCompile 'org.slf4j:slf4j-simple:1.7.7'
 }
 
 // the aspectj compiler and cobertura don't like each other

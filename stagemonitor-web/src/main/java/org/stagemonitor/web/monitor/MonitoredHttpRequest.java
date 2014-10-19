@@ -11,6 +11,9 @@ import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResp
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.util.Collection;
@@ -21,8 +24,10 @@ import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
+@WebListener
+public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace>, ServletContextListener {
 
+	private static boolean determineRequestNameImmediately = false;
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
@@ -87,7 +92,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	/**
 	 * In some servers, like WildFly, it is not possible to determine the request name later, because the
 	 * {@link HttpServletRequest} is in a different state.
-	 *
+	 * <p/>
 	 * For example: {@link javax.servlet.http.HttpServletRequest#getRequestURI()} initially returns '/owners/find.html',
 	 * but after the execution, the request has a {@link javax.servlet.http.HttpServletRequest#getDispatcherType()} of
 	 * {@link javax.servlet.DispatcherType#FORWARD} and {@link javax.servlet.http.HttpServletRequest#getRequestURI()}
@@ -96,7 +101,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	 * @return <code>true</code>, if the request name has to be determined immediately, <code>false</code> otherwise
 	 */
 	private boolean determineRequestNameImmediately() {
-		return httpServletRequest.getServletContext().getServerInfo().contains("WildFly");
+		return determineRequestNameImmediately;
 	}
 
 	private String getClientIp(HttpServletRequest request) {
@@ -128,7 +133,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		for (Map.Entry<Pattern, String> entry : webPlugin.getGroupUrls().entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}
-		return request.getMethod() + " " +requestURI;
+		return request.getMethod() + " " + requestURI;
 	}
 
 	private static String removeSemicolonContent(String requestUri) {
@@ -222,5 +227,14 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	@Override
 	public boolean isMonitorForwardedExecutions() {
 		return true;
+	}
+
+	@Override
+	public void contextInitialized(ServletContextEvent sce) {
+		determineRequestNameImmediately = sce.getServletContext().getServerInfo().contains("WildFly");
+	}
+
+	@Override
+	public void contextDestroyed(ServletContextEvent sce) {
 	}
 }

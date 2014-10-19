@@ -33,7 +33,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
 
-@WebFilter(urlPatterns = "/*", asyncSupported = true)
+import static javax.servlet.DispatcherType.FORWARD;
+import static javax.servlet.DispatcherType.REQUEST;
+
+@WebFilter(urlPatterns = "/*", asyncSupported = true, dispatcherTypes = {REQUEST, FORWARD})
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
 	private static final Logger logger = LoggerFactory.getLogger(HttpRequestMonitorFilter.class);
@@ -90,13 +93,20 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	public final void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
 		setCachingHeadersForBommerangJs(request, response);
-		beforeFilter();
-		if (corePlugin.isStagemonitorActive() && request instanceof HttpServletRequest &&
-				response instanceof HttpServletResponse && !isInternalRequest((HttpServletRequest) request)) {
+		if (corePlugin.isStagemonitorActive() && isHttpRequest(request, response) &&
+				!isInternalRequest((HttpServletRequest) request) && onlyMonitorForwardedRequestsIfConfigured(request)) {
 			doMonitor((HttpServletRequest) request, response, filterChain);
 		} else {
 			filterChain.doFilter(request, response);
 		}
+	}
+
+	private boolean onlyMonitorForwardedRequestsIfConfigured(ServletRequest request) {
+		return request.getDispatcherType() != FORWARD || webPlugin.isMonitorOnlyForwardedRequests();
+	}
+
+	private boolean isHttpRequest(ServletRequest request, ServletResponse response) {
+		return request instanceof HttpServletRequest && response instanceof HttpServletResponse;
 	}
 
 	private void doMonitor(HttpServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -121,7 +131,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private void setCachingHeadersForBommerangJs(ServletRequest request, ServletResponse response) {
-		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
+		if (isHttpRequest(request, response)) {
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 			if (httpServletRequest.getRequestURI().endsWith(BommerangJsHtmlInjector.BOOMERANG_FILENAME)) {
 				final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
@@ -150,9 +160,6 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	private boolean isInternalRequest(HttpServletRequest request) {
 		return request.getRequestURI().startsWith(request.getContextPath() + "/stagemonitor");
-	}
-
-	protected void beforeFilter() {
 	}
 
 	protected RequestMonitor.RequestInformation<HttpRequestTrace> monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
