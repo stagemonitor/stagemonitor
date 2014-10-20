@@ -128,7 +128,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	public static String getRequestNameByRequest(HttpServletRequest request, WebPlugin webPlugin) {
-		String requestURI = removeSemicolonContent(request.getRequestURI());
+		String requestURI = removeSemicolonContent(request.getRequestURI().substring(request.getContextPath().length()));
 		for (Map.Entry<Pattern, String> entry : webPlugin.getGroupUrls().entrySet()) {
 			requestURI = entry.getKey().matcher(requestURI).replaceAll(entry.getValue());
 		}

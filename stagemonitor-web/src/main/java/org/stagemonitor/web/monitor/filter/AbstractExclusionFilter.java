@@ -78,12 +78,12 @@ public abstract class AbstractExclusionFilter implements Filter {
 		}
 	}
 
-	private boolean isExcluded(HttpServletRequest httpServletRequest) {
+	private boolean isExcluded(HttpServletRequest request) {
 		if (excludedPaths == null) {
 			return false;
 		}
 		for (String excludedPath : excludedPaths) {
-			if (httpServletRequest.getRequestURI().startsWith(excludedPath)) {
+			if (request.getRequestURI().substring(request.getContextPath().length()).startsWith(excludedPath)) {
 				return true;
 			}
 		}
