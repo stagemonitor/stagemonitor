@@ -4,11 +4,19 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.stagemonitor.web.monitor.filter.AbstractExclusionFilter;
 
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AbstractExclusionFilterTest {
 
@@ -26,14 +34,14 @@ public class AbstractExclusionFilterTest {
 	public void testExclude() throws Exception {
 		when(filterConfigMock.getInitParameter("exclude")).thenReturn("exclude1,/exclude2,  /exclude3/");
 		testFilter.init(filterConfigMock);
-		assertExcludes("/exclude1");
-		assertExcludes("/exclude2/bla/blubb");
-		assertExcludes("/exclude3/");
-		assertExcludes("/exclude2bla");
+		assertExcludes("/context-path/exclude1");
+		assertExcludes("/context-path/exclude2/bla/blubb");
+		assertExcludes("/context-path/exclude3/");
+		assertExcludes("/context-path/exclude2bla");
 
-		assertIncludes("/exclude3");
-		assertIncludes("/included");
-		assertIncludes("/included/exclude1");
+		assertIncludes("/context-path/exclude3");
+		assertIncludes("/context-path/included");
+		assertIncludes("/context-path/included/exclude1");
 	}
 
 	@Test
@@ -57,6 +65,7 @@ public class AbstractExclusionFilterTest {
 			notExclutedCount++;
 
 		when(mockRequest.getRequestURI()).thenReturn(url);
+		when(mockRequest.getContextPath()).thenReturn("/context-path");
 		testFilter.doFilter(mockRequest, null, mock(FilterChain.class));
 		verify(testFilter, times(notExclutedCount)).doFilterInternal((ServletRequest) any(), (ServletResponse) any(), (FilterChain) any());
 	}
