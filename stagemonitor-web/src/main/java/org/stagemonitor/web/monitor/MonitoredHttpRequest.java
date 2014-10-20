@@ -24,8 +24,7 @@ import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-@WebListener
-public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace>, ServletContextListener {
+public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
 	private static boolean determineRequestNameImmediately = false;
 	protected final HttpServletRequest httpServletRequest;
@@ -229,12 +228,16 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace>,
 		return true;
 	}
 
-	@Override
-	public void contextInitialized(ServletContextEvent sce) {
-		determineRequestNameImmediately = sce.getServletContext().getServerInfo().contains("WildFly");
-	}
+	@WebListener
+	public static class StagemonitorServletContextListener implements ServletContextListener {
 
-	@Override
-	public void contextDestroyed(ServletContextEvent sce) {
+		@Override
+		public void contextInitialized(ServletContextEvent sce) {
+			determineRequestNameImmediately = sce.getServletContext().getServerInfo().contains("WildFly");
+		}
+
+		@Override
+		public void contextDestroyed(ServletContextEvent sce) {
+		}
 	}
 }
