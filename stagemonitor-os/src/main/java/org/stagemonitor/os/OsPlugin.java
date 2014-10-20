@@ -36,15 +36,9 @@ public class OsPlugin implements StagemonitorPlugin {
 
 	private final static Logger logger = LoggerFactory.getLogger(OsPlugin.class);
 
-	private final Sigar sigar;
+	private Sigar sigar;
 
 	public OsPlugin() throws IOException {
-		this.sigar = newSigar();
-	}
-
-	public static Sigar newSigar() throws IOException {
-		System.setProperty("java.library.path", NativeUtils.getLibraryPath(getSigarBindings(), "sigar"));
-		return new Sigar();
 	}
 
 	public OsPlugin(Sigar sigar) {
@@ -63,22 +57,31 @@ public class OsPlugin implements StagemonitorPlugin {
 			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "OS Overview.json");
 		}
 
+		if (sigar == null) {
+			sigar = newSigar();
+		}
+		metricRegistry.registerAll(init(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0])));
+		metricRegistry.registerAll(init(new MemoryMetricSet(sigar)));
+		metricRegistry.registerAll(init(new SwapMetricSet(sigar)));
+		for (String ifname : sigar.getNetInterfaceList()) {
+			metricRegistry.registerAll(init(new NetworkMetricSet(ifname, sigar)));
+		}
+		@SuppressWarnings("unchecked")
+		final Set<Map.Entry<String, FileSystem>> entries = (Set<Map.Entry<String, FileSystem>>) sigar.getFileSystemMap().entrySet();
+		for (Map.Entry<String, FileSystem> e : entries) {
+			final FileSystem fs = e.getValue();
+			if (fs.getType() == FileSystem.TYPE_LOCAL_DISK) {
+				metricRegistry.registerAll(init(new FileSystemMetricSet(e.getKey(), sigar)));
+			}
+		}
+	}
+
+	public static Sigar newSigar() throws Exception {
+		final String libraryPath = NativeUtils.addResourcesToLibraryPath(getSigarBindings(), "sigar");
 		try {
-			metricRegistry.registerAll(init(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0])));
-			metricRegistry.registerAll(init(new MemoryMetricSet(sigar)));
-			metricRegistry.registerAll(init(new SwapMetricSet(sigar)));
-			for (String ifname : sigar.getNetInterfaceList()) {
-				metricRegistry.registerAll(init(new NetworkMetricSet(ifname, sigar)));
-			}
-			@SuppressWarnings("unchecked")
-			final Set<Map.Entry<String, FileSystem>> entries = (Set<Map.Entry<String, FileSystem>>) sigar.getFileSystemMap().entrySet();
-			for (Map.Entry<String, FileSystem> e : entries) {
-				final FileSystem fs = e.getValue();
-				if (fs.getType() == FileSystem.TYPE_LOCAL_DISK) {
-					metricRegistry.registerAll(init(new FileSystemMetricSet(e.getKey(), sigar)));
-				}
-			}
+			return new Sigar();
 		} catch (UnsatisfiedLinkError e) {
+			logger.warn("Please add -Djava.library.path={} system property to resolve the UnsatisfiedLinkError", libraryPath);
 			throw new RuntimeException(e);
 		}
 	}

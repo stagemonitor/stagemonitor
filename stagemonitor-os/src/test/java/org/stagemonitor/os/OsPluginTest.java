@@ -14,7 +14,6 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +33,7 @@ public class OsPluginTest {
 	static {
 		try {
 			sigar = OsPlugin.newSigar();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}

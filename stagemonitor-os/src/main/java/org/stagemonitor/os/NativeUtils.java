@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -17,24 +18,38 @@ import java.util.List;
  */
 public final class NativeUtils {
 
+	private static final String JAVA_LIBRARY_PATH = "java.library.path";
+
 	private NativeUtils() {
 	}
 
-	public static String getLibraryPath(List<String> nativeLibs, String parentDir) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		if (System.getProperty("java.library.path") != null) {
-			sb.append(System.getProperty("java.library.path")).append(File.pathSeparatorChar);
+	/**
+	 * Adds native libs that are stored inside a jar file to the java library path.
+	 *
+	 * @param nativeLibs the path to the native libs in jar file
+	 * @param parentDir the parent directory name the native libs should be stored to
+	 * @return the folder that contains the extracted nativeLibs
+	 * @throws Exception
+	 */
+	public static String addResourcesToLibraryPath(List<String> nativeLibs, String parentDir) throws Exception {
+		StringBuilder newLibraryPath = new StringBuilder();
+		if (System.getProperty(JAVA_LIBRARY_PATH) != null) {
+			newLibraryPath.append(System.getProperty(JAVA_LIBRARY_PATH)).append(File.pathSeparatorChar);
 		}
 		final File tempDirectory = new File(System.getProperty("java.io.tmpdir"), parentDir);
 		tempDirectory.mkdir();
-		tempDirectory.deleteOnExit();
-		sb.append(tempDirectory.getAbsolutePath());
+		newLibraryPath.append(tempDirectory.getAbsolutePath());
 
 		for (String nativeLib : nativeLibs) {
 			extractFromJarToTemp(nativeLib, tempDirectory);
 		}
 
-		return sb.toString();
+		System.setProperty(JAVA_LIBRARY_PATH, newLibraryPath.toString());
+
+		final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
+		sysPathsField.setAccessible(true);
+		sysPathsField.set(null, null);
+		return tempDirectory.getAbsolutePath();
 	}
 
 	/**
@@ -69,7 +84,6 @@ public final class NativeUtils {
 
 		// Prepare temporary file
 		File temp = new File(tempDirectory, parts[parts.length - 1]);
-		temp.deleteOnExit();
 		if (temp.exists()) {
 			// already extracted
 			return null;
