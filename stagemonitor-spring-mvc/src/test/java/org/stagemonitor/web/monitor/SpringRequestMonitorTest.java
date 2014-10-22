@@ -140,7 +140,6 @@ public class SpringRequestMonitorTest {
 				return ((HttpServletRequest) item).getRequestURI().equals("/test/requestName");
 			}
 
-			@Override
 			public void describeMismatch(Object item, Description mismatchDescription) {
 			}
 
