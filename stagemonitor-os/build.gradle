@@ -8,8 +8,6 @@ dependencies {
 	compile project(":stagemonitor-core")
 	compile 'org.fusesource:sigar:1.6.4'
 	compile 'org.slf4j:log4j-over-slf4j:1.7.7'
-	compile 'org.slf4j:slf4j-simple:1.7.7'
-
 }
 
 configurations {
