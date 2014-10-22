@@ -1,5 +1,14 @@
 package org.stagemonitor.web.monitor;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Pattern;
+import javax.servlet.http.HttpServletRequest;
+
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -28,15 +37,6 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
@@ -138,6 +138,10 @@ public class SpringRequestMonitorTest {
 			@Override
 			public boolean matches(Object item) {
 				return ((HttpServletRequest) item).getRequestURI().equals("/test/requestName");
+			}
+
+			@Override
+			public void describeMismatch(Object item, Description mismatchDescription) {
 			}
 
 			@Override
