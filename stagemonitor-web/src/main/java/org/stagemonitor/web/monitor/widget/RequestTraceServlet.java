@@ -1,22 +1,5 @@
 package org.stagemonitor.web.monitor.widget;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestTrace;
-import org.stagemonitor.requestmonitor.RequestTraceReporter;
-import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,6 +12,23 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.requestmonitor.RequestTraceReporter;
+import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
 
 @WebServlet(urlPatterns = "/stagemonitor/request-traces", asyncSupported = true)
 public class RequestTraceServlet extends HttpServlet implements RequestTraceReporter {
@@ -90,21 +90,23 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			if (connectionIdToLockMap.putIfAbsent(connectionId, lock) == null) {
 				try {
 					lock.wait(REQUEST_TIMEOUT);
-					connectionIdToLockMap.remove(connectionId);
 				} catch (InterruptedException e) {
 					throw new RuntimeException(e);
+				} finally {
+					connectionIdToLockMap.remove(connectionId, lock);
 				}
 				if (connectionIdToRequestTracesMap.containsKey(connectionId)) {
 					writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
 				} else {
 					writeEmptyResponse(resp);
 				}
+			} else {
+				writeEmptyResponse(resp);
 			}
 		}
 	}
 
 	private boolean startAsync(final String connectionId, HttpServletRequest req, HttpServletResponse response) {
-		req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", Boolean.TRUE);
 		if (req.isAsyncSupported()) {
 			final AsyncContext asyncContext = req.startAsync(req, response);
 			asyncContext.addListener(new AsyncListener() {
@@ -142,7 +144,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
 				logger.debug("reportRequestTrace {} ({})", requestTrace.getName(), requestTrace.getTimestamp());
 				final AsyncContext asyncContext = connectionIdToAsyncContextMap.remove(connectionId);
-				if (asyncContext != null && !asyncContext.getResponse().isCommitted()) {
+				if (isActive(asyncContext)) {
 					logger.debug("asyncContext {}", httpRequestTrace.getConnectionId());
 					writeRequestTracesToResponse((HttpServletResponse) asyncContext.getResponse(), getAllRequestTraces(httpRequestTrace, connectionId));
 					asyncContext.complete();
@@ -157,6 +159,14 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 					}
 				}
 			}
+		}
+	}
+
+	private boolean isActive(AsyncContext asyncContext) {
+		try {
+			return asyncContext != null && !asyncContext.getResponse().isCommitted();
+		} catch (RuntimeException e) {
+			return false;
 		}
 	}
 
