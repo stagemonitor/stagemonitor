@@ -1,18 +1,81 @@
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+ext {
+	pomFilePath = "${project.projectDir}/tmp/pom.xml"
+	pomFile = file(pomFilePath)
+}
+
+configurations {
+	pom
+}
 
 jar {
 	metaInf { from "$rootDir/LICENSE" }
 	metaInf { from "$rootDir/NOTICE" }
 }
+
 task sourcesJar(type: Jar, dependsOn: classes) {
 	classifier = 'sources'
 	from sourceSets.main.allSource
 	metaInf { from "$rootDir/LICENSE" }
 	metaInf { from "$rootDir/NOTICE" }
 }
-artifacts {
-	archives sourcesJar
+
+javadoc {
+	if (JavaVersion.current().isJava8Compatible()) {
+		options.addStringOption('Xdoclint:none', '-quiet')
+	}
 }
+
+task javadocJar (type: Jar, dependsOn: javadoc) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+
+artifacts {
+	archives jar
+	archives sourcesJar
+	archives javadocJar
+	if (pomFile.exists()) {
+		pom pomFile
+	}
+}
+
+if (project.hasProperty('sign')) {
+	if (project.ext.pomFile.exists()) {
+		publish.dependsOn << signJars << signPom
+	} else {
+		publish.dependsOn << signJars
+	}
+
+	task signJars (type : Sign, dependsOn: [jar, javadocJar, sourcesJar]) {
+		sign configurations.archives
+	}
+
+	task signPom(type: Sign) {
+		sign configurations.pom
+	}
+
+	// extract signature file and give them proper name
+	def getSignatureFiles = {
+		def allFiles = project.tasks.signJars.signatureFiles.collect { it }
+		def signedSources = allFiles.find { it.name.contains('-sources') }
+		def signedJavadoc = allFiles.find { it.name.contains('-javadoc') }
+		def signedJar = (allFiles - [signedSources/*, signedJavadoc*/])[0]
+		return [
+				[archive: signedSources, classifier: 'sources', extension: 'jar.asc'],
+				[archive: signedJavadoc, classifier: 'javadoc', extension: 'jar.asc'],
+				[archive: signedJar,     classifier: null,      extension: 'jar.asc']
+		]
+	}
+
+	def getPomSignature = {
+		return project.tasks.signPom.signatureFiles.collect{it}[0]
+	}
+}
+
+
 publishing {
 	publications {
 		maven(MavenPublication) {
@@ -60,12 +123,35 @@ publishing {
 			artifact sourcesJar {
 				classifier "sources"
 			}
+			artifact (javadocJar) {
+				classifier = 'javadoc'
+			}
+		}
+		if (project.hasProperty('sign')) {
+			gpgJars(MavenPublication) {
+				getSignatureFiles().each {signature ->
+					artifact (signature.archive) {
+						classifier = signature.classifier
+						extension  = signature.extension
+					}
+				}
+			}
+			if (project.ext.pomFile.exists()) {
+				gpgPom(MavenPublication) {
+					artifact (getPomSignature()) {
+						classifier = null
+						extension  = 'pom.asc'
+					}
+				}
+			}
 		}
 	}
 	repositories {
 		maven {
 			if (project.hasProperty('mvnRepo')) {
 				url mvnRepo
+			} else {
+				url "file:/${rootDir}/build/artifacts"
 			}
 		}
 	}
