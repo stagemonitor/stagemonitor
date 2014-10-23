@@ -97,6 +97,9 @@ publishing {
 				}
 				asNode().children().last() + {
 					resolveStrategy = Closure.DELEGATE_FIRST
+					name "${project.group}:${project.name}"
+					description "an open source solution to application performance monitoring for java server applications"
+					url "http://www.stagemonitor.org"
 					organization {
 						name "iSYS Software GmbH"
 						url "https://www.isys-software.de/"
@@ -116,6 +119,22 @@ publishing {
 					issueManagement {
 						system "GitHub Issues"
 						url "https://github.com/stagemonitor/stagemonitor/issues"
+					}
+					developers {
+						developer {
+							id 'felixbarny'
+							name 'Felix Barnsteiner'
+							email 'f.barnsteiner@isys-software.de'
+							organization 'iSYS Software GmbH'
+							organizationUrl "https://www.isys-software.de/"
+						}
+						developer {
+							id 'trampi'
+							name 'Fabian Trampusch'
+							email 'f.trampusch@isys-software.de'
+							organization 'iSYS Software GmbH'
+							organizationUrl "https://www.isys-software.de/"
+						}
 					}
 				}
 			}
