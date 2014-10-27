@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
@@ -49,7 +50,15 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	/**
 	 * see {@link OldRequestTraceRemover}
 	 */
-	private ScheduledExecutorService oldRequestTracesRemoverPool = Executors.newScheduledThreadPool(1);
+	private ScheduledExecutorService oldRequestTracesRemoverPool = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r);
+			thread.setDaemon(true);
+			thread.setName("request-trace-remover");
+			return thread;
+		}
+	});
 
 
 	public RequestTraceServlet() {
@@ -84,7 +93,9 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	}
 
 	private void blockingWaitForRequestTrace(String connectionId, HttpServletResponse resp) throws IOException {
-		logger.info("Request does not support async processing. Falling back to blocking processor thread. Please mark your filters with <async-supported>true</async-supported>.");
+		logger.info("Request does not support async processing. Falling back to blocking processor thread. " +
+				"Mark your filters with <async-supported>true</async-supported> to enable non-blocking AsyncContext mode. " +
+				"See https://blogs.oracle.com/enterprisetechtips/entry/asynchronous_support_in_servlet_3 for more information on why this is necessary.");
 		Object lock = new Object();
 		synchronized (lock) {
 			if (connectionIdToLockMap.putIfAbsent(connectionId, lock) == null) {
@@ -205,6 +216,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			jsonResponse.add(requestTrace.toJson());
 		}
 		response.getOutputStream().print(jsonResponse.toString());
+		response.getOutputStream().close();
 	}
 
 	private void writeEmptyResponse(HttpServletResponse resp) throws IOException {
