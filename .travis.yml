@@ -13,8 +13,6 @@ script:
   - ./gradlew test
 after_success:
   - ./gradlew cobertura coveralls -PexcludeAspectTests
-  - chmod +x etc/publish-to-github-mvn-repo-with-travis.sh
-  - etc/publish-to-github-mvn-repo-with-travis.sh
 
 addons:
   coverity_scan:
