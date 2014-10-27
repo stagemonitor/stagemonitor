@@ -1,7 +1,7 @@
 dependencies {
 	compile project(":stagemonitor-web")
-	compileNoLib 'org.springframework:spring-webmvc:3.1.0.RELEASE'
-	provided 'javax.servlet:servlet-api:2.5'
+	provided 'org.springframework:spring-webmvc:3.1.0.RELEASE'
+	provided 'javax.servlet:javax.servlet-api:3.0.1'
 
 	testCompile 'org.springframework:spring-test:3.1.0.RELEASE'
 }

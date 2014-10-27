@@ -1,176 +1,37 @@
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
+apply plugin: 'com.bmuschko.nexus'
 
-ext {
-	pomFilePath = "${project.projectDir}/tmp/pom.xml"
-	pomFile = file(pomFilePath)
-}
-
-configurations {
-	pom
-}
-
-jar {
-	metaInf { from "$rootDir/LICENSE" }
-	metaInf { from "$rootDir/NOTICE" }
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-	classifier = 'sources'
-	from sourceSets.main.allSource
-	metaInf { from "$rootDir/LICENSE" }
-	metaInf { from "$rootDir/NOTICE" }
-}
-
-javadoc {
-	if (JavaVersion.current().isJava8Compatible()) {
-		options.addStringOption('Xdoclint:none', '-quiet')
-	}
-}
-
-task javadocJar (type: Jar, dependsOn: javadoc) {
-	classifier = 'javadoc'
-	from javadoc.destinationDir
-}
-
-artifacts {
-	archives jar
-	archives sourcesJar
-	archives javadocJar
-	if (pomFile.exists()) {
-		pom pomFile
-	}
-}
-
-if (project.hasProperty('sign')) {
-	if (project.ext.pomFile.exists()) {
-		publish.dependsOn << signJars << signPom
-	} else {
-		publish.dependsOn << signJars
-	}
-
-	task signJars (type : Sign, dependsOn: [jar, javadocJar, sourcesJar]) {
-		sign configurations.archives
-	}
-
-	task signPom(type: Sign) {
-		sign configurations.pom
-	}
-
-	// extract signature file and give them proper name
-	def getSignatureFiles = {
-		def allFiles = project.tasks.signJars.signatureFiles.collect { it }
-		def signedSources = allFiles.find { it.name.contains('-sources') }
-		def signedJavadoc = allFiles.find { it.name.contains('-javadoc') }
-		def signedJar = (allFiles - [signedSources/*, signedJavadoc*/])[0]
-		return [
-				[archive: signedSources, classifier: 'sources', extension: 'jar.asc'],
-				[archive: signedJavadoc, classifier: 'javadoc', extension: 'jar.asc'],
-				[archive: signedJar,     classifier: null,      extension: 'jar.asc']
-		]
-	}
-
-	def getPomSignature = {
-		return project.tasks.signPom.signatureFiles.collect{it}[0]
-	}
-}
-
-
-publishing {
-	publications {
-		maven(MavenPublication) {
-			from components.java
-			pom.withXml {
-				asNode().dependencies.'*'.findAll() {
-					it.scope.text() == 'runtime'  && project.configurations.provided.allDependencies.find { dep ->
-						dep.name == it.artifactId.text()
-					}
-				}.each() {
-					it.scope*.value = 'provided'
-				}
-				asNode().dependencies.'*'.findAll() {
-					it.scope.text() == 'runtime'  && project.configurations.compile.allDependencies.find { dep ->
-						dep.name == it.artifactId.text()
-					}
-				}.each() {
-					it.scope*.value = 'compile'
-				}
-				asNode().children().last() + {
-					resolveStrategy = Closure.DELEGATE_FIRST
-					name "${project.group}:${project.name}"
-					description "an open source solution to application performance monitoring for java server applications"
-					url "http://www.stagemonitor.org"
-					organization {
-						name "iSYS Software GmbH"
-						url "https://www.isys-software.de/"
-					}
-					licenses {
-						license {
-							name 'The Apache Software License, Version 2.0'
-							url 'http://www.apache.org/license/LICENSE-2.0.txt'
-							distribution 'repo'
-						}
-					}
-					scm {
-						url "https://github.com/stagemonitor/stagemonitor"
-						connection "scm:git:git://github.com/stagemonitor/stagemonitor"
-						developerConnection "scm:git:git://github.com/stagemonitor/stagemonitor"
-					}
-					issueManagement {
-						system "GitHub Issues"
-						url "https://github.com/stagemonitor/stagemonitor/issues"
-					}
-					developers {
-						developer {
-							id 'felixbarny'
-							name 'Felix Barnsteiner'
-							email 'f.barnsteiner@isys-software.de'
-							organization 'iSYS Software GmbH'
-							organizationUrl "https://www.isys-software.de/"
-						}
-						developer {
-							id 'trampi'
-							name 'Fabian Trampusch'
-							email 'f.trampusch@isys-software.de'
-							organization 'iSYS Software GmbH'
-							organizationUrl "https://www.isys-software.de/"
-						}
-					}
-				}
-			}
-
-			artifact sourcesJar {
-				classifier "sources"
-			}
-			artifact (javadocJar) {
-				classifier = 'javadoc'
+modifyPom {
+	project {
+		name "${project.group}:${project.name}"
+		description "an open source solution to application performance monitoring for java server applications"
+		url "http://www.stagemonitor.org"
+		organization {
+			name "iSYS Software GmbH"
+			url "https://www.isys-software.de/"
+		}
+		licenses {
+			license {
+				name 'The Apache Software License, Version 2.0'
+				url 'http://www.apache.org/license/LICENSE-2.0.txt'
+				distribution 'repo'
 			}
 		}
-		if (project.hasProperty('sign')) {
-			gpgJars(MavenPublication) {
-				getSignatureFiles().each {signature ->
-					artifact (signature.archive) {
-						classifier = signature.classifier
-						extension  = signature.extension
-					}
-				}
-			}
-			if (project.ext.pomFile.exists()) {
-				gpgPom(MavenPublication) {
-					artifact (getPomSignature()) {
-						classifier = null
-						extension  = 'pom.asc'
-					}
-				}
-			}
+		scm {
+			url "https://github.com/stagemonitor/stagemonitor"
+			connection "scm:git:git://github.com/stagemonitor/stagemonitor"
+			developerConnection "scm:git:git://github.com/stagemonitor/stagemonitor"
 		}
-	}
-	repositories {
-		maven {
-			if (project.hasProperty('mvnRepo')) {
-				url mvnRepo
-			} else {
-				url "file:/${rootDir}/build/artifacts"
+		issueManagement {
+			system "GitHub Issues"
+			url "https://github.com/stagemonitor/stagemonitor/issues"
+		}
+		developers {
+			developer {
+				id 'felixbarny'
+				name 'Felix Barnsteiner'
+				email 'f.barnsteiner@isys-software.de'
+				organization 'iSYS Software GmbH'
+				organizationUrl "https://www.isys-software.de/"
 			}
 		}
 	}

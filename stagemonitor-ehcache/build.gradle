@@ -1,4 +1,4 @@
 dependencies {
 	compile project(":stagemonitor-core")
-	compileNoLib 'net.sf.ehcache:ehcache-core:2.6.6'
+	provided 'net.sf.ehcache:ehcache-core:2.6.6'
 }

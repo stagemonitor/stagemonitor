@@ -12,12 +12,14 @@
 buildscript {
 	repositories {
 		mavenCentral()
+		jcenter()
 	}
 
 	dependencies {
 		classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
 		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.0.0'
 		classpath 'com.github.townsfolk:gradle-release:1.2'
+		classpath 'com.bmuschko:gradle-nexus-plugin:2.0'
 	}
 }
 
@@ -33,8 +35,6 @@ apply plugin: 'com.github.kt3k.coveralls'
 
 subprojects {
 	configurations {
-		compileNoLib
-		compile.extendsFrom compileNoLib
 		provided
 		compile.extendsFrom provided
 	}
@@ -74,13 +74,19 @@ subprojects {
 		coverageIgnoreTrivial = true
 	}
 
-	if (!project.name.contains("benchmark")) {
+	if (!project.name.contains("benchmark") && !project.name.contains("javassist")) {
 		apply from: "$rootDir/gradle/publish-maven.gradle"
+	}
+
+	javadoc {
+		if (JavaVersion.current().isJava8Compatible()) {
+			options.addStringOption('Xdoclint:none', '-quiet')
+		}
 	}
 
 	task copyToLib( type: Copy ) {
 		into "$buildDir/libs/lib"
-		from configurations.runtime - configurations.provided - configurations.compileNoLib
+		from configurations.runtime - configurations.provided
 	}
 
 	jar {
