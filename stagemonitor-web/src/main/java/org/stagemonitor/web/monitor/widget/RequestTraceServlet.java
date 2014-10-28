@@ -98,19 +98,16 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 				"See https://blogs.oracle.com/enterprisetechtips/entry/asynchronous_support_in_servlet_3 for more information on why this is necessary.");
 		Object lock = new Object();
 		synchronized (lock) {
-			if (connectionIdToLockMap.putIfAbsent(connectionId, lock) == null) {
-				try {
-					lock.wait(REQUEST_TIMEOUT);
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				} finally {
-					connectionIdToLockMap.remove(connectionId, lock);
-				}
-				if (connectionIdToRequestTracesMap.containsKey(connectionId)) {
-					writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
-				} else {
-					writeEmptyResponse(resp);
-				}
+			connectionIdToLockMap.put(connectionId, lock);
+			try {
+				lock.wait(REQUEST_TIMEOUT);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			} finally {
+				connectionIdToLockMap.remove(connectionId, lock);
+			}
+			if (connectionIdToRequestTracesMap.containsKey(connectionId)) {
+				writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
 			} else {
 				writeEmptyResponse(resp);
 			}
