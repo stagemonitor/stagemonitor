@@ -260,35 +260,44 @@ public class ConfigurationOption<T> {
 	}
 
 	private void loadValue() {
-		String property = null;
+		String newValue = null;
 		for (ConfigurationSource configurationSource : configurationSources) {
-			property = configurationSource.getValue(key);
+			newValue = configurationSource.getValue(key);
 			nameOfCurrentConfigurationSource = configurationSource.getName();
-			if (property != null) {
+			if (newValue != null) {
 				break;
 			}
 		}
-		if (property != null) {
-			if (trySetValue(property)) {
-				return;
-			}
+		if (newValue == null || !trySetValue(newValue)) {
+			setToDefault();
 		}
+	}
+
+	private boolean trySetValue(String newValue) {
+		newValue = newValue.trim();
+		if (hasChanges(newValue)) {
+			this.valueAsString = newValue;
+			try {
+				value = valueConverter.convert(newValue);
+				return true;
+			} catch (IllegalArgumentException e) {
+				errorMessage = "Error in " + nameOfCurrentConfigurationSource + ": " + e.getMessage();
+				logger.warn(errorMessage + " Default value '" + defaultValueAsString + "' will be applied.", e);
+				return false;
+			}
+		} else {
+			return true;
+		}
+	}
+
+	private void setToDefault() {
 		valueAsString = defaultValueAsString;
 		value = defaultValue;
 		nameOfCurrentConfigurationSource = "Default Value";
 	}
 
-	private boolean trySetValue(String property) {
-		property = property.trim();
-		this.valueAsString = property;
-		try {
-			value = valueConverter.convert(property);
-			return true;
-		} catch (IllegalArgumentException e) {
-			errorMessage = "Error in " + nameOfCurrentConfigurationSource +": " + e.getMessage();
-			logger.warn(errorMessage + " Default value '" + defaultValueAsString + "' will be applied.", e);
-			return false;
-		}
+	private boolean hasChanges(String property) {
+		return !property.equals(valueAsString);
 	}
 
 	/**
