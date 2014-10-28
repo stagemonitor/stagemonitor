@@ -7,15 +7,19 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.util.HashSet;
 
 import static java.util.Arrays.asList;
+import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MonitoredHttpRequestTest {
 
@@ -59,7 +63,7 @@ public class MonitoredHttpRequestTest {
 	@Test
 	public void testCreateRequestTrace() throws Exception {
 		final HttpRequestTrace requestTrace = monitoredHttpRequest.createRequestTrace();
-		assertEquals("?foo=bar&bla=blubb&pwd=XXXX&creditCard=XXXX", requestTrace.getParameter());
+		assertNull(requestTrace.getParameter());
 		assertEquals("/test.js", requestTrace.getUrl());
 		assertEquals("GET *.js", requestTrace.getName());
 		assertEquals("GET", requestTrace.getMethod());
@@ -75,5 +79,11 @@ public class MonitoredHttpRequestTest {
 		assertEquals(new HashSet<String>(asList("accept")), requestTrace.getHeaders().keySet());
 		assertFalse(requestTrace.getHeaders().containsKey("cookie"));
 		assertFalse(requestTrace.getHeaders().containsKey("Cookie"));
+
+		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
+		when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
+		monitoredHttpRequest.onPostExecute(requestInformation);
+		assertEquals("?foo=bar&bla=blubb&pwd=XXXX&creditCard=XXXX", requestTrace.getParameter());
+
 	}
 }

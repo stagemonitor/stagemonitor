@@ -80,10 +80,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		request.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
-		// according to javadoc, its always a Map<String, String[]>
-		@SuppressWarnings("unchecked")
-		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
-		request.setParameter(getSafeQueryString(parameterMap));
 
 		return request;
 	}
@@ -213,6 +209,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 			request.setException((Exception) exception);
 		}
 		request.setBytesWritten(responseWrapper.getContentLength());
+
+		// get the parameters after the execution and not on creation, because that could lead to wrong decoded
+		// parameters inside the application
+		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
+		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
+		request.setParameter(getSafeQueryString(parameterMap));
 	}
 
 	/**
