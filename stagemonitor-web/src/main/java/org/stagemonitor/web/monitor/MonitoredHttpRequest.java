@@ -1,5 +1,17 @@
 package org.stagemonitor.web.monitor;
 
+import java.security.Principal;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
+import javax.servlet.http.HttpServletRequest;
+
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
@@ -9,18 +21,6 @@ import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
-import javax.servlet.http.HttpServletRequest;
-import java.security.Principal;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
@@ -80,10 +80,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		request.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
-		// according to javadoc, its always a Map<String, String[]>
-		@SuppressWarnings("unchecked")
-		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
-		request.setParameter(getSafeQueryString(parameterMap));
 
 		return request;
 	}
@@ -213,6 +209,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 			request.setException((Exception) exception);
 		}
 		request.setBytesWritten(responseWrapper.getContentLength());
+
+		// get the parameters after the execution and not on creation, because that could lead to wrong decoded
+		// parameters inside the application
+		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
+		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
+		request.setParameter(getSafeQueryString(parameterMap));
 	}
 
 	/**
