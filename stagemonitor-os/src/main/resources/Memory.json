@@ -7,17 +7,8 @@
 					"type": "filter",
 					"name": "application",
 					"query": "stagemonitor.*",
-					"includeAll": false,
-					"options": [
-						{
-							"text": "os",
-							"value": "os"
-						}
-					],
-					"current": {
-						"text": "os",
-						"value": "os"
-					}
+					"refresh": true,
+					"includeAll": false
 				},
 				{
 					"type": "filter",

@@ -7,6 +7,7 @@
           "type": "filter",
           "name": "application",
           "query": "stagemonitor.*",
+          "refresh": true,
           "includeAll": false
         },
         {
