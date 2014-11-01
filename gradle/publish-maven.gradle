@@ -2,6 +2,24 @@ apply plugin: 'com.bmuschko.nexus'
 
 modifyPom {
 	project {
+		dependencies {
+			project.configurations.compile.allDependencies.each { dep ->
+				dependency {
+					groupId dep.group
+					artifactId dep.name
+					version dep.version
+					scope 'compile'
+				}
+			}
+			project.configurations.provided.allDependencies.each { dep ->
+				dependency {
+					groupId dep.group
+					artifactId dep.name
+					version dep.version
+					scope 'provided'
+				}
+			}
+		}
 		name "${project.group}:${project.name}"
 		description "an open source solution to application performance monitoring for java server applications"
 		url "http://www.stagemonitor.org"
