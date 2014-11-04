@@ -30,11 +30,8 @@
 						var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
 						stagemonitorWindow.stagemonitor.renderPageLoadTime(data);
 						var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
-						var stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show");
-						stagemonitorOverlayShow.classList.remove("stagemonitor-threshold-exceeded");
-						stagemonitorOverlayShow.classList.remove("stagemonitor-threshold-ok");
 						var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
-						document.getElementById("stagemonitor-overlay-show").classList.add(clazz);
+						document.getElementById("stagemonitor-overlay-show").className = clazz;
 					}
 				});
 			}
@@ -75,8 +72,7 @@
 
 					stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "", true, connectionId);
 					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
-					var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
-					stagemonitorOverlayShow.classList.add(clazz);
+					stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 					stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
 				});
 
@@ -184,7 +180,7 @@
 		<iframe id="stagemonitor-modal" src="../../main/resources/META-INF/resources/stagemonitor/static/stagemonitor-modal.html"></iframe>
 	</div>
 
-	<div id="stagemonitor-overlay-show">
+	<div id="stagemonitor-overlay-show" class="stagemonitor-threshold-ok">
 		<img src="../../main/resources/META-INF/resources/stagemonitor/static/stagemonitor.png" />
 	</div>
 
