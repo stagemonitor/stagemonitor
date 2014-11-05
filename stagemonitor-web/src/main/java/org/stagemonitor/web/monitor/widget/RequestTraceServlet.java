@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
@@ -38,6 +39,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	private static final long REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(25);
 	private static final long MAX_REQUEST_TRACE_BUFFERING_TIME = 60 * 1000;
 
+	private final AtomicBoolean alreadyWarnedIfAsyncNotSupported = new AtomicBoolean(false);
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final WebPlugin webPlugin;
 	private ConcurrentMap<String, ConcurrentLinkedQueue<HttpRequestTrace>> connectionIdToRequestTracesMap =
@@ -93,9 +95,12 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	}
 
 	private void blockingWaitForRequestTrace(String connectionId, HttpServletResponse resp) throws IOException {
-		logger.info("Request does not support async processing. Falling back to blocking processor thread. " +
-				"Mark your filters with <async-supported>true</async-supported> to enable non-blocking AsyncContext mode. " +
-				"See https://blogs.oracle.com/enterprisetechtips/entry/asynchronous_support_in_servlet_3 for more information on why this is necessary.");
+		if (!alreadyWarnedIfAsyncNotSupported.get()) {
+			alreadyWarnedIfAsyncNotSupported.set(true);
+			logger.info("Request does not support async processing. Falling back to blocking processor thread. " +
+					"Mark your filters with <async-supported>true</async-supported> to enable non-blocking AsyncContext mode. " +
+					"See https://blogs.oracle.com/enterprisetechtips/entry/asynchronous_support_in_servlet_3 for more information on why this is necessary.");
+		}
 		Object lock = new Object();
 		synchronized (lock) {
 			connectionIdToLockMap.put(connectionId, lock);
