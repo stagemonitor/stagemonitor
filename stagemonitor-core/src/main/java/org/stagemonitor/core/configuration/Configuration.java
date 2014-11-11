@@ -1,5 +1,9 @@
 package org.stagemonitor.core.configuration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.configuration.source.ConfigurationSource;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,10 +13,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
 public class Configuration {
 
@@ -135,7 +135,11 @@ public class Configuration {
 
 	public void reload() {
 		for (ConfigurationSource configurationSource : configurationSources) {
-			configurationSource.reload();
+			try {
+				configurationSource.reload();
+			} catch (Exception e) {
+				logger.warn(e.getMessage() + " (this exception is ignored)", e);
+			}
 		}
 		for (ConfigurationOption<?> configurationOption : configurationOptionsByKey.values()) {
 			configurationOption.reload();

@@ -1,16 +1,16 @@
 package org.stagemonitor.core;
 
+import com.codahale.metrics.MetricRegistry;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class CorePlugin implements StagemonitorPlugin {
 
@@ -105,6 +105,16 @@ public class CorePlugin implements StagemonitorPlugin {
 			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceIds = ConfigurationOption.stringsOption()
+			.key("stagemonitor.elasticsearch.configurationSourceIds")
+			.dynamic(true)
+			.label("Elasticsearch configuration source ids")
+			.description("Set configuration source ids to use elasticsearch as a centralized configuration source " +
+					"that is shared between multiple server instances. The configuration will be stored under " +
+					"{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceId}.")
+			.defaultValue(Collections.<String>emptyList())
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
 	private final ConfigurationOption<List<Pattern>> excludedMetrics = ConfigurationOption.regexListOption()
 			.key("stagemonitor.metrics.excluded.pattern")
 			.dynamic(false)
@@ -133,7 +143,7 @@ public class CorePlugin implements StagemonitorPlugin {
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Arrays.<ConfigurationOption<?>>asList(stagemonitorActive, internalMonitoring, reportingIntervalConsole,
 				reportingJmx, reportingIntervalGraphite, graphiteHostName, graphitePort, applicationName, instanceName,
-				elasticsearchUrl, excludedMetrics, disabledPlugins);
+				elasticsearchUrl, elasticsearchConfigurationSourceIds, excludedMetrics, disabledPlugins);
 	}
 
 	public boolean isStagemonitorActive() {
@@ -178,6 +188,10 @@ public class CorePlugin implements StagemonitorPlugin {
 			return url.substring(0, url.length() - 1);
 		}
 		return url;
+	}
+
+	public Collection<String> getElasticsearchConfigurationSourceIds() {
+		return elasticsearchConfigurationSourceIds.getValue();
 	}
 
 	public Collection<Pattern> getExcludedMetricsPatterns() {

@@ -1,15 +1,5 @@
 package org.stagemonitor.core;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -19,18 +9,20 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.converter.StringsValueConverter;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.configuration.source.ElasticsearchConfigurationSource;
-import org.stagemonitor.core.configuration.source.EnvironmentVariableConfigurationSource;
-import org.stagemonitor.core.configuration.source.PropertyFileConfigurationSource;
-import org.stagemonitor.core.configuration.source.SimpleSource;
-import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
@@ -192,27 +184,20 @@ public final class Stagemonitor {
 	private static void reloadConfiguration() {
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
 		configurationSources.addAll(additionalConfigurationSources);
-		configurationSources.add(new SimpleSource());
-		configurationSources.add(new SystemPropertyConfigurationSource());
-		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
-		if (stagemonitorPropertyOverridesLocation != null) {
-			logger.info("try loading of default property overrides: '" + stagemonitorPropertyOverridesLocation + "'");
-			configurationSources.add(new PropertyFileConfigurationSource(stagemonitorPropertyOverridesLocation));
+		for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class)) {
+			initializer.modifyConfigurationSources(configurationSources);
 		}
-		configurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
-		configurationSources.add(new EnvironmentVariableConfigurationSource());
-		final String elasticsearchConfigurationIds = System.getProperty("stagemonitor.elasticsearch.configurationIds");
-		if (elasticsearchConfigurationIds != null) {
-			try {
-				ElasticsearchClient.getJson("");
-				for (String configurationId : new StringsValueConverter().convert(elasticsearchConfigurationIds)) {
-					configurationSources.add(new ElasticsearchConfigurationSource(configurationId));
-				}
-			} catch (IOException e) {
-				started = true;
-				logger.error("System property stagemonitor.elasticsearch.configurationIds was set but elasticsearch is not reachable at.");
-			}
-		}
+
 		configuration = new Configuration(StagemonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
+
+		try {
+			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class)) {
+				initializer.onConfigurationInitialized(configuration);
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			logger.error("Stagemonitor will be deactivated!");
+			started = true;
+		}
 	}
 }

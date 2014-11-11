@@ -1,5 +1,8 @@
 package org.stagemonitor.core.configuration.source;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,12 +11,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public final class PropertyFileConfigurationSource extends AbstractConfigurationSource {
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(PropertyFileConfigurationSource.class);
 
 	private Properties properties;
 
@@ -43,12 +43,16 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 		return location;
 	}
 
-	private Properties getProperties(String classpathLocation) {
+	public static boolean isPresent(String classpathLocation) {
+		return getProperties(classpathLocation) != null;
+	}
+
+	private static Properties getProperties(String classpathLocation) {
 		if (classpathLocation == null) {
 			return null;
 		}
 		final Properties props = new Properties();
-		InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(classpathLocation);
+		InputStream resourceStream = PropertyFileConfigurationSource.class.getClassLoader().getResourceAsStream(classpathLocation);
 		if (resourceStream != null) {
 			try {
 				props.load(resourceStream);
