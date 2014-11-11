@@ -8,7 +8,7 @@ import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.ElasticsearchClient;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class RequestMonitorPlugin implements StagemonitorPlugin {
 
@@ -107,7 +107,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
 		// async, because it is not possible, that request traces are reaching elasticsearch before the mapping is set
 		// that is, because a single thread executor is used that executes the request in a linear queue (LinkedBlockingQueue)
-		ElasticsearchClient.sendAsJsonAsync("/_template/stagemonitor", "PUT", resourceAsStream);
+		ElasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor", resourceAsStream);
 	}
 
 	public int getNoOfWarmupRequests() {

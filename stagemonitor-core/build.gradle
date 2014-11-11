@@ -8,6 +8,9 @@ dependencies {
 	// necessary for load-time-weaving
 	compile 'org.aspectj:aspectjtools:1.8.2'
 	compile 'org.aspectj:aspectjrt:1.8.2'
+
+	testCompile 'org.elasticsearch:elasticsearch:1.3.2'
+	testCompile 'commons-io:commons-io:2.4'
 }
 
 // the aspectj compiler and cobertura don't like each other

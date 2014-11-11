@@ -1,11 +1,5 @@
 package org.stagemonitor.core.configuration;
 
-import com.codahale.metrics.MetricRegistry;
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StagemonitorPlugin;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -14,6 +8,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import com.codahale.metrics.MetricRegistry;
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
+import org.stagemonitor.core.configuration.source.SimpleSource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

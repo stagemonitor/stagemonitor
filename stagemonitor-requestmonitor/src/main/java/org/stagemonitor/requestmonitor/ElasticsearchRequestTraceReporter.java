@@ -6,7 +6,7 @@ import java.util.TimeZone;
 
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.rest.ElasticsearchClient;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 /**
  * An implementation of {@link RequestTraceReporter} that sends the {@link RequestTrace} to Elasticsearch
@@ -34,7 +34,7 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 		if (ttl != null && !ttl.isEmpty()) {
 			path += "?ttl=" + ttl;
 		}
-		ElasticsearchClient.sendAsJsonAsync(path, "PUT", requestTrace);
+		ElasticsearchClient.sendAsJsonAsync("PUT", path, requestTrace);
 	}
 
 	@Override

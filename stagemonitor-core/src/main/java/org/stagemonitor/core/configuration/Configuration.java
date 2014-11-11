@@ -12,6 +12,7 @@ import java.util.ServiceLoader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
 public class Configuration {
 
@@ -172,7 +173,7 @@ public class Configuration {
 	 *
 	 * @param key                         the configuration key
 	 * @param value                       the configuration value
-	 * @param configurationSourceName     the {@link org.stagemonitor.core.configuration.ConfigurationSource#getName()}
+	 * @param configurationSourceName     the {@link org.stagemonitor.core.configuration.source.ConfigurationSource#getName()}
 	 *                                    of the configuration source the value should be stored to
 	 * @param configurationUpdatePassword the password (must not be null)
 	 * @throws IOException                   if there was an error saving the key to the source

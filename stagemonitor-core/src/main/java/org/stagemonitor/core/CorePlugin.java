@@ -1,5 +1,6 @@
 package org.stagemonitor.core;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,7 +10,7 @@ import java.util.regex.Pattern;
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.ElasticsearchClient;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class CorePlugin implements StagemonitorPlugin {
 
@@ -124,6 +125,8 @@ public class CorePlugin implements StagemonitorPlugin {
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
 		ElasticsearchClient.sendGrafanaDashboardAsync("Custom Metrics.json");
+		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-configuration-index-template.json");
+		ElasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor-configuration", resourceAsStream);
 	}
 
 	@Override

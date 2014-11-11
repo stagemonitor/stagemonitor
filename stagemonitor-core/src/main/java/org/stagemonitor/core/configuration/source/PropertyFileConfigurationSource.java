@@ -1,7 +1,4 @@
-package org.stagemonitor.core.configuration;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package org.stagemonitor.core.configuration.source;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,6 +7,9 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class PropertyFileConfigurationSource extends AbstractConfigurationSource {
 

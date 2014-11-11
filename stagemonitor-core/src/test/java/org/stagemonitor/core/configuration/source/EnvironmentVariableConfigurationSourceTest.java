@@ -1,9 +1,9 @@
-package org.stagemonitor.core.configuration;
+package org.stagemonitor.core.configuration.source;
+
+import java.util.Collections;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Collections;
 
 public class EnvironmentVariableConfigurationSourceTest {
 

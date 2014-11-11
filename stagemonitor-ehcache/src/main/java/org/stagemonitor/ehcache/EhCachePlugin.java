@@ -9,7 +9,7 @@ import net.sf.ehcache.CacheManager;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.ElasticsearchClient;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;

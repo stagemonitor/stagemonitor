@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
-import org.stagemonitor.core.rest.ElasticsearchClient;
 
 public class WebPlugin implements StagemonitorPlugin {
 

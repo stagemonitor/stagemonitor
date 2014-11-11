@@ -1,4 +1,4 @@
-package org.stagemonitor.core.configuration;
+package org.stagemonitor.core.configuration.source;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +15,6 @@ public class SystemPropertyConfigurationSource extends AbstractConfigurationSour
 			logger.warn("Could not get Java system property, because of a SecurityException: {}", e.getMessage());
 			return null;
 		}
-	}
-
-	@Override
-	public void reload() {
 	}
 
 	@Override

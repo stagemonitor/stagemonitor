@@ -7,7 +7,7 @@ import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.ElasticsearchClient;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class JdbcPlugin implements StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";

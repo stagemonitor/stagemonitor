@@ -17,6 +17,7 @@ import org.stagemonitor.core.configuration.converter.RegexMapValueConverter;
 import org.stagemonitor.core.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.configuration.converter.StringsValueConverter;
 import org.stagemonitor.core.configuration.converter.ValueConverter;
+import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
 /**
  * Represents a configuration option
