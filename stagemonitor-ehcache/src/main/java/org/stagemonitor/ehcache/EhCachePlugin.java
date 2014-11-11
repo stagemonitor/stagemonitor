@@ -6,11 +6,10 @@ import java.util.List;
 import com.codahale.metrics.MetricRegistry;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.RestClient;
+import org.stagemonitor.core.rest.ElasticsearchClient;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
@@ -44,7 +43,6 @@ public class EhCachePlugin implements StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
-		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
 		final EhCachePlugin chCacheConfig = configuration.getConfig(EhCachePlugin.class);
 		final CacheManager cacheManager = CacheManager.getCacheManager(chCacheConfig.ehCacheNameOption.getValue());
 		for (String cacheName : cacheManager.getCacheNames()) {
@@ -58,7 +56,7 @@ public class EhCachePlugin implements StagemonitorPlugin {
 			metricRegistry.registerAll(new EhCacheMetricSet(metricPrefix, cache, cacheUsageListener));
 		}
 
-		RestClient.sendGrafanaDashboardAsync(corePlugin.getElasticsearchUrl(), "EhCache.json");
+		ElasticsearchClient.sendGrafanaDashboardAsync("EhCache.json");
 	}
 
 }

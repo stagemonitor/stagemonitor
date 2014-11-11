@@ -12,13 +12,12 @@ import java.util.regex.Pattern;
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
-import org.stagemonitor.core.rest.RestClient;
+import org.stagemonitor.core.rest.ElasticsearchClient;
 
 public class WebPlugin implements StagemonitorPlugin {
 
@@ -181,10 +180,9 @@ public class WebPlugin implements StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration config) {
-		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
 		monitorServerThreadPool(registry, config.getConfig(WebPlugin.class));
-		RestClient.sendGrafanaDashboardAsync(corePlugin.getElasticsearchUrl(), "Server.json");
-		RestClient.sendGrafanaDashboardAsync(corePlugin.getElasticsearchUrl(), "KPIs over Time.json");
+		ElasticsearchClient.sendGrafanaDashboardAsync("Server.json");
+		ElasticsearchClient.sendGrafanaDashboardAsync("KPIs over Time.json");
 	}
 
 	private void monitorServerThreadPool(MetricRegistry registry, WebPlugin webPlugin) {

@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.RestClient;
+import org.stagemonitor.core.rest.ElasticsearchClient;
 
 public class CorePlugin implements StagemonitorPlugin {
 
@@ -123,7 +123,7 @@ public class CorePlugin implements StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
-		RestClient.sendGrafanaDashboardAsync(configuration.getConfig(CorePlugin.class).getElasticsearchUrl(), "Custom Metrics.json");
+		ElasticsearchClient.sendGrafanaDashboardAsync("Custom Metrics.json");
 	}
 
 	@Override

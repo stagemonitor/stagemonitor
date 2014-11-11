@@ -4,11 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.RestClient;
+import org.stagemonitor.core.rest.ElasticsearchClient;
 
 public class JdbcPlugin implements StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
@@ -36,7 +35,7 @@ public class JdbcPlugin implements StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		RestClient.sendGrafanaDashboardAsync(config.getConfig(CorePlugin.class).getElasticsearchUrl(), "DB Queries.json");
+		ElasticsearchClient.sendGrafanaDashboardAsync("DB Queries.json");
 	}
 
 	public boolean isCollectSql() {

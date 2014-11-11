@@ -22,11 +22,12 @@ import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.JsonUtils;
 
-public class RestClient {
+public class ElasticsearchClient {
 
-	private static final Logger logger = LoggerFactory.getLogger(RestClient.class);
+	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
 	private static final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
 	private static final String TITLE = "title";
+	private static String baseUrl = Stagemonitor.getConfiguration(CorePlugin.class).getElasticsearchUrl();
 
 	private static final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
 			new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
@@ -46,7 +47,7 @@ public class RestClient {
 		}
 	}
 
-	public static void sendAsJson(final String baseUrl, final String path, final String method, final Object requestBody) {
+	public static void sendAsJson(final String path, final String method, final Object requestBody) {
 		if (baseUrl == null || baseUrl.isEmpty()) {
 			return;
 		}
@@ -81,30 +82,30 @@ public class RestClient {
 		}
 	}
 
-	public static void sendAsJsonAsync(final String baseUrl, final String path, final String method, final Object requestBody) {
+	public static void sendAsJsonAsync(final String path, final String method, final Object requestBody) {
 		if (baseUrl != null && !baseUrl.isEmpty()) {
 			asyncRestPool.execute(new Runnable() {
 				@Override
 				public void run() {
-					sendAsJson(baseUrl, path, method, requestBody);
+					sendAsJson(path, method, requestBody);
 				}
 			});
 		}
 	}
 
-	public static void sendGrafanaDashboardAsync(final String baseUrl, String dashboardPath) {
-		sendDashboardAsync(baseUrl, "/grafana-dash/dashboard/", dashboardPath);
+	public static void sendGrafanaDashboardAsync(String dashboardPath) {
+		sendDashboardAsync("/grafana-dash/dashboard/", dashboardPath);
 	}
 
-	public static void sendKibanaDashboardAsync(final String baseUrl, String dashboardPath) {
-		sendDashboardAsync(baseUrl, "/kibana-int/dashboard/", dashboardPath);
+	public static void sendKibanaDashboardAsync(String dashboardPath) {
+		sendDashboardAsync("/kibana-int/dashboard/", dashboardPath);
 	}
 
-	public static void sendDashboardAsync(final String baseUrl, String path, String dashboardPath) {
+	public static void sendDashboardAsync(String path, String dashboardPath) {
 		if (baseUrl != null && !baseUrl.isEmpty()) {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
-				RestClient.sendAsJsonAsync(baseUrl, path + slugifyTitle(dashboard) + "/_create",
+				ElasticsearchClient.sendAsJsonAsync(path + slugifyTitle(dashboard) + "/_create",
 						"PUT", dashboard);
 			} catch (IOException e) {
 				logger.warn(e.getMessage(), e);
@@ -113,12 +114,12 @@ public class RestClient {
 	}
 
 	private static String slugifyTitle(ObjectNode dashboard) {
-		return dashboard.get(TITLE).asText().replaceAll("[^\\w ]+", "").replaceAll("\\s+", "-");
+		return dashboard.get(TITLE).asText().toLowerCase().replaceAll("[^\\w ]+", "").replaceAll("\\s+", "-");
 	}
 
 	static ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
 		final ObjectMapper mapper = JsonUtils.getMapper();
-		final InputStream dashboardStram = RestClient.class.getClassLoader().getResourceAsStream(dashboardPath);
+		final InputStream dashboardStram = ElasticsearchClient.class.getClassLoader().getResourceAsStream(dashboardPath);
 		final ObjectNode dashboard = (ObjectNode) mapper.readTree(dashboardStram);
 		dashboard.put(TITLE, dashboard.get(TITLE).asText() + STAGEMONITOR_MAJOR_MINOR_VERSION);
 		ObjectNode dashboardElasticsearchFormat = mapper.createObjectNode();
@@ -131,7 +132,7 @@ public class RestClient {
 	}
 
 	private static String getStagemonitorMajorMinorVersion() {
-		Class clazz = RestClient.class;
+		Class clazz = ElasticsearchClient.class;
 		String className = clazz.getSimpleName() + ".class";
 		String classPath = clazz.getResource(className).toString();
 		if (!classPath.startsWith("jar")) {
@@ -153,4 +154,9 @@ public class RestClient {
 	static String getMajorMinorVersionFromFullVersionString(String value) {
 		return value.substring(0, value.lastIndexOf('.'));
 	}
+
+	public static void setBaseUrl(String baseUrl) {
+		ElasticsearchClient.baseUrl = baseUrl;
+	}
+
 }

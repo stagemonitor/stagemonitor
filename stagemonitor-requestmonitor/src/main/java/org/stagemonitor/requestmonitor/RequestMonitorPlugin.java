@@ -5,11 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.RestClient;
+import org.stagemonitor.core.rest.ElasticsearchClient;
 
 public class RequestMonitorPlugin implements StagemonitorPlugin {
 
@@ -99,17 +98,16 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
-		addElasticsearchMapping(corePlugin.getElasticsearchUrl());
-		RestClient.sendGrafanaDashboardAsync(corePlugin.getElasticsearchUrl(), "Request.json");
-		RestClient.sendKibanaDashboardAsync(corePlugin.getElasticsearchUrl(), "Recent Requests.json");
+		addElasticsearchMapping();
+		ElasticsearchClient.sendGrafanaDashboardAsync("Request.json");
+		ElasticsearchClient.sendKibanaDashboardAsync("Recent Requests.json");
 	}
 
-	private void addElasticsearchMapping(String serverUrl) {
+	private void addElasticsearchMapping() {
 		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
 		// async, because it is not possible, that request traces are reaching elasticsearch before the mapping is set
 		// that is, because a single thread executor is used that executes the request in a linear queue (LinkedBlockingQueue)
-		RestClient.sendAsJsonAsync(serverUrl, "/_template/stagemonitor", "PUT", resourceAsStream);
+		ElasticsearchClient.sendAsJsonAsync("/_template/stagemonitor", "PUT", resourceAsStream);
 	}
 
 	public int getNoOfWarmupRequests() {

@@ -1,12 +1,12 @@
 package org.stagemonitor.requestmonitor;
 
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.rest.RestClient;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.rest.ElasticsearchClient;
 
 /**
  * An implementation of {@link RequestTraceReporter} that sends the {@link RequestTrace} to Elasticsearch
@@ -34,7 +34,7 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 		if (ttl != null && !ttl.isEmpty()) {
 			path += "?ttl=" + ttl;
 		}
-		RestClient.sendAsJsonAsync(corePlugin.getElasticsearchUrl(), path, "PUT", requestTrace);
+		ElasticsearchClient.sendAsJsonAsync(path, "PUT", requestTrace);
 	}
 
 	@Override

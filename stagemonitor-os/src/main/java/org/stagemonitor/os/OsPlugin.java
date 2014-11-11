@@ -1,5 +1,15 @@
 package org.stagemonitor.os;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.codahale.metrics.MetricRegistry;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
@@ -13,7 +23,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.ConfigurationSource;
 import org.stagemonitor.core.configuration.SimpleSource;
-import org.stagemonitor.core.rest.RestClient;
+import org.stagemonitor.core.rest.ElasticsearchClient;
 import org.stagemonitor.os.metrics.AbstractSigarMetricSet;
 import org.stagemonitor.os.metrics.CpuMetricSet;
 import org.stagemonitor.os.metrics.EmptySigarMetricSet;
@@ -21,16 +31,6 @@ import org.stagemonitor.os.metrics.FileSystemMetricSet;
 import org.stagemonitor.os.metrics.MemoryMetricSet;
 import org.stagemonitor.os.metrics.NetworkMetricSet;
 import org.stagemonitor.os.metrics.SwapMetricSet;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class OsPlugin implements StagemonitorPlugin {
 
@@ -50,11 +50,11 @@ public class OsPlugin implements StagemonitorPlugin {
 		final CorePlugin config = configuration.getConfig(CorePlugin.class);
 		final String elasticsearchUrl = config.getElasticsearchUrl();
 		if (elasticsearchUrl != null && !elasticsearchUrl.isEmpty()) {
-			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "CPU.json");
-			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "Filesystem.json");
-			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "Memory.json");
-			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "Network.json");
-			RestClient.sendGrafanaDashboardAsync(elasticsearchUrl, "OS Overview.json");
+			ElasticsearchClient.sendGrafanaDashboardAsync("CPU.json");
+			ElasticsearchClient.sendGrafanaDashboardAsync("Filesystem.json");
+			ElasticsearchClient.sendGrafanaDashboardAsync("Memory.json");
+			ElasticsearchClient.sendGrafanaDashboardAsync("Network.json");
+			ElasticsearchClient.sendGrafanaDashboardAsync("OS Overview.json");
 		}
 
 		if (sigar == null) {
