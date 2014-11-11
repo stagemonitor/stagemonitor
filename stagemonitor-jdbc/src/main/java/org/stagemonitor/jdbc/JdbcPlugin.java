@@ -1,14 +1,14 @@
 package org.stagemonitor.jdbc;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.rest.RestClient;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class JdbcPlugin implements StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
@@ -18,7 +18,7 @@ public class JdbcPlugin implements StagemonitorPlugin {
 			.label("Collect SQLs in call tree")
 			.description("Whether or not sql statements should be included in the call stack.")
 			.defaultValue(true)
-			.pluginName(JDBC_PLUGIN)
+			.configurationCategory(JDBC_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectPreparedStatementParameters = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.jdbc.collectPreparedStatementParameters")
@@ -26,7 +26,7 @@ public class JdbcPlugin implements StagemonitorPlugin {
 			.label("Collect prepared statement parameters")
 			.description("Whether or not the prepared statement placeholders (?) should be replaced with the actual parameters.")
 			.defaultValue(false)
-			.pluginName(JDBC_PLUGIN)
+			.configurationCategory(JDBC_PLUGIN)
 			.build();
 
 	@Override

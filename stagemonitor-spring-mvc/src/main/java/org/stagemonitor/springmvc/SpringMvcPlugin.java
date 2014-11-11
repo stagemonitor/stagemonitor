@@ -1,12 +1,12 @@
 package org.stagemonitor.springmvc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SpringMvcPlugin implements StagemonitorPlugin {
 
@@ -19,7 +19,7 @@ public class SpringMvcPlugin implements StagemonitorPlugin {
 					"Setting this to true can also significantly reduce the amount of files (and thus storing space) " +
 					"Graphite will allocate.")
 			.defaultValue(false)
-			.pluginName("Spring MVC Plugin")
+			.configurationCategory("Spring MVC Plugin")
 			.build();
 
 	@Override

@@ -1,5 +1,7 @@
 package org.stagemonitor.web.monitor.widget;
 
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
@@ -9,8 +11,6 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
-
-import java.io.IOException;
 
 public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 
@@ -44,7 +44,7 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 	@Override
 	public String build(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
 		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson())
-				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByPlugin()))
+				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByCategory()))
 				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()));
 	}

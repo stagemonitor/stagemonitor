@@ -1,5 +1,11 @@
 package org.stagemonitor.core.configuration;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +17,6 @@ import org.stagemonitor.core.configuration.converter.RegexMapValueConverter;
 import org.stagemonitor.core.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.configuration.converter.StringsValueConverter;
 import org.stagemonitor.core.configuration.converter.ValueConverter;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Represents a configuration option
@@ -41,7 +41,7 @@ public class ConfigurationOption<T> {
 	private final String description;
 	private final T defaultValue;
 	private final String defaultValueAsString;
-	private final String pluginName;
+	private final String configurationCategory;
 	private final ValueConverter<T> valueConverter;
 	private final Class<? super T> valueType;
 	private String valueAsString;
@@ -132,7 +132,7 @@ public class ConfigurationOption<T> {
 	}
 
 	private ConfigurationOption(boolean dynamic, String key, String label, String description,
-								T defaultValue, String pluginName, ValueConverter<T> valueConverter,
+								T defaultValue, String configurationCategory, ValueConverter<T> valueConverter,
 								Class<? super T> valueType) {
 		this.dynamic = dynamic;
 		this.key = key;
@@ -140,7 +140,7 @@ public class ConfigurationOption<T> {
 		this.description = description;
 		this.defaultValue = defaultValue;
 		this.defaultValueAsString = valueConverter.toString(defaultValue);
-		this.pluginName = pluginName;
+		this.configurationCategory = configurationCategory;
 		this.valueConverter = valueConverter;
 		this.valueType = valueType;
 	}
@@ -225,12 +225,12 @@ public class ConfigurationOption<T> {
 
 
 	/**
-	 * Returns the plugin name that has registered this configuration option
+	 * Returns the category name of this configuration option
 	 *
-	 * @return the plugin name that has registered this configuration option
+	 * @return the category name of this configuration option
 	 */
-	public String getPluginName() {
-		return pluginName;
+	public String getConfigurationCategory() {
+		return configurationCategory;
 	}
 
 	/**
@@ -316,7 +316,7 @@ public class ConfigurationOption<T> {
 		private String label;
 		private String description;
 		private T defaultValue;
-		private String pluginName;
+		private String configurationCategory;
 		private ValueConverter<T> valueConverter;
 		private Class<? super T> valueType;
 
@@ -326,7 +326,7 @@ public class ConfigurationOption<T> {
 		}
 
 		public ConfigurationOption<T> build() {
-			return new ConfigurationOption<T>(dynamic, key, label, description, defaultValue, pluginName,
+			return new ConfigurationOption<T>(dynamic, key, label, description, defaultValue, configurationCategory,
 					valueConverter, valueType);
 		}
 
@@ -355,8 +355,8 @@ public class ConfigurationOption<T> {
 			return this;
 		}
 
-		public ConfigurationOptionBuilder<T> pluginName(String pluginName) {
-			this.pluginName = pluginName;
+		public ConfigurationOptionBuilder<T> configurationCategory(String configurationCategory) {
+			this.configurationCategory = configurationCategory;
 			return this;
 		}
 	}

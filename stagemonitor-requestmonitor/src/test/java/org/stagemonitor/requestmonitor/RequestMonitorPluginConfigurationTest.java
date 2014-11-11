@@ -20,7 +20,7 @@ public class RequestMonitorPluginConfigurationTest {
 	public void before() throws Exception {
 		Stagemonitor.reset();
 		Configuration configuration = new Configuration(StagemonitorPlugin.class);
-		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerPluginConfiguration", ConfigurationOptionProvider.class);
+		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerOptionProvider", ConfigurationOptionProvider.class);
 		registerPluginConfiguration.setAccessible(true);
 		registerPluginConfiguration.invoke(configuration, new RequestMonitorPlugin());
 		config = configuration.getConfig(RequestMonitorPlugin.class);

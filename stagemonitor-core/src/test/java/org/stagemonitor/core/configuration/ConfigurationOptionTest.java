@@ -53,7 +53,7 @@ public class ConfigurationOptionTest {
 		corePlugin = configuration.getConfig(CorePlugin.class);
 		configuration.addConfigurationSource(configSource);
 
-		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerPluginConfiguration", ConfigurationOptionProvider.class);
+		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerOptionProvider", ConfigurationOptionProvider.class);
 		registerPluginConfiguration.setAccessible(true);
 		registerPluginConfiguration.invoke(configuration, new StagemonitorPlugin() {
 			public List<ConfigurationOption<?>> getConfigurationOptions() {

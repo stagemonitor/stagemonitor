@@ -11,7 +11,7 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 public class ConfigurationOptionsMarkdownExporter {
 
 	public static void main(String[] args) throws IOException {
-		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new Configuration(StagemonitorPlugin.class).getConfigurationOptionsByPlugin();
+		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new Configuration(StagemonitorPlugin.class).getConfigurationOptionsByCategory();
 
 		StringBuilder markdown = new StringBuilder();
 		for (Map.Entry<String, List<ConfigurationOption<?>>> entry : configurationOptionsByPlugin.entrySet()) {

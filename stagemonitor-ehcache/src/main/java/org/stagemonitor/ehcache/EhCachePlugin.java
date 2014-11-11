@@ -1,5 +1,8 @@
 package org.stagemonitor.ehcache;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.codahale.metrics.MetricRegistry;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -8,9 +11,6 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.rest.RestClient;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
@@ -24,7 +24,7 @@ public class EhCachePlugin implements StagemonitorPlugin {
 			.description("The name of the ehcache to instrument (the value of the 'name' attribute of the " +
 					"'ehcache' tag in ehcache.xml)")
 			.defaultValue(null)
-			.pluginName("EhCache Plugin")
+			.configurationCategory("EhCache Plugin")
 			.build();
 	private final ConfigurationOption<Boolean> timeGet = ConfigurationOption.booleanOption()
 			.key("stagemonitor.ehcache.get.timer")
@@ -34,7 +34,7 @@ public class EhCachePlugin implements StagemonitorPlugin {
 					"element from the cache. If you have a lot of caches, that could lead to a increased network and " +
 					"disk utilisation. If set to false, only a meter (which measures the rate) will be created")
 			.defaultValue(true)
-			.pluginName("EhCache Plugin")
+			.configurationCategory("EhCache Plugin")
 			.build();
 
 	@Override

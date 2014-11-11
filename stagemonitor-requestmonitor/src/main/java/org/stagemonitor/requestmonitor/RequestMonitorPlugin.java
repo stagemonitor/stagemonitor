@@ -1,15 +1,15 @@
 package org.stagemonitor.requestmonitor;
 
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
+
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.rest.RestClient;
-
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
 
 public class RequestMonitorPlugin implements StagemonitorPlugin {
 
@@ -20,7 +20,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 			.label("Number of warmup requests")
 			.description("the minimum number of requests that have to be issued against the application before metrics are collected")
 			.defaultValue(0)
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Integer> warmupSeconds = ConfigurationOption.integerOption()
 			.key("stagemonitor.requestmonitor.warmupSeconds")
@@ -28,7 +28,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 			.label("Number of warmup seconds")
 			.description("A timespan in seconds after the start of the server where no metrics are collected.")
 			.defaultValue(0)
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectRequestStats = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.collectRequestStats")
@@ -36,7 +36,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 			.label("Collect request stats")
 			.description("Whether or not metrics about requests (Call Stacks, response times, errors status codes) should be collected.")
 			.defaultValue(true)
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectCpuTime = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.cpuTime")
@@ -44,7 +44,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 			.label("Collect CPU time")
 			.description("Whether or not a timer for the cpu time of executions should be created.")
 			.defaultValue(false)
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Long> minExecutionTimeNanos = ConfigurationOption.longOption()
 			.key("stagemonitor.profiler.minExecutionTimeNanos")
@@ -52,7 +52,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 			.label("Min execution time (nanos)")
 			.description("The minimal inclusive execution time in nanoseconds of a method to be included in a call stack.")
 			.defaultValue(100000L)
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Integer> callStackEveryXRequestsToGroup = ConfigurationOption.integerOption()
 			.key("stagemonitor.profiler.callStackEveryXRequestsToGroup")
@@ -60,7 +60,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 			.label("Gather call tree every x requests to URL group")
 			.description("Defines after how many requests to a URL group a call tree should be collected.")
 			.defaultValue(1)
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> logCallStacks = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.logCallStacks")
@@ -68,7 +68,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 			.label("Log call tree")
 			.description("Whether or not call stacks should be logged.")
 			.defaultValue(true)
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<String> requestTraceTtl = ConfigurationOption.stringOption()
 			.key("stagemonitor.requestmonitor.requestTraceTTL")
@@ -78,7 +78,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 					"In case you do not specify a time unit like d (days), m (minutes), h (hours), " +
 					"ms (milliseconds) or w (weeks), milliseconds is used as default unit.")
 			.defaultValue("1w")
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
 			.key("stagemonitor.jdbc.collectDbTimePerRequest")
@@ -87,7 +87,7 @@ public class RequestMonitorPlugin implements StagemonitorPlugin {
 			.description("Whether or not db execution time should be collected per request group\n" +
 					"If set to true, a timer will be created for each request to record the total db time per request.")
 			.defaultValue(false)
-			.pluginName(REQUEST_MONITOR_PLUGIN)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 
 	@Override

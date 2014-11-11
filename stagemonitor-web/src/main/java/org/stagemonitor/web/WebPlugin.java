@@ -1,5 +1,14 @@
 package org.stagemonitor.web;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,15 +19,6 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.rest.RestClient;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 public class WebPlugin implements StagemonitorPlugin {
 
@@ -36,7 +36,7 @@ public class WebPlugin implements StagemonitorPlugin {
 					Pattern.compile("(?i).*pass.*"),
 					Pattern.compile("(?i).*credit.*"),
 					Pattern.compile("(?i).*pwd.*")))
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private ConfigurationOption<Boolean> collectHttpHeaders = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.http.collectHeaders")
@@ -44,7 +44,7 @@ public class WebPlugin implements StagemonitorPlugin {
 			.label("Collect HTTP headers")
 			.description("Whether or not HTTP headers should be collected with a call stack.")
 			.defaultValue(true)
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private ConfigurationOption<Boolean> parseUserAgent = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.http.parseUserAgent")
@@ -53,7 +53,7 @@ public class WebPlugin implements StagemonitorPlugin {
 			.description("Whether or not the user-agent header should be parsed and analyzed to get information " +
 					"about the browser, device type and operating system.")
 			.defaultValue(true)
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private ConfigurationOption<Collection<String>> excludeHeaders = ConfigurationOption.lowerStringsOption()
 			.key("stagemonitor.requestmonitor.http.headers.excluded")
@@ -61,7 +61,7 @@ public class WebPlugin implements StagemonitorPlugin {
 			.label("Do not collect headers")
 			.description("A list of (case insensitive) header names that should not be collected.")
 			.defaultValue(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")))
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> widgetEnabled = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.widget.enabled")
@@ -71,7 +71,7 @@ public class WebPlugin implements StagemonitorPlugin {
 					"metrics.\n" +
 					"Requires Servlet-Api >= 3.0")
 			.defaultValue(false)
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Map<Pattern, String>> groupUrls = ConfigurationOption.regexMapOption()
 			.key("stagemonitor.groupUrls")
@@ -89,44 +89,44 @@ public class WebPlugin implements StagemonitorPlugin {
 						put(Pattern.compile("(.*).jpeg$"), "*.jpeg");
 						put(Pattern.compile("(.*).png$"), "*.png");
 					}})
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	// TODO descriptions
 	private final ConfigurationOption<String> serverThreadPoolObjectName = ConfigurationOption.stringOption()
 			.key("stagemonitor.server.threadpool.objectName")
 			.label("Server Thread Pool MBean Object Name")
 			.description("")
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build(); 
 	private final ConfigurationOption<String> serverThreadPoolMBeanPropertyName = ConfigurationOption.stringOption()
 			.key("stagemonitor.server.threadpool.mbeanKeyPropertyName")
 			.label("Server Thread Pool MBean Property Name")
 			.description("")
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build(); 
 	private final ConfigurationOption<String> serverThreadPoolMBeanActiveAttribute = ConfigurationOption.stringOption()
 			.key("stagemonitor.server.threadpool.mbeanActiveAttribute")
 			.label("Server Thread Pool MBean Active Attribute")
 			.description("")
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build(); 
 	private final ConfigurationOption<String> serverThreadPoolMBeanCountAttribute = ConfigurationOption.stringOption()
 			.key("stagemonitor.server.threadpool.mbeanCountAttribute")
 			.label("Server Thread Pool MBean Count Attribute")
 			.description("")
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build(); 
 	private final ConfigurationOption<String> serverThreadPoolMBeanMaxAttribute = ConfigurationOption.stringOption()
 			.key("stagemonitor.server.threadpool.mbeanMaxAttribute")
 			.label("Server Thread Pool MBean Max Attribute")
 			.description("")
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build(); 
 	private final ConfigurationOption<String> serverThreadPoolMBeanQueueAttribute = ConfigurationOption.stringOption()
 			.key("stagemonitor.server.threadpool.mbeanQueueAttribute")
 			.label("Server Thread Pool MBean Queue Attribute")
 			.description("")
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> rumEnabled = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.rum.enabled")
@@ -137,7 +137,7 @@ public class WebPlugin implements StagemonitorPlugin {
 					"injected to each html page that collects the data from real users and sends it back " +
 					"to the server. Servlet API 3.0 or higher is required for this.")
 			.defaultValue(true)
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectPageLoadTimesPerRequest = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.collectPageLoadTimesPerRequest")
@@ -148,7 +148,7 @@ public class WebPlugin implements StagemonitorPlugin {
 					"rendering time, dom processing time, network time and overall time per request. " +
 					"If set to false, the times of all requests will be aggregated.")
 			.defaultValue(false)
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Collection<String>> excludedRequestPaths = ConfigurationOption.stringsOption()
 			.key("stagemonitor.web.paths.excluded")
@@ -159,7 +159,7 @@ public class WebPlugin implements StagemonitorPlugin {
 					" It's recommended to not monitor static resources, as they are typically not interesting to " +
 					"monitor but consume resources when you do.")
 			.defaultValue(Collections.<String>emptyList())
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> monitorOnlyForwardedRequests = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.monitorOnlyForwardedRequests")
@@ -169,7 +169,7 @@ public class WebPlugin implements StagemonitorPlugin {
 					"filter that translates a external URI (/a) to a internal URI (/b). If only /b should be monitored," +
 					"set the value to true.")
 			.defaultValue(false)
-			.pluginName(WEB_PLUGIN)
+			.configurationCategory(WEB_PLUGIN)
 			.build();
 
 	@Override

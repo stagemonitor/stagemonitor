@@ -1,15 +1,15 @@
 package org.stagemonitor.core;
 
-import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.rest.RestClient;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import com.codahale.metrics.MetricRegistry;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.rest.RestClient;
 
 public class CorePlugin implements StagemonitorPlugin {
 
@@ -21,7 +21,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.label("Activate stagemonitor")
 			.description("If set to 'false' stagemonitor will be completely deactivated.")
 			.defaultValue(true)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Boolean> internalMonitoring = ConfigurationOption.booleanOption()
 			.key("stagemonitor.internal.monitoring")
@@ -29,7 +29,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.label("Internal monitoring")
 			.description("If active, stagemonitor will collect internal performance data")
 			.defaultValue(false)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> reportingIntervalConsole = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.interval.console")
@@ -38,7 +38,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.description("The amount of time between console reports (in seconds). " +
 					"To deactivate console reports, set this to a value below 1.")
 			.defaultValue(60)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Boolean> reportingJmx = ConfigurationOption.booleanOption()
 			.key("stagemonitor.reporting.jmx")
@@ -46,7 +46,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.label("Expose MBeans")
 			.description("Whether or not to expose all metrics as MBeans.")
 			.defaultValue(true)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> reportingIntervalGraphite = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.interval.graphite")
@@ -56,7 +56,7 @@ public class CorePlugin implements StagemonitorPlugin {
 					"To deactivate graphite reporting, set this to a value below 1, or don't provide " +
 					"stagemonitor.reporting.graphite.hostName.")
 			.defaultValue(60)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> graphiteHostName = ConfigurationOption.stringOption()
 			.key("stagemonitor.reporting.graphite.hostName")
@@ -65,7 +65,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.description("The name of the host where graphite is running. This setting is mandatory, if you want " +
 					"to use the grafana dashboards.")
 			.defaultValue(null)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> graphitePort = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.graphite.port")
@@ -73,7 +73,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.label("Carbon port")
 			.description("The port where carbon is listening.")
 			.defaultValue(2003)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> applicationName = ConfigurationOption.stringOption()
 			.key("stagemonitor.applicationName")
@@ -82,7 +82,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.description("The name of the application.\n" +
 					"Either this property or the display-name in web.xml is mandatory!")
 			.defaultValue(null)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> instanceName = ConfigurationOption.stringOption()
 			.key("stagemonitor.instanceName")
@@ -93,7 +93,7 @@ public class CorePlugin implements StagemonitorPlugin {
 					"javax.servlet.ServletRequest#getServerName()\n" +
 					"That means that the collection of metrics does not start before the first request is executed!")
 			.defaultValue(null)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> elasticsearchUrl = ConfigurationOption.stringOption()
 			.key("stagemonitor.elasticsearch.url")
@@ -102,7 +102,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.description("The URL of the elasticsearch server that stores the call stacks. If the URL is not " +
 					"provided, the call stacks won't get stored.")
 			.defaultValue(null)
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<List<Pattern>> excludedMetrics = ConfigurationOption.regexListOption()
 			.key("stagemonitor.metrics.excluded.pattern")
@@ -110,7 +110,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.label("Excluded metrics (regex)")
 			.description("A comma separated list of metric names that should not be collected.")
 			.defaultValue(Collections.<Pattern>emptyList())
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Collection<String>> disabledPlugins = ConfigurationOption.stringsOption()
 			.key("stagemonitor.plugins.disabled")
@@ -118,7 +118,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.label("Disabled plugins")
 			.description("A comma separated list of plugin names (the simple class name) that should not be active.")
 			.defaultValue(Collections.<String>emptyList())
-			.pluginName(CORE_PLUGIN_NAME)
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 
 	@Override
