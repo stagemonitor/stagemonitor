@@ -1,5 +1,17 @@
 package org.stagemonitor.core.rest;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
@@ -9,19 +21,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.JsonUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 public class RestClient {
 
@@ -105,12 +104,16 @@ public class RestClient {
 		if (baseUrl != null && !baseUrl.isEmpty()) {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
-				RestClient.sendAsJsonAsync(baseUrl, path + URLEncoder.encode(dashboard.get(TITLE).asText(), "UTF-8") + "/_create",
+				RestClient.sendAsJsonAsync(baseUrl, path + slugifyTitle(dashboard) + "/_create",
 						"PUT", dashboard);
 			} catch (IOException e) {
 				logger.warn(e.getMessage(), e);
 			}
 		}
+	}
+
+	private static String slugifyTitle(ObjectNode dashboard) {
+		return dashboard.get(TITLE).asText().replaceAll("[^\\w ]+", "").replaceAll("\\s+", "-");
 	}
 
 	static ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
