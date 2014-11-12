@@ -1,11 +1,14 @@
 package org.stagemonitor.core.configuration;
 
+import java.io.IOException;
+import java.util.Collections;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
-
-import java.io.IOException;
-import java.util.Collections;
+import org.stagemonitor.core.configuration.source.ConfigurationSource;
+import org.stagemonitor.core.configuration.source.SimpleSource;
+import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

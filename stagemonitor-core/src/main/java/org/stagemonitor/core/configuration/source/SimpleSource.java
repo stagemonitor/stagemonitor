@@ -1,4 +1,4 @@
-package org.stagemonitor.core.configuration;
+package org.stagemonitor.core.configuration.source;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;

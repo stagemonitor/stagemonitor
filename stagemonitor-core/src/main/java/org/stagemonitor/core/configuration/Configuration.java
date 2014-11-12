@@ -12,6 +12,7 @@ import java.util.ServiceLoader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
 public class Configuration {
 
@@ -128,23 +129,61 @@ public class Configuration {
 
 	public void reload(String key) {
 		if (configurationOptionsByKey.containsKey(key)) {
-			configurationOptionsByKey.get(key).reload();
+			configurationOptionsByKey.get(key).reload(false);
 		}
 	}
 
-	public void reload() {
+	/**
+	 * This method reloads all configuration options - even non {@link ConfigurationOption#dynamic} ones.
+	 * <p/>
+	 * Use this method judiciously, because you have to make sure that no one already read from a non dynamic
+	 * {@link ConfigurationOption} before calling this method.
+	 */
+	public void reloadAllConfigurationOptions() {
+		reload(true);
+	}
+
+	/**
+	 * Reloads all {@link ConfigurationOption}s where {@link ConfigurationOption#dynamic} is true
+	 */
+	public void reloadDynamicConfigurationOptions() {
+		reload(false);
+	}
+
+	private void reload(final boolean reloadNonDynamicValues) {
 		for (ConfigurationSource configurationSource : configurationSources) {
-			configurationSource.reload();
+			try {
+				configurationSource.reload();
+			} catch (Exception e) {
+				logger.warn(e.getMessage() + " (this exception is ignored)", e);
+			}
 		}
 		for (ConfigurationOption<?> configurationOption : configurationOptionsByKey.values()) {
-			configurationOption.reload();
+			configurationOption.reload(reloadNonDynamicValues);
 		}
 	}
 
+	/**
+	 * Adds a configuration source as first priority to the configuration.
+	 * <p/>
+	 * Don't forget to call {@link #reloadAllConfigurationOptions()} or {@link #reloadDynamicConfigurationOptions()}
+	 * after adding all configuration sources.
+	 *
+	 * @param configurationSource the configuration source to add
+	 */
 	public void addConfigurationSource(ConfigurationSource configurationSource) {
 		addConfigurationSource(configurationSource, true);
 	}
 
+	/**
+	 * Adds a configuration source to the configuration.
+	 * <p/>
+	 * Don't forget to call {@link #reloadAllConfigurationOptions()} or {@link #reloadDynamicConfigurationOptions()}
+	 * after adding all configuration sources.
+	 *
+	 * @param configurationSource the configuration source to add
+	 * @param firstPrio whether the configuration source should be first or last priority
+	 */
 	public void addConfigurationSource(ConfigurationSource configurationSource, boolean firstPrio) {
 		if (configurationSource == null) {
 			return;
@@ -154,7 +193,6 @@ public class Configuration {
 		} else {
 			configurationSources.add(configurationSource);
 		}
-		reload();
 	}
 
 	/**
@@ -172,7 +210,7 @@ public class Configuration {
 	 *
 	 * @param key                         the configuration key
 	 * @param value                       the configuration value
-	 * @param configurationSourceName     the {@link org.stagemonitor.core.configuration.ConfigurationSource#getName()}
+	 * @param configurationSourceName     the {@link org.stagemonitor.core.configuration.source.ConfigurationSource#getName()}
 	 *                                    of the configuration source the value should be stored to
 	 * @param configurationUpdatePassword the password (must not be null)
 	 * @throws IOException                   if there was an error saving the key to the source

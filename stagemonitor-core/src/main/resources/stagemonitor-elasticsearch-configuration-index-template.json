@@ -1,0 +1,19 @@
+{
+	"template": "stagemonitor-configuration",
+	"mappings": {
+		"_default_": {
+			"_all" : { "enabled" : false },
+			"dynamic_templates": [
+				{
+					"fields": {
+						"match": "*",
+						"mapping": {
+							"type": "string",
+							"index": "not_analyzed"
+						}
+					}
+				}
+			]
+		}
+	}
+}

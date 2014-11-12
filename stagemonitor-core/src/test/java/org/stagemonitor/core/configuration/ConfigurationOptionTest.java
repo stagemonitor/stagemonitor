@@ -1,11 +1,5 @@
 package org.stagemonitor.core.configuration;
 
-import com.codahale.metrics.MetricRegistry;
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StagemonitorPlugin;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -14,6 +8,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import com.codahale.metrics.MetricRegistry;
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
+import org.stagemonitor.core.configuration.source.SimpleSource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -31,7 +32,7 @@ public class ConfigurationOptionTest {
 	private final ConfigurationOption<Boolean> booleanTrue = ConfigurationOption.booleanOption().key("boolean.true").build();
 	private final ConfigurationOption<Boolean> booleanFalse = ConfigurationOption.booleanOption().key("boolean.false").build();
 	private final ConfigurationOption<Boolean> booleanInvalid = ConfigurationOption.booleanOption().key("boolean.invalid").build();
-	private final ConfigurationOption<String> testCaching = ConfigurationOption.stringOption().key("testCaching").dynamic(true).build();
+	private final ConfigurationOption<String> testCaching = ConfigurationOption.stringOption().key("testCaching").build();
 	private Configuration configuration = new Configuration(StagemonitorPlugin.class);
 	private CorePlugin corePlugin;
 	private SimpleSource configSource = SimpleSource
@@ -52,6 +53,7 @@ public class ConfigurationOptionTest {
 	public void before() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 		corePlugin = configuration.getConfig(CorePlugin.class);
 		configuration.addConfigurationSource(configSource);
+		configuration.reloadDynamicConfigurationOptions();
 
 		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerOptionProvider", ConfigurationOptionProvider.class);
 		registerPluginConfiguration.setAccessible(true);
@@ -101,7 +103,9 @@ public class ConfigurationOptionTest {
 		assertEquals("testCaching", testCaching.getValue());
 		configSource.add("testCaching", "testCaching2");
 		assertEquals("testCaching", testCaching.getValue());
-		configuration.reload();
+		configuration.reloadDynamicConfigurationOptions();
+		assertEquals("testCaching", testCaching.getValue());
+		configuration.reloadAllConfigurationOptions();
 		assertEquals("testCaching2", testCaching.getValue());
 	}
 

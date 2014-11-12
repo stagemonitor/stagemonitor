@@ -1,5 +1,18 @@
 package org.stagemonitor.requestmonitor;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
@@ -11,20 +24,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.net.InetAddress;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -140,7 +139,7 @@ public class RequestMonitor {
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {
-		if (corePlugin.isInternalMonitoringActive()) {
+		if (corePlugin.isInternalMonitoringActive() && noOfRequests.get() > 0) {
 			overhead2 = System.nanoTime() - overhead2;
 			metricRegistry.timer("internal.overhead.RequestMonitor").update(overhead2 + overhead1, NANOSECONDS);
 		}
@@ -161,7 +160,7 @@ public class RequestMonitor {
 
 	private synchronized void createMeasurementSession() {
 		if (Stagemonitor.getMeasurementSession().isNull()) {
-			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), getHostName(),
+			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), MeasurementSession.getNameOfLocalHost(),
 					corePlugin.getInstanceName());
 			setMeasurementSession(session);
 		}
@@ -311,15 +310,6 @@ public class RequestMonitor {
 			return warmedUp.get();
 		} else {
 			return true;
-		}
-	}
-
-	public static String getHostName() {
-		try {
-			return InetAddress.getLocalHost().getHostName();
-		} catch (Exception e) {
-			logger.warn("Could not get host name. (this exception is ignored)", e);
-			return null;
 		}
 	}
 

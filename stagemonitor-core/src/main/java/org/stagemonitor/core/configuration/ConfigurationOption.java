@@ -17,6 +17,7 @@ import org.stagemonitor.core.configuration.converter.RegexMapValueConverter;
 import org.stagemonitor.core.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.configuration.converter.StringsValueConverter;
 import org.stagemonitor.core.configuration.converter.ValueConverter;
+import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
 /**
  * Represents a configuration option
@@ -252,9 +253,8 @@ public class ConfigurationOption<T> {
 		return errorMessage;
 	}
 
-	synchronized void reload() {
-		// non-dynamic options can't be reloaded
-		if (dynamic) {
+	synchronized void reload(boolean reloadNonDynamicValues) {
+		if (dynamic || reloadNonDynamicValues) {
 			loadValue();
 		}
 	}
