@@ -1,16 +1,16 @@
 package org.stagemonitor.web.configuration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-
+import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
 
 @WebServlet(ConfigurationServlet.CONFIGURATION_ENDPOINT)
 public class ConfigurationServlet extends HttpServlet {
@@ -42,7 +42,7 @@ public class ConfigurationServlet extends HttpServlet {
 
 	private boolean reloadConfigIfRequested(HttpServletRequest req) {
 		if (req.getParameter("reload") != null) {
-			configuration.reload();
+			configuration.reloadDynamicConfigurationOptions();
 			return true;
 		}
 		return false;

@@ -1,9 +1,5 @@
 package org.stagemonitor.core.configuration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +9,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
 public class Configuration {
 
@@ -129,11 +129,28 @@ public class Configuration {
 
 	public void reload(String key) {
 		if (configurationOptionsByKey.containsKey(key)) {
-			configurationOptionsByKey.get(key).reload();
+			configurationOptionsByKey.get(key).reload(false);
 		}
 	}
 
-	public void reload() {
+	/**
+	 * This method reloads all configuration options - even non {@link ConfigurationOption#dynamic} ones.
+	 * <p/>
+	 * Use this method judiciously, because you have to make sure that no one already read from a non dynamic
+	 * {@link ConfigurationOption} before calling this method.
+	 */
+	public void reloadAllConfigurationOptions() {
+		reload(true);
+	}
+
+	/**
+	 * Reloads all {@link ConfigurationOption}s where {@link ConfigurationOption#dynamic} is true
+	 */
+	public void reloadDynamicConfigurationOptions() {
+		reload(false);
+	}
+
+	private void reload(final boolean reloadNonDynamicValues) {
 		for (ConfigurationSource configurationSource : configurationSources) {
 			try {
 				configurationSource.reload();
@@ -142,14 +159,31 @@ public class Configuration {
 			}
 		}
 		for (ConfigurationOption<?> configurationOption : configurationOptionsByKey.values()) {
-			configurationOption.reload();
+			configurationOption.reload(reloadNonDynamicValues);
 		}
 	}
 
+	/**
+	 * Adds a configuration source as first priority to the configuration.
+	 * <p/>
+	 * Don't forget to call {@link #reloadAllConfigurationOptions()} or {@link #reloadDynamicConfigurationOptions()}
+	 * after adding all configuration sources.
+	 *
+	 * @param configurationSource the configuration source to add
+	 */
 	public void addConfigurationSource(ConfigurationSource configurationSource) {
 		addConfigurationSource(configurationSource, true);
 	}
 
+	/**
+	 * Adds a configuration source to the configuration.
+	 * <p/>
+	 * Don't forget to call {@link #reloadAllConfigurationOptions()} or {@link #reloadDynamicConfigurationOptions()}
+	 * after adding all configuration sources.
+	 *
+	 * @param configurationSource the configuration source to add
+	 * @param firstPrio whether the configuration source should be first or last priority
+	 */
 	public void addConfigurationSource(ConfigurationSource configurationSource, boolean firstPrio) {
 		if (configurationSource == null) {
 			return;
@@ -159,7 +193,6 @@ public class Configuration {
 		} else {
 			configurationSources.add(configurationSource);
 		}
-		reload();
 	}
 
 	/**

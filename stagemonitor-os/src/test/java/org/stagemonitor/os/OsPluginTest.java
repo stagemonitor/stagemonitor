@@ -1,5 +1,8 @@
 package org.stagemonitor.os;
 
+import java.util.Map;
+import java.util.Set;
+
 import com.codahale.metrics.MetricRegistry;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
@@ -13,9 +16,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
-
-import java.util.Map;
-import java.util.Set;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
@@ -122,13 +122,6 @@ public class OsPluginTest {
 		assertTrue(getLongGauge(name(baseName, "write.packets")) >= 0);
 		assertTrue(getLongGauge(name(baseName, "write.errors")) >= 0);
 		assertTrue(getLongGauge(name(baseName, "write.dropped")) >= 0);
-	}
-
-	@Test
-	@ExcludeOnTravis
-	public void testGetHostname() {
-		assertNotNull(OsPlugin.getHostName());
-		assertNotNull(OsPlugin.getHostNameFromEnv());
 	}
 
 	@Test

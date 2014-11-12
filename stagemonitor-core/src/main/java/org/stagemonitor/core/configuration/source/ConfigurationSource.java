@@ -15,7 +15,7 @@ public interface ConfigurationSource {
 	/**
 	 * Reloads the configuration to pick up the latest changes
 	 */
-	void reload() throws IOException;
+	void reload();
 
 	/**
 	 * Returns the name of the configuration source.

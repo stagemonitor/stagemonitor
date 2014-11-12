@@ -1,16 +1,16 @@
 package org.stagemonitor.core;
 
-import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import com.codahale.metrics.MetricRegistry;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class CorePlugin implements StagemonitorPlugin {
 
@@ -107,12 +107,23 @@ public class CorePlugin implements StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceIds = ConfigurationOption.stringsOption()
 			.key("stagemonitor.elasticsearch.configurationSourceIds")
-			.dynamic(true)
+			.dynamic(false)
 			.label("Elasticsearch configuration source ids")
 			.description("Set configuration source ids to use elasticsearch as a centralized configuration source " +
-					"that is shared between multiple server instances. The configuration will be stored under " +
+					"that can be shared between multiple server instances. Set the ids appropriate to the current " +
+					"environment e.g. 'production', 'local', 'common', ... The configuration will be stored under " +
 					"{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceId}.")
 			.defaultValue(Collections.<String>emptyList())
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<Boolean> deactivateStagemonitorIfEsConfigSourceIsDown = ConfigurationOption.booleanOption()
+			.key("stagemonitor.elasticsearch.configurationSource.deactivateStagemonitorIfEsIsDown")
+			.dynamic(false)
+			.label("Deactivate stagemonitor if elasticsearch configuration source is down")
+			.description("Set to true if stagemonitor should be deactivated if " +
+					"stagemonitor.elasticsearch.configurationSourceIds is set but elasticsearch can't be reached " +
+					"under stagemonitor.elasticsearch.url")
+			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<List<Pattern>> excludedMetrics = ConfigurationOption.regexListOption()
@@ -143,7 +154,8 @@ public class CorePlugin implements StagemonitorPlugin {
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Arrays.<ConfigurationOption<?>>asList(stagemonitorActive, internalMonitoring, reportingIntervalConsole,
 				reportingJmx, reportingIntervalGraphite, graphiteHostName, graphitePort, applicationName, instanceName,
-				elasticsearchUrl, elasticsearchConfigurationSourceIds, excludedMetrics, disabledPlugins);
+				elasticsearchUrl, elasticsearchConfigurationSourceIds, deactivateStagemonitorIfEsConfigSourceIsDown,
+				excludedMetrics, disabledPlugins);
 	}
 
 	public boolean isStagemonitorActive() {
@@ -192,6 +204,10 @@ public class CorePlugin implements StagemonitorPlugin {
 
 	public Collection<String> getElasticsearchConfigurationSourceIds() {
 		return elasticsearchConfigurationSourceIds.getValue();
+	}
+
+	public boolean isDeactivateStagemonitorIfEsConfigSourceIsDown() {
+		return deactivateStagemonitorIfEsConfigSourceIsDown.getValue();
 	}
 
 	public Collection<Pattern> getExcludedMetricsPatterns() {

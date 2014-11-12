@@ -1,5 +1,9 @@
 package org.stagemonitor.core;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
@@ -9,16 +13,14 @@ import org.stagemonitor.core.configuration.source.EnvironmentVariableConfigurati
 import org.stagemonitor.core.configuration.source.PropertyFileConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
-
-import java.io.IOException;
-import java.util.Collection;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class StagemonitorCoreConfigurationSourceInitializer implements StagemonitorConfigurationSourceInitializer {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
-	public void modifyConfigurationSources(Collection<ConfigurationSource> configurationSources) {
+	public void modifyConfigurationSources(List<ConfigurationSource> configurationSources) {
 		configurationSources.add(new SimpleSource());
 		configurationSources.add(new SystemPropertyConfigurationSource());
 		final String stagemonitorPropertyOverridesLocation = System.getProperty("stagemonitor.property.overrides");
@@ -33,17 +35,31 @@ public class StagemonitorCoreConfigurationSourceInitializer implements Stagemoni
 	}
 
 	@Override
-	public void onConfigurationInitialized(Configuration configuration) throws IOException{
+	public void onConfigurationInitialized(Configuration configuration) throws IOException {
 		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
-		if (!corePlugin.getElasticsearchConfigurationSourceIds().isEmpty()) {
-			try {
-				for (String configurationId : corePlugin.getElasticsearchConfigurationSourceIds()) {
-					configuration.addConfigurationSource(new ElasticsearchConfigurationSource(configurationId));
-				}
-			} catch (IOException e) {
-				throw new IllegalStateException("Property stagemonitor.elasticsearch.configurationSourceIds was set " +
-						"but elasticsearch is not reachable at " + corePlugin.getElasticsearchUrl(), e);
-			}
+		final Collection<String> elasticsearchConfigurationSourceIds = corePlugin.getElasticsearchConfigurationSourceIds();
+		if (!elasticsearchConfigurationSourceIds.isEmpty()) {
+			addElasticsearchConfigurationSources(configuration, corePlugin, elasticsearchConfigurationSourceIds);
+		}
+	}
+
+	private void addElasticsearchConfigurationSources(Configuration configuration, CorePlugin corePlugin, Collection<String> elasticsearchConfigurationSourceIds) {
+		if (corePlugin.isDeactivateStagemonitorIfEsConfigSourceIsDown()) {
+			assertElasticsearchIsAvailable(corePlugin);
+		}
+
+		for (String configurationId : elasticsearchConfigurationSourceIds) {
+			configuration.addConfigurationSource(new ElasticsearchConfigurationSource(configurationId), false);
+		}
+		configuration.reloadAllConfigurationOptions();
+	}
+
+	private void assertElasticsearchIsAvailable(CorePlugin corePlugin) {
+		try {
+			ElasticsearchClient.getJson("/");
+		} catch (IOException e) {
+			throw new IllegalStateException("Property stagemonitor.elasticsearch.configurationSourceIds was set " +
+					"but elasticsearch is not reachable at " + corePlugin.getElasticsearchUrl(), e);
 		}
 	}
 }

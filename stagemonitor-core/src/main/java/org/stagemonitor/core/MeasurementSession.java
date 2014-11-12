@@ -1,6 +1,8 @@
 package org.stagemonitor.core;
 
 
+import java.net.InetAddress;
+
 public class MeasurementSession {
 
 	private final String applicationName;
@@ -39,5 +41,26 @@ public class MeasurementSession {
 	@Override
 	public String toString() {
 		return stringRepresentation;
+	}
+
+	public static String getNameOfLocalHost() {
+		try {
+			return InetAddress.getLocalHost().getHostName();
+		} catch (Exception e) {
+			return getHostNameFromEnv();
+		}
+	}
+
+	static String getHostNameFromEnv() {
+		// try environment properties.
+		String host = System.getenv("COMPUTERNAME");
+		if (host != null) {
+			return host;
+		}
+		host = System.getenv("HOSTNAME");
+		if (host != null) {
+			return host;
+		}
+		return null;
 	}
 }

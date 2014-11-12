@@ -15,7 +15,7 @@ public abstract class AbstractConfigurationSource implements ConfigurationSource
 	}
 
 	@Override
-	public void reload() throws IOException {
+	public void reload() {
 	}
 
 	@Override

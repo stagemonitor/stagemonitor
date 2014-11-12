@@ -253,9 +253,8 @@ public class ConfigurationOption<T> {
 		return errorMessage;
 	}
 
-	synchronized void reload() {
-		// non-dynamic options can't be reloaded
-		if (dynamic) {
+	synchronized void reload(boolean reloadNonDynamicValues) {
+		if (dynamic || reloadNonDynamicValues) {
 			loadValue();
 		}
 	}

@@ -1,9 +1,7 @@
 package org.stagemonitor.os;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.StagemonitorConfigurationSourceInitializer;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
@@ -32,9 +31,10 @@ import org.stagemonitor.os.metrics.MemoryMetricSet;
 import org.stagemonitor.os.metrics.NetworkMetricSet;
 import org.stagemonitor.os.metrics.SwapMetricSet;
 
-public class OsPlugin implements StagemonitorPlugin {
+public class OsPlugin implements StagemonitorPlugin, StagemonitorConfigurationSourceInitializer {
 
 	private final static Logger logger = LoggerFactory.getLogger(OsPlugin.class);
+	private static ConfigurationSource argsConfigurationSource;
 
 	private Sigar sigar;
 
@@ -105,7 +105,8 @@ public class OsPlugin implements StagemonitorPlugin {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
-		Stagemonitor.startMonitoring(getMeasurementSession(), getConfiguration(args));
+		argsConfigurationSource = getConfiguration(args);
+		Stagemonitor.startMonitoring(getMeasurementSession());
 		while (!Thread.currentThread().isInterrupted()) {
 			Thread.sleep(100);
 		}
@@ -115,7 +116,7 @@ public class OsPlugin implements StagemonitorPlugin {
 		final CorePlugin corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 		String applicationName = corePlugin.getApplicationName() != null ? corePlugin.getApplicationName() : "os";
 		String instanceName = corePlugin.getInstanceName() != null ? corePlugin.getInstanceName() : "host";
-		return new MeasurementSession(applicationName, getHostName(), instanceName);
+		return new MeasurementSession(applicationName, MeasurementSession.getNameOfLocalHost(), instanceName);
 	}
 
 	static ConfigurationSource getConfiguration(String[] args) {
@@ -129,27 +130,6 @@ public class OsPlugin implements StagemonitorPlugin {
 			source.add(split[0], split[1]);
 		}
 		return source;
-	}
-
-	static String getHostName() {
-		try {
-			return InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e) {
-			return getHostNameFromEnv();
-		}
-	}
-
-	static String getHostNameFromEnv() {
-		// try environment properties.
-		String host = System.getenv("COMPUTERNAME");
-		if (host != null) {
-			return host;
-		}
-		host = System.getenv("HOSTNAME");
-		if (host != null) {
-			return host;
-		}
-		return null;
 	}
 
 	private static List<String> getSigarBindings() {
@@ -169,5 +149,16 @@ public class OsPlugin implements StagemonitorPlugin {
 		sigarBindings.add("/sigar/sigar-amd64-winnt.dll");
 		sigarBindings.add("/sigar/sigar-x86-winnt.dll");
 		return sigarBindings;
+	}
+
+	@Override
+	public void modifyConfigurationSources(List<ConfigurationSource> configurationSources) {
+		if (argsConfigurationSource != null) {
+			configurationSources.add(0, argsConfigurationSource);
+		}
+	}
+
+	@Override
+	public void onConfigurationInitialized(Configuration configuration) throws Exception {
 	}
 }
