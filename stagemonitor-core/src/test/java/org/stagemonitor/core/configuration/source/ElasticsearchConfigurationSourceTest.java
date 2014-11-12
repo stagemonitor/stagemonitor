@@ -1,10 +1,12 @@
 package org.stagemonitor.core.configuration.source;
 
+import com.codahale.metrics.MetricRegistry;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 
 public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchTest {
@@ -13,7 +15,7 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 
 	@BeforeClass
 	public static void setup() throws Exception {
-		new CorePlugin().initializePlugin(null, null);
+		new CorePlugin().initializePlugin(new MetricRegistry(), Stagemonitor.getConfiguration());
 		Thread.sleep(100);
 	}
 

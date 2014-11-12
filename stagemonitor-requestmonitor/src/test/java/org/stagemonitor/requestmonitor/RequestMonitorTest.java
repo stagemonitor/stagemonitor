@@ -90,7 +90,13 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testInternalMetricsActive() throws Exception {
-		internalMonitoringTestHelper(true);
+		when(corePlugin.isInternalMonitoringActive()).thenReturn(true);
+
+		requestMonitor.monitor(createMonitoredRequest());
+		verify(registry, times(0)).timer("internal.overhead.RequestMonitor");
+
+		requestMonitor.monitor(createMonitoredRequest());
+		verify(registry, times(1)).timer("internal.overhead.RequestMonitor");
 	}
 
 	private void internalMonitoringTestHelper(boolean active) throws Exception {
