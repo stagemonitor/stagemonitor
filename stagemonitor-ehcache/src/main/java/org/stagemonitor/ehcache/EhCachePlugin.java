@@ -20,8 +20,8 @@ public class EhCachePlugin implements StagemonitorPlugin {
 			.key("stagemonitor.ehcache.name")
 			.dynamic(false)
 			.label("EhCache cache name")
-			.description("The name of the ehcache to instrument (the value of the 'name' attribute of the " +
-					"'ehcache' tag in ehcache.xml)")
+			.description("The name of the ehcache to instrument (the value of the `name` attribute of the " +
+					"`ehcache` tag in ehcache.xml)")
 			.defaultValue(null)
 			.configurationCategory("EhCache Plugin")
 			.build();

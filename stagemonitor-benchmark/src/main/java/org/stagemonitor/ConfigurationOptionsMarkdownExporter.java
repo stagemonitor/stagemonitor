@@ -15,14 +15,20 @@ public class ConfigurationOptionsMarkdownExporter {
 
 		StringBuilder markdown = new StringBuilder();
 		for (Map.Entry<String, List<ConfigurationOption<?>>> entry : configurationOptionsByPlugin.entrySet()) {
-			markdown.append("# ").append(entry.getKey()).append(" Plugin\n\n");
+			markdown.append("# ").append(entry.getKey()).append("\n\n");
 			for (ConfigurationOption<?> configurationOption : entry.getValue()) {
 				markdown.append("## ").append(configurationOption.getLabel()).append("\n\n");
 				markdown.append(configurationOption.getDescription()).append("\n\n");
 				markdown.append("Key: `").append(configurationOption.getKey()).append("`\n\n");
 				markdown.append("Default Value: ");
-				markdown.append('`').append(configurationOption.getDefaultValueAsString()).append('`');
-				markdown.append("\n\n");
+				markdown.append('`').append(configurationOption.getDefaultValueAsString()).append("`\n\n");
+				if (!configurationOption.getTags().isEmpty()) {
+					markdown.append("Tags: ");
+					for (String tag : configurationOption.getTags()) {
+						markdown.append('`').append(tag).append("` ");
+					}
+					markdown.append("\n\n");
+				}
 			}
 			markdown.append("***\n\n");
 		}

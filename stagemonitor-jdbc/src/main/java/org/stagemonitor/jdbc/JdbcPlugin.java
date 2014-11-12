@@ -25,6 +25,7 @@ public class JdbcPlugin implements StagemonitorPlugin {
 			.label("Collect prepared statement parameters")
 			.description("Whether or not the prepared statement placeholders (?) should be replaced with the actual parameters.")
 			.defaultValue(false)
+			.tags("security-relevant")
 			.configurationCategory(JDBC_PLUGIN)
 			.build();
 

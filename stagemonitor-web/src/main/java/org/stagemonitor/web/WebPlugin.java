@@ -35,6 +35,7 @@ public class WebPlugin implements StagemonitorPlugin {
 					Pattern.compile("(?i).*pass.*"),
 					Pattern.compile("(?i).*credit.*"),
 					Pattern.compile("(?i).*pwd.*")))
+			.tags("security-relevant")
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private ConfigurationOption<Boolean> collectHttpHeaders = ConfigurationOption.booleanOption()
@@ -44,6 +45,7 @@ public class WebPlugin implements StagemonitorPlugin {
 			.description("Whether or not HTTP headers should be collected with a call stack.")
 			.defaultValue(true)
 			.configurationCategory(WEB_PLUGIN)
+			.tags("security-relevant")
 			.build();
 	private ConfigurationOption<Boolean> parseUserAgent = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.http.parseUserAgent")
@@ -61,6 +63,7 @@ public class WebPlugin implements StagemonitorPlugin {
 			.description("A list of (case insensitive) header names that should not be collected.")
 			.defaultValue(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")))
 			.configurationCategory(WEB_PLUGIN)
+			.tags("security-relevant")
 			.build();
 	private final ConfigurationOption<Boolean> widgetEnabled = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.widget.enabled")
@@ -77,9 +80,9 @@ public class WebPlugin implements StagemonitorPlugin {
 			.dynamic(true)
 			.label("Group URLs regex")
 			.description("Combine url paths by regex to a single url group.\n" +
-					"E.g. '(.*).js: *.js' combines all URLs that end with .js to a group named *.js. " +
+					"E.g. `(.*).js: *.js` combines all URLs that end with `.js` to a group named `*.js`. " +
 					"The metrics for all URLs matching the pattern are consolidated and shown in one row in the request table. " +
-					"The syntax is '<regex>: <group name>[, <regex>: <group name>]*'")
+					"The syntax is `<regex>: <group name>[, <regex>: <group name>]*`")
 			.defaultValue(
 					new LinkedHashMap<Pattern, String>() {{
 						put(Pattern.compile("(.*).js$"), "*.js");
@@ -154,7 +157,7 @@ public class WebPlugin implements StagemonitorPlugin {
 			.dynamic(false)
 			.label("Excluded paths")
 			.description("Request paths that should not be monitored. " +
-					"A value of '/aaa' means, that all paths starting with '/aaa' should not be monitored." +
+					"A value of `/aaa` means, that all paths starting with `/aaa` should not be monitored." +
 					" It's recommended to not monitor static resources, as they are typically not interesting to " +
 					"monitor but consume resources when you do.")
 			.defaultValue(Collections.<String>emptyList())

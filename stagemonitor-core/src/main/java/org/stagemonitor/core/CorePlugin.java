@@ -20,7 +20,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.key("stagemonitor.active")
 			.dynamic(true)
 			.label("Activate stagemonitor")
-			.description("If set to 'false' stagemonitor will be completely deactivated.")
+			.description("If set to `false` stagemonitor will be completely deactivated.")
 			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -111,7 +111,7 @@ public class CorePlugin implements StagemonitorPlugin {
 			.label("Elasticsearch configuration source ids")
 			.description("Set configuration source ids to use elasticsearch as a centralized configuration source " +
 					"that can be shared between multiple server instances. Set the ids appropriate to the current " +
-					"environment e.g. 'production', 'local', 'common', ... The configuration will be stored under " +
+					"environment e.g. `production`, `local`, `common`, ... The configuration will be stored under " +
 					"{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceId}.")
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)

@@ -1,5 +1,6 @@
 package org.stagemonitor.core.configuration;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +42,7 @@ public class ConfigurationOption<T> {
 	private final String label;
 	private final String description;
 	private final T defaultValue;
+	private final List<String> tags;
 	private final String defaultValueAsString;
 	private final String configurationCategory;
 	private final ValueConverter<T> valueConverter;
@@ -134,12 +136,13 @@ public class ConfigurationOption<T> {
 
 	private ConfigurationOption(boolean dynamic, String key, String label, String description,
 								T defaultValue, String configurationCategory, ValueConverter<T> valueConverter,
-								Class<? super T> valueType) {
+								Class<? super T> valueType, List<String> tags) {
 		this.dynamic = dynamic;
 		this.key = key;
 		this.label = label;
 		this.description = description;
 		this.defaultValue = defaultValue;
+		this.tags = tags;
 		this.defaultValueAsString = valueConverter.toString(defaultValue);
 		this.configurationCategory = configurationCategory;
 		this.valueConverter = valueConverter;
@@ -235,6 +238,15 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
+	 * Returns the tags associated with this configuration option
+	 *
+	 * @return the tags associated with this configuration option
+	 */
+	public List<String> getTags() {
+		return Collections.unmodifiableList(tags);
+	}
+
+	/**
 	 * Returns the simple type name of the value
 	 *
 	 * @return the simple type name of the value
@@ -319,6 +331,7 @@ public class ConfigurationOption<T> {
 		private String configurationCategory;
 		private ValueConverter<T> valueConverter;
 		private Class<? super T> valueType;
+		private String[] tags = new String[0];
 
 		private ConfigurationOptionBuilder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 			this.valueConverter = valueConverter;
@@ -327,7 +340,7 @@ public class ConfigurationOption<T> {
 
 		public ConfigurationOption<T> build() {
 			return new ConfigurationOption<T>(dynamic, key, label, description, defaultValue, configurationCategory,
-					valueConverter, valueType);
+					valueConverter, valueType, Arrays.asList(tags));
 		}
 
 		public ConfigurationOptionBuilder<T> dynamic(boolean dynamic) {
@@ -357,6 +370,11 @@ public class ConfigurationOption<T> {
 
 		public ConfigurationOptionBuilder<T> configurationCategory(String configurationCategory) {
 			this.configurationCategory = configurationCategory;
+			return this;
+		}
+
+		public ConfigurationOptionBuilder<T> tags(String... tags) {
+			this.tags = tags;
 			return this;
 		}
 	}
