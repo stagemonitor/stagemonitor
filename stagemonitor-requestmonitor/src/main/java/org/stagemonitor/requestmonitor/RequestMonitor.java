@@ -106,7 +106,8 @@ public class RequestMonitor {
 			createMeasurementSession();
 		}
 
-		if (Stagemonitor.getMeasurementSession().getInstanceName() == null && noOfRequests.get() == 0) {
+		final boolean firstRequest = noOfRequests.get() == 0;
+		if (Stagemonitor.getMeasurementSession().getInstanceName() == null && firstRequest) {
 			getInstanceNameFromExecution(monitoredRequest);
 		}
 
@@ -128,7 +129,9 @@ public class RequestMonitor {
 				afterExecution(monitoredRequest, info);
 			}
 
-			trackOverhead(overhead1, overhead2);
+			if (!firstRequest) {
+				trackOverhead(overhead1, overhead2);
+			}
 		}
 	}
 
@@ -139,7 +142,7 @@ public class RequestMonitor {
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {
-		if (corePlugin.isInternalMonitoringActive() && noOfRequests.get() > 0) {
+		if (corePlugin.isInternalMonitoringActive()) {
 			overhead2 = System.nanoTime() - overhead2;
 			metricRegistry.timer("internal.overhead.RequestMonitor").update(overhead2 + overhead1, NANOSECONDS);
 		}
