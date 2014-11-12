@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import com.codahale.metrics.MetricRegistry;
@@ -142,9 +143,23 @@ public class CorePlugin implements StagemonitorPlugin {
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Integer> reloadConfigurationInterval = ConfigurationOption.integerOption()
+			.key("stagemonitor.configuration.reload.interval")
+			.dynamic(false)
+			.label("Configuration reload interval")
+			.description("The interval in seconds a reload of all configuration sources is performed. " +
+					"Set to a value below `1` to deactivate periodic reloading the configuration.")
+			.defaultValue(60)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
+		final Integer reloadInterval = configuration.getConfig(CorePlugin.class).getReloadConfigurationInterval();
+		if (reloadInterval > 0) {
+			configuration.scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
+		}
+
 		ElasticsearchClient.sendGrafanaDashboardAsync("Custom Metrics.json");
 		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-configuration-index-template.json");
 		ElasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor-configuration", resourceAsStream);
@@ -155,7 +170,7 @@ public class CorePlugin implements StagemonitorPlugin {
 		return Arrays.<ConfigurationOption<?>>asList(stagemonitorActive, internalMonitoring, reportingIntervalConsole,
 				reportingJmx, reportingIntervalGraphite, graphiteHostName, graphitePort, applicationName, instanceName,
 				elasticsearchUrl, elasticsearchConfigurationSourceIds, deactivateStagemonitorIfEsConfigSourceIsDown,
-				excludedMetrics, disabledPlugins);
+				excludedMetrics, disabledPlugins, reloadConfigurationInterval);
 	}
 
 	public boolean isStagemonitorActive() {
@@ -216,5 +231,9 @@ public class CorePlugin implements StagemonitorPlugin {
 
 	public Collection<String> getDisabledPlugins() {
 		return disabledPlugins.getValue();
+	}
+
+	public Integer getReloadConfigurationInterval() {
+		return reloadConfigurationInterval.getValue();
 	}
 }

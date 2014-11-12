@@ -9,6 +9,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +27,15 @@ public class Configuration {
 	private Map<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider> optionProvidersByClass = new HashMap<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider>();
 	private Map<String, ConfigurationOption<?>> configurationOptionsByKey = new LinkedHashMap<String, ConfigurationOption<?>>();
 	private Map<String, List<ConfigurationOption<?>>> configurationOptionsByCategory = new LinkedHashMap<String, List<ConfigurationOption<?>>>();
+	private ScheduledExecutorService configurationReloader = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r);
+			thread.setDaemon(true);
+			thread.setName("configuration-reloader");
+			return thread;
+		}
+	});
 
 	/**
 	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
@@ -33,8 +46,8 @@ public class Configuration {
 	}
 
 	/**
-	 * @param optionProviderClass     the class that should be used to lookup instances of
-	 *                                {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
+	 * @param optionProviderClass the class that should be used to lookup instances of
+	 *                            {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
 	 */
 	public Configuration(Class<? extends ConfigurationOptionProvider> optionProviderClass) {
 		this(optionProviderClass, null);
@@ -53,6 +66,7 @@ public class Configuration {
 	/**
 	 * @param optionProviderClass     the class that should be used to lookup instances of
 	 *                                {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
+	 * @param configSources           the configuration sources
 	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
 	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
 	 */
@@ -61,6 +75,12 @@ public class Configuration {
 		this(ServiceLoader.load(optionProviderClass), configSources, updateConfigPasswordKey);
 	}
 
+	/**
+	 * @param optionProviders         the option providers
+	 * @param configSources           the configuration sources
+	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
+	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
+	 */
 	public Configuration(Iterable<? extends ConfigurationOptionProvider> optionProviders,
 						 List<ConfigurationSource> configSources, String updateConfigPasswordKey) {
 		this.updateConfigPasswordKey = updateConfigPasswordKey;
@@ -86,6 +106,13 @@ public class Configuration {
 		}
 	}
 
+	/**
+	 * Returns a {@link ConfigurationOptionProvider} whose {@link ConfigurationOption}s are populated
+	 *
+	 * @param configClass the {@link ConfigurationOptionProvider} class
+	 * @param <T>         the type
+	 * @return a {@link ConfigurationOptionProvider} whose {@link ConfigurationOption}s are populated
+	 */
 	public <T extends ConfigurationOptionProvider> T getConfig(Class<T> configClass) {
 		return (T) optionProvidersByClass.get(configClass);
 	}
@@ -107,14 +134,30 @@ public class Configuration {
 		}
 	}
 
+	/**
+	 * Returns all Configuration options grouped by {@link ConfigurationOption#configurationCategory}
+	 *
+	 * @return all Configuration options grouped by {@link ConfigurationOption#configurationCategory}
+	 */
 	public Map<String, List<ConfigurationOption<?>>> getConfigurationOptionsByCategory() {
 		return Collections.unmodifiableMap(configurationOptionsByCategory);
 	}
 
+	/**
+	 * Returns all Configuration options grouped by the {@link ConfigurationOption#key}
+	 *
+	 * @return all Configuration options grouped by the {@link ConfigurationOption#key}
+	 */
 	public Map<String, ConfigurationOption<?>> getConfigurationOptionsByKey() {
 		return Collections.unmodifiableMap(configurationOptionsByKey);
 	}
 
+	/**
+	 * Returns a map with the names of all configuration sources as key and a boolean indicating whether the configuration
+	 * source supports saving as value
+	 *
+	 * @return the names of all configuration sources
+	 */
 	public Map<String, Boolean> getNamesOfConfigurationSources() {
 		final Map<String, Boolean> result = new LinkedHashMap<String, Boolean>();
 		for (ConfigurationSource configurationSource : configurationSources) {
@@ -123,10 +166,38 @@ public class Configuration {
 		return result;
 	}
 
+	/**
+	 * Returns a configuration option by its {@link ConfigurationOption#key}
+	 *
+	 * @param key the configuration key
+	 * @return the configuration option with a specific key
+	 */
 	public ConfigurationOption<?> getConfigurationOptionByKey(String key) {
 		return configurationOptionsByKey.get(key);
 	}
 
+	/**
+	 * Schedules {@link #reloadDynamicConfigurationOptions()} at a fixed rate
+	 *
+	 * @param rate     the period between reloads
+	 * @param timeUnit the time unit of rate
+	 */
+	public void scheduleReloadAtRate(final long rate, TimeUnit timeUnit) {
+		configurationReloader.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				logger.info("Beginning scheduled configuration reload (interval is {} sec)...", rate);
+				reloadDynamicConfigurationOptions();
+				logger.info("Finished scheduled configuration reload");
+			}
+		}, rate, rate, timeUnit);
+	}
+
+	/**
+	 * Reloads a specific dynamic configuration option.
+	 *
+	 * @param key the key of the configuration option
+	 */
 	public void reload(String key) {
 		if (configurationOptionsByKey.containsKey(key)) {
 			configurationOptionsByKey.get(key).reload(false);
@@ -182,7 +253,7 @@ public class Configuration {
 	 * after adding all configuration sources.
 	 *
 	 * @param configurationSource the configuration source to add
-	 * @param firstPrio whether the configuration source should be first or last priority
+	 * @param firstPrio           whether the configuration source should be first or last priority
 	 */
 	public void addConfigurationSource(ConfigurationSource configurationSource, boolean firstPrio) {
 		if (configurationSource == null) {
@@ -259,7 +330,7 @@ public class Configuration {
 				return;
 			}
 		}
-		throw new IllegalArgumentException("Configuration source '"+configurationSourceName+"' does not exist.");
+		throw new IllegalArgumentException("Configuration source '" + configurationSourceName + "' does not exist.");
 	}
 
 	private void validateConfigurationSource(ConfigurationSource configurationSource, ConfigurationOption<?> configurationOption) {
