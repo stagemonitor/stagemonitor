@@ -10,7 +10,9 @@ $(document).ready(function () {
 				localStorage.setItem(key, value);
 			}
 		});
-		$("#submit-response").show().fadeOut(3000);
+		$.growl('Changes will take effect on next request', {
+			type: "success"
+		});
 		return false;
 	});
 

@@ -11,9 +11,11 @@
 		<link rel="stylesheet" href="jquery-treetable/jquery.treetable.theme.bootstrap.css">
 		<link rel="stylesheet" href="datatables/jquery.dataTables.min.css">
 		<link rel="stylesheet" href="datatables/dataTables.bootstrap.css">
+		<link rel="stylesheet" href="animate/animate.min.css">
 		<link rel="stylesheet" href="stagemonitor-widget.css">
 		<script src="jquery.1.11.1.min.js"></script>
 		<script src="bootstrap/bootstrap.min.js"></script>
+		<script src="bootstrap/bootstrap-growl.min.js"></script>
 		<script src="datatables/jquery.dataTables.min.js"></script>
 		<script src="datatables/dataTables.bootstrap.js"></script>
 		<script src="handlebars-v1.3.0.min.js"></script>
@@ -254,10 +256,6 @@
 						<div class="form-group">
 							<div class="col-sm-offset-3 col-sm-6">
 								<button type="submit" class="btn btn-primary" id="widget-settings-save">Save</button>
-								<span id="submit-response" class="text-success" style="display: none;">
-									<span>Changes will take effect on next request</span>
-									<span class="glyphicon glyphicon-ok"></span>
-								</span>
 							</div>
 						</div>
 					</form>
@@ -275,15 +273,11 @@
 								</label>
 								<div class="col-sm-9">
 									<input type="hidden" name="reload" value="">
-									<button type="submit" class="btn btn-primary save-configuration">Reload</button>
-									<span class="submit-response-ok text-success" style="display: none;">
-										<span class="glyphicon glyphicon-ok"></span>
-										<span>Refresh page to view updated configuration</span>
-									</span>
-									<span class="submit-response-failed text-danger" style="display: none;">
-										<span class="glyphicon glyphicon-remove"></span>
-										<span>Failed to reload configuration</span>
-									</span>
+									<button type="submit" class="btn btn-primary save-configuration"
+											data-success="Refresh page to view updated configuration"
+											data-fail="Failed to reload configuration">
+										Reload
+									</button>
 								</div>
 							</div>
 						</form>
@@ -377,6 +371,8 @@
 																{{/unless}}>
 
 														<button type="submit" class="tip btn save-configuration {{#if dynamic}}btn-primary{{else}}btn-warning{{/if}}"
+																data-success="Successfully saved"
+																data-fail="Failed to save"
 																data-toggle="tooltip" data-placement="top"
 															{{#if ../../passwordSet}}
 																{{#if dynamic}}
@@ -391,14 +387,6 @@
 																disabled
 															{{/if}}
 															>Save</button>
-														<span class="submit-response-ok text-success" style="display: none;">
-															<span class="glyphicon glyphicon-ok"></span>
-															<span>Successfully saved</span>
-														</span>
-														<span class="submit-response-failed text-danger" style="display: none;">
-															<span class="glyphicon glyphicon-remove"></span>
-															<span>Failed to save. Did you specify the configuration update password?</span>
-														</span>
 														</div>
 													</div>
 												</form>

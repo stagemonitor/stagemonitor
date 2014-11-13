@@ -7,6 +7,10 @@ body {
 	margin-bottom: 0;
 }
 
+.alert {
+	min-width: 500px;
+}
+
 .head {
 	margin-bottom: 0.6em;
 	margin-top: 0;

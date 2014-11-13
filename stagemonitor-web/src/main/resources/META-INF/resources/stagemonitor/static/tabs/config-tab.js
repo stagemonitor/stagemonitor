@@ -1,4 +1,4 @@
-renderConfigTab = function(configurationSources, configurationOptions, passwordSet, contextPathPrefix) {
+renderConfigTab = function (configurationSources, configurationOptions, passwordSet, contextPathPrefix) {
 	var configurationTemplate = Handlebars.compile($("#stagemonitor-configuration-template").html());
 
 	var $configTab = $("#stagemonitor-configuration");
@@ -11,15 +11,19 @@ renderConfigTab = function(configurationSources, configurationOptions, passwordS
 		var $button = $(this);
 		$.post(contextPathPrefix + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
 			.done(function () {
-				$button.nextAll(".submit-response-ok").show().fadeOut(3000);
+				$.growl($button.data("success"), { type: "success" });
 			}).fail(function (xhr) {
-				$button.removeClass("btn-primary").addClass("btn-danger");
-				var errorSpan = $button.nextAll(".submit-response-failed");
-				errorSpan.html(xhr.responseText || 'Failed to save.');
-				errorSpan.show().fadeOut(4000, function () {
-					$button.removeClass("btn-danger").addClass("btn-primary");
-				});
+				$.growl((htmlEscape(xhr.responseText) || $button.data("fail")), { type: "danger" });
 			});
 		return false;
 	});
+
+	function htmlEscape(str) {
+		return String(str)
+			.replace(/&/g, '&amp;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;');
+	}
 };
