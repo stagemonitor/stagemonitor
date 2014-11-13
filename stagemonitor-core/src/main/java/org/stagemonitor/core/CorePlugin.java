@@ -174,7 +174,7 @@ public class CorePlugin implements StagemonitorPlugin {
 	}
 
 	public boolean isStagemonitorActive() {
-		return stagemonitorActive.getValue();
+		return Stagemonitor.isDisabled() ? false : stagemonitorActive.getValue();
 	}
 
 	public boolean isInternalMonitoringActive() {

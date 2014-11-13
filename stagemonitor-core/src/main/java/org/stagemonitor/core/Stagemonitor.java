@@ -2,9 +2,7 @@ package org.stagemonitor.core;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +31,8 @@ public final class Stagemonitor {
 	private static Logger logger = LoggerFactory.getLogger(Stagemonitor.class);
 	private static Configuration configuration;
 	private static volatile boolean started;
+	private static volatile boolean disabled;
 	private static volatile MeasurementSession measurementSession;
-	private static List<ConfigurationSource> additionalConfigurationSources = Collections.emptyList();
 
 	static {
 		reset();
@@ -43,22 +41,17 @@ public final class Stagemonitor {
 	private Stagemonitor() {
 	}
 
-	public synchronized static void startMonitoring(MeasurementSession measurementSession,
-													ConfigurationSource... additionalConfigurationSources) {
+	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
 		if (!getConfiguration(CorePlugin.class).isStagemonitorActive()) {
 			logger.info("stagemonitor is deactivated");
-			started = true;
+			disabled = true;
 		}
-		if (started) {
+		if (started || disabled) {
 			return;
 		}
 		Stagemonitor.measurementSession = measurementSession;
 		if (measurementSession.isInitialized() && !started) {
 			try {
-				if (additionalConfigurationSources.length > 0) {
-					Stagemonitor.additionalConfigurationSources = Arrays.asList(additionalConfigurationSources);
-					reloadConfiguration();
-				}
 				start(measurementSession);
 			} catch (RuntimeException e) {
 				logger.warn("Error while trying to start monitoring. (this exception is ignored)", e);
@@ -168,6 +161,10 @@ public final class Stagemonitor {
 		return started;
 	}
 
+	static boolean isDisabled() {
+		return disabled;
+	}
+
 	static void setLogger(Logger logger) {
 		Stagemonitor.logger = logger;
 	}
@@ -176,14 +173,13 @@ public final class Stagemonitor {
 	 * Should only be used by the internal unit tests
 	 */
 	public static void reset() {
-		reloadConfiguration();
 		started = false;
 		measurementSession = new MeasurementSession(null, null, null);
+		reloadConfiguration();
 	}
 
 	private static void reloadConfiguration() {
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
-		configurationSources.addAll(additionalConfigurationSources);
 		for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class)) {
 			initializer.modifyConfigurationSources(configurationSources);
 		}
@@ -198,7 +194,7 @@ public final class Stagemonitor {
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			logger.error("Stagemonitor will be deactivated!");
-			started = true;
+			disabled = true;
 		}
 	}
 }
