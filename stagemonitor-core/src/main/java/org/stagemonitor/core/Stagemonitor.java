@@ -174,6 +174,7 @@ public final class Stagemonitor {
 	 */
 	public static void reset() {
 		started = false;
+		disabled = false;
 		measurementSession = new MeasurementSession(null, null, null);
 		reloadConfiguration();
 	}

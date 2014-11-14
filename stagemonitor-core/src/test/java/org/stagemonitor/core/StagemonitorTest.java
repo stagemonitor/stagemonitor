@@ -1,12 +1,12 @@
 package org.stagemonitor.core;
 
+import java.util.Arrays;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.stagemonitor.core.configuration.Configuration;
-
-import java.util.Arrays;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -60,7 +60,8 @@ public class StagemonitorTest {
 		final MeasurementSession measurementSession = new MeasurementSession("testApp", "testHost", "testInstance");
 		Stagemonitor.startMonitoring(measurementSession);
 
-		assertTrue(Stagemonitor.isStarted());
+		assertTrue(Stagemonitor.isDisabled());
+		assertFalse(Stagemonitor.isStarted());
 		assertFalse(Stagemonitor.getMeasurementSession().isInitialized());
 		verify(logger, times(0)).info("Initializing plugin {}", "TestPlugin");
 		verify(logger, times(0)).info("Initializing plugin {}", "TestExceptionPlugin");
