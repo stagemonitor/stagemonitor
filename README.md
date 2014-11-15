@@ -14,3 +14,6 @@ Check the [Installation](https://github.com/stagemonitor/stagemonitor/wiki/Insta
 
 ## Issues
 If you encounter any issues or if you have a question, don't hesitate to create an issue.
+
+## Build Locally
+To build this project locally, clone the repo and execute `./gradlew install` (Linux) `gradlew.bat install` (Windows) to install stagemonitor to your local maven repo (`~/.m2/repository/org/stagemonitor/`).
