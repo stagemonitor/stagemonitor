@@ -1,5 +1,8 @@
 package org.stagemonitor.web.monitor;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
@@ -7,9 +10,6 @@ import net.sf.uadetector.service.UADetectorServiceFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class HttpRequestTrace extends RequestTrace {
 
@@ -28,7 +28,7 @@ public class HttpRequestTrace extends RequestTrace {
 	private final Map<String, String> headers;
 	private final String method;
 	private Integer bytesWritten;
-	private final UserAgentInformation userAgent;
+	private UserAgentInformation userAgent;
 	private final String sessionId;
 	@JsonIgnore
 	private final String connectionId;
@@ -40,7 +40,6 @@ public class HttpRequestTrace extends RequestTrace {
 		this.headers = headers;
 		this.sessionId = sessionId;
 		this.connectionId = connectionId;
-		userAgent = getUserAgentInformation(headers);
 		this.method = method;
 	}
 
@@ -108,21 +107,6 @@ public class HttpRequestTrace extends RequestTrace {
 		return headers;
 	}
 
-	private UserAgentInformation getUserAgentInformation(Map<String, String> headers) {
-		if (headers != null && Stagemonitor.getConfiguration(WebPlugin.class).isParseUserAgent()) {
-			final String userAgentHeader = headers.get("user-agent");
-			if (userAgentHeader != null) {
-				ReadableUserAgent readableUserAgent = userAgentCache.get(userAgentHeader);
-				if (readableUserAgent == null) {
-					readableUserAgent = parser.parse(userAgentHeader);
-					userAgentCache.put(userAgentHeader, readableUserAgent);
-				}
-				return new UserAgentInformation(readableUserAgent);
-			}
-		}
-		return null;
-	}
-
 	public String getMethod() {
 		return method;
 	}
@@ -136,6 +120,17 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	public UserAgentInformation getUserAgent() {
+		if (userAgent == null && headers != null && Stagemonitor.getConfiguration(WebPlugin.class).isParseUserAgent()) {
+			final String userAgentHeader = headers.get("user-agent");
+			if (userAgentHeader != null) {
+				ReadableUserAgent readableUserAgent = userAgentCache.get(userAgentHeader);
+				if (readableUserAgent == null) {
+					readableUserAgent = parser.parse(userAgentHeader);
+					userAgentCache.put(userAgentHeader, readableUserAgent);
+				}
+				userAgent = new UserAgentInformation(readableUserAgent);
+			}
+		}
 		return userAgent;
 	}
 
