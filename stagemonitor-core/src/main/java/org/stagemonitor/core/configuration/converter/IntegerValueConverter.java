@@ -7,7 +7,7 @@ public class IntegerValueConverter implements ValueConverter<Integer> {
 		try {
 			return Integer.valueOf(s);
 		} catch (RuntimeException e) {
-			throw new IllegalArgumentException("Can't '" + s + "' to Long.", e);
+			throw new IllegalArgumentException("Can't convert '" + s + "' to Integer.", e);
 		}
 	}
 
