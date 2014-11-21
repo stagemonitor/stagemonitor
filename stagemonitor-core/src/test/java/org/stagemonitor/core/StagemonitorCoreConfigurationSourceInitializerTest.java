@@ -21,7 +21,7 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(corePlugin.getElasticsearchConfigurationSourceIds()).thenReturn(Arrays.asList("test"));
+		when(corePlugin.getElasticsearchConfigurationSourceProfiles()).thenReturn(Arrays.asList("test"));
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 
 	}

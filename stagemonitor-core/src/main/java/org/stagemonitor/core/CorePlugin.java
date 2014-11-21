@@ -106,14 +106,14 @@ public class CorePlugin implements StagemonitorPlugin {
 			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
-	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceIds = ConfigurationOption.stringsOption()
-			.key("stagemonitor.elasticsearch.configurationSourceIds")
+	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceProfiles = ConfigurationOption.stringsOption()
+			.key("stagemonitor.elasticsearch.configurationSourceProfiles")
 			.dynamic(false)
 			.label("Elasticsearch configuration source ids")
-			.description("Set configuration source ids to use elasticsearch as a centralized configuration source " +
-					"that can be shared between multiple server instances. Set the ids appropriate to the current " +
-					"environment e.g. `production`, `local`, `common`, ... The configuration will be stored under " +
-					"{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceId}.")
+			.description("Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source " +
+					"that can be shared between multiple server instances. Set the profiles appropriate to the current " +
+					"environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under " +
+					"{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceProfile}.")
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -122,8 +122,9 @@ public class CorePlugin implements StagemonitorPlugin {
 			.dynamic(false)
 			.label("Deactivate stagemonitor if elasticsearch configuration source is down")
 			.description("Set to true if stagemonitor should be deactivated if " +
-					"stagemonitor.elasticsearch.configurationSourceIds is set but elasticsearch can't be reached " +
-					"under stagemonitor.elasticsearch.url")
+					"stagemonitor.elasticsearch.configurationSourceProfiles is set but elasticsearch can't be reached " +
+					"under stagemonitor.elasticsearch.url. Defaults to true to prevent starting stagemonitor with " +
+					"wrong configuration.")
 			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -169,7 +170,7 @@ public class CorePlugin implements StagemonitorPlugin {
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Arrays.<ConfigurationOption<?>>asList(stagemonitorActive, internalMonitoring, reportingIntervalConsole,
 				reportingJmx, reportingIntervalGraphite, graphiteHostName, graphitePort, applicationName, instanceName,
-				elasticsearchUrl, elasticsearchConfigurationSourceIds, deactivateStagemonitorIfEsConfigSourceIsDown,
+				elasticsearchUrl, elasticsearchConfigurationSourceProfiles, deactivateStagemonitorIfEsConfigSourceIsDown,
 				excludedMetrics, disabledPlugins, reloadConfigurationInterval);
 	}
 
@@ -217,8 +218,8 @@ public class CorePlugin implements StagemonitorPlugin {
 		return url;
 	}
 
-	public Collection<String> getElasticsearchConfigurationSourceIds() {
-		return elasticsearchConfigurationSourceIds.getValue();
+	public Collection<String> getElasticsearchConfigurationSourceProfiles() {
+		return elasticsearchConfigurationSourceProfiles.getValue();
 	}
 
 	public boolean isDeactivateStagemonitorIfEsConfigSourceIsDown() {

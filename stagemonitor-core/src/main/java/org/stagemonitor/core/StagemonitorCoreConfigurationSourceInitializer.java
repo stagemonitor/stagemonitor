@@ -37,7 +37,7 @@ public class StagemonitorCoreConfigurationSourceInitializer implements Stagemoni
 	@Override
 	public void onConfigurationInitialized(Configuration configuration) throws IOException {
 		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
-		final Collection<String> elasticsearchConfigurationSourceIds = corePlugin.getElasticsearchConfigurationSourceIds();
+		final Collection<String> elasticsearchConfigurationSourceIds = corePlugin.getElasticsearchConfigurationSourceProfiles();
 		if (!elasticsearchConfigurationSourceIds.isEmpty()) {
 			addElasticsearchConfigurationSources(configuration, corePlugin, elasticsearchConfigurationSourceIds);
 		}
@@ -58,7 +58,7 @@ public class StagemonitorCoreConfigurationSourceInitializer implements Stagemoni
 		try {
 			ElasticsearchClient.getJson("/");
 		} catch (IOException e) {
-			throw new IllegalStateException("Property stagemonitor.elasticsearch.configurationSourceIds was set " +
+			throw new IllegalStateException("Property stagemonitor.elasticsearch.configurationSourceProfiles was set " +
 					"but elasticsearch is not reachable at " + corePlugin.getElasticsearchUrl(), e);
 		}
 	}
