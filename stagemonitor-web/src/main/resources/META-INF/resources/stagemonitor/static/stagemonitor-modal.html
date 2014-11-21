@@ -345,6 +345,10 @@
 															{{#if errorMessage}}
 															<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="left" title="{{errorMessage}}"></span>
 															{{/if}}
+															{{#if tags}}<br>{{/if}}
+															{{#each tags}}
+															<span class="label label-default">{{this}}</span>
+															{{/each}}
 														</label>
 														<div class="col-sm-2">
 															<input type="hidden" name="key" value="{{key}}">
