@@ -13,6 +13,7 @@
 		<link rel="stylesheet" href="datatables/dataTables.bootstrap.css">
 		<link rel="stylesheet" href="animate/animate.min.css">
 		<link rel="stylesheet" href="stagemonitor-widget.css">
+		<link rel="stylesheet" href="c3/c3.min.css">
 		<script src="jquery.1.11.1.min.js"></script>
 		<script src="bootstrap/bootstrap.min.js"></script>
 		<script src="bootstrap/bootstrap-growl.min.js"></script>
@@ -27,6 +28,9 @@
 		<script type="text/javascript" src="tabs/request-tab.js"></script>
 		<script type="text/javascript" src="tabs/widget-settings-tab.js"></script>
 		<script type="text/javascript" src="tabs/ajax-requests.js"></script>
+		<script type="text/javascript" src="c3/d3.v3.min.js"></script>
+		<script type="text/javascript" src="c3/c3.min.js"></script>
+		<script type="text/javascript" src="tabs/metrics-tab.js"></script>
 	</head>
 	<body>
 		<div class="container-fluid">
@@ -69,141 +73,25 @@
 							Ajax Requests <span id="ajax-badge" class="badge"></span>
 						</a>
 					</li>
+					<li id="config-tab">
+						<a href="#stagemonitor-metrics" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
+						   title="Show metrics of the application.">
+							Metrics
+						</a>
+					</li>
 				</ul>
 			</div>
 
 			<div class="tab-content">
 				<div class="tab-pane active" id="stagemonitor-home">
+					<!--tabs/call-tree-tab.html-->
 				</div>
 
-				<script id="stagemonitor-calltree-template" type="text/x-handlebars-template">
-					<table id="stagemonitor-calltree" class="table">
-						<thead>
-						<tr>
-							<th>Signature</th>
-							<th class="stagemonitor-calltree-executiontime">Total time (ms)</th>
-							<th class="stagemonitor-calltree-executiontime">Self time (ms)</th>
-						</tr>
-						</thead>
-						<tbody>
-						{{#each callTreeRows}}
-							<tr class="{{#if executionTimeExceededThreshold}}warning{{/if}}" data-tt-expanded="{{#if anyChildExceedsThreshold}}true{{else}}false{{/if}}" data-tt-parent-id="{{parentId}}" data-tt-id="{{myId}}">
-								<td class="stagemonitor-calltree-signature">{{signature}}</td>
-								<td><div class="progress"><div class="progress-bar" style="width: {{executionTimePercent}}%">{{executionTimeInMs}}</div></div></td>
-								<td><div class="progress"><div class="progress-bar" style="width: {{selfExecutionTimePercent}}%">{{selfExecutionTimeInMs}}</div></div></td>
-							</tr>
-						{{/each}}
-						</tbody>
-					</table>
-				</script>
+
 
 				<div class="tab-pane" id="stagemonitor-request">
-
+					<!--tabs/request-tab.html-->
 				</div>
-				<script id="stagemonitor-page-load-time-template" type="text/x-handlebars-template">
-					<h3>Page Load Time</h3>
-					<div class="progress">
-						<div class="progress-bar progress-bar-success tip" style="width: {{networkPercent}}%"
-							 title="{{networkMs}} ms ({{networkPercent}}%)" data-toggle="tooltip" data-placement="right">
-							<span>Network</span>
-						</div>
-						<div class="progress-bar progress-bar-danger tip" style="width: {{serverPercent}}%"
-							 title="{{serverMs}} ms ({{serverPercent}}%)" data-toggle="tooltip">
-							<span>Server</span>
-						</div>
-						<div class="progress-bar progress-bar-warning tip" style="width: {{domProcessingPercent}}%"
-							 title="{{domProcessingMs}} ms ({{domProcessingPercent}}%)" data-toggle="tooltip">
-							<span>DOM Processing</span>
-						</div>
-						<div class="progress-bar progress-bar-info tip" style="width: {{pageRenderingPercent}}%"
-							 title="{{pageRenderingMs}} ms ({{pageRenderingPercent}}%)" data-toggle="tooltip">
-							<span>Page Rendering</span>
-						</div>
-					</div>
-					<table class="table">
-						<tbody>
-							<tr {{#if totalThresholdExceeded}}class="danger"{{/if}}>
-								<td class="col-sm-6">
-									Page Load Time
-									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
-										  title="The Page Load Time is the total time it took from requesting a page
-										  until the page is usable (onLoad event fires)."></span>
-								</td>
-								<td class="col-sm-6">{{totalMs}} ms</td>
-							</tr>
-							<tr>
-								<td class="col-sm-6">
-									Network
-									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
-										  title="The network time is the time from requesting a page until the first
-										  byte arrived minus the server processing time."></span>
-								</td>
-								<td class="col-sm-6">{{networkMs}} ms ({{networkPercent}}%)</td>
-							</tr>
-							<tr {{#if serverThresholdExceeded}}class="danger"{{/if}}>
-								<td class="col-sm-6">
-									Server
-									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
-										  title="The server time is the time it took the server to process the request."></span>
-								</td>
-								<td class="col-sm-6">{{serverMs}} ms ({{serverPercent}}%)</td>
-							</tr>
-							<tr>
-								<td class="col-sm-6">
-									DOM Processing
-									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
-										  title="The DOM Processing time is the time the first byte arrived until the DOM is ready."></span>
-								</td>
-								<td class="col-sm-6">{{domProcessingMs}} ms ({{domProcessingPercent}}%)</td>
-							</tr>
-							<tr>
-								<td class="col-sm-6">
-									Page Rendering
-									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
-										  title="The time between the DOM ready and load event."></span>
-								</td>
-								<td class="col-sm-6">{{pageRenderingMs}} ms ({{pageRenderingPercent}}%)</td>
-							</tr>
-						</tbody>
-					</table>
-				</script>
-				<script id="stagemonitor-request-template" type="text/x-handlebars-template">
-					<h3>General Information</h3>
-					<table class="table">
-						<tbody>
-							{{#each metrics}}
-								<tr class="{{#if exceededThreshold}}danger{{/if}}">
-									<td class="col-sm-6">{{name}} {{#if description}}<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right" title="{{description}}"></span>{{/if}}</td>
-									<td class="col-sm-6">{{value}}</td>
-								</tr>
-							{{/each}}
-						</tbody>
-					</table>
-
-					<h3>Headers</h3>
-					<table class="table">
-						<tbody>
-							{{#each headers}}
-								<tr>
-									<td class="col-sm-6">{{@key}}</td>
-									<td class="col-sm-6">{{this}}</td>
-								</tr>
-							{{/each}}
-						</tbody>
-					</table>
-
-					<h3>User Agent Information</h3>
-					<table class="table">
-						<tbody>
-							{{#each userAgent}}
-								<tr>
-									<td class="col-sm-6">{{@key}}</td>
-									<td class="col-sm-6">{{this}}</td>
-								</tr>
-							{{/each}}
-						</tbody>
-					</table>
-				</script>
 
 				<div class="tab-pane" id="widget-settings">
 					<form class="form-horizontal" role="form">
@@ -262,147 +150,7 @@
 				</div>
 
 				<div class="tab-pane" id="stagemonitor-configuration">
-					<script id="stagemonitor-configuration-template" type="text/x-handlebars-template">
-						<form class="form-horizontal" role="form">
-							<div class="form-group">
-								<label class="col-sm-3 control-label">
-									Reload configuration sources
-									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left"
-										  title="Reload all config sources to pick up
-										  changes not initiated through this ui."></span>
-								</label>
-								<div class="col-sm-9">
-									<input type="hidden" name="reload" value="">
-									<button type="submit" class="btn btn-primary save-configuration"
-											data-success="Refresh page to view updated configuration"
-											data-fail="Failed to reload configuration">
-										Reload
-									</button>
-								</div>
-							</div>
-						</form>
-						<form id="password-form" class="form-horizontal" role="form">
-							<div class="form-group">
-								<label class="col-sm-3 control-label">
-									Save changes to this configuration source
-									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left"
-										  title="This dropdown lists all currently available configuration sources.
-										  Those which cant't be written to are not selectable."></span>
-								</label>
-								<div class="col-sm-2">
-									<select class="form-control rounded" name="configurationSource">
-										{{#each configurationSources}}
-											<option value="{{@key}}" {{#unless this}}disabled{{/unless}}>{{@key}}</option>
-										{{/each}}
-									</select>
-								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-3 control-label">
-									Configuration Update Password
-									<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="right" title="Click to copy config key stagemonitor.password"
-										  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', 'stagemonitor.password');" style="cursor: pointer;"></span>
-									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="
-														The password that is required to dynamically update the configuration via the configuration endpoint.
-														If not set (default) updating the configuration is disabled (reloading is always enabled, though).
-														If set, you have to include the password here in order to update the configuration.
-														If the password is set to an empty string, the password is not required."></span>
-									{{#unless passwordSet}}
-									<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="left"
-										  title="The password is not set, so saving is not possible.
-												To resolve this, add 'stagemonitor.password=<your_pwd>' in stagemonitor.properties, click on 'Reload' and refresh the page.
-												Then enter the password in the password input."></span>
-									{{/unless}}
-								</label>
-								<div class="col-sm-2">
-									<input type="password" class="form-control rounded" name="stagemonitor.password">
-								</div>
-							</div>
-						</form>
-						<div class="panel-group" id="accordion">
-							{{#each configurationOptions}}
-								<div class="panel panel-default">
-
-									<div class="panel-heading">
-										<h4 class="panel-title">
-											<a data-toggle="collapse" data-parent="#accordion" href="#collapse{{@index}}">{{@key}} Configuration</a>
-										</h4>
-									</div>
-
-									<div id="collapse{{@index}}" class="panel-collapse collapse">
-										<div class="panel-body">
-											{{#each this}}
-												<form class="form-horizontal" role="form">
-													<div class="form-group">
-														<label class="col-sm-3 control-label">
-															{{label}}
-															<span class="wide-tooltip">
-																<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip" data-placement="right" title="Click to copy config key {{key}}"
-																	  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', '{{key}}');" style="cursor: pointer;"></span>
-															</span>
-															<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="left" title="{{description}}"></span>
-															<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="left" title="The current source of this value is '{{nameOfCurrentConfigurationSource}}'"></span>
-															{{#if errorMessage}}
-															<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="left" title="{{errorMessage}}"></span>
-															{{/if}}
-															{{#if tags}}<br>{{/if}}
-															{{#each tags}}
-															<span class="label label-default">{{this}}</span>
-															{{/each}}
-														</label>
-														<div class="col-sm-2">
-															<input type="hidden" name="key" value="{{key}}">
-															{{#ifCond valueAsString.length '<' 50}}
-																<input name="value" value="{{valueAsString}}"
-																	{{#ifCond valueType '==' 'Integer'}}type="number"{{/ifCond}}
-																	{{#ifCond valueType '==' 'Long'}}type="number"{{/ifCond}}
-																	{{#ifCond valueType '==' 'Boolean'}}
-																		class="rounded" type="checkbox"
-																		{{#ifCond valueAsString '==' 'true'}}checked{{/ifCond}}
-																	{{else}}
-																		class="form-control rounded"
-																	{{/ifCond}}>
-															{{else}}
-																<textarea class="form-control rounded" name="value">{{valueAsString}}</textarea>
-															{{/ifCond}}
-														</div>
-														<div style="display: inline-block"
-															 class="tip" data-toggle="tooltip" data-placement="top"
-																{{#unless ../../passwordSet}}
-																	 title="The password is not set, so saving is not possible.
-																			To resolve this, add 'stagemonitor.password=<your_pwd>' in stagemonitor.properties, click on 'Reload' and refresh the page.
-																			Then enter the password in the password input."
-																{{/unless}}>
-
-														<button type="submit" class="tip btn save-configuration {{#if dynamic}}btn-primary{{else}}btn-warning{{/if}}"
-																data-success="Successfully saved"
-																data-fail="Failed to save"
-																data-toggle="tooltip" data-placement="top"
-															{{#if ../../passwordSet}}
-																{{#if dynamic}}
-																	title="This configuration option is dynamic.
-																	Changes apply immediately."
-																{{else}}
-																	title="This configuration option is not dynamic.
-																	Changes will apply after a restart of the application.
-																	Therefore it is only possible to save to persistent configuration sources."
-																{{/if}}
-															{{else}}
-																disabled
-															{{/if}}
-															>Save</button>
-														</div>
-													</div>
-												</form>
-											{{/each}}
-										</div>
-									</div>
-
-								</div>
-							{{/each}}
-						</div>
-
-					</script>
+					<!--tabs/config-tab.html-->
 				</div>
 
 				<div class="tab-pane" id="stagemonitor-ajax">
@@ -419,10 +167,13 @@
 						</thead>
 					</table>
 				</div>
-			</div>
-			<!--<div class="position-relative">-->
 
-			<!--</div>-->
+				<div class="tab-pane" id="stagemonitor-metrics">
+					<div id="chart"></div>
+				</div>
+
+			</div>
+
 		</div>
 	</body>
 </html>

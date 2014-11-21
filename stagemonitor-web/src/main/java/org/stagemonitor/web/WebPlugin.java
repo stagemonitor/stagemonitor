@@ -1,5 +1,16 @@
 package org.stagemonitor.web;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
+
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,16 +21,8 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-
-public class WebPlugin extends StagemonitorPlugin {
+@WebListener
+public class WebPlugin extends StagemonitorPlugin implements ServletContextListener {
 
 	public static final String WEB_PLUGIN = "Web Plugin";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -250,5 +253,14 @@ public class WebPlugin extends StagemonitorPlugin {
 
 	public boolean isMonitorOnlyForwardedRequests() {
 		return monitorOnlyForwardedRequests.getValue();
+	}
+
+	@Override
+	public void contextInitialized(ServletContextEvent sce) {
+		//To change body of implemented methods use File | Settings | File Templates.
+	}
+
+	@Override
+	public void contextDestroyed(ServletContextEvent sce) {
 	}
 }

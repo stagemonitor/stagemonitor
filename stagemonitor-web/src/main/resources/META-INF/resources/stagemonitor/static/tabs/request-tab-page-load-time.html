@@ -1,0 +1,67 @@
+<script type="text/x-handlebars-template">
+	<h3>Page Load Time</h3>
+	<div class="progress">
+		<div class="progress-bar progress-bar-success tip" style="width: {{networkPercent}}%"
+			 title="{{networkMs}} ms ({{networkPercent}}%)" data-toggle="tooltip" data-placement="right">
+			<span>Network</span>
+		</div>
+		<div class="progress-bar progress-bar-danger tip" style="width: {{serverPercent}}%"
+			 title="{{serverMs}} ms ({{serverPercent}}%)" data-toggle="tooltip">
+			<span>Server</span>
+		</div>
+		<div class="progress-bar progress-bar-warning tip" style="width: {{domProcessingPercent}}%"
+			 title="{{domProcessingMs}} ms ({{domProcessingPercent}}%)" data-toggle="tooltip">
+			<span>DOM Processing</span>
+		</div>
+		<div class="progress-bar progress-bar-info tip" style="width: {{pageRenderingPercent}}%"
+			 title="{{pageRenderingMs}} ms ({{pageRenderingPercent}}%)" data-toggle="tooltip">
+			<span>Page Rendering</span>
+		</div>
+	</div>
+	<table class="table">
+		<tbody>
+		<tr {{#if totalThresholdExceeded}}class="danger"{{/if}}>
+		<td class="col-sm-6">
+			Page Load Time
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
+										  title="The Page Load Time is the total time it took from requesting a page
+										  until the page is usable (onLoad event fires)."></span>
+		</td>
+		<td class="col-sm-6">{{totalMs}} ms</td>
+		</tr>
+		<tr>
+			<td class="col-sm-6">
+				Network
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
+										  title="The network time is the time from requesting a page until the first
+										  byte arrived minus the server processing time."></span>
+			</td>
+			<td class="col-sm-6">{{networkMs}} ms ({{networkPercent}}%)</td>
+		</tr>
+		<tr {{#if serverThresholdExceeded}}class="danger"{{/if}}>
+		<td class="col-sm-6">
+			Server
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
+										  title="The server time is the time it took the server to process the request."></span>
+		</td>
+		<td class="col-sm-6">{{serverMs}} ms ({{serverPercent}}%)</td>
+		</tr>
+		<tr>
+			<td class="col-sm-6">
+				DOM Processing
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
+										  title="The DOM Processing time is the time the first byte arrived until the DOM is ready."></span>
+			</td>
+			<td class="col-sm-6">{{domProcessingMs}} ms ({{domProcessingPercent}}%)</td>
+		</tr>
+		<tr>
+			<td class="col-sm-6">
+				Page Rendering
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"
+										  title="The time between the DOM ready and load event."></span>
+			</td>
+			<td class="col-sm-6">{{pageRenderingMs}} ms ({{pageRenderingPercent}}%)</td>
+		</tr>
+		</tbody>
+	</table>
+</script>

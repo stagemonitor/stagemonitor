@@ -1,12 +1,12 @@
 package org.stagemonitor.core;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Can be used for stagemonitor Plugins. The {@link #initializePlugin(MetricRegistry, org.stagemonitor.core.configuration.Configuration)} )} Method serves as a initialize callback

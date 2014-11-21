@@ -9,6 +9,7 @@ $(document).ready(function () {
 			thresholdExceededGlobal = renderRequestTab(data);
 			renderConfigTab(configurationSources, configurationOptions, passwordSet, contextPathPrefix);
 			renderCallTree(data);
+			renderMetricsTab();
 			$(".tip").tooltip();
 		},
 		thresholdExceeded: function () {
