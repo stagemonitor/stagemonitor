@@ -144,11 +144,11 @@ public class CorePlugin extends StagemonitorPlugin {
 	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceProfiles = ConfigurationOption.stringsOption()
 			.key("stagemonitor.elasticsearch.configurationSourceProfiles")
 			.dynamic(false)
-			.label("Elasticsearch configuration source ids")
+			.label("Elasticsearch configuration source profiles")
 			.description("Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source " +
 					"that can be shared between multiple server instances. Set the profiles appropriate to the current " +
 					"environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under " +
-					"{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceProfile}.")
+					"`{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceProfile}`.")
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
