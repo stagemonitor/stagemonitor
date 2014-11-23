@@ -1,17 +1,5 @@
 package org.stagemonitor.web.monitor;
 
-import java.security.Principal;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
-import javax.servlet.http.HttpServletRequest;
-
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
@@ -19,8 +7,21 @@ import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
+import javax.servlet.http.HttpServletRequest;
+import java.security.Principal;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
@@ -75,7 +76,8 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 				}
 			};
 		}
-		HttpRequestTrace request = new HttpRequestTrace(nameCallback, url, headers, method, sessionId, connectionId);
+		final String requestId = (String) httpServletRequest.getAttribute(MDCListener.STAGEMONITOR_REQUEST_ID_ATTR);
+		HttpRequestTrace request = new HttpRequestTrace(requestId, nameCallback, url, headers, method, sessionId, connectionId);
 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();

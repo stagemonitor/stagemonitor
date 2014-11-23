@@ -52,7 +52,7 @@ subprojects {
 	dependencies {
 		testCompile 'junit:junit:4.11'
 		testCompile 'org.mockito:mockito-all:1.9.5'
-		testCompile 'org.slf4j:slf4j-simple:1.7.7'
+		testCompile 'ch.qos.logback:logback-classic:1.1.2'
 	}
 
 	test.testLogging.exceptionFormat = 'full'

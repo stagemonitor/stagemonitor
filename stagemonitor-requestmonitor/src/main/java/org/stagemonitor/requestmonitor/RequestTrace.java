@@ -18,13 +18,16 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
 
+/**
+ * A request trace is a data structure containing all the important information about a request.
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestTrace {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@JsonIgnore
-	private final String id = UUID.randomUUID().toString();
+	private final String id;
 	private final GetNameCallback getNameCallback;
 	private String name;
 	@JsonIgnore
@@ -51,7 +54,8 @@ public class RequestTrace {
 	private String username;
 	private String clientIp;
 
-	public RequestTrace(GetNameCallback getNameCallback) {
+	public RequestTrace(String requestId, GetNameCallback getNameCallback) {
+		this.id = requestId != null ? requestId : UUID.randomUUID().toString();
 		MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
 		application = measurementSession.getApplicationName();
 		host = measurementSession.getHostName();

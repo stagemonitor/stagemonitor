@@ -21,7 +21,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
 	@Override
 	public RequestTrace createRequestTrace() {
-		RequestTrace requestTrace = new RequestTrace(new RequestTrace.GetNameCallback() {
+		RequestTrace requestTrace = new RequestTrace(null, new RequestTrace.GetNameCallback() {
 			@Override
 			public String getName() {
 				return methodSignature;

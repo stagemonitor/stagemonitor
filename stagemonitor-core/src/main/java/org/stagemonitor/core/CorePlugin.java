@@ -1,5 +1,10 @@
 package org.stagemonitor.core;
 
+import com.codahale.metrics.MetricRegistry;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,11 +13,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-
+/**
+ * This class contains the configuration options for stagemonitor's core functionality
+ */
 public class CorePlugin implements StagemonitorPlugin {
 
 	private static final String CORE_PLUGIN_NAME = "Core";
@@ -85,6 +88,7 @@ public class CorePlugin implements StagemonitorPlugin {
 					"Either this property or the display-name in web.xml is mandatory!")
 			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags("important")
 			.build();
 	private final ConfigurationOption<String> instanceName = ConfigurationOption.stringOption()
 			.key("stagemonitor.instanceName")
@@ -96,6 +100,7 @@ public class CorePlugin implements StagemonitorPlugin {
 					"That means that the collection of metrics does not start before the first request is executed!")
 			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags("important")
 			.build();
 	private final ConfigurationOption<String> elasticsearchUrl = ConfigurationOption.stringOption()
 			.key("stagemonitor.elasticsearch.url")

@@ -109,7 +109,7 @@ public class RequestMonitorTest {
 		@SuppressWarnings("unchecked")
 		final MonitoredRequest<RequestTrace> monitoredRequest = mock(MonitoredRequest.class);
 		when(monitoredRequest.execute()).thenReturn("test");
-		when(monitoredRequest.createRequestTrace()).thenReturn(new RequestTrace(new RequestTrace.GetNameCallback() {
+		when(monitoredRequest.createRequestTrace()).thenReturn(new RequestTrace(null, new RequestTrace.GetNameCallback() {
 			@Override
 			public String getName() {
 				return "test";

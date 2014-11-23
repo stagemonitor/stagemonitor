@@ -28,7 +28,7 @@ public class RequestTraceServletTest {
 		Mockito.when(webPlugin.isWidgetEnabled()).thenReturn(Boolean.TRUE);
 		requestTraceServlet = new RequestTraceServlet(webPlugin);
 		connectionId = UUID.randomUUID().toString();
-		httpRequestTrace = new HttpRequestTrace(new RequestTrace.GetNameCallback() {
+		httpRequestTrace = new HttpRequestTrace(null, new RequestTrace.GetNameCallback() {
 			@Override
 			public String getName() {
 				return "test";

@@ -1,12 +1,5 @@
 package org.stagemonitor.core;
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -21,6 +14,13 @@ import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
@@ -157,7 +157,7 @@ public final class Stagemonitor {
 		return measurementSession;
 	}
 
-	static boolean isStarted() {
+	public static boolean isStarted() {
 		return started;
 	}
 

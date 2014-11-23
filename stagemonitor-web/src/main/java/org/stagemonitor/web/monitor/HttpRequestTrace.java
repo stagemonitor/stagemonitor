@@ -1,8 +1,5 @@
 package org.stagemonitor.web.monitor;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
@@ -11,6 +8,12 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * This class extends the generic request trace with data specific for http requests
+ */
 public class HttpRequestTrace extends RequestTrace {
 
 	private final UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
@@ -33,9 +36,9 @@ public class HttpRequestTrace extends RequestTrace {
 	@JsonIgnore
 	private final String connectionId;
 
-	public HttpRequestTrace(GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
+	public HttpRequestTrace(String requestId, GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
 							String sessionId, String connectionId) {
-		super(getNameCallback);
+		super(requestId, getNameCallback);
 		this.url = url;
 		this.headers = headers;
 		this.sessionId = sessionId;
