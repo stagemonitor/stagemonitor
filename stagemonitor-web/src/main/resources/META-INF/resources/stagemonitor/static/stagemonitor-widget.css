@@ -119,3 +119,18 @@ body {
 .toolbar .active {
 	color: #428bca;
 }
+
+/*
+ * Metrics tab
+ */
+.sidebar {
+	z-index: 1;
+	width: 250px;
+	position: absolute;
+}
+
+.page-wrapper {
+	position: inherit;
+	margin: 0 0 0 250px;
+	padding: 0 30px;
+}
