@@ -1,6 +1,49 @@
 function renderMetricsTab(contextPath) {
 	var storedMinutes = 5;
 	var tickMs = 1000;
+	var plugins = [
+		{
+			label: "JVM",
+			htmlPath: "tabs/metrics/jvm-metrics.html",
+			jsPath: "tabs/metrics/jvm-metrics.js",
+			pluginVariableName: "jvmPlugin",
+			id: "jvm-metrics"
+		},
+		{
+			label: "JVM2",
+			htmlPath: "tabs/metrics/jvm-metrics.html",
+			jsPath: "tabs/metrics/jvm-metrics.js",
+			pluginVariableName: "jvmPlugin",
+			id: "jvm-metrics2"
+		}
+	];
+
+	var $metricPlugins = $("#metric-plugins");
+	var $sideMenu = $("#side-menu");
+	var graphs = [];
+	$.each(plugins, function (i, plugin) {
+		$sideMenu.append('<li class="plugin-link' + (i == 0 ? ' active' : '') + '">' +
+			'	<a href="#' + plugin.id + '">' + plugin.label + '</a>' +
+			'</li>');
+		$metricPlugins.append('<div id="' + plugin.id + '" class="metric-plugin' + (i != 0 ? ' hidden' : '') + '"></div>');
+		// TODO contextPath
+		$('#'+plugin.id).load(plugin.htmlPath, function() {
+			$.getScript(plugin.jsPath, function() {
+				plugin["pluginVariable"] = window[plugin.pluginVariableName];
+				graphs = graphs.concat(plugin.pluginVariable.getGraphs());
+			});
+		})
+	});
+
+	// select a plugin from the side bar
+	$sideMenu.find("a").click(function () {
+		var thisLink = $(this);
+		$(".plugin-link").removeClass("active");
+		thisLink.parent().addClass("active");
+		$(".metric-plugin").addClass("hidden");
+		$(thisLink.attr("href")).removeClass("hidden");
+		return false;
+	});
 
 	function getMetricsFromServer(callback) {
 //		$.getJSON(contextPath + "/stagemonitor/metrics", function(data) {
@@ -8,55 +51,13 @@ function renderMetricsTab(contextPath) {
 			var date = new Date();
 			data['timestamp'] = date.getTime();
 			callback(data);
+
+			// notify plugins about new metrics
+			$.each(plugins, function (i, plugin) {
+				plugin.pluginVariable.onMetricsReceived(data);
+			});
 		});
 	}
-
-	var graphs = [
-		{
-			bindto: '#memory',
-			min: 0,
-			format: 'bytes',
-			fill: 0.1,
-			columns: [
-				["gauges", "jvm.memory.heap.(max)", "value"],
-				["gauges", "jvm.memory.heap.(committed)", "value"],
-				["gauges", "jvm.memory.heap.(used)", "value"]
-			]
-		},
-		{
-			bindto: '#memory-pools',
-			min: 0,
-			max: 1,
-			format: 'percent',
-			columns: [
-				["gauges", /jvm.memory.pools.([^\.]+).usage/, "value"]
-			]
-		},
-		{
-			bindto: '#cpu',
-			min: 0,
-			max: 1,
-			fill: 0.1,
-			format: 'percent',
-			columns: [
-				["gauges", "jvm.cpu.process.(usage)", "value"]
-			],
-			padding: {bottom: 0, top: 0 }
-		},
-		{
-			bindto: '#gc',
-			min: 0,
-			fill: 0.1,
-			format: 'ms',
-			derivative: true,
-			columns: [
-				["gauges", /jvm.gc.([^\.]+).time/, "value"]
-			],
-			padding: {bottom: 0, top: 0 }
-		}
-	];
-
-
 
 	$("#metrics-tab").find("a").one('click', function () {
 		getMetricsFromServer(function (data) {
