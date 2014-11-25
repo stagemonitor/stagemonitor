@@ -64,5 +64,9 @@ $(document).ready(function () {
 		delay: 5000
 	});
 
-	window.parent.StagemonitorLoaded();
+	try {
+		window.parent.StagemonitorLoaded();
+
+	} catch (e){}
+
 });

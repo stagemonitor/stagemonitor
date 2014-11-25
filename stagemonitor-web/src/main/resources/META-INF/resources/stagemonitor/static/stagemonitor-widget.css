@@ -134,3 +134,14 @@ body {
 	margin: 0 0 0 250px;
 	padding: 0 30px;
 }
+
+#flotTip {
+	color: white;
+	background: black !important;
+	font-size: 0.9em !important;
+}
+
+.col-lg-6 {
+	padding-right: 10px;
+	padding-left: 10px;
+}
