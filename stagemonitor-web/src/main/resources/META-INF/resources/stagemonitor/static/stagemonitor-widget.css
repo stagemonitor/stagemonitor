@@ -145,3 +145,7 @@ body {
 	padding-right: 10px;
 	padding-left: 10px;
 }
+
+.invisible {
+	top: -1000px;
+}
