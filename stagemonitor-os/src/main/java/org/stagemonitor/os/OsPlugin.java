@@ -79,7 +79,9 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 	public static Sigar newSigar() throws Exception {
 		final String libraryPath = NativeUtils.addResourcesToLibraryPath(getSigarBindings(), "sigar");
 		try {
-			return new Sigar();
+			final Sigar s = new Sigar();
+			s.getCpuInfoList();
+			return s;
 		} catch (UnsatisfiedLinkError e) {
 			logger.warn("Please add -Djava.library.path={} system property to resolve the UnsatisfiedLinkError", libraryPath);
 			throw new RuntimeException(e);
