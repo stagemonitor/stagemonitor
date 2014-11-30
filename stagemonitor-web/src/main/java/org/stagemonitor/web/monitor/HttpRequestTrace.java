@@ -8,6 +8,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -19,12 +20,12 @@ public class HttpRequestTrace extends RequestTrace {
 	private final UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
 	private static final int MAX_ELEMENTS = 100;
 	private static final Map<String, ReadableUserAgent> userAgentCache =
-			new LinkedHashMap<String, ReadableUserAgent>(MAX_ELEMENTS + 1, 0.75f, true) {
+			Collections.synchronizedMap(new LinkedHashMap<String, ReadableUserAgent>(MAX_ELEMENTS + 1, 0.75f, true) {
 				@Override
 				protected boolean removeEldestEntry(Map.Entry eldest) {
 					return size() > MAX_ELEMENTS;
 				}
-			};
+			});
 
 	private final String url;
 	private Integer statusCode;
