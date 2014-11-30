@@ -1,7 +1,5 @@
 package org.stagemonitor.jvm;
 
-import java.util.Collections;
-import java.util.List;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
@@ -11,16 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
-public class JvmPlugin implements StagemonitorPlugin {
+public class JvmPlugin extends StagemonitorPlugin {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-
-	@Override
-	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Collections.emptyList();
-	}
 
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration configuration) {

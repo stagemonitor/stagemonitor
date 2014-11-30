@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Simple library class for working with JNI (Java Native Interface)
  *
- * @see http://frommyplayground.com/how-to-load-native-jni-library-from-jar
+ * http://frommyplayground.com/how-to-load-native-jni-library-from-jar
  *
  * @author Adam Heirnich &lt;adam@adamh.cz&gt;, http://www.adamh.cz
  */

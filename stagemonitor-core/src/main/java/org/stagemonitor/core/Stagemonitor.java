@@ -1,29 +1,16 @@
 package org.stagemonitor.core;
 
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.metrics.MetricsWithCountFilter;
-import org.stagemonitor.core.metrics.OrMetricFilter;
-import org.stagemonitor.core.metrics.RegexMetricFilter;
-import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.ServiceLoader;
-import java.util.concurrent.TimeUnit;
-
-import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 public final class Stagemonitor {
 
@@ -64,23 +51,13 @@ public final class Stagemonitor {
 	}
 
 	private static void start(MeasurementSession measurementSession) {
-		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
-		initializePlugins(corePlugin);
-		RegexMetricFilter regexFilter = new RegexMetricFilter(corePlugin.getExcludedMetricsPatterns());
-		getMetricRegistry().removeMatching(regexFilter);
-
-		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
-
-		reportToGraphite(corePlugin.getGraphiteReportingInterval(), measurementSession, allFilters, corePlugin);
-		reportToConsole(corePlugin.getConsoleReportingInterval(), allFilters);
-		if (corePlugin.reportToJMX()) {
-			reportToJMX(allFilters);
-		}
+		initializePlugins();
 		logger.info("Measurement Session is initialized: " + measurementSession);
 		started = true;
 	}
 
-	private static void initializePlugins(CorePlugin corePlugin) {
+	private static void initializePlugins() {
+		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
 		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class)) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
@@ -99,46 +76,19 @@ public final class Stagemonitor {
 		}
 	}
 
+	/**
+	 * Should be called when the server is shutting down.
+	 * Calls the {@link StagemonitorPlugin#onShutDown()} method of all plugins
+	 */
+	public static void shutDown() {
+		measurementSession.setEndTimestamp(System.currentTimeMillis());
+		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class)) {
+			stagemonitorPlugin.onShutDown();
+		}
+	}
+
 	public static MetricRegistry getMetricRegistry() {
 		return SharedMetricRegistries.getOrCreate("stagemonitor");
-	}
-
-	private static void reportToGraphite(long reportingInterval, MeasurementSession measurementSession,
-										 MetricFilter filter, CorePlugin corePlugin) {
-		String graphiteHostName = corePlugin.getGraphiteHostName();
-		if (graphiteHostName != null && !graphiteHostName.isEmpty()) {
-			GraphiteReporter.forRegistry(getMetricRegistry())
-					.prefixedWith(getGraphitePrefix(measurementSession))
-					.convertRatesTo(TimeUnit.SECONDS)
-					.convertDurationsTo(TimeUnit.MILLISECONDS)
-					.filter(filter)
-					.build(new Graphite(new InetSocketAddress(graphiteHostName, corePlugin.getGraphitePort())))
-					.start(reportingInterval, TimeUnit.SECONDS);
-		}
-	}
-
-	private static String getGraphitePrefix(MeasurementSession measurementSession) {
-		return name("stagemonitor",
-				sanitizeGraphiteMetricSegment(measurementSession.getApplicationName()),
-				sanitizeGraphiteMetricSegment(measurementSession.getInstanceName()),
-				sanitizeGraphiteMetricSegment(measurementSession.getHostName()));
-	}
-
-	private static void reportToConsole(long reportingInterval, MetricFilter filter) {
-		if (reportingInterval > 0) {
-			SortedTableLogReporter.forRegistry(getMetricRegistry())
-					.convertRatesTo(TimeUnit.SECONDS)
-					.convertDurationsTo(TimeUnit.MILLISECONDS)
-					.filter(filter)
-					.build()
-					.start(reportingInterval, TimeUnit.SECONDS);
-		}
-	}
-
-	private static void reportToJMX(MetricFilter filter) {
-		JmxReporter.forRegistry(getMetricRegistry())
-				.filter(filter)
-				.build().start();
 	}
 
 	public static Configuration getConfiguration() {

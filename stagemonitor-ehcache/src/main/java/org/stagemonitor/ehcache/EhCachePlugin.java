@@ -1,8 +1,5 @@
 package org.stagemonitor.ehcache;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.codahale.metrics.MetricRegistry;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -11,10 +8,13 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
-public class EhCachePlugin implements StagemonitorPlugin {
+public class EhCachePlugin extends StagemonitorPlugin {
 
 	private final ConfigurationOption<String> ehCacheNameOption = ConfigurationOption.stringOption()
 			.key("stagemonitor.ehcache.name")

@@ -1,18 +1,9 @@
 package org.stagemonitor.core;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
 
-public class TestExceptionPlugin implements StagemonitorPlugin {
-
-	@Override
-	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Collections.emptyList();
-	}
+public class TestExceptionPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {

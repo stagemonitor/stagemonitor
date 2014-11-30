@@ -1,24 +1,43 @@
 package org.stagemonitor.core;
 
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.metrics.MetricsAggregationReporter;
+import org.stagemonitor.core.metrics.MetricsWithCountFilter;
+import org.stagemonitor.core.metrics.OrMetricFilter;
+import org.stagemonitor.core.metrics.RegexMetricFilter;
+import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+
 /**
  * This class contains the configuration options for stagemonitor's core functionality
  */
-public class CorePlugin implements StagemonitorPlugin {
+public class CorePlugin extends StagemonitorPlugin {
 
 	private static final String CORE_PLUGIN_NAME = "Core";
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	final ConfigurationOption<Boolean> stagemonitorActive = ConfigurationOption.booleanOption()
 			.key("stagemonitor.active")
@@ -43,6 +62,16 @@ public class CorePlugin implements StagemonitorPlugin {
 			.description("The amount of time between console reports (in seconds). " +
 					"To deactivate console reports, set this to a value below 1.")
 			.defaultValue(60)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<Integer> reportingIntervalAggregation = ConfigurationOption.integerOption()
+			.key("stagemonitor.reporting.interval.aggregation")
+			.dynamic(false)
+			.label("Metrics aggregation interval")
+			.description("The amount of time between all registered metrics are aggregated for a report on server " +
+					"shutdown that shows aggregated values for all metrics of the measurement session. " +
+					"To deactivate a aggregate report on shutdown, set this to a value below 1.")
+			.defaultValue(30)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Boolean> reportingJmx = ConfigurationOption.booleanOption()
@@ -158,17 +187,88 @@ public class CorePlugin implements StagemonitorPlugin {
 			.defaultValue(60)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private static MetricsAggregationReporter aggregationReporter;
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
-		final Integer reloadInterval = configuration.getConfig(CorePlugin.class).getReloadConfigurationInterval();
+		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
+		final Integer reloadInterval = corePlugin.getReloadConfigurationInterval();
 		if (reloadInterval > 0) {
 			configuration.scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
 		}
 
 		ElasticsearchClient.sendGrafanaDashboardAsync("Custom Metrics.json");
-		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-configuration-index-template.json");
+		InputStream resourceAsStream = getClass().getClassLoader()
+				.getResourceAsStream("stagemonitor-elasticsearch-configuration-index-template.json");
 		ElasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor-configuration", resourceAsStream);
+
+		registerReporters(metricRegistry, corePlugin);
+	}
+
+	private void registerReporters(MetricRegistry metricRegistry, CorePlugin corePlugin) {
+		RegexMetricFilter regexFilter = new RegexMetricFilter(corePlugin.getExcludedMetricsPatterns());
+		metricRegistry.removeMatching(regexFilter);
+
+		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
+
+		reportToGraphite(metricRegistry, corePlugin.getGraphiteReportingInterval(),
+				Stagemonitor.getMeasurementSession(), allFilters, corePlugin);
+
+		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
+		reportToConsole(metricRegistry, corePlugin.getConsoleReportingInterval(), allFilters, onShutdownReporters);
+		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, corePlugin.getAggregationReportingInterval());
+		if (corePlugin.reportToJMX()) {
+			reportToJMX(metricRegistry, allFilters);
+		}
+	}
+
+	private void registerAggregationReporter(MetricRegistry metricRegistry, MetricFilter allFilters,
+											 List<ScheduledReporter> onShutdownReporters, long reportingInterval) {
+		if (reportingInterval > 0) {
+			aggregationReporter = new MetricsAggregationReporter(metricRegistry, allFilters, onShutdownReporters);
+			aggregationReporter.start(reportingInterval, TimeUnit.SECONDS);
+		}
+	}
+
+	private static void reportToGraphite(MetricRegistry metricRegistry, long reportingInterval,
+										 MeasurementSession measurementSession,
+										 MetricFilter filter, CorePlugin corePlugin) {
+		String graphiteHostName = corePlugin.getGraphiteHostName();
+		if (graphiteHostName != null && !graphiteHostName.isEmpty()) {
+			GraphiteReporter.forRegistry(metricRegistry)
+					.prefixedWith(getGraphitePrefix(measurementSession))
+					.convertRatesTo(TimeUnit.SECONDS)
+					.convertDurationsTo(TimeUnit.MILLISECONDS)
+					.filter(filter)
+					.build(new Graphite(new InetSocketAddress(graphiteHostName, corePlugin.getGraphitePort())))
+					.start(reportingInterval, TimeUnit.SECONDS);
+		}
+	}
+
+	private static String getGraphitePrefix(MeasurementSession measurementSession) {
+		return name("stagemonitor",
+				sanitizeGraphiteMetricSegment(measurementSession.getApplicationName()),
+				sanitizeGraphiteMetricSegment(measurementSession.getInstanceName()),
+				sanitizeGraphiteMetricSegment(measurementSession.getHostName()));
+	}
+
+	private static void reportToConsole(MetricRegistry metricRegistry, long reportingInterval, MetricFilter filter,
+										List<ScheduledReporter> onShutdownReporters) {
+		final SortedTableLogReporter reporter = SortedTableLogReporter.forRegistry(metricRegistry)
+				.convertRatesTo(TimeUnit.SECONDS)
+				.convertDurationsTo(TimeUnit.MILLISECONDS)
+				.filter(filter)
+				.build();
+		onShutdownReporters.add(reporter);
+		if (reportingInterval > 0) {
+			reporter.start(reportingInterval, TimeUnit.SECONDS);
+		}
+	}
+
+	private static void reportToJMX(MetricRegistry metricRegistry, MetricFilter filter) {
+		JmxReporter.forRegistry(metricRegistry)
+				.filter(filter)
+				.build().start();
 	}
 
 	@Override
@@ -176,7 +276,17 @@ public class CorePlugin implements StagemonitorPlugin {
 		return Arrays.<ConfigurationOption<?>>asList(stagemonitorActive, internalMonitoring, reportingIntervalConsole,
 				reportingJmx, reportingIntervalGraphite, graphiteHostName, graphitePort, applicationName, instanceName,
 				elasticsearchUrl, elasticsearchConfigurationSourceProfiles, deactivateStagemonitorIfEsConfigSourceIsDown,
-				excludedMetrics, disabledPlugins, reloadConfigurationInterval);
+				excludedMetrics, disabledPlugins, reloadConfigurationInterval, reportingIntervalAggregation);
+	}
+
+	@Override
+	public void onShutDown() {
+		if (aggregationReporter != null) {
+			logger.info("\n####################################################\n" +
+					"## Aggregated report for this measurement session ##\n" +
+					"####################################################\n");
+			aggregationReporter.onShutDown();
+		}
 	}
 
 	public boolean isStagemonitorActive() {
@@ -189,6 +299,11 @@ public class CorePlugin implements StagemonitorPlugin {
 
 	public long getConsoleReportingInterval() {
 		return reportingIntervalConsole.getValue();
+	}
+
+
+	private long getAggregationReportingInterval() {
+		return reportingIntervalAggregation.getValue();
 	}
 
 	public boolean reportToJMX() {

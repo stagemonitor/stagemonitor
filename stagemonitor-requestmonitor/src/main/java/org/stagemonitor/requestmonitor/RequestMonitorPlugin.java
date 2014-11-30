@@ -1,16 +1,16 @@
 package org.stagemonitor.requestmonitor;
 
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
-public class RequestMonitorPlugin implements StagemonitorPlugin {
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
+
+public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public static final String REQUEST_MONITOR_PLUGIN = "Request Monitor Plugin";
 	private final ConfigurationOption<Integer> noOfWarmupRequests = ConfigurationOption.integerOption()

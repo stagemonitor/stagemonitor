@@ -7,7 +7,7 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import java.util.Collections;
 import java.util.List;
 
-public class TestPlugin implements StagemonitorPlugin {
+public class TestPlugin extends StagemonitorPlugin {
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {

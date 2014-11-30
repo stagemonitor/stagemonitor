@@ -1,18 +1,23 @@
 package org.stagemonitor.core.metrics;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
 import java.util.Locale;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
-public class SortedTableLogReporterTest {
+public class SortedTableLogReporterTest extends AbstractMetricsReporterTest {
 
 	private Logger logger;
 	private SortedTableLogReporter reporter;
@@ -32,8 +37,7 @@ public class SortedTableLogReporterTest {
 
 	@Test
 	public void reportsGaugeValues() throws Exception {
-		final SortedMap<String, Gauge> gauges = map("gauge3", gauge(3)).add("gaugeWithLongName1", gauge(1)).add("gauge2", gauge(2));
-		reporter.report(gauges, this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+		reporter.report(testGauges(), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +
@@ -46,15 +50,14 @@ public class SortedTableLogReporterTest {
 				"\n");
 	}
 
+	private FluentMap<String, Gauge> testGauges() {
+		return map("gauge3", gauge(3)).add("gaugeWithLongName1", gauge(1)).add("gauge2", gauge(2));
+	}
+
 	@Test
 	public void reportsCounterValues() throws Exception {
-		final Counter counter1 = mock(Counter.class);
-		when(counter1.getCount()).thenReturn(100L);
-		final Counter counter2 = mock(Counter.class);
-		when(counter2.getCount()).thenReturn(200L);
-
-		final SortedMap<String, Counter> counters = map("test.counter", counter1).add("test.counter2", counter2);
-		reporter.report(this.<Gauge>map(), counters, this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+		reporter.report(this.<Gauge>map(), map("test.counter", counter(100L)).add("test.counter2", counter(200L)),
+				this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +
@@ -71,42 +74,22 @@ public class SortedTableLogReporterTest {
 
 		reporter.report(this.<Gauge>map(),
 				this.<Counter>map(),
-				map("test.histogram", histogram(3.0)).add("test.histogram2", histogram(4.0)),
+				testHistograms(),
 				this.<Meter>map(),
 				this.<Timer>map());
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +
 				"-- Histograms ------------------------------------------------------------------\n" +
-				"name            | count     | mean      | max       | min       | stddev    | p50       | p75       | p95       | p98       | p99       | p999\n" +
+				"name            | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      |\n" +
 				"test.histogram2 |         1 |      4.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 | \n" +
 				" test.histogram |         1 |      3.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 | \n" +
 				"\n" +
 				"\n");
 	}
 
-	private Histogram histogram(double mean) {
-		final Histogram histogram = mock(Histogram.class);
-		when(histogram.getCount()).thenReturn(1L);
-
-		final Snapshot snapshot = snapshot(mean);
-		when(histogram.getSnapshot()).thenReturn(snapshot);
-		return histogram;
-	}
-
-	private Snapshot snapshot(double mean) {
-		final Snapshot snapshot = mock(Snapshot.class);
-		when(snapshot.getMax()).thenReturn(2L);
-		when(snapshot.getMean()).thenReturn(mean);
-		when(snapshot.getMin()).thenReturn(4L);
-		when(snapshot.getStdDev()).thenReturn(5.0);
-		when(snapshot.getMedian()).thenReturn(6.0);
-		when(snapshot.get75thPercentile()).thenReturn(7.0);
-		when(snapshot.get95thPercentile()).thenReturn(8.0);
-		when(snapshot.get98thPercentile()).thenReturn(9.0);
-		when(snapshot.get99thPercentile()).thenReturn(10.0);
-		when(snapshot.get999thPercentile()).thenReturn(11.0);
-		return snapshot;
+	private FluentMap<String, Histogram> testHistograms() {
+		return map("test.histogram", histogram(3.0)).add("test.histogram2", histogram(4.0));
 	}
 
 	@Test
@@ -126,16 +109,6 @@ public class SortedTableLogReporterTest {
 				"test.meter1 |         1 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
 				"\n" +
 				"\n");
-	}
-
-	private Meter meter(long count) {
-		final Meter meter = mock(Meter.class);
-		when(meter.getCount()).thenReturn(count);
-		when(meter.getMeanRate()).thenReturn(2.0);
-		when(meter.getOneMinuteRate()).thenReturn(3.0);
-		when(meter.getFiveMinuteRate()).thenReturn(4.0);
-		when(meter.getFifteenMinuteRate()).thenReturn(5.0);
-		return meter;
 	}
 
 	@Test
@@ -158,38 +131,4 @@ public class SortedTableLogReporterTest {
 				"\n");
 	}
 
-	private Timer timer(double mean) {
-		final Timer timer = mock(Timer.class);
-		when(timer.getCount()).thenReturn(1L);
-		when(timer.getMeanRate()).thenReturn(2.0);
-		when(timer.getOneMinuteRate()).thenReturn(3.0);
-		when(timer.getFiveMinuteRate()).thenReturn(4.0);
-		when(timer.getFifteenMinuteRate()).thenReturn(5.0);
-		final Snapshot snapshot = snapshot(mean);
-		when(timer.getSnapshot()).thenReturn(snapshot);
-		return timer;
-	}
-
-	private <T> SortedMap<String, T> map() {
-		return new TreeMap<String, T>();
-	}
-
-	private <T> FluentMap<String, T> map(String name, T metric) {
-		final FluentMap<String, T> map = new FluentMap<String, T>();
-		map.put(name, metric);
-		return map;
-	}
-
-	private <T> Gauge gauge(T value) {
-		final Gauge gauge = mock(Gauge.class);
-		when(gauge.getValue()).thenReturn(value);
-		return gauge;
-	}
-
-	private class FluentMap<K, V> extends TreeMap<K, V> {
-		public FluentMap<K, V> add(K key, V value) {
-			this.put(key, value);
-			return this;
-		}
-	}
 }

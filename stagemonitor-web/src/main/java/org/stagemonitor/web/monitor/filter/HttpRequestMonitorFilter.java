@@ -1,22 +1,5 @@
 package org.stagemonitor.web.monitor.filter;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ServiceLoader;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +15,23 @@ import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.MonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
 import org.stagemonitor.web.monitor.widget.StagemonitorWidgetHtmlInjector;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ServiceLoader;
 
 import static javax.servlet.DispatcherType.FORWARD;
 import static javax.servlet.DispatcherType.REQUEST;
@@ -224,5 +224,10 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		} else {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public void destroy() {
+		Stagemonitor.shutDown();
 	}
 }

@@ -8,6 +8,8 @@ public class MeasurementSession {
 	private final String applicationName;
 	private final String hostName;
 	private final String instanceName;
+	private final long startTimestamp;
+	private long endTimestamp;
 
 	private final String stringRepresentation;
 
@@ -16,6 +18,7 @@ public class MeasurementSession {
 		this.hostName = hostName;
 		this.instanceName = instanceName;
 		stringRepresentation = "[application=" + applicationName + "] [instance=" + instanceName + "] [host=" + hostName + "]";
+		startTimestamp = System.currentTimeMillis();
 	}
 
 	public String getApplicationName() {
@@ -32,6 +35,18 @@ public class MeasurementSession {
 
 	public boolean isInitialized() {
 		return applicationName != null && instanceName != null && hostName != null;
+	}
+
+	public long getStartTimestamp() {
+		return startTimestamp;
+	}
+
+	public long getEndTimestamp() {
+		return endTimestamp;
+	}
+
+	public void setEndTimestamp(long endTimestamp) {
+		this.endTimestamp = endTimestamp;
 	}
 
 	public boolean isNull() {

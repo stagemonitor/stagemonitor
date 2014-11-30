@@ -1,14 +1,14 @@
 package org.stagemonitor.springmvc;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 
-public class SpringMvcPlugin implements StagemonitorPlugin {
+import java.util.ArrayList;
+import java.util.List;
+
+public class SpringMvcPlugin extends StagemonitorPlugin {
 
 	private ConfigurationOption<Boolean> onlyMvcOption = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.spring.monitorOnlySpringMvcRequests")

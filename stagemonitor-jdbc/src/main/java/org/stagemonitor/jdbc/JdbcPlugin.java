@@ -1,15 +1,15 @@
 package org.stagemonitor.jdbc;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
-public class JdbcPlugin implements StagemonitorPlugin {
+import java.util.Arrays;
+import java.util.List;
+
+public class JdbcPlugin extends StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
 	private final ConfigurationOption<Boolean> collectSql = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.jdbc.collectSql")

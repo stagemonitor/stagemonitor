@@ -1,13 +1,5 @@
 package org.stagemonitor.os;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.codahale.metrics.MetricRegistry;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
@@ -31,7 +23,15 @@ import org.stagemonitor.os.metrics.MemoryMetricSet;
 import org.stagemonitor.os.metrics.NetworkMetricSet;
 import org.stagemonitor.os.metrics.SwapMetricSet;
 
-public class OsPlugin implements StagemonitorPlugin, StagemonitorConfigurationSourceInitializer {
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigurationSourceInitializer {
 
 	private final static Logger logger = LoggerFactory.getLogger(OsPlugin.class);
 	private static ConfigurationSource argsConfigurationSource;
