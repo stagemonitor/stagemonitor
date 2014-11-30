@@ -15,6 +15,7 @@ import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
+import org.stagemonitor.core.metrics.SimpleElasticsearchReporter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
 import java.io.InputStream;
@@ -199,8 +200,8 @@ public class CorePlugin extends StagemonitorPlugin {
 
 		ElasticsearchClient.sendGrafanaDashboardAsync("Custom Metrics.json");
 		InputStream resourceAsStream = getClass().getClassLoader()
-				.getResourceAsStream("stagemonitor-elasticsearch-configuration-index-template.json");
-		ElasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor-configuration", resourceAsStream);
+				.getResourceAsStream("stagemonitor-elasticsearch-mapping.json");
+		ElasticsearchClient.sendAsJsonAsync("PUT", "/stagemonitor", resourceAsStream);
 
 		registerReporters(metricRegistry, corePlugin);
 	}
@@ -215,6 +216,8 @@ public class CorePlugin extends StagemonitorPlugin {
 				Stagemonitor.getMeasurementSession(), allFilters, corePlugin);
 
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
+		onShutdownReporters.add(new SimpleElasticsearchReporter(metricRegistry, "simple-es-reporter", allFilters));
+
 		reportToConsole(metricRegistry, corePlugin.getConsoleReportingInterval(), allFilters, onShutdownReporters);
 		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, corePlugin.getAggregationReportingInterval());
 		if (corePlugin.reportToJMX()) {

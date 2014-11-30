@@ -3,6 +3,7 @@ dependencies {
 	compile 'io.dropwizard.metrics:metrics-core:3.1.0'
 	compile 'io.dropwizard.metrics:metrics-graphite:3.1.0'
 	compile 'io.dropwizard.metrics:metrics-annotation:3.1.0'
+	compile 'io.dropwizard.metrics:metrics-json:3.1.0'
 	compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
 	compile 'com.fasterxml.jackson.module:jackson-module-afterburner:2.4.3'
 	// necessary for load-time-weaving

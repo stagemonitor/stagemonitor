@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class SortedTableLogReporterTest extends AbstractMetricsReporterTest {
+public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 
 	private Logger logger;
 	private SortedTableLogReporter reporter;

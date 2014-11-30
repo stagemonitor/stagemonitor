@@ -1,0 +1,37 @@
+{
+	"mappings" : {
+		"configuration": {
+			"_all" : { "enabled" : false },
+			"dynamic_templates": [
+				{
+					"fields": {
+						"match": "*",
+						"mapping": {
+							"type": "string",
+							"index": "not_analyzed"
+						}
+					}
+				}
+			]
+		},
+		"measurementSessions": {
+			"_all" : { "enabled" : false },
+			"dynamic_templates": [
+				{
+					"fields": {
+						"match": "*",
+						"match_mapping_type" : "string",
+						"mapping": {
+							"type": "string",
+							"index": "not_analyzed"
+						}
+					}
+				}
+			],
+			"properties" : {
+				"startTimestamp": { "type": "date"},
+				"endTimestamp": { "type": "date"}
+			}
+		}
+	}
+}

@@ -1,6 +1,9 @@
 package org.stagemonitor.core;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.stagemonitor.core.util.StringUtils;
+
 import java.net.InetAddress;
 
 public class MeasurementSession {
@@ -33,22 +36,27 @@ public class MeasurementSession {
 		return instanceName;
 	}
 
+	@JsonIgnore
 	public boolean isInitialized() {
 		return applicationName != null && instanceName != null && hostName != null;
 	}
 
-	public long getStartTimestamp() {
-		return startTimestamp;
+	public String getStartTimestamp() {
+		return StringUtils.timestampAsIsoString(startTimestamp);
 	}
 
-	public long getEndTimestamp() {
-		return endTimestamp;
+	public String getEndTimestamp() {
+		if (endTimestamp > 0) {
+			return StringUtils.timestampAsIsoString(endTimestamp);
+		}
+		return null;
 	}
 
 	public void setEndTimestamp(long endTimestamp) {
 		this.endTimestamp = endTimestamp;
 	}
 
+	@JsonIgnore
 	public boolean isNull() {
 		return applicationName == null && instanceName == null && hostName == null;
 	}

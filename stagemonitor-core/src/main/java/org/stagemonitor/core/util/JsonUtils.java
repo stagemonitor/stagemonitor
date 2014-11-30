@@ -1,5 +1,6 @@
 package org.stagemonitor.core.util;
 
+import com.codahale.metrics.json.MetricsModule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 public class JsonUtils {
 
@@ -25,6 +27,7 @@ public class JsonUtils {
 		if (MAPPER.version().compareTo(new Version(2, 3, 0, null, "com.fasterxml.jackson.core", "jackson-databind")) >= 0) {
 			MAPPER.registerModule(new AfterburnerModule());
 		}
+		MAPPER.registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, false));
 	}
 
 	public static String toJson(Object o) {

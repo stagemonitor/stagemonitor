@@ -8,14 +8,12 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
 import java.util.UUID;
 
 /**
@@ -61,10 +59,7 @@ public class RequestTrace {
 		host = measurementSession.getHostName();
 		instance = measurementSession.getInstanceName();
 		this.getNameCallback = getNameCallback;
-		TimeZone tz = TimeZone.getDefault();
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-		df.setTimeZone(tz);
-		this.timestamp = df.format(new Date());
+		this.timestamp = StringUtils.dateAsIsoString(new Date());
 	}
 
 	public boolean isError() {
