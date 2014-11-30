@@ -51,7 +51,7 @@ subprojects {
 
 	dependencies {
 		testCompile 'junit:junit:4.11'
-		testCompile 'org.mockito:mockito-all:1.9.5'
+		testCompile 'org.mockito:mockito-all:1.10.8'
 		testCompile 'ch.qos.logback:logback-classic:1.1.2'
 	}
 
