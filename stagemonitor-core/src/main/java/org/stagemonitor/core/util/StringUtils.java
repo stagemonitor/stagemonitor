@@ -36,4 +36,8 @@ public class StringUtils {
 	public static String timestampAsIsoString(long timestamp) {
 		return dateAsIsoString(new Date(timestamp));
 	}
+
+	public static String slugify(String s) {
+		return s.toLowerCase().replaceAll("[^\\w ]+", "").replaceAll("\\s+", "-");
+	}
 }

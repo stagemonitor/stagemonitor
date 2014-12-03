@@ -26,6 +26,9 @@ import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.StringUtils;
+
+import static org.stagemonitor.core.util.StringUtils.slugify;
 
 public class ElasticsearchClient {
 
@@ -124,16 +127,13 @@ public class ElasticsearchClient {
 		if (baseUrl != null && !baseUrl.isEmpty()) {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
-				return ElasticsearchClient.sendAsJsonAsync("PUT", path + slugifyTitle(dashboard) + "/_create", dashboard);
+				final String titleSlug = slugify(dashboard.get(TITLE).asText());
+				return ElasticsearchClient.sendAsJsonAsync("PUT", path + titleSlug + "/_create", dashboard);
 			} catch (IOException e) {
 				logger.warn(e.getMessage(), e);
 			}
 		}
 		return new CompletedFuture<Object>(null);
-	}
-
-	private static String slugifyTitle(ObjectNode dashboard) {
-		return dashboard.get(TITLE).asText().toLowerCase().replaceAll("[^\\w ]+", "").replaceAll("\\s+", "-");
 	}
 
 	static ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
@@ -201,12 +201,12 @@ public class ElasticsearchClient {
 		}
 
 		@Override
-		public T get() throws InterruptedException, ExecutionException {
+		public T get() {
 			return this.result;
 		}
 
 		@Override
-		public T get(final long l, final TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+		public T get(final long l, final TimeUnit timeUnit) {
 			return get();
 		}
 	}
