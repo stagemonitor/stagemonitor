@@ -4,13 +4,13 @@ dependencies {
 	compile 'io.dropwizard.metrics:metrics-graphite:3.1.0'
 	compile 'io.dropwizard.metrics:metrics-annotation:3.1.0'
 	compile 'io.dropwizard.metrics:metrics-json:3.1.0'
-	compile 'com.fasterxml.jackson.core:jackson-databind:2.4.3'
-	compile 'com.fasterxml.jackson.module:jackson-module-afterburner:2.4.3'
+	compile 'com.fasterxml.jackson.core:jackson-databind:2.4.4'
+	compile 'com.fasterxml.jackson.module:jackson-module-afterburner:2.4.4'
 	// necessary for load-time-weaving
 	compile 'org.aspectj:aspectjtools:1.8.4'
 	compile 'org.aspectj:aspectjrt:1.8.4'
 
-	testCompile 'org.elasticsearch:elasticsearch:1.4.0'
+	testCompile 'org.elasticsearch:elasticsearch:1.4.1'
 	testCompile 'commons-io:commons-io:2.4'
 }
 
