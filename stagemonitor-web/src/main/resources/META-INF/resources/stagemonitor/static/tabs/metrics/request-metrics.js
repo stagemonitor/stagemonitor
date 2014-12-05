@@ -14,7 +14,17 @@
 					format: 'ms',
 					fill: 0.1,
 					columns: [
-						["timers", /request.([^\.]+).server.time.total/, "mean"],
+						["timers", /request.(All).server.time.total/, "mean"]
+					]
+				},
+				{
+					bindto: '#requests',
+					disabled: true,
+					min: 0,
+					format: 'ms',
+					fill: 0.1,
+					columns: [
+						["timers", /request.(GET-\|).server.time.total/, "mean"]
 					]
 				}
 			],
@@ -40,6 +50,14 @@
 				$(this.nTr).addClass('selected');
 			}
 		});
+	}
+
+	function onRowSelected() {
+
+	}
+
+	function onRowDeselected() {
+		graphRenderer.disableGraph("#requests");
 	}
 
 	function initRequestTable() {
@@ -88,9 +106,12 @@
 				table.$('tr.selected').removeClass('selected');
 				$(this).addClass('selected');
 				selectedName = table.fnGetData(table.fnGetPosition(this)).name;
+				onRowSelected();
 			} else {
 				// deselect
+				selectedName = null;
 				$(this).removeClass('selected');
+				onRowDeselected();
 			}
 		});
 	}

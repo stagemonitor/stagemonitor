@@ -12,54 +12,69 @@ var graphRenderer = (function () {
 		graphs = graphs.concat(newGraphs);
 		getMetricsFromServer(function (metrics) {
 			$.each(graphs, function (i, graph) {
-				var metricsForGraph = getAllMetricsForGraphWithValues(graph, metrics);
-				var $bindTo = $(graph.bindto);
-				if ($bindTo.length > 0) {
-					$bindTo.css({height: "300px"});
-					var series = [];
-					$.each(metricsForGraph, function (graphName, value) {
-						if (graph.derivative) {
-							graph[graphName] = { previousValue: value};
-							value = 0;
-						}
-
-//						graph[graphName].data = data;
-						series.push({label: graphName, data: [ [metrics.timestamp, value] ] });
-					});
-					$.plot($bindTo, series, {
-						series: {
-							lines: {
-								show: true,
-								zero: false,
-								fill: graph.fill,
-								lineWidth: 2
-							},
-							shadowSize: 1
-						},
-						grid: {
-							minBorderMargin: null,
-							borderWidth: 0,
-							hoverable: true,
-							color: '#c8c8c8'
-						},
-						yaxis: {
-							min: graph.min,
-							max: graph.max,
-							tickFormatter: formatters[graph.format]
-						},
-						xaxis: {
-							mode: "time",
-							minTickSize: [5, "second"]
-						},
-						tooltip: true,
-						tooltipOpts: {
-							content: "%s: %y"
-						}
-					});
-				}
+				initGraph(graph, metrics);
 			});
 			onGraphsRendered();
 		});
+	}
+
+	function initGraph(graph, metrics) {
+		var metricsForGraph = getAllMetricsForGraphWithValues(graph, metrics);
+		var $bindTo = $(graph.bindto);
+		if ($bindTo.length > 0) {
+			$bindTo.css({height: "300px"});
+			graph.series = [];
+			graph.metadata = graph.metadata || {};
+			$.each(metricsForGraph, function (graphName, value) {
+				graph.metadata[graphName] = graph.metadata[graphName] || {};
+				if (graph.derivative) {
+					graph.metadata[graphName]["previousValue"] = value;
+					value = 0;
+				}
+
+				var data = [
+					[metrics.timestamp, value]
+				];
+				graph.metadata[graphName].data = data;
+				graph.series.push({ label: graphName, data: data });
+			});
+			plotGraph(graph, $bindTo);
+		}
+	}
+
+	function plotGraph(graph, $bindTo) {
+		if (!graph.disabled) {
+			graph.plot = $.plot($bindTo, graph.series, {
+				series: {
+					lines: {
+						show: true,
+						zero: false,
+						fill: graph.fill,
+						lineWidth: 2
+					},
+					shadowSize: 1
+				},
+				grid: {
+					minBorderMargin: null,
+					borderWidth: 0,
+					hoverable: true,
+					color: '#c8c8c8'
+				},
+				yaxis: {
+					min: graph.min,
+					max: graph.max,
+					tickFormatter: formatters[graph.format]
+				},
+				xaxis: {
+					mode: "time",
+					minTickSize: [5, "second"]
+				},
+				tooltip: true,
+				tooltipOpts: {
+					content: "%s: %y"
+				}
+			});
+		}
 	}
 
 	function getMetricsFromServer(callback) {
@@ -73,34 +88,37 @@ var graphRenderer = (function () {
 
 	function updateGraphs(metrics) {
 		$.each(graphs, function (i, graph) {
-			var plot = $(graph.bindto).data("plot");
-			if (plot) {
-				var series = plot.getData();
-
-				$.each(getAllMetricsForGraphWithValues(graph, metrics), function (graphName, value) {
-					updateDatapoints(graphName, value);
-				});
-
-				function updateDatapoints(graphName, value) {
-					var currentSeries = $.grep(series, function (s) {
-						return s.label == graphName
-					})[0];
-					var datapoints = currentSeries.data;
-
-					while (datapoints[0][0] < (metrics.timestamp - 60 * storedMinutes * 1000)) {
-						datapoints.splice(0, 1);
-					}
-					if (graph.derivative === true) {
-						var currentValue = value;
-						value = currentValue - graph[graphName].previousValue;
-						graph[graphName].previousValue = currentValue;
-					}
-					datapoints.push([metrics.timestamp, value]);
-				}
-				plot.setData(series);
-				plot.setupGrid();
-				plot.draw();
+			if (!graph.plot) {
+				plotGraph(graph);
 			}
+			var plot = graph.plot;
+
+			var series = plot.getData();
+
+			$.each(getAllMetricsForGraphWithValues(graph, metrics), function (graphName, value) {
+				updateDatapoints(graphName, value);
+			});
+
+			function updateDatapoints(graphName, value) {
+				var datapoints = graph.metadata[graphName].data
+
+				while (datapoints[0][0] < (metrics.timestamp - 60 * storedMinutes * 1000)) {
+					datapoints.splice(0, 1);
+				}
+				if (graph.derivative === true) {
+					var currentValue = value;
+					value = currentValue - graph.metadata[graphName].previousValue;
+					graph.metadata[graphName].previousValue = currentValue;
+				}
+				datapoints.push([metrics.timestamp, value]);
+				var currentSeries = $.grep(series, function (s) {
+					return s.label == graphName
+				})[0];
+				currentSeries.data = datapoints;
+			}
+			plot.setData(series);
+			plot.setupGrid();
+			plot.draw();
 		});
 	}
 
@@ -176,12 +194,35 @@ var graphRenderer = (function () {
 	return {
 		renderGraphs: function (graphs, onMetricsReceived, onGraphsRendered) {
 			initGraphs(graphs, onGraphsRendered);
+
 			setInterval(function () {
 				getMetricsFromServer(function (metrics) {
 					updateGraphs(metrics);
 					onMetricsReceived(metrics);
 				});
 			}, tickMs);
+		},
+
+		disableGraph: function(bindto) {
+			var graphsToDisable = $.grep(graphs,function (graph) {
+				return graph.bindto == bindto
+			});
+			$.each(graphsToDisable, function (i, graphToDisable) {
+				graphToDisable.disabled = true;
+				if (graphToDisable.plot) {
+					graphToDisable.plot.destroy();
+				}
+				graphToDisable.plot = null;
+			});
+		},
+
+		activateGraph: function(graph) {
+			graph.disabled = false;
+		},
+
+		addGraph: function(graph, metrics) {
+			initGraph(graph, metrics);
+			graphs.push(graph);
 		}
 	}
 }());
