@@ -8,6 +8,9 @@ function renderMetricsTab(contextPath) {
 	$.when.apply(null, $.map(["tabs/metrics/graphRenderer.js"].concat(pluginPaths), loadScript)).done(function() {
 		var $metricPlugins = $("#metric-plugins");
 		var $sideMenu = $("#side-menu");
+		plugins.sort(function (p1, p2) {
+			return p1.label.localeCompare(p2.label);
+		});
 		$.each(plugins, function (i, plugin) {
 			$sideMenu.append('<li class="plugin-link' + (i == 0 ? ' active' : '') + '">' +
 				'	<a href="#' + plugin.id + '">' + plugin.label + '</a>' +

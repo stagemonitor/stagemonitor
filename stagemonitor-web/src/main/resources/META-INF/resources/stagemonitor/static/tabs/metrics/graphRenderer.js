@@ -4,10 +4,6 @@ var graphRenderer = (function () {
 	var metrics = [];
 	var graphs = [];
 
-	function isDisabled(graph, graphName) {
-		return (graph.disabledLines || []).indexOf(graphName) != -1;
-	}
-
 	function initGraphs(newGraphs, onGraphsRendered) {
 		graphs = graphs.concat(newGraphs);
 		getMetricsFromServer(function (metrics) {
@@ -38,13 +34,13 @@ var graphRenderer = (function () {
 				graph.metadata[graphName].data = data;
 				graph.series.push({ label: graphName, data: data });
 			});
-			plotGraph(graph, $bindTo);
+			plotGraph(graph);
 		}
 	}
 
-	function plotGraph(graph, $bindTo) {
+	function plotGraph(graph) {
 		if (!graph.disabled) {
-			graph.plot = $.plot($bindTo, graph.series, {
+			graph.plot = $.plot($(graph.bindto), graph.series, {
 				series: {
 					lines: {
 						show: true,
@@ -63,7 +59,7 @@ var graphRenderer = (function () {
 				yaxis: {
 					min: graph.min,
 					max: graph.max,
-					tickFormatter: formatters[graph.format]
+					tickFormatter: formatters[graph.format] || formatters._default(graph.format)
 				},
 				xaxis: {
 					mode: "time",
@@ -88,38 +84,44 @@ var graphRenderer = (function () {
 
 	function updateGraphs(metrics) {
 		$.each(graphs, function (i, graph) {
-			if (!graph.plot) {
-				plotGraph(graph);
-			}
-			var plot = graph.plot;
+			extractNewValues(graph);
+			repaintGraph(graph);
+		});
 
-			var series = plot.getData();
-
+		function extractNewValues(graph) {
 			$.each(getAllMetricsForGraphWithValues(graph, metrics), function (graphName, value) {
-				updateDatapoints(graphName, value);
-			});
-
-			function updateDatapoints(graphName, value) {
+				var value2 = value;
 				var datapoints = graph.metadata[graphName].data
-
 				while (datapoints[0][0] < (metrics.timestamp - 60 * storedMinutes * 1000)) {
 					datapoints.splice(0, 1);
 				}
 				if (graph.derivative === true) {
-					var currentValue = value;
-					value = currentValue - graph.metadata[graphName].previousValue;
+					var currentValue = value2;
+					value2 = currentValue - graph.metadata[graphName].previousValue;
 					graph.metadata[graphName].previousValue = currentValue;
 				}
-				datapoints.push([metrics.timestamp, value]);
-				var currentSeries = $.grep(series, function (s) {
+				datapoints.push([metrics.timestamp, value2]);
+			});
+		}
+	}
+
+	function repaintGraph(graph) {
+		if (!graph.plot) {
+			plotGraph(graph);
+		}
+		$.each(graph.metadata, function (graphName, value) {
+			if (!graph.disabled) {
+				var currentSeries = $.grep(graph.plot.getData(), function (s) {
 					return s.label == graphName
 				})[0];
-				currentSeries.data = datapoints;
+				currentSeries.data = graph.metadata[graphName].data;
 			}
-			plot.setData(series);
-			plot.setupGrid();
-			plot.draw();
 		});
+		if (!graph.disabled) {
+			graph.plot.setData(graph.plot.getData());
+			graph.plot.setupGrid();
+			graph.plot.draw();
+		}
 	}
 
 	function getAllMetricsForGraphWithValues(graph, data) {
@@ -183,12 +185,25 @@ var graphRenderer = (function () {
 			}
 
 			return round(size / 31536000000) + " year";
+		},
+		_default: function(unit) {
+			return function(datapoint) {
+				if (unit) {
+					return round(datapoint) + " " + unit;
+				} else {
+					return round(datapoint);
+				}
+			};
 		}
 	};
 
 	function round(num, fractionDigits) {
 		var e = fractionDigits || 2;
-		return +(Math.round(num + ("e+" + e)) + ("e-" + e));
+		var result = +(Math.round(num + ("e+" + e)) + ("e-" + e));
+		if (isNaN(result)) {
+			result = 0;
+		}
+		return result;
 	}
 
 	return {
@@ -203,21 +218,19 @@ var graphRenderer = (function () {
 			}, tickMs);
 		},
 
-		disableGraph: function(bindto) {
+		disableGraphsBoundTo: function(bindto) {
 			var graphsToDisable = $.grep(graphs,function (graph) {
 				return graph.bindto == bindto
 			});
 			$.each(graphsToDisable, function (i, graphToDisable) {
 				graphToDisable.disabled = true;
-				if (graphToDisable.plot) {
-					graphToDisable.plot.destroy();
-				}
 				graphToDisable.plot = null;
 			});
 		},
 
 		activateGraph: function(graph) {
 			graph.disabled = false;
+			repaintGraph(graph);
 		},
 
 		addGraph: function(graph, metrics) {

@@ -1,33 +1,35 @@
 (function () {
 	var table;
 	var selectedName;
+	var responseTimeGraphs = {
+		All: {
+			bindto: '#time',
+			min: 0,
+			format: 'ms',
+			fill: 0.1,
+			columns: [
+				["timers", /request.(All).server.time.total/, "mean"]
+			]
+		}
+	};
+	var throughputGraphs = {
+		All: {
+			bindto: '#throughput',
+			min: 0,
+			format: 'requests/sec',
+			fill: 0.1,
+			columns: [
+				["timers", /request.(All).server.time.total/, "m1_rate"]
+			]
+		}
+	};
 
 	plugins.push(
 		{
 			id: "request-metrics",
 			label: "Requests",
 			htmlPath: "tabs/metrics/request-metrics.html",
-			graphs: [
-				{
-					bindto: '#requests',
-					min: 0,
-					format: 'ms',
-					fill: 0.1,
-					columns: [
-						["timers", /request.(All).server.time.total/, "mean"]
-					]
-				},
-				{
-					bindto: '#requests',
-					disabled: true,
-					min: 0,
-					format: 'ms',
-					fill: 0.1,
-					columns: [
-						["timers", /request.(GET-\|).server.time.total/, "mean"]
-					]
-				}
-			],
+			graphs: [ responseTimeGraphs.All, throughputGraphs.All ],
 			timerTable: {
 				bindto: "#request-table",
 				timerRegex: /request.([^\.]+).server.time.total/
@@ -53,11 +55,17 @@
 	}
 
 	function onRowSelected() {
-
+		graphRenderer.disableGraphsBoundTo("#time");
+		graphRenderer.disableGraphsBoundTo("#throughput");
+		graphRenderer.activateGraph(responseTimeGraphs[selectedName]);
+		graphRenderer.activateGraph(throughputGraphs[selectedName]);
 	}
 
 	function onRowDeselected() {
-		graphRenderer.disableGraph("#requests");
+		graphRenderer.disableGraphsBoundTo("#time");
+		graphRenderer.disableGraphsBoundTo("#throughput");
+		graphRenderer.activateGraph(responseTimeGraphs['All']);
+		graphRenderer.activateGraph(throughputGraphs['All']);
 	}
 
 	function initRequestTable() {
@@ -130,10 +138,41 @@
 						timer[timerMetric] = timerMetricValue.toFixed(2)
 					}
 				});
-				data.push(timer)
+				data.push(timer);
+				if (!responseTimeGraphs[timer.name]) {
+					addGraph(timer.name, metrics);
+				}
 			}
 		}
 		return data;
 	}
+
+	function addGraph(graphName, metrics) {
+		responseTimeGraphs[graphName] = {
+			bindto: '#time',
+			disabled: false,
+			min: 0,
+			format: 'ms',
+			fill: 0.1,
+			columns: [
+				["timers", "request.(" + RegExp.quote(graphName) + ").server.time.total", "mean"]
+			]
+		};
+		throughputGraphs[graphName] = {
+			bindto: '#throughput',
+			disabled: false,
+			min: 0,
+			format: 'requests/sec',
+			fill: 0.1,
+			columns: [
+				["timers", "request.(" + RegExp.quote(graphName) + ").server.time.total", "m1_rate"]
+			]
+		};
+		graphRenderer.addGraph(responseTimeGraphs[graphName], metrics)
+	}
+
+	RegExp.quote = function(str) {
+		return (str+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
+	};
 }());
 
