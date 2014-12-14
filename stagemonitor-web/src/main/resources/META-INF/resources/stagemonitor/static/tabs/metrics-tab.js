@@ -1,11 +1,11 @@
-var plugins = [];
+function renderMetricsTab() {
+	window.plugins = [];
 
-function renderMetricsTab(contextPath) {
 	// TODO contextPath
 	var pluginPaths = ["tabs/metrics/jvm-metrics.js", "tabs/metrics/request-metrics.js"];
 
 	// load graphRenderer and plugin scripts
-	$.when.apply(null, $.map(["tabs/metrics/graphRenderer.js"].concat(pluginPaths), loadScript)).done(function() {
+	utils.loadScripts(["tabs/metrics/graphRenderer.js"].concat(pluginPaths), function() {
 		var $metricPlugins = $("#metric-plugins");
 		var $sideMenu = $("#side-menu");
 		plugins.sort(function (p1, p2) {
@@ -28,6 +28,10 @@ function renderMetricsTab(contextPath) {
 					plugin.onHtmlInitialized && plugin.onHtmlInitialized();
 				});
 
+				renderAllGraphs();
+			});
+
+			function renderAllGraphs() {
 				var graphs = $.map(plugins, function (plugin) {
 					return plugin.graphs;
 				});
@@ -40,7 +44,7 @@ function renderMetricsTab(contextPath) {
 					$(".metric-plugin").addClass("hidden").removeClass("invisible");
 					$($(".plugin-link.active > a").attr("href")).removeClass("hidden");
 				});
-			});
+			}
 		});
 
 		// select a plugin from the side bar
@@ -56,25 +60,6 @@ function renderMetricsTab(contextPath) {
 
 	function loadPluginHtml(plugin) {
 		return $('#' + plugin.id).load(plugin.htmlPath);
-	}
-
-	function loadScript(path) {
-		var result = $.Deferred(),
-			script = document.createElement("script");
-		script.async = "async";
-		script.type = "text/javascript";
-		script.src = path;
-		script.onload = script.onreadystatechange = function (_, isAbort) {
-			if (!script.readyState || /loaded|complete/.test(script.readyState)) {
-				if (isAbort)
-					result.reject();
-				else
-					result.resolve();
-			}
-		};
-		script.onerror = function () { result.reject(); };
-		$("head")[0].appendChild(script);
-		return result.promise();
 	}
 
 }

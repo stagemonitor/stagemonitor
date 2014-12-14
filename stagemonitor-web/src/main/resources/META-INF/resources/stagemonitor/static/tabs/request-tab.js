@@ -72,7 +72,7 @@ function renderRequestTab(data) {
 		};
 	}
 
-	return thresholdExceededGlobal;
+	stagemonitor.thresholdExceeded |= thresholdExceededGlobal;
 }
 
 function doRenderPageLoadTime(data) {
@@ -100,5 +100,5 @@ function doRenderPageLoadTime(data) {
 		$stagemonitorRequest.prepend(renderedMetricsTemplate);
 	});
 
-	return thresholdExceeded;
+	stagemonitor.thresholdExceeded |= thresholdExceeded;
 }

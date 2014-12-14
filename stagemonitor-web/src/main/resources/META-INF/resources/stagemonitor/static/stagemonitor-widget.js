@@ -1,26 +1,28 @@
 $(document).ready(function () {
 
-	var thresholdExceededGlobal = false;
-
-
 	window.stagemonitor = {
 		initialize: function (data, configurationSources, configurationOptions, contextPathPrefix, passwordSet, connectionId) {
-			listenForAjaxRequestTraces(data, connectionId, contextPathPrefix);
-			thresholdExceededGlobal = renderRequestTab(data);
-			renderConfigTab(configurationSources, configurationOptions, passwordSet, contextPathPrefix);
+			stagemonitor.requestTrace = data;
+			stagemonitor.configurationSources = configurationSources;
+			stagemonitor.configurationOptions = configurationOptions;
+			stagemonitor.contextPathPrefix = contextPathPrefix;
+			stagemonitor.passwordSet = passwordSet;
+			stagemonitor.connectionId = connectionId;
+
+			listenForAjaxRequestTraces(data, connectionId);
+			renderRequestTab(data);
+			renderConfigTab(configurationSources, configurationOptions, passwordSet);
 			renderCallTree(data);
-			renderMetricsTab(contextPathPrefix);
+			try {
+				renderMetricsTab();
+			} catch (e) {
+				console.log(e);
+			}
 			$(".tip").tooltip();
 		},
-		thresholdExceeded: function () {
-			return thresholdExceededGlobal;
-		},
+		thresholdExceeded: false,
 		renderPageLoadTime: function(data) {
-			var thresholdExceeded = doRenderPageLoadTime(data);
-			if (thresholdExceeded) {
-				thresholdExceededGlobal = true;
-			}
-
+			doRenderPageLoadTime(data);
 			$(".tip").tooltip({html: true});
 		}
 	};
@@ -66,7 +68,6 @@ $(document).ready(function () {
 
 	try {
 		window.parent.StagemonitorLoaded();
-
 	} catch (e){}
 
 });

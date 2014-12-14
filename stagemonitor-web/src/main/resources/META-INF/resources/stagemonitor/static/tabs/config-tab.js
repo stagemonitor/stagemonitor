@@ -1,4 +1,4 @@
-renderConfigTab = function (configurationSources, configurationOptions, passwordSet, contextPathPrefix) {
+renderConfigTab = function (configurationSources, configurationOptions, passwordSet) {
 	$.get("tabs/config-tab.html", function (template) {
 		var configurationTemplate = Handlebars.compile($(template).html());
 
@@ -10,7 +10,7 @@ renderConfigTab = function (configurationSources, configurationOptions, password
 		}));
 		$configTab.on("click", ".save-configuration", function () {
 			var $button = $(this);
-			$.post(contextPathPrefix + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
+			$.post(stagemonitor.contextPathPrefix + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
 				.done(function () {
 					$.growl($button.data("success"), { type: "success" });
 				}).fail(function (xhr) {

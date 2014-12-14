@@ -29,7 +29,7 @@
 					if (data.totalPageLoadTime) {
 						var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
 						stagemonitorWindow.stagemonitor.renderPageLoadTime(data);
-						var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+						var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 						var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 						document.getElementById("stagemonitor-overlay-show").className = clazz;
 					}
@@ -71,7 +71,7 @@
 					};
 
 					stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "", true, connectionId);
-					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 					stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 					stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
 				});
