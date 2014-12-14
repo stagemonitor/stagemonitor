@@ -1,5 +1,8 @@
-(function() {
-	window.utils = {
+var utils = (function() {
+	RegExp.quote = function(str) {
+		return (str+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
+	};
+	return {
 		loadScripts: function(scripts, callback) {
 			$.when.apply(null, $.map(scripts, loadScript)).done(function () {
 				callback();
@@ -22,6 +25,9 @@
 				$("head")[0].appendChild(script);
 				return result.promise();
 			}
+		},
+		clone: function(object) {
+			return JSON.parse(JSON.stringify(object));
 		}
 	}
 })();

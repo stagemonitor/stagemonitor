@@ -1,11 +1,12 @@
 function renderMetricsTab() {
 	window.plugins = [];
+	var tickMs = 1000;
 
 	// TODO contextPath
 	var pluginPaths = ["tabs/metrics/jvm-metrics.js", "tabs/metrics/request-metrics.js"];
 
 	// load graphRenderer and plugin scripts
-	utils.loadScripts(["tabs/metrics/graphRenderer.js"].concat(pluginPaths), function() {
+	utils.loadScripts(["tabs/metrics/graphRenderer.js", "tabs/metrics/timerTableRenderer.js"].concat(pluginPaths), function() {
 		var $metricPlugins = $("#metric-plugins");
 		var $sideMenu = $("#side-menu");
 		plugins.sort(function (p1, p2) {
@@ -27,28 +28,47 @@ function renderMetricsTab() {
 				$.each(plugins, function (i, plugin) {
 					plugin.onHtmlInitialized && plugin.onHtmlInitialized();
 				});
-
 				renderAllGraphs();
-			});
-
-			function renderAllGraphs() {
-				var graphs = $.map(plugins, function (plugin) {
-					return plugin.graphs;
-				});
-				graphRenderer.renderGraphs(graphs, function (metrics) {
-					$.each(plugins, function (i, plugin) {
-						plugin.onMetricsReceived && plugin.onMetricsReceived(metrics);
+				renderAllTimerTables();
+				setInterval(function () {
+					getMetricsFromServer(function (metrics) {
+						$.each(plugins, function (i, plugin) {
+							plugin.onMetricsReceived && plugin.onMetricsReceived(metrics);
+							timerTableRenderer.onMetricsReceived(metrics);
+							graphRenderer.onMetricsReceived(metrics);
+						});
 					});
-				}, function () {
-					// after rendering the graphs remove the custom invisible class and hide all non active plugins
-					$(".metric-plugin").addClass("hidden").removeClass("invisible");
-					$($(".plugin-link.active > a").attr("href")).removeClass("hidden");
-				});
-			}
+				}, tickMs);
+			});
 		});
+		initSideMenu();
+	});
 
-		// select a plugin from the side bar
-		$sideMenu.find("a").click(function () {
+	function renderAllGraphs() {
+		var graphs = $.map(plugins, function (plugin) {
+			return plugin.graphs;
+		});
+		getMetricsFromServer(function (metrics) {
+			graphRenderer.renderGraphs(graphs, metrics, function () {
+				// after rendering the graphs remove the custom invisible class and hide all non active plugins
+				$(".metric-plugin").addClass("hidden").removeClass("invisible");
+				$($(".plugin-link.active > a").attr("href")).removeClass("hidden");
+			});
+		});
+	}
+
+	function renderAllTimerTables() {
+		var tables = $.map(plugins, function (plugin) {
+			return plugin.timerTable;
+		});
+		$.each(tables, function (i, table) {
+			timerTableRenderer.init(table);
+		});
+	}
+
+	// select a plugin from the side bar
+	function initSideMenu() {
+		$("#side-menu").find("a").click(function () {
 			var thisLink = $(this);
 			$(".plugin-link").removeClass("active");
 			thisLink.parent().addClass("active");
@@ -56,10 +76,19 @@ function renderMetricsTab() {
 			$(thisLink.attr("href")).removeClass("hidden");
 			return false;
 		});
-	});
+	}
 
 	function loadPluginHtml(plugin) {
 		return $('#' + plugin.id).load(plugin.htmlPath);
+	}
+
+	function getMetricsFromServer(onMetricsReceived) {
+//		$.getJSON(contextPath + "/stagemonitor/metrics", function(data) {
+		$.getJSON("http://localhost:8880/petclinic/stagemonitor/metrics", function (metrics) {
+			var date = new Date();
+			metrics['timestamp'] = date.getTime();
+			onMetricsReceived(metrics);
+		});
 	}
 
 }

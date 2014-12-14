@@ -1,17 +1,14 @@
 var graphRenderer = (function () {
 	var storedMinutes = 5;
-	var tickMs = 1000;
 	var metrics = [];
 	var graphs = [];
 
-	function initGraphs(newGraphs, onGraphsRendered) {
+	function initGraphs(newGraphs, metrics, onGraphsRendered) {
 		graphs = graphs.concat(newGraphs);
-		getMetricsFromServer(function (metrics) {
-			$.each(graphs, function (i, graph) {
-				initGraph(graph, metrics);
-			});
-			onGraphsRendered();
+		$.each(graphs, function (i, graph) {
+			initGraph(graph, metrics);
 		});
+		onGraphsRendered();
 	}
 
 	function initGraph(graph, metrics) {
@@ -73,14 +70,7 @@ var graphRenderer = (function () {
 		}
 	}
 
-	function getMetricsFromServer(callback) {
-//		$.getJSON(contextPath + "/stagemonitor/metrics", function(data) {
-		$.getJSON("http://localhost:8880/petclinic/stagemonitor/metrics", function (metrics) {
-			var date = new Date();
-			metrics['timestamp'] = date.getTime();
-			callback(metrics);
-		});
-	}
+
 
 	function updateGraphs(metrics) {
 		$.each(graphs, function (i, graph) {
@@ -207,15 +197,8 @@ var graphRenderer = (function () {
 	}
 
 	return {
-		renderGraphs: function (graphs, onMetricsReceived, onGraphsRendered) {
-			initGraphs(graphs, onGraphsRendered);
-
-			setInterval(function () {
-				getMetricsFromServer(function (metrics) {
-					updateGraphs(metrics);
-					onMetricsReceived(metrics);
-				});
-			}, tickMs);
+		renderGraphs: function (graphs, metrics, onGraphsRendered) {
+			initGraphs(graphs, metrics, onGraphsRendered);
 		},
 
 		disableGraphsBoundTo: function(bindto) {
@@ -236,6 +219,10 @@ var graphRenderer = (function () {
 		addGraph: function(graph, metrics) {
 			initGraph(graph, metrics);
 			graphs.push(graph);
+		},
+
+		onMetricsReceived: function(metrics) {
+			updateGraphs(metrics);
 		}
 	}
 }());
