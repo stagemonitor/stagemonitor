@@ -140,17 +140,17 @@
 				});
 				data.push(timer);
 				if (!responseTimeGraphs[timer.name]) {
-					addGraph(timer.name, metrics);
+					onNewTimer(timer.name, metrics);
 				}
 			}
 		}
 		return data;
 	}
 
-	function addGraph(graphName, metrics) {
+	function onNewTimer(graphName, metrics) {
 		responseTimeGraphs[graphName] = {
 			bindto: '#time',
-			disabled: false,
+			disabled: true,
 			min: 0,
 			format: 'ms',
 			fill: 0.1,
@@ -158,9 +158,11 @@
 				["timers", "request.(" + RegExp.quote(graphName) + ").server.time.total", "mean"]
 			]
 		};
+		graphRenderer.addGraph(responseTimeGraphs[graphName], metrics);
+
 		throughputGraphs[graphName] = {
 			bindto: '#throughput',
-			disabled: false,
+			disabled: true,
 			min: 0,
 			format: 'requests/sec',
 			fill: 0.1,
@@ -168,7 +170,7 @@
 				["timers", "request.(" + RegExp.quote(graphName) + ").server.time.total", "m1_rate"]
 			]
 		};
-		graphRenderer.addGraph(responseTimeGraphs[graphName], metrics)
+		graphRenderer.addGraph(throughputGraphs[graphName], metrics);
 	}
 
 	RegExp.quote = function(str) {
