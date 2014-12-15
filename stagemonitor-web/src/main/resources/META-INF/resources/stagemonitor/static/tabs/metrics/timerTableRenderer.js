@@ -61,7 +61,7 @@ var timerTableRenderer = (function () {
 			$.each(timerTables, function (i, timerTable) {
 				timerTable.table.fnClearTable();
 				timerTable.table.fnAddData(getData(metrics, timerTable));
-				restoreSelectedRow(timerTable.table);
+				restoreSelectedRow(timerTable);
 			});
 		}
 	};
@@ -91,10 +91,10 @@ var timerTableRenderer = (function () {
 		return data;
 	}
 
-	function restoreSelectedRow(table) {
-		$(table.fnSettings().aoData).each(function () {
-			var requestName = table.fnGetData(this.nTr).name;
-			if (requestName == selectedName) {
+	function restoreSelectedRow(timerTable) {
+		$(timerTable.table.fnSettings().aoData).each(function () {
+			var requestName = timerTable.table.fnGetData(this.nTr).name;
+			if (requestName == timerTable.selectedName) {
 				$(this.nTr).addClass('selected');
 			}
 		});
