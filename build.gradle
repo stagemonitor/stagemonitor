@@ -46,6 +46,7 @@ subprojects {
 	group = "org.stagemonitor"
 
 	repositories {
+		jcenter()
 		mavenCentral()
 	}
 

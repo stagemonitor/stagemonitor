@@ -190,7 +190,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 			Map<String, Counter> sortedCounters = sortByValue(counters, new Comparator<Counter>() {
 				@Override
 				public int compare(Counter o1, Counter o2) {
-					return Long.compare(o2.getCount(), o1.getCount());
+					return ((Long) o2.getCount()).compareTo(o1.getCount());
 				}
 			});
 			for (Map.Entry<String, Counter> entry : sortedCounters.entrySet()) {
@@ -226,7 +226,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 			Map<String, Meter> sortedMeters = sortByValue(meters, new Comparator<Meter>() {
 				@Override
 				public int compare(Meter o1, Meter o2) {
-					return Long.compare(o2.getCount(), o1.getCount());
+					return ((Long) o2.getCount()).compareTo(o1.getCount());
 				}
 			});
 			for (Map.Entry<String, Meter> entry : sortedMeters.entrySet()) {
