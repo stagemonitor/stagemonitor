@@ -1,16 +1,18 @@
 package org.stagemonitor.core;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ServiceLoader;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ServiceLoader;
 
 public final class Stagemonitor {
 
@@ -20,6 +22,7 @@ public final class Stagemonitor {
 	private static volatile boolean started;
 	private static volatile boolean disabled;
 	private static volatile MeasurementSession measurementSession;
+	private static List<String> pathsOfWidgetMetricTabPlugins;
 
 	static {
 		reset();
@@ -59,20 +62,25 @@ public final class Stagemonitor {
 	private static void initializePlugins() {
 		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
+		pathsOfWidgetMetricTabPlugins = new LinkedList<String>();
 		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class)) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 
 			if (disabledPlugins.contains(pluginName)) {
 				logger.info("Not initializing disabled plugin {}", pluginName);
 			} else {
-				logger.info("Initializing plugin {}", pluginName);
-				try {
-					stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
-				} catch (Exception e) {
-					logger.warn("Error while initializing plugin " + pluginName +
-							" (this exception is ignored)", e);
-				}
+				initializePlugin(stagemonitorPlugin, pluginName);
 			}
+		}
+	}
+
+	private static void initializePlugin(StagemonitorPlugin stagemonitorPlugin, String pluginName) {
+		logger.info("Initializing plugin {}", pluginName);
+		try {
+			stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
+			pathsOfWidgetMetricTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetMetricTabPlugins());
+		} catch (Exception e) {
+			logger.warn("Error while initializing plugin " + pluginName + " (this exception is ignored)", e);
 		}
 	}
 
@@ -117,6 +125,10 @@ public final class Stagemonitor {
 
 	static void setLogger(Logger logger) {
 		Stagemonitor.logger = logger;
+	}
+
+	public static List<String> getPathsOfWidgetMetricTabPlugins() {
+		return Collections.unmodifiableList(pathsOfWidgetMetricTabPlugins);
 	}
 
 	/**

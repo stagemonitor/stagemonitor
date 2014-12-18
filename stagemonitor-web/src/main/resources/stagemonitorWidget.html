@@ -46,7 +46,9 @@
 					stagemonitorOverlay.style.display = "none";
 				};
 
-				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "@@CONTEXT_PREFIX_PATH@@", @@CONFIGURATION_PWD_SET@@, connectionId);
+				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions,
+						window.location.origin + "@@CONTEXT_PREFIX_PATH@@", "@@CONTEXT_PREFIX_PATH@@",
+						@@CONFIGURATION_PWD_SET@@, connectionId, @@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@);
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 				stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 				stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);

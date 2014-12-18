@@ -1,14 +1,14 @@
 package org.stagemonitor.requestmonitor;
 
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
+
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
@@ -108,6 +108,11 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		// async, because it is not possible, that request traces are reaching elasticsearch before the mapping is set
 		// that is, because a single thread executor is used that executes the request in a linear queue (LinkedBlockingQueue)
 		ElasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor", resourceAsStream);
+	}
+
+	@Override
+	public List<String> getPathsOfWidgetMetricTabPlugins() {
+		return Arrays.asList("/stagemonitor/static/tabs/metrics/request-metrics");
 	}
 
 	public int getNoOfWarmupRequests() {

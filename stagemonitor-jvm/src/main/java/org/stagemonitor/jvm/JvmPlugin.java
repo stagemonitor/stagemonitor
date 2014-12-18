@@ -1,6 +1,9 @@
 package org.stagemonitor.jvm;
 
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
@@ -45,5 +48,10 @@ public class JvmPlugin extends StagemonitorPlugin {
 
 		ElasticsearchClient.sendGrafanaDashboardAsync("JVM Memory.json");
 		ElasticsearchClient.sendGrafanaDashboardAsync("JVM Overview.json");
+	}
+
+	@Override
+	public List<String> getPathsOfWidgetMetricTabPlugins() {
+		return Arrays.asList("/stagemonitor/static/tabs/metrics/jvm-metrics");
 	}
 }

@@ -3,7 +3,6 @@
 		{
 			id: "jvm-metrics",
 			label: "JVM",
-			htmlPath: "tabs/metrics/jvm-metrics.html",
 			graphs: [
 				{
 					bindto: '#memory',
@@ -48,10 +47,7 @@
 					],
 					padding: { bottom: 0, top: 0 }
 				}
-			],
-			onMetricsReceived: function (metrics) {
-
-			}
+			]
 		}
 	)
 }());

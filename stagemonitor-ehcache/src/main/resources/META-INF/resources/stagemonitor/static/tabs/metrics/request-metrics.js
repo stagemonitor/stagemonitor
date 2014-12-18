@@ -25,7 +25,6 @@
 	var requestMetricsPlugin = {
 		id: "request-metrics",
 		label: "Requests",
-		htmlPath: "tabs/metrics/request-metrics.html",
 		graphs: [ responseTimeGraphs.All, throughputGraphs.All ],
 		timerTable: {
 			bindto: "#request-table",

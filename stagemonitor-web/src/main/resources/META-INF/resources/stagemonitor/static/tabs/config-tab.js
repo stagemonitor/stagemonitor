@@ -10,7 +10,7 @@ renderConfigTab = function (configurationSources, configurationOptions, password
 		}));
 		$configTab.on("click", ".save-configuration", function () {
 			var $button = $(this);
-			$.post(stagemonitor.contextPathPrefix + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
+			$.post(stagemonitor.baseUrl + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
 				.done(function () {
 					$.growl($button.data("success"), { type: "success" });
 				}).fail(function (xhr) {

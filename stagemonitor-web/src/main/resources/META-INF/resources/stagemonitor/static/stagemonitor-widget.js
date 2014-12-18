@@ -1,13 +1,16 @@
 $(document).ready(function () {
 
 	window.stagemonitor = {
-		initialize: function (data, configurationSources, configurationOptions, contextPathPrefix, passwordSet, connectionId) {
+		initialize: function (data, configurationSources, configurationOptions, baseUrl, contextPath, passwordSet,
+							  connectionId, pathsOfWidgetMetricTabPlugins) {
 			stagemonitor.requestTrace = data;
 			stagemonitor.configurationSources = configurationSources;
 			stagemonitor.configurationOptions = configurationOptions;
-			stagemonitor.contextPathPrefix = contextPathPrefix;
+			stagemonitor.baseUrl = baseUrl;
+			stagemonitor.contextPath = contextPath;
 			stagemonitor.passwordSet = passwordSet;
 			stagemonitor.connectionId = connectionId;
+			stagemonitor.pathsOfWidgetMetricTabPlugins = pathsOfWidgetMetricTabPlugins;
 
 			listenForAjaxRequestTraces(data, connectionId);
 			renderRequestTab(data);

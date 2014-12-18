@@ -28,4 +28,9 @@ public abstract class StagemonitorPlugin implements ConfigurationOptionProvider 
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Collections.emptyList();
 	}
+
+	public List<String> getPathsOfWidgetMetricTabPlugins() {
+		return Collections.emptyList();
+	}
+
 }
