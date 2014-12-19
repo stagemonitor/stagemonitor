@@ -39,7 +39,7 @@ function renderMetricsTab() {
 	}
 
 	function onMetricsReceived(metrics) {
-		timerTableRenderer.onMetricsReceived(metrics);
+		tableRenderer.onMetricsReceived(metrics);
 		graphRenderer.onMetricsReceived(metrics);
 		$.each(plugins, function (i, plugin) {
 			plugin.onMetricsReceived && plugin.onMetricsReceived(metrics);
@@ -51,6 +51,10 @@ function renderMetricsTab() {
 			return plugin.graphs;
 		});
 		getMetricsFromServer(function (metrics) {
+			// give the plugins a chance to modify the metrics
+			$.each(plugins, function (i, plugin) {
+				plugin.onMetricsReceived && plugin.onMetricsReceived(metrics);
+			});
 			graphRenderer.renderGraphs(graphs, metrics, function () {
 				// after rendering the graphs remove the custom invisible class and hide all non active plugins
 				$(".metric-plugin").addClass("hidden").removeClass("invisible");
@@ -61,10 +65,10 @@ function renderMetricsTab() {
 
 	function renderAllTimerTables() {
 		var tables = $.map(plugins, function (plugin) {
-			return plugin.timerTable;
+			return plugin.table;
 		});
 		$.each(tables, function (i, table) {
-			timerTableRenderer.init(table);
+			tableRenderer.init(table);
 		});
 	}
 

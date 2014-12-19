@@ -1,6 +1,5 @@
 var graphRenderer = (function () {
 	var storedMinutes = 5;
-	var metrics = [];
 	var graphs = [];
 
 	function initGraphs(newGraphs, metrics, onGraphsRendered) {
@@ -69,8 +68,6 @@ var graphRenderer = (function () {
 			});
 		}
 	}
-
-
 
 	function updateGraphs(metrics) {
 		$.each(graphs, function (i, graph) {
@@ -212,13 +209,17 @@ var graphRenderer = (function () {
 		},
 
 		activateGraph: function(graph) {
-			graph.disabled = false;
-			repaintGraph(graph);
+			if (graph) {
+				graph.disabled = false;
+				repaintGraph(graph);
+			}
 		},
 
 		addGraph: function(graph, metrics) {
-			initGraph(graph, metrics);
-			graphs.push(graph);
+			if (graph) {
+				initGraph(graph, metrics);
+				graphs.push(graph);
+			}
 		},
 
 		onMetricsReceived: function(metrics) {
