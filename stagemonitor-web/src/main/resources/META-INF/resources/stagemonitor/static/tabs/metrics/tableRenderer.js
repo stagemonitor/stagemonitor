@@ -1,41 +1,57 @@
 var tableRenderer = (function () {
 	var metricTables = [];
+	var selectedPluginId;
 	return {
-		init: function (metricTable) {
-			var aoColumns = [{sTitle: metricTable.nameLabel, mData: "name"}];
-			$.each(metricTable.columns, function (i, column) {
-				aoColumns.push({sTitle: column.title, mData: column.metric});
-			});
-			metricTables.push(metricTable);
-			metricTable.table = $(metricTable.bindto).dataTable({
-				"bJQueryUI": true,
-				"sPaginationType": "full_numbers",
-				"bLengthChange": false,
-				"aoColumns": aoColumns
-			});
-			metricTable.table.find('tbody').on('click', 'tr', function () {
-				if (!$(this).hasClass('selected')) {
-					// select
-					metricTable.table.$('tr.selected').removeClass('selected');
-					$(this).addClass('selected');
-					metricTable.selectedName = metricTable.table.fnGetData(metricTable.table.fnGetPosition(this)).name;
-					onRowSelected(metricTable);
-				} else {
-					// deselect
-					metricTable.selectedName = null;
-					$(this).removeClass('selected');
-					onRowDeselected(metricTable);
+		renderTables: function (plugins) {
+			$.each(plugins, function (i, plugin) {
+				if (plugin.table) {
+					renderTable(plugin.id, plugin.table);
 				}
 			});
 		},
 		onMetricsReceived: function (metrics) {
 			$.each(metricTables, function (i, metricTable) {
-				metricTable.table.fnClearTable();
-				metricTable.table.fnAddData(getData(metrics, metricTable));
-				restoreSelectedRow(metricTable);
+				if (!metricTable.alreadyReceivedData || metricTable.pluginId == selectedPluginId) {
+					metricTable.alreadyReceivedData = true;
+					metricTable.table.fnClearTable();
+					metricTable.table.fnAddData(getData(metrics, metricTable));
+					restoreSelectedRow(metricTable);
+				}
 			});
+		},
+		onPluginSelected: function(pluginId) {
+			selectedPluginId = pluginId;
 		}
 	};
+
+	function renderTable(pluginId, metricTable) {
+		metricTable.pluginId = pluginId;
+		var aoColumns = [{sTitle: metricTable.nameLabel, mData: "name"}];
+		$.each(metricTable.columns, function (i, column) {
+			aoColumns.push({sTitle: column.title, mData: column.metric});
+		});
+		metricTables.push(metricTable);
+		metricTable.table = $(metricTable.bindto).dataTable({
+			"bJQueryUI": true,
+			"sPaginationType": "full_numbers",
+			"bLengthChange": false,
+			"aoColumns": aoColumns
+		});
+		metricTable.table.find('tbody').on('click', 'tr', function () {
+			if (!$(this).hasClass('selected')) {
+				// select
+				metricTable.table.$('tr.selected').removeClass('selected');
+				$(this).addClass('selected');
+				metricTable.selectedName = metricTable.table.fnGetData(metricTable.table.fnGetPosition(this)).name;
+				onRowSelected(metricTable);
+			} else {
+				// deselect
+				metricTable.selectedName = null;
+				$(this).removeClass('selected');
+				onRowDeselected(metricTable);
+			}
+		});
+	}
 
 	function getData(metrics, metricTable) {
 		var dataByRowName = {};
@@ -101,15 +117,19 @@ var tableRenderer = (function () {
 		if (timerTable.graphTemplates.templates) {
 			$.each(timerTable.graphTemplates.templates, function (i, graphTemplate) {
 				graphTemplate.graphs = graphTemplate.graphs || {};
-				var template = JSON.parse(JSON.stringify(graphTemplate.template));
-				template.disabled = true;//rowName == timerTable.graphTemplates.defaultRowSelection;
-				for (var j = 0; j < template.columns.length; j++) {
-					var column = template.columns[j];
-					column[1] = column[1].replace("${rowName}", RegExp.quote(rowName));
-				}
-				graphTemplate.graphs[rowName] = template;
-				graphRenderer.addGraph(graphTemplate.graphs[rowName], metrics);
+				graphTemplate.graphs[rowName] = processGraphTemplate(graphTemplate, rowName, timerTable);
+				graphRenderer.addGraph(timerTable.pluginId, graphTemplate.graphs[rowName], metrics);
 			});
 		}
+	}
+
+	function processGraphTemplate(graphTemplate, rowName, timerTable) {
+		var template = JSON.parse(JSON.stringify(graphTemplate.template));
+		template.disabled = /*true;//*/rowName != timerTable.graphTemplates.defaultRowSelection;
+		for (var j = 0; j < template.columns.length; j++) {
+			var column = template.columns[j];
+			column[1] = column[1].replace("${rowName}", RegExp.quote(rowName));
+		}
+		return template;
 	}
 })();

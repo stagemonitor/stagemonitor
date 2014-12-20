@@ -1,16 +1,22 @@
 var graphRenderer = (function () {
+	var selectedPluginId;
 	var storedMinutes = 5;
 	var graphs = [];
 
-	function initGraphs(newGraphs, metrics, onGraphsRendered) {
-		graphs = graphs.concat(newGraphs);
-		$.each(graphs, function (i, graph) {
-			initGraph(graph, metrics);
+	function initGraphs(plugins, metrics, onGraphsRendered) {
+		$.each(plugins, function (i, plugin) {
+			if (plugin.graphs) {
+				$.each(plugin.graphs, function (i, graph) {
+					initGraph(plugin.id, graph, metrics);
+				});
+			}
 		});
 		onGraphsRendered();
 	}
 
-	function initGraph(graph, metrics) {
+	function initGraph(pluginId, graph, metrics) {
+		graph.pluginId = pluginId;
+		graphs.push(graph);
 		var metricsForGraph = getAllMetricsForGraphWithValues(graph, metrics);
 		var $bindTo = $(graph.bindto);
 		if ($bindTo.length > 0) {
@@ -35,7 +41,7 @@ var graphRenderer = (function () {
 	}
 
 	function plotGraph(graph) {
-		if (!graph.disabled) {
+		if (!graph.disabled && graph.pluginId == selectedPluginId) {
 			graph.plot = $.plot($(graph.bindto), graph.series, {
 				series: {
 					lines: {
@@ -93,18 +99,16 @@ var graphRenderer = (function () {
 	}
 
 	function repaintGraph(graph) {
-		if (!graph.plot) {
-			plotGraph(graph);
-		}
-		$.each(graph.metadata, function (graphName, value) {
-			if (!graph.disabled) {
+		if (!graph.disabled && graph.pluginId == selectedPluginId) {
+			if (!graph.plot) {
+				plotGraph(graph);
+			}
+			$.each(graph.metadata, function (graphName, value) {
 				var currentSeries = $.grep(graph.plot.getData(), function (s) {
 					return s.label == graphName
 				})[0];
 				currentSeries.data = graph.metadata[graphName].data;
-			}
-		});
-		if (!graph.disabled) {
+			});
 			graph.plot.setData(graph.plot.getData());
 			graph.plot.setupGrid();
 			graph.plot.draw();
@@ -194,8 +198,8 @@ var graphRenderer = (function () {
 	}
 
 	return {
-		renderGraphs: function (graphs, metrics, onGraphsRendered) {
-			initGraphs(graphs, metrics, onGraphsRendered);
+		renderGraphs: function (plugins, metrics, onGraphsRendered) {
+			initGraphs(plugins, metrics, onGraphsRendered);
 		},
 
 		disableGraphsBoundTo: function(bindto) {
@@ -215,15 +219,25 @@ var graphRenderer = (function () {
 			}
 		},
 
-		addGraph: function(graph, metrics) {
+		addGraph: function(pluginId, graph, metrics) {
 			if (graph) {
-				initGraph(graph, metrics);
-				graphs.push(graph);
+				initGraph(pluginId, graph, metrics);
 			}
 		},
 
 		onMetricsReceived: function(metrics) {
 			updateGraphs(metrics);
+		},
+
+		onPluginSelected: function(pluginId) {
+			selectedPluginId = pluginId;
+			var graphsOfPlugin = $.grep(graphs, function (graph) {
+				return graph.pluginId == pluginId;
+			});
+
+			$.each(graphsOfPlugin, function (i, graph) {
+				repaintGraph(graph);
+			});
 		}
 	}
 }());

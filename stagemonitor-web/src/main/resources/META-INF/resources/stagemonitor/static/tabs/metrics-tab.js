@@ -1,6 +1,7 @@
 function renderMetricsTab() {
 	window.plugins = [];
 	var tickMs = 1000;
+	var activePluginId;
 
 	var scripts = $.map(stagemonitor.pathsOfWidgetMetricTabPlugins, function (path) {
 		return path + ".js"
@@ -10,7 +11,12 @@ function renderMetricsTab() {
 			return p1.label.localeCompare(p2.label);
 		});
 		$.each(plugins, function (i, plugin) {
-			$("#side-menu").append('<li class="plugin-link' + (i == 0 ? ' active' : '') + '">' +
+			var activeClass = '';
+			if (i == 0) {
+				onPluginSelected(plugin.id);
+				activeClass = ' active';
+			}
+			$("#side-menu").append('<li class="plugin-link' + activeClass + '">' +
 				'	<a href="#' + plugin.id + '">' + plugin.label + '</a>' +
 				'</li>');
 			// custom invisible class, not hidden
@@ -39,23 +45,20 @@ function renderMetricsTab() {
 	}
 
 	function onMetricsReceived(metrics) {
-		tableRenderer.onMetricsReceived(metrics);
-		graphRenderer.onMetricsReceived(metrics);
 		$.each(plugins, function (i, plugin) {
 			plugin.onMetricsReceived && plugin.onMetricsReceived(metrics);
 		});
+		tableRenderer.onMetricsReceived(metrics);
+		graphRenderer.onMetricsReceived(metrics);
 	}
 
 	function renderAllGraphs() {
-		var graphs = $.map(plugins, function (plugin) {
-			return plugin.graphs;
-		});
 		getMetricsFromServer(function (metrics) {
 			// give the plugins a chance to modify the metrics
 			$.each(plugins, function (i, plugin) {
 				plugin.onMetricsReceived && plugin.onMetricsReceived(metrics);
 			});
-			graphRenderer.renderGraphs(graphs, metrics, function () {
+			graphRenderer.renderGraphs(plugins, metrics, function () {
 				// after rendering the graphs remove the custom invisible class and hide all non active plugins
 				$(".metric-plugin").addClass("hidden").removeClass("invisible");
 				$($(".plugin-link.active > a").attr("href")).removeClass("hidden");
@@ -64,12 +67,15 @@ function renderMetricsTab() {
 	}
 
 	function renderAllTimerTables() {
-		var tables = $.map(plugins, function (plugin) {
-			return plugin.table;
-		});
-		$.each(tables, function (i, table) {
-			tableRenderer.init(table);
-		});
+		tableRenderer.renderTables(plugins);
+	}
+
+	function onPluginSelected(pluginId) {
+		if (activePluginId != pluginId) {
+			activePluginId = pluginId;
+			graphRenderer.onPluginSelected(pluginId);
+			tableRenderer.onPluginSelected(pluginId);
+		}
 	}
 
 	function initSideMenu() {
@@ -79,7 +85,9 @@ function renderMetricsTab() {
 			$(".plugin-link").removeClass("active");
 			thisLink.parent().addClass("active");
 			$(".metric-plugin").addClass("hidden");
-			$(thisLink.attr("href")).removeClass("hidden");
+			var pluginId = thisLink.attr("href");
+			$(pluginId).removeClass("hidden");
+			onPluginSelected(pluginId.replace('#', ''));
 			return false;
 		});
 	}
