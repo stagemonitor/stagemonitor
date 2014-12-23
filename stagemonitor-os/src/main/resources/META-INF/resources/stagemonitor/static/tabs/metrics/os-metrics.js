@@ -12,8 +12,8 @@
 					stack: true,
 					fill: 0.1,
 					columns: [
-						["gauges", /os\.cpu\.usage\.((?!idle).*$)/, "value"],
-						["gauges", /os\.cpu\.usage\.(idle)/, "value"]
+						{ metricCategory: "gauges", metricPathRegex: /os\.cpu\.usage\.((?!idle).*$)/, metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: /os\.cpu\.usage\.(idle)/, metric: "value" }
 					]
 				},
 				{
@@ -22,8 +22,8 @@
 					format: 'bytes',
 					derivative: true,
 					columns: [
-						["gauges", /os.net.[^\.]+.(write)/, "value"],
-						["gauges", /os.net.[^\.]+.(read)/, "value"]
+						{ metricCategory: "gauges", metricPathRegex: /os.net.[^\.]+.write/, metric: "value", title: "Send" },
+						{ metricCategory: "gauges", metricPathRegex: /os.net.[^\.]+.read/, metric: "value", title: "Receive" }
 					],
 					disabledLines: ["Code-Cache"]
 				},
@@ -34,8 +34,8 @@
 					format: 'bytes',
 					derivative: true,
 					columns: [
-						["gauges", /os.fs.[^\.]+.(writes).bytes/, "value"],
-						["gauges", /os.fs.[^\.]+.(reads).bytes/, "value"]
+						{ metricCategory: "gauges", metricPathRegex: /os.fs.[^\.]+.(writes).bytes/, metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: /os.fs.[^\.]+.(reads).bytes/, metric: "value" }
 					]
 				},
 				{
@@ -44,7 +44,7 @@
 					max: 1,
 					format: 'percent',
 					columns: [
-						["gauges", /os.fs.([^\.]+).usage-percent/, "value"]
+						{ metricCategory: "gauges", metricPathRegex: /os.fs.([^\.]+).usage-percent/, metric: "value" }
 					]
 				},
 				{
@@ -53,8 +53,8 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						["gauges", "os.mem.usage.(total)", "value"],
-						["gauges", "os.mem.usage.(used)", "value"]
+						{ metricCategory: "gauges", metricPathRegex: "os.mem.usage.(total)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.mem.usage.(used)", metric: "value" }
 					]
 				},
 				{
@@ -63,8 +63,8 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						["gauges", "os.swap.usage.(total)", "value"],
-						["gauges", "os.swap.usage.(used)", "value"]
+						{ metricCategory: "gauges", metricPathRegex: "os.swap.usage.(total)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.swap.usage.(used)", metric: "value" }
 					]
 				}
 			]

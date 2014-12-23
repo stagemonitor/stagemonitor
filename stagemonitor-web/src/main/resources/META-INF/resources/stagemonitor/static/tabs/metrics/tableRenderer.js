@@ -139,7 +139,7 @@ var tableRenderer = (function () {
 		template.disabled = rowName != table.graphTemplates.defaultRowSelection;
 		for (var j = 0; j < template.columns.length; j++) {
 			var column = template.columns[j];
-			column[1] = column[1].replace("${rowName}", quoteRowName ? RegExp.quote(rowName) : rowName);
+			column.metricPathRegex = column.metricPathRegex.replace("${rowName}", quoteRowName ? RegExp.quote(rowName) : rowName);
 		}
 		return template;
 	}

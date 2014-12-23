@@ -10,9 +10,9 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						["gauges", "jvm.memory.heap.(max)", "value"],
-						["gauges", "jvm.memory.heap.(committed)", "value"],
-						["gauges", "jvm.memory.heap.(used)", "value"]
+						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(max)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(committed)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(used)", metric: "value" }
 					]
 				},
 				{
@@ -21,7 +21,7 @@
 					max: 1,
 					format: 'percent',
 					columns: [
-						["gauges", /jvm.memory.pools.([^\.]+).usage/, "value"]
+						{ metricCategory: "gauges", metricPathRegex: /jvm.memory.pools.([^\.]+).usage/, metric: "value" }
 					],
 					disabledLines: ["Code-Cache"]
 				},
@@ -32,7 +32,7 @@
 					fill: 0.1,
 					format: 'percent',
 					columns: [
-						["gauges", "jvm.cpu.process.(usage)", "value"]
+						{ metricCategory: "gauges", metricPathRegex: "jvm.cpu.process.(usage)", metric: "value" }
 					],
 					padding: { bottom: 0, top: 0 }
 				},
@@ -43,7 +43,7 @@
 					format: 'ms',
 					derivative: true,
 					columns: [
-						["gauges", /jvm.gc.([^\.]+).time/, "value"]
+						{ metricCategory: "gauges", metricPathRegex: /jvm.gc.([^\.]+).time/, metric: "value" }
 					],
 					padding: { bottom: 0, top: 0 }
 				}

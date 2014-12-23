@@ -119,22 +119,20 @@ var graphRenderer = (function () {
 	function getAllMetricsForGraphWithValues(graph, data) {
 		var metrics = {};
 		$.each(graph.columns, function (i, metricPath) {
-			var metricCategory = data[metricPath[0]];
-			var regex = metricPath[1];
-			var valuePath = metricPath[2];
+			var metricCategory = data[metricPath.metricCategory];
 			// merge objects
-			$.extend(metrics, findPropertyValuesByRegex(metricCategory, regex, valuePath));
+			$.extend(metrics, findPropertyValuesByRegex(metricCategory, metricPath.metricPathRegex, metricPath.metric, metricPath.title));
 		});
 		return metrics;
 	}
 
-	var findPropertyValuesByRegex = function (obj, regex, valuePath) {
+	var findPropertyValuesByRegex = function (obj, regex, valuePath, title) {
 		var metrics = {};
 		var key;
 		for (key in obj) {
 			var match = new RegExp(regex).exec(key);
 			if (match != null) {
-				var graphName = (match[1] || match[0]);
+				var graphName = title || match[1] || match[0];
 				var value = obj[key][valuePath];
 				// sum if there is more than one metric matching the pattern
 				metrics[graphName] = metrics[graphName] || 0;

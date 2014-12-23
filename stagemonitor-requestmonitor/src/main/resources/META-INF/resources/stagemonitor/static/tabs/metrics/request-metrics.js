@@ -67,7 +67,7 @@
 								format: 'ms',
 								fill: 0.1,
 								columns: [
-									["timers", "request.(${rowName}).server.time.total", "mean"]
+									{ metricCategory: "timers", metricPathRegex: "request.(${rowName}).server.time.total", metric: "mean" }
 								]
 							}
 						},
@@ -78,7 +78,7 @@
 								format: 'requests/sec',
 								fill: 0.1,
 								columns: [
-									["timers", "request.(${rowName}).server.time.total", "m1_rate"]
+									{ metricCategory: "timers", metricPathRegex: "request.(${rowName}).server.time.total", metric: "m1_rate"}
 								]
 							}
 						}

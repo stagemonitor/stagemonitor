@@ -62,7 +62,7 @@
 								format: 'percent',
 								fill: 0.1,
 								columns: [
-									["gauges", "cache.(${rowName}).access.hit.total.ratio", "value"]
+									{ metricCategory: "gauges", metricPathRegex: "cache.(${rowName}).access.hit.total.ratio", metric: "value" }
 								]
 							}
 						},
@@ -73,7 +73,7 @@
 								format: 'bytes',
 								fill: 0.1,
 								columns: [
-									["gauges", "cache.(${rowName}).bytes.used", "value"]
+									{ metricCategory: "gauges", metricPathRegex: "cache.(${rowName}).bytes.used", metric: "value" }
 								]
 							}
 						}
