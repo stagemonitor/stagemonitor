@@ -35,8 +35,8 @@ function renderMetricsTab() {
 				$.each(plugins, function (i, plugin) {
 					plugin.onHtmlInitialized && plugin.onHtmlInitialized();
 				});
-				renderAllGraphs();
 				renderAllTimerTables();
+				renderAllGraphs();
 				setInterval(function () {
 					getMetricsFromServer(onMetricsReceived);
 				}, tickMs);
@@ -45,6 +45,7 @@ function renderMetricsTab() {
 	}
 
 	function onMetricsReceived(metrics) {
+		// give the plugins a chance to modify the metrics
 		$.each(plugins, function (i, plugin) {
 			plugin.onMetricsReceived && plugin.onMetricsReceived(metrics);
 		});
@@ -54,10 +55,7 @@ function renderMetricsTab() {
 
 	function renderAllGraphs() {
 		getMetricsFromServer(function (metrics) {
-			// give the plugins a chance to modify the metrics
-			$.each(plugins, function (i, plugin) {
-				plugin.onMetricsReceived && plugin.onMetricsReceived(metrics);
-			});
+			onMetricsReceived(metrics);
 			graphRenderer.renderGraphs(plugins, metrics, function () {
 				// after rendering the graphs remove the custom invisible class and hide all non active plugins
 				$(".metric-plugin").addClass("hidden").removeClass("invisible");
