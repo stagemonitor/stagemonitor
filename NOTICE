@@ -30,3 +30,5 @@ stagemonitor-os/src/main/resources/sigar
 
 This product bundles DataTables 1.10.3, which is available under the "MIT" license. For details, see
 stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/datatables/jquery.dataTables.min.js
+
+TODO add new stuff
