@@ -59,4 +59,8 @@ public class EhCachePlugin extends StagemonitorPlugin {
 		ElasticsearchClient.sendGrafanaDashboardAsync("EhCache.json");
 	}
 
+	@Override
+	public List<String> getPathsOfWidgetMetricTabPlugins() {
+		return Arrays.asList("/stagemonitor/static/tabs/metrics/ehcache-metrics");
+	}
 }

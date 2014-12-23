@@ -13,8 +13,10 @@ var tableRenderer = (function () {
 			$.each(metricTables, function (i, metricTable) {
 				if (!metricTable.alreadyReceivedData || metricTable.pluginId == selectedPluginId) {
 					metricTable.alreadyReceivedData = true;
-					metricTable.table.fnClearTable();
-					metricTable.table.fnAddData(getData(metrics, metricTable));
+					var data = getData(metrics, metricTable);
+					metricTable.table.fnClearTable(false);
+					metricTable.table.fnAddData(data, false);
+					metricTable.table.DataTable().draw(false);
 					restoreSelectedRow(metricTable);
 				}
 			});
@@ -28,7 +30,7 @@ var tableRenderer = (function () {
 		metricTable.pluginId = pluginId;
 		var aoColumns = [{sTitle: metricTable.nameLabel, mData: "name"}];
 		$.each(metricTable.columns, function (i, column) {
-			aoColumns.push({sTitle: column.title, mData: column.metric});
+			aoColumns.push({sTitle: column.title, mData: column.uniqueName});
 		});
 		metricTables.push(metricTable);
 		metricTable.table = $(metricTable.bindto).dataTable({
@@ -63,7 +65,7 @@ var tableRenderer = (function () {
 					var rowName = match[1] || match[0];
 					dataByRowName[rowName] = dataByRowName[rowName] || {};
 					dataByRowName[rowName].name = rowName;
-					dataByRowName[rowName][column.metric] = metricCategory[metricPath][column.metric].toFixed(2);
+					dataByRowName[rowName][column.uniqueName] = metricCategory[metricPath][column.metric].toFixed(2);
 					metricTable.rows = metricTable.rows || {};
 					if (!metricTable.rows[rowName]) {
 						onNewRow(metricTable, rowName, metrics);
@@ -90,7 +92,7 @@ var tableRenderer = (function () {
 	}
 
 	function onRowSelected(timerTable) {
-		if (timerTable.graphTemplates.templates) {
+		if (timerTable.graphTemplates && timerTable.graphTemplates.templates) {
 			$.each(timerTable.graphTemplates.templates, function (i, graphTemplate) {
 				graphRenderer.disableGraphsBoundTo(graphTemplate.template.bindto);
 			});
@@ -101,7 +103,7 @@ var tableRenderer = (function () {
 	}
 
 	function onRowDeselected(timerTable) {
-		if (timerTable.graphTemplates.templates) {
+		if (timerTable.graphTemplates && timerTable.graphTemplates.templates) {
 			$.each(timerTable.graphTemplates.templates, function (i, graphTemplate) {
 				graphRenderer.disableGraphsBoundTo(graphTemplate.template.bindto);
 			});
@@ -113,23 +115,33 @@ var tableRenderer = (function () {
 		}
 	}
 
-	function onNewRow(timerTable, rowName, metrics) {
-		if (timerTable.graphTemplates.templates) {
-			$.each(timerTable.graphTemplates.templates, function (i, graphTemplate) {
+	function onNewRow(table, rowName, metrics) {
+		addGraphsFromTemplates(table, rowName, metrics, true);
+		if (table.graphTemplates && table.graphTemplates.templates && table.graphTemplates.defaultRowSelection) {
+			addGraphsFromTemplates(table, table.graphTemplates.defaultRowSelection, metrics, false);
+		}
+	}
+
+	function addGraphsFromTemplates(table, rowName, metrics, quoteRowName) {
+		if (table.graphTemplates && table.graphTemplates.templates) {
+			$.each(table.graphTemplates.templates, function (i, graphTemplate) {
 				graphTemplate.graphs = graphTemplate.graphs || {};
-				graphTemplate.graphs[rowName] = processGraphTemplate(graphTemplate, rowName, timerTable);
-				graphRenderer.addGraph(timerTable.pluginId, graphTemplate.graphs[rowName], metrics);
+				if (!graphTemplate.graphs[rowName]) {
+					graphTemplate.graphs[rowName] = processGraphTemplate(graphTemplate, rowName, table, quoteRowName);
+					graphRenderer.addGraph(table.pluginId, graphTemplate.graphs[rowName], metrics);
+				}
 			});
 		}
 	}
 
-	function processGraphTemplate(graphTemplate, rowName, timerTable) {
+	function processGraphTemplate(graphTemplate, rowName, table, quoteRowName) {
 		var template = JSON.parse(JSON.stringify(graphTemplate.template));
-		template.disabled = /*true;//*/rowName != timerTable.graphTemplates.defaultRowSelection;
+		template.disabled = rowName != table.graphTemplates.defaultRowSelection;
 		for (var j = 0; j < template.columns.length; j++) {
 			var column = template.columns[j];
-			column[1] = column[1].replace("${rowName}", RegExp.quote(rowName));
+			column[1] = column[1].replace("${rowName}", quoteRowName ? RegExp.quote(rowName) : rowName);
 		}
 		return template;
 	}
+
 })();

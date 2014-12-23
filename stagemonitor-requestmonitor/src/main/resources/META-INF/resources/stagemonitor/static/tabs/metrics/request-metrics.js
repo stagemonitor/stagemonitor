@@ -1,87 +1,91 @@
 (function () {
-
-	var requestMetricsPlugin = {
-		id: "request-metrics",
-		label: "Requests",
-		table: {
-			bindto: "#request-table",
-			nameLabel: "Name",
-			columns: [
-				{
-					metricCategory: "timers",
-					metricPathRegex: /request.([^\.]+).server.time.total/,
-					metric: "m1_rate",
-					title: "Requests/s"
-				},
-				{
-					metricCategory: "timers",
-					metricPathRegex: /request.([^\.]+).server.time.total/,
-					metric: "max",
-					title: "Max"
-				},
-				{
-					metricCategory: "timers",
-					metricPathRegex: /request.([^\.]+).server.time.total/,
-					metric: "mean",
-					title: "Mean"
-				},
-				{
-					metricCategory: "timers",
-					metricPathRegex: /request.([^\.]+).server.time.total/,
-					metric: "min",
-					title: "Min"
-				},
-				{
-					metricCategory: "timers",
-					metricPathRegex: /request.([^\.]+).server.time.total/,
-					metric: "p50",
-					title: "p50"
-				},
-				{
-					metricCategory: "timers",
-					metricPathRegex: /request.([^\.]+).server.time.total/,
-					metric: "p95",
-					title: "p95"
-				},
-				{
-					metricCategory: "timers",
-					metricPathRegex: /request.([^\.]+).server.time.total/,
-					metric: "stddev",
-					title: "Std. Dev."
-				}
-			],
-			graphTemplates: {
-				defaultRowSelection: 'All',
-				templates: [
-					 {
-						template: {
-							bindto: '#time',
-							min: 0,
-							format: 'ms',
-							fill: 0.1,
-							columns: [
-								["timers", "request.(${rowName}).server.time.total", "mean"]
-							]
-						}
+	plugins.push(
+		{
+			id: "request-metrics",
+			label: "Requests",
+			table: {
+				bindto: "#request-table",
+				nameLabel: "Name",
+				columns: [
+					{
+						metricCategory: "timers",
+						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metric: "m1_rate",
+						title: "Requests/s",
+						uniqueName: "requests"
 					},
 					{
-						template: {
-							bindto: '#throughput',
-							min: 0,
-							format: 'requests/sec',
-							fill: 0.1,
-							columns: [
-								["timers", "request.(${rowName}).server.time.total", "m1_rate"]
-							]
-						}
+						metricCategory: "timers",
+						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metric: "max",
+						title: "Max",
+						uniqueName: "max"
+					},
+					{
+						metricCategory: "timers",
+						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metric: "mean",
+						title: "Mean",
+						uniqueName: "mean"
+					},
+					{
+						metricCategory: "timers",
+						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metric: "min",
+						title: "Min",
+						uniqueName: "min"
+					},
+					{
+						metricCategory: "timers",
+						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metric: "p50",
+						title: "p50",
+						uniqueName: "p50"
+					},
+					{
+						metricCategory: "timers",
+						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metric: "p95",
+						title: "p95",
+						uniqueName: "p95"
+					},
+					{
+						metricCategory: "timers",
+						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metric: "stddev",
+						title: "Std. Dev.",
+						uniqueName: "stddev"
 					}
-				]
+				],
+				graphTemplates: {
+					defaultRowSelection: 'All',
+					templates: [
+						{
+							template: {
+								bindto: '#time',
+								min: 0,
+								format: 'ms',
+								fill: 0.1,
+								columns: [
+									["timers", "request.(${rowName}).server.time.total", "mean"]
+								]
+							}
+						},
+						{
+							template: {
+								bindto: '#throughput',
+								min: 0,
+								format: 'requests/sec',
+								fill: 0.1,
+								columns: [
+									["timers", "request.(${rowName}).server.time.total", "m1_rate"]
+								]
+							}
+						}
+					]
+				}
 			}
 		}
-	};
-	plugins.push(
-		requestMetricsPlugin
 	);
-
 }());
 

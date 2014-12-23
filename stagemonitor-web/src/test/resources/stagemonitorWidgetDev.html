@@ -74,7 +74,8 @@
 							"http://localhost:8880/petclinic", "", true, connectionId,
 							[
 								"/stagemonitor-requestmonitor/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics/request-metrics",
-								"/stagemonitor-jvm/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics/jvm-metrics"
+								"/stagemonitor-jvm/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics/jvm-metrics",
+								"/stagemonitor-ehcache/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics/ehcache-metrics"
 							]);
 					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 					stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
