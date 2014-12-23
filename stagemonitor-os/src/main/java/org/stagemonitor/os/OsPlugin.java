@@ -2,6 +2,7 @@ package org.stagemonitor.os;
 
 import com.codahale.metrics.MetricRegistry;
 import org.hyperic.sigar.FileSystem;
+import org.hyperic.sigar.NetRoute;
 import org.hyperic.sigar.Sigar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,9 @@ import org.stagemonitor.os.metrics.SwapMetricSet;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,14 +66,19 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		metricRegistry.registerAll(init(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0])));
 		metricRegistry.registerAll(init(new MemoryMetricSet(sigar)));
 		metricRegistry.registerAll(init(new SwapMetricSet(sigar)));
-		for (String ifname : sigar.getNetInterfaceList()) {
+
+		Set<String> routedNetworkInterfaces = new HashSet<String>();
+		for (NetRoute netRoute : sigar.getNetRouteList()) {
+			routedNetworkInterfaces.add(netRoute.getIfname());
+		}
+		for (String ifname : routedNetworkInterfaces) {
 			metricRegistry.registerAll(init(new NetworkMetricSet(ifname, sigar)));
 		}
 		@SuppressWarnings("unchecked")
 		final Set<Map.Entry<String, FileSystem>> entries = (Set<Map.Entry<String, FileSystem>>) sigar.getFileSystemMap().entrySet();
 		for (Map.Entry<String, FileSystem> e : entries) {
 			final FileSystem fs = e.getValue();
-			if (fs.getType() == FileSystem.TYPE_LOCAL_DISK) {
+			if (fs.getType() == FileSystem.TYPE_LOCAL_DISK || fs.getType() == FileSystem.TYPE_NETWORK) {
 				metricRegistry.registerAll(init(new FileSystemMetricSet(e.getKey(), sigar)));
 			}
 		}
@@ -162,5 +170,10 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 
 	@Override
 	public void onConfigurationInitialized(Configuration configuration) throws Exception {
+	}
+
+	@Override
+	public List<String> getPathsOfWidgetMetricTabPlugins() {
+		return Arrays.asList("/stagemonitor/static/tabs/metrics/os-metrics");
 	}
 }

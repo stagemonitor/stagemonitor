@@ -44,6 +44,7 @@ var graphRenderer = (function () {
 		if (!graph.disabled && graph.pluginId == selectedPluginId) {
 			graph.plot = $.plot($(graph.bindto), graph.series, {
 				series: {
+					stack: graph.stack,
 					lines: {
 						show: true,
 						zero: false,
@@ -133,7 +134,11 @@ var graphRenderer = (function () {
 		for (key in obj) {
 			var match = new RegExp(regex).exec(key);
 			if (match != null) {
-				metrics[match[1] || match[0]] = obj[key][valuePath];
+				var graphName = (match[1] || match[0]);
+				var value = obj[key][valuePath];
+				// sum if there is more than one metric matching the pattern
+				metrics[graphName] = metrics[graphName] || 0;
+				metrics[graphName] = metrics[graphName] + value;
 			}
 		}
 		return metrics;

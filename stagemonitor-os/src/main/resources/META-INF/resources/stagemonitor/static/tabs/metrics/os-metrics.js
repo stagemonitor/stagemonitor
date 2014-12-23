@@ -1,51 +1,71 @@
 (function () {
 	plugins.push(
 		{
-			id: "jvm-metrics",
-			label: "JVM",
+			id: "os-metrics",
+			label: "OS",
 			graphs: [
 				{
-					bindto: '#memory',
-					min: 0,
-					format: 'bytes',
-					fill: 0.1,
-					columns: [
-						["gauges", "jvm.memory.heap.(max)", "value"],
-						["gauges", "jvm.memory.heap.(committed)", "value"],
-						["gauges", "jvm.memory.heap.(used)", "value"]
-					]
-				},
-				{
-					bindto: '#memory-pools',
+					bindto: '#os-cpu',
 					min: 0,
 					max: 1,
 					format: 'percent',
+					stack: true,
+					fill: 0.1,
 					columns: [
-						["gauges", /jvm.memory.pools.([^\.]+).usage/, "value"]
+						["gauges", /os\.cpu\.usage\.((?!idle).*$)/, "value"],
+						["gauges", /os\.cpu\.usage\.(idle)/, "value"]
+					]
+				},
+				{
+					bindto: '#network-io',
+					min: 0,
+					format: 'bytes',
+					derivative: true,
+					columns: [
+						["gauges", /os.net.[^\.]+.(write)/, "value"],
+						["gauges", /os.net.[^\.]+.(read)/, "value"]
 					],
 					disabledLines: ["Code-Cache"]
 				},
 				{
-					bindto: '#cpu',
-					min: 0,
-					max: 1,
-					fill: 0.1,
-					format: 'percent',
-					columns: [
-						["gauges", "jvm.cpu.process.(usage)", "value"]
-					],
-					padding: { bottom: 0, top: 0 }
-				},
-				{
-					bindto: '#gc',
+					bindto: '#io',
 					min: 0,
 					fill: 0.1,
-					format: 'ms',
+					format: 'bytes',
 					derivative: true,
 					columns: [
-						["gauges", /jvm.gc.([^\.]+).time/, "value"]
-					],
-					padding: { bottom: 0, top: 0 }
+						["gauges", /os.fs.[^\.]+.(writes).bytes/, "value"],
+						["gauges", /os.fs.[^\.]+.(reads).bytes/, "value"]
+					]
+				},
+				{
+					bindto: '#fs-usage',
+					min: 0,
+					max: 1,
+					format: 'percent',
+					columns: [
+						["gauges", /os.fs.([^\.]+).usage-percent/, "value"]
+					]
+				},
+				{
+					bindto: '#ram',
+					min: 0,
+					format: 'bytes',
+					fill: 0.1,
+					columns: [
+						["gauges", "os.mem.usage.(total)", "value"],
+						["gauges", "os.mem.usage.(used)", "value"]
+					]
+				},
+				{
+					bindto: '#swap',
+					min: 0,
+					format: 'bytes',
+					fill: 0.1,
+					columns: [
+						["gauges", "os.swap.usage.(total)", "value"],
+						["gauges", "os.swap.usage.(used)", "value"]
+					]
 				}
 			]
 		}
