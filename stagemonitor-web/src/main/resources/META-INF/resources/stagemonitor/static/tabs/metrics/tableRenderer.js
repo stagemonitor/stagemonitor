@@ -65,7 +65,8 @@ var tableRenderer = (function () {
 					var rowName = match[1] || match[0];
 					dataByRowName[rowName] = dataByRowName[rowName] || {};
 					dataByRowName[rowName].name = rowName;
-					dataByRowName[rowName][column.uniqueName] = metricCategory[metricPath][column.metric].toFixed(2);
+					var value = metricCategory[metricPath][column.metric];
+					dataByRowName[rowName][column.uniqueName] = +(value).toFixed(2);
 					metricTable.rows = metricTable.rows || {};
 					if (!metricTable.rows[rowName]) {
 						onNewRow(metricTable, rowName, metrics);
