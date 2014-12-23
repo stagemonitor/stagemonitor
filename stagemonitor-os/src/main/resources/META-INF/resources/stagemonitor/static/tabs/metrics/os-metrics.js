@@ -12,8 +12,14 @@
 					stack: true,
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /os\.cpu\.usage\.((?!idle).*$)/, metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: /os\.cpu\.usage\.(idle)/, metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(soft-interrupt)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(interrupt)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(stolen)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(nice)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(wait)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(sys)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(user)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(idle)", metric: "value" }
 					]
 				},
 				{
