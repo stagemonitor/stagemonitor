@@ -72,7 +72,7 @@ public class WebPlugin extends StagemonitorPlugin {
 			.description("If active, stagemonitor will inject a widget in the web site containing the calltrace " +
 					"metrics.\n" +
 					"Requires Servlet-Api >= 3.0")
-			.defaultValue(false)
+			.defaultValue(true)
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Map<Pattern, String>> groupUrls = ConfigurationOption.regexMapOption()
