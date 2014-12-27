@@ -28,10 +28,9 @@
 					format: 'bytes',
 					derivative: true,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /os.net.[^\.]+.write/, metric: "value", title: "Send" },
-						{ metricCategory: "gauges", metricPathRegex: /os.net.[^\.]+.read/, metric: "value", title: "Receive" }
-					],
-					disabledLines: ["Code-Cache"]
+						{ metricCategory: "gauges", metricPathRegex: /os.net.[^\.]+.write/, metric: "value", title: "send" },
+						{ metricCategory: "gauges", metricPathRegex: /os.net.[^\.]+.read/, metric: "value", title: "receive" }
+					]
 				},
 				{
 					bindto: '#io',
@@ -40,8 +39,7 @@
 					format: 'bytes',
 					derivative: true,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /os.fs.[^\.]+.(writes).bytes/, metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: /os.fs.[^\.]+.(reads).bytes/, metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: /os.fs.[^\.]+.([^\.]+).bytes/, metric: "value" }
 					]
 				},
 				{
@@ -59,8 +57,7 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "os.mem.usage.(total)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.mem.usage.(used)", metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: /os\.mem\.usage\.([^\.]+)/, metric: "value" }
 					]
 				},
 				{

@@ -29,6 +29,22 @@ public abstract class StagemonitorPlugin implements ConfigurationOptionProvider 
 		return Collections.emptyList();
 	}
 
+	/**
+	 * StagemonitorPlugins can extend the metrics tab in the in browser widget.
+	 * A plugin consists of a javascript file and a html file.
+	 * <p/>
+	 * The files should be placed under
+	 * <code>src/main/resources/META-INF/resources/some/sub/folder/{pluginId}[.js|.html]</code>
+	 * <p/>
+	 * As of servlet-api 3.0, all files under <code>src/main/resources/META-INF/resources/</code> are accessable
+	 * through HTTP.
+	 * <p/>
+	 * For documentation and a example of how a plugin should look like, see 
+	 * <code>stagemonitor-ehcache/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics</code> and
+	 * <code>stagemonitor-jvm/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics</code>
+	 *
+	 * @return the paths of the widget metric tab plugins
+	 */
 	public List<String> getPathsOfWidgetMetricTabPlugins() {
 		return Collections.emptyList();
 	}

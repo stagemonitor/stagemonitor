@@ -1,6 +1,7 @@
 var tableRenderer = (function () {
 	var metricTables = [];
 	var selectedPluginId;
+
 	return {
 		renderTables: function (plugins) {
 			$.each(plugins, function (i, plugin) {
@@ -11,13 +12,11 @@ var tableRenderer = (function () {
 		},
 		onMetricsReceived: function (metrics) {
 			$.each(metricTables, function (i, metricTable) {
+				// only update table if it is visible
+				// or it is the first invocation of onMetricsReceived so that the graphs can be populated
 				if (!metricTable.alreadyReceivedData || metricTable.pluginId == selectedPluginId) {
 					metricTable.alreadyReceivedData = true;
-					var data = getData(metrics, metricTable);
-					metricTable.table.fnClearTable(false);
-					metricTable.table.fnAddData(data, false);
-					metricTable.table.DataTable().draw(false);
-					restoreSelectedRow(metricTable);
+					updateTable(metrics, metricTable);
 				}
 			});
 		},
@@ -29,8 +28,8 @@ var tableRenderer = (function () {
 	function renderTable(pluginId, metricTable) {
 		metricTable.pluginId = pluginId;
 		var aoColumns = [{sTitle: metricTable.nameLabel, mData: "name"}];
-		$.each(metricTable.columns, function (i, column) {
-			aoColumns.push({sTitle: column.title, mData: column.uniqueName});
+		$.each(metricTable.columns, function (columnIndex, column) {
+			aoColumns.push({sTitle: column.title, mData: columnIndex});
 		});
 		metricTables.push(metricTable);
 		metricTable.table = $(metricTable.bindto).dataTable({
@@ -55,9 +54,17 @@ var tableRenderer = (function () {
 		});
 	}
 
+	function updateTable(metrics, metricTable) {
+		var data = getData(metrics, metricTable);
+		metricTable.table.fnClearTable(false);
+		metricTable.table.fnAddData(data, false);
+		metricTable.table.DataTable().draw(false);
+		restoreSelectedRow(metricTable);
+	}
+
 	function getData(metrics, metricTable) {
 		var dataByRowName = {};
-		$.each(metricTable.columns, function (i, column) {
+		$.each(metricTable.columns, function (columnIndex, column) {
 			var metricCategory = metrics[column.metricCategory];
 			for (metricPath in metricCategory) {
 				var match = column.metricPathRegex.exec(metricPath);
@@ -66,7 +73,10 @@ var tableRenderer = (function () {
 					dataByRowName[rowName] = dataByRowName[rowName] || {};
 					dataByRowName[rowName].name = rowName;
 					var value = metricCategory[metricPath][column.metric];
-					dataByRowName[rowName][column.uniqueName] = +(value).toFixed(2);
+					if (isNaN(value)) {
+						value = 0;
+					}
+					dataByRowName[rowName][columnIndex] = +(value).toFixed(2);
 					metricTable.rows = metricTable.rows || {};
 					if (!metricTable.rows[rowName]) {
 						onNewRow(metricTable, rowName, metrics);
@@ -76,11 +86,21 @@ var tableRenderer = (function () {
 			}
 		});
 
-		var data = [];
-		for(var columnName in dataByRowName) {
-			data.push(dataByRowName[columnName]);
+
+		var valuesArray = utils.objectToValuesArray(dataByRowName);
+		fillMissingData(valuesArray, metricTable);
+		return  valuesArray;
+	}
+
+	function fillMissingData(valuesArray, metricTable) {
+		for (var i = 0; i < valuesArray.length; i++) {
+			var metricsForRow = valuesArray[i];
+			$.each(metricTable.columns, function (columnIndex, column) {
+				if (typeof metricsForRow[columnIndex] === 'undefined') {
+					metricsForRow[columnIndex] = 0;
+				}
+			});
 		}
-		return data;
 	}
 
 	function restoreSelectedRow(timerTable) {
@@ -119,6 +139,7 @@ var tableRenderer = (function () {
 	function onNewRow(table, rowName, metrics) {
 		addGraphsFromTemplates(table, rowName, metrics, true);
 		if (table.graphTemplates && table.graphTemplates.templates && table.graphTemplates.defaultRowSelection) {
+			// don't Regex-quote the defaultRowSelection as it may be a regex
 			addGraphsFromTemplates(table, table.graphTemplates.defaultRowSelection, metrics, false);
 		}
 	}

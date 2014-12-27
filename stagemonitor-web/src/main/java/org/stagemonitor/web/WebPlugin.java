@@ -1,17 +1,5 @@
 package org.stagemonitor.web;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
-
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +10,16 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 
-@WebListener
-public class WebPlugin extends StagemonitorPlugin implements ServletContextListener {
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+public class WebPlugin extends StagemonitorPlugin {
 
 	public static final String WEB_PLUGIN = "Web Plugin";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -177,12 +173,28 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContextListe
 			.defaultValue(false)
 			.configurationCategory(WEB_PLUGIN)
 			.build();
+	private final ConfigurationOption<String> metricsServletAllowedOrigin = ConfigurationOption.stringOption()
+			.key("stagemonitor.web.metricsServlet.allowedOrigin")
+			.dynamic(true)
+			.label("Allowed origin")
+			.description("The Access-Control-Allow-Origin header value for the metrics servlet.")
+			.defaultValue(null)
+			.configurationCategory(WEB_PLUGIN)
+			.build();
+	private final ConfigurationOption<String> metricsServletJsonpParameter = ConfigurationOption.stringOption()
+			.key("stagemonitor.web.metricsServlet.jsonpParameter")
+			.dynamic(true)
+			.label("The Jsonp callback parameter name")
+			.description("The name of the parameter used to specify the jsonp callback.")
+			.defaultValue(null)
+			.configurationCategory(WEB_PLUGIN)
+			.build();
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Arrays.<ConfigurationOption<?>>asList(collectHttpHeaders, parseUserAgent, excludeHeaders, 
 				requestParamsConfidential, widgetEnabled, groupUrls, rumEnabled, collectPageLoadTimesPerRequest,
-				excludedRequestPaths, monitorOnlyForwardedRequests);
+				excludedRequestPaths, monitorOnlyForwardedRequests, metricsServletAllowedOrigin, metricsServletJsonpParameter);
 	}
 
 	@Override
@@ -256,12 +268,11 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContextListe
 		return monitorOnlyForwardedRequests.getValue();
 	}
 
-	@Override
-	public void contextInitialized(ServletContextEvent sce) {
-		//To change body of implemented methods use File | Settings | File Templates.
+	public String getMetricsServletAllowedOrigin() {
+		return metricsServletAllowedOrigin.getValue();
 	}
 
-	@Override
-	public void contextDestroyed(ServletContextEvent sce) {
+	public String getMetricsServletJsonpParamName() {
+		return metricsServletJsonpParameter.getValue();
 	}
 }

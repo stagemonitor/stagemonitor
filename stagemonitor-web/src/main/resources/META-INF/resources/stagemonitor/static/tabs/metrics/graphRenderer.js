@@ -3,6 +3,51 @@ var graphRenderer = (function () {
 	var storedMinutes = 5;
 	var graphs = [];
 
+	return {
+		renderGraphs: function (plugins, metrics, onGraphsRendered) {
+			initGraphs(plugins, metrics, onGraphsRendered);
+		},
+
+		disableGraphsBoundTo: function (bindto) {
+			var graphsToDisable = $.grep(graphs, function (graph) {
+				return graph.bindto == bindto
+			});
+			$.each(graphsToDisable, function (i, graphToDisable) {
+				graphToDisable.disabled = true;
+				graphToDisable.plot = null;
+			});
+		},
+
+		activateGraph: function (graph) {
+			if (graph) {
+				graph.disabled = false;
+				repaintGraph(graph);
+			}
+		},
+
+		addGraph: function (pluginId, graph, metrics) {
+			if (graph) {
+				initGraph(pluginId, graph, metrics);
+			}
+		},
+
+		onMetricsReceived: function (metrics) {
+			updateGraphs(metrics);
+		},
+
+		onPluginSelected: function (pluginId) {
+			selectedPluginId = pluginId;
+			var graphsOfPlugin = $.grep(graphs, function (graph) {
+				return graph.pluginId == pluginId;
+			});
+
+			$.each(graphsOfPlugin, function (i, graph) {
+				repaintGraph(graph);
+			});
+		}
+	};
+
+
 	function initGraphs(plugins, metrics, onGraphsRendered) {
 		$.each(plugins, function (i, plugin) {
 			if (plugin.graphs) {
@@ -62,7 +107,7 @@ var graphRenderer = (function () {
 				yaxis: {
 					min: graph.min,
 					max: graph.max,
-					tickFormatter: formatters[graph.format] || formatters._default(graph.format)
+					tickFormatter: formatters()[graph.format] || formatters()._default(graph.format)
 				},
 				xaxis: {
 					mode: "time",
@@ -126,7 +171,7 @@ var graphRenderer = (function () {
 		return metrics;
 	}
 
-	var findPropertyValuesByRegex = function (obj, regex, valuePath, title) {
+	function findPropertyValuesByRegex(obj, regex, valuePath, title) {
 		var metrics = {};
 		var key;
 		for (key in obj) {
@@ -140,56 +185,58 @@ var graphRenderer = (function () {
 			}
 		}
 		return metrics;
-	};
+	}
 
-	var formatters = {
-		bytes: function (bytes) {
-			if (bytes == 0) return '0 Byte';
-			var k = 1024;
-			var sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-			var i = Math.floor(Math.log(bytes) / Math.log(k));
-			return round(bytes / Math.pow(k, i)) + ' ' + sizes[i];
-		},
-		percent: function (percent) {
-			return round(percent * 100) + ' %';
-		},
-		ms: function (size) {
-			if (size === null) {
-				return "";
-			}
-
-			if (Math.abs(size) < 1000) {
-				return round(size) + " ms";
-			}
-			// Less than 1 min
-			else if (Math.abs(size) < 60000) {
-				return round(size / 1000) + " s";
-			}
-			// Less than 1 hour, devide in minutes
-			else if (Math.abs(size) < 3600000) {
-				return round(size / 60000) + " min";
-			}
-			// Less than one day, devide in hours
-			else if (Math.abs(size) < 86400000) {
-				return round(size / 3600000) + " hour";
-			}
-			// Less than one year, devide in days
-			else if (Math.abs(size) < 31536000000) {
-				return round(size / 86400000) + " day";
-			}
-
-			return round(size / 31536000000) + " year";
-		},
-		_default: function(unit) {
-			return function(datapoint) {
-				if (unit) {
-					return round(datapoint) + " " + unit;
-				} else {
-					return round(datapoint);
+	function formatters() {
+		return {
+			bytes: function (bytes) {
+				if (bytes == 0) return '0 Byte';
+				var k = 1024;
+				var sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+				var i = Math.floor(Math.log(bytes) / Math.log(k));
+				return round(bytes / Math.pow(k, i)) + ' ' + sizes[i];
+			},
+			percent: function (percent) {
+				return round(percent * 100) + ' %';
+			},
+			ms: function (size) {
+				if (size === null) {
+					return "";
 				}
-			};
+
+				if (Math.abs(size) < 1000) {
+					return round(size) + " ms";
+				}
+				// Less than 1 min
+				else if (Math.abs(size) < 60000) {
+					return round(size / 1000) + " s";
+				}
+				// Less than 1 hour, devide in minutes
+				else if (Math.abs(size) < 3600000) {
+					return round(size / 60000) + " min";
+				}
+				// Less than one day, devide in hours
+				else if (Math.abs(size) < 86400000) {
+					return round(size / 3600000) + " hour";
+				}
+				// Less than one year, devide in days
+				else if (Math.abs(size) < 31536000000) {
+					return round(size / 86400000) + " day";
+				}
+
+				return round(size / 31536000000) + " year";
+			},
+			_default: function(unit) {
+				return function(datapoint) {
+					if (unit) {
+						return round(datapoint) + " " + unit;
+					} else {
+						return round(datapoint);
+					}
+				};
+			}
 		}
-	};
+	}
 
 	function round(num, fractionDigits) {
 		var e = fractionDigits || 2;
@@ -200,47 +247,4 @@ var graphRenderer = (function () {
 		return result;
 	}
 
-	return {
-		renderGraphs: function (plugins, metrics, onGraphsRendered) {
-			initGraphs(plugins, metrics, onGraphsRendered);
-		},
-
-		disableGraphsBoundTo: function(bindto) {
-			var graphsToDisable = $.grep(graphs,function (graph) {
-				return graph.bindto == bindto
-			});
-			$.each(graphsToDisable, function (i, graphToDisable) {
-				graphToDisable.disabled = true;
-				graphToDisable.plot = null;
-			});
-		},
-
-		activateGraph: function(graph) {
-			if (graph) {
-				graph.disabled = false;
-				repaintGraph(graph);
-			}
-		},
-
-		addGraph: function(pluginId, graph, metrics) {
-			if (graph) {
-				initGraph(pluginId, graph, metrics);
-			}
-		},
-
-		onMetricsReceived: function(metrics) {
-			updateGraphs(metrics);
-		},
-
-		onPluginSelected: function(pluginId) {
-			selectedPluginId = pluginId;
-			var graphsOfPlugin = $.grep(graphs, function (graph) {
-				return graph.pluginId == pluginId;
-			});
-
-			$.each(graphsOfPlugin, function (i, graph) {
-				repaintGraph(graph);
-			});
-		}
-	}
 }());

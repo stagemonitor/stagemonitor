@@ -1,6 +1,6 @@
-var utils = (function() {
-	RegExp.quote = function(str) {
-		return (str+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
+var utils = (function () {
+	RegExp.quote = function (str) {
+		return (str + '').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
 	};
 
 	function loadScript(path) {
@@ -17,19 +17,28 @@ var utils = (function() {
 					result.resolve();
 			}
 		};
-		script.onerror = function () { result.reject(); };
+		script.onerror = function () {
+			result.reject();
+		};
 		$("head")[0].appendChild(script);
 		return  result.promise();
 	}
 
 	return {
-		loadScripts: function(scripts, callback) {
+		loadScripts: function (scripts, callback) {
 			$.when.apply(null, $.map(scripts, loadScript)).done(function () {
 				callback();
 			});
 		},
-		clone: function(object) {
+		clone: function (object) {
 			return JSON.parse(JSON.stringify(object));
+		},
+		objectToValuesArray: function (obj) {
+			var data = [];
+			for (var propertyName in obj) {
+				data.push(obj[propertyName]);
+			}
+			return data;
 		}
 	}
 })();

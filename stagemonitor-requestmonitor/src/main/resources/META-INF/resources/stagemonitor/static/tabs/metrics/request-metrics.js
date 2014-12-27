@@ -11,50 +11,43 @@
 						metricCategory: "timers",
 						metricPathRegex: /request.([^\.]+).server.time.total/,
 						metric: "m1_rate",
-						title: "Requests/s",
-						uniqueName: "requests"
+						title: "Requests/s"
 					},
 					{
 						metricCategory: "timers",
 						metricPathRegex: /request.([^\.]+).server.time.total/,
 						metric: "max",
-						title: "Max",
-						uniqueName: "max"
+						title: "Max"
 					},
 					{
 						metricCategory: "timers",
 						metricPathRegex: /request.([^\.]+).server.time.total/,
 						metric: "mean",
-						title: "Mean",
-						uniqueName: "mean"
+						title: "Mean"
 					},
 					{
 						metricCategory: "timers",
 						metricPathRegex: /request.([^\.]+).server.time.total/,
 						metric: "min",
-						title: "Min",
-						uniqueName: "min"
+						title: "Min"
 					},
 					{
 						metricCategory: "timers",
 						metricPathRegex: /request.([^\.]+).server.time.total/,
 						metric: "p50",
-						title: "p50",
-						uniqueName: "p50"
+						title: "p50"
 					},
 					{
 						metricCategory: "timers",
 						metricPathRegex: /request.([^\.]+).server.time.total/,
 						metric: "p95",
-						title: "p95",
-						uniqueName: "p95"
+						title: "p95"
 					},
 					{
 						metricCategory: "timers",
 						metricPathRegex: /request.([^\.]+).server.time.total/,
 						metric: "stddev",
-						title: "Std. Dev.",
-						uniqueName: "stddev"
+						title: "Std. Dev."
 					}
 				],
 				graphTemplates: {

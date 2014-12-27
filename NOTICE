@@ -45,3 +45,6 @@ stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/flot/
 
 This product bundles Flot tooltip plugin, which is available under the "MIT" license. For details, see
 stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/flot/jquery.flot.tooltip.min.js
+
+This product includes code derived from the Metrics project, which is available under the "Apache 2.0" license. For details, see
+stagemonitor-web/src/main/java/org/stagemonitor/web/metrics/StagemonitorMetricsServlet.java

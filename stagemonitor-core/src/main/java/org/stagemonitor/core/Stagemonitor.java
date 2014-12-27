@@ -127,6 +127,9 @@ public final class Stagemonitor {
 		Stagemonitor.logger = logger;
 	}
 
+	/**
+	 * @see org.stagemonitor.core.StagemonitorPlugin#getPathsOfWidgetMetricTabPlugins()
+	 */
 	public static List<String> getPathsOfWidgetMetricTabPlugins() {
 		return Collections.unmodifiableList(pathsOfWidgetMetricTabPlugins);
 	}
