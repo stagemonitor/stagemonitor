@@ -1,12 +1,12 @@
 package org.stagemonitor.core;
 
-import java.util.Arrays;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.stagemonitor.core.configuration.Configuration;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -41,9 +41,9 @@ public class StagemonitorTest {
 	public void testStartMonitoring() throws Exception {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 
-		final MeasurementSession measurementSession = new MeasurementSession("testApp", "testHost", "testInstance");
+		final MeasurementSession measurementSession = new MeasurementSession("StagemonitorTest", "testHost", "testInstance");
 		Stagemonitor.startMonitoring(measurementSession);
-		Stagemonitor.startMonitoring(new MeasurementSession("testApp2", "testHost2", "testInstance2"));
+		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest2", "testHost2", "testInstance2"));
 
 		assertTrue(Stagemonitor.isStarted());
 		assertTrue(Stagemonitor.getMeasurementSession().isInitialized());
@@ -57,7 +57,7 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(false);
 		Stagemonitor.setConfiguration(configuration);
 
-		final MeasurementSession measurementSession = new MeasurementSession("testApp", "testHost", "testInstance");
+		final MeasurementSession measurementSession = new MeasurementSession("StagemonitorTest", "testHost", "testInstance");
 		Stagemonitor.startMonitoring(measurementSession);
 
 		assertTrue(Stagemonitor.isDisabled());
@@ -72,7 +72,7 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getDisabledPlugins()).thenReturn(Arrays.asList("TestExceptionPlugin"));
 
-		Stagemonitor.startMonitoring(new MeasurementSession("testApp", "testHost", "testInstance"));
+		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance"));
 
 		verify(logger).info("Initializing plugin {}", "TestPlugin");
 		verify(logger).info("Not initializing disabled plugin {}", "TestExceptionPlugin");

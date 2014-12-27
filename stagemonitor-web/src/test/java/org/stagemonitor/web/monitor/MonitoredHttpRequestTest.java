@@ -1,7 +1,6 @@
 package org.stagemonitor.web.monitor;
 
-import java.util.HashSet;
-
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockFilterChain;
@@ -11,6 +10,8 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
+
+import java.util.HashSet;
 
 import static java.util.Arrays.asList;
 import static junit.framework.Assert.assertNull;
@@ -27,7 +28,7 @@ public class MonitoredHttpRequestTest {
 
 	@Before
 	public void setUp() throws Exception {
-		Stagemonitor.startMonitoring(new MeasurementSession("testApp", "testHost", "testInstance"));
+		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance"));
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
 		request.addParameter("foo", "bar");
 		request.addParameter("bla", "blubb");
@@ -41,6 +42,11 @@ public class MonitoredHttpRequestTest {
 				new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 				new MockFilterChain(),
 				Stagemonitor.getConfiguration());
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		Stagemonitor.reset();
 	}
 
 	@Test
@@ -72,7 +78,7 @@ public class MonitoredHttpRequestTest {
 		assertNotNull(requestTrace.getTimestamp());
 		assertTrue("Timestamp should be in format yyyy-MM-dd'T'HH:mm:ss.SSSZ", requestTrace.getTimestamp().contains("T"));
 
-		assertEquals("testApp", requestTrace.getApplication());
+		assertEquals("MonitoredHttpRequestTest", requestTrace.getApplication());
 		assertEquals("testHost", requestTrace.getHost());
 		assertEquals("testInstance", requestTrace.getInstance());
 
