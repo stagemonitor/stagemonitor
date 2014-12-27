@@ -15,7 +15,9 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /jvm.memory.heap.([^\.]+)/, metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(max)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(committed)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(used)", metric: "value" }
 					]
 				},
 				{
