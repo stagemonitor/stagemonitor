@@ -1,0 +1,37 @@
+<script type="text/x-handlebars-template">
+	<h3>General Information</h3>
+	<table class="table">
+		<tbody>
+		{{#each metrics}}
+		<tr class="{{#if exceededThreshold}}danger{{/if}}">
+			<td class="col-sm-6">{{name}} {{#if description}}<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right" title="{{description}}"></span>{{/if}}</td>
+			<td class="col-sm-6">{{value}}</td>
+		</tr>
+		{{/each}}
+		</tbody>
+	</table>
+
+	<h3>Headers</h3>
+	<table class="table">
+		<tbody>
+		{{#each headers}}
+		<tr>
+			<td class="col-sm-6">{{@key}}</td>
+			<td class="col-sm-6">{{this}}</td>
+		</tr>
+		{{/each}}
+		</tbody>
+	</table>
+
+	<h3>User Agent Information</h3>
+	<table class="table">
+		<tbody>
+		{{#each userAgent}}
+		<tr>
+			<td class="col-sm-6">{{@key}}</td>
+			<td class="col-sm-6">{{this}}</td>
+		</tr>
+		{{/each}}
+		</tbody>
+	</table>
+</script>

@@ -1,14 +1,14 @@
 var rootRequestTrace;
 var noOfRequestTraces = 0;
-listenForAjaxRequestTraces = function (rootRequest, connectionId, contextPathPrefix) {
+listenForAjaxRequestTraces = function (rootRequest, connectionId) {
 	rootRequestTrace = rootRequest;
-	$.getJSON(contextPathPrefix + "/stagemonitor/request-traces", {"connectionId": connectionId}, function (requestTraces) {
+	$.getJSON(stagemonitor.baseUrl + "/stagemonitor/request-traces", {"connectionId": connectionId}, function (requestTraces) {
 			if (requestTraces) {
 				for (var i = 0; i < requestTraces.length; i++) {
 					addAjaxRequestTrace(requestTraces[i]);
 				}
 			}
-			listenForAjaxRequestTraces(rootRequest, connectionId, contextPathPrefix);
+			listenForAjaxRequestTraces(rootRequest, connectionId);
 		});
 };
 

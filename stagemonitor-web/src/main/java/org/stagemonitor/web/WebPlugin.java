@@ -173,12 +173,28 @@ public class WebPlugin extends StagemonitorPlugin {
 			.defaultValue(false)
 			.configurationCategory(WEB_PLUGIN)
 			.build();
+	private final ConfigurationOption<String> metricsServletAllowedOrigin = ConfigurationOption.stringOption()
+			.key("stagemonitor.web.metricsServlet.allowedOrigin")
+			.dynamic(true)
+			.label("Allowed origin")
+			.description("The Access-Control-Allow-Origin header value for the metrics servlet.")
+			.defaultValue(null)
+			.configurationCategory(WEB_PLUGIN)
+			.build();
+	private final ConfigurationOption<String> metricsServletJsonpParameter = ConfigurationOption.stringOption()
+			.key("stagemonitor.web.metricsServlet.jsonpParameter")
+			.dynamic(true)
+			.label("The Jsonp callback parameter name")
+			.description("The name of the parameter used to specify the jsonp callback.")
+			.defaultValue(null)
+			.configurationCategory(WEB_PLUGIN)
+			.build();
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		return Arrays.<ConfigurationOption<?>>asList(collectHttpHeaders, parseUserAgent, excludeHeaders, 
 				requestParamsConfidential, widgetEnabled, groupUrls, rumEnabled, collectPageLoadTimesPerRequest,
-				excludedRequestPaths, monitorOnlyForwardedRequests);
+				excludedRequestPaths, monitorOnlyForwardedRequests, metricsServletAllowedOrigin, metricsServletJsonpParameter);
 	}
 
 	@Override
@@ -250,5 +266,13 @@ public class WebPlugin extends StagemonitorPlugin {
 
 	public boolean isMonitorOnlyForwardedRequests() {
 		return monitorOnlyForwardedRequests.getValue();
+	}
+
+	public String getMetricsServletAllowedOrigin() {
+		return metricsServletAllowedOrigin.getValue();
+	}
+
+	public String getMetricsServletJsonpParamName() {
+		return metricsServletJsonpParameter.getValue();
 	}
 }

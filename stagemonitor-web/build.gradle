@@ -2,6 +2,7 @@ dependencies {
 	compile project(":stagemonitor-requestmonitor")
 	compile project(":stagemonitor-jvm")
 	compile project(":stagemonitor-jdbc")
+	compile 'io.dropwizard.metrics:metrics-json:3.1.0'
 	compile 'net.sf.uadetector:uadetector-resources:2014.10'
 	provided 'javax.servlet:javax.servlet-api:3.0.1'
 

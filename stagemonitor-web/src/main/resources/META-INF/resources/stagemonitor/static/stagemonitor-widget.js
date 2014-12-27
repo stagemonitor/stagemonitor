@@ -1,25 +1,31 @@
 $(document).ready(function () {
 
-	var thresholdExceededGlobal = false;
-
-
 	window.stagemonitor = {
-		initialize: function (data, configurationSources, configurationOptions, contextPathPrefix, passwordSet, connectionId) {
-			listenForAjaxRequestTraces(data, connectionId, contextPathPrefix);
-			thresholdExceededGlobal = renderRequestTab(data);
-			renderConfigTab(configurationSources, configurationOptions, passwordSet, contextPathPrefix);
+		initialize: function (data, configurationSources, configurationOptions, baseUrl, contextPath, passwordSet,
+							  connectionId, pathsOfWidgetMetricTabPlugins) {
+			stagemonitor.requestTrace = data;
+			stagemonitor.configurationSources = configurationSources;
+			stagemonitor.configurationOptions = configurationOptions;
+			stagemonitor.baseUrl = baseUrl;
+			stagemonitor.contextPath = contextPath;
+			stagemonitor.passwordSet = passwordSet;
+			stagemonitor.connectionId = connectionId;
+			stagemonitor.pathsOfWidgetMetricTabPlugins = pathsOfWidgetMetricTabPlugins;
+
+			listenForAjaxRequestTraces(data, connectionId);
+			renderRequestTab(data);
+			renderConfigTab(configurationSources, configurationOptions, passwordSet);
 			renderCallTree(data);
+			try {
+				renderMetricsTab();
+			} catch (e) {
+				console.log(e);
+			}
 			$(".tip").tooltip();
 		},
-		thresholdExceeded: function () {
-			return thresholdExceededGlobal;
-		},
+		thresholdExceeded: false,
 		renderPageLoadTime: function(data) {
-			var thresholdExceeded = doRenderPageLoadTime(data);
-			if (thresholdExceeded) {
-				thresholdExceededGlobal = true;
-			}
-
+			doRenderPageLoadTime(data);
 			$(".tip").tooltip({html: true});
 		}
 	};
@@ -63,5 +69,8 @@ $(document).ready(function () {
 		delay: 5000
 	});
 
-	window.parent.StagemonitorLoaded();
+	try {
+		window.parent.StagemonitorLoaded();
+	} catch (e){}
+
 });

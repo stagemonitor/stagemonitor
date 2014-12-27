@@ -30,3 +30,21 @@ stagemonitor-os/src/main/resources/sigar
 
 This product bundles DataTables 1.10.3, which is available under the "MIT" license. For details, see
 stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/datatables/jquery.dataTables.min.js
+
+This product bundles Flot, which is available under the "MIT" license. For details, see
+stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/flot/jquery.flot.min.js
+
+This product bundles Flot, which is available under the "MIT" license. For details, see
+stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/flot/jquery.flot.resize.min.js
+
+This product bundles Flot stack plugin, which is available under the "MIT" license. For details, see
+stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/flot/jquery.flot.stack.original.js
+
+This product bundles Flot time plugin, which is available under the "MIT" license. For details, see
+stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/flot/jquery.flot.time.min.js
+
+This product bundles Flot tooltip plugin, which is available under the "MIT" license. For details, see
+stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/flot/jquery.flot.tooltip.min.js
+
+This product includes code derived from the Metrics project, which is available under the "Apache 2.0" license. For details, see
+stagemonitor-web/src/main/java/org/stagemonitor/web/metrics/StagemonitorMetricsServlet.java

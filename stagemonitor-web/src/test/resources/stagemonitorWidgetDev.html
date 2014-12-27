@@ -29,7 +29,7 @@
 					if (data.totalPageLoadTime) {
 						var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
 						stagemonitorWindow.stagemonitor.renderPageLoadTime(data);
-						var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+						var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 						var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 						document.getElementById("stagemonitor-overlay-show").className = clazz;
 					}
@@ -70,8 +70,15 @@
 						stagemonitorOverlay.style.display = "none";
 					};
 
-					stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions, "", true, connectionId);
-					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded();
+					stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions,
+							"http://localhost:8880/petclinic", "", true, connectionId,
+							[
+								"/stagemonitor-requestmonitor/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics/request-metrics",
+								"/stagemonitor-jvm/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics/jvm-metrics",
+								"/stagemonitor-ehcache/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics/ehcache-metrics",
+								"/stagemonitor-os/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics/os-metrics"
+							]);
+					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 					stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 					stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
 				});
@@ -164,16 +171,8 @@
 		}
 
 		#stagemonitor-modal {
-			border: 1px solid rgba(0, 0, 0, 0.2);
-			border-radius: 6px;
-			box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-			height: 80%;
-			left: 50%;
-			margin-left: -45%;
-			min-width: 1000px;
-			position: fixed;
-			top: 10%;
-			width: 90%;
+			height: 100%;
+			width: 100%;
 		}
 	</style>
 

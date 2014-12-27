@@ -1,0 +1,162 @@
+<script id="stagemonitor-configuration-template" type="text/x-handlebars-template">
+	<form class="form-horizontal" role="form">
+		<div class="form-group">
+			<label class="col-sm-3 control-label">
+				Reload configuration sources
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip"
+										  data-placement="left"
+										  title="Reload all config sources to pick up
+										  changes not initiated through this ui."></span>
+			</label>
+
+			<div class="col-sm-9">
+				<input type="hidden" name="reload" value="">
+				<button type="submit" class="btn btn-primary save-configuration"
+						data-success="Refresh page to view updated configuration"
+						data-fail="Failed to reload configuration">
+					Reload
+				</button>
+			</div>
+		</div>
+	</form>
+	<form id="password-form" class="form-horizontal" role="form">
+		<div class="form-group">
+			<label class="col-sm-3 control-label">
+				Save changes to this configuration source
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip"
+										  data-placement="left"
+										  title="This dropdown lists all currently available configuration sources.
+										  Those which cant't be written to are not selectable."></span>
+			</label>
+
+			<div class="col-sm-2">
+				<select class="form-control rounded" name="configurationSource">
+					{{#each configurationSources}}
+					<option value="{{@key}}"
+					{{#unless this}}disabled{{/unless}}>{{@key}}</option>
+					{{/each}}
+				</select>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label">
+				Configuration Update Password
+									<span class="tip glyphicon glyphicon-cog" data-toggle="tooltip"
+										  data-placement="right" title="Click to copy config key stagemonitor.password"
+										  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', 'stagemonitor.password');"
+										  style="cursor: pointer;"></span>
+									<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip"
+										  data-placement="left" title="
+														The password that is required to dynamically update the configuration via the configuration endpoint.
+														If not set (default) updating the configuration is disabled (reloading is always enabled, though).
+														If set, you have to include the password here in order to update the configuration.
+														If the password is set to an empty string, the password is not required."></span>
+				{{#unless passwordSet}}
+									<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip"
+										  data-placement="left"
+										  title="The password is not set, so saving is not possible.
+												To resolve this, add 'stagemonitor.password=<your_pwd>' in stagemonitor.properties, click on 'Reload' and refresh the page.
+												Then enter the password in the password input."></span>
+				{{/unless}}
+			</label>
+
+			<div class="col-sm-2">
+				<input type="password" class="form-control rounded" name="stagemonitor.password">
+			</div>
+		</div>
+	</form>
+	<div class="panel-group" id="accordion">
+		{{#each configurationOptions}}
+		<div class="panel panel-default">
+
+			<div class="panel-heading">
+				<h4 class="panel-title">
+					<a data-toggle="collapse" data-parent="#accordion" href="#collapse{{@index}}">{{@key}}
+						Configuration</a>
+				</h4>
+			</div>
+
+			<div id="collapse{{@index}}" class="panel-collapse collapse">
+				<div class="panel-body">
+					{{#each this}}
+					<form class="form-horizontal" role="form">
+						<div class="form-group">
+							<label class="col-sm-3 control-label">
+								{{label}}
+															<span class="wide-tooltip">
+																<span class="tip glyphicon glyphicon-cog"
+																	  data-toggle="tooltip" data-placement="right"
+																	  title="Click to copy config key {{key}}"
+																	  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', '{{key}}');"
+																	  style="cursor: pointer;"></span>
+															</span>
+								<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip"
+									  data-placement="left" title="{{description}}"></span>
+								<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip"
+									  data-placement="left"
+									  title="The current source of this value is '{{nameOfCurrentConfigurationSource}}'"></span>
+								{{#if errorMessage}}
+								<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip" data-placement="left"
+									  title="{{errorMessage}}"></span>
+								{{/if}}
+								{{#if tags}}<br>{{/if}}
+								{{#each tags}}
+								<span class="label label-default">{{this}}</span>
+								{{/each}}
+							</label>
+
+							<div class="col-sm-2">
+								<input type="hidden" name="key" value="{{key}}">
+								{{#ifCond valueAsString.length '<' 50}}
+								<input name="value" value="{{valueAsString}}"
+								{{#ifCond valueType '==' 'Integer'}}type="number"{{/ifCond}}
+								{{#ifCond valueType '==' 'Long'}}type="number"{{/ifCond}}
+								{{#ifCond valueType '==' 'Boolean'}}
+								class="rounded" type="checkbox"
+								{{#ifCond valueAsString '==' 'true'}}checked{{/ifCond}}
+								{{else}}
+								class="form-control rounded"
+								{{/ifCond}}>
+								{{else}}
+								<textarea class="form-control rounded" name="value">{{valueAsString}}</textarea>
+								{{/ifCond}}
+							</div>
+							<div style="display: inline-block"
+								 class="tip" data-toggle="tooltip" data-placement="top"
+							{{#unless ../../passwordSet}}
+							title="The password is not set, so saving is not possible.
+							To resolve this, add 'stagemonitor.password=
+							<your_pwd>' in stagemonitor.properties, click on 'Reload' and refresh the page.
+								Then enter the password in the password input."
+								{{/unless}}>
+
+								<button type="submit"
+										class="tip btn save-configuration {{#if dynamic}}btn-primary{{else}}btn-warning{{/if}}"
+										data-success="Successfully saved"
+										data-fail="Failed to save"
+										data-toggle="tooltip" data-placement="top"
+								{{#if ../../passwordSet}}
+								{{#if dynamic}}
+								title="This configuration option is dynamic.
+								Changes apply immediately."
+								{{else}}
+								title="This configuration option is not dynamic.
+								Changes will apply after a restart of the application.
+								Therefore it is only possible to save to persistent configuration sources."
+								{{/if}}
+								{{else}}
+								disabled
+								{{/if}}
+								>Save</button>
+						</div>
+				</div>
+				</form>
+				{{/each}}
+			</div>
+		</div>
+
+	</div>
+	{{/each}}
+	</div>
+
+</script>

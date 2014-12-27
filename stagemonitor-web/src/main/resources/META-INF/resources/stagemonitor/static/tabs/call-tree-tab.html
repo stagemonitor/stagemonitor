@@ -1,0 +1,20 @@
+<script type="text/x-handlebars-template">
+	<table id="stagemonitor-calltree" class="table">
+		<thead>
+		<tr>
+			<th>Signature</th>
+			<th class="stagemonitor-calltree-executiontime">Total time (ms)</th>
+			<th class="stagemonitor-calltree-executiontime">Self time (ms)</th>
+		</tr>
+		</thead>
+		<tbody>
+		{{#each callTreeRows}}
+		<tr class="{{#if executionTimeExceededThreshold}}warning{{/if}}" data-tt-expanded="{{#if anyChildExceedsThreshold}}true{{else}}false{{/if}}" data-tt-parent-id="{{parentId}}" data-tt-id="{{myId}}">
+			<td class="stagemonitor-calltree-signature">{{signature}}</td>
+			<td><div class="progress"><div class="progress-bar" style="width: {{executionTimePercent}}%">{{executionTimeInMs}}</div></div></td>
+			<td><div class="progress"><div class="progress-bar" style="width: {{selfExecutionTimePercent}}%">{{selfExecutionTimeInMs}}</div></div></td>
+		</tr>
+		{{/each}}
+		</tbody>
+	</table>
+</script>
