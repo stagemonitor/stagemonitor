@@ -104,6 +104,7 @@ release {
 	newVersionCommitMessage = 'next development version '
 	failOnSnapshotDependencies = false // snapshot for caliper is needed in benchmark
 	requireBranch = ''
+	failOnCommitNeeded = false
 }
 release.dependsOn test
 
