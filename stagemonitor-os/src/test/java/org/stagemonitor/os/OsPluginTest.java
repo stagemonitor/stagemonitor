@@ -1,5 +1,8 @@
 package org.stagemonitor.os;
 
+import java.util.Map;
+import java.util.Set;
+
 import com.codahale.metrics.MetricRegistry;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
@@ -13,9 +16,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
-
-import java.util.Map;
-import java.util.Set;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
@@ -84,8 +84,9 @@ public class OsPluginTest {
 		assertEquals(getLongGauge("os.swap.usage.total"),
 				getLongGauge("os.swap.usage.used") + getLongGauge("os.swap.usage.free"));
 
-		assertTrue(getDoubleGauge("os.swap.usage-percent") >= 0);
-		assertTrue(getDoubleGauge("os.swap.usage-percent") <= 1);
+		double swapPercent = getDoubleGauge("os.swap.usage-percent");
+		assertTrue(swapPercent >= 0 || Double.isNaN(swapPercent));
+		assertTrue(swapPercent <= 1 || Double.isNaN(swapPercent));
 		assertTrue(getLongGauge("os.swap.page.in") >= 0);
 		assertTrue(getLongGauge("os.swap.page.out") >= 0);
 	}
@@ -121,7 +122,7 @@ public class OsPluginTest {
 		assertTrue(getLongGauge(name(baseName, "write.bytes")) >= 0);
 		assertTrue(getLongGauge(name(baseName, "write.packets")) >= 0);
 		assertTrue(getLongGauge(name(baseName, "write.errors")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "write.dropped")) >= 0);
+		assertTrue(getLongGauge(name(baseName, "write.dropped")) >= -1);
 	}
 
 	@Test
@@ -152,7 +153,7 @@ public class OsPluginTest {
 		assertTrue(getDoubleGauge(name(baseName, "usage-percent")) <= 1);
 		assertTrue(getLongGauge(name(baseName, "reads.bytes")) >= 0);
 		assertTrue(getLongGauge(name(baseName, "writes.bytes")) >= 0);
-		assertTrue(getDoubleGauge(name(baseName, "disk.queue")) >= 0);
+		assertTrue(getDoubleGauge(name(baseName, "disk.queue")) >= -1);
 	}
 
 	private double getDoubleGauge(String gaugeName) {
