@@ -194,6 +194,9 @@ var graphRenderer = (function () {
 				var k = 1024;
 				var sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
 				var i = Math.floor(Math.log(bytes) / Math.log(k));
+				if (i < 0) {
+					i = 0;
+				}
 				return round(bytes / Math.pow(k, i)) + ' ' + sizes[i];
 			},
 			percent: function (percent) {
