@@ -1,5 +1,6 @@
 package org.stagemonitor.core;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
@@ -14,6 +15,11 @@ public class MeasurementSessionTest {
 	@ExcludeOnTravis
 	public void testGetHostname() {
 		assertNotNull(MeasurementSession.getNameOfLocalHost());
+	}
+
+	@Test
+	@Ignore
+	public void testGetHostnameFromEnv() {
 		assertNotNull(MeasurementSession.getHostNameFromEnv());
 	}
 }
