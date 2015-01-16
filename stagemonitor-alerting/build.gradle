@@ -1,3 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-core")
+
+	testCompile project(':stagemonitor-core').sourceSets.test.output
+
 }

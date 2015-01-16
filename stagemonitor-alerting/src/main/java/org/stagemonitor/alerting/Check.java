@@ -1,82 +1,138 @@
 package org.stagemonitor.alerting;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.stagemonitor.core.util.StringUtils;
-
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  *
  */
 public class Check {
 
-	private final String id;
-	private final Pattern metricName;
-	private final String metric;
-	private List<Threshold> warn = new LinkedList<Threshold>();
-	private List<Threshold> error = new LinkedList<Threshold>();
-	private List<Threshold> critical = new LinkedList<Threshold>();
+	private String metric;
+	private Threshold warn;
+	private Threshold error;
+	private Threshold critical;
 
-	@JsonCreator
-	public Check(@JsonProperty("id") String id, @JsonProperty("metricName") Pattern metricName, @JsonProperty("metric") String metric) {
-		this.id = StringUtils.slugify(id);
-		this.metricName = metricName;
+	public Check() {
+	}
+
+	public Check(String metric, Threshold warn, Threshold error, Threshold critical) {
 		this.metric = metric;
+		this.warn = warn;
+		this.error = error;
+		this.critical = critical;
 	}
 
-	public Status check(double actualValue) {
-		if (Threshold.isAllExceeded(critical, actualValue)) {
-			return Status.CRITICAL;
+	public Result check(String target, double actualValue) {
+		if (critical != null && critical.isExceeded(actualValue)) {
+			return new Result(getCheckExpressionAsString(target, critical), actualValue, Status.CRITICAL);
 		}
-		if (Threshold.isAllExceeded(error, actualValue)) {
-			return Status.ERROR;
+		if (error != null && error.isExceeded(actualValue)) {
+			return new Result(getCheckExpressionAsString(target, error), actualValue, Status.ERROR);
 		}
-		if (Threshold.isAllExceeded(warn, actualValue)) {
-			return Status.WARN;
+		if (warn != null && warn.isExceeded(actualValue)) {
+			return new Result(getCheckExpressionAsString(target, warn), actualValue, Status.WARN);
 		}
-		return Status.OK;
+		return new Result(null, actualValue, Status.OK);
 	}
 
-	public String getId() {
-		return id;
-	}
-
-	public Pattern getMetricName() {
-		return metricName;
+	private String getCheckExpressionAsString(String target, Threshold threshold) {
+		return target + "." + metric + " " + threshold.toString();
 	}
 
 	public String getMetric() {
 		return metric;
 	}
 
-	public List<Threshold> getWarn() {
+	public void setMetric(String metric) {
+		this.metric = metric;
+	}
+
+	public Threshold getWarn() {
 		return warn;
 	}
 
-	public List<Threshold> getError() {
+	public Threshold getError() {
 		return error;
 	}
 
-	public List<Threshold> getCritical() {
+	public Threshold getCritical() {
 		return critical;
 	}
 
-	public void setWarn(List<Threshold> warn) {
+	public void setWarn(Threshold warn) {
 		this.warn = warn;
 	}
 
-	public void setError(List<Threshold> error) {
+	public void setError(Threshold error) {
 		this.error = error;
 	}
 
-	public void setCritical(List<Threshold> critical) {
+	public void setCritical(Threshold critical) {
 		this.critical = critical;
 	}
 
-	public static enum Status {
-		OK, WARN, ERROR, CRITICAL
+	/**
+	 * The result of a check
+	 */
+	public static class Result {
+
+		private final String failingExpression;
+		private final Status status;
+		private final double currentValue;
+
+		public Result(String failingExpression, double currentValue, Status status) {
+			this.failingExpression = failingExpression;
+			this.currentValue = currentValue;
+			this.status = status;
+		}
+
+		public static List<Result> getResultsWithMostSevereStatus(List<Check.Result> results) {
+			Check.Status mostSevereStatus = getMostSevereStatus(results);
+			List<Check.Result> resultsWithStatus = new LinkedList<Result>();
+			for (Check.Result result : results) {
+				if (result.getStatus() == mostSevereStatus) {
+					resultsWithStatus.add(result);
+				}
+			}
+			return resultsWithStatus;
+		}
+
+		public static Check.Status getMostSevereStatus(List<Check.Result> results) {
+			Check.Status mostSevereStatus = Check.Status.OK;
+			for (Check.Result result : results) {
+				if (result.getStatus().isMoreSevere(mostSevereStatus)) {
+					mostSevereStatus = result.getStatus();
+				}
+			}
+			return mostSevereStatus;
+		}
+
+		public String getFailingExpression() {
+			return failingExpression;
+		}
+
+		public Status getStatus() {
+			return status;
+		}
+
+		public double getCurrentValue() {
+			return currentValue;
+		}
 	}
+
+	public static enum Status {
+		OK(0), WARN(1), ERROR(2), CRITICAL(3);
+
+		private final int severity;
+
+		private Status(int severity) {
+			this.severity = severity;
+		}
+
+		public boolean isMoreSevere(Status other) {
+			return severity > other.severity;
+		}
+	}
+
 }

@@ -1,12 +1,7 @@
 package org.stagemonitor.alerting;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -44,13 +39,6 @@ public class ThresholdTest {
 		assertFalse(threshold.isExceeded(-1));
 		assertTrue(threshold.isExceeded(0));
 		assertTrue(threshold.isExceeded(1));
-	}
-
-	@Test
-	public void testAllExceeded() throws Exception {
-		final List<Threshold> thresholds = Arrays.asList(new Threshold(Threshold.Operator.GREATER, 0), new Threshold(Threshold.Operator.GREATER, 2));
-		assertTrue(Threshold.isAllExceeded(thresholds, 3));
-		assertFalse(Threshold.isAllExceeded(thresholds, 2));
 	}
 
 	@Test

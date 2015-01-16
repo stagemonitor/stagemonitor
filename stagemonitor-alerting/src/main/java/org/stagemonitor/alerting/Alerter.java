@@ -4,4 +4,6 @@ public interface Alerter {
 
 	void alert(Incident incident);
 
+	String getAlerterName();
+
 }

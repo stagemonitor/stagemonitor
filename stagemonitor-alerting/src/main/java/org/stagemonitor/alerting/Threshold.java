@@ -3,37 +3,21 @@ package org.stagemonitor.alerting;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-
 /**
  * Represents a threshold to check
  */
 public class Threshold {
 
 	private final Operator operator;
-	private final double expectedValue;
+	private final double thresholdValue;
 
 	@JsonCreator
-	public Threshold(@JsonProperty("operator") Operator operator, @JsonProperty("expectedValue") double expectedValue) {
+	public Threshold(@JsonProperty("operator") Operator operator, @JsonProperty("thresholdValue") double thresholdValue) {
 		if (operator == null) {
 			throw new IllegalArgumentException("Operator may not be null");
 		}
 		this.operator = operator;
-		this.expectedValue = expectedValue;
-	}
-
-	/**
-	 * Checks if all thresholds are exceeded.
-	 *
-	 * @param actualValue the value to check
-	 * @return <code>true</code>, if the actual value exceeds all thresholds, <code>false</code> otherwise
-	 */
-	public static boolean isAllExceeded(List<Threshold> thresholds, double actualValue) {
-		boolean exceeded = true;
-		for (Threshold threshold : thresholds) {
-			exceeded &= threshold.isExceeded(actualValue);
-		}
-		return exceeded;
+		this.thresholdValue = thresholdValue;
 	}
 
 	/**
@@ -43,20 +27,24 @@ public class Threshold {
 	 * @return <code>true</code>, if the actual value exceeds the threshold, <code>false</code> otherwise
 	 */
 	public boolean isExceeded(double actualValue) {
-		return operator.check(actualValue, expectedValue);
+		return operator.check(actualValue, thresholdValue);
 	}
 
 	public Operator getOperator() {
 		return operator;
 	}
 
-	public double getExpectedValue() {
-		return expectedValue;
+	public double getThresholdValue() {
+		return thresholdValue;
+	}
+
+	public String toString() {
+		return operator.operatorString + " " + thresholdValue;
 	}
 
 	/**
 	 * Represents a boolean operator that can be used to check whether the expression
-	 * <code>actualValue OPERATOR expectedValue</code> is true or false
+	 * <code>actualValue OPERATOR thresholdValue</code> is true or false
 	 */
 	public static enum Operator {
 
@@ -92,7 +80,7 @@ public class Threshold {
 		}
 
 		/**
-		 * Checks, whether <code>actualValue OPERATOR expectedValue</code> is true or false
+		 * Checks, whether <code>actualValue OPERATOR thresholdValue</code> is true or false
 		 *
 		 * @param actualValue
 		 * @param expectedValue
