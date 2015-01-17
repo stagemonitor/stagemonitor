@@ -10,6 +10,11 @@ import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.alerting.incident.Incident;
+import org.stagemonitor.alerting.incident.IncidentRepository;
+import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.util.JsonUtils;
 
 import java.util.HashMap;
@@ -22,16 +27,21 @@ import java.util.concurrent.TimeUnit;
 
 public class ThresholdMonitoringReporter extends ScheduledReporter {
 
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+
 	private final CheckGroupRepository checkGroupRepository;
 	private final AlerterFactory alerterFactory;
-	// TODO IncidentRepository - gotcha: different status on different host/instance
-	private Map<String, Incident> currentIncidentsByCheckId = new HashMap<String, Incident>();
+	private final IncidentRepository incidentRepository;
+	private final MeasurementSession measurementSession;
 
 	protected ThresholdMonitoringReporter(MetricRegistry registry, CheckGroupRepository checkGroupRepository,
-										  AlerterFactory alerterFactory) {
+										  AlerterFactory alerterFactory, IncidentRepository incidentRepository,
+										  MeasurementSession measurementSession) {
 		super(registry, "threshold-monitoring-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
 		this.checkGroupRepository = checkGroupRepository;
 		this.alerterFactory = alerterFactory;
+		this.incidentRepository = incidentRepository;
+		this.measurementSession = measurementSession;
 	}
 
 	@Override
@@ -45,7 +55,7 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		metrics.set(MetricCategory.METER.getPath(), JsonUtils.toObjectNode(meters));
 		metrics.set(MetricCategory.TIMER.getPath(), JsonUtils.toObjectNode(timers));
 
-		for (CheckGroup check : checkGroupRepository.getAllActiveCheckGroups()) {
+		for (CheckGroup check : checkGroupRepository.getAllActiveCheckGroups(measurementSession.getApplicationName())) {
 			checkMetrics(metrics, check);
 		}
 	}
@@ -61,7 +71,7 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 				checkResults.addAll(check.checkAll(metricTypes.getKey(), valuesByMetricType));
 			}
 		}
-		addIncident(check, checkResults, Check.Result.getMostSevereStatus(checkResults));
+		addIncident(check, checkResults);
 	}
 
 	private Map<String, Double> getValuesByMetricType(JsonNode metricTypes) {
@@ -74,9 +84,8 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		return metricTypesMap;
 	}
 
-	private void addIncident(CheckGroup checkGroup, List<Check.Result> results, Check.Status newStatus) {
-		Incident incident = createIncident(checkGroup, results, newStatus);
-		saveOrDeleteIncident(checkGroup, incident);
+	private void addIncident(CheckGroup checkGroup, List<Check.Result> results) {
+		Incident incident = getAndPersistIncident(checkGroup, results);
 		if (isAlertIncidents(checkGroup, incident)) {
 			for (Alerter alerter : alerterFactory.getAlerters(incident)) {
 				alerter.alert(incident);
@@ -84,34 +93,51 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		}
 	}
 
+	private Incident getAndPersistIncident(CheckGroup checkGroup, List<Check.Result> results) {
+		boolean sucessfullyPersisted = false;
+		Incident incident = null;
+		while (!sucessfullyPersisted) {
+			incident = getOrCreateIncident(checkGroup, results);
+			sucessfullyPersisted = trySaveOrDeleteIncident(checkGroup, incident);
+		}
+		return incident;
+	}
+
 	private boolean isAlertIncidents(CheckGroup checkGroup, Incident incident) {
 		return (incident.hasStageChange() && incident.getConsecutiveFailures() >= checkGroup.getAlertAfterXFailures()) ||
 				incident.getConsecutiveFailures() == checkGroup.getAlertAfterXFailures();
 	}
 
-	private Incident createIncident(CheckGroup checkGroup, List<Check.Result> results, Check.Status newStatus) {
+	private Incident getOrCreateIncident(CheckGroup checkGroup, List<Check.Result> results) {
 		final Incident currentIncident;
-		Incident lastIncident = currentIncidentsByCheckId.get(checkGroup.getId());
-		if (lastIncident == null) {
-			currentIncident = new Incident(checkGroup, Check.Status.OK, newStatus, results);
+		Incident previousIncident = incidentRepository.getIncidentByCheckGroupId(checkGroup.getId());
+		if (previousIncident == null) {
+			currentIncident = new Incident(checkGroup, measurementSession, results);
 		} else {
-			currentIncident = new Incident(checkGroup, lastIncident.getNewStatus(), newStatus, results);
-			currentIncident.setConsecutiveFailures(lastIncident.getConsecutiveFailures());
+			currentIncident = new Incident(previousIncident, measurementSession, results);
 		}
-		if (newStatus != Check.Status.OK) {
-			currentIncident.incrementConsecutiveFailures();
-		} else {
-			currentIncident.setConsecutiveFailures(0);
-		}
+
 		return currentIncident;
 	}
 
-	private void saveOrDeleteIncident(CheckGroup checkGroup, Incident incident) {
+	private boolean trySaveOrDeleteIncident(CheckGroup checkGroup, Incident incident) {
 		if (incident.getNewStatus() == Check.Status.OK) {
-			currentIncidentsByCheckId.remove(checkGroup.getId());
-		} else {
-			currentIncidentsByCheckId.put(checkGroup.getId(), incident);
+			if (!incidentRepository.deleteIncident(incident)) {
+				logger.warn("Optimistic lock failure when deleting incident for check group {}.", checkGroup.getId());
+				return false;
+			}
+		} else if (incident.getOldStatus() == null) {
+			incident.setOldStatus(Check.Status.OK);
+			if (!incidentRepository.createIncident(incident)) {
+				logger.warn("Error while creating incident for check group {}. " +
+						"A incident for the same check group already exists.", checkGroup.getId());
+				return false;
+			}
+		} else if (!incidentRepository.updateIncident(incident)) {
+			logger.warn("Optimistic lock failure when updating incident for check group {}.", checkGroup.getId());
+			return false;
 		}
+		return true;
 	}
 
 }

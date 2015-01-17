@@ -1,5 +1,7 @@
 package org.stagemonitor.alerting;
 
+import org.stagemonitor.alerting.incident.Incident;
+
 import java.util.Collections;
 import java.util.List;
 

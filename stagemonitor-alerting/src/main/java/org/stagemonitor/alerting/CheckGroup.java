@@ -21,6 +21,7 @@ public class CheckGroup {
 	private Pattern target;
 	private int alertAfterXFailures = 1;
 	private List<Check> checks;
+	private String application;
 
 	/**
 	 * Performs threshold checks for the whole check group
@@ -86,5 +87,13 @@ public class CheckGroup {
 
 	public void setAlertAfterXFailures(int alertAfterXFailures) {
 		this.alertAfterXFailures = alertAfterXFailures;
+	}
+
+	public String getApplication() {
+		return application;
+	}
+
+	public void setApplication(String application) {
+		this.application = application;
 	}
 }
