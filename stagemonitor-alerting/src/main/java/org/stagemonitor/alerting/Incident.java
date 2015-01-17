@@ -6,16 +6,19 @@ import java.util.List;
 public class Incident {
 
 	private List<Check.Result> checkResults;
-	private Date time;
+	private Date time = new Date();
 	private Check.Status oldStatus;
 	private Check.Status newStatus;
 	private String checkGroupId;
 	private String checkGroupName;
+	private int consecutiveFailures;
 	// TODO application host instance
+
+	public Incident() {
+	}
 
 	public Incident(CheckGroup checkGroup, Check.Status oldStatus, Check.Status newStatus, List<Check.Result> checkResults) {
 		this.checkResults = checkResults;
-		this.time = new Date();
 		this.oldStatus = oldStatus;
 		this.newStatus = newStatus;
 		this.checkGroupId = checkGroup.getId();
@@ -68,5 +71,21 @@ public class Incident {
 
 	public void setCheckResults(List<Check.Result> checkResults) {
 		this.checkResults = checkResults;
+	}
+
+	public int getConsecutiveFailures() {
+		return consecutiveFailures;
+	}
+
+	public void setConsecutiveFailures(int consecutiveFailures) {
+		this.consecutiveFailures = consecutiveFailures;
+	}
+
+	public void incrementConsecutiveFailures() {
+		this.consecutiveFailures++;
+	}
+
+	public boolean hasStageChange() {
+		return oldStatus != newStatus;
 	}
 }

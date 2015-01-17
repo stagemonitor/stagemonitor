@@ -1,13 +1,5 @@
 package org.stagemonitor.alerting;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -20,6 +12,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.stagemonitor.core.util.JsonUtils;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
+
 public class ThresholdMonitoringReporter extends ScheduledReporter {
 
 	private final CheckGroupRepository checkGroupRepository;
@@ -27,7 +27,8 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 	// TODO IncidentRepository - gotcha: different status on different host/instance
 	private Map<String, Incident> currentIncidentsByCheckId = new HashMap<String, Incident>();
 
-	protected ThresholdMonitoringReporter(MetricRegistry registry, CheckGroupRepository checkGroupRepository, AlerterFactory alerterFactory) {
+	protected ThresholdMonitoringReporter(MetricRegistry registry, CheckGroupRepository checkGroupRepository,
+										  AlerterFactory alerterFactory) {
 		super(registry, "threshold-monitoring-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
 		this.checkGroupRepository = checkGroupRepository;
 		this.alerterFactory = alerterFactory;
@@ -57,12 +58,10 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 			Map.Entry<String, JsonNode> metricTypes = metricsOfCategory.next();
 			if (check.getTarget().matcher(metricTypes.getKey()).matches()) {
 				Map<String, Double> valuesByMetricType = getValuesByMetricType(metricTypes.getValue());
-				checkResults.addAll(check.checkAll(valuesByMetricType));
+				checkResults.addAll(check.checkAll(metricTypes.getKey(), valuesByMetricType));
 			}
 		}
-		if (!checkResults.isEmpty()) {
-			addIncident(check, checkResults, Check.Result.getMostSevereStatus(checkResults));
-		}
+		addIncident(check, checkResults, Check.Result.getMostSevereStatus(checkResults));
 	}
 
 	private Map<String, Double> getValuesByMetricType(JsonNode metricTypes) {
@@ -76,23 +75,42 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 	}
 
 	private void addIncident(CheckGroup checkGroup, List<Check.Result> results, Check.Status newStatus) {
-		final Incident currentIncident = currentIncidentsByCheckId.get(checkGroup.getId());
-		Check.Status oldStatus = currentIncident != null ? currentIncident.getNewStatus() : Check.Status.OK;
-		if (oldStatus != newStatus) {
-			// only update on state changes
-			createIncident(checkGroup, oldStatus, newStatus, results);
+		Incident incident = createIncident(checkGroup, results, newStatus);
+		saveOrDeleteIncident(checkGroup, incident);
+		if (isAlertIncidents(checkGroup, incident)) {
+			for (Alerter alerter : alerterFactory.getAlerters(incident)) {
+				alerter.alert(incident);
+			}
 		}
 	}
 
-	private void createIncident(CheckGroup checkGroup, Check.Status oldStatus, Check.Status newStatus, List<Check.Result> results) {
-		final Incident incident = new Incident(checkGroup, oldStatus, newStatus, results);
-		if (newStatus == Check.Status.OK) {
+	private boolean isAlertIncidents(CheckGroup checkGroup, Incident incident) {
+		return (incident.hasStageChange() && incident.getConsecutiveFailures() >= checkGroup.getAlertAfterXFailures()) ||
+				incident.getConsecutiveFailures() == checkGroup.getAlertAfterXFailures();
+	}
+
+	private Incident createIncident(CheckGroup checkGroup, List<Check.Result> results, Check.Status newStatus) {
+		final Incident currentIncident;
+		Incident lastIncident = currentIncidentsByCheckId.get(checkGroup.getId());
+		if (lastIncident == null) {
+			currentIncident = new Incident(checkGroup, Check.Status.OK, newStatus, results);
+		} else {
+			currentIncident = new Incident(checkGroup, lastIncident.getNewStatus(), newStatus, results);
+			currentIncident.setConsecutiveFailures(lastIncident.getConsecutiveFailures());
+		}
+		if (newStatus != Check.Status.OK) {
+			currentIncident.incrementConsecutiveFailures();
+		} else {
+			currentIncident.setConsecutiveFailures(0);
+		}
+		return currentIncident;
+	}
+
+	private void saveOrDeleteIncident(CheckGroup checkGroup, Incident incident) {
+		if (incident.getNewStatus() == Check.Status.OK) {
 			currentIncidentsByCheckId.remove(checkGroup.getId());
 		} else {
 			currentIncidentsByCheckId.put(checkGroup.getId(), incident);
-		}
-		for (Alerter alerter : alerterFactory.getAlerters(incident)) {
-			alerter.alert(incident);
 		}
 	}
 

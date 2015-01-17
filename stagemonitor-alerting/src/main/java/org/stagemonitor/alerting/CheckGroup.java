@@ -19,14 +19,23 @@ public class CheckGroup {
 	private String name;
 	private MetricCategory metricCategory;
 	private Pattern target;
-	private int sensitivity;
+	private int alertAfterXFailures = 1;
 	private List<Check> checks;
 
-	public List<Check.Result> checkAll(Map<String, Double> actualValuesByMetric) {
+	/**
+	 * Performs threshold checks for the whole check group
+	 *
+	 * @param currentValuesByMetric the values of the target
+	 * @param actualTarget the actual target that matched the {@link #target} pattern
+	 * @return a list of check results (results with OK statuses are omitted)
+	 */
+	public List<Check.Result> checkAll(String actualTarget, Map<String, Double> currentValuesByMetric) {
 		List<Check.Result> results = new ArrayList<Check.Result>(checks.size());
 		for (Check check : checks) {
-			Check.Result result = check.check(target.toString(), actualValuesByMetric.get(check.getMetric()));
-			results.add(result);
+			Check.Result result = check.check(actualTarget, currentValuesByMetric.get(check.getMetric()));
+			if (result.getStatus() != Check.Status.OK) {
+				results.add(result);
+			}
 		}
 		return Check.Result.getResultsWithMostSevereStatus(results);
 	}
@@ -71,11 +80,11 @@ public class CheckGroup {
 		this.metricCategory = metricCategory;
 	}
 
-	public int getSensitivity() {
-		return sensitivity;
+	public int getAlertAfterXFailures() {
+		return alertAfterXFailures;
 	}
 
-	public void setSensitivity(int sensitivity) {
-		this.sensitivity = sensitivity;
+	public void setAlertAfterXFailures(int alertAfterXFailures) {
+		this.alertAfterXFailures = alertAfterXFailures;
 	}
 }

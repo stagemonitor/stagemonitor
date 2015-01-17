@@ -1,10 +1,13 @@
 package org.stagemonitor.alerting;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.core.util.JsonUtils;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -73,9 +76,34 @@ public class CheckTest {
 		assertEquals("b", resultsWithMostSevereStatus.get(1).getFailingExpression());
 	}
 
-//	@Test
-//	public void testJson() throws Exception {
-//		final String json = JsonUtils.toJson(new Check(Pattern.compile("requests.([^\\.]+).time"), "p95"));
-//		assertEquals("requests.([^\\.]+).time", JsonUtils.getMapper().readValue(json, Check.class).getTarget().toString());
-//	}
+	@Test
+	public void testGetMostSevereStatus() {
+		assertEquals(Check.Status.OK, Check.Result.getMostSevereStatus(Collections.<Check.Result>emptyList()));
+	}
+
+	@Test
+	public void testJson() throws Exception {
+		CheckGroup checkGroup = new CheckGroup();
+		checkGroup.setName("Test Timer");
+		checkGroup.setTarget(Pattern.compile("test.timer.*"));
+		checkGroup.setMetricCategory(MetricCategory.TIMER);
+		checkGroup.setAlertAfterXFailures(2);
+		checkGroup.setChecks(Arrays.asList(
+				new Check("mean",
+						new Threshold(Threshold.Operator.GREATER_EQUAL, 3), null, null)));
+
+		final String json = JsonUtils.toJson(checkGroup);
+		final CheckGroup checkGroupFromJson = JsonUtils.getMapper().readValue(json, CheckGroup.class);
+		assertEquals("Test Timer", checkGroupFromJson.getName());
+		assertEquals("test.timer.*", checkGroupFromJson.getTarget().toString());
+		assertEquals(MetricCategory.TIMER, checkGroupFromJson.getMetricCategory());
+		assertEquals(2, checkGroupFromJson.getAlertAfterXFailures());
+		assertEquals(1, checkGroupFromJson.getChecks().size());
+		assertEquals("mean", checkGroupFromJson.getChecks().get(0).getMetric());
+		assertEquals(Threshold.Operator.GREATER_EQUAL, checkGroupFromJson.getChecks().get(0).getWarn().getOperator());
+		assertEquals(3, checkGroupFromJson.getChecks().get(0).getWarn().getThresholdValue(), 0);
+		assertEquals(null, checkGroupFromJson.getChecks().get(0).getError());
+		assertEquals(null, checkGroupFromJson.getChecks().get(0).getCritical());
+		assertEquals(json, JsonUtils.toJson(checkGroupFromJson));
+	}
 }

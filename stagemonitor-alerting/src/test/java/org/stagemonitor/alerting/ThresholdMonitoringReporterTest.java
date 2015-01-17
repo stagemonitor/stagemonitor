@@ -1,10 +1,5 @@
 package org.stagemonitor.alerting;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -16,8 +11,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.map;
@@ -40,14 +42,8 @@ public class ThresholdMonitoringReporterTest {
 	}
 
 	@Test
-	public void testReportTimer() throws Exception {
-		CheckGroup checkGroup = new CheckGroup();
-		checkGroup.setName("Test Timer");
-		checkGroup.setTarget(Pattern.compile("test.timer.*"));
-		checkGroup.setMetricCategory(MetricCategory.TIMER);
-		checkGroup.setChecks(Arrays.asList(
-				new Check("mean",
-						new Threshold(Threshold.Operator.GREATER_EQUAL, 5), null, null)));
+	public void testAlerting() throws Exception {
+		CheckGroup checkGroup = createCheckGroupCheckingMean(1, 5);
 
 		when(checkGroupRepository.getAllActiveCheckGroups()).thenReturn(Arrays.asList(checkGroup));
 
@@ -69,15 +65,57 @@ public class ThresholdMonitoringReporterTest {
 		assertEquals(Check.Status.WARN, result.getStatus());
 	}
 
+	@Test
+	public void testAlertAfter2Failures() throws Exception {
+		CheckGroup checkGroup = createCheckGroupCheckingMean(2, 6);
+
+		when(checkGroupRepository.getAllActiveCheckGroups()).thenReturn(Arrays.asList(checkGroup));
+
+		checkMetrics();
+		verify(alerter, times(0)).alert(any(Incident.class));
+
+		checkMetrics();
+		verify(alerter).alert(any(Incident.class));
+	}
+
+	@Test
+	public void testNoAlertWhenFailureRecovers() throws Exception {
+		CheckGroup checkGroup = createCheckGroupCheckingMean(2, 6);
+		when(checkGroupRepository.getAllActiveCheckGroups()).thenReturn(Arrays.asList(checkGroup));
+
+		checkMetrics(7, 0, 0);
+		verify(alerter, times(0)).alert(any(Incident.class));
+
+		checkMetrics(1, 0, 0);
+		verify(alerter, times(0)).alert(any(Incident.class));
+	}
+
+	private CheckGroup createCheckGroupCheckingMean(int alertAfterXFailures, long meanMs) {
+		CheckGroup checkGroup = new CheckGroup();
+		checkGroup.setName("Test Timer");
+		checkGroup.setTarget(Pattern.compile("test.timer.*"));
+		checkGroup.setMetricCategory(MetricCategory.TIMER);
+		checkGroup.setAlertAfterXFailures(alertAfterXFailures);
+		checkGroup.setChecks(Arrays.asList(
+				new Check("mean",
+						new Threshold(Threshold.Operator.GREATER_EQUAL, meanMs), null, null)));
+		return checkGroup;
+	}
+
 	private void checkMetrics() {
+		checkMetrics(5, 4, 6);
+	}
+
+	private void checkMetrics(long timer1Mean, long timer2Mean, long timer3Mean) {
 		thresholdMonitoringReporter.report(
 				MetricsReporterTestHelper.<Gauge>map(),
 				MetricsReporterTestHelper.<Counter>map(),
 				MetricsReporterTestHelper.<Histogram>map(),
 				MetricsReporterTestHelper.<Meter>map(),
-				map("test.timer1", timer(TimeUnit.MILLISECONDS.toNanos(5)))
-						.add("test.timer2", timer(TimeUnit.MILLISECONDS.toNanos(4)))
-						.add("test.timer3", timer(TimeUnit.MILLISECONDS.toNanos(6)))
+				map("test.timer1", timer(TimeUnit.MILLISECONDS.toNanos(timer1Mean)))
+						.add("test.timer2", timer(TimeUnit.MILLISECONDS.toNanos(timer2Mean)))
+						.add("test.timer3", timer(TimeUnit.MILLISECONDS.toNanos(timer3Mean)))
+						.add("test.some.other.timer", timer(TimeUnit.MILLISECONDS.toNanos(999)))
 		);
 	}
 }
