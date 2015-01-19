@@ -39,7 +39,7 @@ public class ConfigurationTest {
 			configuration.save("stagemonitor.internal.monitoring", "true", "Transient Configuration Source", null);
 			fail();
 		} catch (IllegalStateException e) {
-			assertEquals("Update configuration password is not set. Dynamic configuration changes are therefore not allowed.", e.getMessage());
+			assertEquals("'stagemonitor.password' is not set.", e.getMessage());
 		}
 		assertFalse(corePlugin.isInternalMonitoringActive());
 	}
@@ -144,7 +144,7 @@ public class ConfigurationTest {
 			configuration.save("stagemonitor.internal.monitoring", "true", "Transient Configuration Source", null);
 			fail();
 		} catch (IllegalStateException e) {
-			assertEquals("Wrong password for updating configuration.", e.getMessage());
+			assertEquals("Wrong password for 'stagemonitor.password'.", e.getMessage());
 		}
 
 		assertFalse(corePlugin.isInternalMonitoringActive());

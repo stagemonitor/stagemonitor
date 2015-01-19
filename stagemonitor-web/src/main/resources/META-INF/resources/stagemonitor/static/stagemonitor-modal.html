@@ -36,6 +36,7 @@
 	<script type="text/javascript" src="tabs/metrics-tab.js"></script>
 	<script type="text/javascript" src="tabs/metrics/graphRenderer.js"></script>
 	<script type="text/javascript" src="tabs/metrics/tableRenderer.js"></script>
+	<script type="text/javascript" src="tabs/alerting-tab.js"></script>
 </head>
 <body>
 <div class="container-fluid">
@@ -83,6 +84,12 @@
 				<a href="#stagemonitor-metrics" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
 				   title="Show metrics of the application.">
 					Metrics
+				</a>
+			</li>
+			<li id="alerts-tab">
+				<a href="#stagemonitor-alerts" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
+				   title="Show status and current incidents of the application.">
+					Alerts
 				</a>
 			</li>
 		</ul>
@@ -248,8 +255,11 @@
 			</div>
 		</div>
 
-	</div>
+		<div class="tab-pane" id="stagemonitor-alerts">
+			<!--tabs/alerting-tab.html-->
+		</div>
 
+	</div>
 </div>
 </body>
 </html>

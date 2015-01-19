@@ -1,6 +1,10 @@
 package org.stagemonitor.alerting.incident;
 
+import java.util.Collection;
+
 public interface IncidentRepository {
+
+	Collection<Incident> getAllIncidents();
 
 	Incident getIncidentByCheckGroupId(String checkGroupId);
 

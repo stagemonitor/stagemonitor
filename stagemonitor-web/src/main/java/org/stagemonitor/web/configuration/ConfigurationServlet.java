@@ -1,23 +1,23 @@
 package org.stagemonitor.web.configuration;
 
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import java.io.IOException;
 
 @WebServlet(ConfigurationServlet.CONFIGURATION_ENDPOINT)
 public class ConfigurationServlet extends HttpServlet {
 
 	public static final String CONFIGURATION_ENDPOINT = "/stagemonitor/configuration";
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(ConfigurationServlet.class);
 
 	private final Configuration configuration;
 
@@ -65,12 +65,15 @@ public class ConfigurationServlet extends HttpServlet {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'configurationSource'");
 			return;
 		}
-		tryToSaveAndHandleErrors(req, resp, req.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD), key, configurationSource);
+		tryToSaveAndHandleErrors(configuration, req, resp, req.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD), key,
+				req.getParameter("value"));
 	}
 
-	private void tryToSaveAndHandleErrors(HttpServletRequest req, HttpServletResponse resp, String configurationUpdatePassword, String key, String configurationSource) throws IOException {
+	public static void tryToSaveAndHandleErrors(Configuration configuration, HttpServletRequest req,
+												HttpServletResponse resp, String configurationUpdatePassword,
+												String key, String value) throws IOException {
 		try {
-			configuration.save(key, req.getParameter("value"), configurationSource, configurationUpdatePassword);
+			configuration.save(key, value, req.getParameter("configurationSource"), configurationUpdatePassword);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} catch (IllegalArgumentException e) {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
@@ -84,7 +87,7 @@ public class ConfigurationServlet extends HttpServlet {
 		}
 	}
 
-	private void sendError(HttpServletResponse response, int status, String message) throws IOException {
+	private static void sendError(HttpServletResponse response, int status, String message) throws IOException {
 		response.setStatus(status);
 		response.getWriter().print(message);
 	}

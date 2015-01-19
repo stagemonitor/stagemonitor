@@ -23,7 +23,7 @@ public class BoomerangJsHtmlInjector implements HtmlInjector {
 	private String buildBoomerangTemplate(String contextPath) {
 		String beaconUrl = webPlugin.isRealUserMonitoringEnabled() ?
 				"      beacon_url: " + "'" + contextPath + "/stagemonitor/rum'" + ",\n" : "";
-		return "<script src=\"" + contextPath + "/stagemonitor/static/rum/" + BOOMERANG_FILENAME + "\"></script>\n" +
+		return "<script src=\"" + contextPath + "/rum/" + BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
 				beaconUrl +

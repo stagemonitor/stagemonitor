@@ -1,13 +1,5 @@
 package org.stagemonitor.web.metrics;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -15,6 +7,14 @@ import com.fasterxml.jackson.databind.util.JSONPObject;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.web.WebPlugin;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * A servlet which returns the metrics in a given registry as an {@code application/json} response.
@@ -40,27 +40,23 @@ public class StagemonitorMetricsServlet extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		if (webPlugin.isWidgetEnabled()) {
-			resp.setContentType("application/json");
-			if (webPlugin.getMetricsServletAllowedOrigin() != null) {
-				resp.setHeader("Access-Control-Allow-Origin", webPlugin.getMetricsServletAllowedOrigin());
-			}
-			resp.setHeader("Cache-Control", "must-revalidate,no-cache,no-store");
-			resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType("application/json");
+		if (webPlugin.getMetricsServletAllowedOrigin() != null) {
+			resp.setHeader("Access-Control-Allow-Origin", webPlugin.getMetricsServletAllowedOrigin());
+		}
+		resp.setHeader("Cache-Control", "must-revalidate,no-cache,no-store");
+		resp.setStatus(HttpServletResponse.SC_OK);
 
-			final OutputStream output = resp.getOutputStream();
-			try {
-				String jsonpParamName = webPlugin.getMetricsServletJsonpParamName();
-				if (jsonpParamName != null && req.getParameter(jsonpParamName) != null) {
-					getWriter(req).writeValue(output, new JSONPObject(req.getParameter(jsonpParamName), registry));
-				} else {
-					getWriter(req).writeValue(output, registry);
-				}
-			} finally {
-				output.close();
+		final OutputStream output = resp.getOutputStream();
+		try {
+			String jsonpParamName = webPlugin.getMetricsServletJsonpParamName();
+			if (jsonpParamName != null && req.getParameter(jsonpParamName) != null) {
+				getWriter(req).writeValue(output, new JSONPObject(req.getParameter(jsonpParamName), registry));
+			} else {
+				getWriter(req).writeValue(output, registry);
 			}
-		} else {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+		} finally {
+			output.close();
 		}
 	}
 

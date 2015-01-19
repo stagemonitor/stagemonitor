@@ -18,6 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.codahale.metrics.MetricRegistry;
@@ -55,6 +56,7 @@ public class HttpRequestMonitorFilterTest {
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(webPlugin.isWidgetEnabled()).thenReturn(true);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class))).thenReturn(true);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
@@ -160,7 +162,7 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		Assert.assertEquals("<html><body><script src=\"/stagemonitor/static/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
+		Assert.assertEquals("<html><body><script src=\"/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
 				"      beacon_url: '/stagemonitor/rum',\n" +

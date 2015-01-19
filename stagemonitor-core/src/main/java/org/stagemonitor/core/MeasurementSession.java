@@ -45,9 +45,20 @@ public class MeasurementSession {
 		return StringUtils.timestampAsIsoString(startTimestamp);
 	}
 
+	public long getStartTimestampEpoch() {
+		return startTimestamp;
+	}
+
 	public String getEndTimestamp() {
 		if (endTimestamp > 0) {
 			return StringUtils.timestampAsIsoString(endTimestamp);
+		}
+		return null;
+	}
+
+	public Long getEndTimestampEpoch() {
+		if (endTimestamp > 0) {
+			return endTimestamp;
 		}
 		return null;
 	}

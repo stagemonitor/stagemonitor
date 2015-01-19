@@ -142,16 +142,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private boolean isInjectContentToHtml(HttpServletRequest httpServletRequest) {
-		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive() ;
-	}
-
-	private boolean isAtLeastOneHtmlInjectorActive() {
-		for (HtmlInjector htmlInjector : htmlInjectors) {
-			if (htmlInjector.isActive()) {
-				return true;
-			}
-		}
-		return false;
+		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) &&
+				webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest) ;
 	}
 
 	private boolean isHtmlRequested(HttpServletRequest httpServletRequest) {

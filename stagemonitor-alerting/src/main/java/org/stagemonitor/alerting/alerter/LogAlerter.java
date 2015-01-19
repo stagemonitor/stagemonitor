@@ -25,6 +25,6 @@ public class LogAlerter implements Alerter {
 
 	@Override
 	public String getAlerterType() {
-		return "log";
+		return "Log";
 	}
 }

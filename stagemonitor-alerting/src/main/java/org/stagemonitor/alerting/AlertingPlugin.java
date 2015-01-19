@@ -6,6 +6,7 @@ import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.alerting.check.CheckGroup;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
 import org.stagemonitor.alerting.incident.Incident;
+import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
@@ -36,7 +37,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.defaultValue(60L)
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
-	private final ConfigurationOption<Subscription[]> subscriptions = ConfigurationOption.jsonOption(Subscription[].class)
+	public final ConfigurationOption<Subscription[]> subscriptions = ConfigurationOption.jsonOption(Subscription[].class)
 			.key("stagemonitor.alerts.subscriptions")
 			.dynamic(true)
 			.label("Alert Subscriptions")
@@ -52,13 +53,16 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.defaultValue(new CheckGroup[]{})
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
+	private static AlerterFactory alerterFactory;
+	private static IncidentRepository incidentRepository;
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
 		final AlertingPlugin config = configuration.getConfig(AlertingPlugin.class);
-		new ThresholdMonitoringReporter(metricRegistry, config, new AlerterFactory(config),
-				new ConcurrentMapIncidentRepository(new ConcurrentHashMap<String, Incident>()),
-				Stagemonitor.getMeasurementSession())
+		// TODO make configurable
+		alerterFactory = new AlerterFactory(config);
+		incidentRepository = new ConcurrentMapIncidentRepository(new ConcurrentHashMap<String, Incident>());
+		new ThresholdMonitoringReporter(metricRegistry, config, alerterFactory, incidentRepository, Stagemonitor.getMeasurementSession())
 				.start(config.checkFrequency.getValue(), TimeUnit.SECONDS);
 	}
 
@@ -77,5 +81,13 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 	public List<CheckGroup> getCheckGroups() {
 		return Arrays.asList(checkGroups.getValue());
+	}
+
+	public IncidentRepository getIncidentRepository() {
+		return incidentRepository;
+	}
+
+	public AlerterFactory getAlerterFactory() {
+		return alerterFactory;
 	}
 }
