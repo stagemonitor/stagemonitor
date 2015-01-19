@@ -1,6 +1,6 @@
 package org.stagemonitor.alerting.incident;
 
-import org.stagemonitor.alerting.Check;
+import org.stagemonitor.alerting.check.Check;
 
 import java.util.HashMap;
 import java.util.List;

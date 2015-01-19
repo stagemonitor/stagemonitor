@@ -1,7 +1,7 @@
 package org.stagemonitor.alerting.incident;
 
-import org.stagemonitor.alerting.Check;
-import org.stagemonitor.alerting.CheckGroup;
+import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckGroup;
 import org.stagemonitor.core.MeasurementSession;
 
 import java.util.Date;
@@ -12,7 +12,8 @@ import java.util.Map;
 public class Incident {
 
 	private int version;
-	private Date time = new Date();
+	private Date firstFailAt;
+	private Date resolvedAt;
 	private Check.Status oldStatus;
 	private Check.Status newStatus;
 	private String checkGroupId;
@@ -26,6 +27,7 @@ public class Incident {
 		this.newStatus = Check.Result.getMostSevereStatus(checkResults);
 		this.checkGroupId = checkGroup.getId();
 		this.checkGroupName = checkGroup.getName();
+		this.firstFailAt = new Date();
 
 		setCheckResults(measurementSession, checkResults);
 	}
@@ -36,6 +38,7 @@ public class Incident {
 		checkGroupId = previousIncident.checkGroupId;
 		checkGroupName = previousIncident.checkGroupName;
 		resultsByHostAndInstance = previousIncident.resultsByHostAndInstance;
+		firstFailAt = previousIncident.getFirstFailAt();
 
 		setCheckResults(measurementSession, checkResults);
 	}
@@ -52,6 +55,9 @@ public class Incident {
 			resultsByHostAndInstance.put(host, new CheckResultsByInstance(instance, checkResults));
 		}
 		newStatus = getMostSevereStatus();
+		if (newStatus == Check.Status.OK) {
+			resolvedAt = new Date();
+		}
 	}
 
 	private boolean isRemoveHost(List<Check.Result> checkResults, String instance, CheckResultsByInstance checkResultsByInstance) {
@@ -90,12 +96,12 @@ public class Incident {
 		this.version = version;
 	}
 
-	public Date getTime() {
-		return time;
+	public Date getFirstFailAt() {
+		return firstFailAt;
 	}
 
-	public void setTime(Date time) {
-		this.time = time;
+	public void setFirstFailAt(Date firstFailAt) {
+		this.firstFailAt = firstFailAt;
 	}
 
 	public Check.Status getOldStatus() {
@@ -152,6 +158,14 @@ public class Incident {
 		this.resultsByHostAndInstance = resultsByHostAndInstance;
 	}
 
+	public Date getResolvedAt() {
+		return resolvedAt;
+	}
+
+	public void setResolvedAt(Date resolvedAt) {
+		this.resolvedAt = resolvedAt;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -178,5 +192,27 @@ public class Incident {
 		incident.setCheckGroupId(checkGroupId);
 		incident.setVersion(version - 1);
 		return incident;
+	}
+
+	@Override
+	public String toString() {
+		String s = "Incident for check group '" + checkGroupName + "':\n" +
+				"firstFailAt=" + firstFailAt + "\n" +
+				"resolvedAt=" + resolvedAt + "\n" +
+				"oldStatus=" + oldStatus + "\n" +
+				"newStatus=" + newStatus + "\n" +
+				"host|instance|status|description|current value\n" +
+				"----|--------|------|-----------|-------------\n";
+		for (Map.Entry<String, CheckResultsByInstance> hostEntry : resultsByHostAndInstance.entrySet()) {
+			final String host = hostEntry.getKey();
+			for (Map.Entry<String, ResultOnSpecificHostAndInstance> instanceEntry : hostEntry.getValue().getResultsByInstance().entrySet()) {
+				final String instance = instanceEntry.getKey();
+				for (Check.Result result : instanceEntry.getValue().getResults()) {
+					s += host + '|' + instance + '|' + result.getStatus() + '|' + result.getFailingExpression() +
+							'|' + result.getCurrentValue()+ "\n";
+				}
+			}
+		}
+		return s;
 	}
 }

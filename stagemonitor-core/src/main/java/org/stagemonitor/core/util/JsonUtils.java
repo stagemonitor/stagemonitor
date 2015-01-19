@@ -57,6 +57,6 @@ public class JsonUtils {
 	}
 
 	public static ObjectNode toObjectNode(Object o) {
-		return JsonUtils.getMapper().valueToTree(o);
+		return MAPPER.valueToTree(o);
 	}
 }

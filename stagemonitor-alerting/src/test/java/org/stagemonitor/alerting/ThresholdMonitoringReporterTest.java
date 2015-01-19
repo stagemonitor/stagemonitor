@@ -9,6 +9,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.stagemonitor.alerting.alerter.Alerter;
+import org.stagemonitor.alerting.alerter.AlerterFactory;
+import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckGroup;
+import org.stagemonitor.alerting.check.MetricCategory;
+import org.stagemonitor.alerting.check.Threshold;
+import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.MeasurementSession;
@@ -21,9 +28,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -36,17 +43,16 @@ public class ThresholdMonitoringReporterTest {
 
 	private final MeasurementSession measurementSession = new MeasurementSession("testApp", "testHost", "testInstance");
 	private ThresholdMonitoringReporter thresholdMonitoringReporter;
-	private CheckGroupRepository checkGroupRepository;
-	private AlerterFactory alerterFactory;
 	private Alerter alerter;
 	private IncidentRepository incidentRepository;
+	private AlertingPlugin alertingPlugin;
 
 	@Before
 	public void setUp() throws Exception {
-		checkGroupRepository = mock(CheckGroupRepository.class);
-		alerterFactory = mock(AlerterFactory.class);
+		AlerterFactory alerterFactory = mock(AlerterFactory.class);
+		alertingPlugin = mock(AlertingPlugin.class);
 		incidentRepository = spy(new ConcurrentMapIncidentRepository(new ConcurrentHashMap<String, Incident>()));
-		thresholdMonitoringReporter = new ThresholdMonitoringReporter(new MetricRegistry(), checkGroupRepository,
+		thresholdMonitoringReporter = new ThresholdMonitoringReporter(new MetricRegistry(), alertingPlugin,
 				alerterFactory, incidentRepository, measurementSession);
 		alerter = mock(Alerter.class);
 		when(alerterFactory.getAlerters(Mockito.<Incident>any())).thenReturn(Arrays.asList(alerter));
@@ -56,7 +62,7 @@ public class ThresholdMonitoringReporterTest {
 	public void testAlerting() throws Exception {
 		CheckGroup checkGroup = createCheckGroupCheckingMean(1, 5);
 
-		when(checkGroupRepository.getAllActiveCheckGroups(anyString())).thenReturn(Arrays.asList(checkGroup));
+		when(alertingPlugin.getCheckGroups()).thenReturn(Arrays.asList(checkGroup));
 
 		checkMetrics();
 
@@ -80,7 +86,7 @@ public class ThresholdMonitoringReporterTest {
 	public void testAlertAfter2Failures() throws Exception {
 		CheckGroup checkGroup = createCheckGroupCheckingMean(2, 6);
 
-		when(checkGroupRepository.getAllActiveCheckGroups(anyString())).thenReturn(Arrays.asList(checkGroup));
+		when(alertingPlugin.getCheckGroups()).thenReturn(Arrays.asList(checkGroup));
 
 		checkMetrics();
 		verify(alerter, times(0)).alert(any(Incident.class));
@@ -94,21 +100,28 @@ public class ThresholdMonitoringReporterTest {
 	@Test
 	public void testNoAlertWhenFailureRecovers() throws Exception {
 		CheckGroup checkGroup = createCheckGroupCheckingMean(2, 6);
-		when(checkGroupRepository.getAllActiveCheckGroups(anyString())).thenReturn(Arrays.asList(checkGroup));
+		when(alertingPlugin.getCheckGroups()).thenReturn(Arrays.asList(checkGroup));
 
 		checkMetrics(7, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
-		verify(incidentRepository).createIncident(any(Incident.class));
+		final Incident incident = incidentRepository.getIncidentByCheckGroupId(checkGroup.getId());
+		assertNotNull(incident);
+		assertEquals(Check.Status.OK, incident.getOldStatus());
+		assertEquals(Check.Status.WARN, incident.getNewStatus());
+		assertNotNull(incident.getFirstFailAt());
+		assertNull(incident.getResolvedAt());
+		assertEquals(1, incident.getConsecutiveFailures());
+		System.out.println(incident);
 
 		checkMetrics(1, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
-		verify(incidentRepository).deleteIncident(any(Incident.class));
+		assertNull(incidentRepository.getIncidentByCheckGroupId(checkGroup.getId()));
 	}
 
 	@Test
 	public void testDontDeleteIncidentIfThereAreNonOkResultsFromOtherInstances() {
 		CheckGroup checkGroup = createCheckGroupCheckingMean(2, 6);
-		when(checkGroupRepository.getAllActiveCheckGroups(anyString())).thenReturn(Arrays.asList(checkGroup));
+		when(alertingPlugin.getCheckGroups()).thenReturn(Arrays.asList(checkGroup));
 		incidentRepository.createIncident(
 				new Incident(checkGroup, new MeasurementSession("testApp", "testHost2", "testInstance"),
 						Arrays.asList(new Check.Result("test", 10, Check.Status.CRITICAL))));
@@ -121,6 +134,7 @@ public class ThresholdMonitoringReporterTest {
 		assertEquals(Check.Status.CRITICAL, storedIncident.getNewStatus());
 		assertEquals(1, storedIncident.getResultsByHostAndInstance().get("testHost").getResultsByInstance("testInstance").getResults().size());
 		assertEquals(1, storedIncident.getResultsByHostAndInstance().get("testHost2").getResultsByInstance("testInstance").getResults().size());
+		System.out.println(storedIncident);
 
 		checkMetrics(1, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
@@ -137,6 +151,7 @@ public class ThresholdMonitoringReporterTest {
 	private CheckGroup createCheckGroupCheckingMean(int alertAfterXFailures, long meanMs) {
 		CheckGroup checkGroup = new CheckGroup();
 		checkGroup.setName("Test Timer");
+		checkGroup.setApplication("testApp");
 		checkGroup.setTarget(Pattern.compile("test.timer.*"));
 		checkGroup.setMetricCategory(MetricCategory.TIMER);
 		checkGroup.setAlertAfterXFailures(alertAfterXFailures);

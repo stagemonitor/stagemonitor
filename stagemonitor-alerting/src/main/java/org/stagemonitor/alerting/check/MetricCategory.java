@@ -1,4 +1,4 @@
-package org.stagemonitor.alerting;
+package org.stagemonitor.alerting.check;
 
 public enum MetricCategory {
 

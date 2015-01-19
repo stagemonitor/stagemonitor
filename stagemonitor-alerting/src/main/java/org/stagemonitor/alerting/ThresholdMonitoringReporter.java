@@ -12,6 +12,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.alerting.alerter.Alerter;
+import org.stagemonitor.alerting.alerter.AlerterFactory;
+import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckGroup;
+import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.MeasurementSession;
@@ -29,16 +34,16 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final CheckGroupRepository checkGroupRepository;
 	private final AlerterFactory alerterFactory;
 	private final IncidentRepository incidentRepository;
 	private final MeasurementSession measurementSession;
+	private final AlertingPlugin alertingPlugin;
 
-	protected ThresholdMonitoringReporter(MetricRegistry registry, CheckGroupRepository checkGroupRepository,
+	protected ThresholdMonitoringReporter(MetricRegistry registry, AlertingPlugin alertingPlugin,
 										  AlerterFactory alerterFactory, IncidentRepository incidentRepository,
 										  MeasurementSession measurementSession) {
 		super(registry, "threshold-monitoring-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-		this.checkGroupRepository = checkGroupRepository;
+		this.alertingPlugin = alertingPlugin;
 		this.alerterFactory = alerterFactory;
 		this.incidentRepository = incidentRepository;
 		this.measurementSession = measurementSession;
@@ -55,8 +60,10 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		metrics.set(MetricCategory.METER.getPath(), JsonUtils.toObjectNode(meters));
 		metrics.set(MetricCategory.TIMER.getPath(), JsonUtils.toObjectNode(timers));
 
-		for (CheckGroup check : checkGroupRepository.getAllActiveCheckGroups(measurementSession.getApplicationName())) {
-			checkMetrics(metrics, check);
+		for (CheckGroup check : alertingPlugin.getCheckGroups()) {
+			if (measurementSession.getApplicationName().equals(check.getApplication()) && check.isActive()) {
+				checkMetrics(metrics, check);
+			}
 		}
 	}
 

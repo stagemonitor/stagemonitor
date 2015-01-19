@@ -1,0 +1,28 @@
+package org.stagemonitor.alerting.alerter;
+
+import org.stagemonitor.alerting.incident.Incident;
+
+/**
+ * An alerter reports incidents to some chanel like email.
+ * <p/>
+ * To add a custom {@link Alerter}, just implement the interface and create a file under
+ * src/main/resources/META-INF/services/org.stagemonitor.alerting.alerter.Alerter.
+ * The content of the file has to be the canonical class name of the alerter.
+ */
+public interface Alerter {
+
+	/**
+	 * Triggers an alert
+	 *
+	 * @param incident the incident to report
+	 */
+	void alert(Incident incident);
+
+	/**
+	 * A unique name for this alerter e.g. email or irc.
+	 *
+	 * @return the unique alerter name
+	 */
+	String getAlerterType();
+
+}

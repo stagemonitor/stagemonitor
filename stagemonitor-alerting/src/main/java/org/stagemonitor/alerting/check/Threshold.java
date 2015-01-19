@@ -1,4 +1,4 @@
-package org.stagemonitor.alerting;
+package org.stagemonitor.alerting.check;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

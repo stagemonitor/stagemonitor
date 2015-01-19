@@ -1,4 +1,4 @@
-package org.stagemonitor.alerting;
+package org.stagemonitor.alerting.check;
 
 import java.util.LinkedList;
 import java.util.List;

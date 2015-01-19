@@ -2,6 +2,10 @@ package org.stagemonitor.alerting;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckGroup;
+import org.stagemonitor.alerting.check.MetricCategory;
+import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.core.util.JsonUtils;
 
 import java.util.Arrays;

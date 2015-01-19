@@ -1,4 +1,4 @@
-package org.stagemonitor.alerting;
+package org.stagemonitor.alerting.check;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +22,7 @@ public class CheckGroup {
 	private int alertAfterXFailures = 1;
 	private List<Check> checks;
 	private String application;
+	private boolean active = true;
 
 	/**
 	 * Performs threshold checks for the whole check group
@@ -95,5 +96,13 @@ public class CheckGroup {
 
 	public void setApplication(String application) {
 		this.application = application;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 }

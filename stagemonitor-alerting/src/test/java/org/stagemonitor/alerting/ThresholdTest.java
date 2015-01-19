@@ -1,6 +1,7 @@
 package org.stagemonitor.alerting;
 
 import org.junit.Test;
+import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.core.util.JsonUtils;
 
 import static org.junit.Assert.assertEquals;

@@ -1,7 +1,4 @@
-package org.stagemonitor.alerting;
-
-import org.stagemonitor.alerting.incident.Incident;
-import org.stagemonitor.alerting.incident.IncidentRepository;
+package org.stagemonitor.alerting.incident;
 
 import java.util.concurrent.ConcurrentMap;
 

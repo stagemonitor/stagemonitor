@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.converter.BooleanValueConverter;
 import org.stagemonitor.core.configuration.converter.DoubleValueConverter;
 import org.stagemonitor.core.configuration.converter.IntegerValueConverter;
+import org.stagemonitor.core.configuration.converter.JsonValueConverter;
 import org.stagemonitor.core.configuration.converter.LongValueConverter;
 import org.stagemonitor.core.configuration.converter.RegexListValueConverter;
 import org.stagemonitor.core.configuration.converter.RegexMapValueConverter;
@@ -69,6 +70,10 @@ public class ConfigurationOption<T> {
 	 */
 	public static  ConfigurationOptionBuilder<String> stringOption() {
 		return new ConfigurationOptionBuilder<String>(STRING_VALUE_CONVERTER, String.class);
+	}
+
+	public static <T> ConfigurationOptionBuilder<T> jsonOption(Class<T> clazz) {
+		return new ConfigurationOptionBuilder<T>(new JsonValueConverter<T>(clazz), clazz);
 	}
 
 	/**
