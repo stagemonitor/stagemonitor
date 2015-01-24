@@ -4,8 +4,17 @@ import org.stagemonitor.alerting.check.Check;
 
 public class Subscription {
 
+	private String target;
 	private String alerterType;
 	boolean alertOnBackToOk, alertOnWarn, alertOnError, alertOnCritical;
+
+	public String getTarget() {
+		return target;
+	}
+
+	public void setTarget(String target) {
+		this.target = target;
+	}
 
 	public String getAlerterType() {
 		return alerterType;

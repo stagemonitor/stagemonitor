@@ -1,5 +1,10 @@
 package org.stagemonitor.alerting;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.alerting.alerter.AlerterFactory;
 import org.stagemonitor.alerting.alerter.Subscription;
@@ -11,11 +16,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 public class AlertingPlugin extends StagemonitorPlugin {
 
@@ -68,7 +68,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Arrays.<ConfigurationOption<?>>asList(muteAlerts, checkFrequency, subscriptions);
+		return Arrays.<ConfigurationOption<?>>asList(muteAlerts, checkFrequency, subscriptions, checkGroups);
 	}
 
 	public boolean isMuteAlerts() {

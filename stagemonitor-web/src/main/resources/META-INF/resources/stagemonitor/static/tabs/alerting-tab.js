@@ -6,6 +6,14 @@ function renderAlertsTab() {
 		tab.html(renderedTemplate);
 
 		initSideMenu();
+		$("#incidents-table").dataTable({
+			"bJQueryUI": true,
+			"sPaginationType": "full_numbers"
+		});
+		$("#checks-table").dataTable({
+			"bJQueryUI": true,
+			"sPaginationType": "full_numbers"
+		});
 	});
 
 

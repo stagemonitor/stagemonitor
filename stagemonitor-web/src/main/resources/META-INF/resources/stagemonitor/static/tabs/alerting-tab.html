@@ -12,10 +12,179 @@
 
 	<div id="alerting-content" class="page-wrapper">
 		<div id="status" class="alerting-content">
-			status
+			<div class="row">
+				<div class="col-lg-6">
+					<h2><span class="glyphicon glyphicon-info-sign"></span> Status</h2>
+				</div>
+				<div class="col-lg-5">
+					<h2 class="pull-right"><span class="label label-success">OK</span></h2>
+				</div>
+			</div>
+			<hr>
+			<div class="row">
+				<div class="col-lg-2">
+					<p>Subscriptions</p>
+				</div>
+				<div class="col-lg-10">
+					<span class="well well-sm">
+						Email
+						<a href="#"><span class="glyphicon glyphicon-edit" data-toggle="modal" data-target="#subscription-modal"></span></a>
+						<a href="#"><span class="glyphicon glyphicon-remove"></span></a>
+					</span>
+					<span>&nbsp;</span>
+					<button class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
+						<span class="glyphicon glyphicon-plus"></span>
+					</button>
+				</div>
+			</div>
+
+			<hr>
+			<table id="incidents-table" class="display" cellspacing="0" width="100%">
+				<h3>Incidents</h3>
+				<thead>
+				<tr>
+					<th>Name</th>
+					<th>Application</th>
+					<th>Host</th>
+					<th>Instance</th>
+					<th>First Failure</th>
+					<th>Failing Expression</th>
+					<th>Current Value</th>
+					<th>From</th>
+					<th>To</th>
+				</tr>
+				</thead>
+
+				<tbody>
+				<tr>
+					<td>Search Response Time</td>
+					<td>Spring Petclinic</td>
+					<td>n51</td>
+					<td>www.petclinic.com</td>
+					<td>2015-01-19T20:05:39</td>
+					<td>response.time.search > 5</td>
+					<td>5.123</td>
+					<td><span class="label label-success">OK</span></td>
+					<td><span class="label label-warning">WARN</span></td>
+				</tr>
+				</tbody>
+
+			</table>
 		</div>
+
+
 		<div id="checks" class="alerting-content hidden">
-			checks
+			<div class="row">
+				<div class="col-lg-6">
+					<h2><span class="glyphicon glyphicon-eye-open"></span> Checks</h2>
+				</div>
+				<div class="col-lg-5">
+					<h2 class="pull-right">
+						<a href="#" class="tip" title="Add check" data-placement="bottom"
+								data-toggle="modal" data-target="#check-modal">
+							<span class="glyphicon glyphicon-plus"></span>
+						</a>
+					</h2>
+				</div>
+			</div>
+			<hr>
+			<table id="checks-table" class="display" cellspacing="0" width="100%">
+				<thead>
+				<tr>
+					<th>Name</th>
+					<th>Target</th>
+					<th>Edit</th>
+					<th>Delete</th>
+				</tr>
+				</thead>
+
+				<tbody>
+				<tr>
+					<td>Search Response Time</td>
+					<td>request.*.time</td>
+					<td><a href="#"><span class="glyphicon glyphicon-edit" aria-hidden="true" data-toggle="modal" data-target="#check-modal"></span></a></td>
+					<td><a href="#"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a></td>
+				</tr>
+				</tbody>
+
+			</table>
+		</div>
+	</div>
+
+	<!-- Subscription Modal -->
+	<div class="modal fade" id="subscription-modal" tabindex="-1" role="dialog"
+		 aria-labelledby="subscription-modal-label" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+							aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="subscription-modal-label">Subscription</h4>
+				</div>
+				<div class="modal-body">
+					<form>
+						<div class="row">
+							<div class="col-lg-3">
+								Target
+							</div>
+							<div class="col-lg-9">
+								<input class="form-control" type="text">
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-lg-3">
+								Type
+							</div>
+							<div class="col-lg-9">
+								<select class="form-control">
+									<option value="Email">Email</option>
+									<option value="Hipchat">Hipchat</option>
+									<option value="SMS">SMS</option>
+									<option value="Pagerduty">Pagerduty</option>
+								</select>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-lg-3">
+								Alert on
+							</div>
+							<div class="col-lg-9">
+								<select class="form-control" multiple>
+									<option value="OK">Back to OK</option>
+									<option value="Warn">(Back to) Warn</option>
+									<option value="Error">(Back to) Error</option>
+									<option value="Critical">Critical</option>
+								</select>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary">Save</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Check Modal -->
+	<div class="modal fade" id="check-modal" tabindex="-1" role="dialog"
+		 aria-labelledby="check-modal-label" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+							aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="check-modal-label">Check</h4>
+				</div>
+				<div class="modal-body">
+					...
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary">Save</button>
+				</div>
+			</div>
 		</div>
 	</div>
 </script>
