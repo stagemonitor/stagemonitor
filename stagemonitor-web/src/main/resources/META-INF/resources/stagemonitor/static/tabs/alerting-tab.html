@@ -1,190 +1,309 @@
 <script type="text/x-handlebars-template">
-	<div>
-		<ul class="nav nav-pills nav-stacked sidebar" id="alerting-side-menu">
-			<li class="alerting-menu active">
-				<a href="#status">Status</a>
-			</li>
-			<li class="alerting-menu">
-				<a href="#checks">Checks</a>
-			</li>
-		</ul>
-	</div>
+<div>
+	<ul class="nav nav-pills nav-stacked sidebar" id="alerting-side-menu">
+		<li class="alerting-menu active">
+			<a href="#status">Status</a>
+		</li>
+		<li class="alerting-menu">
+			<a href="#checks">Checks</a>
+		</li>
+	</ul>
+</div>
 
-	<div id="alerting-content" class="page-wrapper">
-		<div id="status" class="alerting-content">
-			<div class="row">
-				<div class="col-lg-6">
-					<h2><span class="glyphicon glyphicon-info-sign"></span> Status</h2>
-				</div>
-				<div class="col-lg-5">
-					<h2 class="pull-right"><span class="label label-success">OK</span></h2>
-				</div>
+<div id="alerting-content" class="page-wrapper">
+	<div id="status" class="alerting-content">
+		<div class="row">
+			<div class="col-lg-6">
+				<h2><span class="glyphicon glyphicon-info-sign"></span> Status</h2>
 			</div>
-			<hr>
-			<div class="row">
-				<div class="col-lg-2">
-					<p>Subscriptions</p>
-				</div>
-				<div class="col-lg-10">
+			<div class="col-lg-5">
+				<h2 class="pull-right"><span class="label label-success">OK</span></h2>
+			</div>
+		</div>
+		<hr>
+		<div class="row">
+			<div class="col-lg-2">
+				<p>Subscriptions</p>
+			</div>
+			<div class="col-lg-10">
 					<span class="well well-sm">
 						Email
-						<a href="#"><span class="glyphicon glyphicon-edit" data-toggle="modal" data-target="#subscription-modal"></span></a>
+						<a href="#"><span class="glyphicon glyphicon-edit" data-toggle="modal"
+										  data-target="#subscription-modal"></span></a>
 						<a href="#"><span class="glyphicon glyphicon-remove"></span></a>
 					</span>
-					<span>&nbsp;</span>
-					<button class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
+				<span>&nbsp;</span>
+				<button class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
+					<span class="glyphicon glyphicon-plus"></span>
+				</button>
+			</div>
+		</div>
+
+		<hr>
+		<table id="incidents-table" class="display" cellspacing="0" width="100%">
+			<h3>Incidents</h3>
+			<thead>
+			<tr>
+				<th>Name</th>
+				<th>Application</th>
+				<th>Host</th>
+				<th>Instance</th>
+				<th>First Failure</th>
+				<th>Failing Expression</th>
+				<th>Current Value</th>
+				<th>From</th>
+				<th>To</th>
+			</tr>
+			</thead>
+
+			<tbody>
+			<tr>
+				<td>Search Response Time</td>
+				<td>Spring Petclinic</td>
+				<td>n51</td>
+				<td>www.petclinic.com</td>
+				<td>2015-01-19T20:05:39</td>
+				<td>response.time.search > 5</td>
+				<td>5.123</td>
+				<td><span class="label label-success">OK</span></td>
+				<td><span class="label label-warning">WARN</span></td>
+			</tr>
+			</tbody>
+
+		</table>
+	</div>
+
+
+	<div id="checks" class="alerting-content hidden">
+		<div class="row">
+			<div class="col-lg-6">
+				<h2><span class="glyphicon glyphicon-eye-open"></span> Checks</h2>
+			</div>
+			<div class="col-lg-5">
+				<h2 class="pull-right">
+					<a href="#" class="tip" title="Add check" data-placement="bottom"
+					   data-toggle="modal" data-target="#check-modal">
 						<span class="glyphicon glyphicon-plus"></span>
-					</button>
-				</div>
+					</a>
+				</h2>
 			</div>
-
-			<hr>
-			<table id="incidents-table" class="display" cellspacing="0" width="100%">
-				<h3>Incidents</h3>
-				<thead>
-				<tr>
-					<th>Name</th>
-					<th>Application</th>
-					<th>Host</th>
-					<th>Instance</th>
-					<th>First Failure</th>
-					<th>Failing Expression</th>
-					<th>Current Value</th>
-					<th>From</th>
-					<th>To</th>
-				</tr>
-				</thead>
-
-				<tbody>
-				<tr>
-					<td>Search Response Time</td>
-					<td>Spring Petclinic</td>
-					<td>n51</td>
-					<td>www.petclinic.com</td>
-					<td>2015-01-19T20:05:39</td>
-					<td>response.time.search > 5</td>
-					<td>5.123</td>
-					<td><span class="label label-success">OK</span></td>
-					<td><span class="label label-warning">WARN</span></td>
-				</tr>
-				</tbody>
-
-			</table>
 		</div>
+		<hr>
+		<table id="checks-table" class="display" cellspacing="0" width="100%">
+			<thead>
+			<tr>
+				<th>Name</th>
+				<th>Target</th>
+				<th>Edit</th>
+				<th>Delete</th>
+			</tr>
+			</thead>
 
+			<tbody>
+			<tr>
+				<td>Search Response Time</td>
+				<td>request.*.time</td>
+				<td><a href="#"><span class="glyphicon glyphicon-edit" aria-hidden="true" data-toggle="modal"
+									  data-target="#check-modal"></span></a></td>
+				<td><a href="#"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a></td>
+			</tr>
+			</tbody>
 
-		<div id="checks" class="alerting-content hidden">
-			<div class="row">
-				<div class="col-lg-6">
-					<h2><span class="glyphicon glyphicon-eye-open"></span> Checks</h2>
-				</div>
-				<div class="col-lg-5">
-					<h2 class="pull-right">
-						<a href="#" class="tip" title="Add check" data-placement="bottom"
-								data-toggle="modal" data-target="#check-modal">
-							<span class="glyphicon glyphicon-plus"></span>
-						</a>
-					</h2>
-				</div>
+		</table>
+	</div>
+</div>
+
+<!-- Subscription Modal -->
+<div class="modal fade" id="subscription-modal" tabindex="-1" role="dialog"
+	 aria-labelledby="subscription-modal-label" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+						aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="subscription-modal-label">Subscription</h4>
 			</div>
-			<hr>
-			<table id="checks-table" class="display" cellspacing="0" width="100%">
-				<thead>
-				<tr>
-					<th>Name</th>
-					<th>Target</th>
-					<th>Edit</th>
-					<th>Delete</th>
-				</tr>
-				</thead>
-
-				<tbody>
-				<tr>
-					<td>Search Response Time</td>
-					<td>request.*.time</td>
-					<td><a href="#"><span class="glyphicon glyphicon-edit" aria-hidden="true" data-toggle="modal" data-target="#check-modal"></span></a></td>
-					<td><a href="#"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a></td>
-				</tr>
-				</tbody>
-
-			</table>
+			<div class="modal-body">
+				<form>
+					<div class="row">
+						<div class="col-lg-3">
+							Target
+						</div>
+						<div class="col-lg-9">
+							<input class="form-control" type="text">
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-lg-3">
+							Type
+						</div>
+						<div class="col-lg-9">
+							<select class="form-control">
+								<option value="Email">Email</option>
+								<option value="Hipchat">Hipchat</option>
+								<option value="SMS">SMS</option>
+								<option value="Pagerduty">Pagerduty</option>
+							</select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-lg-3">
+							Alert on
+						</div>
+						<div class="col-lg-9">
+							<select class="form-control" multiple>
+								<option value="OK">Back to OK</option>
+								<option value="Warn">(Back to) Warn</option>
+								<option value="Error">(Back to) Error</option>
+								<option value="Critical">Critical</option>
+							</select>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary">Save</button>
+			</div>
 		</div>
 	</div>
+</div>
 
-	<!-- Subscription Modal -->
-	<div class="modal fade" id="subscription-modal" tabindex="-1" role="dialog"
-		 aria-labelledby="subscription-modal-label" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-							aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title" id="subscription-modal-label">Subscription</h4>
-				</div>
-				<div class="modal-body">
-					<form>
-						<div class="row">
-							<div class="col-lg-3">
-								Target
-							</div>
-							<div class="col-lg-9">
-								<input class="form-control" type="text">
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-lg-3">
-								Type
-							</div>
-							<div class="col-lg-9">
-								<select class="form-control">
-									<option value="Email">Email</option>
-									<option value="Hipchat">Hipchat</option>
-									<option value="SMS">SMS</option>
-									<option value="Pagerduty">Pagerduty</option>
+<!-- Check Modal -->
+<div class="modal fade" id="check-modal" tabindex="-1" role="dialog"
+	 aria-labelledby="check-modal-label" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+						aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="check-modal-label">Check</h4>
+			</div>
+			<div class="modal-body">
+				<form>
+					<div class="form-group">
+						<label for="name-input">Name</label>
+						<input id="name-input" name="name" class="form-control">
+					</div>
+					<div class="form-group">
+						<label for="alertAfterXFailures-label">Alert after x failures</label>
+						<input id="alertAfterXFailures-label" name="alertAfterXFailures" type="number"
+							   class="form-control" value="1" min="1">
+					</div>
+					<div class="form-group">
+						<label for="metric-category-input">Metric Category</label>
+						<select id="metric-category-input" class="form-control" name="metricCategory">
+							<option value="TIMER">Timer</option>
+							<option value="GAUGE">Gauge</option>
+							<option value="HISTOGRAM">Histrogram</option>
+							<option value="COUNTER">Counters</option>
+							<option value="METER">METER</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="target-input">Target</label>
+						<input id="target-input" class="form-control" name="target">
+					</div>
+
+					<fieldset>
+						<legend>Warn</legend>
+						<div class="col-lg-6">
+							<div class="col-lg-4">
+								<select class="form-control" name="checks[0].warn.operator">
+									<option value="GREATER">&gt;</option>
+									<option value="GREATER_EQUAL">&gt;=</option>
+									<option value="LESS">&lt;</option>
+									<option value="LESS_EQUAL">&lt;=</option>
 								</select>
 							</div>
-						</div>
-						<div class="row">
-							<div class="col-lg-3">
-								Alert on
+							<div class="col-lg-8">
+								<input class="form-control" type="number" name="checks[0].warn.thresholdValue">
 							</div>
-							<div class="col-lg-9">
-								<select class="form-control" multiple>
-									<option value="OK">Back to OK</option>
-									<option value="Warn">(Back to) Warn</option>
-									<option value="Error">(Back to) Error</option>
-									<option value="Critical">Critical</option>
+						</div>
+						<div class="col-lg-6">
+							<div class="col-lg-4">
+								<select class="form-control" name="checks[1].warn.operator">
+									<option value="GREATER">&gt;</option>
+									<option value="GREATER_EQUAL">&gt;=</option>
+									<option value="LESS">&lt;</option>
+									<option value="LESS_EQUAL">&lt;=</option>
 								</select>
 							</div>
+							<div class="col-lg-8">
+								<input class="form-control" type="number" name="checks[1].warn.thresholdValue">
+							</div>
 						</div>
-					</form>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-					<button type="button" class="btn btn-primary">Save</button>
-				</div>
-			</div>
-		</div>
-	</div>
+					</fieldset>
 
-	<!-- Check Modal -->
-	<div class="modal fade" id="check-modal" tabindex="-1" role="dialog"
-		 aria-labelledby="check-modal-label" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-							aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title" id="check-modal-label">Check</h4>
-				</div>
-				<div class="modal-body">
-					...
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-					<button type="button" class="btn btn-primary">Save</button>
-				</div>
+
+					<fieldset>
+						<legend>Error</legend>
+						<div class="col-lg-6">
+							<div class="col-lg-4">
+								<select class="form-control" name="checks[0].error.operator">
+									<option value="GREATER">&gt;</option>
+									<option value="GREATER_EQUAL">&gt;=</option>
+									<option value="LESS">&lt;</option>
+									<option value="LESS_EQUAL">&lt;=</option>
+								</select>
+							</div>
+							<div class="col-lg-8">
+								<input class="form-control" type="number" name="checks[0].error.thresholdValue">
+							</div>
+						</div>
+						<div class="col-lg-6">
+							<div class="col-lg-4">
+								<select class="form-control" name="checks[1].error.operator">
+									<option value="GREATER">&gt;</option>
+									<option value="GREATER_EQUAL">&gt;=</option>
+									<option value="LESS">&lt;</option>
+									<option value="LESS_EQUAL">&lt;=</option>
+								</select>
+							</div>
+							<div class="col-lg-8">
+								<input class="form-control" type="number" name="checks[1].error.thresholdValue">
+							</div>
+						</div>
+					</fieldset>
+
+
+					<fieldset>
+						<legend>Critical</legend>
+						<div class="col-lg-6">
+							<div class="col-lg-4">
+								<select class="form-control" name="checks[0].critical.operator">
+									<option value="GREATER">&gt;</option>
+									<option value="GREATER_EQUAL">&gt;=</option>
+									<option value="LESS">&lt;</option>
+									<option value="LESS_EQUAL">&lt;=</option>
+								</select>
+							</div>
+							<div class="col-lg-8">
+								<input class="form-control" type="number" name="checks[0].critical.thresholdValue">
+							</div>
+						</div>
+						<div class="col-lg-6">
+							<div class="col-lg-4">
+								<select class="form-control" name="checks[1].critical.operator">
+									<option value="GREATER">&gt;</option>
+									<option value="GREATER_EQUAL">&gt;=</option>
+									<option value="LESS">&lt;</option>
+									<option value="LESS_EQUAL">&lt;=</option>
+								</select>
+							</div>
+							<div class="col-lg-8">
+								<input class="form-control" type="number" name="checks[1].critical.thresholdValue">
+							</div>
+						</div>
+					</fieldset>
+
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary">Save</button>
 			</div>
 		</div>
 	</div>
+</div>
 </script>
