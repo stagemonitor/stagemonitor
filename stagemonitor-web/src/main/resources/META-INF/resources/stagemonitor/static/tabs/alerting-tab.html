@@ -61,10 +61,10 @@
 				<td>Search Response Time</td>
 				<td>Spring Petclinic</td>
 				<td>n51</td>
-				<td>www.petclinic.com</td>
+				<td>petclinic.com</td>
 				<td>2015-01-19T20:05:39</td>
-				<td>response.time.search > 5</td>
-				<td>5.123</td>
+				<td>request.Search > 5000</td>
+				<td>5123</td>
 				<td><span class="label label-success">OK</span></td>
 				<td><span class="label label-warning">WARN</span></td>
 			</tr>
@@ -125,38 +125,44 @@
 			</div>
 			<div class="modal-body">
 				<form>
-					<div class="row">
-						<div class="col-lg-3">
-							Target
-						</div>
-						<div class="col-lg-9">
-							<input class="form-control" type="text">
-						</div>
+					<div class="form-group">
+						<label>Target</label>
+						<input name="target" class="form-control" type="text">
 					</div>
-					<div class="row">
-						<div class="col-lg-3">
-							Type
-						</div>
-						<div class="col-lg-9">
-							<select class="form-control">
-								<option value="Email">Email</option>
-								<option value="Hipchat">Hipchat</option>
-								<option value="SMS">SMS</option>
-								<option value="Pagerduty">Pagerduty</option>
-							</select>
-						</div>
+					<div class="form-group">
+						<label>Type</label>
+						<select name="type" class="form-control">
+							<option value="Email">Email</option>
+							<option value="Hipchat">Hipchat</option>
+							<option value="SMS">SMS</option>
+							<option value="Pagerduty">Pagerduty</option>
+						</select>
 					</div>
-					<div class="row">
-						<div class="col-lg-3">
-							Alert on
+					<div class="form-group">
+						<label>Alert on</label>
+						<div class="checkbox">
+							<label>
+								<input name="alertOnBackToOk" type="checkbox" value="">
+								Back to OK
+							</label>
 						</div>
-						<div class="col-lg-9">
-							<select class="form-control" multiple>
-								<option value="OK">Back to OK</option>
-								<option value="Warn">(Back to) Warn</option>
-								<option value="Error">(Back to) Error</option>
-								<option value="Critical">Critical</option>
-							</select>
+						<div class="checkbox">
+							<label>
+								<input name="alertOnWarn" type="checkbox" value="">
+								(Back to) Warn
+							</label>
+						</div>
+						<div class="checkbox">
+							<label>
+								<input name="alertOnError" type="checkbox" value="">
+								(Back to) Error
+							</label>
+						</div>
+						<div class="checkbox">
+							<label>
+								<input name="alertOnCritical" type="checkbox" value="">
+								Critical
+							</label>
 						</div>
 					</div>
 				</form>
@@ -197,7 +203,7 @@
 							<option value="GAUGE">Gauge</option>
 							<option value="HISTOGRAM">Histrogram</option>
 							<option value="COUNTER">Counters</option>
-							<option value="METER">METER</option>
+							<option value="METER">Meter</option>
 						</select>
 					</div>
 					<div class="form-group">
@@ -207,8 +213,28 @@
 
 					<fieldset>
 						<legend>Warn</legend>
-						<div class="col-lg-6">
-							<div class="col-lg-4">
+
+						<div class="row">
+							<div class="col-lg-3">
+								<select class="form-control" name="checks[0].warn.metric">
+									<option value="count">count</option>
+									<option value="mean">mean</option>
+									<option value="min">min</option>
+									<option value="max">max</option>
+									<option value="stddev">stddev</option>
+									<option value="p50">p50</option>
+									<option value="p75">p75</option>
+									<option value="p95">p95</option>
+									<option value="p98">p98</option>
+									<option value="p99">p99</option>
+									<option value="p999">p999</option>
+									<option value="mean_rate">mean_rate</option>
+									<option value="m1_rate">m1_rate</option>
+									<option value="m5_rate">m5_rate</option>
+									<option value="m15_rate">m15_rate</option>
+								</select>
+							</div>
+							<div class="col-lg-2">
 								<select class="form-control" name="checks[0].warn.operator">
 									<option value="GREATER">&gt;</option>
 									<option value="GREATER_EQUAL">&gt;=</option>
@@ -216,12 +242,36 @@
 									<option value="LESS_EQUAL">&lt;=</option>
 								</select>
 							</div>
-							<div class="col-lg-8">
+							<div class="col-lg-4">
 								<input class="form-control" type="number" name="checks[0].warn.thresholdValue">
 							</div>
+							<div class="col-lg-3">
+								<button class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span></button>
+								<button class="btn btn-primary"><span class="glyphicon glyphicon-minus"></span></button>
+							</div>
 						</div>
-						<div class="col-lg-6">
-							<div class="col-lg-4">
+
+						<div class="row">
+							<div class="col-lg-3">
+								<select class="form-control" name="checks[1].warn.metric">
+									<option value="count">count</option>
+									<option value="mean">mean</option>
+									<option value="min">min</option>
+									<option value="max">max</option>
+									<option value="stddev">stddev</option>
+									<option value="p50">p50</option>
+									<option value="p75">p75</option>
+									<option value="p95">p95</option>
+									<option value="p98">p98</option>
+									<option value="p99">p99</option>
+									<option value="p999">p999</option>
+									<option value="mean_rate">mean_rate</option>
+									<option value="m1_rate">m1_rate</option>
+									<option value="m5_rate">m5_rate</option>
+									<option value="m15_rate">m15_rate</option>
+								</select>
+							</div>
+							<div class="col-lg-2">
 								<select class="form-control" name="checks[1].warn.operator">
 									<option value="GREATER">&gt;</option>
 									<option value="GREATER_EQUAL">&gt;=</option>
@@ -229,17 +279,39 @@
 									<option value="LESS_EQUAL">&lt;=</option>
 								</select>
 							</div>
-							<div class="col-lg-8">
+							<div class="col-lg-4">
 								<input class="form-control" type="number" name="checks[1].warn.thresholdValue">
+							</div>
+							<div class="col-lg-3">
+								<button class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span></button>
+								<button class="btn btn-primary"><span class="glyphicon glyphicon-minus"></span></button>
 							</div>
 						</div>
 					</fieldset>
-
-
 					<fieldset>
 						<legend>Error</legend>
-						<div class="col-lg-6">
-							<div class="col-lg-4">
+
+						<div class="row">
+							<div class="col-lg-3">
+								<select class="form-control" name="checks[0].error.metric">
+									<option value="count">count</option>
+									<option value="mean">mean</option>
+									<option value="min">min</option>
+									<option value="max">max</option>
+									<option value="stddev">stddev</option>
+									<option value="p50">p50</option>
+									<option value="p75">p75</option>
+									<option value="p95">p95</option>
+									<option value="p98">p98</option>
+									<option value="p99">p99</option>
+									<option value="p999">p999</option>
+									<option value="mean_rate">mean_rate</option>
+									<option value="m1_rate">m1_rate</option>
+									<option value="m5_rate">m5_rate</option>
+									<option value="m15_rate">m15_rate</option>
+								</select>
+							</div>
+							<div class="col-lg-2">
 								<select class="form-control" name="checks[0].error.operator">
 									<option value="GREATER">&gt;</option>
 									<option value="GREATER_EQUAL">&gt;=</option>
@@ -247,55 +319,25 @@
 									<option value="LESS_EQUAL">&lt;=</option>
 								</select>
 							</div>
-							<div class="col-lg-8">
+							<div class="col-lg-4">
 								<input class="form-control" type="number" name="checks[0].error.thresholdValue">
 							</div>
-						</div>
-						<div class="col-lg-6">
-							<div class="col-lg-4">
-								<select class="form-control" name="checks[1].error.operator">
-									<option value="GREATER">&gt;</option>
-									<option value="GREATER_EQUAL">&gt;=</option>
-									<option value="LESS">&lt;</option>
-									<option value="LESS_EQUAL">&lt;=</option>
-								</select>
-							</div>
-							<div class="col-lg-8">
-								<input class="form-control" type="number" name="checks[1].error.thresholdValue">
+							<div class="col-lg-3">
+								<button class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span></button>
+								<button class="btn btn-primary"><span class="glyphicon glyphicon-minus"></span></button>
 							</div>
 						</div>
 					</fieldset>
-
-
 					<fieldset>
 						<legend>Critical</legend>
-						<div class="col-lg-6">
-							<div class="col-lg-4">
-								<select class="form-control" name="checks[0].critical.operator">
-									<option value="GREATER">&gt;</option>
-									<option value="GREATER_EQUAL">&gt;=</option>
-									<option value="LESS">&lt;</option>
-									<option value="LESS_EQUAL">&lt;=</option>
-								</select>
-							</div>
-							<div class="col-lg-8">
-								<input class="form-control" type="number" name="checks[0].critical.thresholdValue">
-							</div>
-						</div>
-						<div class="col-lg-6">
-							<div class="col-lg-4">
-								<select class="form-control" name="checks[1].critical.operator">
-									<option value="GREATER">&gt;</option>
-									<option value="GREATER_EQUAL">&gt;=</option>
-									<option value="LESS">&lt;</option>
-									<option value="LESS_EQUAL">&lt;=</option>
-								</select>
-							</div>
-							<div class="col-lg-8">
-								<input class="form-control" type="number" name="checks[1].critical.thresholdValue">
+
+						<div class="row">
+							<div class="col-lg-3">
+								<button class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span></button>
 							</div>
 						</div>
 					</fieldset>
+
 
 				</form>
 			</div>
