@@ -1,5 +1,25 @@
 package org.stagemonitor.web.monitor.filter;
 
+import static javax.servlet.DispatcherType.FORWARD;
+import static javax.servlet.DispatcherType.REQUEST;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ServiceLoader;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,27 +34,6 @@ import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.MonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
-import org.stagemonitor.web.monitor.widget.StagemonitorWidgetHtmlInjector;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ServiceLoader;
-
-import static javax.servlet.DispatcherType.FORWARD;
-import static javax.servlet.DispatcherType.REQUEST;
 
 @WebFilter(urlPatterns = "/*", asyncSupported = true, dispatcherTypes = {REQUEST, FORWARD})
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
@@ -77,8 +76,10 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		final ServletContext servletContext = filterConfig.getServletContext();
 		atLeastServletApi3 = servletContext.getMajorVersion() >= 3;
 
-		htmlInjectors.add(new BommerangJsHtmlInjector(webPlugin, servletContext.getContextPath()));
-		htmlInjectors.add(new StagemonitorWidgetHtmlInjector(configuration, webPlugin, servletContext.getContextPath()));
+		for (HtmlInjector htmlInjector : ServiceLoader.load(HtmlInjector.class)) {
+			htmlInjector.init(configuration, servletContext);
+			htmlInjectors.add(htmlInjector);
+		}
 	}
 
 	private String getApplicationName(FilterConfig filterConfig) {
@@ -178,7 +179,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
 			for (HtmlInjector htmlInjector : htmlInjectors) {
 				if (htmlInjector.isActive()) {
-					content = injectBeforeClosingBody(content, htmlInjector.build(requestInformation));
+					content = injectBeforeClosingBody(content, htmlInjector.getContentToInjectBeforeClosingBody(requestInformation));
 				}
 			}
 			response.getWriter().write(content);
