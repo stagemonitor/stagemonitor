@@ -2,6 +2,8 @@ package org.stagemonitor.web.monitor.widget;
 
 import java.io.IOException;
 
+import javax.servlet.ServletContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
@@ -15,16 +17,17 @@ import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
 public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private final WebPlugin webPlugin;
-	private final Configuration configuration;
+	private Logger logger = LoggerFactory.getLogger(getClass());
+	private WebPlugin webPlugin;
+	private Configuration configuration;
 	private String widgetTemplate;
 
-	public StagemonitorWidgetHtmlInjector(Configuration configuration, WebPlugin webPlugin, String contextPath) {
+	@Override
+	public void init(Configuration configuration, ServletContext servletContext) {
 		this.configuration = configuration;
-		this.webPlugin = webPlugin;
+		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		try {
-			this.widgetTemplate = buildWidgetTemplate(contextPath);
+			this.widgetTemplate = buildWidgetTemplate(servletContext.getContextPath());
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
 			this.widgetTemplate = "";
@@ -36,14 +39,13 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 				.replace("@@CONTEXT_PREFIX_PATH@@", contextPath);
 	}
 
-
 	@Override
 	public boolean isActive() {
 		return webPlugin.isWidgetEnabled();
 	}
 
 	@Override
-	public String build(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
+	public String getContentToInjectBeforeClosingBody(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
 		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson())
 				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByCategory()))
 				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))

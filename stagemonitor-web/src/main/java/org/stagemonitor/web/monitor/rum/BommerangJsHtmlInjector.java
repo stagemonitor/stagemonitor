@@ -1,5 +1,8 @@
 package org.stagemonitor.web.monitor.rum;
 
+import javax.servlet.ServletContext;
+
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
@@ -8,12 +11,13 @@ import org.stagemonitor.web.monitor.filter.HtmlInjector;
 public class BommerangJsHtmlInjector implements HtmlInjector {
 
 	public static final String BOOMERANG_FILENAME = "boomerang-56c823668fc.min.js";
-	private final WebPlugin webPlugin;
+	private WebPlugin webPlugin;
 	private String boomerangTemplate;
 
-	public BommerangJsHtmlInjector(WebPlugin webPlugin, String contextPath) {
-		this.webPlugin = webPlugin;
-		this.boomerangTemplate = buildBoomerangTemplate(contextPath);
+	@Override
+	public void init(Configuration configuration, ServletContext servletContext) {
+		this.webPlugin = configuration.getConfig(WebPlugin.class);
+		this.boomerangTemplate = buildBoomerangTemplate(servletContext.getContextPath());
 	}
 
 	private String buildBoomerangTemplate(String contextPath) {
@@ -39,7 +43,7 @@ public class BommerangJsHtmlInjector implements HtmlInjector {
 	}
 
 	@Override
-	public String build(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
+	public String getContentToInjectBeforeClosingBody(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
 		final HttpRequestTrace requestTrace = requestInformation.getRequestTrace();
 		return boomerangTemplate.replace("${requestId}", String.valueOf(requestTrace.getId()))
 				.replace("${requestName}", requestTrace.getName())
