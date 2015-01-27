@@ -1,13 +1,13 @@
 package org.stagemonitor.web.logging;
 
-import org.slf4j.MDC;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.Stagemonitor;
-
+import java.util.UUID;
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.ServletRequestListener;
 import javax.servlet.annotation.WebListener;
-import java.util.UUID;
+
+import org.slf4j.MDC;
+import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.Stagemonitor;
 
 /**
  * This class adds the {@link MDC} properties requestId, application, host and instance.
@@ -23,7 +23,6 @@ public class MDCListener implements ServletRequestListener {
 	@Override
 	public void requestInitialized(ServletRequestEvent sre) {
 		final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
-		System.out.println(measurementSession);
 		MDC.put("application", measurementSession.getApplicationName());
 		MDC.put("host", measurementSession.getHostName());
 		String instanceName = measurementSession.getInstanceName();
