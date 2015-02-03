@@ -5,9 +5,6 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SpringMvcPlugin extends StagemonitorPlugin {
 
 	private ConfigurationOption<Boolean> onlyMvcOption = ConfigurationOption.booleanOption()
@@ -21,13 +18,6 @@ public class SpringMvcPlugin extends StagemonitorPlugin {
 			.defaultValue(false)
 			.configurationCategory("Spring MVC Plugin")
 			.build();
-
-	@Override
-	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		List<ConfigurationOption<?>> config = new ArrayList<ConfigurationOption<?>>();
-		config.add(onlyMvcOption);
-		return config;
-	}
 
 	public boolean isMonitorOnlySpringMvcRequests() {
 		return onlyMvcOption.getValue();

@@ -90,13 +90,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.build();
 
 	@Override
-	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Arrays.<ConfigurationOption<?>>asList(noOfWarmupRequests, warmupSeconds, collectRequestStats, 
-				collectCpuTime, minExecutionTimeNanos, callStackEveryXRequestsToGroup, logCallStacks, requestTraceTtl,
-				collectDbTimePerRequest);
-	}
-
-	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
 		addElasticsearchMapping();
 		ElasticsearchClient.sendGrafanaDashboardAsync("Request.json");

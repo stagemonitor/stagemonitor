@@ -6,9 +6,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class JdbcPlugin extends StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
 	private final ConfigurationOption<Boolean> collectSql = ConfigurationOption.booleanOption()
@@ -28,11 +25,6 @@ public class JdbcPlugin extends StagemonitorPlugin {
 			.tags("security-relevant")
 			.configurationCategory(JDBC_PLUGIN)
 			.build();
-
-	@Override
-	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Arrays.<ConfigurationOption<?>>asList(collectSql, collectPreparedStatementParameters);
-	}
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {

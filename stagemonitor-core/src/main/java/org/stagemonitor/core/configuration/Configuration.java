@@ -278,6 +278,8 @@ public class Configuration {
 
 	/**
 	 * Dynamically updates a configuration key.
+	 * <p/>
+	 * Performs a password check.
 	 *
 	 * @param key                         the configuration key
 	 * @param value                       the configuration value
@@ -291,8 +293,7 @@ public class Configuration {
 	 *                                       sources
 	 * @throws UnsupportedOperationException if saving values is not possible with this configuration source
 	 */
-	public void save(String key, String value, String configurationSourceName, String configurationUpdatePassword) throws IOException,
-			IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
+	public void save(String key, String value, String configurationSourceName, String configurationUpdatePassword) throws IOException {
 		if (configurationUpdatePassword == null) {
 			configurationUpdatePassword = "";
 		}
@@ -303,11 +304,30 @@ public class Configuration {
 		}
 
 		if (updateConfigPassword.equals(configurationUpdatePassword)) {
-			final ConfigurationOption<?> configurationOption = validateConfigurationOption(key, value);
-			saveToConfigurationSource(key, value, configurationSourceName, configurationOption);
+			save(key, value, configurationSourceName);
 		} else {
 			throw new IllegalStateException("Wrong password for updating configuration.");
 		}
+	}
+
+	/**
+	 * Dynamically updates a configuration key.
+	 * <p/>
+	 * Does not perform a password check.
+	 *
+	 * @param key                         the configuration key
+	 * @param value                       the configuration value
+	 * @param configurationSourceName     the {@link org.stagemonitor.core.configuration.source.ConfigurationSource#getName()}
+	 *                                    of the configuration source the value should be stored to
+	 * @throws IOException                   if there was an error saving the key to the source
+	 * @throws IllegalArgumentException      if there was a error processing the configuration key or value or the
+	 *                                       configurationSourceName did not match any of the available configuration
+	 *                                       sources
+	 * @throws UnsupportedOperationException if saving values is not possible with this configuration source
+	 */
+	public void save(String key, String value, String configurationSourceName) throws IOException {
+		final ConfigurationOption<?> configurationOption = validateConfigurationOption(key, value);
+		saveToConfigurationSource(key, value, configurationSourceName, configurationOption);
 	}
 
 	private ConfigurationOption<?> validateConfigurationOption(String key, String value) throws IllegalArgumentException {

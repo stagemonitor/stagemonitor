@@ -5,16 +5,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.converter.BooleanValueConverter;
+import org.stagemonitor.core.configuration.converter.DoubleValueConverter;
 import org.stagemonitor.core.configuration.converter.IntegerValueConverter;
 import org.stagemonitor.core.configuration.converter.LongValueConverter;
 import org.stagemonitor.core.configuration.converter.RegexListValueConverter;
 import org.stagemonitor.core.configuration.converter.RegexMapValueConverter;
+import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.configuration.converter.StringsValueConverter;
 import org.stagemonitor.core.configuration.converter.ValueConverter;
@@ -36,6 +39,8 @@ public class ConfigurationOption<T> {
 	public static final ValueConverter<Boolean> BOOLEAN_VALUE_CONVERTER = new BooleanValueConverter();
 	public static final ValueConverter<Integer> INTEGER_VALUE_CONVERTER = new IntegerValueConverter();
 	public static final ValueConverter<Long> LONG_VALUE_CONVERTER = new LongValueConverter();
+	public static final ValueConverter<Double> DOUBLE_VALUE_CONVERTER = new DoubleValueConverter();
+	public static final ValueConverter<Set<Integer>> INTEGERS_VALUE_CONVERTER = new SetValueConverter<Integer>(new IntegerValueConverter());
 
 	private final boolean dynamic;
 	private final String key;
@@ -53,7 +58,7 @@ public class ConfigurationOption<T> {
 	private String nameOfCurrentConfigurationSource;
 	private String errorMessage;
 
-	public static <T> ConfigurationOptionBuilder<T> builder(ValueConverter<T> valueConverter, Class<T> valueType) {
+	public static <T> ConfigurationOptionBuilder<T> builder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 		return new ConfigurationOptionBuilder<T>(valueConverter, valueType);
 	}
 
@@ -92,6 +97,14 @@ public class ConfigurationOption<T> {
 	public static ConfigurationOptionBuilder<Long> longOption() {
 		return new ConfigurationOptionBuilder<Long>(LONG_VALUE_CONVERTER, Long.class);
 	}
+	/**
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Double}
+	 *
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Double}
+	 */
+	public static ConfigurationOptionBuilder<Double> doubleOption() {
+		return new ConfigurationOptionBuilder<Double>(DOUBLE_VALUE_CONVERTER, Double.class);
+	}
 
 	/**
 	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link String}>
@@ -112,6 +125,15 @@ public class ConfigurationOption<T> {
 	public static ConfigurationOptionBuilder<Collection<String>> lowerStringsOption() {
 		return new ConfigurationOptionBuilder<Collection<String>>(LOWER_STRINGS_VALUE_CONVERTER, Collection.class)
 				.defaultValue(Collections.<String>emptySet());
+	}
+
+	/**
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Set}&lt{@link Integer}>
+	 *
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Set}&lt{@link Integer}>
+	 */
+	public static ConfigurationOption.ConfigurationOptionBuilder<Set<Integer>> integersOption() {
+		return ConfigurationOption.builder(INTEGERS_VALUE_CONVERTER, Set.class);
 	}
 
 	/**
@@ -147,6 +169,7 @@ public class ConfigurationOption<T> {
 		this.configurationCategory = configurationCategory;
 		this.valueConverter = valueConverter;
 		this.valueType = valueType;
+		setToDefault();
 	}
 
 	/**
@@ -294,7 +317,7 @@ public class ConfigurationOption<T> {
 				return true;
 			} catch (IllegalArgumentException e) {
 				errorMessage = "Error in " + nameOfCurrentConfigurationSource + ": " + e.getMessage();
-				logger.warn(errorMessage + " Default value '" + defaultValueAsString + "' will be applied.", e);
+				logger.warn(errorMessage + " Default value '" + defaultValueAsString + "' for '" + key + "' will be applied.");
 				return false;
 			}
 		} else {

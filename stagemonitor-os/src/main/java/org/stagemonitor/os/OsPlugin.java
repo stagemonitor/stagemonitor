@@ -1,5 +1,14 @@
 package org.stagemonitor.os;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.codahale.metrics.MetricRegistry;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.NetRoute;
@@ -12,7 +21,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorConfigurationSourceInitializer;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -23,16 +31,6 @@ import org.stagemonitor.os.metrics.FileSystemMetricSet;
 import org.stagemonitor.os.metrics.MemoryMetricSet;
 import org.stagemonitor.os.metrics.NetworkMetricSet;
 import org.stagemonitor.os.metrics.SwapMetricSet;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigurationSourceInitializer {
 
@@ -107,11 +105,6 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 			logger.warn(e.getMessage() + ". (This exception is ignored)", e);
 			return new EmptySigarMetricSet();
 		}
-	}
-
-	@Override
-	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Collections.emptyList();
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
