@@ -1,5 +1,17 @@
 package org.stagemonitor.core;
 
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -17,19 +29,6 @@ import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SimpleElasticsearchReporter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
-
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-
-import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 /**
  * This class contains the configuration options for stagemonitor's core functionality
@@ -272,14 +271,6 @@ public class CorePlugin extends StagemonitorPlugin {
 		JmxReporter.forRegistry(metricRegistry)
 				.filter(filter)
 				.build().start();
-	}
-
-	@Override
-	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Arrays.<ConfigurationOption<?>>asList(stagemonitorActive, internalMonitoring, reportingIntervalConsole,
-				reportingJmx, reportingIntervalGraphite, graphiteHostName, graphitePort, applicationName, instanceName,
-				elasticsearchUrl, elasticsearchConfigurationSourceProfiles, deactivateStagemonitorIfEsConfigSourceIsDown,
-				excludedMetrics, disabledPlugins, reloadConfigurationInterval, reportingIntervalAggregation);
 	}
 
 	@Override

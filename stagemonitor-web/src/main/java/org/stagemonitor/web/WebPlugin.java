@@ -1,5 +1,14 @@
 package org.stagemonitor.web;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,15 +18,6 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 public class WebPlugin extends StagemonitorPlugin {
 
@@ -189,13 +189,6 @@ public class WebPlugin extends StagemonitorPlugin {
 			.defaultValue(null)
 			.configurationCategory(WEB_PLUGIN)
 			.build();
-
-	@Override
-	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Arrays.<ConfigurationOption<?>>asList(collectHttpHeaders, parseUserAgent, excludeHeaders, 
-				requestParamsConfidential, widgetEnabled, groupUrls, rumEnabled, collectPageLoadTimesPerRequest,
-				excludedRequestPaths, monitorOnlyForwardedRequests, metricsServletAllowedOrigin, metricsServletJsonpParameter);
-	}
 
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration config) {
