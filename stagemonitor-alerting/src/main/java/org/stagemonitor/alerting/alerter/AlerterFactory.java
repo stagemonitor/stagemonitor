@@ -1,8 +1,5 @@
 package org.stagemonitor.alerting.alerter;
 
-import org.stagemonitor.alerting.AlertingPlugin;
-import org.stagemonitor.alerting.incident.Incident;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,6 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+
+import org.stagemonitor.alerting.AlertingPlugin;
+import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.incident.Incident;
 
 public class AlerterFactory {
 
@@ -37,7 +38,7 @@ public class AlerterFactory {
 		return availableAlerters;
 	}
 
-	public Collection<Alerter> getAlerters(Incident incident) {
+	public Collection<Alerter> getAlerters(Check check, Incident incident) {
 		if (alertingPlugin.isMuteAlerts()) {
 			return Collections.emptyList();
 		}

@@ -1,138 +1,137 @@
 package org.stagemonitor.alerting.check;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 /**
- *
+ * A {@link Check} is a named collection of {@link Threshold}s with the same {@link MetricCategory} and target.
+ * <p/>
+ * Example: We have a check group named 'Search response time' with two checks both have the target
+ * <code>requests.search.time</code>. The first check is that the 75th
+ * percentile shall be < 4sec and the second one says the 99th percentile shall be < 10 sec.
  */
+@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE)
 public class Check {
 
-	private String metric;
-	private Threshold warn;
-	private Threshold error;
-	private Threshold critical;
-
-	public Check() {
-	}
-
-	public Check(String metric, Threshold warn, Threshold error, Threshold critical) {
-		this.metric = metric;
-		this.warn = warn;
-		this.error = error;
-		this.critical = critical;
-	}
-
-	public Result check(String target, double actualValue) {
-		if (critical != null && critical.isExceeded(actualValue)) {
-			return new Result(getCheckExpressionAsString(target, critical), actualValue, Status.CRITICAL);
-		}
-		if (error != null && error.isExceeded(actualValue)) {
-			return new Result(getCheckExpressionAsString(target, error), actualValue, Status.ERROR);
-		}
-		if (warn != null && warn.isExceeded(actualValue)) {
-			return new Result(getCheckExpressionAsString(target, warn), actualValue, Status.WARN);
-		}
-		return new Result(null, actualValue, Status.OK);
-	}
-
-	private String getCheckExpressionAsString(String target, Threshold threshold) {
-		return target + "." + metric + " " + threshold.toString();
-	}
-
-	public String getMetric() {
-		return metric;
-	}
-
-	public void setMetric(String metric) {
-		this.metric = metric;
-	}
-
-	public Threshold getWarn() {
-		return warn;
-	}
-
-	public Threshold getError() {
-		return error;
-	}
-
-	public Threshold getCritical() {
-		return critical;
-	}
-
-	public void setWarn(Threshold warn) {
-		this.warn = warn;
-	}
-
-	public void setError(Threshold error) {
-		this.error = error;
-	}
-
-	public void setCritical(Threshold critical) {
-		this.critical = critical;
-	}
+	private String id = UUID.randomUUID().toString();
+	private String name;
+	private MetricCategory metricCategory;
+	private Pattern target;
+	private int alertAfterXFailures = 1;
+	private Map<CheckResult.Status, List<Threshold>> thresholds = new LinkedHashMap<CheckResult.Status, List<Threshold>>(){{
+		put(CheckResult.Status.CRITICAL, new LinkedList<Threshold>());
+		put(CheckResult.Status.ERROR, new LinkedList<Threshold>());
+		put(CheckResult.Status.WARN, new LinkedList<Threshold>());
+	}};
+	private String application;
+	private boolean active = true;
 
 	/**
-	 * The result of a check
+	 * Performs threshold checks for the whole check group
+	 *
+	 * @param currentValuesByMetric the values of the target
+	 * @param actualTarget the actual target that matched the {@link #target} pattern
+	 * @return a list of check results (results with OK statuses are omitted)
 	 */
-	public static class Result {
-
-		private final String failingExpression;
-		private final Status status;
-		private final double currentValue;
-
-		public Result(String failingExpression, double currentValue, Status status) {
-			this.failingExpression = failingExpression;
-			this.currentValue = currentValue;
-			this.status = status;
-		}
-
-		public static List<Result> getResultsWithMostSevereStatus(List<Check.Result> results) {
-			Check.Status mostSevereStatus = getMostSevereStatus(results);
-			List<Check.Result> resultsWithStatus = new LinkedList<Result>();
-			for (Check.Result result : results) {
-				if (result.getStatus() == mostSevereStatus) {
-					resultsWithStatus.add(result);
-				}
+	public List<CheckResult> check(String actualTarget, Map<String, Double> currentValuesByMetric) {
+		for (Map.Entry<CheckResult.Status, List<Threshold>> entry : thresholds.entrySet()) {
+			List<CheckResult> results = checkThresholds(entry.getValue(), entry.getKey(), actualTarget, currentValuesByMetric);
+			if (!results.isEmpty()) {
+				return results;
 			}
-			return resultsWithStatus;
 		}
-
-		public static Check.Status getMostSevereStatus(List<Check.Result> results) {
-			Check.Status mostSevereStatus = Check.Status.OK;
-			for (Check.Result result : results) {
-				if (result.getStatus().isMoreSevere(mostSevereStatus)) {
-					mostSevereStatus = result.getStatus();
-				}
-			}
-			return mostSevereStatus;
-		}
-
-		public String getFailingExpression() {
-			return failingExpression;
-		}
-
-		public Status getStatus() {
-			return status;
-		}
-
-		public double getCurrentValue() {
-			return currentValue;
-		}
+		return Collections.emptyList();
 	}
 
-	public static enum Status {
-		OK(0), WARN(1), ERROR(2), CRITICAL(3);
-
-		private final int severity;
-
-		private Status(int severity) {
-			this.severity = severity;
+	private List<CheckResult> checkThresholds(List<Threshold> thresholds, CheckResult.Status severity,
+											  String actualTarget, Map<String, Double> currentValuesByMetric) {
+		List<CheckResult> results = new ArrayList<CheckResult>(thresholds.size());
+		for (Threshold threshold : thresholds) {
+			CheckResult result = threshold.check(severity, actualTarget, currentValuesByMetric);
+			if (result.getStatus() != CheckResult.Status.OK) {
+				results.add(result);
+			}
 		}
+		return results;
+	}
 
-		public boolean isMoreSevere(Status other) {
-			return severity > other.severity;
-		}
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Pattern getTarget() {
+		return target;
+	}
+
+	public void setTarget(Pattern target) {
+		this.target = target;
+	}
+
+	public MetricCategory getMetricCategory() {
+		return metricCategory;
+	}
+
+	public void setMetricCategory(MetricCategory metricCategory) {
+		this.metricCategory = metricCategory;
+	}
+
+	public int getAlertAfterXFailures() {
+		return alertAfterXFailures;
+	}
+
+	public void setAlertAfterXFailures(int alertAfterXFailures) {
+		this.alertAfterXFailures = alertAfterXFailures;
+	}
+
+	public String getApplication() {
+		return application;
+	}
+
+	public void setApplication(String application) {
+		this.application = application;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+
+	public List<Threshold> getWarn() {
+		return thresholds.get(CheckResult.Status.WARN);
+	}
+
+	public List<Threshold> getError() {
+		return thresholds.get(CheckResult.Status.ERROR);
+	}
+
+	public List<Threshold> getCritical() {
+		return thresholds.get(CheckResult.Status.CRITICAL);
 	}
 
 }

@@ -23,3 +23,6 @@ Handlebars.registerHelper('ifCond', function (v1, operator, v2, options) {
 Handlebars.registerHelper('csv', function (items, options) {
 	return options.fn(items.join(', '));
 });
+Handlebars.registerHelper('capitalize', function (string, options) {
+	return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+});

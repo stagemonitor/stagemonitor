@@ -1,48 +1,48 @@
 package org.stagemonitor.alerting.incident;
 
-import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckResult;
 
 import java.util.List;
 
 public class ResultOnSpecificHostAndInstance {
-	private Check.Status status;
-	private List<Check.Result> results;
+	private CheckResult.Status status;
+	private List<CheckResult> results;
 	private int consecutiveFailures;
 
 	public ResultOnSpecificHostAndInstance() {
 	}
 
-	public ResultOnSpecificHostAndInstance(List<Check.Result> results) {
+	public ResultOnSpecificHostAndInstance(List<CheckResult> results) {
 		this(results, 0);
 	}
 
-	public ResultOnSpecificHostAndInstance(ResultOnSpecificHostAndInstance previousResult, List<Check.Result> results) {
+	public ResultOnSpecificHostAndInstance(ResultOnSpecificHostAndInstance previousResult, List<CheckResult> results) {
 		this(results, previousResult.consecutiveFailures);
 	}
 
-	private ResultOnSpecificHostAndInstance(List<Check.Result> results, int consecutiveFailures) {
+	private ResultOnSpecificHostAndInstance(List<CheckResult> results, int consecutiveFailures) {
 		this.results = results;
-		this.status = Check.Result.getMostSevereStatus(results);
+		this.status = CheckResult.getMostSevereStatus(results);
 		this.consecutiveFailures = consecutiveFailures;
 
-		if (status != Check.Status.OK) {
+		if (status != CheckResult.Status.OK) {
 			this.consecutiveFailures++;
 		}
 	}
 
-	public Check.Status getStatus() {
+	public CheckResult.Status getStatus() {
 		return status;
 	}
 
-	public void setStatus(Check.Status status) {
+	public void setStatus(CheckResult.Status status) {
 		this.status = status;
 	}
 
-	public List<Check.Result> getResults() {
+	public List<CheckResult> getResults() {
 		return results;
 	}
 
-	public void setResults(List<Check.Result> results) {
+	public void setResults(List<CheckResult> results) {
 		this.results = results;
 	}
 

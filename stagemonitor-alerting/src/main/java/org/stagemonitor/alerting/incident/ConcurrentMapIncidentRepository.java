@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentMap;
  * Although this is a simple and easy-to-use implementation, incidents from different servers can't be aggregated
  * so you will get alerts for each distinct server.
  * <p/>
- * If you want only one alert per {@link org.stagemonitor.alerting.check.CheckGroup}, even for multiple servers,
+ * If you want only one alert per {@link org.stagemonitor.alerting.check.Check}, even for multiple servers,
  * plug in a implementation that uses a common datasource for all servers such as an elasticsearch cluster,
  * a relational database or a clustered hazelcast map.
  */
@@ -33,18 +33,18 @@ public class ConcurrentMapIncidentRepository implements IncidentRepository {
 
 	@Override
 	public boolean deleteIncident(Incident incident) {
-		return incidentsByCheckGroupId.remove(incident.getCheckGroupId(), incident.getIncidentWithPreviousVersion());
+		return incidentsByCheckGroupId.remove(incident.getCheckId(), incident.getIncidentWithPreviousVersion());
 	}
 
 	@Override
 	public boolean createIncident(Incident incident) {
-		final Incident previousIncident = incidentsByCheckGroupId.putIfAbsent(incident.getCheckGroupId(), incident);
+		final Incident previousIncident = incidentsByCheckGroupId.putIfAbsent(incident.getCheckId(), incident);
 		return previousIncident == null;
 	}
 
 	@Override
 	public boolean updateIncident(Incident incident) {
-		return incidentsByCheckGroupId.replace(incident.getCheckGroupId(), incident.getIncidentWithPreviousVersion(),
+		return incidentsByCheckGroupId.replace(incident.getCheckId(), incident.getIncidentWithPreviousVersion(),
 				incident);
 	}
 

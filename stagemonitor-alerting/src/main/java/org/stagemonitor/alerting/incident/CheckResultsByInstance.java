@@ -1,6 +1,6 @@
 package org.stagemonitor.alerting.incident;
 
-import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckResult;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,11 +13,11 @@ public class CheckResultsByInstance {
 	public CheckResultsByInstance() {
 	}
 
-	public CheckResultsByInstance(String instanceName, List<Check.Result> checkResults) {
+	public CheckResultsByInstance(String instanceName, List<CheckResult> checkResults) {
 		resultsByInstance.put(instanceName, new ResultOnSpecificHostAndInstance(checkResults));
 	}
 
-	public void addCheckResults(String instance, List<Check.Result> results) {
+	public void addCheckResults(String instance, List<CheckResult> results) {
 		if (results.isEmpty()) {
 			resultsByInstance.remove(instance);
 		} else {
@@ -29,8 +29,8 @@ public class CheckResultsByInstance {
 		return resultsByInstance.size() == 1 && resultsByInstance.containsKey(instance);
 	}
 
-	public Check.Status getMostSevereStatus() {
-		Check.Status mostSevereStatus = Check.Status.OK;
+	public CheckResult.Status getMostSevereStatus() {
+		CheckResult.Status mostSevereStatus = CheckResult.Status.OK;
 		for (ResultOnSpecificHostAndInstance resultOnSpecificHostAndInstance : resultsByInstance.values()) {
 			if (resultOnSpecificHostAndInstance.getStatus().isMoreSevere(mostSevereStatus)) {
 				mostSevereStatus = resultOnSpecificHostAndInstance.getStatus();

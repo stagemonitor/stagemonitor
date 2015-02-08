@@ -1,6 +1,6 @@
 package org.stagemonitor.alerting.alerter;
 
-import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckResult;
 
 public class Subscription {
 
@@ -56,7 +56,7 @@ public class Subscription {
 		this.alertOnCritical = alertOnCritical;
 	}
 
-	public boolean isAlertOn(Check.Status status) {
+	public boolean isAlertOn(CheckResult.Status status) {
 		switch (status) {
 			case OK:
 				return alertOnBackToOk;

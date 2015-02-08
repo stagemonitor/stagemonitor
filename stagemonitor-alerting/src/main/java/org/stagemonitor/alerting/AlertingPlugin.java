@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.alerting.alerter.AlerterFactory;
 import org.stagemonitor.alerting.alerter.Subscription;
-import org.stagemonitor.alerting.check.CheckGroup;
+import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
@@ -45,12 +45,12 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.defaultValue(new Subscription[]{})
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
-	private final ConfigurationOption<CheckGroup[]> checkGroups = ConfigurationOption.jsonOption(CheckGroup[].class)
-			.key("stagemonitor.alerts.checkGroups")
+	private final ConfigurationOption<Check[]> checks = ConfigurationOption.jsonOption(Check[].class)
+			.key("stagemonitor.alerts.checks")
 			.dynamic(true)
 			.label("Check Groups")
 			.description("The check groups that contain thresholds for metrics.")
-			.defaultValue(new CheckGroup[]{})
+			.defaultValue(new Check[]{})
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
 	private static AlerterFactory alerterFactory;
@@ -68,7 +68,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
-		return Arrays.<ConfigurationOption<?>>asList(muteAlerts, checkFrequency, subscriptions, checkGroups);
+		return Arrays.<ConfigurationOption<?>>asList(muteAlerts, checkFrequency, subscriptions, checks);
 	}
 
 	public boolean isMuteAlerts() {
@@ -79,8 +79,8 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		return Arrays.asList(subscriptions.getValue());
 	}
 
-	public List<CheckGroup> getCheckGroups() {
-		return Arrays.asList(checkGroups.getValue());
+	public List<Check> getChecks() {
+		return Arrays.asList(checks.getValue());
 	}
 
 	public IncidentRepository getIncidentRepository() {

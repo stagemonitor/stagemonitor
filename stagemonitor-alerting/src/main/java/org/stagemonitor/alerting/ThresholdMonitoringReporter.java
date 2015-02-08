@@ -1,5 +1,13 @@
 package org.stagemonitor.alerting;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -15,20 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.alerter.Alerter;
 import org.stagemonitor.alerting.alerter.AlerterFactory;
 import org.stagemonitor.alerting.check.Check;
-import org.stagemonitor.alerting.check.CheckGroup;
+import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.util.JsonUtils;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.concurrent.TimeUnit;
 
 public class ThresholdMonitoringReporter extends ScheduledReporter {
 
@@ -60,22 +60,22 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		metrics.set(MetricCategory.METER.getPath(), JsonUtils.toObjectNode(meters));
 		metrics.set(MetricCategory.TIMER.getPath(), JsonUtils.toObjectNode(timers));
 
-		for (CheckGroup check : alertingPlugin.getCheckGroups()) {
+		for (Check check : alertingPlugin.getChecks()) {
 			if (measurementSession.getApplicationName().equals(check.getApplication()) && check.isActive()) {
 				checkMetrics(metrics, check);
 			}
 		}
 	}
 
-	private void checkMetrics(JsonNode metrics, CheckGroup check) {
-		List<Check.Result> checkResults = new LinkedList<Check.Result>();
+	private void checkMetrics(JsonNode metrics, Check check) {
+		List<CheckResult> checkResults = new LinkedList<CheckResult>();
 
 		Iterator<Map.Entry<String, JsonNode>> metricsOfCategory = metrics.get(check.getMetricCategory().getPath()).fields();
 		while (metricsOfCategory.hasNext()) {
 			Map.Entry<String, JsonNode> metricTypes = metricsOfCategory.next();
 			if (check.getTarget().matcher(metricTypes.getKey()).matches()) {
 				Map<String, Double> valuesByMetricType = getValuesByMetricType(metricTypes.getValue());
-				checkResults.addAll(check.checkAll(metricTypes.getKey(), valuesByMetricType));
+				checkResults.addAll(check.check(metricTypes.getKey(), valuesByMetricType));
 			}
 		}
 		addIncident(check, checkResults);
@@ -91,35 +91,35 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		return metricTypesMap;
 	}
 
-	private void addIncident(CheckGroup checkGroup, List<Check.Result> results) {
-		Incident incident = getAndPersistIncident(checkGroup, results);
-		if (isAlertIncidents(checkGroup, incident)) {
-			for (Alerter alerter : alerterFactory.getAlerters(incident)) {
+	private void addIncident(Check check, List<CheckResult> results) {
+		Incident incident = getAndPersistIncident(check, results);
+		if (isAlertIncidents(check, incident)) {
+			for (Alerter alerter : alerterFactory.getAlerters(check, incident)) {
 				alerter.alert(incident);
 			}
 		}
 	}
 
-	private Incident getAndPersistIncident(CheckGroup checkGroup, List<Check.Result> results) {
+	private Incident getAndPersistIncident(Check check, List<CheckResult> results) {
 		boolean sucessfullyPersisted = false;
 		Incident incident = null;
 		while (!sucessfullyPersisted) {
-			incident = getOrCreateIncident(checkGroup, results);
-			sucessfullyPersisted = trySaveOrDeleteIncident(checkGroup, incident);
+			incident = getOrCreateIncident(check, results);
+			sucessfullyPersisted = trySaveOrDeleteIncident(check, incident);
 		}
 		return incident;
 	}
 
-	private boolean isAlertIncidents(CheckGroup checkGroup, Incident incident) {
-		return (incident.hasStageChange() && incident.getConsecutiveFailures() >= checkGroup.getAlertAfterXFailures()) ||
-				incident.getConsecutiveFailures() == checkGroup.getAlertAfterXFailures();
+	private boolean isAlertIncidents(Check check, Incident incident) {
+		return (incident.hasStageChange() && incident.getConsecutiveFailures() >= check.getAlertAfterXFailures()) ||
+				incident.getConsecutiveFailures() == check.getAlertAfterXFailures();
 	}
 
-	private Incident getOrCreateIncident(CheckGroup checkGroup, List<Check.Result> results) {
+	private Incident getOrCreateIncident(Check check, List<CheckResult> results) {
 		final Incident currentIncident;
-		Incident previousIncident = incidentRepository.getIncidentByCheckGroupId(checkGroup.getId());
+		Incident previousIncident = incidentRepository.getIncidentByCheckGroupId(check.getId());
 		if (previousIncident == null) {
-			currentIncident = new Incident(checkGroup, measurementSession, results);
+			currentIncident = new Incident(check, measurementSession, results);
 		} else {
 			currentIncident = new Incident(previousIncident, measurementSession, results);
 		}
@@ -127,21 +127,21 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		return currentIncident;
 	}
 
-	private boolean trySaveOrDeleteIncident(CheckGroup checkGroup, Incident incident) {
-		if (incident.getNewStatus() == Check.Status.OK) {
+	private boolean trySaveOrDeleteIncident(Check check, Incident incident) {
+		if (incident.getNewStatus() == CheckResult.Status.OK) {
 			if (!incidentRepository.deleteIncident(incident)) {
-				logger.warn("Optimistic lock failure when deleting incident for check group {}.", checkGroup.getId());
+				logger.warn("Optimistic lock failure when deleting incident for check group {}.", check.getId());
 				return false;
 			}
 		} else if (incident.getOldStatus() == null) {
-			incident.setOldStatus(Check.Status.OK);
+			incident.setOldStatus(CheckResult.Status.OK);
 			if (!incidentRepository.createIncident(incident)) {
 				logger.warn("Error while creating incident for check group {}. " +
-						"A incident for the same check group already exists.", checkGroup.getId());
+						"A incident for the same check group already exists.", check.getId());
 				return false;
 			}
 		} else if (!incidentRepository.updateIncident(incident)) {
-			logger.warn("Optimistic lock failure when updating incident for check group {}.", checkGroup.getId());
+			logger.warn("Optimistic lock failure when updating incident for check group {}.", check.getId());
 			return false;
 		}
 		return true;

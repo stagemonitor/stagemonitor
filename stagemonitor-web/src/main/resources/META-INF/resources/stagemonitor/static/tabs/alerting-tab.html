@@ -1,351 +1,263 @@
-<script type="text/x-handlebars-template">
 <div>
-	<ul class="nav nav-pills nav-stacked sidebar" id="alerting-side-menu">
-		<li class="alerting-menu active">
-			<a href="#status">Status</a>
-		</li>
-		<li class="alerting-menu">
-			<a href="#checks">Checks</a>
-		</li>
-	</ul>
-</div>
+<script id="alerts-content-template" type="text/x-handlebars-template">
+	<div>
+		<ul class="nav nav-pills nav-stacked sidebar" id="alerting-side-menu">
+			<li class="alerting-menu active">
+				<a href="#status">Status</a>
+			</li>
+			<li class="alerting-menu">
+				<a href="#checks">Checks</a>
+			</li>
+		</ul>
+	</div>
 
-<div id="alerting-content" class="page-wrapper">
-	<div id="status" class="alerting-content">
-		<div class="row">
-			<div class="col-lg-6">
-				<h2><span class="glyphicon glyphicon-info-sign"></span> Status</h2>
+	<div id="alerting-content" class="page-wrapper">
+		<div id="status" class="alerting-content">
+			<div class="row">
+				<div class="col-xs-6">
+					<h2><span class="glyphicon glyphicon-info-sign"></span> Status</h2>
+				</div>
+				<div class="col-xs-6">
+					<h2 class="pull-right"><span class="label label-success">OK</span></h2>
+				</div>
 			</div>
-			<div class="col-lg-5">
-				<h2 class="pull-right"><span class="label label-success">OK</span></h2>
-			</div>
-		</div>
-		<hr>
-		<div class="row">
-			<div class="col-lg-2">
-				<p>Subscriptions</p>
-			</div>
-			<div class="col-lg-10">
-					<span class="well well-sm">
+			<hr>
+			<div id="subscriptions" class="row">
+				<div class="col-xs-2">
+					<label>Subscriptions</label>
+				</div>
+				<div class="col-xs-10">
+					<span class="edit-subscription well well-sm" data-subscription-id="cafebabe-6a82-4f1d-a8e5-11f08937668a">
 						Email
 						<a href="#"><span class="glyphicon glyphicon-edit" data-toggle="modal"
 										  data-target="#subscription-modal"></span></a>
 						<a href="#"><span class="glyphicon glyphicon-remove"></span></a>
 					</span>
-				<span>&nbsp;</span>
-				<button class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
-					<span class="glyphicon glyphicon-plus"></span>
-				</button>
+					<span>&nbsp;</span>
+					<button id="add-subscription" class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
+						<span class="glyphicon glyphicon-plus"></span> Add
+					</button>
+				</div>
 			</div>
+
+			<hr>
+			<table id="incidents-table" class="display" cellspacing="0" width="100%">
+				<h3>Incidents</h3>
+				<thead>
+				<tr>
+					<th>Name</th>
+					<th>Application</th>
+					<th>Host</th>
+					<th>Instance</th>
+					<th>First Failure</th>
+					<th>Failing Expression</th>
+					<th>Current Value</th>
+					<th>From</th>
+					<th>To</th>
+				</tr>
+				</thead>
+
+				<tbody>
+				<tr>
+					<td>Search Response Time</td>
+					<td>Spring Petclinic</td>
+					<td>n51</td>
+					<td>petclinic.com</td>
+					<td>2015-01-19T20:05:39</td>
+					<td>request.Search > 5000</td>
+					<td>5123</td>
+					<td><span class="label label-success">OK</span></td>
+					<td><span class="label label-warning">WARN</span></td>
+				</tr>
+				</tbody>
+
+			</table>
 		</div>
 
-		<hr>
-		<table id="incidents-table" class="display" cellspacing="0" width="100%">
-			<h3>Incidents</h3>
-			<thead>
-			<tr>
-				<th>Name</th>
-				<th>Application</th>
-				<th>Host</th>
-				<th>Instance</th>
-				<th>First Failure</th>
-				<th>Failing Expression</th>
-				<th>Current Value</th>
-				<th>From</th>
-				<th>To</th>
-			</tr>
-			</thead>
 
-			<tbody>
-			<tr>
-				<td>Search Response Time</td>
-				<td>Spring Petclinic</td>
-				<td>n51</td>
-				<td>petclinic.com</td>
-				<td>2015-01-19T20:05:39</td>
-				<td>request.Search > 5000</td>
-				<td>5123</td>
-				<td><span class="label label-success">OK</span></td>
-				<td><span class="label label-warning">WARN</span></td>
-			</tr>
-			</tbody>
-
-		</table>
-	</div>
-
-
-	<div id="checks" class="alerting-content hidden">
-		<div class="row">
-			<div class="col-lg-6">
-				<h2><span class="glyphicon glyphicon-eye-open"></span> Checks</h2>
+		<div id="checks" class="alerting-content hidden">
+			<div class="row">
+				<div class="col-xs-6">
+					<h2><span class="glyphicon glyphicon-eye-open"></span> Checks</h2>
+				</div>
+				<div class="col-xs-6">
+					<h2 class="pull-right">
+						<a href="#" class="add-check btn btn-primary" title="Add check" data-placement="bottom"
+						   data-toggle="modal" data-target="#check-modal">
+							<span class="glyphicon glyphicon-plus"></span> Add
+						</a>
+					</h2>
+					<span class=""></span>
+				</div>
 			</div>
-			<div class="col-lg-5">
-				<h2 class="pull-right">
-					<a href="#" class="tip" title="Add check" data-placement="bottom"
-					   data-toggle="modal" data-target="#check-modal">
-						<span class="glyphicon glyphicon-plus"></span>
-					</a>
-				</h2>
-			</div>
+			<hr>
+			<table id="checks-table" class="display" cellspacing="0" width="100%">
+				<thead>
+				<tr>
+					<th>Name</th>
+					<th>Target</th>
+					<th>Alert after x failures</th>
+					<th>Edit</th>
+					<th>Delete</th>
+				</tr>
+				</thead>
+			</table>
 		</div>
-		<hr>
-		<table id="checks-table" class="display" cellspacing="0" width="100%">
-			<thead>
-			<tr>
-				<th>Name</th>
-				<th>Target</th>
-				<th>Edit</th>
-				<th>Delete</th>
-			</tr>
-			</thead>
-
-			<tbody>
-			<tr>
-				<td>Search Response Time</td>
-				<td>request.*.time</td>
-				<td><a href="#"><span class="glyphicon glyphicon-edit" aria-hidden="true" data-toggle="modal"
-									  data-target="#check-modal"></span></a></td>
-				<td><a href="#"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a></td>
-			</tr>
-			</tbody>
-
-		</table>
 	</div>
-</div>
-
-<!-- Subscription Modal -->
-<div class="modal fade" id="subscription-modal" tabindex="-1" role="dialog"
-	 aria-labelledby="subscription-modal-label" aria-hidden="true">
-	<div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-						aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="subscription-modal-label">Subscription</h4>
-			</div>
-			<div class="modal-body">
-				<form>
-					<div class="form-group">
-						<label>Target</label>
-						<input name="target" class="form-control" type="text">
-					</div>
-					<div class="form-group">
-						<label>Type</label>
-						<select name="type" class="form-control">
-							<option value="Email">Email</option>
-							<option value="Hipchat">Hipchat</option>
-							<option value="SMS">SMS</option>
-							<option value="Pagerduty">Pagerduty</option>
-						</select>
-					</div>
-					<div class="form-group">
-						<label>Alert on</label>
-						<div class="checkbox">
-							<label>
-								<input name="alertOnBackToOk" type="checkbox" value="">
-								Back to OK
-							</label>
-						</div>
-						<div class="checkbox">
-							<label>
-								<input name="alertOnWarn" type="checkbox" value="">
-								(Back to) Warn
-							</label>
-						</div>
-						<div class="checkbox">
-							<label>
-								<input name="alertOnError" type="checkbox" value="">
-								(Back to) Error
-							</label>
-						</div>
-						<div class="checkbox">
-							<label>
-								<input name="alertOnCritical" type="checkbox" value="">
-								Critical
-							</label>
-						</div>
-					</div>
-				</form>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-primary">Save</button>
+	<!-- Subscription Modal -->
+	<div class="modal fade" id="subscription-modal" tabindex="-1" role="dialog"
+		 aria-labelledby="subscription-modal-label" aria-hidden="true">
+		<div class="modal-dialog">
+			<div id="subscription-modal-content" class="modal-content">
 			</div>
 		</div>
 	</div>
-</div>
-
-<!-- Check Modal -->
-<div class="modal fade" id="check-modal" tabindex="-1" role="dialog"
-	 aria-labelledby="check-modal-label" aria-hidden="true">
-	<div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-						aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="check-modal-label">Check</h4>
-			</div>
-			<div class="modal-body">
-				<form>
-					<div class="form-group">
-						<label for="name-input">Name</label>
-						<input id="name-input" name="name" class="form-control">
-					</div>
-					<div class="form-group">
-						<label for="alertAfterXFailures-label">Alert after x failures</label>
-						<input id="alertAfterXFailures-label" name="alertAfterXFailures" type="number"
-							   class="form-control" value="1" min="1">
-					</div>
-					<div class="form-group">
-						<label for="metric-category-input">Metric Category</label>
-						<select id="metric-category-input" class="form-control" name="metricCategory">
-							<option value="TIMER">Timer</option>
-							<option value="GAUGE">Gauge</option>
-							<option value="HISTOGRAM">Histrogram</option>
-							<option value="COUNTER">Counters</option>
-							<option value="METER">Meter</option>
-						</select>
-					</div>
-					<div class="form-group">
-						<label for="target-input">Target</label>
-						<input id="target-input" class="form-control" name="target">
-					</div>
-
-					<fieldset>
-						<legend>Warn</legend>
-
-						<div class="row">
-							<div class="col-lg-3">
-								<select class="form-control" name="checks[0].warn.metric">
-									<option value="count">count</option>
-									<option value="mean">mean</option>
-									<option value="min">min</option>
-									<option value="max">max</option>
-									<option value="stddev">stddev</option>
-									<option value="p50">p50</option>
-									<option value="p75">p75</option>
-									<option value="p95">p95</option>
-									<option value="p98">p98</option>
-									<option value="p99">p99</option>
-									<option value="p999">p999</option>
-									<option value="mean_rate">mean_rate</option>
-									<option value="m1_rate">m1_rate</option>
-									<option value="m5_rate">m5_rate</option>
-									<option value="m15_rate">m15_rate</option>
-								</select>
-							</div>
-							<div class="col-lg-2">
-								<select class="form-control" name="checks[0].warn.operator">
-									<option value="GREATER">&gt;</option>
-									<option value="GREATER_EQUAL">&gt;=</option>
-									<option value="LESS">&lt;</option>
-									<option value="LESS_EQUAL">&lt;=</option>
-								</select>
-							</div>
-							<div class="col-lg-4">
-								<input class="form-control" type="number" name="checks[0].warn.thresholdValue">
-							</div>
-							<div class="col-lg-3">
-								<button class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span></button>
-								<button class="btn btn-primary"><span class="glyphicon glyphicon-minus"></span></button>
-							</div>
-						</div>
-
-						<div class="row">
-							<div class="col-lg-3">
-								<select class="form-control" name="checks[1].warn.metric">
-									<option value="count">count</option>
-									<option value="mean">mean</option>
-									<option value="min">min</option>
-									<option value="max">max</option>
-									<option value="stddev">stddev</option>
-									<option value="p50">p50</option>
-									<option value="p75">p75</option>
-									<option value="p95">p95</option>
-									<option value="p98">p98</option>
-									<option value="p99">p99</option>
-									<option value="p999">p999</option>
-									<option value="mean_rate">mean_rate</option>
-									<option value="m1_rate">m1_rate</option>
-									<option value="m5_rate">m5_rate</option>
-									<option value="m15_rate">m15_rate</option>
-								</select>
-							</div>
-							<div class="col-lg-2">
-								<select class="form-control" name="checks[1].warn.operator">
-									<option value="GREATER">&gt;</option>
-									<option value="GREATER_EQUAL">&gt;=</option>
-									<option value="LESS">&lt;</option>
-									<option value="LESS_EQUAL">&lt;=</option>
-								</select>
-							</div>
-							<div class="col-lg-4">
-								<input class="form-control" type="number" name="checks[1].warn.thresholdValue">
-							</div>
-							<div class="col-lg-3">
-								<button class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span></button>
-								<button class="btn btn-primary"><span class="glyphicon glyphicon-minus"></span></button>
-							</div>
-						</div>
-					</fieldset>
-					<fieldset>
-						<legend>Error</legend>
-
-						<div class="row">
-							<div class="col-lg-3">
-								<select class="form-control" name="checks[0].error.metric">
-									<option value="count">count</option>
-									<option value="mean">mean</option>
-									<option value="min">min</option>
-									<option value="max">max</option>
-									<option value="stddev">stddev</option>
-									<option value="p50">p50</option>
-									<option value="p75">p75</option>
-									<option value="p95">p95</option>
-									<option value="p98">p98</option>
-									<option value="p99">p99</option>
-									<option value="p999">p999</option>
-									<option value="mean_rate">mean_rate</option>
-									<option value="m1_rate">m1_rate</option>
-									<option value="m5_rate">m5_rate</option>
-									<option value="m15_rate">m15_rate</option>
-								</select>
-							</div>
-							<div class="col-lg-2">
-								<select class="form-control" name="checks[0].error.operator">
-									<option value="GREATER">&gt;</option>
-									<option value="GREATER_EQUAL">&gt;=</option>
-									<option value="LESS">&lt;</option>
-									<option value="LESS_EQUAL">&lt;=</option>
-								</select>
-							</div>
-							<div class="col-lg-4">
-								<input class="form-control" type="number" name="checks[0].error.thresholdValue">
-							</div>
-							<div class="col-lg-3">
-								<button class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span></button>
-								<button class="btn btn-primary"><span class="glyphicon glyphicon-minus"></span></button>
-							</div>
-						</div>
-					</fieldset>
-					<fieldset>
-						<legend>Critical</legend>
-
-						<div class="row">
-							<div class="col-lg-3">
-								<button class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span></button>
-							</div>
-						</div>
-					</fieldset>
-
-
-				</form>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-primary">Save</button>
+	<!-- Check Modal -->
+	<div class="modal fade" id="check-modal" tabindex="-1" role="dialog"
+		 aria-labelledby="check-modal-label" aria-hidden="true">
+		<div class="modal-dialog">
+			<div id="check-modal-content" class="modal-content">
 			</div>
 		</div>
 	</div>
-</div>
 </script>
+
+<script id="subscription-modal-template" type="text/x-handlebars-template">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+				aria-hidden="true">&times;</span></button>
+		<h4 class="modal-title" id="subscription-modal-label">Subscription</h4>
+	</div>
+	<div class="modal-body">
+		<form data-parsley-validate>
+			<div class="form-group">
+				<label>Target</label>
+				<input name="target" class="form-control" type="text" required>
+			</div>
+			<div class="form-group">
+				<label>Type</label>
+				<select name="type" class="form-control">
+					<option value="Email">Email</option>
+					<option value="Hipchat">Hipchat</option>
+					<option value="SMS">SMS</option>
+					<option value="Pagerduty">Pagerduty</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label>Alert on</label>
+
+				<div class="checkbox">
+					<label>
+						<input name="alertOnBackToOk" type="checkbox" value="">
+						Back to OK
+					</label>
+				</div>
+				<div class="checkbox">
+					<label>
+						<input name="alertOnWarn" type="checkbox" value="">
+						(Back to) Warn
+					</label>
+				</div>
+				<div class="checkbox">
+					<label>
+						<input name="alertOnError" type="checkbox" value="">
+						(Back to) Error
+					</label>
+				</div>
+				<div class="checkbox">
+					<label>
+						<input name="alertOnCritical" type="checkbox" value="">
+						Critical
+					</label>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		<button id="save-subscription" type="button" class="btn btn-primary">Save</button>
+	</div>
+
+
+</script>
+
+<script id="check-modal-template" type="text/x-handlebars-template">
+
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+				aria-hidden="true">&times;</span></button>
+		<h4 class="modal-title" id="check-modal-label">{{title}}</h4>
+	</div>
+	<div class="modal-body">
+		<form id="check-form" data-parsley-validate>
+			<input type="hidden" name="id" value="{{check.id}}">
+			<div class="form-group">
+				<label for="name-input">Name</label>
+				<input id="name-input" name="name" class="form-control" value="{{check.name}}" required>
+			</div>
+			<div class="form-group">
+				<label for="alertAfterXFailures-label">Alert after x failures</label>
+				<input id="alertAfterXFailures-label" name="alertAfterXFailures" type="number"
+					   class="form-control" value="{{check.alertAfterXFailures}}" min="1" required>
+			</div>
+			<div class="form-group">
+				<label for="metric-category-input">Metric Category</label>
+				<select id="metric-category-input" class="form-control" name="metricCategory">
+					{{#each metricCategories}}
+						<option value="{{@key}}" {{#ifCond @key '==' ../check.metricCategory}}selected{{/ifCond}}>{{this.label}}</option>
+					{{/each}}
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="target-input">Target</label>
+				<input id="target-input" class="form-control" name="target" value="{{check.target}}" required>
+			</div>
+
+			{{#each check.thresholds}}
+			<fieldset>
+				<legend>{{capitalize @key}}</legend>
+				{{#each this}}
+				<div class="threshold-form-group row form-group">
+					<div class="col-lg-3">
+						<select class="form-control" name="thresholds[{{@key}}][][metric]">
+							{{#each @root.metrics}}
+								<option value="{{this}}" {{#ifCond ../metric '==' this}}selected{{/ifCond}}>{{this}}</option>
+							{{/each}}
+						</select>
+					</div>
+					<div class="col-lg-2">
+						<select class="form-control" name="thresholds[{{@key}}][][operator]">
+							<option value="GREATER" {{#ifCond operator '==' 'GREATER'}}selected{{/ifCond}}>&gt;</option>
+							<option value="GREATER_EQUAL" {{#ifCond operator '==' 'GREATER_EQUAL'}}selected{{/ifCond}}>&gt;=</option>
+							<option value="LESS" {{#ifCond operator '==' 'LESS'}}selected{{/ifCond}}>&lt;</option>
+							<option value="LESS_EQUAL" {{#ifCond operator '==' 'LESS_EQUAL'}}selected{{/ifCond}}>&lt;=</option>
+						</select>
+					</div>
+					<div class="col-lg-4">
+						<input class="form-control" type="number" step="0.01" name="thresholds[{{@key}}][][thresholdValue]" value="{{thresholdValue}}" required>
+					</div>
+					<div class="col-lg-3">
+						<a href="#" class="add-threshold btn btn-default" data-severity="{{@key}}"><span class="glyphicon glyphicon-plus"></span></a>
+						<a href="#" class="remove-threshold btn btn-default"><span class="glyphicon glyphicon-minus"></span></a>
+					</div>
+				</div>
+				{{/each}}
+				{{#unless this}}
+				<div class="row form-group">
+					<div class="col-lg-3">
+						<a href="#" class="add-threshold btn btn-default" data-severity="{{@key}}"><span class="glyphicon glyphicon-plus"></span></a>
+					</div>
+				</div>
+				{{/unless}}
+			</fieldset>
+			{{/each}}
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		<!--<button id="save-check" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>-->
+		<button id="save-check" type="button" class="btn btn-primary">Save</button>
+	</div>
+
+</script>
+</div>

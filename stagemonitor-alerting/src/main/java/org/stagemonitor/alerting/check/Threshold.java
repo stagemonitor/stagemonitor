@@ -1,5 +1,7 @@
 package org.stagemonitor.alerting.check;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -8,14 +10,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class Threshold {
 
+	private final String metric;
 	private final Operator operator;
 	private final double thresholdValue;
 
 	@JsonCreator
-	public Threshold(@JsonProperty("operator") Operator operator, @JsonProperty("thresholdValue") double thresholdValue) {
+	public Threshold(@JsonProperty("metric") String metric, @JsonProperty("operator") Operator operator, @JsonProperty("thresholdValue") double thresholdValue) {
 		if (operator == null) {
 			throw new IllegalArgumentException("Operator may not be null");
 		}
+		this.metric = metric;
 		this.operator = operator;
 		this.thresholdValue = thresholdValue;
 	}
@@ -38,8 +42,24 @@ public class Threshold {
 		return thresholdValue;
 	}
 
+	public String getMetric() {
+		return metric;
+	}
+
 	public String toString() {
-		return operator.operatorString + " " + thresholdValue;
+		return metric + " " + operator.operatorString + " " + thresholdValue;
+	}
+
+	public String getCheckExpressionAsString(String target) {
+		return target + '.' + metric + " " + operator.operatorString + " " + thresholdValue;
+	}
+
+	public CheckResult check(CheckResult.Status severity, String target, Map<String, Double> currentValuesByMetric) {
+		Double actualValue = currentValuesByMetric.get(metric);
+		if (isExceeded(actualValue)) {
+			return new CheckResult(getCheckExpressionAsString(target), actualValue, severity);
+		}
+		return new CheckResult(null, actualValue, CheckResult.Status.OK);
 	}
 
 	/**
