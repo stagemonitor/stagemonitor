@@ -314,6 +314,7 @@ public class ConfigurationOption<T> {
 			this.valueAsString = newValue;
 			try {
 				value = valueConverter.convert(newValue);
+				errorMessage = null;
 				return true;
 			} catch (IllegalArgumentException e) {
 				errorMessage = "Error in " + nameOfCurrentConfigurationSource + ": " + e.getMessage();

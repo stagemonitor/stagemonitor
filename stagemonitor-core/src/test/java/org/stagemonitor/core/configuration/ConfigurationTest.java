@@ -1,5 +1,15 @@
 package org.stagemonitor.core.configuration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.Stagemonitor.STAGEMONITOR_PASSWORD;
+
 import java.io.IOException;
 import java.util.Collections;
 
@@ -9,15 +19,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.Stagemonitor.STAGEMONITOR_PASSWORD;
 
 public class ConfigurationTest {
 
@@ -51,6 +52,21 @@ public class ConfigurationTest {
 		configuration.save("stagemonitor.internal.monitoring", "true", "Transient Configuration Source", null);
 
 		assertTrue(corePlugin.isInternalMonitoringActive());
+	}
+
+	@Test
+	public void testUpdateConfigurationWrongDatatype() throws IOException {
+		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, "").add("stagemonitor.internal.monitoring", "1"));
+		configuration.reloadAllConfigurationOptions();
+		assertFalse(corePlugin.isInternalMonitoringActive());
+
+		assertEquals("Error in Test Configuration Source: Can't convert '1' to Boolean.", configuration.getConfigurationOptionByKey("stagemonitor.internal.monitoring").getErrorMessage());
+
+		configuration.save("stagemonitor.internal.monitoring", "true", "Test Configuration Source", null);
+		assertTrue(corePlugin.isInternalMonitoringActive());
+
+		assertNull(configuration.getConfigurationOptionByKey("stagemonitor.internal.monitoring").getErrorMessage());
+
 	}
 
 	@Test
