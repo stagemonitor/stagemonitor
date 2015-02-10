@@ -1,7 +1,21 @@
 package org.stagemonitor.web.monitor;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.ServletRequestEvent;
+import javax.servlet.ServletRequestListener;
+import javax.servlet.annotation.WebListener;
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.FrameworkServlet;
@@ -12,19 +26,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.ServletRequestEvent;
-import javax.servlet.ServletRequestListener;
-import javax.servlet.annotation.WebListener;
-import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
 
 public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
@@ -94,8 +95,9 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 			while (attributeNames.hasMoreElements()) {
 				String attributeName = (String) attributeNames.nextElement();
 				if (attributeName.startsWith(FrameworkServlet.SERVLET_CONTEXT_PREFIX)) {
-					result.add(WebApplicationContextUtils.getWebApplicationContext(
-							servletContext, attributeName).getBean(RequestMappingHandlerMapping.class));
+					WebApplicationContext webApplicationContext = WebApplicationContextUtils
+							.getWebApplicationContext(servletContext, attributeName);
+					result.addAll(webApplicationContext.getBeansOfType(RequestMappingHandlerMapping.class).values());
 				}
 			}
 			return result;
