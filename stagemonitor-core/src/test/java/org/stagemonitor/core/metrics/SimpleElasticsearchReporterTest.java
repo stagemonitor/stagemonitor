@@ -1,16 +1,5 @@
 package org.stagemonitor.core.metrics;
 
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
-
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.counter;
@@ -21,6 +10,18 @@ import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.meter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.snapshot;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
 
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+
 public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 
 	private SimpleElasticsearchReporter reporter;
@@ -28,8 +29,10 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 	@BeforeClass
 	public static void setup() throws Exception {
 		new CorePlugin().initializePlugin(new MetricRegistry(), Stagemonitor.getConfiguration());
-		// give the async tasks time to complete
-		Thread.sleep(500);
+		while (!ElasticsearchClient.asyncRestPool.getQueue().isEmpty()) {
+			// give the async tasks time to complete
+			Thread.sleep(10);
+		}
 		refresh();
 	}
 

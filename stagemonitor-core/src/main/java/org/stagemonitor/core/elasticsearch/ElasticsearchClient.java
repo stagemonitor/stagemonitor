@@ -34,7 +34,7 @@ public class ElasticsearchClient {
 	private static final String TITLE = "title";
 	private static String baseUrl = Stagemonitor.getConfiguration(CorePlugin.class).getElasticsearchUrl();
 
-	private static final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+	public static final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
 			new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
 		@Override
 		public Thread newThread(Runnable r) {
