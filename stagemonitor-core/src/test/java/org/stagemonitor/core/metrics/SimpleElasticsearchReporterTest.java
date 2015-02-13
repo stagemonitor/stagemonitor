@@ -33,6 +33,7 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 			// give the async tasks time to complete
 			Thread.sleep(10);
 		}
+		Thread.sleep(500);
 		refresh();
 	}
 
