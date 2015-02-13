@@ -166,22 +166,28 @@ var graphRenderer = (function () {
 		$.each(graph.columns, function (i, metricPath) {
 			var metricCategory = data[metricPath.metricCategory];
 			// merge objects
-			$.extend(metrics, findPropertyValuesByRegex(metricCategory, metricPath.metricPathRegex, metricPath.metric, metricPath.title));
+			$.extend(metrics, findPropertyValuesByRegex(metricCategory, metricPath));
 		});
 		return metrics;
 	}
 
-	function findPropertyValuesByRegex(obj, regex, valuePath, title) {
+	function findPropertyValuesByRegex(obj, metricPath) {
 		var metrics = {};
 		var key;
+		var matches = 1;
 		for (key in obj) {
-			var match = new RegExp(regex).exec(key);
+			var match = new RegExp(metricPath.metricPathRegex).exec(key);
 			if (match != null) {
-				var graphName = title || match[1] || match[0];
-				var value = obj[key][valuePath];
-				// sum if there is more than one metric matching the pattern
+				var graphName = metricPath.title || match[1] || match[0];
+				var value = obj[key][metricPath.metric];
 				metrics[graphName] = metrics[graphName] || 0;
-				metrics[graphName] = metrics[graphName] + value;
+				if (metricPath.aggregate === 'mean' && metrics) {
+					metrics[graphName] = (metrics[graphName] * matches + value) / ++matches;
+				} else {
+					// sum by default
+					// deprecated behaviour, use metricPath.aggregate to explicitly set aggregation type
+					metrics[graphName] = metrics[graphName] + value;
+				}
 			}
 		}
 		return metrics;

@@ -84,8 +84,9 @@
 										// A regex of metric paths. A line is created for each distinct regex group.
 										// That's why the placeholder ${rowName} is put in parentesis.
 										// That way a line is created and named after the selected cache name
-										metricPathRegex: "cache.(${rowName}).access.hit.total.ratio",
-										metric: "value"
+										metricPathRegex: "cache.${rowName}.access.hit.total.(ratio)",
+										metric: "value",
+										aggregate: 'mean'
 									}
 								]
 							}
@@ -97,13 +98,31 @@
 								format: 'bytes',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "gauges", metricPathRegex: "cache.(${rowName}).bytes.used", metric: "value" }
+									{
+										metricCategory: "gauges",
+										metricPathRegex: "cache.${rowName}.bytes.(used)",
+										metric: "value",
+										aggregate: 'sum'
+									}
 								]
 							}
 						}
 					]
 				}
 
+			},
+			/**
+			 * Called after the corresponding html (${plugin-id}.html) got rendered
+			 */
+			onHtmlInitialized: function() {
+			},
+			/**
+			 * Called each time metrics from the server are received.
+			 * This method can be used to register additional (computed) metrics
+			 *
+			 * @param metrics
+			 */
+			onMetricsReceived: function(metrics) {
 			}
 		}
 	);
