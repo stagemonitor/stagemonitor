@@ -1,6 +1,6 @@
 function renderMetricsTab() {
 	window.plugins = [];
-	var tickMs = 1000;
+	var tickMs = +localStorage.getItem("widget-settings-metrics-refresh") * 1000;
 	var activePluginId;
 
 	var scripts = $.map(stagemonitor.pathsOfWidgetMetricTabPlugins, function (path) {

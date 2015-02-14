@@ -100,66 +100,116 @@
 
 		<div class="tab-pane" id="widget-settings">
 			<form class="form-horizontal" role="form">
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Highlight and expand method calls taking longer than </label>
+				<fieldset>
+					<legend>Call Tree</legend>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Highlight and expand method calls taking longer
+							than </label>
 
-					<div class="col-sm-2">
-						<div class="input-group">
-							<input data-widget-settings-key="widget-settings-execution-threshold-percent"
-								   data-widget-settings-default-value="5" class="form-control">
+						<div class="col-sm-2">
+							<div class="input-group">
+								<input data-widget-settings-key="widget-settings-execution-threshold-percent"
+									   data-widget-settings-default-value="5" class="form-control">
 
-							<div class="input-group-btn-vertical stagemonitor-spinner">
-								<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i></button>
-								<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i>
-								</button>
-							</div>
-							<span class="input-group-addon">%</span>
-						</div>
-					</div>
-				</div>
-
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Notify if request took longer than </label>
-
-					<div class="col-sm-2">
-						<div class="input-group">
-							<input data-widget-settings-key="widget-settings-execution-threshold-milliseconds"
-								   data-widget-settings-default-value="2000" class="form-control">
-
-							<div class="input-group-btn-vertical stagemonitor-spinner">
-								<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i></button>
-								<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i>
-								</button>
-							</div>
-							<span class="input-group-addon">ms</span>
-						</div>
-					</div>
-				</div>
-
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Count of SQL-queries after which you will be notified</label>
-
-					<div class="col-sm-2">
-						<div class="input-group">
-							<input data-widget-settings-key="widget-settings-db-count-threshold"
-								   data-widget-settings-default-value="20" class="form-control">
-
-							<div class="input-group-btn-vertical stagemonitor-spinner rounded">
-								<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i></button>
-								<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i>
-								</button>
+								<div class="input-group-btn-vertical stagemonitor-spinner">
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i>
+									</button>
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i>
+									</button>
+								</div>
+								<span class="input-group-addon">%</span>
 							</div>
 						</div>
 					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-3 control-label">Notify on error</label>
+				</fieldset>
+				<fieldset>
+					<legend>Notifications</legend>
 
-					<div class="col-sm-2">
-						<input data-widget-settings-key="widget-settings-notify-on-error"
-							   data-widget-settings-default-value="false" type="checkbox" class="checkbox">
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Notify if request took longer than </label>
+
+						<div class="col-sm-2">
+							<div class="input-group">
+								<input data-widget-settings-key="widget-settings-execution-threshold-milliseconds"
+									   data-widget-settings-default-value="2000" class="form-control">
+
+								<div class="input-group-btn-vertical stagemonitor-spinner">
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i>
+									</button>
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i>
+									</button>
+								</div>
+								<span class="input-group-addon">ms</span>
+							</div>
+						</div>
 					</div>
-				</div>
+
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Count of SQL-queries after which you will be
+							notified</label>
+
+						<div class="col-sm-2">
+							<div class="input-group">
+								<input data-widget-settings-key="widget-settings-db-count-threshold"
+									   data-widget-settings-default-value="20" class="form-control">
+
+								<div class="input-group-btn-vertical stagemonitor-spinner rounded">
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i>
+									</button>
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Notify on error</label>
+
+						<div class="col-sm-2">
+							<input data-widget-settings-key="widget-settings-notify-on-error"
+								   data-widget-settings-default-value="false" type="checkbox" class="checkbox">
+						</div>
+					</div>
+				</fieldset>
+				<fieldset>
+					<legend>Metrics Tab</legend>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Refresh metrics interval</label>
+
+						<div class="col-sm-2">
+							<div class="input-group">
+								<input data-min="1" data-max="30" data-widget-settings-key="widget-settings-metrics-refresh"
+									   data-widget-settings-default-value="2" class="form-control">
+
+								<div class="input-group-btn-vertical stagemonitor-spinner">
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i>
+									</button>
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i>
+									</button>
+								</div>
+								<span class="input-group-addon">sec</span>
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Keep metrics history</label>
+
+						<div class="col-sm-2">
+							<div class="input-group">
+								<input data-min="1" data-max="60" data-widget-settings-key="widget-settings-metrics-history"
+									   data-widget-settings-default-value="5" class="form-control">
+
+								<div class="input-group-btn-vertical stagemonitor-spinner">
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-up"></i>
+									</button>
+									<button class="btn btn-default"><i class="glyphicon glyphicon-chevron-down"></i>
+									</button>
+								</div>
+								<span class="input-group-addon">min</span>
+							</div>
+						</div>
+					</div>
+				</fieldset>
 				<div class="form-group">
 					<div class="col-sm-offset-3 col-sm-6">
 						<button type="submit" class="btn btn-primary" id="widget-settings-save">Save</button>

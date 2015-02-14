@@ -207,7 +207,6 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	private void registerReporters(MetricRegistry metricRegistry, CorePlugin corePlugin) {
 		RegexMetricFilter regexFilter = new RegexMetricFilter(corePlugin.getExcludedMetricsPatterns());
-		metricRegistry.removeMatching(regexFilter);
 
 		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
 

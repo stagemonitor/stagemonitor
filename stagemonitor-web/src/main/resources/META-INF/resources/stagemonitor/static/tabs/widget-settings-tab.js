@@ -35,12 +35,14 @@ $(document).ready(function () {
 	// spinner
 	$('.stagemonitor-spinner .btn:first-of-type').on('click', function () {
 		var $input = $(this).parent().prev();
-		$input.val(parseInt($input.val(), 10) + 1);
+		var max = $input.data('max') || Infinity;
+		$input.val(Math.min(parseInt($input.val(), 10) + 1, max));
 		return false;
 	});
 	$('.stagemonitor-spinner .btn:last-of-type').on('click', function () {
 		var $input = $(this).parent().prev();
-		$input.val(parseInt($input.val(), 10) - 1);
+		var min = $input.data('min') || -Infinity;
+		$input.val(Math.max(parseInt($input.val(), 10) - 1, min));
 		return false;
 	});
 

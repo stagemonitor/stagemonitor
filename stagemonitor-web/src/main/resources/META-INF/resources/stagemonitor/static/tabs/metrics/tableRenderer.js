@@ -1,6 +1,7 @@
 var tableRenderer = (function () {
 	var metricTables = [];
 	var selectedPluginId;
+	$.fn.dataTableExt.sErrMode = 'throw';
 
 	return {
 		renderTables: function (plugins) {

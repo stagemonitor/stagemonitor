@@ -1,6 +1,6 @@
 var graphRenderer = (function () {
 	var selectedPluginId;
-	var storedMinutes = 5;
+	var storedMinutes = +localStorage.getItem("widget-settings-metrics-history");
 	var graphs = [];
 
 	return {
@@ -173,13 +173,15 @@ var graphRenderer = (function () {
 
 	function findPropertyValuesByRegex(obj, metricPath) {
 		var metrics = {};
-		var key;
 		var matches = 1;
-		for (key in obj) {
-			var match = new RegExp(metricPath.metricPathRegex).exec(key);
+		$.each(obj, function(key, metric) {
+			if (!(metricPath.metricPathRegex instanceof RegExp)) {
+				metricPath.metricPathRegex = new RegExp(metricPath.metricPathRegex);
+			}
+			var match = metricPath.metricPathRegex.exec(key);
 			if (match != null) {
 				var graphName = metricPath.title || match[1] || match[0];
-				var value = obj[key][metricPath.metric];
+				var value = +metric[metricPath.metric] || 0; // convert "NaN" to 0
 				metrics[graphName] = metrics[graphName] || 0;
 				if (metricPath.aggregate === 'mean' && metrics) {
 					metrics[graphName] = (metrics[graphName] * matches + value) / ++matches;
@@ -189,7 +191,7 @@ var graphRenderer = (function () {
 					metrics[graphName] = metrics[graphName] + value;
 				}
 			}
-		}
+		});
 		return metrics;
 	}
 
