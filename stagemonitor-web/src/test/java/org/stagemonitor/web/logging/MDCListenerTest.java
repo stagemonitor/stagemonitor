@@ -1,5 +1,14 @@
 package org.stagemonitor.web.logging;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletRequestEvent;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -7,15 +16,8 @@ import org.junit.Test;
 import org.slf4j.MDC;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestEvent;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.source.SimpleSource;
 
 public class MDCListenerTest {
 
@@ -66,7 +68,17 @@ public class MDCListenerTest {
 		Assert.assertEquals("testInstance", MDC.get("instance"));
 		Assert.assertNull(MDC.get("requestId"));
 		mdcListener.requestDestroyed(requestEvent);
+	}
 
+	@Test
+	public void testMDCStagemonitorDeactivated() {
+		Configuration configuration = Stagemonitor.getConfiguration();
+		configuration.addConfigurationSource(SimpleSource.forTest("stagemonitor.active", "false"));
+		configuration.reloadAllConfigurationOptions();
+		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", null));
 
+		mdcListener.requestInitialized(mock(ServletRequestEvent.class));
+
+		Assert.assertNull(MDC.getCopyOfContextMap());
 	}
 }

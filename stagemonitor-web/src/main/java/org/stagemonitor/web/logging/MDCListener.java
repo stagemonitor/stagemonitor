@@ -6,6 +6,7 @@ import javax.servlet.ServletRequestListener;
 import javax.servlet.annotation.WebListener;
 
 import org.slf4j.MDC;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 
@@ -20,24 +21,28 @@ public class MDCListener implements ServletRequestListener {
 
 	public static final String STAGEMONITOR_REQUEST_ID_ATTR = "stagemonitor-request-id";
 
+	public static final CorePlugin corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
+
 	@Override
 	public void requestInitialized(ServletRequestEvent sre) {
-		final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
-		MDC.put("application", measurementSession.getApplicationName());
-		MDC.put("host", measurementSession.getHostName());
-		String instanceName = measurementSession.getInstanceName();
-		if (instanceName == null) {
-			instanceName = sre.getServletRequest().getServerName();
-		}
-		MDC.put("instance", instanceName);
+		if (corePlugin.isStagemonitorActive()) {
+			final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
+			MDC.put("application", measurementSession.getApplicationName());
+			MDC.put("host", measurementSession.getHostName());
+			String instanceName = measurementSession.getInstanceName();
+			if (instanceName == null) {
+				instanceName = sre.getServletRequest().getServerName();
+			}
+			MDC.put("instance", instanceName);
 
-		final String requestId = UUID.randomUUID().toString();
-		sre.getServletRequest().setAttribute(STAGEMONITOR_REQUEST_ID_ATTR, requestId);
+			final String requestId = UUID.randomUUID().toString();
+			sre.getServletRequest().setAttribute(STAGEMONITOR_REQUEST_ID_ATTR, requestId);
 
-		if (Stagemonitor.isStarted()) {
-			// don't store the requestId in MDC if stagemonitor is not active
-			// so that thread pools that get created on startup don't inherit the requestId
-			MDC.put("requestId", requestId);
+			if (Stagemonitor.isStarted()) {
+				// don't store the requestId in MDC if stagemonitor is not active
+				// so that thread pools that get created on startup don't inherit the requestId
+				MDC.put("requestId", requestId);
+			}
 		}
 	}
 
