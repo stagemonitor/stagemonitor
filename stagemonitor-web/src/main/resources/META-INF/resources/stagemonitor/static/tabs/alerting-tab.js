@@ -1,7 +1,5 @@
 function renderAlertsTab() {
 
-	var checkModalTemplate;
-	var subscriptionModalTemplate;
 	var metricCategories = {
 		TIMER: {
 			label: "Timer",
@@ -27,19 +25,20 @@ function renderAlertsTab() {
 	};
 
 
-	$.get("tabs/alerting-tab.html", function (tmpl) {
+	$.get("tabs/alerting-tab.hbs", function (tmpl) {
 		var $tmpl = $(tmpl);
 		var template = Handlebars.compile($tmpl.find("#alerts-content-template").html());
-		checkModalTemplate = Handlebars.compile($tmpl.find("#check-modal-template").html());
-		subscriptionModalTemplate = Handlebars.compile($tmpl.find("#subscription-modal-template").html());
+		var checkModalTemplate = Handlebars.compile($tmpl.find("#check-modal-template").html());
+		var subscriptionModalTemplate = Handlebars.compile($tmpl.find("#subscription-modal-template").html());
+		var subscriptionsPartial = Handlebars.compile($tmpl.find("#subscriptions-partial-template").html());
 		var tab = $("#stagemonitor-alerts");
 		tab.html(template());
 
 		initSideMenu();
 
 		initializeValidation();
-		incidentsPage();
-		checksPage();
+		incidentsPage(subscriptionModalTemplate, subscriptionsPartial);
+		checksPage(checkModalTemplate);
 	});
 
 	function initSideMenu() {
@@ -67,11 +66,12 @@ function renderAlertsTab() {
 		};
 	}
 
-	function incidentsPage() {
+	function incidentsPage(subscriptionModalTemplate, subscriptionsPartial) {
 		var incidents = [];
 		var alerterTypes = ["Email", "PagerDuty", "SMS"];
 		var subscriptionsById = {
 			"cafebabe-6a82-4f1d-a8e5-11f08937668a" : {
+				id: "cafebabe-6a82-4f1d-a8e5-11f08937668a",
 				target: "f.barnsteiner@isys-software.de",
 				alerterType: "Email",
 				alertOnBackToOk: true,
@@ -80,17 +80,43 @@ function renderAlertsTab() {
 				alertOnCritical: true
 			}
 		};
+		renderSubscriptionsPartial();
 
 		$("#incidents-table").dataTable();
 
-		$("#add-subscription").click(function(){
+		$("#subscriptions").on("click", "#add-subscription", function(){
 			renderSubscriptionModal("Add Subscription", {});
 		});
 
 		$("#subscriptions").on("click", ".edit-subscription", function(){
-			renderSubscriptionModal("Edit Subscription", subscriptionsById[$(this).data('subscription-id')]);
+			renderSubscriptionModal("Edit Subscription", subscriptionsById[$(this).parent().parent().data('subscription-id')]);
 		});
 
+		$("#subscriptions").on("click", ".remove-subscription", function(){
+			delete subscriptionsById[$(this).parent().parent().data('subscription-id')];
+			renderSubscriptionsPartial();
+		});
+
+		function renderSubscriptionsPartial() {
+			$("#subscriptions-partial").html(subscriptionsPartial({subscriptionsById: subscriptionsById}))
+		}
+
+		var $subscriptionModal = $("#subscription-modal");
+		$subscriptionModal.on('click', "#save-subscription", function () {
+			var $subscriptionForm = $("#subscription-form");
+			if ($subscriptionForm.parsley().validate()) {
+				$subscriptionModal.modal('hide');
+				var subscription = $subscriptionForm.serializeObject();
+				console.log(JSON.stringify(subscription));
+				if (!subscription.id) {
+					// TODO persist on server
+					subscription.id = utils.generateUUID();
+				}
+				subscriptionsById[subscription.id] = subscription;
+
+				renderSubscriptionsPartial();
+			}
+		});
 
 		function renderSubscriptionModal(title, subscription) {
 			$("#subscription-modal-content").html(subscriptionModalTemplate({
@@ -101,7 +127,7 @@ function renderAlertsTab() {
 		}
 	}
 
-	function checksPage() {
+	function checksPage(checkModalTemplate) {
 		var checksById = {
 			"e0bc261c-6a82-4f1d-a8e5-11f08937668a": {
 				id: "e0bc261c-6a82-4f1d-a8e5-11f08937668a", name: "Search Response Time", alertAfterXFailures: "1",
@@ -148,6 +174,7 @@ function renderAlertsTab() {
 		var $checkModal = $("#check-modal");
 		$checkModal.on('click', "#save-check", function () {
 			if ($("#check-form").parsley().validate()) {
+				$checkModal.modal('hide');
 				var check = getCheckFromForm();
 				console.log(JSON.stringify(check));
 				if (!check.id) {

@@ -26,17 +26,8 @@
 				<div class="col-xs-2">
 					<label>Subscriptions</label>
 				</div>
-				<div class="col-xs-10">
-					<span class="edit-subscription well well-sm" data-subscription-id="cafebabe-6a82-4f1d-a8e5-11f08937668a">
-						Email
-						<a href="#"><span class="glyphicon glyphicon-edit" data-toggle="modal"
-										  data-target="#subscription-modal"></span></a>
-						<a href="#"><span class="glyphicon glyphicon-remove"></span></a>
-					</span>
-					<span>&nbsp;</span>
-					<button id="add-subscription" class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
-						<span class="glyphicon glyphicon-plus"></span> Add
-					</button>
+				<div id="subscriptions-partial" class="col-xs-10">
+
 				</div>
 			</div>
 
@@ -122,25 +113,42 @@
 	</div>
 </script>
 
+<!--Subscription partial-->
+<script id="subscriptions-partial-template" type="text/x-handlebars-template">
+	{{#each subscriptionsById}}
+	<span class="well well-sm" data-subscription-id="{{@key}}">
+		{{alerterType}}: {{target}}
+		<a href="#"><span class="edit-subscription glyphicon glyphicon-edit" data-toggle="modal"
+						  data-target="#subscription-modal"></span></a>
+		<a href="#"><span class="remove-subscription glyphicon glyphicon-remove"></span></a>
+	</span>
+	<span>&nbsp;</span>
+	{{/each}}
+	<button id="add-subscription" class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
+		<span class="glyphicon glyphicon-plus"></span> Add
+	</button>
+</script>
+
+<!--Subscription Modal-->
 <script id="subscription-modal-template" type="text/x-handlebars-template">
 	<div class="modal-header">
 		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
 				aria-hidden="true">&times;</span></button>
-		<h4 class="modal-title" id="subscription-modal-label">Subscription</h4>
+		<h4 class="modal-title" id="subscription-modal-label">{{title}}</h4>
 	</div>
 	<div class="modal-body">
-		<form data-parsley-validate>
+		<form id="subscription-form" data-parsley-validate>
+			<input type="hidden" name="id" value="{{subscription.id}}"/>
 			<div class="form-group">
 				<label>Target</label>
-				<input name="target" class="form-control" type="text" required>
+				<input name="target" class="form-control" type="text" value="{{subscription.target}}" required>
 			</div>
 			<div class="form-group">
 				<label>Type</label>
-				<select name="type" class="form-control">
-					<option value="Email">Email</option>
-					<option value="Hipchat">Hipchat</option>
-					<option value="SMS">SMS</option>
-					<option value="Pagerduty">Pagerduty</option>
+				<select name="alerterType" class="form-control">
+					{{#each alerterTypes}}
+						<option value="{{this}}">{{this}}</option>
+					{{/each}}
 				</select>
 			</div>
 			<div class="form-group">
@@ -148,25 +156,27 @@
 
 				<div class="checkbox">
 					<label>
-						<input name="alertOnBackToOk" type="checkbox" value="">
+						<input name="alertOnBackToOk" type="checkbox"
+							   {{#if subscription.alertOnBackToOk}}checked{{/if}}>
 						Back to OK
 					</label>
 				</div>
 				<div class="checkbox">
 					<label>
-						<input name="alertOnWarn" type="checkbox" value="">
+						<input name="alertOnWarn" type="checkbox" {{#if subscription.alertOnWarn}}checked{{/if}}>
 						(Back to) Warn
 					</label>
 				</div>
 				<div class="checkbox">
 					<label>
-						<input name="alertOnError" type="checkbox" value="">
+						<input name="alertOnError" type="checkbox" {{#if subscription.alertOnError}}checked{{/if}}>
 						(Back to) Error
 					</label>
 				</div>
 				<div class="checkbox">
 					<label>
-						<input name="alertOnCritical" type="checkbox" value="">
+						<input name="alertOnCritical" type="checkbox"
+							   {{#if subscription.alertOnCritical}}checked{{/if}}>
 						Critical
 					</label>
 				</div>
@@ -177,10 +187,9 @@
 		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 		<button id="save-subscription" type="button" class="btn btn-primary">Save</button>
 	</div>
+</script>   <!--Subscription Modal-->
 
-
-</script>
-
+<!--Check Modal-->
 <script id="check-modal-template" type="text/x-handlebars-template">
 
 	<div class="modal-header">
@@ -191,6 +200,7 @@
 	<div class="modal-body">
 		<form id="check-form" data-parsley-validate>
 			<input type="hidden" name="id" value="{{check.id}}">
+
 			<div class="form-group">
 				<label for="name-input">Name</label>
 				<input id="name-input" name="name" class="form-control" value="{{check.name}}" required>
@@ -204,7 +214,8 @@
 				<label for="metric-category-input">Metric Category</label>
 				<select id="metric-category-input" class="form-control" name="metricCategory">
 					{{#each metricCategories}}
-						<option value="{{@key}}" {{#ifCond @key '==' ../check.metricCategory}}selected{{/ifCond}}>{{this.label}}</option>
+						<option value="{{@key}}"
+								{{#ifCond @key '==' ../check.metricCategory}}selected{{/ifCond}}>{{this.label}}</option>
 					{{/each}}
 				</select>
 			</div>
@@ -214,50 +225,61 @@
 			</div>
 
 			{{#each check.thresholds}}
-			<fieldset>
-				<legend>{{capitalize @key}}</legend>
-				{{#each this}}
-				<div class="threshold-form-group row form-group">
-					<div class="col-lg-3">
-						<select class="form-control" name="thresholds[{{@key}}][][metric]">
-							{{#each @root.metrics}}
-								<option value="{{this}}" {{#ifCond ../metric '==' this}}selected{{/ifCond}}>{{this}}</option>
-							{{/each}}
-						</select>
-					</div>
-					<div class="col-lg-2">
-						<select class="form-control" name="thresholds[{{@key}}][][operator]">
-							<option value="GREATER" {{#ifCond operator '==' 'GREATER'}}selected{{/ifCond}}>&gt;</option>
-							<option value="GREATER_EQUAL" {{#ifCond operator '==' 'GREATER_EQUAL'}}selected{{/ifCond}}>&gt;=</option>
-							<option value="LESS" {{#ifCond operator '==' 'LESS'}}selected{{/ifCond}}>&lt;</option>
-							<option value="LESS_EQUAL" {{#ifCond operator '==' 'LESS_EQUAL'}}selected{{/ifCond}}>&lt;=</option>
-						</select>
-					</div>
-					<div class="col-lg-4">
-						<input class="form-control" type="number" step="0.01" name="thresholds[{{@key}}][][thresholdValue]" value="{{thresholdValue}}" required>
-					</div>
-					<div class="col-lg-3">
-						<a href="#" class="add-threshold btn btn-default" data-severity="{{@key}}"><span class="glyphicon glyphicon-plus"></span></a>
-						<a href="#" class="remove-threshold btn btn-default"><span class="glyphicon glyphicon-minus"></span></a>
-					</div>
-				</div>
-				{{/each}}
-				{{#unless this}}
-				<div class="row form-group">
-					<div class="col-lg-3">
-						<a href="#" class="add-threshold btn btn-default" data-severity="{{@key}}"><span class="glyphicon glyphicon-plus"></span></a>
-					</div>
-				</div>
-				{{/unless}}
-			</fieldset>
+				<fieldset>
+					<legend>{{capitalize @key}}</legend>
+					{{#each this}}
+						<div class="threshold-form-group row form-group">
+							<div class="col-lg-3">
+								<select class="form-control" name="thresholds[{{@key}}][][metric]">
+									{{#each @root.metrics}}
+										<option value="{{this}}"
+												{{#ifCond ../metric '==' this}}selected{{/ifCond}}>{{this}}</option>
+									{{/each}}
+								</select>
+							</div>
+							<div class="col-lg-2">
+								<select class="form-control" name="thresholds[{{@key}}][][operator]">
+									<option value="GREATER" {{#ifCond operator '==' 'GREATER'}}selected{{/ifCond}}>
+										&gt;</option>
+									<option value="GREATER_EQUAL"
+											{{#ifCond operator '==' 'GREATER_EQUAL'}}selected{{/ifCond}}>&gt;=
+									</option>
+									<option value="LESS" {{#ifCond operator '==' 'LESS'}}selected{{/ifCond}}>
+										&lt;</option>
+									<option value="LESS_EQUAL"
+											{{#ifCond operator '==' 'LESS_EQUAL'}}selected{{/ifCond}}>&lt;=
+									</option>
+								</select>
+							</div>
+							<div class="col-lg-4">
+								<input class="form-control" type="number" step="0.01"
+									   name="thresholds[{{@key}}][][thresholdValue]" value="{{thresholdValue}}"
+									   required>
+							</div>
+							<div class="col-lg-3">
+								<a href="#" class="add-threshold btn btn-default" data-severity="{{@key}}"><span
+										class="glyphicon glyphicon-plus"></span></a>
+								<a href="#" class="remove-threshold btn btn-default"><span
+										class="glyphicon glyphicon-minus"></span></a>
+							</div>
+						</div>
+					{{/each}}
+					{{#unless this}}
+						<div class="row form-group">
+							<div class="col-lg-3">
+								<a href="#" class="add-threshold btn btn-default" data-severity="{{@key}}"><span
+										class="glyphicon glyphicon-plus"></span></a>
+							</div>
+						</div>
+					{{/unless}}
+				</fieldset>
 			{{/each}}
 		</form>
 	</div>
 	<div class="modal-footer">
 		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-		<!--<button id="save-check" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>-->
 		<button id="save-check" type="button" class="btn btn-primary">Save</button>
 	</div>
 
 </script>
-</div>
+</div> <!--Check Modal-->
