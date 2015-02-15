@@ -8,7 +8,7 @@ import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
-public class BommerangJsHtmlInjector implements HtmlInjector {
+public class BoomerangJsHtmlInjector implements HtmlInjector {
 
 	public static final String BOOMERANG_FILENAME = "boomerang-56c823668fc.min.js";
 	private WebPlugin webPlugin;

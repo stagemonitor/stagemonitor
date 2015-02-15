@@ -1,2 +1,2 @@
-org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector
+org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector
 org.stagemonitor.web.monitor.widget.StagemonitorWidgetHtmlInjector

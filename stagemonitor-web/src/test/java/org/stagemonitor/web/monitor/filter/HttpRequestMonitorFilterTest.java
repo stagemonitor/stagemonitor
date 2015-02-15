@@ -1,5 +1,25 @@
 package org.stagemonitor.web.monitor.filter;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.Servlet;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
+
 import com.codahale.metrics.MetricRegistry;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,27 +36,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
-import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
-
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
 public class HttpRequestMonitorFilterTest {
 
@@ -160,7 +160,7 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		Assert.assertEquals("<html><body><script src=\"/stagemonitor/static/rum/" + BommerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
+		Assert.assertEquals("<html><body><script src=\"/stagemonitor/static/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
 				"      beacon_url: '/stagemonitor/rum',\n" +

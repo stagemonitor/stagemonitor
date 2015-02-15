@@ -1,26 +1,26 @@
 package org.stagemonitor.web.monitor.filter.htmlinjector;
 
-import org.junit.Test;
-import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.junit.Test;
+import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
-public class BommerangJsHtmlInjectorTest {
+public class BoomerangJsHtmlInjectorTest {
 
 	@Test
 	public void testBommerangJsExistsAndHashIsCorrect() throws Exception {
-		final String location = "/META-INF/resources/stagemonitor/static/rum/" + BommerangJsHtmlInjector.BOOMERANG_FILENAME;
+		final String location = "/META-INF/resources/stagemonitor/static/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME;
 		final InputStream inputStream = getClass().getResourceAsStream(location);
 		assertNotNull(inputStream);
 
 		String contentHash = toSHA1(IOUtils.toString(inputStream).replace("\r\n", "\n").getBytes()).substring(0, 11);
-		assertEquals("boomerang-" + contentHash + ".min.js", BommerangJsHtmlInjector.BOOMERANG_FILENAME);
+		assertEquals("boomerang-" + contentHash + ".min.js", BoomerangJsHtmlInjector.BOOMERANG_FILENAME);
 	}
 
 	public static String toSHA1(byte[] convertme) throws NoSuchAlgorithmException {

@@ -33,7 +33,7 @@ import org.stagemonitor.web.monitor.DefaultMonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.MonitoredHttpRequestFactory;
-import org.stagemonitor.web.monitor.rum.BommerangJsHtmlInjector;
+import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
 @WebFilter(urlPatterns = "/*", asyncSupported = true, dispatcherTypes = {REQUEST, FORWARD})
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
@@ -134,7 +134,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private void setCachingHeadersForBommerangJs(ServletRequest request, ServletResponse response) {
 		if (isHttpRequest(request, response)) {
 			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			if (httpServletRequest.getRequestURI().endsWith(BommerangJsHtmlInjector.BOOMERANG_FILENAME)) {
+			if (httpServletRequest.getRequestURI().endsWith(BoomerangJsHtmlInjector.BOOMERANG_FILENAME)) {
 				final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 				httpServletResponse.setHeader("cache-control", "public, max-age=315360000");
 			}
