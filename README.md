@@ -9,6 +9,9 @@ Stagemonitor is a Java monitoring agent that tightly integrates with the timeser
 ## More Information
 For more information about the project, please see http://www.stagemonitor.org
 
+## Live Demo
+http://stagemonitor-demo.isys-software.de
+
 ## Getting Started
 Check the [Installation](https://github.com/stagemonitor/stagemonitor/wiki/Installation) site of the wiki
 
