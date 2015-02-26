@@ -3,7 +3,8 @@ apply plugin: 'com.bmuschko.nexus'
 modifyPom {
 	project {
 		dependencies {
-			project.configurations.compile.allDependencies.each { dep ->
+			def configurations = project.configurations
+			(configurations.compile.allDependencies - configurations.provided.allDependencies).each { dep ->
 				dependency {
 					groupId dep.group
 					artifactId dep.name
@@ -11,7 +12,7 @@ modifyPom {
 					scope 'compile'
 				}
 			}
-			project.configurations.provided.allDependencies.each { dep ->
+			configurations.provided.allDependencies.each { dep ->
 				dependency {
 					groupId dep.group
 					artifactId dep.name
