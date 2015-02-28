@@ -1,9 +1,6 @@
 <!DOCTYPE aspectj PUBLIC
 		"-//AspectJ//DTD//EN" "http://www.eclipse.org/aspectj/dtd/aspectj.dtd">
 <aspectj>
-	<weaver options="-verbose">
-	</weaver>
-
 	<aspects>
 		<aspect name="org.stagemonitor.core.metrics.aspects.ExceptionMeteredAspect"/>
 		<aspect name="org.stagemonitor.core.metrics.aspects.GaugeAspect"/>
