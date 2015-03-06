@@ -2,6 +2,8 @@ package org.stagemonitor.core.configuration.converter;
 
 public class LongValueConverter implements ValueConverter<Long> {
 
+	public static final LongValueConverter INSTANCE = new LongValueConverter();
+
 	@Override
 	public Long convert(String s) {
 		try {

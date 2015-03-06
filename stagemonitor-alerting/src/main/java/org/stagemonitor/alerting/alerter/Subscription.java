@@ -4,6 +4,7 @@ import org.stagemonitor.alerting.check.CheckResult;
 
 public class Subscription {
 
+	private String id;
 	private String target;
 	private String alerterType;
 	boolean alertOnBackToOk, alertOnWarn, alertOnError, alertOnCritical;
@@ -54,6 +55,14 @@ public class Subscription {
 
 	public void setAlertOnCritical(boolean alertOnCritical) {
 		this.alertOnCritical = alertOnCritical;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public boolean isAlertOn(CheckResult.Status status) {

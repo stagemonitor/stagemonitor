@@ -2,6 +2,11 @@ package org.stagemonitor.core.configuration.converter;
 
 public class DoubleValueConverter implements ValueConverter<Double> {
 
+	public static final ValueConverter<Double> INSTANCE = new DoubleValueConverter();
+
+	private DoubleValueConverter() {
+	}
+
 	@Override
 	public Double convert(String s) {
 		try {

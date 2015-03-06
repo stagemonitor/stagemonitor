@@ -1,18 +1,18 @@
 package org.stagemonitor.core.configuration.converter;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.junit.Test;
 
 public class StringsValueConverterTest {
 
-	private final StringsValueConverter converter = new StringsValueConverter();
-	private final StringsValueConverter lowerConverter = new StringsValueConverter(true);
+	private final SetValueConverter<String> converter = SetValueConverter.STRINGS_VALUE_CONVERTER;
+	private final SetValueConverter<String> lowerConverter = SetValueConverter.LOWER_STRINGS_VALUE_CONVERTER;
 
 	@Test
 	public void testConvertSingleValue() throws Exception {

@@ -60,7 +60,7 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		metrics.set(MetricCategory.METER.getPath(), JsonUtils.toObjectNode(meters));
 		metrics.set(MetricCategory.TIMER.getPath(), JsonUtils.toObjectNode(timers));
 
-		for (Check check : alertingPlugin.getChecks()) {
+		for (Check check : alertingPlugin.getChecks().values()) {
 			if (measurementSession.getApplicationName().equals(check.getApplication()) && check.isActive()) {
 				checkMetrics(metrics, check);
 			}

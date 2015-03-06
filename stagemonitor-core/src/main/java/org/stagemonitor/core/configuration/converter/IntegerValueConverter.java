@@ -2,6 +2,8 @@ package org.stagemonitor.core.configuration.converter;
 
 public class IntegerValueConverter implements ValueConverter<Integer> {
 
+	public static final IntegerValueConverter INSTANCE = new IntegerValueConverter();
+
 	@Override
 	public Integer convert(String s) {
 		try {

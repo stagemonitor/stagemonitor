@@ -47,6 +47,20 @@ var utils = (function () {
 				d = Math.floor(d / 16);
 				return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
 			});
+		},
+		successMessage: function(message) {
+			$.growl(message, { type: "success" });
+		},
+		errorMessage: function(xhrOrString) {
+			$.growl((utils.htmlEscape(xhrOrString.responseText) || xhrOrString), { type: "danger" });
+		},
+		htmlEscape: function(str) {
+			return String(str)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
 		}
 	}
 })();

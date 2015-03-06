@@ -26,7 +26,7 @@ public class WebPlugin extends StagemonitorPlugin {
 	public static final String WEB_PLUGIN = "Web Plugin";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	boolean requiredPropertiesSet = true;
-	private final ConfigurationOption<List<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
+	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
 			.key("stagemonitor.requestmonitor.http.requestparams.confidential.regex")
 			.dynamic(true)
 			.label("Confidential request parameters (regex)")
@@ -243,7 +243,7 @@ public class WebPlugin extends StagemonitorPlugin {
 		return groupUrls.getValue();
 	}
 
-	public List<Pattern> getRequestParamsConfidential() {
+	public Collection<Pattern> getRequestParamsConfidential() {
 		return requestParamsConfidential.getValue();
 	}
 

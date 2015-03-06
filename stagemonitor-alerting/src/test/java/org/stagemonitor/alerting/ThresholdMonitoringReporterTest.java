@@ -13,6 +13,7 @@ import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.map;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +63,7 @@ public class ThresholdMonitoringReporterTest {
 	public void testAlerting() throws Exception {
 		Check check = createCheckGroupCheckingMean(1, 5);
 
-		when(alertingPlugin.getChecks()).thenReturn(Arrays.asList(check));
+		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 
 		checkMetrics();
 
@@ -86,7 +87,7 @@ public class ThresholdMonitoringReporterTest {
 	public void testAlertAfter2Failures() throws Exception {
 		Check check = createCheckGroupCheckingMean(2, 6);
 
-		when(alertingPlugin.getChecks()).thenReturn(Arrays.asList(check));
+		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 
 		checkMetrics();
 		verify(alerter, times(0)).alert(any(Incident.class));
@@ -100,7 +101,7 @@ public class ThresholdMonitoringReporterTest {
 	@Test
 	public void testNoAlertWhenFailureRecovers() throws Exception {
 		Check check = createCheckGroupCheckingMean(2, 6);
-		when(alertingPlugin.getChecks()).thenReturn(Arrays.asList(check));
+		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 
 		checkMetrics(7, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
@@ -121,7 +122,7 @@ public class ThresholdMonitoringReporterTest {
 	@Test
 	public void testDontDeleteIncidentIfThereAreNonOkResultsFromOtherInstances() {
 		Check check = createCheckGroupCheckingMean(2, 6);
-		when(alertingPlugin.getChecks()).thenReturn(Arrays.asList(check));
+		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 		incidentRepository.createIncident(
 				new Incident(check, new MeasurementSession("testApp", "testHost2", "testInstance"),
 						Arrays.asList(new CheckResult("test", 10, CheckResult.Status.CRITICAL))));

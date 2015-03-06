@@ -43,7 +43,7 @@ public class AlerterFactory {
 			return Collections.emptyList();
 		}
 		Set<Alerter> alerters = new HashSet<Alerter>(alerterByType.size());
-		for (Subscription subscription : alertingPlugin.getSubscriptions()) {
+		for (Subscription subscription : alertingPlugin.getSubscriptionsByIds().values()) {
 			if (subscription.isAlertOn(incident.getNewStatus())) {
 				alerters.add(alerterByType.get(subscription.getAlerterType()));
 			}

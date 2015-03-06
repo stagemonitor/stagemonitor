@@ -162,7 +162,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
-	private final ConfigurationOption<List<Pattern>> excludedMetrics = ConfigurationOption.regexListOption()
+	private final ConfigurationOption<Collection<Pattern>> excludedMetrics = ConfigurationOption.regexListOption()
 			.key("stagemonitor.metrics.excluded.pattern")
 			.dynamic(false)
 			.label("Excluded metrics (regex)")

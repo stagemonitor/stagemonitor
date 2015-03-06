@@ -7,7 +7,7 @@ import org.junit.Test;
 
 public class DoubleValueConverterTest {
 
-	private final DoubleValueConverter converter = new DoubleValueConverter();
+	private final ValueConverter<Double> converter = DoubleValueConverter.INSTANCE;
 
 	@Test
 	public void testConvert() throws Exception {

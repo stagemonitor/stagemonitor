@@ -1,17 +1,19 @@
 package org.stagemonitor.core.configuration.converter;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.util.regex.Pattern;
+
+import org.junit.Test;
+
 public class RegexListValueConverterTest {
 
-	private final RegexListValueConverter converter = new RegexListValueConverter();
+	private final SetValueConverter<Pattern> converter = new SetValueConverter<Pattern>(RegexValueConverter.INSTANCE);
 
 	@Test
 	public void testConvert() throws Exception {
-		assertEquals(".*", converter.convert(".*").get(0).pattern());
+		assertEquals(".*", converter.convert(".*").iterator().next().pattern());
 	}
 
 	@Test

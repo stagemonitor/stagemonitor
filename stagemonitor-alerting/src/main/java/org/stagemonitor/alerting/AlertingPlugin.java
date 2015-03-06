@@ -1,11 +1,14 @@
 package org.stagemonitor.alerting;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.stagemonitor.alerting.alerter.AlerterFactory;
 import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.alerting.check.Check;
@@ -37,20 +40,22 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.defaultValue(60L)
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
-	public final ConfigurationOption<Subscription[]> subscriptions = ConfigurationOption.jsonOption(Subscription[].class)
+	public final ConfigurationOption<Map<String, Subscription>> subscriptions = ConfigurationOption
+			.jsonOption(new TypeReference<Map<String, Subscription>>() {}, Map.class)
 			.key("stagemonitor.alerts.subscriptions")
 			.dynamic(true)
 			.label("Alert Subscriptions")
 			.description("The alert subscriptions.")
-			.defaultValue(new Subscription[]{})
+			.defaultValue(Collections.<String, Subscription>emptyMap())
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
-	private final ConfigurationOption<Check[]> checks = ConfigurationOption.jsonOption(Check[].class)
+	private final ConfigurationOption<Map<String, Check>> checks = ConfigurationOption
+			.jsonOption(new TypeReference<Map<String, Check>>() {}, Map.class)
 			.key("stagemonitor.alerts.checks")
 			.dynamic(true)
 			.label("Check Groups")
 			.description("The check groups that contain thresholds for metrics.")
-			.defaultValue(new Check[]{})
+			.defaultValue(Collections.<String, Check>emptyMap())
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
 	private static AlerterFactory alerterFactory;
@@ -75,12 +80,16 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		return muteAlerts.getValue();
 	}
 
-	public List<Subscription> getSubscriptions() {
-		return Arrays.asList(subscriptions.getValue());
+	public Map<String, Subscription> getSubscriptionsByIds() {
+		return subscriptions.getValue();
 	}
 
-	public List<Check> getChecks() {
-		return Arrays.asList(checks.getValue());
+	public String getSubscriptionsByIdsAsJson() {
+		return subscriptions.getValueAsString();
+	}
+
+	public Map<String, Check> getChecks() {
+		return checks.getValue();
 	}
 
 	public IncidentRepository getIncidentRepository() {

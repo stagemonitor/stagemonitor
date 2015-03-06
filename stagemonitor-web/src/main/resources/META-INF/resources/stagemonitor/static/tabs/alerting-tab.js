@@ -69,17 +69,18 @@ function renderAlertsTab() {
 	function incidentsPage(subscriptionModalTemplate, subscriptionsPartial) {
 		var incidents = [];
 		var alerterTypes = ["Email", "PagerDuty", "SMS"];
-		var subscriptionsById = {
-			"cafebabe-6a82-4f1d-a8e5-11f08937668a" : {
-				id: "cafebabe-6a82-4f1d-a8e5-11f08937668a",
-				target: "f.barnsteiner@isys-software.de",
-				alerterType: "Email",
-				alertOnBackToOk: true,
-				alertOnWarn: true,
-				alertOnError: true,
-				alertOnCritical: true
-			}
-		};
+		var subscriptionsById = $.getJSON(stagemonitor.baseUrl + "/stagemonitor/subscriptions");
+//		{
+//			"cafebabe-6a82-4f1d-a8e5-11f08937668a" : {
+//				id: "cafebabe-6a82-4f1d-a8e5-11f08937668a",
+//				target: "f.barnsteiner@isys-software.de",
+//				alerterType: "Email",
+//				alertOnBackToOk: true,
+//				alertOnWarn: true,
+//				alertOnError: true,
+//				alertOnCritical: true
+//			}
+//		};
 		renderSubscriptionsPartial();
 
 		$("#incidents-table").dataTable();
@@ -109,10 +110,20 @@ function renderAlertsTab() {
 				var subscription = $subscriptionForm.serializeObject();
 				console.log(JSON.stringify(subscription));
 				if (!subscription.id) {
-					// TODO persist on server
 					subscription.id = utils.generateUUID();
 				}
-				subscriptionsById[subscription.id] = subscription;
+				$.ajax({
+					type: "PUT",
+					url: stagemonitor.baseUrl + "/stagemonitor/subscriptions",
+					data: subscription
+				})
+					.done(function() {
+						utils.errorMessage("Successfully saved subscription");
+						subscriptionsById[subscription.id] = subscription;
+					}).fail(function(xhr) {
+						utils.errorMessage(xhr.responseText || "Failed to save subscription");
+					});
+
 
 				renderSubscriptionsPartial();
 			}
