@@ -67,30 +67,29 @@ function renderAlertsTab() {
 	}
 
 	function getSubscriptionsUrl(id) {
-		var subscriptionsUrl = stagemonitor.baseUrl + "/stagemonitor/subscriptions?" + $("#password-form").serialize() + "&id=" + id;
-		return subscriptionsUrl;
+		return stagemonitor.baseUrl + "/stagemonitor/subscriptions?" + $("#password-form").serialize() + "&id=" + id;
 	}
 
 	function incidentsPage(subscriptionModalTemplate, subscriptionsPartial) {
 		var incidents = [];
 		var alerterTypes = ["Email", "PagerDuty", "SMS"];
 		var subscriptionsById = {};
-		$.getJSON(stagemonitor.baseUrl + "/stagemonitor/subscriptions", function(result) {
+		$.getJSON(stagemonitor.baseUrl + "/stagemonitor/subscriptions", function (result) {
 			subscriptionsById = result;
 			renderSubscriptionsPartial();
 		});
 
 		$("#incidents-table").dataTable();
 
-		$("#subscriptions").on("click", "#add-subscription", function(){
+		$("#subscriptions").on("click", "#add-subscription", function () {
 			renderSubscriptionModal("Add Subscription", {});
 		});
 
-		$("#subscriptions").on("click", ".edit-subscription", function(){
+		$("#subscriptions").on("click", ".edit-subscription", function () {
 			renderSubscriptionModal("Edit Subscription", subscriptionsById[$(this).parent().parent().data('subscription-id')]);
 		});
 
-		$("#subscriptions").on("click", ".remove-subscription", function(){
+		$("#subscriptions").on("click", ".remove-subscription", function () {
 			var id = $(this).parent().parent().data('subscription-id');
 			$.ajax({ type: "DELETE", url: getSubscriptionsUrl(id)})
 				.done(function () {
@@ -117,11 +116,11 @@ function renderAlertsTab() {
 					subscription.id = utils.generateUUID();
 				}
 				$.ajax({type: "PUT", url: getSubscriptionsUrl(subscription.id), data: JSON.stringify(subscription) })
-					.done(function() {
+					.done(function () {
 						utils.successMessage("Successfully saved subscription");
 						subscriptionsById[subscription.id] = subscription;
 						renderSubscriptionsPartial();
-					}).fail(function(xhr) {
+					}).fail(function (xhr) {
 						utils.errorMessage(xhr.responseText || "Failed to save subscription");
 					});
 
@@ -138,47 +137,46 @@ function renderAlertsTab() {
 	}
 
 	function checksPage(checkModalTemplate) {
-		var checksById = {
-			"e0bc261c-6a82-4f1d-a8e5-11f08937668a": {
-				id: "e0bc261c-6a82-4f1d-a8e5-11f08937668a", name: "Search Response Time", alertAfterXFailures: "1",
-				metricCategory: "TIMER", target: "request.*.time",
-				thresholds: {
-					"WARN": [
-						{"metric": "p50", "operator": "GREATER", "thresholdValue": "5000"},
-						{"metric": "p95", "operator": "GREATER", "thresholdValue": "10000"}
-					],
-					"ERROR": [
-						{"metric": "m5_rate", "operator": "LESS", "thresholdValue": "0.01"}
-					],
-					"CRITICAL": []
-				}
-			}
-		};
-
-		var checksTable = $("#checks-table").dataTable({
-			data: getData(),
-			columns: [
-				{ data: "name" },
-				{ data: "target" },
-				{ data: "alertAfterXFailures" },
-				{
-					render: function (data, type, full, meta) {
-						return '<a href="#"><span class="edit-check glyphicon glyphicon-edit" aria-hidden="true" ' +
-							'data-toggle="modal" data-target="#check-modal" data-check-id="' + full.id + '"></span></a>';
-					}
-				},
-				{
-					render: function (data, type, full, meta) {
-						return '<a href="#"><span class="delete-check glyphicon glyphicon-remove" aria-hidden="true" ' +
-							'data-check-id="' + full.id + '"></span></a>'
-					}
-				}
-			]
+		var checksById = {};
+		var checksTable;
+		$.getJSON(stagemonitor.baseUrl + "/stagemonitor/checks", function (result) {
+			checksById = result;
+			renderChecksTable();
 		});
 
-		$(".delete-check").click(function () {
-			delete checksById[$(this).data('check-id')];
-			updateChecksTable();
+		function renderChecksTable() {
+			checksTable = $("#checks-table").dataTable({
+				data: getData(),
+				columns: [
+					{ data: "name" },
+					{ data: "target" },
+					{ data: "alertAfterXFailures" },
+					{
+						render: function (data, type, full, meta) {
+							return '<a href="#"><span class="edit-check glyphicon glyphicon-edit" aria-hidden="true" ' +
+								'data-toggle="modal" data-target="#check-modal" data-check-id="' + full.id + '"></span></a>';
+						}
+					},
+					{
+						render: function (data, type, full, meta) {
+							return '<a href="#"><span class="delete-check glyphicon glyphicon-remove" aria-hidden="true" ' +
+								'data-check-id="' + full.id + '"></span></a>'
+						}
+					}
+				]
+			});
+		}
+
+		$("#checks-table").on('click', '.delete-check', function () {
+			var id = $(this).data('check-id');
+			$.ajax({ type: "DELETE", url: getChecksUrl(id)})
+				.done(function () {
+					utils.successMessage("Successfully removed check");
+					delete checksById[ id];
+					updateChecksTable();
+				}).fail(function (xhr) {
+					utils.errorMessage(xhr.responseText || "Failed to remove check");
+				});
 		});
 
 		var $checkModal = $("#check-modal");
@@ -188,12 +186,17 @@ function renderAlertsTab() {
 				var check = getCheckFromForm();
 				console.log(JSON.stringify(check));
 				if (!check.id) {
-					// TODO persist on server
 					check.id = utils.generateUUID();
 				}
-				checksById[check.id] = check;
 
-				updateChecksTable();
+				$.ajax({type: "PUT", url: getChecksUrl(check.id), data: JSON.stringify(check) })
+					.done(function () {
+						utils.successMessage("Successfully saved check");
+						checksById[check.id] = check;
+						updateChecksTable();
+					}).fail(function (xhr) {
+						utils.errorMessage(xhr.responseText || "Failed to save check");
+					});
 			}
 		});
 
@@ -254,6 +257,10 @@ function renderAlertsTab() {
 				return [value];
 			});
 			return data;
+		}
+
+		function getChecksUrl(id) {
+			return stagemonitor.baseUrl + "/stagemonitor/checks?" + $("#password-form").serialize() + "&id=" + id;
 		}
 	}
 }

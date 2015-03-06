@@ -49,7 +49,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.<String, Subscription>emptyMap())
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
-	private final ConfigurationOption<Map<String, Check>> checks = ConfigurationOption
+	public final ConfigurationOption<Map<String, Check>> checks = ConfigurationOption
 			.jsonOption(new TypeReference<Map<String, Check>>() {}, Map.class)
 			.key("stagemonitor.alerts.checks")
 			.dynamic(true)
@@ -98,5 +98,9 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 	public AlerterFactory getAlerterFactory() {
 		return alerterFactory;
+	}
+
+	public String getChecksAsJson() {
+		return checks.getValueAsString();
 	}
 }
