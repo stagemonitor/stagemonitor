@@ -55,6 +55,9 @@ var utils = (function () {
 			$.growl((utils.htmlEscape(xhrOrString.responseText) || xhrOrString), { type: "danger" });
 		},
 		htmlEscape: function(str) {
+			if (!str) {
+				return str;
+			}
 			return String(str)
 				.replace(/&/g, '&amp;')
 				.replace(/"/g, '&quot;')

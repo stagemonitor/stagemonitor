@@ -66,22 +66,19 @@ function renderAlertsTab() {
 		};
 	}
 
+	function getSubscriptionsUrl(id) {
+		var subscriptionsUrl = stagemonitor.baseUrl + "/stagemonitor/subscriptions?" + $("#password-form").serialize() + "&id=" + id;
+		return subscriptionsUrl;
+	}
+
 	function incidentsPage(subscriptionModalTemplate, subscriptionsPartial) {
 		var incidents = [];
 		var alerterTypes = ["Email", "PagerDuty", "SMS"];
-		var subscriptionsById = $.getJSON(stagemonitor.baseUrl + "/stagemonitor/subscriptions");
-//		{
-//			"cafebabe-6a82-4f1d-a8e5-11f08937668a" : {
-//				id: "cafebabe-6a82-4f1d-a8e5-11f08937668a",
-//				target: "f.barnsteiner@isys-software.de",
-//				alerterType: "Email",
-//				alertOnBackToOk: true,
-//				alertOnWarn: true,
-//				alertOnError: true,
-//				alertOnCritical: true
-//			}
-//		};
-		renderSubscriptionsPartial();
+		var subscriptionsById = {};
+		$.getJSON(stagemonitor.baseUrl + "/stagemonitor/subscriptions", function(result) {
+			subscriptionsById = result;
+			renderSubscriptionsPartial();
+		});
 
 		$("#incidents-table").dataTable();
 
@@ -94,8 +91,15 @@ function renderAlertsTab() {
 		});
 
 		$("#subscriptions").on("click", ".remove-subscription", function(){
-			delete subscriptionsById[$(this).parent().parent().data('subscription-id')];
-			renderSubscriptionsPartial();
+			var id = $(this).parent().parent().data('subscription-id');
+			$.ajax({ type: "DELETE", url: getSubscriptionsUrl(id)})
+				.done(function () {
+					utils.successMessage("Successfully removed subscription");
+					delete subscriptionsById[id];
+					renderSubscriptionsPartial();
+				}).fail(function (xhr) {
+					utils.errorMessage(xhr.responseText || "Failed to remove subscription");
+				});
 		});
 
 		function renderSubscriptionsPartial() {
@@ -112,20 +116,15 @@ function renderAlertsTab() {
 				if (!subscription.id) {
 					subscription.id = utils.generateUUID();
 				}
-				$.ajax({
-					type: "PUT",
-					url: stagemonitor.baseUrl + "/stagemonitor/subscriptions",
-					data: subscription
-				})
+				$.ajax({type: "PUT", url: getSubscriptionsUrl(subscription.id), data: JSON.stringify(subscription) })
 					.done(function() {
-						utils.errorMessage("Successfully saved subscription");
+						utils.successMessage("Successfully saved subscription");
 						subscriptionsById[subscription.id] = subscription;
+						renderSubscriptionsPartial();
 					}).fail(function(xhr) {
 						utils.errorMessage(xhr.responseText || "Failed to save subscription");
 					});
 
-
-				renderSubscriptionsPartial();
 			}
 		});
 

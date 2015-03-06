@@ -3,6 +3,7 @@ package org.stagemonitor.web.alert;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 
 /**
@@ -23,6 +25,7 @@ public class SubscriptionServlet extends HttpServlet {
 
 	private final AlertingPlugin alertingPlugin;
 	private final Configuration configuration;
+	private final WebPlugin webPlugin;
 
 	public SubscriptionServlet() {
 		this(Stagemonitor.getConfiguration(AlertingPlugin.class), Stagemonitor.getConfiguration());
@@ -31,6 +34,12 @@ public class SubscriptionServlet extends HttpServlet {
 	public SubscriptionServlet(AlertingPlugin alertingPlugin, Configuration configuration) {
 		this.alertingPlugin = alertingPlugin;
 		this.configuration = configuration;
+		this.webPlugin = configuration.getConfig(WebPlugin.class);
+	}
+
+	@Override
+	protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		handleCors(resp);
 	}
 
 	/**
@@ -39,7 +48,18 @@ public class SubscriptionServlet extends HttpServlet {
 	 */
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		resp.setContentType("application/json");
+		handleCors(resp);
+		resp.setHeader("Cache-Control", "must-revalidate,no-cache,no-store");
+		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.getOutputStream().print(alertingPlugin.getSubscriptionsByIdsAsJson());
+	}
+
+	private void handleCors(HttpServletResponse resp) {
+		if (webPlugin.getMetricsServletAllowedOrigin() != null) {
+			resp.setHeader("Access-Control-Allow-Origin", webPlugin.getMetricsServletAllowedOrigin());
+			resp.setHeader("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS");
+		}
 	}
 
 	/**
@@ -48,6 +68,7 @@ public class SubscriptionServlet extends HttpServlet {
 	 */
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		handleCors(resp);
 		Map<String, Subscription> subscriptions = new LinkedHashMap<String, Subscription>(alertingPlugin.getSubscriptionsByIds());
 		if (subscriptions.remove(req.getParameter("id")) == null) {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -62,6 +83,7 @@ public class SubscriptionServlet extends HttpServlet {
 	 */
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		handleCors(resp);
 		final Subscription subscription = JsonUtils.getMapper().readValue(req.getInputStream(), Subscription.class);
 		subscription.setId(req.getParameter("id"));
 
