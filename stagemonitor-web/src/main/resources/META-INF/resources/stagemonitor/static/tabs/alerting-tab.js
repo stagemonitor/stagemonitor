@@ -66,10 +66,6 @@ function renderAlertsTab() {
 		};
 	}
 
-	function getSubscriptionsUrl(id) {
-		return stagemonitor.baseUrl + "/stagemonitor/subscriptions?" + $("#password-form").serialize() + "&id=" + id;
-	}
-
 	function getConfigValue(configurationCategory, configurationKey) {
 		return $.grep(stagemonitor.configurationOptions[configurationCategory], function (configOption) {
 			return configOption.key == configurationKey;
@@ -77,12 +73,64 @@ function renderAlertsTab() {
 	}
 
 	function incidentsPage(subscriptionModalTemplate, subscriptionsPartial) {
-		var incidents = [];
 		var alerterTypes = ["Email", "PagerDuty", "SMS"];
 		var subscriptionsById = JSON.parse(getConfigValue("Alerting", "stagemonitor.alerts.subscriptions"));
 		renderSubscriptionsPartial();
 
-		$("#incidents-table").dataTable();
+		var incidentsTable = $("#incidents-table").dataTable({
+			aaSorting: [],
+			columns: [
+				{ data: "checkName" },
+				{
+					render: function (data, type, full, meta) {
+						return full.hosts.join(', ');
+					}
+				},
+				{
+					render: function (data, type, full, meta) {
+						return full.instances.join(', ');
+					}
+				},
+				{
+					render: function (data, type, full, meta) {
+						return new Date(full.firstFailureAt).toISOString();
+					}
+				},
+				{
+					render: function (data, type, full, meta) {
+						var labelType = "label-success";
+						if (full.newStatus == 'WARN') {
+							labelType = "label-info"
+						} else if (full.newStatus == 'ERROR') {
+							labelType = "label-warning"
+						} else if (full.newStatus == 'CRITICAL') {
+							labelType = "label-danger"
+						}
+						return '<span class="label ' + labelType + '">' + full.newStatus + '</span>';
+					}
+				},
+				{
+					render: function (data, type, full, meta) {
+						return '<button class="btn btn-default incident-details-btn">Details</button>';
+					}
+				}
+			]
+		});
+
+		$('#incidents-table tbody').on('click', '.incident-details-btn', function () {
+			var data = incidentsTable.DataTable().row( $(this).parents('tr') ).data();
+			alert(JSON.stringify(data.checkResults, null, 2));
+		} );
+
+		$("#alerts-tab").find("a").one('click', function() {
+			(function refreshIncidents() {
+				// TODO 'push' incidents via the long polling mechanism that is used for ajax request traces
+				$.getJSON(stagemonitor.baseUrl + "/stagemonitor/incidents", function (data) {
+					updateTable(incidentsTable, data);
+					setTimeout(refreshIncidents, 2000);
+				});
+			}());
+		});
 
 		$("#subscriptions").on("click", "#add-subscription", function () {
 			renderSubscriptionModal("Add Subscription", {});
@@ -162,12 +210,18 @@ function renderAlertsTab() {
 
 		function renderChecksTable() {
 			checksTable = $("#checks-table").dataTable({
-				data: getData(),
+				data: getChecksArray(),
 				aaSorting: [],
 				columns: [
+					{ data: "application" },
 					{ data: "name" },
 					{ data: "target" },
 					{ data: "alertAfterXFailures" },
+					{
+						render: function (data, type, full, meta) {
+							return '<span class="delete-check glyphicon glyphicon-' + (full.active ? 'ok' : 'remove') + '" aria-hidden="true"></span>';
+						}
+					},
 					{
 						render: function (data, type, full, meta) {
 							return '<a href="#"><span class="edit-check glyphicon glyphicon-edit" aria-hidden="true" ' +
@@ -194,7 +248,7 @@ function renderAlertsTab() {
 				.done(function () {
 					utils.successMessage("Successfully removed check");
 					checksById = clonedChecks;
-					updateChecksTable();
+					updateTable(checksTable, getChecksArray());
 				}).fail(function (xhr) {
 					utils.errorMessage(xhr.responseText || "Failed to remove check");
 				});
@@ -217,13 +271,12 @@ function renderAlertsTab() {
 					.done(function () {
 						utils.successMessage("Successfully saved check into " + $("#configuration-source").val());
 						checksById = clonedChecks;
-						updateChecksTable();
+						updateTable(checksTable, getChecksArray());
 					}).fail(function (xhr) {
 						utils.errorMessage(xhr.responseText || "Failed to save check");
 					});
 			}
 		});
-
 
 		$checkModal.on('change', "#metric-category-input", function () {
 			renderCheckModal($("#check-modal-label").html(), getCheckFromForm());
@@ -245,9 +298,8 @@ function renderAlertsTab() {
 		});
 
 		$(".add-check").click(function () {
-			renderCheckModal("Add Check", {alertAfterXFailures: 1, thresholds: {WARN: [], ERROR: [], CRITICAL: []}});
+			renderCheckModal("Add Check", {application: stagemonitor.measurementSession.applicationName, active: true, alertAfterXFailures: 1, thresholds: {WARN: [], ERROR: [], CRITICAL: []}});
 		});
-
 
 		function getCheckFromForm() {
 			var check = $("#check-form").serializeObject();
@@ -267,24 +319,19 @@ function renderAlertsTab() {
 			}));
 		}
 
-		function updateChecksTable() {
-			checksTable.fnClearTable(false);
-			var data = getData();
-			if (data.length > 0) {
-				checksTable.fnAddData(data, false);
-			}
-			checksTable.DataTable().draw(false);
-		}
-
-		function getData() {
+		function getChecksArray() {
 			var data = $.map(checksById, function (value, index) {
 				return [value];
 			});
 			return data;
 		}
+	}
 
-		function getChecksUrl(id) {
-			return stagemonitor.baseUrl + "/stagemonitor/checks?" + $("#password-form").serialize() + "&id=" + id;
+	function updateTable(table, data) {
+		table.fnClearTable(false);
+		if (data.length > 0) {
+			table.fnAddData(data, false);
 		}
+		table.DataTable().draw(false);
 	}
 }

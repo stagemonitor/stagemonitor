@@ -1,26 +1,30 @@
 package org.stagemonitor.alerting.incident;
 
-import org.stagemonitor.alerting.check.CheckResult;
-
 import java.util.List;
 
-public class ResultOnSpecificHostAndInstance {
+import org.stagemonitor.alerting.check.CheckResult;
+import org.stagemonitor.core.MeasurementSession;
+
+public class CheckResults {
+
+	private MeasurementSession measurementSession;
 	private CheckResult.Status status;
 	private List<CheckResult> results;
 	private int consecutiveFailures;
 
-	public ResultOnSpecificHostAndInstance() {
+	public CheckResults() {
 	}
 
-	public ResultOnSpecificHostAndInstance(List<CheckResult> results) {
-		this(results, 0);
+	public CheckResults(MeasurementSession measurementSession, List<CheckResult> results) {
+		this(measurementSession, results, 0);
 	}
 
-	public ResultOnSpecificHostAndInstance(ResultOnSpecificHostAndInstance previousResult, List<CheckResult> results) {
-		this(results, previousResult.consecutiveFailures);
+	public CheckResults(CheckResults previousResult, List<CheckResult> results) {
+		this(previousResult.getMeasurementSession(), results, previousResult.consecutiveFailures);
 	}
 
-	private ResultOnSpecificHostAndInstance(List<CheckResult> results, int consecutiveFailures) {
+	private CheckResults(MeasurementSession measurementSession, List<CheckResult> results, int consecutiveFailures) {
+		this.measurementSession = measurementSession;
 		this.results = results;
 		this.status = CheckResult.getMostSevereStatus(results);
 		this.consecutiveFailures = consecutiveFailures;
@@ -52,5 +56,13 @@ public class ResultOnSpecificHostAndInstance {
 
 	public void setConsecutiveFailures(int consecutiveFailures) {
 		this.consecutiveFailures = consecutiveFailures;
+	}
+
+	public MeasurementSession getMeasurementSession() {
+		return measurementSession;
+	}
+
+	public void setMeasurementSession(MeasurementSession measurementSession) {
+		this.measurementSession = measurementSession;
 	}
 }

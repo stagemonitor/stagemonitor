@@ -15,36 +15,36 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class ConcurrentMapIncidentRepository implements IncidentRepository {
 
-	private final ConcurrentMap<String, Incident> incidentsByCheckGroupId;
+	private final ConcurrentMap<String, Incident> incidentsByCheckId;
 
-	public ConcurrentMapIncidentRepository(ConcurrentMap<String, Incident> incidentsByCheckGroupId) {
-		this.incidentsByCheckGroupId = incidentsByCheckGroupId;
+	public ConcurrentMapIncidentRepository(ConcurrentMap<String, Incident> incidentsByCheckId) {
+		this.incidentsByCheckId = incidentsByCheckId;
 	}
 
 	@Override
 	public Collection<Incident> getAllIncidents() {
-		return incidentsByCheckGroupId.values();
+		return incidentsByCheckId.values();
 	}
 
 	@Override
-	public Incident getIncidentByCheckGroupId(String checkGroupId) {
-		return incidentsByCheckGroupId.get(checkGroupId);
+	public Incident getIncidentByCheckId(String checkId) {
+		return incidentsByCheckId.get(checkId);
 	}
 
 	@Override
 	public boolean deleteIncident(Incident incident) {
-		return incidentsByCheckGroupId.remove(incident.getCheckId(), incident.getIncidentWithPreviousVersion());
+		return incidentsByCheckId.remove(incident.getCheckId(), incident.getIncidentWithPreviousVersion());
 	}
 
 	@Override
 	public boolean createIncident(Incident incident) {
-		final Incident previousIncident = incidentsByCheckGroupId.putIfAbsent(incident.getCheckId(), incident);
+		final Incident previousIncident = incidentsByCheckId.putIfAbsent(incident.getCheckId(), incident);
 		return previousIncident == null;
 	}
 
 	@Override
 	public boolean updateIncident(Incident incident) {
-		return incidentsByCheckGroupId.replace(incident.getCheckId(), incident.getIncidentWithPreviousVersion(),
+		return incidentsByCheckId.replace(incident.getCheckId(), incident.getIncidentWithPreviousVersion(),
 				incident);
 	}
 

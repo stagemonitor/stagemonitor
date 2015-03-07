@@ -1,16 +1,16 @@
 package org.stagemonitor.web.alert;
 
-import org.stagemonitor.alerting.AlertingPlugin;
-import org.stagemonitor.alerting.incident.IncidentRepository;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.util.JsonUtils;
-
+import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
+import org.stagemonitor.alerting.AlertingPlugin;
+import org.stagemonitor.alerting.incident.IncidentRepository;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.util.JsonUtils;
 
 @WebServlet(urlPatterns = "/stagemonitor/incidents")
 public class IncidentServlet extends HttpServlet {
@@ -26,6 +26,8 @@ public class IncidentServlet extends HttpServlet {
 	}
 
 	/**
+	 * GET /stagemonitor/incidents
+	 *
 	 * Returns all current incidents
 	 */
 	@Override

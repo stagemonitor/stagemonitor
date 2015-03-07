@@ -1,10 +1,10 @@
 package org.stagemonitor.core;
 
 
+import java.net.InetAddress;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.stagemonitor.core.util.StringUtils;
-
-import java.net.InetAddress;
 
 public class MeasurementSession {
 
@@ -96,5 +96,28 @@ public class MeasurementSession {
 			return host;
 		}
 		return null;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof MeasurementSession)) return false;
+
+		MeasurementSession that = (MeasurementSession) o;
+
+		if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null)
+			return false;
+		if (hostName != null ? !hostName.equals(that.hostName) : that.hostName != null) return false;
+		if (instanceName != null ? !instanceName.equals(that.instanceName) : that.instanceName != null) return false;
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = applicationName != null ? applicationName.hashCode() : 0;
+		result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
+		result = 31 * result + (instanceName != null ? instanceName.hashCode() : 0);
+		return result;
 	}
 }

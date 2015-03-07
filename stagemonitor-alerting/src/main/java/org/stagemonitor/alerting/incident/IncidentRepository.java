@@ -6,7 +6,7 @@ public interface IncidentRepository {
 
 	Collection<Incident> getAllIncidents();
 
-	Incident getIncidentByCheckGroupId(String checkGroupId);
+	Incident getIncidentByCheckId(String checkId);
 
 	boolean deleteIncident(Incident incident);
 

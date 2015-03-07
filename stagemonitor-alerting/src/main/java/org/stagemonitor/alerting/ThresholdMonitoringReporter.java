@@ -32,6 +32,7 @@ import org.stagemonitor.core.util.JsonUtils;
 
 public class ThresholdMonitoringReporter extends ScheduledReporter {
 
+	public static final int OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES = 10;
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final AlerterFactory alerterFactory;
@@ -103,22 +104,31 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 	private Incident getAndPersistIncident(Check check, List<CheckResult> results) {
 		boolean sucessfullyPersisted = false;
 		Incident incident = null;
-		while (!sucessfullyPersisted) {
+		for (int i = 0; i < OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES && !sucessfullyPersisted; i++) {
 			incident = getOrCreateIncident(check, results);
 			sucessfullyPersisted = trySaveOrDeleteIncident(check, incident);
+		}
+		if (!sucessfullyPersisted) {
+			logger.error("Failed to save incident {} after {} retries.", incident, OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES);
 		}
 		return incident;
 	}
 
 	private boolean isAlertIncidents(Check check, Incident incident) {
-		return (incident.hasStageChange() && incident.getConsecutiveFailures() >= check.getAlertAfterXFailures()) ||
-				incident.getConsecutiveFailures() == check.getAlertAfterXFailures();
+		if (incident == null) {
+			return false;
+		}
+		return (incident.hasStageChange() && incident.getConsecutiveFailures() >= check.getAlertAfterXFailures())
+				|| incident.getConsecutiveFailures() == check.getAlertAfterXFailures();
 	}
 
 	private Incident getOrCreateIncident(Check check, List<CheckResult> results) {
 		final Incident currentIncident;
-		Incident previousIncident = incidentRepository.getIncidentByCheckGroupId(check.getId());
+		Incident previousIncident = incidentRepository.getIncidentByCheckId(check.getId());
 		if (previousIncident == null) {
+			if (CheckResult.getMostSevereStatus(results) == CheckResult.Status.OK) {
+				return null;
+			}
 			currentIncident = new Incident(check, measurementSession, results);
 		} else {
 			currentIncident = new Incident(previousIncident, measurementSession, results);
@@ -128,6 +138,9 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 	}
 
 	private boolean trySaveOrDeleteIncident(Check check, Incident incident) {
+		if (incident == null) {
+			return true;
+		}
 		if (incident.getNewStatus() == CheckResult.Status.OK) {
 			if (!incidentRepository.deleteIncident(incident)) {
 				logger.warn("Optimistic lock failure when deleting incident for check group {}.", check.getId());

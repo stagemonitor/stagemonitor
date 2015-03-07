@@ -1,10 +1,15 @@
 package org.stagemonitor.alerting.incident;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.core.MeasurementSession;
@@ -12,13 +17,13 @@ import org.stagemonitor.core.MeasurementSession;
 public class Incident {
 
 	private int version;
-	private Date firstFailAt;
+	private Date firstFailureAt;
 	private Date resolvedAt;
 	private CheckResult.Status oldStatus;
 	private CheckResult.Status newStatus;
 	private String checkId;
 	private String checkName;
-	private Map<String, CheckResultsByInstance> resultsByHostAndInstance = new HashMap<String, CheckResultsByInstance>();
+	private Map<MeasurementSession, CheckResults> checkResultsByMeasurementSession = new HashMap<MeasurementSession, CheckResults>();
 
 	public Incident() {
 	}
@@ -27,7 +32,7 @@ public class Incident {
 		this.newStatus = CheckResult.getMostSevereStatus(checkResults);
 		this.checkId = check.getId();
 		this.checkName = check.getName();
-		this.firstFailAt = new Date();
+		this.firstFailureAt = new Date();
 
 		setCheckResults(measurementSession, checkResults);
 	}
@@ -37,22 +42,20 @@ public class Incident {
 		oldStatus = previousIncident.newStatus;
 		checkId = previousIncident.checkId;
 		checkName = previousIncident.checkName;
-		resultsByHostAndInstance = previousIncident.resultsByHostAndInstance;
-		firstFailAt = previousIncident.getFirstFailAt();
+		checkResultsByMeasurementSession = previousIncident.checkResultsByMeasurementSession;
+		firstFailureAt = previousIncident.getFirstFailureAt();
 
 		setCheckResults(measurementSession, checkResults);
 	}
 
 	private void setCheckResults(MeasurementSession measurementSession, List<CheckResult> checkResults) {
-		final String host = measurementSession.getHostName();
-		final String instance = measurementSession.getInstanceName();
-		final CheckResultsByInstance checkResultsByInstance = resultsByHostAndInstance.get(host);
-		if (isRemoveHost(checkResults, instance, checkResultsByInstance)) {
-			resultsByHostAndInstance.remove(host);
-		} else if (checkResultsByInstance != null) {
-			checkResultsByInstance.addCheckResults(instance, checkResults);
+		if (checkResults.isEmpty()) {
+			checkResultsByMeasurementSession.remove(measurementSession);
+		} else if (checkResultsByMeasurementSession.containsKey(measurementSession)) {
+			checkResultsByMeasurementSession.put(measurementSession,
+					new CheckResults(checkResultsByMeasurementSession.get(measurementSession), checkResults));
 		} else {
-			resultsByHostAndInstance.put(host, new CheckResultsByInstance(instance, checkResults));
+			checkResultsByMeasurementSession.put(measurementSession, new CheckResults(measurementSession, checkResults));
 		}
 		newStatus = getMostSevereStatus();
 		if (newStatus == CheckResult.Status.OK) {
@@ -60,24 +63,37 @@ public class Incident {
 		}
 	}
 
-	private boolean isRemoveHost(List<CheckResult> checkResults, String instance, CheckResultsByInstance checkResultsByInstance) {
-		return checkResults.isEmpty() && checkResultsByInstance != null && checkResultsByInstance.isOnlyInstance(instance);
+	public Collection<CheckResults> getCheckResults() {
+		return checkResultsByMeasurementSession.values();
 	}
 
-	public CheckResult.Status getMostSevereStatus() {
-		CheckResult.Status mostSevereStatus = CheckResult.Status.OK;
-		for (CheckResultsByInstance checkResultByInstance : resultsByHostAndInstance.values()) {
-			final CheckResult.Status mostSevereStatusOfInstance = checkResultByInstance.getMostSevereStatus();
-			if (mostSevereStatusOfInstance.isMoreSevere(mostSevereStatus)) {
-				mostSevereStatus = mostSevereStatusOfInstance;
-			}
+	public Collection<String> getHosts() {
+		Set<String> hosts = new TreeSet<String>();
+		for (MeasurementSession measurementSession : checkResultsByMeasurementSession.keySet()) {
+			hosts.add(measurementSession.getHostName());
 		}
-		return mostSevereStatus;
+		return hosts;
+	}
+
+	public Collection<String> getInstances() {
+		Set<String> instances = new TreeSet<String>();
+		for (MeasurementSession measurementSession : checkResultsByMeasurementSession.keySet()) {
+			instances.add(measurementSession.getInstanceName());
+		}
+		return instances;
+	}
+
+	private CheckResult.Status getMostSevereStatus() {
+		LinkedList<CheckResult> results = new LinkedList<CheckResult>();
+		for (CheckResults checkResults : checkResultsByMeasurementSession.values()) {
+			results.addAll(checkResults.getResults());
+		}
+		return CheckResult.getMostSevereStatus(results);
 	}
 
 	public int getConsecutiveFailures() {
 		int consecutiveFailures = 0;
-		for (CheckResultsByInstance checkResultByInstance : resultsByHostAndInstance.values()) {
+		for (CheckResults checkResultByInstance : checkResultsByMeasurementSession.values()) {
 			consecutiveFailures = Math.max(consecutiveFailures, checkResultByInstance.getConsecutiveFailures());
 		}
 		return consecutiveFailures;
@@ -96,12 +112,12 @@ public class Incident {
 		this.version = version;
 	}
 
-	public Date getFirstFailAt() {
-		return firstFailAt;
+	public Date getFirstFailureAt() {
+		return firstFailureAt;
 	}
 
-	public void setFirstFailAt(Date firstFailAt) {
-		this.firstFailAt = firstFailAt;
+	public void setFirstFailureAt(Date firstFailureAt) {
+		this.firstFailureAt = firstFailureAt;
 	}
 
 	public CheckResult.Status getOldStatus() {
@@ -150,14 +166,6 @@ public class Incident {
 		return oldStatus != newStatus;
 	}
 
-	public Map<String, CheckResultsByInstance> getResultsByHostAndInstance() {
-		return resultsByHostAndInstance;
-	}
-
-	public void setResultsByHostAndInstance(Map<String, CheckResultsByInstance> resultsByHostAndInstance) {
-		this.resultsByHostAndInstance = resultsByHostAndInstance;
-	}
-
 	public Date getResolvedAt() {
 		return resolvedAt;
 	}
@@ -187,6 +195,7 @@ public class Incident {
 		return result;
 	}
 
+	@JsonIgnore
 	public Incident getIncidentWithPreviousVersion() {
 		final Incident incident = new Incident();
 		incident.setCheckId(checkId);
@@ -197,20 +206,17 @@ public class Incident {
 	@Override
 	public String toString() {
 		String s = "Incident for check group '" + checkName + "':\n" +
-				"firstFailAt=" + firstFailAt + "\n" +
+				"firstFailureAt=" + firstFailureAt + "\n" +
 				"resolvedAt=" + resolvedAt + "\n" +
 				"oldStatus=" + oldStatus + "\n" +
 				"newStatus=" + newStatus + "\n" +
 				"host|instance|status|description|current value\n" +
 				"----|--------|------|-----------|-------------\n";
-		for (Map.Entry<String, CheckResultsByInstance> hostEntry : resultsByHostAndInstance.entrySet()) {
-			final String host = hostEntry.getKey();
-			for (Map.Entry<String, ResultOnSpecificHostAndInstance> instanceEntry : hostEntry.getValue().getResultsByInstance().entrySet()) {
-				final String instance = instanceEntry.getKey();
-				for (CheckResult result : instanceEntry.getValue().getResults()) {
-					s += host + '|' + instance + '|' + result.getStatus() + '|' + result.getFailingExpression() +
-							'|' + result.getCurrentValue()+ "\n";
-				}
+		for (Map.Entry<MeasurementSession, CheckResults> entry : checkResultsByMeasurementSession.entrySet()) {
+			MeasurementSession measurement = entry.getKey();
+			for (CheckResult result : entry.getValue().getResults()) {
+				s += measurement.getHostName() + '|' + measurement.getInstanceName() + '|' + result.getStatus() + '|' + result.getFailingExpression() +
+						'|' + result.getCurrentValue() + "\n";
 			}
 		}
 		return s;

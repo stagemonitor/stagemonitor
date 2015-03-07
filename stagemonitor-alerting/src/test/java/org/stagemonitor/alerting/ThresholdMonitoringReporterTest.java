@@ -3,6 +3,7 @@ package org.stagemonitor.alerting;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -34,11 +35,13 @@ import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
+import org.stagemonitor.alerting.incident.CheckResults;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
+import org.stagemonitor.core.util.JsonUtils;
 
 public class ThresholdMonitoringReporterTest {
 
@@ -61,7 +64,7 @@ public class ThresholdMonitoringReporterTest {
 
 	@Test
 	public void testAlerting() throws Exception {
-		Check check = createCheckGroupCheckingMean(1, 5);
+		Check check = createCheckCheckingMean(1, 5);
 
 		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 
@@ -74,7 +77,8 @@ public class ThresholdMonitoringReporterTest {
 		assertEquals(CheckResult.Status.OK, incident.getValue().getOldStatus());
 		assertEquals(CheckResult.Status.WARN, incident.getValue().getNewStatus());
 
-		List<CheckResult> checkResults = incident.getValue().getResultsByHostAndInstance().get("testHost").getResultsByInstance("testInstance").getResults();
+		assertEquals(1, incident.getValue().getCheckResults().size());
+		List<CheckResult> checkResults = incident.getValue().getCheckResults().iterator().next().getResults();
 		assertEquals(2, checkResults.size());
 
 		CheckResult result = checkResults.get(0);
@@ -85,7 +89,7 @@ public class ThresholdMonitoringReporterTest {
 
 	@Test
 	public void testAlertAfter2Failures() throws Exception {
-		Check check = createCheckGroupCheckingMean(2, 6);
+		Check check = createCheckCheckingMean(2, 6);
 
 		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 
@@ -100,28 +104,28 @@ public class ThresholdMonitoringReporterTest {
 
 	@Test
 	public void testNoAlertWhenFailureRecovers() throws Exception {
-		Check check = createCheckGroupCheckingMean(2, 6);
+		Check check = createCheckCheckingMean(2, 6);
 		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 
 		checkMetrics(7, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
-		final Incident incident = incidentRepository.getIncidentByCheckGroupId(check.getId());
+		final Incident incident = incidentRepository.getIncidentByCheckId(check.getId());
 		assertNotNull(incident);
 		assertEquals(CheckResult.Status.OK, incident.getOldStatus());
 		assertEquals(CheckResult.Status.WARN, incident.getNewStatus());
-		assertNotNull(incident.getFirstFailAt());
+		assertNotNull(incident.getFirstFailureAt());
 		assertNull(incident.getResolvedAt());
 		assertEquals(1, incident.getConsecutiveFailures());
 		System.out.println(incident);
 
 		checkMetrics(1, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
-		assertNull(incidentRepository.getIncidentByCheckGroupId(check.getId()));
+		assertNull(incidentRepository.getIncidentByCheckId(check.getId()));
 	}
 
 	@Test
 	public void testDontDeleteIncidentIfThereAreNonOkResultsFromOtherInstances() {
-		Check check = createCheckGroupCheckingMean(2, 6);
+		Check check = createCheckCheckingMean(2, 6);
 		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 		incidentRepository.createIncident(
 				new Incident(check, new MeasurementSession("testApp", "testHost2", "testInstance"),
@@ -130,26 +134,36 @@ public class ThresholdMonitoringReporterTest {
 		checkMetrics(7, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
 		verify(incidentRepository).updateIncident(any(Incident.class));
-		Incident storedIncident = incidentRepository.getIncidentByCheckGroupId(check.getId());
+		Incident storedIncident = incidentRepository.getIncidentByCheckId(check.getId());
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getOldStatus());
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getNewStatus());
-		assertEquals(1, storedIncident.getResultsByHostAndInstance().get("testHost").getResultsByInstance("testInstance").getResults().size());
-		assertEquals(1, storedIncident.getResultsByHostAndInstance().get("testHost2").getResultsByInstance("testInstance").getResults().size());
+		assertEquals(2, storedIncident.getCheckResults().size());
+		boolean containsTestHost = false;
+		boolean containsTestHost2 = false;
+		for (CheckResults checkResults : storedIncident.getCheckResults()) {
+			if (checkResults.getMeasurementSession().getHostName().equals("testHost2")) {
+				containsTestHost2 = true;
+			} else if (checkResults.getMeasurementSession().getHostName().equals("testHost")) {
+				containsTestHost = true;
+			}
+		}
+		assertTrue(containsTestHost);
+		assertTrue(containsTestHost2);
 		System.out.println(storedIncident);
+		System.out.println(JsonUtils.toJson(storedIncident));
 
 		checkMetrics(1, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
 		verify(incidentRepository, times(0)).deleteIncident(any(Incident.class));
 		verify(incidentRepository, times(2)).updateIncident(any(Incident.class));
 
-		storedIncident = incidentRepository.getIncidentByCheckGroupId(check.getId());
+		storedIncident = incidentRepository.getIncidentByCheckId(check.getId());
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getOldStatus());
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getNewStatus());
-		assertNull(storedIncident.getResultsByHostAndInstance().get("testHost"));
-		assertEquals(1, storedIncident.getResultsByHostAndInstance().get("testHost2").getResultsByInstance("testInstance").getResults().size());
+		assertEquals(1, storedIncident.getCheckResults().size());
 	}
 
-	private Check createCheckGroupCheckingMean(int alertAfterXFailures, long meanMs) {
+	private Check createCheckCheckingMean(int alertAfterXFailures, long meanMs) {
 		Check check = new Check();
 		check.setName("Test Timer");
 		check.setApplication("testApp");

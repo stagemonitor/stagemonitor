@@ -1,6 +1,6 @@
 package org.stagemonitor.alerting.check;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * The result of a check
@@ -17,7 +17,7 @@ public class CheckResult {
 		this.status = status;
 	}
 
-	public static Status getMostSevereStatus(List<CheckResult> results) {
+	public static Status getMostSevereStatus(Collection<CheckResult> results) {
 		Status mostSevereStatus = Status.OK;
 		for (CheckResult result : results) {
 			if (result.getStatus().isMoreSevere(mostSevereStatus)) {

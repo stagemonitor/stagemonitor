@@ -33,35 +33,17 @@
 
 			<hr>
 			<table id="incidents-table" class="display" cellspacing="0" width="100%">
-				<h3>Incidents</h3>
+				<h3>Open Incidents</h3>
 				<thead>
 				<tr>
 					<th>Name</th>
-					<th>Application</th>
-					<th>Host</th>
-					<th>Instance</th>
+					<th>Hosts</th>
+					<th>Instances</th>
 					<th>First Failure</th>
-					<th>Failing Expression</th>
-					<th>Current Value</th>
-					<th>From</th>
-					<th>To</th>
+					<th>Status</th>
+					<th>Details</th>
 				</tr>
 				</thead>
-
-				<tbody>
-				<tr>
-					<td>Search Response Time</td>
-					<td>Spring Petclinic</td>
-					<td>n51</td>
-					<td>petclinic.com</td>
-					<td>2015-01-19T20:05:39</td>
-					<td>request.Search > 5000</td>
-					<td>5123</td>
-					<td><span class="label label-success">OK</span></td>
-					<td><span class="label label-warning">WARN</span></td>
-				</tr>
-				</tbody>
-
 			</table>
 		</div>
 
@@ -85,9 +67,11 @@
 			<table id="checks-table" class="display" cellspacing="0" width="100%">
 				<thead>
 				<tr>
+					<th>Application</th>
 					<th>Name</th>
 					<th>Target</th>
 					<th>Alert after x failures</th>
+					<th>Active</th>
 					<th>Edit</th>
 					<th>Delete</th>
 				</tr>
@@ -201,6 +185,14 @@
 		<form id="check-form" data-parsley-validate>
 			<input type="hidden" name="id" value="{{check.id}}">
 
+			<div class="form-group">
+				<label for="name-input">Application</label>
+				<input id="name-input" name="application" class="form-control" value="{{check.application}}" required>
+			</div>
+			<div class="form-group">
+				<label>Active</label>
+					<input name="active" type="checkbox" class="checkbox" {{#if check.active}}checked{{/if}}>
+			</div>
 			<div class="form-group">
 				<label for="name-input">Name</label>
 				<input id="name-input" name="name" class="form-control" value="{{check.name}}" required>
