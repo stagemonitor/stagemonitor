@@ -30,7 +30,7 @@
 			</label>
 
 			<div class="col-sm-2">
-				<select class="form-control rounded" name="configurationSource">
+				<select id="configuration-source" class="form-control rounded" name="configurationSource">
 					{{#each configurationSources}}
 					<option value="{{@key}}"
 					{{#unless this}}disabled{{/unless}}>{{@key}}</option>
@@ -61,7 +61,7 @@
 			</label>
 
 			<div class="col-sm-2">
-				<input type="password" class="form-control rounded" name="stagemonitor.password">
+				<input id="stagemonitor-password" type="password" class="form-control rounded" name="stagemonitor.password">
 			</div>
 		</div>
 	</form>

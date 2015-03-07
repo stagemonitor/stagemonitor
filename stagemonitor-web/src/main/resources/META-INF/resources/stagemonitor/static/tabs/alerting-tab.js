@@ -70,14 +70,17 @@ function renderAlertsTab() {
 		return stagemonitor.baseUrl + "/stagemonitor/subscriptions?" + $("#password-form").serialize() + "&id=" + id;
 	}
 
+	function getConfigValue(configurationCategory, configurationKey) {
+		return $.grep(stagemonitor.configurationOptions[configurationCategory], function (configOption) {
+			return configOption.key == configurationKey;
+		})[0].valueAsString;
+	}
+
 	function incidentsPage(subscriptionModalTemplate, subscriptionsPartial) {
 		var incidents = [];
 		var alerterTypes = ["Email", "PagerDuty", "SMS"];
-		var subscriptionsById = {};
-		$.getJSON(stagemonitor.baseUrl + "/stagemonitor/subscriptions", function (result) {
-			subscriptionsById = result;
-			renderSubscriptionsPartial();
-		});
+		var subscriptionsById = JSON.parse(getConfigValue("Alerting", "stagemonitor.alerts.subscriptions"));
+		renderSubscriptionsPartial();
 
 		$("#incidents-table").dataTable();
 
@@ -91,10 +94,14 @@ function renderAlertsTab() {
 
 		$("#subscriptions").on("click", ".remove-subscription", function () {
 			var id = $(this).parent().parent().data('subscription-id');
-			$.ajax({ type: "DELETE", url: getSubscriptionsUrl(id)})
+
+			var clonedSubscriptions = utils.clone(subscriptionsById);
+			delete clonedSubscriptions[id];
+			$.post(stagemonitor.baseUrl + "/stagemonitor/configuration",
+					getConfigData("stagemonitor.alerts.subscriptions", clonedSubscriptions))
 				.done(function () {
 					utils.successMessage("Successfully removed subscription");
-					delete subscriptionsById[id];
+					subscriptionsById = clonedSubscriptions;
 					renderSubscriptionsPartial();
 				}).fail(function (xhr) {
 					utils.errorMessage(xhr.responseText || "Failed to remove subscription");
@@ -115,15 +122,17 @@ function renderAlertsTab() {
 				if (!subscription.id) {
 					subscription.id = utils.generateUUID();
 				}
-				$.ajax({type: "PUT", url: getSubscriptionsUrl(subscription.id), data: JSON.stringify(subscription) })
-					.done(function () {
-						utils.successMessage("Successfully saved subscription");
-						subscriptionsById[subscription.id] = subscription;
+
+				var clonedSubscriptions = utils.clone(subscriptionsById);
+				clonedSubscriptions[subscription.id] = subscription;
+				$.post(stagemonitor.baseUrl + "/stagemonitor/configuration",
+						getConfigData("stagemonitor.alerts.subscriptions", clonedSubscriptions)).done(function () {
+						utils.successMessage("Successfully saved subscription into " + $("#configuration-source").val());
+						subscriptionsById = clonedSubscriptions;
 						renderSubscriptionsPartial();
 					}).fail(function (xhr) {
 						utils.errorMessage(xhr.responseText || "Failed to save subscription");
 					});
-
 			}
 		});
 
@@ -136,17 +145,25 @@ function renderAlertsTab() {
 		}
 	}
 
+	function getConfigData(key, value) {
+		return {
+			key: key,
+			value: JSON.stringify(value),
+			configurationSource: $("#configuration-source").val(),
+			"stagemonitor.password": $("#stagemonitor-password").val()
+		};
+	}
+
 	function checksPage(checkModalTemplate) {
-		var checksById = {};
+		var checksById = JSON.parse(getConfigValue("Alerting", "stagemonitor.alerts.checks"));
 		var checksTable;
-		$.getJSON(stagemonitor.baseUrl + "/stagemonitor/checks", function (result) {
-			checksById = result;
-			renderChecksTable();
-		});
+
+		renderChecksTable();
 
 		function renderChecksTable() {
 			checksTable = $("#checks-table").dataTable({
 				data: getData(),
+				aaSorting: [],
 				columns: [
 					{ data: "name" },
 					{ data: "target" },
@@ -169,10 +186,14 @@ function renderAlertsTab() {
 
 		$("#checks-table").on('click', '.delete-check', function () {
 			var id = $(this).data('check-id');
-			$.ajax({ type: "DELETE", url: getChecksUrl(id)})
+			var clonedChecks = utils.clone(checksById);
+			delete clonedChecks[id];
+
+			$.post(stagemonitor.baseUrl + "/stagemonitor/configuration",
+					getConfigData("stagemonitor.alerts.checks", clonedChecks))
 				.done(function () {
 					utils.successMessage("Successfully removed check");
-					delete checksById[ id];
+					checksById = clonedChecks;
 					updateChecksTable();
 				}).fail(function (xhr) {
 					utils.errorMessage(xhr.responseText || "Failed to remove check");
@@ -189,10 +210,13 @@ function renderAlertsTab() {
 					check.id = utils.generateUUID();
 				}
 
-				$.ajax({type: "PUT", url: getChecksUrl(check.id), data: JSON.stringify(check) })
+				var clonedChecks = utils.clone(checksById);
+				clonedChecks[check.id] = check;
+				$.post(stagemonitor.baseUrl + "/stagemonitor/configuration",
+						getConfigData("stagemonitor.alerts.checks", clonedChecks))
 					.done(function () {
-						utils.successMessage("Successfully saved check");
-						checksById[check.id] = check;
+						utils.successMessage("Successfully saved check into " + $("#configuration-source").val());
+						checksById = clonedChecks;
 						updateChecksTable();
 					}).fail(function (xhr) {
 						utils.errorMessage(xhr.responseText || "Failed to save check");
