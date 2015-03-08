@@ -28,6 +28,7 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.DefaultMonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
@@ -49,16 +50,16 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private final MonitoredHttpRequestFactory monitoredHttpRequestFactory;
 
 	public HttpRequestMonitorFilter() {
-		this(Stagemonitor.getConfiguration(), new RequestMonitor(Stagemonitor.getConfiguration()), Stagemonitor.getMetricRegistry());
+		this(Stagemonitor.getConfiguration(), Stagemonitor.getMetricRegistry());
 	}
 
-	public HttpRequestMonitorFilter(Configuration configuration, RequestMonitor requestMonitor, MetricRegistry metricRegistry) {
+	public HttpRequestMonitorFilter(Configuration configuration, MetricRegistry metricRegistry) {
 		super(configuration.getConfig(WebPlugin.class).getExcludedRequestPaths());
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
-		this.requestMonitor = requestMonitor;
 		this.metricRegistry = metricRegistry;
+		this.requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
 
 		final Iterator<MonitoredHttpRequestFactory> requestFactoryIterator = ServiceLoader.load(MonitoredHttpRequestFactory.class).iterator();
 		if (!requestFactoryIterator.hasNext()) {

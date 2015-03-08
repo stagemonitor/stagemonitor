@@ -89,6 +89,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 
+	private static RequestMonitor requestMonitor;
+
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
 		addElasticsearchMapping();
@@ -106,6 +108,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	@Override
 	public List<String> getPathsOfWidgetMetricTabPlugins() {
 		return Arrays.asList("/stagemonitor/static/tabs/metrics/request-metrics");
+	}
+
+	public RequestMonitor getRequestMonitor() {
+		if (requestMonitor == null) {
+			requestMonitor = new RequestMonitor();
+		}
+		return requestMonitor;
 	}
 
 	public int getNoOfWarmupRequests() {

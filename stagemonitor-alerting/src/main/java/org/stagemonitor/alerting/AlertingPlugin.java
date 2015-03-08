@@ -63,12 +63,11 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
-		final AlertingPlugin config = configuration.getConfig(AlertingPlugin.class);
-		// TODO make configurable
-		alerterFactory = new AlerterFactory(config);
+		final AlertingPlugin alertingPlugin = configuration.getConfig(AlertingPlugin.class);
+		alerterFactory = new AlerterFactory(configuration);
 		incidentRepository = new ConcurrentMapIncidentRepository(new ConcurrentHashMap<String, Incident>());
-		new ThresholdMonitoringReporter(metricRegistry, config, alerterFactory, incidentRepository, Stagemonitor.getMeasurementSession())
-				.start(config.checkFrequency.getValue(), TimeUnit.SECONDS);
+		new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alerterFactory, incidentRepository, Stagemonitor.getMeasurementSession())
+				.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
 	}
 
 	@Override

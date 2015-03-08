@@ -10,8 +10,13 @@ import org.stagemonitor.core.configuration.Configuration;
 @Aspect
 public abstract class RequestMonitorAspect {
 
-	protected Configuration configuration = Stagemonitor.getConfiguration();
-	protected RequestMonitor requestMonitor = new RequestMonitor(configuration);
+	protected Configuration configuration;
+	protected RequestMonitor requestMonitor;
+
+	protected RequestMonitorAspect() {
+		configuration = Stagemonitor.getConfiguration();
+		requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
+	}
 
 	@Pointcut
 	public abstract void methodsToMonitor();

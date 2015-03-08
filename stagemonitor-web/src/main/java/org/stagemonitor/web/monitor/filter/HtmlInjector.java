@@ -25,6 +25,8 @@ public interface HtmlInjector {
 
 	/**
 	 * Implementations can return html snippets that are injected just before the closing body tag.
+	 * <p/>
+	 * <b>Note:</b> {@link org.stagemonitor.requestmonitor.RequestMonitor.RequestInformation#getRequestTrace()} may be null
 	 *
 	 * @param requestInformation information about the current request
 	 * @return the code to inject into html documents just before the closing body tag

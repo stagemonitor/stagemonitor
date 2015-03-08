@@ -22,7 +22,7 @@ public final class Stagemonitor {
 	private static volatile boolean started;
 	private static volatile boolean disabled;
 	private static volatile MeasurementSession measurementSession;
-	private static List<String> pathsOfWidgetMetricTabPlugins;
+	private static List<String> pathsOfWidgetMetricTabPlugins = Collections.emptyList();
 
 	static {
 		reset();
@@ -31,7 +31,7 @@ public final class Stagemonitor {
 	private Stagemonitor() {
 	}
 
-	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
+	public synchronized static void setMeasurementSession(MeasurementSession measurementSession) {
 		if (!getConfiguration(CorePlugin.class).isStagemonitorActive()) {
 			logger.info("stagemonitor is deactivated");
 			disabled = true;
@@ -40,6 +40,9 @@ public final class Stagemonitor {
 			return;
 		}
 		Stagemonitor.measurementSession = measurementSession;
+	}
+
+	public synchronized static void startMonitoring() {
 		if (measurementSession.isInitialized() && !started) {
 			try {
 				start(measurementSession);
@@ -51,6 +54,11 @@ public final class Stagemonitor {
 			logger.warn("make sure the properties 'stagemonitor.instanceName' and 'stagemonitor.applicationName' " +
 					"are set and stagemonitor.properties is available in the classpath");
 		}
+	}
+
+	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
+		setMeasurementSession(measurementSession);
+		startMonitoring();
 	}
 
 	private static void start(MeasurementSession measurementSession) {

@@ -12,6 +12,7 @@ import java.util.Set;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.incident.Incident;
+import org.stagemonitor.core.configuration.Configuration;
 
 public class AlerterFactory {
 
@@ -19,8 +20,8 @@ public class AlerterFactory {
 	private final Map<String, Alerter> alerterByType;
 	private final LogAlerter logAlerter = new LogAlerter();
 
-	public AlerterFactory(AlertingPlugin alertingPlugin) {
-		this.alertingPlugin = alertingPlugin;
+	public AlerterFactory(Configuration configuration) {
+		this.alertingPlugin = configuration.getConfig(AlertingPlugin.class);
 		Map<String, Alerter> alerters = new HashMap<String, Alerter>();
 		for (Alerter alerter : ServiceLoader.load(Alerter.class)) {
 			alerters.put(alerter.getAlerterType(), alerter);
@@ -39,10 +40,10 @@ public class AlerterFactory {
 
 	public Collection<Alerter> getAlerters(Check check, Incident incident) {
 		Set<Alerter> alerters = new HashSet<Alerter>(alerterByType.size());
-		alerters.add(logAlerter);
 		if (alertingPlugin.isMuteAlerts()) {
 			return alerters;
 		}
+		alerters.add(logAlerter);
 		for (Subscription subscription : alertingPlugin.getSubscriptionsByIds().values()) {
 			if (subscription.isAlertOn(incident.getNewStatus())) {
 				alerters.add(alerterByType.get(subscription.getAlerterType()));

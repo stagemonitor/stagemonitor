@@ -54,6 +54,19 @@ public class HttpRequestMonitorFilterTest {
 
 	@Before
 	public void before() throws Exception {
+		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
+		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<RequestMonitor.RequestInformation<?>>() {
+			@Override
+			public RequestMonitor.RequestInformation<?> answer(InvocationOnMock invocation) throws Throwable {
+				MonitoredRequest<?> request = (MonitoredRequest<?>) invocation.getArguments()[0];
+				request.execute();
+				when(requestTrace.toJson()).thenReturn("");
+				when(requestTrace.getName()).thenReturn("testName");
+				when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
+				return requestInformation;
+			}
+		});
+
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
@@ -62,6 +75,7 @@ public class HttpRequestMonitorFilterTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		when(corePlugin.getApplicationName()).thenReturn("testApplication");
 		when(corePlugin.getInstanceName()).thenReturn("testInstance");
 
@@ -78,19 +92,8 @@ public class HttpRequestMonitorFilterTest {
 		when(servlet3Context.addServlet(anyString(), any(Servlet.class))).thenReturn(mock(ServletRegistration.Dynamic.class));
 		final FilterConfig filterConfig = spy(new MockFilterConfig());
 		when(filterConfig.getServletContext()).thenReturn(servlet3Context);
-		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
-		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<RequestMonitor.RequestInformation<?>>() {
-			@Override
-			public RequestMonitor.RequestInformation<?> answer(InvocationOnMock invocation) throws Throwable {
-				MonitoredRequest<?> request = (MonitoredRequest<?>) invocation.getArguments()[0];
-				request.execute();
-				when(requestTrace.toJson()).thenReturn("");
-				when(requestTrace.getName()).thenReturn("testName");
-				when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
-				return requestInformation;
-			}
-		});
-		httpRequestMonitorFilter = new HttpRequestMonitorFilter(configuration, requestMonitor, mock(MetricRegistry.class));
+
+		httpRequestMonitorFilter = new HttpRequestMonitorFilter(configuration, mock(MetricRegistry.class));
 		httpRequestMonitorFilter.initInternal(filterConfig);
 	}
 
