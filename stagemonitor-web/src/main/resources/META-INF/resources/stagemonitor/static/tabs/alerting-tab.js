@@ -3,23 +3,28 @@ function renderAlertsTab() {
 	var metricCategories = {
 		TIMER: {
 			label: "Timer",
+			value: "timers",
 			metrics: ["count", "mean", "min", "max", "stddev", "p50", "p75", "p95", "p98", "p99", "p999",
 				"mean_rate", "m1_rate", "m5_rate", "m15_rate"]
 		},
 		GAUGE: {
 			label: "Gauge",
+			value: "gauges",
 			metrics: ["value"]
 		},
 		METER: {
 			label: "Meter",
+			value: "meters",
 			metrics: ["count", "mean_rate", "m1_rate", "m5_rate", "m15_rate"]
 		},
 		HISTOGRAM: {
 			label: "Histogram",
+			value: "histograms",
 			metrics: ["count", "mean", "min", "max", "stddev", "p50", "p75", "p95", "p98", "p99", "p999"]
 		},
 		COUNTER: {
 			label: "Counter",
+			value: "counters",
 			metrics: ["count"]
 		}
 	};
@@ -311,13 +316,61 @@ function renderAlertsTab() {
 		}
 
 		function renderCheckModal(title, check) {
+			var metricCategory = metricCategories[check.metricCategory || 'TIMER'];
 			$("#check-modal-content").html(checkModalTemplate({
 				title: title,
 				check: check,
 				metricCategories: metricCategories,
-				metrics: metricCategories[check.metricCategory || 'TIMER'].metrics
+				metrics: metricCategory.metrics
 			}));
+			$(".tip").tooltip({html: true});
+			$.getJSON(stagemonitor.baseUrl + "/stagemonitor/metrics", function (metrics) {
+				var source = Object.keys(metrics[metricCategory.value]);
+				$("#target-input").typeahead({
+						hint: true,
+						highlight: true,
+						minLength: 0
+					},
+					{
+						name: 'targets',
+						displayKey: 'value',
+						source: substringMatcher(source)
+					}).on('keyup typeahead:closed', function () {
+						var matches = 0;
+						var regExp = new RegExp($(this).val());
+						for (var i = 0; i < source.length; i++) {
+							if (regExp.test(source[i])) {
+								matches++;
+							}
+						}
+						$("#target-matches-input").val(matches);
+					});
+			});
 		}
+
+		var substringMatcher = function(strs) {
+			return function findMatches(q, cb) {
+				var matches, substrRegex;
+
+				// an array that will be populated with substring matches
+				matches = [];
+
+				// regex used to determine if a string contains the substring `q`
+				substrRegex = new RegExp(q, 'i');
+
+				// iterate through the pool of strings and for any string that
+				// contains the substring `q`, add it to the `matches` array
+				$.each(strs, function(i, str) {
+					if (substrRegex.test(str)) {
+						// the typeahead jQuery plugin expects suggestions to a
+						// JavaScript object, refer to typeahead docs for more info
+						matches.push({ value: str });
+					}
+				});
+
+				cb(matches);
+			};
+		};
 
 		function getChecksArray() {
 			var data = $.map(checksById, function (value, index) {

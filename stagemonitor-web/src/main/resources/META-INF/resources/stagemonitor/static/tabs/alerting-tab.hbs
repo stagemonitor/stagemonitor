@@ -90,7 +90,7 @@
 	<!-- Check Modal -->
 	<div class="modal fade" id="check-modal" tabindex="-1" role="dialog"
 		 aria-labelledby="check-modal-label" aria-hidden="true">
-		<div class="modal-dialog">
+		<div class="modal-dialog modal-lg">
 			<div id="check-modal-content" class="modal-content">
 			</div>
 		</div>
@@ -182,38 +182,58 @@
 		<h4 class="modal-title" id="check-modal-label">{{title}}</h4>
 	</div>
 	<div class="modal-body">
-		<form id="check-form" data-parsley-validate>
+		<form id="check-form" class="form-horizontal" data-parsley-validate>
 			<input type="hidden" name="id" value="{{check.id}}">
 
 			<div class="form-group">
-				<label for="name-input">Application</label>
-				<input id="name-input" name="application" class="form-control" value="{{check.application}}" required>
+				<label for="name-input" class="col-sm-2 control-label">Application</label>
+				<div class="col-sm-10">
+					<input id="name-input" name="application" class="form-control" value="{{check.application}}" required>
+				</div>
 			</div>
 			<div class="form-group">
-				<label>Active</label>
+				<label class="col-sm-2 control-label">Active</label>
+				<div class="col-sm-10">
 					<input name="active" type="checkbox" class="checkbox" {{#if check.active}}checked{{/if}}>
+				</div>
 			</div>
 			<div class="form-group">
-				<label for="name-input">Name</label>
-				<input id="name-input" name="name" class="form-control" value="{{check.name}}" required>
+				<label class="col-sm-2 control-label" for="name-input">Name</label>
+				<div class="col-sm-10">
+					<input id="name-input" name="name" class="form-control" value="{{check.name}}" required>
+				</div>
 			</div>
 			<div class="form-group">
-				<label for="alertAfterXFailures-label">Alert after x failures</label>
-				<input id="alertAfterXFailures-label" name="alertAfterXFailures" type="number"
+				<label class="col-sm-2 control-label" for="alertAfterXFailures-label">Alert after x failures</label>
+				<div class="col-sm-10">
+					<input id="alertAfterXFailures-label" name="alertAfterXFailures" type="number"
 					   class="form-control" value="{{check.alertAfterXFailures}}" min="1" required>
+				</div>
 			</div>
 			<div class="form-group">
-				<label for="metric-category-input">Metric Category</label>
-				<select id="metric-category-input" class="form-control" name="metricCategory">
-					{{#each metricCategories}}
-						<option value="{{@key}}"
-								{{#ifCond @key '==' ../check.metricCategory}}selected{{/ifCond}}>{{this.label}}</option>
-					{{/each}}
-				</select>
+				<label class="col-sm-2 control-label" for="metric-category-input">Metric Category</label>
+				<div class="col-sm-10">
+					<select id="metric-category-input" class="form-control" name="metricCategory">
+						{{#each metricCategories}}
+							<option value="{{@key}}"
+									{{#ifCond @key '==' ../check.metricCategory}}selected{{/ifCond}}>{{this.label}}</option>
+						{{/each}}
+					</select>
+				</div>
 			</div>
 			<div class="form-group">
-				<label for="target-input">Target</label>
-				<input id="target-input" class="form-control" name="target" value="{{check.target}}" required>
+				<label class="col-sm-2 control-label" for="target-input">
+					Target
+					<span class="glyphicon glyphicon-question-sign tip"
+						  title="Enter a regex to select one or multiple targets. For example 'requests.*.server.time.total'"></span>
+				</label>
+				<div class="col-sm-7">
+					<input id="target-input" type="text" class="form-control typeahead" name="target" value="{{check.target}}" required>
+				</div>
+				<label class="col-sm-1 control-label" for="target-input">Matches</label>
+				<div class="col-sm-2">
+					<input id="target-matches-input" class="form-control" disabled>
+				</div>
 			</div>
 
 			{{#each check.thresholds}}
@@ -243,12 +263,12 @@
 									</option>
 								</select>
 							</div>
-							<div class="col-lg-4">
+							<div class="col-lg-5">
 								<input class="form-control" type="number" step="0.01"
 									   name="thresholds[{{@key}}][][thresholdValue]" value="{{thresholdValue}}"
 									   required>
 							</div>
-							<div class="col-lg-3">
+							<div class="col-lg-2">
 								<a href="#" class="add-threshold btn btn-default" data-severity="{{@key}}"><span
 										class="glyphicon glyphicon-plus"></span></a>
 								<a href="#" class="remove-threshold btn btn-default"><span
