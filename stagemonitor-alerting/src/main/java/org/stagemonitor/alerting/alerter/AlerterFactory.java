@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -18,7 +17,6 @@ public class AlerterFactory {
 
 	private final AlertingPlugin alertingPlugin;
 	private final Map<String, Alerter> alerterByType;
-	private final List<String> availableAlerters;
 
 	public AlerterFactory(AlertingPlugin alertingPlugin) {
 		this.alertingPlugin = alertingPlugin;
@@ -27,15 +25,15 @@ public class AlerterFactory {
 			alerters.put(alerter.getAlerterType(), alerter);
 		}
 		alerterByType = Collections.unmodifiableMap(alerters);
-
-		ArrayList<String> alerterTypes = new ArrayList<String>(alerterByType.keySet());
-		Collections.sort(alerterTypes);
-		availableAlerters = Collections.unmodifiableList(alerterTypes);
-
 	}
 
 	public Collection<String> getAvailableAlerters() {
-		return availableAlerters;
+		ArrayList<String> alerterTypes = new ArrayList<String>(alerterByType.size());
+		for (String alerterType : alerterByType.keySet()) {
+			alerterTypes.add(alerterType);
+		}
+		Collections.sort(alerterTypes);
+		return alerterTypes;
 	}
 
 	public Collection<Alerter> getAlerters(Check check, Incident incident) {

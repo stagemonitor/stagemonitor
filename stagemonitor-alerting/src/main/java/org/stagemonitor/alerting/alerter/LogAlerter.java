@@ -25,6 +25,11 @@ public class LogAlerter implements Alerter {
 
 	@Override
 	public String getAlerterType() {
-		return "Log";
+		return "Log Alerts";
+	}
+
+	@Override
+	public boolean isAvailable() {
+		return true;
 	}
 }

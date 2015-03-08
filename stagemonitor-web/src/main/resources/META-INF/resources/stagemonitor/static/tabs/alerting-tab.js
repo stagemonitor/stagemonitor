@@ -78,7 +78,6 @@ function renderAlertsTab() {
 	}
 
 	function incidentsPage(subscriptionModalTemplate, subscriptionsPartial) {
-		var alerterTypes = ["Email", "PagerDuty", "SMS"];
 		var subscriptionsById = JSON.parse(getConfigValue("Alerting", "stagemonitor.alerts.subscriptions"));
 		renderSubscriptionsPartial();
 
@@ -193,7 +192,7 @@ function renderAlertsTab() {
 			$("#subscription-modal-content").html(subscriptionModalTemplate({
 				title: title,
 				subscription: subscription,
-				alerterTypes: alerterTypes
+				alerterTypes: stagemonitor.alerterTypes
 			}));
 		}
 	}

@@ -25,4 +25,11 @@ public interface Alerter {
 	 */
 	String getAlerterType();
 
+	/**
+	 * An alerter is available, if all required configuration options for the particular Alerter are set.
+	 *
+	 * @return <code>true</code>, if the alerter is available, <code>false</code> otherwise
+	 */
+	boolean isAvailable();
+
 }

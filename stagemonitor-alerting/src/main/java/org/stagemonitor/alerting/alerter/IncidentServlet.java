@@ -1,4 +1,4 @@
-package org.stagemonitor.web.alert;
+package org.stagemonitor.alerting.alerter;
 
 import java.io.IOException;
 import javax.servlet.ServletException;

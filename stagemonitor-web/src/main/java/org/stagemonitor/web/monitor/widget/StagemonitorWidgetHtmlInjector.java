@@ -6,6 +6,7 @@ import javax.servlet.ServletContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.IOUtils;
@@ -18,6 +19,7 @@ import org.stagemonitor.web.monitor.filter.HtmlInjector;
 public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
+	private AlertingPlugin alertingPlugin;
 	private WebPlugin webPlugin;
 	private Configuration configuration;
 	private String widgetTemplate;
@@ -52,6 +54,7 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()))
 				.replace("@@MEASUREMENT_SESSION@@", JsonUtils.toJson(Stagemonitor.getMeasurementSession()))
+				.replace("@@ALERTER_TYPES@@", JsonUtils.toJson(alertingPlugin.getAlerterFactory().getAvailableAlerters()))
 				.replace("@@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@", JsonUtils.toJson(Stagemonitor.getPathsOfWidgetMetricTabPlugins()));
 	}
 }

@@ -1,5 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-core")
+	provided 'javax.servlet:javax.servlet-api:3.0.1'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
 
