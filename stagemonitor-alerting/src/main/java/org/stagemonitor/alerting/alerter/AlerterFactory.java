@@ -17,6 +17,7 @@ public class AlerterFactory {
 
 	private final AlertingPlugin alertingPlugin;
 	private final Map<String, Alerter> alerterByType;
+	private final LogAlerter logAlerter = new LogAlerter();
 
 	public AlerterFactory(AlertingPlugin alertingPlugin) {
 		this.alertingPlugin = alertingPlugin;
@@ -37,10 +38,11 @@ public class AlerterFactory {
 	}
 
 	public Collection<Alerter> getAlerters(Check check, Incident incident) {
-		if (alertingPlugin.isMuteAlerts()) {
-			return Collections.emptyList();
-		}
 		Set<Alerter> alerters = new HashSet<Alerter>(alerterByType.size());
+		alerters.add(logAlerter);
+		if (alertingPlugin.isMuteAlerts()) {
+			return alerters;
+		}
 		for (Subscription subscription : alertingPlugin.getSubscriptionsByIds().values()) {
 			if (subscription.isAlertOn(incident.getNewStatus())) {
 				alerters.add(alerterByType.get(subscription.getAlerterType()));

@@ -1,7 +1,6 @@
 package org.stagemonitor.web.monitor.widget;
 
 import java.io.IOException;
-
 import javax.servlet.ServletContext;
 
 import org.slf4j.Logger;
@@ -28,6 +27,7 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 	public void init(Configuration configuration, ServletContext servletContext) {
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
+		alertingPlugin = configuration.getConfig(AlertingPlugin.class);
 		try {
 			this.widgetTemplate = buildWidgetTemplate(servletContext.getContextPath());
 		} catch (IOException e) {
