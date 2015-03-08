@@ -154,6 +154,6 @@ body {
  * Alerts Tab
  */
 #check-form .tt-dropdown-menu {
-	max-height: 150px;
+	max-height: 20em;
 	overflow-y: auto;
 }

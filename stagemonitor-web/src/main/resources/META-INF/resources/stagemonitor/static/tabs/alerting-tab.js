@@ -325,6 +325,7 @@ function renderAlertsTab() {
 			$(".tip").tooltip({html: true});
 			$.getJSON(stagemonitor.baseUrl + "/stagemonitor/metrics", function (metrics) {
 				var source = Object.keys(metrics[metricCategory.value]);
+				updateMatchesCount();
 				$("#target-input").typeahead({
 						hint: true,
 						highlight: true,
@@ -333,17 +334,19 @@ function renderAlertsTab() {
 					{
 						name: 'targets',
 						displayKey: 'value',
-						source: substringMatcher(source)
-					}).on('keyup typeahead:closed', function () {
-						var matches = 0;
-						var regExp = new RegExp($(this).val());
-						for (var i = 0; i < source.length; i++) {
-							if (regExp.test(source[i])) {
-								matches++;
-							}
+						source: substringMatcher($.map(source, function(str) { return RegExp.quote(str) }))
+					}).on('keyup change', updateMatchesCount);
+
+				function updateMatchesCount() {
+					var matches = 0;
+					var regExp = new RegExp($("#target-input").val());
+					for (var i = 0; i < source.length; i++) {
+						if (regExp.test(source[i])) {
+							matches++;
 						}
-						$("#target-matches-input").val(matches);
-					});
+					}
+					$("#target-matches-input").val(matches);
+				}
 			});
 		}
 
