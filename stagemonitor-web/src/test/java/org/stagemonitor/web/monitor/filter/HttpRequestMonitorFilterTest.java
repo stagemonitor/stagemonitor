@@ -30,6 +30,8 @@ import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.stagemonitor.alerting.AlertingPlugin;
+import org.stagemonitor.alerting.alerter.AlerterFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
@@ -62,6 +64,10 @@ public class HttpRequestMonitorFilterTest {
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
 		when(corePlugin.getApplicationName()).thenReturn("testApplication");
 		when(corePlugin.getInstanceName()).thenReturn("testInstance");
+
+		AlertingPlugin alertingPlugin = mock(AlertingPlugin.class);
+		when(alertingPlugin.getAlerterFactory()).thenReturn(mock(AlerterFactory.class));
+		when(configuration.getConfig(AlertingPlugin.class)).thenReturn(alertingPlugin);
 		initFilter();
 	}
 

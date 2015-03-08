@@ -118,8 +118,20 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		if (incident == null) {
 			return false;
 		}
-		return (incident.hasStageChange() && incident.getConsecutiveFailures() >= check.getAlertAfterXFailures())
-				|| incident.getConsecutiveFailures() == check.getAlertAfterXFailures();
+		if (incident.isBackToOk() && hasEnoughConsecutiveFailures(check, incident)) {
+			return true;
+		}
+		if (incident.hasStageChange() && hasEnoughConsecutiveFailures(check, incident)) {
+			return true;
+		}
+		if (incident.getConsecutiveFailures() == check.getAlertAfterXFailures()) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean hasEnoughConsecutiveFailures(Check check, Incident incident) {
+		return incident.getConsecutiveFailures() >= check.getAlertAfterXFailures();
 	}
 
 	private Incident getOrCreateIncident(Check check, List<CheckResult> results) {

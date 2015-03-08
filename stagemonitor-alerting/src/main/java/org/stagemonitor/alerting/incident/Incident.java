@@ -23,6 +23,7 @@ public class Incident {
 	private CheckResult.Status newStatus;
 	private String checkId;
 	private String checkName;
+	private int consecutiveFailures;
 	private Map<MeasurementSession, CheckResults> checkResultsByMeasurementSession = new HashMap<MeasurementSession, CheckResults>();
 
 	public Incident() {
@@ -34,7 +35,7 @@ public class Incident {
 		this.checkName = check.getName();
 		this.firstFailureAt = new Date();
 
-		setCheckResults(measurementSession, checkResults);
+		setCheckResults(measurementSession, checkResults, 0);
 	}
 
 	public Incident(Incident previousIncident, MeasurementSession measurementSession, List<CheckResult> checkResults) {
@@ -44,11 +45,10 @@ public class Incident {
 		checkName = previousIncident.checkName;
 		checkResultsByMeasurementSession = previousIncident.checkResultsByMeasurementSession;
 		firstFailureAt = previousIncident.getFirstFailureAt();
-
-		setCheckResults(measurementSession, checkResults);
+		setCheckResults(measurementSession, checkResults, previousIncident.consecutiveFailures);
 	}
 
-	private void setCheckResults(MeasurementSession measurementSession, List<CheckResult> checkResults) {
+	private void setCheckResults(MeasurementSession measurementSession, List<CheckResult> checkResults, int previousConsecutiveFailures) {
 		if (checkResults.isEmpty()) {
 			checkResultsByMeasurementSession.remove(measurementSession);
 		} else if (checkResultsByMeasurementSession.containsKey(measurementSession)) {
@@ -61,6 +61,7 @@ public class Incident {
 		if (newStatus == CheckResult.Status.OK) {
 			resolvedAt = new Date();
 		}
+		consecutiveFailures = Math.max(previousConsecutiveFailures, getConsecutiveFailuresFromCheckResults());
 	}
 
 	public Collection<CheckResults> getCheckResults() {
@@ -91,11 +92,15 @@ public class Incident {
 		return CheckResult.getMostSevereStatus(results);
 	}
 
-	public int getConsecutiveFailures() {
+	private int getConsecutiveFailuresFromCheckResults() {
 		int consecutiveFailures = 0;
 		for (CheckResults checkResultByInstance : checkResultsByMeasurementSession.values()) {
 			consecutiveFailures = Math.max(consecutiveFailures, checkResultByInstance.getConsecutiveFailures());
 		}
+		return consecutiveFailures;
+	}
+
+	public int getConsecutiveFailures() {
 		return consecutiveFailures;
 	}
 
@@ -203,22 +208,35 @@ public class Incident {
 		return incident;
 	}
 
+	@JsonIgnore
+	public boolean isBackToOk() {
+		return hasStageChange() && newStatus == CheckResult.Status.OK;
+	}
+
 	@Override
 	public String toString() {
-		String s = "Incident for check group '" + checkName + "':\n" +
-				"firstFailureAt=" + firstFailureAt + "\n" +
-				"resolvedAt=" + resolvedAt + "\n" +
-				"oldStatus=" + oldStatus + "\n" +
-				"newStatus=" + newStatus + "\n" +
-				"host|instance|status|description|current value\n" +
-				"----|--------|------|-----------|-------------\n";
-		for (Map.Entry<MeasurementSession, CheckResults> entry : checkResultsByMeasurementSession.entrySet()) {
-			MeasurementSession measurement = entry.getKey();
-			for (CheckResult result : entry.getValue().getResults()) {
-				s += measurement.getHostName() + '|' + measurement.getInstanceName() + '|' + result.getStatus() + '|' + result.getFailingExpression() +
-						'|' + result.getCurrentValue() + "\n";
+		StringBuilder sb = new StringBuilder()
+				.append("Incident for check group '").append(checkName).append("':\n")
+				.append("firstFailureAt=").append(firstFailureAt).append("\n");
+		if (resolvedAt == null) {
+			sb.append("resolvedAt=").append(resolvedAt).append("\n");
+		}
+		sb.append("oldStatus=").append(oldStatus).append("\n")
+				.append("newStatus=").append(newStatus).append("\n");
+		if (!checkResultsByMeasurementSession.isEmpty()) {
+			sb.append("host|instance|status|description|current value\n")
+					.append("----|--------|------|-----------|-------------\n");
+			for (Map.Entry<MeasurementSession, CheckResults> entry : checkResultsByMeasurementSession.entrySet()) {
+				MeasurementSession measurement = entry.getKey();
+				for (CheckResult result : entry.getValue().getResults()) {
+					sb.append(measurement.getHostName()).append('|')
+							.append(measurement.getInstanceName()).append('|')
+							.append(result.getStatus()).append('|')
+							.append(result.getFailingExpression()).append('|')
+							.append(result.getCurrentValue()).append("\n");
+				}
 			}
 		}
-		return s;
+		return sb.toString();
 	}
 }

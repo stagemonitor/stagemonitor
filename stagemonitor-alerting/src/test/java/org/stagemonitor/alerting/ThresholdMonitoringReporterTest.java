@@ -107,6 +107,7 @@ public class ThresholdMonitoringReporterTest {
 		Check check = createCheckCheckingMean(2, 6);
 		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 
+		// violation
 		checkMetrics(7, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
 		final Incident incident = incidentRepository.getIncidentByCheckId(check.getId());
@@ -118,9 +119,39 @@ public class ThresholdMonitoringReporterTest {
 		assertEquals(1, incident.getConsecutiveFailures());
 		System.out.println(incident);
 
+		// back to ok
 		checkMetrics(1, 0, 0);
 		verify(alerter, times(0)).alert(any(Incident.class));
 		assertNull(incidentRepository.getIncidentByCheckId(check.getId()));
+	}
+
+	@Test
+	public void testAlertWhenBackToOk() throws Exception {
+		Check check = createCheckCheckingMean(1, 6);
+		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
+
+		// violation
+		checkMetrics(7, 0, 0);
+		verify(alerter, times(1)).alert(any(Incident.class));
+		Incident incident = incidentRepository.getIncidentByCheckId(check.getId());
+		assertNotNull(incident);
+		assertEquals(CheckResult.Status.OK, incident.getOldStatus());
+		assertEquals(CheckResult.Status.WARN, incident.getNewStatus());
+		assertNotNull(incident.getFirstFailureAt());
+		assertNull(incident.getResolvedAt());
+		assertEquals(1, incident.getConsecutiveFailures());
+		System.out.println(incident);
+
+		// back to ok
+		checkMetrics(1, 0, 0);
+		ArgumentCaptor<Incident> incidentArgumentCaptor = ArgumentCaptor.forClass(Incident.class);
+		verify(alerter, times(2)).alert(incidentArgumentCaptor.capture());
+		incident = incidentArgumentCaptor.getValue();
+		assertNotNull(incident);
+		assertEquals(CheckResult.Status.WARN, incident.getOldStatus());
+		assertEquals(CheckResult.Status.OK, incident.getNewStatus());
+		assertNotNull(incident.getFirstFailureAt());
+		assertNotNull(incident.getResolvedAt());
 	}
 
 	@Test
