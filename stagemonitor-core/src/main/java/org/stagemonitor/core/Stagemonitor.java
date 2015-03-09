@@ -23,6 +23,7 @@ public final class Stagemonitor {
 	private static volatile boolean disabled;
 	private static volatile MeasurementSession measurementSession;
 	private static List<String> pathsOfWidgetMetricTabPlugins = Collections.emptyList();
+	private static Iterable<StagemonitorPlugin> plugins;
 
 	static {
 		reset();
@@ -71,7 +72,7 @@ public final class Stagemonitor {
 		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
 		pathsOfWidgetMetricTabPlugins = new LinkedList<String>();
-		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class)) {
+		for (StagemonitorPlugin stagemonitorPlugin : plugins) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 
 			if (disabledPlugins.contains(pluginName)) {
@@ -159,7 +160,8 @@ public final class Stagemonitor {
 		}
 		configurationSources.remove(null);
 
-		configuration = new Configuration(StagemonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
+		plugins = ServiceLoader.load(StagemonitorPlugin.class);
+		configuration = new Configuration(plugins, configurationSources, STAGEMONITOR_PASSWORD);
 
 		try {
 			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class)) {
