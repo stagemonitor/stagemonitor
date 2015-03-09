@@ -102,28 +102,63 @@ function renderAlertsTab() {
 				},
 				{
 					render: function (data, type, full, meta) {
-						var labelType = "label-success";
-						if (full.newStatus == 'WARN') {
-							labelType = "label-info"
-						} else if (full.newStatus == 'ERROR') {
-							labelType = "label-warning"
-						} else if (full.newStatus == 'CRITICAL') {
-							labelType = "label-danger"
-						}
-						return '<span class="label ' + labelType + '">' + full.newStatus + '</span>';
+						return createStatusLabel(full.newStatus);
 					}
 				},
 				{
 					render: function (data, type, full, meta) {
-						return '<button class="btn btn-default incident-details-btn">Details</button>';
+						return '<a href="#" class="btn btn-default incident-details-btn" ' +
+							'data-toggle="modal" data-target="#incident-details-modal">Details</a>';
 					}
 				}
 			]
 		});
 
+		var incidentDetailsTable = $("#incident-details-table").dataTable({
+			order: [[ 0, 'asc' ], [ 1, 'asc' ], [ 2, 'asc' ], [ 3, 'asc' ]],
+			columns: [
+				{ data: "application" },
+				{ data: "host" },
+				{ data: "instance" },
+				{
+					render: function (data, type, full, meta) {
+						return createStatusLabel(full.status);
+					}
+				},
+				{ data: "failingExpression" },
+				{ data: "currentValue" }
+			]
+		});
+
+
+		function createStatusLabel(status) {
+			var labelType = "label-success";
+			if (status == 'WARN') {
+				labelType = "label-info"
+			} else if (status == 'ERROR') {
+				labelType = "label-warning"
+			} else if (status == 'CRITICAL') {
+				labelType = "label-danger"
+			}
+			return '<span class="label ' + labelType + '">' + status + '</span>';
+		}
+
 		$('#incidents-table tbody').on('click', '.incident-details-btn', function () {
-			var data = incidentsTable.DataTable().row( $(this).parents('tr') ).data();
-			alert(JSON.stringify(data.checkResults, null, 2));
+			var incident = incidentsTable.DataTable().row( $(this).parents('tr') ).data();
+			var data = [];
+			$.each(incident.checkResults, function (i, results) {
+				$.each(results.results, function (i, result) {
+					data.push({
+						application: results.measurementSession.applicationName,
+						host: results.measurementSession.hostName,
+						instance: results.measurementSession.instanceName,
+						status: result.status,
+						failingExpression: result.failingExpression,
+						currentValue: +(result.currentValue).toFixed(2)
+					});
+				});
+			});
+			updateTable(incidentDetailsTable, data);
 		} );
 
 		$("#alerts-tab").find("a").one('click', function() {
