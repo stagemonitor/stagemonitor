@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -43,7 +46,21 @@ public final class Stagemonitor {
 		Stagemonitor.measurementSession = measurementSession;
 	}
 
-	public synchronized static void startMonitoring() {
+	public static Future<?> startMonitoring() {
+		ExecutorService startupThread = Executors.newSingleThreadExecutor();
+		try {
+			return startupThread.submit(new Runnable() {
+				@Override
+				public void run() {
+					doStartMonitoring();
+				}
+			});
+		} finally {
+			startupThread.shutdown();
+		}
+	}
+
+	private synchronized static void doStartMonitoring() {
 		if (measurementSession.isInitialized() && !started) {
 			try {
 				start(measurementSession);
@@ -57,9 +74,9 @@ public final class Stagemonitor {
 		}
 	}
 
-	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
+	public synchronized static Future<?> startMonitoring(MeasurementSession measurementSession) {
 		setMeasurementSession(measurementSession);
-		startMonitoring();
+		return startMonitoring();
 	}
 
 	private static void start(MeasurementSession measurementSession) {

@@ -96,8 +96,8 @@ public class RequestMonitor {
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
 		long overhead1 = System.nanoTime();
+		RequestInformation<T> info = new RequestInformation<T>();
 		if (!corePlugin.isStagemonitorActive()) {
-			RequestInformation<T> info = new RequestInformation<T>();
 			info.executionResult = monitoredRequest.execute();
 			return info;
 		}
@@ -111,7 +111,6 @@ public class RequestMonitor {
 			getInstanceNameFromExecution(monitoredRequest);
 		}
 
-		RequestInformation<T> info = new RequestInformation<T>();
 		final boolean monitor = requestMonitorPlugin.isCollectRequestStats() && isWarmedUp();
 		if (monitor) {
 			if (!Stagemonitor.isStarted()) {

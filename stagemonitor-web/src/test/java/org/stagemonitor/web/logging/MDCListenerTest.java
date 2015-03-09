@@ -36,8 +36,8 @@ public class MDCListenerTest {
 	}
 
 	@Test
-	public void testMDCInstanceAlreadySet() {
-		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", "testInstance"));
+	public void testMDCInstanceAlreadySet() throws Exception {
+		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", "testInstance")).get();
 		final ServletRequestEvent requestEvent = mock(ServletRequestEvent.class);
 		final ServletRequest request = mock(ServletRequest.class);
 		when(requestEvent.getServletRequest()).thenReturn(request);
@@ -54,8 +54,8 @@ public class MDCListenerTest {
 	}
 
 	@Test
-	public void testMDCInstanceNotAlreadySet() {
-		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", null));
+	public void testMDCInstanceNotAlreadySet() throws Exception {
+		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", null)).get();
 
 		final ServletRequestEvent requestEvent = mock(ServletRequestEvent.class);
 		final ServletRequest request = mock(ServletRequest.class);
@@ -71,11 +71,11 @@ public class MDCListenerTest {
 	}
 
 	@Test
-	public void testMDCStagemonitorDeactivated() {
+	public void testMDCStagemonitorDeactivated() throws Exception{
 		Configuration configuration = Stagemonitor.getConfiguration();
 		configuration.addConfigurationSource(SimpleSource.forTest("stagemonitor.active", "false"));
 		configuration.reloadAllConfigurationOptions();
-		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", null));
+		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", null)).get();
 
 		mdcListener.requestInitialized(mock(ServletRequestEvent.class));
 

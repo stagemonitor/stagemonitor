@@ -58,8 +58,8 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.<String, Check>emptyMap())
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
-	private static AlerterFactory alerterFactory;
-	private static IncidentRepository incidentRepository;
+	private AlerterFactory alerterFactory;
+	private IncidentRepository incidentRepository;
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
