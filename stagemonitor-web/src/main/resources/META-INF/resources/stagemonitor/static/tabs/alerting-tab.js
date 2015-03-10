@@ -229,6 +229,7 @@ function renderAlertsTab() {
 				subscription: subscription,
 				alerterTypes: stagemonitor.alerterTypes
 			}));
+			$(".tip").tooltip({html: true});
 		}
 	}
 
