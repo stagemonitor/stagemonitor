@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.stagemonitor.alerting.alerter.AlerterFactory;
+import org.stagemonitor.alerting.alerter.AlertSender;
 import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
@@ -58,15 +58,15 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.<String, Check>emptyMap())
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
-	private AlerterFactory alerterFactory;
+	private AlertSender alertSender;
 	private IncidentRepository incidentRepository;
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
 		final AlertingPlugin alertingPlugin = configuration.getConfig(AlertingPlugin.class);
-		alerterFactory = new AlerterFactory(configuration);
+		alertSender = new AlertSender(configuration);
 		incidentRepository = new ConcurrentMapIncidentRepository(new ConcurrentHashMap<String, Incident>());
-		new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alerterFactory, incidentRepository, Stagemonitor.getMeasurementSession())
+		new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession())
 				.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
 	}
 
@@ -95,8 +95,8 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		return incidentRepository;
 	}
 
-	public AlerterFactory getAlerterFactory() {
-		return alerterFactory;
+	public AlertSender getAlertSender() {
+		return alertSender;
 	}
 
 	public String getChecksAsJson() {

@@ -28,9 +28,9 @@ import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
+import org.stagemonitor.alerting.alerter.AlertSender;
 import org.stagemonitor.alerting.alerter.Alerter;
-import org.stagemonitor.alerting.alerter.AlerterFactory;
+import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.alerting.check.MetricCategory;
@@ -40,6 +40,7 @@ import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.util.JsonUtils;
 
@@ -53,13 +54,24 @@ public class ThresholdMonitoringReporterTest {
 
 	@Before
 	public void setUp() throws Exception {
-		AlerterFactory alerterFactory = mock(AlerterFactory.class);
+		Configuration configuration = mock(Configuration.class);
 		alertingPlugin = mock(AlertingPlugin.class);
+		Subscription subscription = new Subscription();
+		subscription.setAlerterType("Test Alerter");
+		subscription.setAlertOnBackToOk(true);
+		subscription.setAlertOnWarn(true);
+		subscription.setAlertOnError(true);
+		subscription.setAlertOnCritical(true);
+		when(alertingPlugin.getSubscriptionsByIds()).thenReturn(Collections.singletonMap("1", subscription));
+		when(configuration.getConfig(AlertingPlugin.class)).thenReturn(alertingPlugin);
+		alerter = mock(Alerter.class);
+		when(alerter.getAlerterType()).thenReturn("Test Alerter");
+		when(alerter.isAvailable()).thenReturn(true);
+		AlertSender alertSender = new AlertSender(configuration, Arrays.asList(alerter));
+
 		incidentRepository = spy(new ConcurrentMapIncidentRepository(new ConcurrentHashMap<String, Incident>()));
 		thresholdMonitoringReporter = new ThresholdMonitoringReporter(new MetricRegistry(), alertingPlugin,
-				alerterFactory, incidentRepository, measurementSession);
-		alerter = mock(Alerter.class);
-		when(alerterFactory.getAlerters(Mockito.<Check>any(), Mockito.<Incident>any())).thenReturn(Arrays.asList(alerter));
+				alertSender, incidentRepository, measurementSession);
 	}
 
 	@Test
@@ -71,7 +83,7 @@ public class ThresholdMonitoringReporterTest {
 		checkMetrics();
 
 		ArgumentCaptor<Incident> incident = ArgumentCaptor.forClass(Incident.class);
-		verify(alerter).alert(incident.capture());
+		verify(alerter).alert(incident.capture(), any(Subscription.class));
 		assertEquals(check.getId(), incident.getValue().getCheckId());
 		assertEquals("Test Timer", incident.getValue().getCheckName());
 		assertEquals(CheckResult.Status.OK, incident.getValue().getOldStatus());
@@ -94,11 +106,11 @@ public class ThresholdMonitoringReporterTest {
 		when(alertingPlugin.getChecks()).thenReturn(Collections.singletonMap(check.getId(), check));
 
 		checkMetrics();
-		verify(alerter, times(0)).alert(any(Incident.class));
+		verify(alerter, times(0)).alert(any(Incident.class), any(Subscription.class));
 		verify(incidentRepository).createIncident(any(Incident.class));
 
 		checkMetrics();
-		verify(alerter).alert(any(Incident.class));
+		verify(alerter).alert(any(Incident.class), any(Subscription.class));
 		verify(incidentRepository).updateIncident(any(Incident.class));
 	}
 
@@ -109,7 +121,7 @@ public class ThresholdMonitoringReporterTest {
 
 		// violation
 		checkMetrics(7, 0, 0);
-		verify(alerter, times(0)).alert(any(Incident.class));
+		verify(alerter, times(0)).alert(any(Incident.class), any(Subscription.class));
 		final Incident incident = incidentRepository.getIncidentByCheckId(check.getId());
 		assertNotNull(incident);
 		assertEquals(CheckResult.Status.OK, incident.getOldStatus());
@@ -121,7 +133,7 @@ public class ThresholdMonitoringReporterTest {
 
 		// back to ok
 		checkMetrics(1, 0, 0);
-		verify(alerter, times(0)).alert(any(Incident.class));
+		verify(alerter, times(0)).alert(any(Incident.class), any(Subscription.class));
 		assertNull(incidentRepository.getIncidentByCheckId(check.getId()));
 	}
 
@@ -132,7 +144,7 @@ public class ThresholdMonitoringReporterTest {
 
 		// violation
 		checkMetrics(7, 0, 0);
-		verify(alerter, times(1)).alert(any(Incident.class));
+		verify(alerter, times(1)).alert(any(Incident.class), any(Subscription.class));
 		Incident incident = incidentRepository.getIncidentByCheckId(check.getId());
 		assertNotNull(incident);
 		assertEquals(CheckResult.Status.OK, incident.getOldStatus());
@@ -145,7 +157,7 @@ public class ThresholdMonitoringReporterTest {
 		// back to ok
 		checkMetrics(1, 0, 0);
 		ArgumentCaptor<Incident> incidentArgumentCaptor = ArgumentCaptor.forClass(Incident.class);
-		verify(alerter, times(2)).alert(incidentArgumentCaptor.capture());
+		verify(alerter, times(2)).alert(incidentArgumentCaptor.capture(), any(Subscription.class));
 		incident = incidentArgumentCaptor.getValue();
 		assertNotNull(incident);
 		assertEquals(CheckResult.Status.WARN, incident.getOldStatus());
@@ -163,7 +175,7 @@ public class ThresholdMonitoringReporterTest {
 						Arrays.asList(new CheckResult("test", 10, CheckResult.Status.CRITICAL))));
 
 		checkMetrics(7, 0, 0);
-		verify(alerter, times(0)).alert(any(Incident.class));
+		verify(alerter, times(0)).alert(any(Incident.class), any(Subscription.class));
 		verify(incidentRepository).updateIncident(any(Incident.class));
 		Incident storedIncident = incidentRepository.getIncidentByCheckId(check.getId());
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getOldStatus());
@@ -184,7 +196,7 @@ public class ThresholdMonitoringReporterTest {
 		System.out.println(JsonUtils.toJson(storedIncident));
 
 		checkMetrics(1, 0, 0);
-		verify(alerter, times(0)).alert(any(Incident.class));
+		verify(alerter, times(0)).alert(any(Incident.class), any(Subscription.class));
 		verify(incidentRepository, times(0)).deleteIncident(any(Incident.class));
 		verify(incidentRepository, times(2)).updateIncident(any(Incident.class));
 

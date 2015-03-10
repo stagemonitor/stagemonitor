@@ -12,7 +12,7 @@ public class LogAlerter implements Alerter {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
-	public void alert(Incident incident) {
+	public void alert(Incident incident, Subscription subscription) {
 		switch (incident.getNewStatus()) {
 			case CRITICAL:
 			case ERROR:

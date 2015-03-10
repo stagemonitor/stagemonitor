@@ -20,8 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.alerting.alerter.Alerter;
-import org.stagemonitor.alerting.alerter.AlerterFactory;
+import org.stagemonitor.alerting.alerter.AlertSender;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.alerting.check.MetricCategory;
@@ -35,17 +34,17 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 	public static final int OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES = 10;
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final AlerterFactory alerterFactory;
+	private final AlertSender alertSender;
 	private final IncidentRepository incidentRepository;
 	private final MeasurementSession measurementSession;
 	private final AlertingPlugin alertingPlugin;
 
 	protected ThresholdMonitoringReporter(MetricRegistry registry, AlertingPlugin alertingPlugin,
-										  AlerterFactory alerterFactory, IncidentRepository incidentRepository,
+										  AlertSender alertSender, IncidentRepository incidentRepository,
 										  MeasurementSession measurementSession) {
 		super(registry, "threshold-monitoring-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
 		this.alertingPlugin = alertingPlugin;
-		this.alerterFactory = alerterFactory;
+		this.alertSender = alertSender;
 		this.incidentRepository = incidentRepository;
 		this.measurementSession = measurementSession;
 	}
@@ -94,10 +93,8 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 
 	private void addIncident(Check check, List<CheckResult> results) {
 		Incident incident = getAndPersistIncident(check, results);
-		if (isAlertIncidents(check, incident)) {
-			for (Alerter alerter : alerterFactory.getAlerters(check, incident)) {
-				alerter.alert(incident);
-			}
+		if (incident != null) {
+			alertSender.sendAlerts(check, incident);
 		}
 	}
 
@@ -112,26 +109,6 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 			logger.error("Failed to save incident {} after {} retries.", incident, OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES);
 		}
 		return incident;
-	}
-
-	private boolean isAlertIncidents(Check check, Incident incident) {
-		if (incident == null) {
-			return false;
-		}
-		if (incident.isBackToOk() && hasEnoughConsecutiveFailures(check, incident)) {
-			return true;
-		}
-		if (incident.hasStageChange() && hasEnoughConsecutiveFailures(check, incident)) {
-			return true;
-		}
-		if (incident.getConsecutiveFailures() == check.getAlertAfterXFailures()) {
-			return true;
-		}
-		return false;
-	}
-
-	private boolean hasEnoughConsecutiveFailures(Check check, Incident incident) {
-		return incident.getConsecutiveFailures() >= check.getAlertAfterXFailures();
 	}
 
 	private Incident getOrCreateIncident(Check check, List<CheckResult> results) {

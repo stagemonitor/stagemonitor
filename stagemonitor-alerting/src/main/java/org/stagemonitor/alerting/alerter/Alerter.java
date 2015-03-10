@@ -15,8 +15,9 @@ public interface Alerter {
 	 * Triggers an alert
 	 *
 	 * @param incident the incident to report
+	 * @param subscription the corresponding subscription
 	 */
-	void alert(Incident incident);
+	void alert(Incident incident, Subscription subscription);
 
 	/**
 	 * A unique name for this alerter e.g. email or irc.

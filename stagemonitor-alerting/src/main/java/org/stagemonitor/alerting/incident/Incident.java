@@ -208,8 +208,24 @@ public class Incident {
 		return incident;
 	}
 
-	@JsonIgnore
-	public boolean isBackToOk() {
+	public boolean isAlertIncident(Check check) {
+		if (isBackToOk() && hasEnoughConsecutiveFailures(check)) {
+			return true;
+		}
+		if (hasStageChange() && hasEnoughConsecutiveFailures(check)) {
+			return true;
+		}
+		if (getConsecutiveFailures() == check.getAlertAfterXFailures()) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean hasEnoughConsecutiveFailures(Check check) {
+		return getConsecutiveFailures() >= check.getAlertAfterXFailures();
+	}
+
+	private boolean isBackToOk() {
 		return hasStageChange() && newStatus == CheckResult.Status.OK;
 	}
 
