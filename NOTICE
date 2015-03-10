@@ -7,7 +7,7 @@ iSYS Software GmbH (http://www.isys-software.de/).
 This product bundles jQuery treetable 3.2.0, which is available under the "MIT" license. For details, see
 stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/jquery-treetable/jquery.treetable.js
 
-This product bundles Twitter Bootstrap 3.2.0, which is available under the "MIT" license. For details, see
+This product bundles Twitter Bootstrap 3.3.2, which is available under the "MIT" license. For details, see
 stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/bootstrap/bootstrap.min.css
 
 This product bundles typeahead.js-bootstrap3.less, which is available under the "MIT" license. For details, see
