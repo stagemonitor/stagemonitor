@@ -46,7 +46,8 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 
 	@Override
 	public String getContentToInjectBeforeClosingBody(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
-		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestInformation.getRequestTrace().toJson())
+		HttpRequestTrace requestTrace = requestInformation.getRequestTrace();
+		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestTrace != null ? requestTrace.toJson() : "null")
 				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByCategory()))
 				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()))

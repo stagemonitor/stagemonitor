@@ -2,7 +2,7 @@ function renderCallTree(data) {
 	$.get("tabs/call-tree-tab.html", function (template) {
 		var callTreeTemplate = Handlebars.compile($(template).html());
 
-		if (data.callStackJson !== undefined) {
+		if (data && data.callStackJson !== undefined) {
 			var callTree = JSON.parse(data.callStackJson);
 			var callTreeRows = [];
 			processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);

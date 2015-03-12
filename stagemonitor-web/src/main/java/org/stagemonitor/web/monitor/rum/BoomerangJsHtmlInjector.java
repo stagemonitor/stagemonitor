@@ -45,6 +45,9 @@ public class BoomerangJsHtmlInjector implements HtmlInjector {
 	@Override
 	public String getContentToInjectBeforeClosingBody(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
 		final HttpRequestTrace requestTrace = requestInformation.getRequestTrace();
+		if (requestTrace == null) {
+			return "";
+		}
 		return boomerangTemplate.replace("${requestId}", String.valueOf(requestTrace.getId()))
 				.replace("${requestName}", requestTrace.getName())
 				.replace("${serverTime}", Long.toString(requestTrace.getExecutionTime()));

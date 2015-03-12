@@ -1,4 +1,10 @@
 function renderRequestTab(data) {
+	if (!data) {
+		$("#request-tab").hide();
+		$("#config-tab").addClass('active');
+		$("#stagemonitor-configuration").addClass('active');
+		return;
+	}
 	var thresholdExceededGlobal = false;
 	var requestsMetrics = processRequestsMetrics(data);
 
