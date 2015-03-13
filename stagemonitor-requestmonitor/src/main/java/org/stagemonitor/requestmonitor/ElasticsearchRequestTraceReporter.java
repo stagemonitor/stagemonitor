@@ -15,14 +15,18 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	private final CorePlugin corePlugin;
 	private final RequestMonitorPlugin requestMonitorPlugin;
+	private final ElasticsearchClient elasticsearchClient;
 
 	public ElasticsearchRequestTraceReporter() {
-		this(Stagemonitor.getConfiguration(CorePlugin.class), Stagemonitor.getConfiguration(RequestMonitorPlugin.class));
+		this(Stagemonitor.getConfiguration(CorePlugin.class), Stagemonitor.getConfiguration(RequestMonitorPlugin.class),
+				Stagemonitor.getConfiguration().getConfig(CorePlugin.class).getElasticsearchClient());
 	}
 
-	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin) {
+	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin,
+											 ElasticsearchClient elasticsearchClient) {
 		this.corePlugin = corePlugin;
 		this.requestMonitorPlugin = requestMonitorPlugin;
+		this.elasticsearchClient = elasticsearchClient;
 	}
 
 	@Override
@@ -34,7 +38,7 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 		if (ttl != null && !ttl.isEmpty()) {
 			path += "?ttl=" + ttl;
 		}
-		ElasticsearchClient.sendAsJsonAsync("PUT", path, requestTrace);
+		elasticsearchClient.sendAsJsonAsync("PUT", path, requestTrace);
 	}
 
 	@Override

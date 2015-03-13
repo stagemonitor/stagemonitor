@@ -1,19 +1,19 @@
 package org.stagemonitor.core.configuration.source;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.InputStream;
+
 import com.codahale.metrics.MetricRegistry;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-
-import java.io.InputStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchTest {
 
@@ -22,15 +22,19 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 	@BeforeClass
 	public static void setup() throws Exception {
 		new CorePlugin().initializePlugin(new MetricRegistry(), Stagemonitor.getConfiguration());
-		new CorePlugin().initializePlugin(new MetricRegistry(), Stagemonitor.getConfiguration());
 		// give the async tasks time to complete
 		Thread.sleep(500);
 		refresh();
 	}
 
+	@AfterClass
+	public static void reset() {
+		Stagemonitor.reset();
+	}
+
 	@Before
 	public void setUp() throws Exception {
-		configurationSource = new ElasticsearchConfigurationSource("test");
+		configurationSource = new ElasticsearchConfigurationSource(elasticsearchClient, "test");
 	}
 
 	@Test
@@ -60,7 +64,7 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 	public void testMapping() throws Exception {
 		InputStream resourceAsStream = getClass().getClassLoader()
 				.getResourceAsStream("stagemonitor-elasticsearch-mapping.json");
-		ElasticsearchClient.sendAsJson("PUT", "/stagemonitor", resourceAsStream);
+		elasticsearchClient.sendAsJson("PUT", "/stagemonitor", resourceAsStream);
 		refresh();
 		configurationSource.save("foo", "bar");
 		refresh();

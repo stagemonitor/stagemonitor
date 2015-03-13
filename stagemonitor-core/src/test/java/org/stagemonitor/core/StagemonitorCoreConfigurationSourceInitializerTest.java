@@ -1,5 +1,10 @@
 package org.stagemonitor.core;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.util.Arrays;
 
 import org.junit.Before;
@@ -7,11 +12,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class StagemonitorCoreConfigurationSourceInitializerTest {
 
@@ -23,7 +24,8 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 	public void setUp() throws Exception {
 		when(corePlugin.getElasticsearchConfigurationSourceProfiles()).thenReturn(Arrays.asList("test"));
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-
+		ElasticsearchClient elasticsearchClient = new ElasticsearchClient(corePlugin);
+		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 	}
 
 	@Test(expected = IllegalStateException.class)

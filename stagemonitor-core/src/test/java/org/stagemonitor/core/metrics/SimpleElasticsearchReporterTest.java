@@ -2,6 +2,8 @@ package org.stagemonitor.core.metrics;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.counter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.gauge;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.histogram;
@@ -20,7 +22,7 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.configuration.Configuration;
 
 public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 
@@ -28,8 +30,13 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 
 	@BeforeClass
 	public static void setup() throws Exception {
-		new CorePlugin().initializePlugin(new MetricRegistry(), Stagemonitor.getConfiguration());
-		while (!ElasticsearchClient.asyncRestPool.getQueue().isEmpty()) {
+		Configuration configuration = mock(Configuration.class);
+		CorePlugin corePlugin = mock(CorePlugin.class);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
+		when(corePlugin.getAggregationReportingInterval()).thenReturn(30L);
+		new CorePlugin().initializePlugin(new MetricRegistry(), configuration);
+		while (!elasticsearchClient.asyncRestPool.getQueue().isEmpty()) {
 			// give the async tasks time to complete
 			Thread.sleep(10);
 		}
@@ -39,7 +46,7 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 
 	@Before
 	public void setUp() throws Exception {
-		reporter = new SimpleElasticsearchReporter(null, null, MetricFilter.ALL);
+		reporter = new SimpleElasticsearchReporter(elasticsearchClient, null, null, MetricFilter.ALL);
 	}
 
 	@Test

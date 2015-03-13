@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
@@ -195,8 +196,9 @@ public class WebPlugin extends StagemonitorPlugin {
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration config) {
 		monitorServerThreadPool(registry, config.getConfig(WebPlugin.class));
-		ElasticsearchClient.sendGrafanaDashboardAsync("Server.json");
-		ElasticsearchClient.sendGrafanaDashboardAsync("KPIs over Time.json");
+		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
+		elasticsearchClient.sendGrafanaDashboardAsync("Server.json");
+		elasticsearchClient.sendGrafanaDashboardAsync("KPIs over Time.json");
 	}
 
 	private void monitorServerThreadPool(MetricRegistry registry, WebPlugin webPlugin) {

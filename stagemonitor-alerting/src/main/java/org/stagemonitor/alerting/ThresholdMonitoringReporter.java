@@ -78,7 +78,11 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 				checkResults.addAll(check.check(metricTypes.getKey(), valuesByMetricType));
 			}
 		}
-		addIncident(check, checkResults);
+		try {
+			addIncident(check, checkResults);
+		} catch (RuntimeException e) {
+			logger.warn(e.getMessage(), e);
+		}
 	}
 
 	private Map<String, Double> getValuesByMetricType(JsonNode metricTypes) {

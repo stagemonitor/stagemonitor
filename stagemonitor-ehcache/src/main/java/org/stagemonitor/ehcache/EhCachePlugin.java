@@ -9,6 +9,7 @@ import java.util.List;
 import com.codahale.metrics.MetricRegistry;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
@@ -51,7 +52,8 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			metricRegistry.registerAll(new EhCacheMetricSet(metricPrefix, cache, cacheUsageListener));
 		}
 
-		ElasticsearchClient.sendGrafanaDashboardAsync("EhCache.json");
+		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
+		elasticsearchClient.sendGrafanaDashboardAsync("EhCache.json");
 	}
 
 	@Override

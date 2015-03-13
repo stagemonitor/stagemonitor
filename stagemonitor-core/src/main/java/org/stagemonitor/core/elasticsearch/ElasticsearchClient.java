@@ -1,20 +1,21 @@
 package org.stagemonitor.core.elasticsearch;
 
+import static org.stagemonitor.core.util.StringUtils.slugify;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -26,18 +27,15 @@ import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.core.util.StringUtils;
-
-import static org.stagemonitor.core.util.StringUtils.slugify;
 
 public class ElasticsearchClient {
 
-	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
-	private static final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
-	private static final String TITLE = "title";
-	private static String baseUrl = Stagemonitor.getConfiguration(CorePlugin.class).getElasticsearchUrl();
+	private final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
+	private final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
+	private final String TITLE = "title";
+	private String baseUrl;
 
-	public static final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+	public final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
 			new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
 		@Override
 		public Thread newThread(Runnable r) {
@@ -48,31 +46,47 @@ public class ElasticsearchClient {
 		}
 	});
 
-	static {
-		if (Stagemonitor.getConfiguration(CorePlugin.class).isInternalMonitoringActive()) {
+
+	public ElasticsearchClient() {
+		this(Stagemonitor.getConfiguration().getConfig(CorePlugin.class));
+	}
+
+	public ElasticsearchClient(CorePlugin corePlugin) {
+		this(corePlugin.getElasticsearchUrl(), corePlugin.isInternalMonitoringActive());
+	}
+
+	public ElasticsearchClient(String baseUrl, boolean internalMonitoringActive) {
+		this.baseUrl = baseUrl;
+		if (internalMonitoringActive) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetricRegistry());
 		}
 	}
 
-	public static JsonNode getJson(final String path) throws IOException {
+	public JsonNode getJson(final String path) throws IOException {
 		return JsonUtils.getMapper().readTree(new URL(baseUrl + path).openStream());
 	}
 
-	public static void sendAsJson(final String method, final String path, final Object requestBody) {
-		if (baseUrl == null || baseUrl.isEmpty()) {
-			return;
-		}
+	public <T> T getObject(final String path, TypeReference type) throws IOException {
+		return JsonUtils.getMapper().reader(type).readValue(getJson(path).get("_source"));
+	}
 
+	public HttpURLConnection sendRequest(final String method, final String path) {
+		return sendAsJson(method, path, null);
+	}
+
+	public HttpURLConnection sendAsJson(final String method, final String path, final Object requestBody) {
 		HttpURLConnection connection = null;
+		if (baseUrl == null || baseUrl.isEmpty()) {
+			return connection;
+		}
 		try {
 			URL url = new URL(baseUrl + path);
 			connection = (HttpURLConnection) url.openConnection();
 			connection.setDoOutput(true);
 			connection.setRequestMethod(method);
-			connection.setRequestProperty("Content-Type", "application/json");
 
-			writeRequestBody(requestBody, connection.getOutputStream());
+			writeRequestBody(requestBody, connection);
 
 			connection.getContent();
 		} catch (IOException e) {
@@ -86,10 +100,14 @@ public class ElasticsearchClient {
 			}
 			logger.warn(e.getMessage() + ": " + errorMessage);
 		}
+		return connection;
 	}
 
-	private static void writeRequestBody(Object requestBody, OutputStream os) throws IOException {
-		if (requestBody != null && os != null) {
+	private void writeRequestBody(Object requestBody, HttpURLConnection connection) throws IOException {
+		if (requestBody != null) {
+			connection.setRequestProperty("Content-Type", "application/json");
+			OutputStream os = connection.getOutputStream();
+
 			if (requestBody instanceof InputStream) {
 				byte[] buf = new byte[8192];
 				int n;
@@ -103,7 +121,7 @@ public class ElasticsearchClient {
 		}
 	}
 
-	public static Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
+	public Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
 		if (baseUrl != null && !baseUrl.isEmpty()) {
 			return asyncRestPool.submit(new Runnable() {
 				@Override
@@ -115,20 +133,20 @@ public class ElasticsearchClient {
 		return new CompletedFuture<Object>(null);
 	}
 
-	public static Future<?> sendGrafanaDashboardAsync(String dashboardPath) {
+	public Future<?> sendGrafanaDashboardAsync(String dashboardPath) {
 		return sendDashboardAsync("/grafana-dash/dashboard/", dashboardPath);
 	}
 
-	public static Future<?> sendKibanaDashboardAsync(String dashboardPath) {
+	public Future<?> sendKibanaDashboardAsync(String dashboardPath) {
 		return sendDashboardAsync("/kibana-int/dashboard/", dashboardPath);
 	}
 
-	public static Future<?> sendDashboardAsync(String path, String dashboardPath) {
+	public Future<?> sendDashboardAsync(String path, String dashboardPath) {
 		if (baseUrl != null && !baseUrl.isEmpty()) {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
 				final String titleSlug = slugify(dashboard.get(TITLE).asText());
-				return ElasticsearchClient.sendAsJsonAsync("PUT", path + titleSlug + "/_create", dashboard);
+				return sendAsJsonAsync("PUT", path + titleSlug + "/_create", dashboard);
 			} catch (IOException e) {
 				logger.warn(e.getMessage(), e);
 			}
@@ -136,7 +154,7 @@ public class ElasticsearchClient {
 		return new CompletedFuture<Object>(null);
 	}
 
-	static ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
+	ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
 		final ObjectMapper mapper = JsonUtils.getMapper();
 		final InputStream dashboardStram = ElasticsearchClient.class.getClassLoader().getResourceAsStream(dashboardPath);
 		final ObjectNode dashboard = (ObjectNode) mapper.readTree(dashboardStram);
@@ -150,7 +168,7 @@ public class ElasticsearchClient {
 		return dashboardElasticsearchFormat;
 	}
 
-	private static String getStagemonitorMajorMinorVersion() {
+	private String getStagemonitorMajorMinorVersion() {
 		Class clazz = ElasticsearchClient.class;
 		String className = clazz.getSimpleName() + ".class";
 		String classPath = clazz.getResource(className).toString();
@@ -170,15 +188,15 @@ public class ElasticsearchClient {
 		}
 	}
 
-	static String getMajorMinorVersionFromFullVersionString(String value) {
+	String getMajorMinorVersionFromFullVersionString(String value) {
 		return value.substring(0, value.lastIndexOf('.'));
 	}
 
-	public static void setBaseUrl(String baseUrl) {
-		ElasticsearchClient.baseUrl = baseUrl;
+	public void setBaseUrl(String baseUrl) {
+		this.baseUrl = baseUrl;
 	}
 
-	private static class CompletedFuture<T> implements Future<T> {
+	private class CompletedFuture<T> implements Future<T> {
 		private final T result;
 
 		public CompletedFuture(final T result) {

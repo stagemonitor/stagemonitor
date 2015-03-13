@@ -163,10 +163,6 @@ public class Incident {
 		this.checkName = checkName;
 	}
 
-	public void incrementVersion() {
-		this.version++;
-	}
-
 	public boolean hasStageChange() {
 		return oldStatus != newStatus;
 	}

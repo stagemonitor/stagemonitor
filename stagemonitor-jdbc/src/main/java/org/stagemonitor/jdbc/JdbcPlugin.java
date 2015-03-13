@@ -1,6 +1,7 @@
 package org.stagemonitor.jdbc;
 
 import com.codahale.metrics.MetricRegistry;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
@@ -28,7 +29,8 @@ public class JdbcPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		ElasticsearchClient.sendGrafanaDashboardAsync("DB Queries.json");
+		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
+		elasticsearchClient.sendGrafanaDashboardAsync("DB Queries.json");
 	}
 
 	public boolean isCollectSql() {

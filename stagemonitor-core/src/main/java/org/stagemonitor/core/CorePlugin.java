@@ -189,6 +189,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.build();
 	private static MetricsAggregationReporter aggregationReporter;
 
+	private ElasticsearchClient elasticsearchClient;
+
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
 		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
@@ -197,15 +199,15 @@ public class CorePlugin extends StagemonitorPlugin {
 			configuration.scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
 		}
 
-		ElasticsearchClient.sendGrafanaDashboardAsync("Custom Metrics.json");
+		corePlugin.getElasticsearchClient().sendGrafanaDashboardAsync("Custom Metrics.json");
 		InputStream resourceAsStream = getClass().getClassLoader()
 				.getResourceAsStream("stagemonitor-elasticsearch-mapping.json");
-		ElasticsearchClient.sendAsJsonAsync("PUT", "/stagemonitor", resourceAsStream);
+		corePlugin.getElasticsearchClient().sendAsJsonAsync("PUT", "/stagemonitor", resourceAsStream);
 
-		registerReporters(metricRegistry, corePlugin);
+		registerReporters(elasticsearchClient, metricRegistry, corePlugin);
 	}
 
-	private void registerReporters(MetricRegistry metricRegistry, CorePlugin corePlugin) {
+	private void registerReporters(ElasticsearchClient elasticsearchClient, MetricRegistry metricRegistry, CorePlugin corePlugin) {
 		RegexMetricFilter regexFilter = new RegexMetricFilter(corePlugin.getExcludedMetricsPatterns());
 
 		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
@@ -214,7 +216,7 @@ public class CorePlugin extends StagemonitorPlugin {
 				Stagemonitor.getMeasurementSession(), allFilters, corePlugin);
 
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
-		onShutdownReporters.add(new SimpleElasticsearchReporter(metricRegistry, "simple-es-reporter", allFilters));
+		onShutdownReporters.add(new SimpleElasticsearchReporter(elasticsearchClient, metricRegistry, "simple-es-reporter", allFilters));
 
 		reportToConsole(metricRegistry, corePlugin.getConsoleReportingInterval(), allFilters, onShutdownReporters);
 		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, corePlugin.getAggregationReportingInterval());
@@ -282,6 +284,13 @@ public class CorePlugin extends StagemonitorPlugin {
 		}
 	}
 
+	public ElasticsearchClient getElasticsearchClient() {
+		if (elasticsearchClient == null) {
+			elasticsearchClient = new ElasticsearchClient();
+		}
+		return elasticsearchClient;
+	}
+
 	public boolean isStagemonitorActive() {
 		return Stagemonitor.isDisabled() ? false : stagemonitorActive.getValue();
 	}
@@ -294,8 +303,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		return reportingIntervalConsole.getValue();
 	}
 
-
-	private long getAggregationReportingInterval() {
+	public long getAggregationReportingInterval() {
 		return reportingIntervalAggregation.getValue();
 	}
 

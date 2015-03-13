@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.codahale.metrics.MetricRegistry;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
@@ -93,16 +94,17 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		addElasticsearchMapping();
-		ElasticsearchClient.sendGrafanaDashboardAsync("Request.json");
-		ElasticsearchClient.sendKibanaDashboardAsync("Recent Requests.json");
+		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
+		addElasticsearchMapping(elasticsearchClient);
+		elasticsearchClient.sendGrafanaDashboardAsync("Request.json");
+		elasticsearchClient.sendKibanaDashboardAsync("Recent Requests.json");
 	}
 
-	private void addElasticsearchMapping() {
+	private void addElasticsearchMapping(ElasticsearchClient elasticsearchClient) {
 		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
 		// async, because it is not possible, that request traces are reaching elasticsearch before the mapping is set
 		// that is, because a single thread executor is used that executes the request in a linear queue (LinkedBlockingQueue)
-		ElasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor", resourceAsStream);
+		elasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor", resourceAsStream);
 	}
 
 	@Override
