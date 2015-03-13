@@ -233,7 +233,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		}
 	}
 
-	private static void reportToGraphite(MetricRegistry metricRegistry, long reportingInterval,
+	private void reportToGraphite(MetricRegistry metricRegistry, long reportingInterval,
 										 MeasurementSession measurementSession,
 										 MetricFilter filter, CorePlugin corePlugin) {
 		String graphiteHostName = corePlugin.getGraphiteHostName();
@@ -248,14 +248,14 @@ public class CorePlugin extends StagemonitorPlugin {
 		}
 	}
 
-	private static String getGraphitePrefix(MeasurementSession measurementSession) {
+	private String getGraphitePrefix(MeasurementSession measurementSession) {
 		return name("stagemonitor",
 				sanitizeGraphiteMetricSegment(measurementSession.getApplicationName()),
 				sanitizeGraphiteMetricSegment(measurementSession.getInstanceName()),
 				sanitizeGraphiteMetricSegment(measurementSession.getHostName()));
 	}
 
-	private static void reportToConsole(MetricRegistry metricRegistry, long reportingInterval, MetricFilter filter,
+	private void reportToConsole(MetricRegistry metricRegistry, long reportingInterval, MetricFilter filter,
 										List<ScheduledReporter> onShutdownReporters) {
 		final SortedTableLogReporter reporter = SortedTableLogReporter.forRegistry(metricRegistry)
 				.convertRatesTo(TimeUnit.SECONDS)
@@ -268,7 +268,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		}
 	}
 
-	private static void reportToJMX(MetricRegistry metricRegistry, MetricFilter filter) {
+	private void reportToJMX(MetricRegistry metricRegistry, MetricFilter filter) {
 		JmxReporter.forRegistry(metricRegistry)
 				.filter(filter)
 				.build().start();
