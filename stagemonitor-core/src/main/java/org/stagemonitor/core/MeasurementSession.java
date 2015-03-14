@@ -20,7 +20,7 @@ public class MeasurementSession {
 	private final String instanceName;
 	private final long startTimestamp;
 	private long endTimestamp;
-
+	@JsonIgnore
 	private final String stringRepresentation;
 
 	@JsonCreator
