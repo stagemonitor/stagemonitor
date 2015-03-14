@@ -23,10 +23,11 @@ public class IncidentServletTest {
 
 	private IncidentServlet incidentServlet;
 	private Incident incident;
+	private AlertingPlugin alertingPlugin;
 
 	@Before
 	public void setUp() throws Exception {
-		AlertingPlugin alertingPlugin = mock(AlertingPlugin.class);
+		alertingPlugin = mock(AlertingPlugin.class);
 		ConcurrentMapIncidentRepository incidentRepository = new ConcurrentMapIncidentRepository();
 		incident = new Incident(ThresholdMonitoringReporterTest.createCheckCheckingMean(1, 5),
 				new MeasurementSession("testApp", "testHost2", "testInstance"),
@@ -46,5 +47,14 @@ public class IncidentServletTest {
 			put("incidents", Arrays.asList(incident));
 		}});
 		Assert.assertEquals(expected, response.getContentAsString());
+	}
+
+	@Test
+	public void testGetIncidentsIncidentRepositoryNull() throws Exception {
+		when(alertingPlugin.getIncidentRepository()).thenReturn(null);
+
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		incidentServlet.service(new MockHttpServletRequest("GET", "/stagemonitor/incidents"), response);
+		Assert.assertEquals("{}", response.getContentAsString());
 	}
 }
