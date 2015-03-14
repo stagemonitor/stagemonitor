@@ -1,6 +1,7 @@
 package org.stagemonitor.alerting.incident;
 
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -16,6 +17,10 @@ import java.util.concurrent.ConcurrentMap;
 public class ConcurrentMapIncidentRepository implements IncidentRepository {
 
 	private final ConcurrentMap<String, Incident> incidentsByCheckId;
+
+	public ConcurrentMapIncidentRepository() {
+		this(new ConcurrentHashMap<String, Incident>());
+	}
 
 	public ConcurrentMapIncidentRepository(ConcurrentMap<String, Incident> incidentsByCheckId) {
 		this.incidentsByCheckId = incidentsByCheckId;

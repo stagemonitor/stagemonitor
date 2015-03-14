@@ -34,6 +34,17 @@ public class Incident {
 	@JsonIgnore
 	private Map<MeasurementSession, CheckResults> checkResultsByMeasurementSession = new HashMap<MeasurementSession, CheckResults>();
 
+
+	public static CheckResult.Status getMostSevereStatus(Collection<Incident> incidents) {
+		CheckResult.Status mostSevereStatus = CheckResult.Status.OK;
+		for (Incident incident : incidents) {
+			if (incident.getNewStatus().isMoreSevere(mostSevereStatus)) {
+				mostSevereStatus = incident.getNewStatus();
+			}
+		}
+		return mostSevereStatus;
+	}
+
 	public Incident() {
 	}
 
@@ -83,7 +94,6 @@ public class Incident {
 		return checkResultsByMeasurementSession.values();
 	}
 
-	@JsonIgnore
 	public Collection<String> getHosts() {
 		Set<String> hosts = new TreeSet<String>();
 		for (MeasurementSession measurementSession : checkResultsByMeasurementSession.keySet()) {
@@ -92,7 +102,6 @@ public class Incident {
 		return hosts;
 	}
 
-	@JsonIgnore
 	public Collection<String> getInstances() {
 		Set<String> instances = new TreeSet<String>();
 		for (MeasurementSession measurementSession : checkResultsByMeasurementSession.keySet()) {

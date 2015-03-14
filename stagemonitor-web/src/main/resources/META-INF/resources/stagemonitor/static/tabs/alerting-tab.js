@@ -29,7 +29,6 @@ function renderAlertsTab() {
 		}
 	};
 
-
 	$.get("tabs/alerting-tab.hbs", function (tmpl) {
 		var $tmpl = $(tmpl);
 		var template = Handlebars.compile($tmpl.find("#alerts-content-template").html());
@@ -134,10 +133,8 @@ function renderAlertsTab() {
 		function createStatusLabel(status) {
 			var labelType = "label-success";
 			if (status == 'WARN') {
-				labelType = "label-info"
-			} else if (status == 'ERROR') {
 				labelType = "label-warning"
-			} else if (status == 'CRITICAL') {
+			} else if (status == 'CRITICAL' || status == 'ERROR') {
 				labelType = "label-danger"
 			}
 			return '<span class="label ' + labelType + '">' + status + '</span>';
@@ -163,9 +160,9 @@ function renderAlertsTab() {
 
 		$("#alerts-tab").find("a").one('click', function() {
 			(function refreshIncidents() {
-				// TODO 'push' incidents via the long polling mechanism that is used for ajax request traces
 				$.getJSON(stagemonitor.baseUrl + "/stagemonitor/incidents", function (data) {
-					updateTable(incidentsTable, data);
+					updateTable(incidentsTable, data.incidents);
+					$("#incident-status").html(createStatusLabel(data.status));
 					setTimeout(refreshIncidents, 2000);
 				});
 			}());
@@ -205,7 +202,6 @@ function renderAlertsTab() {
 			if ($subscriptionForm.parsley().validate()) {
 				$subscriptionModal.modal('hide');
 				var subscription = $subscriptionForm.serializeObject();
-				console.log(JSON.stringify(subscription));
 				if (!subscription.id) {
 					subscription.id = utils.generateUUID();
 				}
@@ -299,7 +295,6 @@ function renderAlertsTab() {
 			if ($("#check-form").parsley().validate()) {
 				$checkModal.modal('hide');
 				var check = getCheckFromForm();
-				console.log(JSON.stringify(check));
 				if (!check.id) {
 					check.id = utils.generateUUID();
 				}

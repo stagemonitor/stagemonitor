@@ -1,5 +1,6 @@
 package org.stagemonitor.alerting.incident;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -44,6 +45,8 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 	public Incident getIncidentByCheckId(String checkId) {
 		try {
 			return asIncident(elasticsearchClient.getJson(BASE_URL + checkId));
+		} catch (FileNotFoundException e) {
+			return null;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -56,7 +59,7 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 
 	@Override
 	public boolean createIncident(Incident incident) {
-		return hasNoConflict(elasticsearchClient.sendAsJson("PUT", BASE_URL + incident.getCheckId() + "/_create", incident));
+		return hasNoConflict(elasticsearchClient.sendAsJson("PUT", BASE_URL + incident.getCheckId() + "/_create" + getVersionParameter(incident), incident));
 	}
 
 	@Override
@@ -69,7 +72,7 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 	}
 
 	private String getVersionParameter(Incident incident) {
-		return "?version=" + incident.getVersion();
+		return "?version=" + incident.getVersion() + "&version_type=external";
 	}
 
 	private boolean hasNoConflict(HttpURLConnection connection) {
