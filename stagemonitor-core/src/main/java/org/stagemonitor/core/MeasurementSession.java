@@ -1,11 +1,18 @@
 package org.stagemonitor.core;
 
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+
 import java.net.InetAddress;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.stagemonitor.core.util.StringUtils;
 
+@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = ANY, setterVisibility = NONE)
 public class MeasurementSession {
 
 	private final String applicationName;
@@ -16,7 +23,11 @@ public class MeasurementSession {
 
 	private final String stringRepresentation;
 
-	public MeasurementSession(String applicationName, String hostName, String instanceName) {
+	@JsonCreator
+	public MeasurementSession(@JsonProperty("applicationName") String applicationName,
+							  @JsonProperty("hostName") String hostName,
+							  @JsonProperty("instanceName") String instanceName) {
+
 		this.applicationName = applicationName;
 		this.hostName = hostName;
 		this.instanceName = instanceName;
@@ -41,22 +52,22 @@ public class MeasurementSession {
 		return applicationName != null && instanceName != null && hostName != null;
 	}
 
-	public String getStartTimestamp() {
+	public String getStart() {
 		return StringUtils.timestampAsIsoString(startTimestamp);
 	}
 
-	public long getStartTimestampEpoch() {
+	public long getStartTimestamp() {
 		return startTimestamp;
 	}
 
-	public String getEndTimestamp() {
+	public String getEnd() {
 		if (endTimestamp > 0) {
 			return StringUtils.timestampAsIsoString(endTimestamp);
 		}
 		return null;
 	}
 
-	public Long getEndTimestampEpoch() {
+	public Long getEndTimestamp() {
 		if (endTimestamp > 0) {
 			return endTimestamp;
 		}

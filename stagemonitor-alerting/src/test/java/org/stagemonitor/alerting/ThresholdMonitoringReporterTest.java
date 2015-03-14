@@ -208,7 +208,7 @@ public class ThresholdMonitoringReporterTest {
 		assertEquals(2, storedIncident.getVersion());
 	}
 
-	private Check createCheckCheckingMean(int alertAfterXFailures, long meanMs) {
+	public static Check createCheckCheckingMean(int alertAfterXFailures, long meanMs) {
 		Check check = new Check();
 		check.setName("Test Timer");
 		check.setApplication("testApp");

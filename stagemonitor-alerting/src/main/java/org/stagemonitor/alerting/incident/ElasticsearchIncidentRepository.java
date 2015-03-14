@@ -2,14 +2,22 @@ package org.stagemonitor.alerting.incident;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 
 public class ElasticsearchIncidentRepository implements IncidentRepository {
+
+	public static final ObjectReader READER = JsonUtils.getMapper().reader(Incident.class);
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public static final String BASE_URL = "/stagemonitor/incidents/";
 	private final ElasticsearchClient elasticsearchClient;
@@ -21,8 +29,12 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 	@Override
 	public Collection<Incident> getAllIncidents() {
 		try {
-			return JsonUtils.getMapper().reader(new TypeReference<Collection<Incident>>() {})
-					.readValue(elasticsearchClient.getJson(BASE_URL).get(""));
+			JsonNode hits = elasticsearchClient.getJson(BASE_URL + "/_search").get("hits").get("hits");
+			List<Incident> incidents = new ArrayList<Incident>(hits.size());
+			for (JsonNode hit : hits) {
+				incidents.add(asIncident(hit));
+			}
+			return incidents;
 		} catch (IOException e) {
 			return Collections.emptyList();
 		}
@@ -31,8 +43,7 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 	@Override
 	public Incident getIncidentByCheckId(String checkId) {
 		try {
-			return JsonUtils.getMapper().reader(Incident.class)
-					.readValue(elasticsearchClient.getJson(BASE_URL + checkId).get("_source"));
+			return asIncident(elasticsearchClient.getJson(BASE_URL + checkId));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -51,6 +62,10 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 	@Override
 	public boolean updateIncident(Incident incident) {
 		return hasNoConflict(elasticsearchClient.sendAsJson("PUT", BASE_URL + incident.getCheckId() + getVersionParameter(incident), incident));
+	}
+
+	private Incident asIncident(JsonNode hit) throws IOException {
+		return READER.readValue(hit.get("_source"));
 	}
 
 	private String getVersionParameter(Incident incident) {

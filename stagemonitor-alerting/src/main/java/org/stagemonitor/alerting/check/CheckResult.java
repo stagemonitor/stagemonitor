@@ -2,6 +2,9 @@ package org.stagemonitor.alerting.check;
 
 import java.util.Collection;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * The result of a check
  */
@@ -11,7 +14,11 @@ public class CheckResult {
 	private final Status status;
 	private final double currentValue;
 
-	public CheckResult(String failingExpression, double currentValue, Status status) {
+	@JsonCreator
+	public CheckResult(@JsonProperty("failingExpression") String failingExpression,
+					   @JsonProperty("currentValue") double currentValue,
+					   @JsonProperty("status")Status status) {
+
 		this.failingExpression = failingExpression;
 		this.currentValue = currentValue;
 		this.status = status;

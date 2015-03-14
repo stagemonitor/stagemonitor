@@ -1,5 +1,8 @@
 package org.stagemonitor.alerting.incident;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -9,11 +12,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.core.MeasurementSession;
 
+@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = ANY, setterVisibility = NONE)
 public class Incident {
 
 	private int version;
@@ -24,9 +31,17 @@ public class Incident {
 	private String checkId;
 	private String checkName;
 	private int consecutiveFailures;
+	@JsonIgnore
 	private Map<MeasurementSession, CheckResults> checkResultsByMeasurementSession = new HashMap<MeasurementSession, CheckResults>();
 
 	public Incident() {
+	}
+
+	@JsonCreator
+	public Incident(@JsonProperty("checkResults") Collection<CheckResults> checkResults) {
+		for (CheckResults checkResult : checkResults) {
+			checkResultsByMeasurementSession.put(checkResult.getMeasurementSession(), checkResult);
+		}
 	}
 
 	public Incident(Check check, MeasurementSession measurementSession, List<CheckResult> checkResults) {
@@ -68,6 +83,7 @@ public class Incident {
 		return checkResultsByMeasurementSession.values();
 	}
 
+	@JsonIgnore
 	public Collection<String> getHosts() {
 		Set<String> hosts = new TreeSet<String>();
 		for (MeasurementSession measurementSession : checkResultsByMeasurementSession.keySet()) {
@@ -76,6 +92,7 @@ public class Incident {
 		return hosts;
 	}
 
+	@JsonIgnore
 	public Collection<String> getInstances() {
 		Set<String> instances = new TreeSet<String>();
 		for (MeasurementSession measurementSession : checkResultsByMeasurementSession.keySet()) {
