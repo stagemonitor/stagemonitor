@@ -10,6 +10,7 @@ import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -46,8 +47,9 @@ public class JvmPlugin extends StagemonitorPlugin {
 			}
 		});
 
-		ElasticsearchClient.sendGrafanaDashboardAsync("JVM Memory.json");
-		ElasticsearchClient.sendGrafanaDashboardAsync("JVM Overview.json");
+		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
+		elasticsearchClient.sendGrafanaDashboardAsync("JVM Memory.json");
+		elasticsearchClient.sendGrafanaDashboardAsync("JVM Overview.json");
 	}
 
 	@Override

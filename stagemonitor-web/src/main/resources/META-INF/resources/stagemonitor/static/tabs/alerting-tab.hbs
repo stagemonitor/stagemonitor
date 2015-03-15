@@ -1,0 +1,339 @@
+<div>
+<script id="alerts-content-template" type="text/x-handlebars-template">
+	<div>
+		<ul class="nav nav-pills nav-stacked sidebar" id="alerting-side-menu">
+			<li class="alerting-menu active">
+				<a href="#status">Status</a>
+			</li>
+			<li class="alerting-menu">
+				<a href="#checks">Checks</a>
+			</li>
+		</ul>
+	</div>
+
+	<div id="alerting-content" class="page-wrapper">
+		<div id="status" class="alerting-content">
+			<div class="row">
+				<div class="col-xs-6">
+					<h2><span class="glyphicon glyphicon-info-sign"></span> Status</h2>
+				</div>
+				<div class="col-xs-6">
+					<h2 id="incident-status" class="pull-right"></h2>
+				</div>
+			</div>
+			<hr>
+			<div id="subscriptions" class="row">
+				<div class="col-xs-2">
+					<label>Subscriptions</label>
+				</div>
+				<div id="subscriptions-partial" class="col-xs-10">
+
+				</div>
+			</div>
+
+			<hr>
+			<table id="incidents-table" class="display" cellspacing="0" width="100%">
+				<h3>Open Incidents</h3>
+				<thead>
+				<tr>
+					<th>Name</th>
+					<th>Hosts</th>
+					<th>Instances</th>
+					<th>First Failure</th>
+					<th>Status</th>
+					<th>Details</th>
+				</tr>
+				</thead>
+			</table>
+		</div>
+
+
+		<div id="checks" class="alerting-content hidden">
+			<div class="row">
+				<div class="col-xs-6">
+					<h2><span class="glyphicon glyphicon-eye-open"></span> Checks</h2>
+				</div>
+				<div class="col-xs-6">
+					<h2 class="pull-right">
+						<a href="#" class="add-check btn btn-primary" title="Add check" data-placement="bottom"
+						   data-toggle="modal" data-target="#check-modal">
+							<span class="glyphicon glyphicon-plus"></span> Add
+						</a>
+					</h2>
+					<span class=""></span>
+				</div>
+			</div>
+			<hr>
+			<table id="checks-table" class="display" cellspacing="0" width="100%">
+				<thead>
+				<tr>
+					<th>Application</th>
+					<th>Name</th>
+					<th>Target</th>
+					<th>Alert after x failures</th>
+					<th>Active</th>
+					<th>Edit</th>
+					<th>Delete</th>
+				</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+	<!-- Subscription Modal -->
+	<div class="modal fade" id="subscription-modal" tabindex="-1" role="dialog"
+		 aria-labelledby="subscription-modal-label" aria-hidden="true">
+		<div class="modal-dialog">
+			<div id="subscription-modal-content" class="modal-content">
+			</div>
+		</div>
+	</div>
+	<!-- Check Modal -->
+	<div class="modal fade" id="check-modal" tabindex="-1" role="dialog"
+		 aria-labelledby="check-modal-label" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div id="check-modal-content" class="modal-content">
+			</div>
+		</div>
+	</div>
+	<!-- Incident Details Modal -->
+	<div class="modal fade" id="incident-details-modal" tabindex="-1" role="dialog"
+		 aria-labelledby="incident-details-modal-label" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div id="incident-details-modal-content" class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+							aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="incident-details-modal-label">Incident Details</h4>
+				</div>
+				<div class="modal-body">
+					<table id="incident-details-table" class="display" cellspacing="0" width="100%">
+						<thead>
+						<tr>
+							<th>Application</th>
+							<th>Host</th>
+							<th>Instance</th>
+							<th>Status</th>
+							<th>Description</th>
+							<th>Current Value</th>
+						</tr>
+						</thead>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</script>
+
+<!--Subscription partial-->
+<script id="subscriptions-partial-template" type="text/x-handlebars-template">
+	{{#each subscriptionsById}}
+	<span class="well well-sm" data-subscription-id="{{@key}}">
+		{{alerterType}}: {{target}}
+		<a href="#"><span class="edit-subscription glyphicon glyphicon-edit" data-toggle="modal"
+						  data-target="#subscription-modal"></span></a>
+		<a href="#"><span class="remove-subscription glyphicon glyphicon-remove"></span></a>
+	</span>
+	<span>&nbsp;</span>
+	{{/each}}
+	<button id="add-subscription" class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
+		<span class="glyphicon glyphicon-plus"></span> Add
+	</button>
+</script>
+
+<!--Subscription Modal-->
+<script id="subscription-modal-template" type="text/x-handlebars-template">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+				aria-hidden="true">&times;</span></button>
+		<h4 class="modal-title" id="subscription-modal-label">{{title}}</h4>
+	</div>
+	<div class="modal-body">
+		<form id="subscription-form" data-parsley-validate>
+			<input type="hidden" name="id" value="{{subscription.id}}"/>
+			<div class="form-group">
+				<label>Target</label>
+				<input name="target" class="form-control" type="text" value="{{subscription.target}}" required>
+			</div>
+			<div class="form-group">
+				<label>Type</label>
+				<select name="alerterType" class="form-control">
+					{{#each alerterTypes}}
+						<option value="{{this}}">{{this}}</option>
+					{{/each}}
+				</select>
+			</div>
+			<div class="form-group">
+				<label>Alert on</label>
+
+				<div class="checkbox">
+					<label>
+						<input name="alertOnBackToOk" type="checkbox"
+							   {{#if subscription.alertOnBackToOk}}checked{{/if}}>
+						Back to OK
+					</label>
+				</div>
+				<div class="checkbox">
+					<label>
+						<input name="alertOnWarn" type="checkbox" {{#if subscription.alertOnWarn}}checked{{/if}}>
+						(Back to) Warn
+					</label>
+				</div>
+				<div class="checkbox">
+					<label>
+						<input name="alertOnError" type="checkbox" {{#if subscription.alertOnError}}checked{{/if}}>
+						(Back to) Error
+					</label>
+				</div>
+				<div class="checkbox">
+					<label>
+						<input name="alertOnCritical" type="checkbox"
+							   {{#if subscription.alertOnCritical}}checked{{/if}}>
+						Critical
+					</label>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		<button id="save-subscription" type="button" class="btn btn-primary tip"
+				title="To change the configuration source this check is saved to or to enter the configuration update
+				password, go to the configuration tab">Save</button>
+	</div>
+</script>   <!--Subscription Modal-->
+
+<!--Check Modal-->
+<script id="check-modal-template" type="text/x-handlebars-template">
+
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+				aria-hidden="true">&times;</span></button>
+		<h4 class="modal-title" id="check-modal-label">{{title}}</h4>
+	</div>
+	<div class="modal-body">
+		<form id="check-form" class="form-horizontal" data-parsley-validate>
+			<input type="hidden" name="id" value="{{check.id}}">
+
+			<div class="form-group">
+				<label for="name-input" class="col-sm-2 control-label">Application</label>
+				<div class="col-sm-10">
+					<input id="name-input" name="application" class="form-control" value="{{check.application}}" required>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">Active</label>
+				<div class="col-sm-10">
+					<input name="active" type="checkbox" {{#if check.active}}checked{{/if}}>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label" for="name-input">Name</label>
+				<div class="col-sm-10">
+					<input id="name-input" name="name" class="form-control" value="{{check.name}}" required>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label" for="alertAfterXFailures-label">Alert after x failures</label>
+				<div class="col-sm-10">
+					<input id="alertAfterXFailures-label" name="alertAfterXFailures" type="number"
+					   class="form-control" value="{{check.alertAfterXFailures}}" min="1" required>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label" for="metric-category-input">Metric Category</label>
+				<div class="col-sm-10">
+					<select id="metric-category-input" class="form-control" name="metricCategory">
+						{{#each metricCategories}}
+							<option value="{{@key}}"
+									{{#ifCond @key '==' ../check.metricCategory}}selected{{/ifCond}}>{{this.label}}</option>
+						{{/each}}
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label" for="target-input">
+					Target
+					<span class="glyphicon glyphicon-question-sign tip"
+						  title="Enter a regex to select one or multiple targets. For example 'requests.*.server.time.total'"></span>
+				</label>
+				<div class="col-sm-7">
+					<input id="target-input" type="text" class="form-control typeahead" name="target" value="{{check.target}}" required>
+				</div>
+				<label class="col-sm-1 control-label" for="target-input">Matches</label>
+				<div class="col-sm-2">
+					<input id="target-matches-input" class="form-control" disabled>
+				</div>
+			</div>
+
+			{{#each check.thresholds}}
+				<fieldset>
+					<legend>{{capitalize @key}}</legend>
+					{{#each this}}
+						<div class="threshold-form-group row form-group">
+							<div class="col-lg-2">
+								<div class="pull-right">
+									<a href="#" class="add-threshold btn btn-default" data-severity="{{@key}}"><span
+											class="glyphicon glyphicon-plus"></span></a>
+									<a href="#" class="remove-threshold btn btn-default"><span
+											class="glyphicon glyphicon-minus"></span></a>
+								</div>
+							</div>
+							<div class="col-lg-3">
+								<select class="form-control" name="thresholds[{{@key}}][][metric]">
+									{{#each @root.metrics}}
+										<option value="{{this}}"
+												{{#ifCond ../metric '==' this}}selected{{/ifCond}}>{{this}}</option>
+									{{/each}}
+								</select>
+							</div>
+							<div class="col-lg-2">
+								<select class="form-control" name="thresholds[{{@key}}][][operator]">
+									<option value="GREATER" {{#ifCond operator '==' 'GREATER'}}selected{{/ifCond}}>
+										&gt;</option>
+									<option value="GREATER_EQUAL"
+											{{#ifCond operator '==' 'GREATER_EQUAL'}}selected{{/ifCond}}>&gt;=
+									</option>
+									<option value="LESS" {{#ifCond operator '==' 'LESS'}}selected{{/ifCond}}>
+										&lt;</option>
+									<option value="LESS_EQUAL"
+											{{#ifCond operator '==' 'LESS_EQUAL'}}selected{{/ifCond}}>&lt;=
+									</option>
+								</select>
+							</div>
+							<div class="col-lg-5">
+								<input class="form-control" type="number" step="0.01"
+									   name="thresholds[{{@key}}][][thresholdValue]" value="{{thresholdValue}}"
+									   required>
+							</div>
+						</div>
+					{{/each}}
+					{{#unless this}}
+						<div class="row form-group">
+							<div class="col-lg-2">
+								<div class="pull-right">
+									<a href="#" class="add-threshold btn btn-default"data-severity="{{@key}}">
+										<span class="glyphicon glyphicon-plus"></span>
+									</a>
+								</div>
+							</div>
+						</div>
+					{{/unless}}
+				</fieldset>
+			{{/each}}
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		<button id="save-check" type="button" class="btn btn-primary tip"
+				title="To change the configuration source this check is saved to or to enter the configuration update
+				password, go to the configuration tab">Save</button>
+	</div>
+
+</script> <!--Check Modal-->
+
+<!--Incident Details-->
+<script id="incident-details-template" type="text/x-handlebars-template">
+
+</script> <!--Incident Details-->
+
+</div>

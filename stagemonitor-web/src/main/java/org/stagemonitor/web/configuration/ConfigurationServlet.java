@@ -17,7 +17,7 @@ public class ConfigurationServlet extends HttpServlet {
 
 	public static final String CONFIGURATION_ENDPOINT = "/stagemonitor/configuration";
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(ConfigurationServlet.class);
 
 	private final Configuration configuration;
 
@@ -65,12 +65,19 @@ public class ConfigurationServlet extends HttpServlet {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'configurationSource'");
 			return;
 		}
-		tryToSaveAndHandleErrors(req, resp, req.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD), key, configurationSource);
+		tryToSaveAndHandleErrors(configuration, req, resp, key,
+				req.getParameter("value"));
 	}
 
-	private void tryToSaveAndHandleErrors(HttpServletRequest req, HttpServletResponse resp, String configurationUpdatePassword, String key, String configurationSource) throws IOException {
+	public static void tryToSaveAndHandleErrors(Configuration configuration, HttpServletRequest req,
+												HttpServletResponse resp,
+												String key, String value) throws IOException {
+		String password = req.getHeader("X-Stagemonitor-Show-Widget");
+		if (password == null) {
+			password = req.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD);
+		}
 		try {
-			configuration.save(key, req.getParameter("value"), configurationSource, configurationUpdatePassword);
+			configuration.save(key, value, req.getParameter("configurationSource"), password);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} catch (IllegalArgumentException e) {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
@@ -84,7 +91,7 @@ public class ConfigurationServlet extends HttpServlet {
 		}
 	}
 
-	private void sendError(HttpServletResponse response, int status, String message) throws IOException {
+	private static void sendError(HttpServletResponse response, int status, String message) throws IOException {
 		response.setStatus(status);
 		response.getWriter().print(message);
 	}

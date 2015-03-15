@@ -1,24 +1,24 @@
 package org.stagemonitor.web.monitor.rum;
 
-import com.codahale.metrics.MetricRegistry;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.util.GraphiteSanitizer;
-import org.stagemonitor.web.WebPlugin;
+import static com.codahale.metrics.MetricRegistry.name;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
-import static com.codahale.metrics.MetricRegistry.name;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import com.codahale.metrics.MetricRegistry;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.util.GraphiteSanitizer;
+import org.stagemonitor.web.WebPlugin;
 
 /**
  * The Real User Monitoring Servlet handles boomerang beacons (see http://www.lognormal.com/boomerang/doc/)
  */
-@WebServlet("/stagemonitor/rum")
+@WebServlet("/stagemonitor/public/rum")
 public class RumServlet extends HttpServlet {
 
 	private final MetricRegistry metricRegistry;

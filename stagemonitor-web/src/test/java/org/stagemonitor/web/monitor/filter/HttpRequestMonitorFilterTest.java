@@ -18,6 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.codahale.metrics.MetricRegistry;
@@ -29,6 +30,8 @@ import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.stagemonitor.alerting.AlertingPlugin;
+import org.stagemonitor.alerting.alerter.AlertSender;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
@@ -51,25 +54,6 @@ public class HttpRequestMonitorFilterTest {
 
 	@Before
 	public void before() throws Exception {
-		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
-		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		when(webPlugin.isWidgetEnabled()).thenReturn(true);
-		when(corePlugin.isStagemonitorActive()).thenReturn(true);
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
-		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
-		when(corePlugin.getApplicationName()).thenReturn("testApplication");
-		when(corePlugin.getInstanceName()).thenReturn("testInstance");
-		initFilter();
-	}
-
-	private void initFilter() throws Exception {
-		final ServletContext servlet3Context = mock(ServletContext.class);
-		when(servlet3Context.getMajorVersion()).thenReturn(3);
-		when(servlet3Context.getContextPath()).thenReturn("");
-		when(servlet3Context.addServlet(anyString(), any(Servlet.class))).thenReturn(mock(ServletRegistration.Dynamic.class));
-		final FilterConfig filterConfig = spy(new MockFilterConfig());
-		when(filterConfig.getServletContext()).thenReturn(servlet3Context);
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<RequestMonitor.RequestInformation<?>>() {
 			@Override
@@ -82,7 +66,34 @@ public class HttpRequestMonitorFilterTest {
 				return requestInformation;
 			}
 		});
-		httpRequestMonitorFilter = new HttpRequestMonitorFilter(configuration, requestMonitor, mock(MetricRegistry.class));
+
+		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(webPlugin.isWidgetEnabled()).thenReturn(true);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(true);
+		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
+		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(corePlugin.getApplicationName()).thenReturn("testApplication");
+		when(corePlugin.getInstanceName()).thenReturn("testInstance");
+
+		AlertingPlugin alertingPlugin = mock(AlertingPlugin.class);
+		when(alertingPlugin.getAlertSender()).thenReturn(mock(AlertSender.class));
+		when(configuration.getConfig(AlertingPlugin.class)).thenReturn(alertingPlugin);
+		initFilter();
+	}
+
+	private void initFilter() throws Exception {
+		final ServletContext servlet3Context = mock(ServletContext.class);
+		when(servlet3Context.getMajorVersion()).thenReturn(3);
+		when(servlet3Context.getContextPath()).thenReturn("");
+		when(servlet3Context.addServlet(anyString(), any(Servlet.class))).thenReturn(mock(ServletRegistration.Dynamic.class));
+		final FilterConfig filterConfig = spy(new MockFilterConfig());
+		when(filterConfig.getServletContext()).thenReturn(servlet3Context);
+
+		httpRequestMonitorFilter = new HttpRequestMonitorFilter(configuration, mock(MetricRegistry.class));
 		httpRequestMonitorFilter.initInternal(filterConfig);
 	}
 
@@ -106,6 +117,7 @@ public class HttpRequestMonitorFilterTest {
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
 		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(false);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(false);
 		when(webPlugin.isWidgetEnabled()).thenReturn(false);
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
@@ -155,15 +167,16 @@ public class HttpRequestMonitorFilterTest {
 	public void testRUM() throws Exception {
 		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(true);
 		when(webPlugin.isWidgetEnabled()).thenReturn(false);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(false);
 		initFilter();
 
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		Assert.assertEquals("<html><body><script src=\"/stagemonitor/static/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
+		Assert.assertEquals("<html><body><script src=\"/stagemonitor/public/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
-				"      beacon_url: '/stagemonitor/rum',\n" +
+				"      beacon_url: '/stagemonitor/public/rum',\n" +
 				"      log: null\n" +
 				"   });\n" +
 				"   BOOMR.addVar(\"requestId\", \"null\");\n" +

@@ -293,20 +293,46 @@ public class Configuration {
 	 *                                       sources
 	 * @throws UnsupportedOperationException if saving values is not possible with this configuration source
 	 */
-	public void save(String key, String value, String configurationSourceName, String configurationUpdatePassword) throws IOException {
-		if (configurationUpdatePassword == null) {
-			configurationUpdatePassword = "";
+	public void save(String key, String value, String configurationSourceName, String configurationUpdatePassword) throws IOException,
+			IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
+		assertPasswordCorrect(configurationUpdatePassword);
+		final ConfigurationOption<?> configurationOption = validateConfigurationOption(key, value);
+		saveToConfigurationSource(key, value, configurationSourceName, configurationOption);
+	}
+
+	/**
+	 * Validates a password.
+	 *
+	 * @param password the provided password to validate
+	 * @return <code>true</code>, if the password is correct, <code>false</code> otherwise
+	 */
+	public boolean isPasswordCorrect(String password) {
+		try {
+			assertPasswordCorrect(password);
+			return true;
+		} catch (IllegalStateException e) {
+			logger.error(e.getMessage(), e);
+			return false;
+		}
+	}
+
+	/**
+	 * Validates a password. If not valid, throws a {@link IllegalStateException}.
+	 *
+	 * @param password the provided password to validate
+	 * @throws IllegalStateException if the password did not match
+	 */
+	public void assertPasswordCorrect(String password) {
+		if (password == null) {
+			password = "";
 		}
 		String updateConfigPassword = getString(updateConfigPasswordKey);
 		if (updateConfigPassword == null) {
-			throw new IllegalStateException("Update configuration password is not set. " +
-					"Dynamic configuration changes are therefore not allowed.");
+			throw new IllegalStateException("'" + updateConfigPasswordKey + "' is not set.");
 		}
 
-		if (updateConfigPassword.equals(configurationUpdatePassword)) {
-			save(key, value, configurationSourceName);
-		} else {
-			throw new IllegalStateException("Wrong password for updating configuration.");
+		if (!updateConfigPassword.equals(password)) {
+			throw new IllegalStateException("Wrong password for '" + updateConfigPasswordKey + "'.");
 		}
 	}
 

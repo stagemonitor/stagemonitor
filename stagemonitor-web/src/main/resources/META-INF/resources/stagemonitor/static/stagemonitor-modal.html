@@ -11,16 +11,20 @@
 	<link rel="stylesheet" href="jquery-treetable/jquery.treetable.theme.bootstrap.css">
 	<link rel="stylesheet" href="datatables/jquery.dataTables.min.css">
 	<link rel="stylesheet" href="datatables/dataTables.bootstrap.css">
+	<link rel="stylesheet" href="typeahead.css">
 	<link rel="stylesheet" href="animate/animate.min.css">
 	<link rel="stylesheet" href="stagemonitor-widget.css">
 	<script src="jquery.1.11.1.min.js"></script>
+	<script src="jquery.serialize-object.min.js"></script>
 	<script src="bootstrap/bootstrap.min.js"></script>
 	<script src="bootstrap/bootstrap-growl.min.js"></script>
+	<script src="parsley.min.js"></script>
 	<script src="datatables/jquery.dataTables.min.js"></script>
 	<script src="datatables/dataTables.bootstrap.js"></script>
-	<script src="handlebars-v1.3.0.min.js"></script>
+	<script src="handlebars.min.js"></script>
 	<script src="handlebars-helpers.js"></script>
 	<script src="jquery-treetable/jquery.treetable.js"></script>
+	<script src="typeahead.jquery.min.js"></script>
 	<script type="text/javascript" src="utils.js"></script>
 	<script type="text/javascript" src="stagemonitor-widget.js"></script>
 	<script type="text/javascript" src="tabs/config-tab.js"></script>
@@ -36,6 +40,7 @@
 	<script type="text/javascript" src="tabs/metrics-tab.js"></script>
 	<script type="text/javascript" src="tabs/metrics/graphRenderer.js"></script>
 	<script type="text/javascript" src="tabs/metrics/tableRenderer.js"></script>
+	<script type="text/javascript" src="tabs/alerting-tab.js"></script>
 </head>
 <body>
 <div class="container-fluid">
@@ -83,6 +88,12 @@
 				<a href="#stagemonitor-metrics" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
 				   title="Show metrics of the application.">
 					Metrics
+				</a>
+			</li>
+			<li id="alerts-tab">
+				<a href="#stagemonitor-alerts" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
+				   title="Show status and current incidents of the application.">
+					Alerts
 				</a>
 			</li>
 		</ul>
@@ -248,8 +259,11 @@
 			</div>
 		</div>
 
-	</div>
+		<div class="tab-pane" id="stagemonitor-alerts">
+			<!--tabs/alerting-tab.hbs-->
+		</div>
 
+	</div>
 </div>
 </body>
 </html>

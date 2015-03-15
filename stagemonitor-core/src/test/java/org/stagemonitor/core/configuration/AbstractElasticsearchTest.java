@@ -19,6 +19,7 @@ public class AbstractElasticsearchTest {
 	protected static Client client;
 	protected static AdminClient adminClient;
 	protected static int elasticsearchPort;
+	protected static ElasticsearchClient elasticsearchClient;
 
 	@BeforeClass
 	public static void beforeClass() throws IOException {
@@ -39,7 +40,7 @@ public class AbstractElasticsearchTest {
 					.put("index.number_of_shards", "1")
 					.put("index.number_of_replicas", "0")
 					.put("discovery.zen.ping.multicast.enabled", "false");
-			ElasticsearchClient.setBaseUrl("http://localhost:" + elasticsearchPort);
+			elasticsearchClient = new ElasticsearchClient("http://localhost:" + elasticsearchPort, false);
 
 			node = nodeBuilder.node();
 			node.client().admin().cluster().prepareHealth().setWaitForGreenStatus().get();

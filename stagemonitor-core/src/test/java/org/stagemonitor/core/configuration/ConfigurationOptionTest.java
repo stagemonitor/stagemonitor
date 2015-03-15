@@ -1,10 +1,8 @@
 package org.stagemonitor.core.configuration;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.source.SimpleSource;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,14 +13,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.StagemonitorPlugin;
+import org.stagemonitor.core.configuration.source.SimpleSource;
 
 public class ConfigurationOptionTest {
 
 	private final ConfigurationOption<Map<Pattern,String>> invalidPatternMap = ConfigurationOption.regexMapOption().key("invalidPatternMap").build();
-	private final ConfigurationOption<List<Pattern>> invalidPatternSyntax = ConfigurationOption.regexListOption().key("invalidPatternSyntax").build();
+	private final ConfigurationOption<Collection<Pattern>> invalidPatternSyntax = ConfigurationOption.regexListOption().key("invalidPatternSyntax").build();
 	private final ConfigurationOption<Long> aLong = ConfigurationOption.longOption().key("long").build();
 	private final ConfigurationOption<Long> invalidLong = ConfigurationOption.longOption().key("invalidLong").defaultValue(2L).build();
 	private final ConfigurationOption<String> string = ConfigurationOption.stringOption().key("string").build();

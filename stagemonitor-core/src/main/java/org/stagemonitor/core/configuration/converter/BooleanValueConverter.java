@@ -2,8 +2,10 @@ package org.stagemonitor.core.configuration.converter;
 
 public class BooleanValueConverter implements ValueConverter<Boolean> {
 
-	public static final String TRUE = Boolean.TRUE.toString();
-	public static final String FALSE = Boolean.FALSE.toString();
+	public static final BooleanValueConverter INSTANCE = new BooleanValueConverter();
+
+	private static final String TRUE = Boolean.TRUE.toString();
+	private static final String FALSE = Boolean.FALSE.toString();
 
 	@Override
 	public Boolean convert(String s) {

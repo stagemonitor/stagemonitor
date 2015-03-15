@@ -1,13 +1,15 @@
 package org.stagemonitor.core.configuration.converter;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.util.regex.Pattern;
+
+import org.junit.Test;
+
 public class RegexMapValueConverterTest {
 
-	private final RegexMapValueConverter converter = new RegexMapValueConverter();
+	private final MapValueConverter<Pattern, String> converter = new MapValueConverter<Pattern, String>(RegexValueConverter.INSTANCE, StringValueConverter.INSTANCE);
 
 	@Test
 	public void testRoundtrip() {

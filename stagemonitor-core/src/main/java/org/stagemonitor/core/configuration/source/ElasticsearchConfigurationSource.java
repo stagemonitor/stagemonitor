@@ -14,10 +14,12 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final String path;
+	private final ElasticsearchClient elasticsearchClient;
 	private final String configurationId;
 	private Map<String, String> configuration = new HashMap<String, String>();
 
-	public ElasticsearchConfigurationSource(String configurationId) {
+	public ElasticsearchConfigurationSource(ElasticsearchClient elasticsearchClient, String configurationId) {
+		this.elasticsearchClient = elasticsearchClient;
 		this.configurationId = configurationId;
 		this.path = "/stagemonitor/configuration/" + this.configurationId;
 		reload();
@@ -47,14 +49,14 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 	public void save(String key, String value) throws IOException {
 		synchronized (this) {
 			configuration.put(key, value);
-			ElasticsearchClient.sendAsJson("PUT", path, configuration);
+			elasticsearchClient.sendAsJson("PUT", path, configuration);
 		}
 	}
 
 	@Override
 	public void reload() {
 		try {
-			final JsonNode source = ElasticsearchClient.getJson(path).get("_source");
+			final JsonNode source = elasticsearchClient.getJson(path).get("_source");
 			Map<String, String> conf = new HashMap<String, String>((int) Math.ceil(source.size() / 0.75));
 			final Iterator<Map.Entry<String, JsonNode>> it = source.fields();
 			while (it.hasNext()) {

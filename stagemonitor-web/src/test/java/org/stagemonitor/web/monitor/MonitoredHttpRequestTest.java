@@ -1,5 +1,16 @@
 package org.stagemonitor.web.monitor;
 
+import static java.util.Arrays.asList;
+import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,24 +22,13 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
-import java.util.HashSet;
-
-import static java.util.Arrays.asList;
-import static junit.framework.Assert.assertNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class MonitoredHttpRequestTest {
 
 	private MonitoredHttpRequest monitoredHttpRequest;
 
 	@Before
 	public void setUp() throws Exception {
-		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance"));
+		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance")).get();
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
 		request.addParameter("foo", "bar");
 		request.addParameter("bla", "blubb");

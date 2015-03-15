@@ -2,6 +2,8 @@ package org.stagemonitor.core.metrics;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.counter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.gauge;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.histogram;
@@ -20,7 +22,8 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.JsonUtils;
 
 public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 
@@ -28,8 +31,13 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 
 	@BeforeClass
 	public static void setup() throws Exception {
-		new CorePlugin().initializePlugin(new MetricRegistry(), Stagemonitor.getConfiguration());
-		while (!ElasticsearchClient.asyncRestPool.getQueue().isEmpty()) {
+		Configuration configuration = mock(Configuration.class);
+		CorePlugin corePlugin = mock(CorePlugin.class);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
+		when(corePlugin.getAggregationReportingInterval()).thenReturn(30L);
+		new CorePlugin().initializePlugin(new MetricRegistry(), configuration);
+		while (!elasticsearchClient.asyncRestPool.getQueue().isEmpty()) {
 			// give the async tasks time to complete
 			Thread.sleep(10);
 		}
@@ -39,7 +47,7 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 
 	@Before
 	public void setUp() throws Exception {
-		reporter = new SimpleElasticsearchReporter(null, null, MetricFilter.ALL);
+		reporter = new SimpleElasticsearchReporter(elasticsearchClient, null, null, MetricFilter.ALL);
 	}
 
 	@Test
@@ -56,18 +64,20 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 
 		final SearchResponse searchResponse = client.prepareSearch("stagemonitor").setTypes("measurementSessions").get();
 		assertEquals(1, searchResponse.getHits().totalHits());
-		assertEquals(String.format("{\"applicationName\":null," +
+		assertEquals(JsonUtils.getMapper().readTree(String.format("{\"applicationName\":null," +
 				"\"hostName\":null," +
 				"\"instanceName\":null," +
-				"\"startTimestamp\":\"%s\"," +
+				"\"startTimestamp\":%d," +
 				"\"endTimestamp\":null," +
+				"\"start\":\"%s\"," +
+				"\"end\":null," +
 				"\"gauges\":{\"gauge\":{\"value\":1.1},\"stringGauge\":{\"value\":\"test\"}}," +
 				"\"counters\":{\"counter\":{\"count\":1}}," +
 				"\"histograms\":{\"histogram\":{\"count\":1,\"max\":2,\"mean\":4.0,\"min\":4,\"p50\":6.0,\"p75\":7.0,\"p95\":8.0,\"p98\":9.0,\"p99\":10.0,\"p999\":11.0,\"stddev\":5.0}}," +
 				"\"meters\":{\"meter\":{\"count\":4,\"m15_rate\":5.0,\"m1_rate\":3.0,\"m5_rate\":4.0,\"mean_rate\":2.0,\"units\":\"events/second\"}}," +
 				"\"timers\":{\"timer\":{\"count\":1000000,\"max\":2.0,\"mean\":4.0,\"min\":4.0,\"p50\":6.0,\"p75\":7.0,\"p95\":8.0,\"p98\":9.0,\"p99\":10.0,\"p999\":11.0,\"stddev\":5.0,\"m15_rate\":5000000.0,\"m1_rate\":3000000.0,\"m5_rate\":4000000.0,\"mean_rate\":2000000.0,\"duration_units\":\"milliseconds\",\"rate_units\":\"calls/second\"}}}",
-				Stagemonitor.getMeasurementSession().getStartTimestamp()),
-				searchResponse.getHits().getAt(0).getSourceAsString());
+				Stagemonitor.getMeasurementSession().getStartTimestamp(), Stagemonitor.getMeasurementSession().getStart())),
+				JsonUtils.getMapper().readTree(searchResponse.getHits().getAt(0).getSourceAsString()));
 	}
 
 	@Test

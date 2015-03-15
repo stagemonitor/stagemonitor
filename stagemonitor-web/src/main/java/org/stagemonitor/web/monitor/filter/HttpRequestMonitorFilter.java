@@ -28,6 +28,7 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.DefaultMonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
@@ -49,16 +50,16 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private final MonitoredHttpRequestFactory monitoredHttpRequestFactory;
 
 	public HttpRequestMonitorFilter() {
-		this(Stagemonitor.getConfiguration(), new RequestMonitor(Stagemonitor.getConfiguration()), Stagemonitor.getMetricRegistry());
+		this(Stagemonitor.getConfiguration(), Stagemonitor.getMetricRegistry());
 	}
 
-	public HttpRequestMonitorFilter(Configuration configuration, RequestMonitor requestMonitor, MetricRegistry metricRegistry) {
+	public HttpRequestMonitorFilter(Configuration configuration, MetricRegistry metricRegistry) {
 		super(configuration.getConfig(WebPlugin.class).getExcludedRequestPaths());
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
-		this.requestMonitor = requestMonitor;
 		this.metricRegistry = metricRegistry;
+		this.requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
 
 		final Iterator<MonitoredHttpRequestFactory> requestFactoryIterator = ServiceLoader.load(MonitoredHttpRequestFactory.class).iterator();
 		if (!requestFactoryIterator.hasNext()) {
@@ -91,12 +92,12 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	@Override
-	public final void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
+	public final void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
 		setCachingHeadersForBommerangJs(request, response);
 		if (corePlugin.isStagemonitorActive() && isHttpRequest(request, response) &&
-				!isInternalRequest((HttpServletRequest) request) && onlyMonitorForwardedRequestsIfConfigured(request)) {
-			doMonitor((HttpServletRequest) request, response, filterChain);
+				!isInternalRequest(request) && onlyMonitorForwardedRequestsIfConfigured(request)) {
+			doMonitor(request, response, filterChain);
 		} else {
 			filterChain.doFilter(request, response);
 		}
@@ -142,12 +143,12 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private boolean isInjectContentToHtml(HttpServletRequest httpServletRequest) {
-		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive() ;
+		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive(httpServletRequest) ;
 	}
 
-	private boolean isAtLeastOneHtmlInjectorActive() {
+	private boolean isAtLeastOneHtmlInjectorActive(HttpServletRequest httpServletRequest) {
 		for (HtmlInjector htmlInjector : htmlInjectors) {
-			if (htmlInjector.isActive()) {
+			if (htmlInjector.isActive(httpServletRequest)) {
 				return true;
 			}
 		}
@@ -178,7 +179,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			httpServletRequest.setAttribute("stagemonitorInjected", true);
 			String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
 			for (HtmlInjector htmlInjector : htmlInjectors) {
-				if (htmlInjector.isActive()) {
+				if (htmlInjector.isActive(httpServletRequest)) {
 					content = injectBeforeClosingBody(content, htmlInjector.getContentToInjectBeforeClosingBody(requestInformation));
 				}
 			}

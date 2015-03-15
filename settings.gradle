@@ -1,4 +1,5 @@
-include'stagemonitor-benchmark',
+include 'stagemonitor-alerting',
+		'stagemonitor-benchmark',
 		'stagemonitor-benchmark:stagemonitor-instrument-javassist',
 		'stagemonitor-core',
 		'stagemonitor-ehcache',

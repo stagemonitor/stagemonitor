@@ -44,19 +44,20 @@ public class StagemonitorCoreConfigurationSourceInitializer implements Stagemoni
 	}
 
 	private void addElasticsearchConfigurationSources(Configuration configuration, CorePlugin corePlugin, Collection<String> elasticsearchConfigurationSourceIds) {
+		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
 		if (corePlugin.isDeactivateStagemonitorIfEsConfigSourceIsDown()) {
-			assertElasticsearchIsAvailable(corePlugin);
+			assertElasticsearchIsAvailable(elasticsearchClient, corePlugin);
 		}
 
 		for (String configurationId : elasticsearchConfigurationSourceIds) {
-			configuration.addConfigurationSource(new ElasticsearchConfigurationSource(configurationId), false);
+			configuration.addConfigurationSource(new ElasticsearchConfigurationSource(elasticsearchClient, configurationId), false);
 		}
 		configuration.reloadAllConfigurationOptions();
 	}
 
-	private void assertElasticsearchIsAvailable(CorePlugin corePlugin) {
+	private void assertElasticsearchIsAvailable(ElasticsearchClient elasticsearchClient, CorePlugin corePlugin) {
 		try {
-			ElasticsearchClient.getJson("/");
+			elasticsearchClient.getJson("/");
 		} catch (IOException e) {
 			throw new IllegalStateException("Property stagemonitor.elasticsearch.configurationSourceProfiles was set " +
 					"but elasticsearch is not reachable at " + corePlugin.getElasticsearchUrl(), e);

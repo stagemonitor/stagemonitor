@@ -149,3 +149,11 @@ body {
 .invisible {
 	top: -1000px;
 }
+
+/*
+ * Alerts Tab
+ */
+#check-form .tt-dropdown-menu {
+	max-height: 20em;
+	overflow-y: auto;
+}

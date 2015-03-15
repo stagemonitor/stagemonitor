@@ -91,13 +91,13 @@ public class RequestMonitor {
 	}
 
 	public void setMeasurementSession(MeasurementSession measurementSession) {
-		Stagemonitor.startMonitoring(measurementSession);
+		Stagemonitor.setMeasurementSession(measurementSession);
 	}
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
 		long overhead1 = System.nanoTime();
+		RequestInformation<T> info = new RequestInformation<T>();
 		if (!corePlugin.isStagemonitorActive()) {
-			RequestInformation<T> info = new RequestInformation<T>();
 			info.executionResult = monitoredRequest.execute();
 			return info;
 		}
@@ -111,9 +111,11 @@ public class RequestMonitor {
 			getInstanceNameFromExecution(monitoredRequest);
 		}
 
-		RequestInformation<T> info = new RequestInformation<T>();
 		final boolean monitor = requestMonitorPlugin.isCollectRequestStats() && isWarmedUp();
 		if (monitor) {
+			if (!Stagemonitor.isStarted()) {
+				Stagemonitor.startMonitoring();
+			}
 			beforeExecution(monitoredRequest, info);
 		}
 		try {
@@ -157,7 +159,7 @@ public class RequestMonitor {
 		if (measurementSession.getInstanceName() == null) {
 			MeasurementSession session = new MeasurementSession(measurementSession.getApplicationName(), measurementSession.getHostName(),
 					monitoredRequest.getInstanceName());
-			Stagemonitor.startMonitoring(session);
+			Stagemonitor.setMeasurementSession(session);
 		}
 	}
 
@@ -307,7 +309,7 @@ public class RequestMonitor {
 		}
 	}
 
-	private boolean isWarmedUp() {
+	public boolean isWarmedUp() {
 		if (!warmedUp.get()) {
 			warmedUp.set(warmupRequests < noOfRequests.incrementAndGet() && new Date(System.currentTimeMillis() + 1).after(endOfWarmup));
 			return warmedUp.get();
@@ -337,6 +339,13 @@ public class RequestMonitor {
 			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(requestTrace.getName()));
 		}
 
+		/**
+		 * Returns the request trace or <code>null</code>, if
+		 * {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()} is <code>false</code>
+		 *
+		 * @return the request trace or <code>null</code>, if
+		 * {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()} is <code>false</code>
+		 */
 		public T getRequestTrace() {
 			return requestTrace;
 		}

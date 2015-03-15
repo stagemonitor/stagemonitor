@@ -12,20 +12,11 @@ renderConfigTab = function (configurationSources, configurationOptions, password
 			var $button = $(this);
 			$.post(stagemonitor.baseUrl + "/stagemonitor/configuration", $(this.form).add("#password-form").serialize())
 				.done(function () {
-					$.growl($button.data("success"), { type: "success" });
+					utils.successMessage($button.data("success"));
 				}).fail(function (xhr) {
-					$.growl((htmlEscape(xhr.responseText) || $button.data("fail")), { type: "danger" });
+					utils.errorMessage($button.data("fail"), xhr);
 				});
 			return false;
 		});
 	});
-
-	function htmlEscape(str) {
-		return String(str)
-			.replace(/&/g, '&amp;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;');
-	}
 };

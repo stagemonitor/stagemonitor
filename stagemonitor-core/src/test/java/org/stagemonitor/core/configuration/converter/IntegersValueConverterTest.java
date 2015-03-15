@@ -5,15 +5,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.stagemonitor.core.configuration.converter.SetValueConverter.immutableSet;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import org.junit.Test;
-import org.stagemonitor.core.configuration.ConfigurationOption;
 
 public class IntegersValueConverterTest {
 
-	private final ValueConverter<Set<Integer>> converter = ConfigurationOption.INTEGERS_VALUE_CONVERTER;
+	private final ValueConverter<Collection<Integer>> converter = SetValueConverter.INTEGERS;
 
 	@Test
 	public void testConvertSingleValue() throws Exception {

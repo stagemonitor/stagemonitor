@@ -1,6 +1,7 @@
 package org.stagemonitor.web.monitor.filter;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -25,6 +26,8 @@ public interface HtmlInjector {
 
 	/**
 	 * Implementations can return html snippets that are injected just before the closing body tag.
+	 * <p/>
+	 * <b>Note:</b> {@link org.stagemonitor.requestmonitor.RequestMonitor.RequestInformation#getRequestTrace()} may be null
 	 *
 	 * @param requestInformation information about the current request
 	 * @return the code to inject into html documents just before the closing body tag
@@ -36,5 +39,5 @@ public interface HtmlInjector {
 	 *
 	 * @return <code>true</code>, if this {@link HtmlInjector} should be applied, <code>false</code> otherwise
 	 */
-	boolean isActive();
+	boolean isActive(HttpServletRequest httpServletRequest);
 }

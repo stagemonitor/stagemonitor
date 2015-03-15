@@ -51,11 +51,12 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		final CorePlugin config = configuration.getConfig(CorePlugin.class);
 		final String elasticsearchUrl = config.getElasticsearchUrl();
 		if (elasticsearchUrl != null && !elasticsearchUrl.isEmpty()) {
-			ElasticsearchClient.sendGrafanaDashboardAsync("CPU.json");
-			ElasticsearchClient.sendGrafanaDashboardAsync("Filesystem.json");
-			ElasticsearchClient.sendGrafanaDashboardAsync("Memory.json");
-			ElasticsearchClient.sendGrafanaDashboardAsync("Network.json");
-			ElasticsearchClient.sendGrafanaDashboardAsync("OS Overview.json");
+			ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
+			elasticsearchClient.sendGrafanaDashboardAsync("CPU.json");
+			elasticsearchClient.sendGrafanaDashboardAsync("Filesystem.json");
+			elasticsearchClient.sendGrafanaDashboardAsync("Memory.json");
+			elasticsearchClient.sendGrafanaDashboardAsync("Network.json");
+			elasticsearchClient.sendGrafanaDashboardAsync("OS Overview.json");
 		}
 
 		if (sigar == null) {

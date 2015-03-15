@@ -8,10 +8,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import javax.servlet.http.HttpServletRequest;
 
 import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
@@ -21,10 +23,11 @@ import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 
 public class WebPlugin extends StagemonitorPlugin {
 
-	public static final String WEB_PLUGIN = "Web Plugin";
+	public static final String STAGEMONITOR_SHOW_WIDGET = "X-Stagemonitor-Show-Widget";
+	private static final String WEB_PLUGIN = "Web Plugin";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	boolean requiredPropertiesSet = true;
-	private final ConfigurationOption<List<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
+	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
 			.key("stagemonitor.requestmonitor.http.requestparams.confidential.regex")
 			.dynamic(true)
 			.label("Confidential request parameters (regex)")
@@ -193,8 +196,9 @@ public class WebPlugin extends StagemonitorPlugin {
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration config) {
 		monitorServerThreadPool(registry, config.getConfig(WebPlugin.class));
-		ElasticsearchClient.sendGrafanaDashboardAsync("Server.json");
-		ElasticsearchClient.sendGrafanaDashboardAsync("KPIs over Time.json");
+		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
+		elasticsearchClient.sendGrafanaDashboardAsync("Server.json");
+		elasticsearchClient.sendGrafanaDashboardAsync("KPIs over Time.json");
 	}
 
 	private void monitorServerThreadPool(MetricRegistry registry, WebPlugin webPlugin) {
@@ -241,7 +245,7 @@ public class WebPlugin extends StagemonitorPlugin {
 		return groupUrls.getValue();
 	}
 
-	public List<Pattern> getRequestParamsConfidential() {
+	public Collection<Pattern> getRequestParamsConfidential() {
 		return requestParamsConfidential.getValue();
 	}
 
@@ -267,5 +271,13 @@ public class WebPlugin extends StagemonitorPlugin {
 
 	public String getMetricsServletJsonpParamName() {
 		return metricsServletJsonpParameter.getValue();
+	}
+
+	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request, Configuration configuration) {
+		if (request.getAttribute(STAGEMONITOR_SHOW_WIDGET) != null) {
+			return (Boolean) request.getAttribute(STAGEMONITOR_SHOW_WIDGET);
+		}
+
+		return isWidgetEnabled() || configuration.isPasswordCorrect(request.getHeader(STAGEMONITOR_SHOW_WIDGET));
 	}
 }

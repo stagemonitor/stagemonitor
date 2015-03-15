@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -22,7 +25,8 @@ public final class Stagemonitor {
 	private static volatile boolean started;
 	private static volatile boolean disabled;
 	private static volatile MeasurementSession measurementSession;
-	private static List<String> pathsOfWidgetMetricTabPlugins;
+	private static List<String> pathsOfWidgetMetricTabPlugins = Collections.emptyList();
+	private static Iterable<StagemonitorPlugin> plugins;
 
 	static {
 		reset();
@@ -31,7 +35,7 @@ public final class Stagemonitor {
 	private Stagemonitor() {
 	}
 
-	public synchronized static void startMonitoring(MeasurementSession measurementSession) {
+	public synchronized static void setMeasurementSession(MeasurementSession measurementSession) {
 		if (!getConfiguration(CorePlugin.class).isStagemonitorActive()) {
 			logger.info("stagemonitor is deactivated");
 			disabled = true;
@@ -40,6 +44,23 @@ public final class Stagemonitor {
 			return;
 		}
 		Stagemonitor.measurementSession = measurementSession;
+	}
+
+	public static Future<?> startMonitoring() {
+		ExecutorService startupThread = Executors.newSingleThreadExecutor();
+		try {
+			return startupThread.submit(new Runnable() {
+				@Override
+				public void run() {
+					doStartMonitoring();
+				}
+			});
+		} finally {
+			startupThread.shutdown();
+		}
+	}
+
+	private synchronized static void doStartMonitoring() {
 		if (measurementSession.isInitialized() && !started) {
 			try {
 				start(measurementSession);
@@ -53,6 +74,11 @@ public final class Stagemonitor {
 		}
 	}
 
+	public synchronized static Future<?> startMonitoring(MeasurementSession measurementSession) {
+		setMeasurementSession(measurementSession);
+		return startMonitoring();
+	}
+
 	private static void start(MeasurementSession measurementSession) {
 		initializePlugins();
 		logger.info("Measurement Session is initialized: " + measurementSession);
@@ -63,7 +89,7 @@ public final class Stagemonitor {
 		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
 		pathsOfWidgetMetricTabPlugins = new LinkedList<String>();
-		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class)) {
+		for (StagemonitorPlugin stagemonitorPlugin : plugins) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 
 			if (disabledPlugins.contains(pluginName)) {
@@ -151,7 +177,8 @@ public final class Stagemonitor {
 		}
 		configurationSources.remove(null);
 
-		configuration = new Configuration(StagemonitorPlugin.class, configurationSources, STAGEMONITOR_PASSWORD);
+		plugins = ServiceLoader.load(StagemonitorPlugin.class);
+		configuration = new Configuration(plugins, configurationSources, STAGEMONITOR_PASSWORD);
 
 		try {
 			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class)) {

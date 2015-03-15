@@ -1,5 +1,12 @@
 package org.stagemonitor.os;
 
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -16,13 +23,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
-
-import static com.codahale.metrics.MetricRegistry.name;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(ConditionalTravisTestRunner.class)
 public class OsPluginTest {
@@ -48,14 +48,17 @@ public class OsPluginTest {
 
 	@Test
 	public void testCpuUtilisation() throws Exception {
-		double cpu = getDoubleGauge("os.cpu.usage.sys") +
-				getDoubleGauge("os.cpu.usage.user") +
-				getDoubleGauge("os.cpu.usage.idle") +
-				getDoubleGauge("os.cpu.usage.nice") +
-				getDoubleGauge("os.cpu.usage.wait") +
-				getDoubleGauge("os.cpu.usage.interrupt") +
-				getDoubleGauge("os.cpu.usage.soft-interrupt") +
-				getDoubleGauge("os.cpu.usage.stolen");
+		double cpu = Double.NaN;
+		for (int i = 0; i < 5 && Double.isNaN(cpu); i++) {
+			cpu = getDoubleGauge("os.cpu.usage.sys") +
+					getDoubleGauge("os.cpu.usage.user") +
+					getDoubleGauge("os.cpu.usage.idle") +
+					getDoubleGauge("os.cpu.usage.nice") +
+					getDoubleGauge("os.cpu.usage.wait") +
+					getDoubleGauge("os.cpu.usage.interrupt") +
+					getDoubleGauge("os.cpu.usage.soft-interrupt") +
+					getDoubleGauge("os.cpu.usage.stolen");
+		}
 
 		assertEquals(1.0, cpu, 0.000001);
 

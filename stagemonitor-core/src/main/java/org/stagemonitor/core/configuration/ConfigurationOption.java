@@ -9,17 +9,18 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.converter.BooleanValueConverter;
 import org.stagemonitor.core.configuration.converter.DoubleValueConverter;
 import org.stagemonitor.core.configuration.converter.IntegerValueConverter;
+import org.stagemonitor.core.configuration.converter.JsonValueConverter;
 import org.stagemonitor.core.configuration.converter.LongValueConverter;
-import org.stagemonitor.core.configuration.converter.RegexListValueConverter;
-import org.stagemonitor.core.configuration.converter.RegexMapValueConverter;
+import org.stagemonitor.core.configuration.converter.MapValueConverter;
+import org.stagemonitor.core.configuration.converter.RegexValueConverter;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.configuration.converter.StringValueConverter;
-import org.stagemonitor.core.configuration.converter.StringsValueConverter;
 import org.stagemonitor.core.configuration.converter.ValueConverter;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
@@ -31,16 +32,6 @@ import org.stagemonitor.core.configuration.source.ConfigurationSource;
 public class ConfigurationOption<T> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	public static final ValueConverter<String> STRING_VALUE_CONVERTER = new StringValueConverter();
-	public static final ValueConverter<Collection<String>> STRINGS_VALUE_CONVERTER = new StringsValueConverter();
-	public static final ValueConverter<Collection<String>> LOWER_STRINGS_VALUE_CONVERTER = new StringsValueConverter(true);
-	public static final ValueConverter<List<Pattern>> PATTERNS_VALUE_CONVERTER = new RegexListValueConverter();
-	public static final ValueConverter<Map<Pattern, String>> REGEX_MAP_VALUE_CONVERTER = new RegexMapValueConverter();
-	public static final ValueConverter<Boolean> BOOLEAN_VALUE_CONVERTER = new BooleanValueConverter();
-	public static final ValueConverter<Integer> INTEGER_VALUE_CONVERTER = new IntegerValueConverter();
-	public static final ValueConverter<Long> LONG_VALUE_CONVERTER = new LongValueConverter();
-	public static final ValueConverter<Double> DOUBLE_VALUE_CONVERTER = new DoubleValueConverter();
-	public static final ValueConverter<Set<Integer>> INTEGERS_VALUE_CONVERTER = new SetValueConverter<Integer>(new IntegerValueConverter());
 
 	private final boolean dynamic;
 	private final String key;
@@ -68,7 +59,11 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link String}
 	 */
 	public static  ConfigurationOptionBuilder<String> stringOption() {
-		return new ConfigurationOptionBuilder<String>(STRING_VALUE_CONVERTER, String.class);
+		return new ConfigurationOptionBuilder<String>(StringValueConverter.INSTANCE, String.class);
+	}
+
+	public static <T> ConfigurationOptionBuilder<T> jsonOption(TypeReference<T> typeReference, Class<? super T> clazz) {
+		return new ConfigurationOptionBuilder<T>(new JsonValueConverter<T>(typeReference), clazz);
 	}
 
 	/**
@@ -77,7 +72,7 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Boolean}
 	 */
 	public static  ConfigurationOptionBuilder<Boolean> booleanOption() {
-		return new ConfigurationOptionBuilder<Boolean>(BOOLEAN_VALUE_CONVERTER, Boolean.class);
+		return new ConfigurationOptionBuilder<Boolean>(BooleanValueConverter.INSTANCE, Boolean.class);
 	}
 
 	/**
@@ -86,7 +81,7 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Integer}
 	 */
 	public static  ConfigurationOptionBuilder<Integer> integerOption() {
-		return new ConfigurationOptionBuilder<Integer>(INTEGER_VALUE_CONVERTER, Integer.class);
+		return new ConfigurationOptionBuilder<Integer>(IntegerValueConverter.INSTANCE, Integer.class);
 	}
 
 	/**
@@ -95,7 +90,7 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Long}
 	 */
 	public static ConfigurationOptionBuilder<Long> longOption() {
-		return new ConfigurationOptionBuilder<Long>(LONG_VALUE_CONVERTER, Long.class);
+		return new ConfigurationOptionBuilder<Long>(LongValueConverter.INSTANCE, Long.class);
 	}
 	/**
 	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Double}
@@ -103,7 +98,7 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Double}
 	 */
 	public static ConfigurationOptionBuilder<Double> doubleOption() {
-		return new ConfigurationOptionBuilder<Double>(DOUBLE_VALUE_CONVERTER, Double.class);
+		return new ConfigurationOptionBuilder<Double>(DoubleValueConverter.INSTANCE, Double.class);
 	}
 
 	/**
@@ -112,7 +107,7 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link String}>
 	 */
 	public static ConfigurationOptionBuilder<Collection<String>> stringsOption() {
-		return new ConfigurationOptionBuilder<Collection<String>>(STRINGS_VALUE_CONVERTER, Collection.class)
+		return new ConfigurationOptionBuilder<Collection<String>>(SetValueConverter.STRINGS_VALUE_CONVERTER, Collection.class)
 				.defaultValue(Collections.<String>emptySet());
 	}
 
@@ -123,7 +118,7 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link String}>
 	 */
 	public static ConfigurationOptionBuilder<Collection<String>> lowerStringsOption() {
-		return new ConfigurationOptionBuilder<Collection<String>>(LOWER_STRINGS_VALUE_CONVERTER, Collection.class)
+		return new ConfigurationOptionBuilder<Collection<String>>(SetValueConverter.LOWER_STRINGS_VALUE_CONVERTER, Collection.class)
 				.defaultValue(Collections.<String>emptySet());
 	}
 
@@ -132,8 +127,8 @@ public class ConfigurationOption<T> {
 	 *
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Set}&lt{@link Integer}>
 	 */
-	public static ConfigurationOption.ConfigurationOptionBuilder<Set<Integer>> integersOption() {
-		return ConfigurationOption.builder(INTEGERS_VALUE_CONVERTER, Set.class);
+	public static ConfigurationOption.ConfigurationOptionBuilder<? extends Collection<Integer>> integersOption() {
+		return ConfigurationOption.builder(SetValueConverter.INTEGERS, Collection.class);
 	}
 
 	/**
@@ -141,9 +136,9 @@ public class ConfigurationOption<T> {
 	 *
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link Pattern}>
 	 */
-	public static ConfigurationOptionBuilder<List<Pattern>> regexListOption() {
-		return new ConfigurationOptionBuilder<List<Pattern>>(PATTERNS_VALUE_CONVERTER, List.class)
-				.defaultValue(Collections.<Pattern>emptyList());
+	public static ConfigurationOptionBuilder<Collection<Pattern>> regexListOption() {
+		return new ConfigurationOptionBuilder<Collection<Pattern>>(new SetValueConverter<Pattern>(RegexValueConverter.INSTANCE), Collection.class)
+				.defaultValue(Collections.<Pattern>emptySet());
 	}
 
 	/**
@@ -152,8 +147,18 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt{@link Pattern}, {@link String}>
 	 */
 	public static ConfigurationOptionBuilder<Map<Pattern, String>> regexMapOption() {
-		return new ConfigurationOptionBuilder<Map<Pattern, String>>(REGEX_MAP_VALUE_CONVERTER, Map.class)
+		return new ConfigurationOptionBuilder<Map<Pattern, String>>(MapValueConverter.REGEX_MAP_VALUE_CONVERTER, Map.class)
 				.defaultValue(Collections.<Pattern, String>emptyMap());
+	}
+
+	/**
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}
+	 *
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}
+	 */
+	public static <K, V> ConfigurationOptionBuilder<Map<K, V>> mapOption(ValueConverter<K> keyConverter, ValueConverter<V> valueConverter) {
+		return new ConfigurationOptionBuilder<Map<K, V>>(new MapValueConverter<K, V>(keyConverter, valueConverter), Map.class)
+				.defaultValue(Collections.<K, V>emptyMap());
 	}
 
 	private ConfigurationOption(boolean dynamic, String key, String label, String description,

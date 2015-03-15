@@ -24,6 +24,17 @@ var utils = (function () {
 		return  result.promise();
 	}
 
+	// toast notification settings
+	$.growl(false, {
+		allow_dismiss: true,
+		placement: {
+			from: "top",
+			align: "right"
+		},
+		mouse_over: "pause",
+		delay: 5000
+	});
+
 	return {
 		loadScripts: function (scripts, callback) {
 			$.when.apply(null, $.map(scripts, loadScript)).done(function () {
@@ -39,6 +50,35 @@ var utils = (function () {
 				data.push(obj[propertyName]);
 			}
 			return data;
+		},
+		generateUUID: function () {
+			var d = window.performance && window.performance.now && window.performance.now() || new Date().getTime();
+			return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+				var r = (d + Math.random() * 16) % 16 | 0;
+				d = Math.floor(d / 16);
+				return (c == 'x' ? r : (r & 0x7 | 0x8)).toString(16);
+			});
+		},
+		successMessage: function(message) {
+			$.growl(message, { type: "success" });
+		},
+		errorMessage: function(fallbackMessage, xhr) {
+			var errorMessage = fallbackMessage;
+			if (xhr && xhr.responseText && xhr.responseText.indexOf("<body") == -1) {
+				errorMessage = utils.htmlEscape(xhr.responseText);
+			}
+			$.growl(errorMessage, { type: "danger" });
+		},
+		htmlEscape: function(str) {
+			if (!str) {
+				return str;
+			}
+			return String(str)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
 		}
 	}
 })();

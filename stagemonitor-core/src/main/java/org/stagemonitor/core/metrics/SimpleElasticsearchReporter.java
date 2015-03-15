@@ -1,6 +1,9 @@
 package org.stagemonitor.core.metrics;
 
 
+import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -15,16 +18,16 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 
-import java.util.SortedMap;
-import java.util.concurrent.TimeUnit;
-
 /**
  * This implementation is intended to report aggregate metrics about a measurement session to elasticsearch on shutdown
  */
 public class SimpleElasticsearchReporter extends ScheduledReporter {
 
-	public SimpleElasticsearchReporter(MetricRegistry registry, String name, MetricFilter filter) {
+	private final ElasticsearchClient elasticsearchClient;
+
+	public SimpleElasticsearchReporter(ElasticsearchClient elasticsearchClient, MetricRegistry registry, String name, MetricFilter filter) {
 		super(registry, name, filter, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+		this.elasticsearchClient = elasticsearchClient;
 	}
 
 	@Override
@@ -38,6 +41,6 @@ public class SimpleElasticsearchReporter extends ScheduledReporter {
 		jsonReport.set("meters", mapper.valueToTree(meters));
 		jsonReport.set("timers", mapper.valueToTree(timers));
 
-		ElasticsearchClient.sendAsJson("POST", "/stagemonitor/measurementSessions", jsonReport);
+		elasticsearchClient.sendAsJson("POST", "/stagemonitor/measurementSessions", jsonReport);
 	}
 }
