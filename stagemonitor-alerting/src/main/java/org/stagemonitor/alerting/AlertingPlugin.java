@@ -4,23 +4,27 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.alerter.AlertSender;
 import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
-import org.stagemonitor.alerting.incident.Incident;
+import org.stagemonitor.alerting.incident.ElasticsearchIncidentRepository;
 import org.stagemonitor.alerting.incident.IncidentRepository;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 
 public class AlertingPlugin extends StagemonitorPlugin {
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private static final String ALERTING_PLUGIN_NAME = "Alerting";
 
@@ -65,7 +69,14 @@ public class AlertingPlugin extends StagemonitorPlugin {
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
 		final AlertingPlugin alertingPlugin = configuration.getConfig(AlertingPlugin.class);
 		alertSender = new AlertSender(configuration);
-		incidentRepository = new ConcurrentMapIncidentRepository(new ConcurrentHashMap<String, Incident>());
+		CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
+		if (corePlugin.getElasticsearchUrl() != null) {
+			incidentRepository = new ElasticsearchIncidentRepository(corePlugin.getElasticsearchClient());
+		} else {
+			incidentRepository = new ConcurrentMapIncidentRepository();
+		}
+		logger.info("Using {} for storing incidents.", incidentRepository.getClass().getSimpleName());
+
 		new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession())
 				.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
 	}

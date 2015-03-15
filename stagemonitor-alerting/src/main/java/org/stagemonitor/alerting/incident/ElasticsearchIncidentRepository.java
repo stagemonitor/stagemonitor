@@ -30,7 +30,7 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 	@Override
 	public Collection<Incident> getAllIncidents() {
 		try {
-			JsonNode hits = elasticsearchClient.getJson(BASE_URL + "/_search").get("hits").get("hits");
+			JsonNode hits = elasticsearchClient.getJson(BASE_URL + "/_search?size=100").get("hits").get("hits");
 			List<Incident> incidents = new ArrayList<Incident>(hits.size());
 			for (JsonNode hit : hits) {
 				incidents.add(asIncident(hit));
