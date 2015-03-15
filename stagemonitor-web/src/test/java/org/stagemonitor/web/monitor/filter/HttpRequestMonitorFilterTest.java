@@ -117,6 +117,7 @@ public class HttpRequestMonitorFilterTest {
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
 		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(false);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(false);
 		when(webPlugin.isWidgetEnabled()).thenReturn(false);
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
@@ -166,12 +167,13 @@ public class HttpRequestMonitorFilterTest {
 	public void testRUM() throws Exception {
 		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(true);
 		when(webPlugin.isWidgetEnabled()).thenReturn(false);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(false);
 		initFilter();
 
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		Assert.assertEquals("<html><body><script src=\"/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
+		Assert.assertEquals("<html><body><script src=\"/stagemonitor/public/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
 				"      beacon_url: '/stagemonitor/public/rum',\n" +
