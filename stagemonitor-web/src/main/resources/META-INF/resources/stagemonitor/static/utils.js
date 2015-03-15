@@ -24,6 +24,17 @@ var utils = (function () {
 		return  result.promise();
 	}
 
+	// toast notification settings
+	$.growl(false, {
+		allow_dismiss: true,
+		placement: {
+			from: "top",
+			align: "right"
+		},
+		mouse_over: "pause",
+		delay: 5000
+	});
+
 	return {
 		loadScripts: function (scripts, callback) {
 			$.when.apply(null, $.map(scripts, loadScript)).done(function () {
@@ -51,8 +62,12 @@ var utils = (function () {
 		successMessage: function(message) {
 			$.growl(message, { type: "success" });
 		},
-		errorMessage: function(xhrOrString) {
-			$.growl((utils.htmlEscape(xhrOrString.responseText) || xhrOrString), { type: "danger" });
+		errorMessage: function(fallbackMessage, xhr) {
+			var errorMessage = fallbackMessage;
+			if (xhr && xhr.responseText && xhr.responseText.indexOf("<body") == -1) {
+				errorMessage = utils.htmlEscape(xhr.responseText);
+			}
+			$.growl(errorMessage, { type: "danger" });
 		},
 		htmlEscape: function(str) {
 			if (!str) {

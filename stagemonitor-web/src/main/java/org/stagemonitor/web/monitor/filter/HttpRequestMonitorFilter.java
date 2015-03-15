@@ -92,12 +92,12 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	@Override
-	public final void doFilterInternal(final ServletRequest request, final ServletResponse response, final FilterChain filterChain)
+	public final void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
 		setCachingHeadersForBommerangJs(request, response);
 		if (corePlugin.isStagemonitorActive() && isHttpRequest(request, response) &&
-				!isInternalRequest((HttpServletRequest) request) && onlyMonitorForwardedRequestsIfConfigured(request)) {
-			doMonitor((HttpServletRequest) request, response, filterChain);
+				!isInternalRequest(request) && onlyMonitorForwardedRequestsIfConfigured(request)) {
+			doMonitor(request, response, filterChain);
 		} else {
 			filterChain.doFilter(request, response);
 		}
@@ -143,8 +143,16 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private boolean isInjectContentToHtml(HttpServletRequest httpServletRequest) {
-		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) &&
-				webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest) ;
+		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive(httpServletRequest) ;
+	}
+
+	private boolean isAtLeastOneHtmlInjectorActive(HttpServletRequest httpServletRequest) {
+		for (HtmlInjector htmlInjector : htmlInjectors) {
+			if (htmlInjector.isActive(httpServletRequest)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean isHtmlRequested(HttpServletRequest httpServletRequest) {
@@ -171,7 +179,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			httpServletRequest.setAttribute("stagemonitorInjected", true);
 			String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
 			for (HtmlInjector htmlInjector : htmlInjectors) {
-				if (htmlInjector.isActive()) {
+				if (htmlInjector.isActive(httpServletRequest)) {
 					content = injectBeforeClosingBody(content, htmlInjector.getContentToInjectBeforeClosingBody(requestInformation));
 				}
 			}

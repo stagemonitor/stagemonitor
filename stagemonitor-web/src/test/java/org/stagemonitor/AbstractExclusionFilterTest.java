@@ -1,22 +1,21 @@
 package org.stagemonitor;
 
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.stagemonitor.web.monitor.filter.AbstractExclusionFilter;
-
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.stagemonitor.web.monitor.filter.AbstractExclusionFilter;
 
 public class AbstractExclusionFilterTest {
 
@@ -26,7 +25,7 @@ public class AbstractExclusionFilterTest {
 
 	private static class TestExclusionFilter extends AbstractExclusionFilter {
 		@Override
-		public void doFilterInternal(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+		public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 		}
 	}
 
@@ -66,7 +65,7 @@ public class AbstractExclusionFilterTest {
 
 		when(mockRequest.getRequestURI()).thenReturn(url);
 		when(mockRequest.getContextPath()).thenReturn("/context-path");
-		testFilter.doFilter(mockRequest, null, mock(FilterChain.class));
-		verify(testFilter, times(notExclutedCount)).doFilterInternal((ServletRequest) any(), (ServletResponse) any(), (FilterChain) any());
+		testFilter.doFilter(mockRequest, mock(HttpServletResponse.class), mock(FilterChain.class));
+		verify(testFilter, times(notExclutedCount)).doFilterInternal((HttpServletRequest) any(), (HttpServletResponse) any(), (FilterChain) any());
 	}
 }

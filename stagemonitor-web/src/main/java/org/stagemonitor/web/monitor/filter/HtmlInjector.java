@@ -1,6 +1,7 @@
 package org.stagemonitor.web.monitor.filter;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -38,5 +39,5 @@ public interface HtmlInjector {
 	 *
 	 * @return <code>true</code>, if this {@link HtmlInjector} should be applied, <code>false</code> otherwise
 	 */
-	boolean isActive();
+	boolean isActive(HttpServletRequest httpServletRequest);
 }

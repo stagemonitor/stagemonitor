@@ -1,16 +1,16 @@
 package org.stagemonitor.web.configuration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-
+import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
 
 @WebServlet(ConfigurationServlet.CONFIGURATION_ENDPOINT)
 public class ConfigurationServlet extends HttpServlet {
@@ -65,15 +65,19 @@ public class ConfigurationServlet extends HttpServlet {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing parameter 'configurationSource'");
 			return;
 		}
-		tryToSaveAndHandleErrors(configuration, req, resp, req.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD), key,
+		tryToSaveAndHandleErrors(configuration, req, resp, key,
 				req.getParameter("value"));
 	}
 
 	public static void tryToSaveAndHandleErrors(Configuration configuration, HttpServletRequest req,
-												HttpServletResponse resp, String configurationUpdatePassword,
+												HttpServletResponse resp,
 												String key, String value) throws IOException {
+		String password = req.getHeader("X-Stagemonitor-Show-Widget");
+		if (password == null) {
+			password = req.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD);
+		}
 		try {
-			configuration.save(key, value, req.getParameter("configurationSource"), configurationUpdatePassword);
+			configuration.save(key, value, req.getParameter("configurationSource"), password);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} catch (IllegalArgumentException e) {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());

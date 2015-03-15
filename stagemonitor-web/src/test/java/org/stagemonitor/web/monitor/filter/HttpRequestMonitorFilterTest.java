@@ -71,7 +71,7 @@ public class HttpRequestMonitorFilterTest {
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(webPlugin.isWidgetEnabled()).thenReturn(true);
-		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class))).thenReturn(true);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(true);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
@@ -174,7 +174,7 @@ public class HttpRequestMonitorFilterTest {
 		Assert.assertEquals("<html><body><script src=\"/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
-				"      beacon_url: '/stagemonitor/rum',\n" +
+				"      beacon_url: '/stagemonitor/public/rum',\n" +
 				"      log: null\n" +
 				"   });\n" +
 				"   BOOMR.addVar(\"requestId\", \"null\");\n" +

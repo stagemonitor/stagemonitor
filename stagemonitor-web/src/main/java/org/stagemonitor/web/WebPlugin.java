@@ -14,7 +14,6 @@ import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
@@ -24,7 +23,8 @@ import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 
 public class WebPlugin extends StagemonitorPlugin {
 
-	public static final String WEB_PLUGIN = "Web Plugin";
+	public static final String STAGEMONITOR_SHOW_WIDGET = "X-Stagemonitor-Show-Widget";
+	private static final String WEB_PLUGIN = "Web Plugin";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	boolean requiredPropertiesSet = true;
 	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
@@ -273,9 +273,11 @@ public class WebPlugin extends StagemonitorPlugin {
 		return metricsServletJsonpParameter.getValue();
 	}
 
-	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request) {
-		return isWidgetEnabled() ||
-				Stagemonitor.getConfiguration().isPasswordCorrect(request.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD)) ||
-				Stagemonitor.getConfiguration().isPasswordCorrect(request.getHeader(Stagemonitor.STAGEMONITOR_PASSWORD));
+	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request, Configuration configuration) {
+		if (request.getAttribute(STAGEMONITOR_SHOW_WIDGET) != null) {
+			return (Boolean) request.getAttribute(STAGEMONITOR_SHOW_WIDGET);
+		}
+
+		return isWidgetEnabled() || configuration.isPasswordCorrect(request.getHeader(STAGEMONITOR_SHOW_WIDGET));
 	}
 }

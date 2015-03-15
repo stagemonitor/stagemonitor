@@ -20,11 +20,6 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 
-/*
- * TODO move js into alerting plugin folder
- * TODO security/authentication
- * TODO alerters
- */
 public class AlertingPlugin extends StagemonitorPlugin {
 
 	private static final String ALERTING_PLUGIN_NAME = "Alerting";

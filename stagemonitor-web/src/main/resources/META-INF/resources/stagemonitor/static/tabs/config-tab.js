@@ -14,7 +14,7 @@ renderConfigTab = function (configurationSources, configurationOptions, password
 				.done(function () {
 					utils.successMessage($button.data("success"));
 				}).fail(function (xhr) {
-					utils.errorMessage(xhr.responseText || $button.data("fail"));
+					utils.errorMessage($button.data("fail"), xhr);
 				});
 			return false;
 		});

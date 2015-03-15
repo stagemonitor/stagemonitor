@@ -1,5 +1,9 @@
 package org.stagemonitor.web.monitor.filter;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -7,10 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Adds support for excluding specific url prefixes of a filter-mapping.
@@ -62,19 +63,19 @@ public abstract class AbstractExclusionFilter implements Filter {
 	}
 
 	@Override
-	public final void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
+	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
 							   FilterChain filterChain) throws IOException, ServletException {
-		if (servletRequest instanceof HttpServletRequest) {
+		if (servletRequest instanceof HttpServletRequest && servletResponse instanceof HttpServletResponse) {
 			HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
 
 			if (isExcluded(httpServletRequest)) {
 				// Don't execute Filter when request matches exclusion pattern
 				filterChain.doFilter(servletRequest, servletResponse);
 			} else {
-				doFilterInternal(servletRequest, servletResponse, filterChain);
+				doFilterInternal(httpServletRequest, (HttpServletResponse) servletResponse, filterChain);
 			}
 		} else {
-			doFilterInternal(servletRequest, servletResponse, filterChain);
+			filterChain.doFilter(servletRequest, servletResponse);
 		}
 	}
 
@@ -94,9 +95,8 @@ public abstract class AbstractExclusionFilter implements Filter {
 	public void destroy() {
 	}
 
-	public abstract void doFilterInternal(ServletRequest servletRequest, ServletResponse servletResponse,
+	public abstract void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
 										  FilterChain filterChain) throws IOException, ServletException;
-
 
 	private void setExcludedPaths(Collection<String> excludedPaths) {
 		this.excludedPaths = new ArrayList<String>(excludedPaths.size());

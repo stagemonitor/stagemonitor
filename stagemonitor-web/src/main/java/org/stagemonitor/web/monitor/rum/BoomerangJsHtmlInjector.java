@@ -1,6 +1,7 @@
 package org.stagemonitor.web.monitor.rum;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -22,8 +23,8 @@ public class BoomerangJsHtmlInjector implements HtmlInjector {
 
 	private String buildBoomerangTemplate(String contextPath) {
 		String beaconUrl = webPlugin.isRealUserMonitoringEnabled() ?
-				"      beacon_url: " + "'" + contextPath + "/stagemonitor/rum'" + ",\n" : "";
-		return "<script src=\"" + contextPath + "/rum/" + BOOMERANG_FILENAME + "\"></script>\n" +
+				"      beacon_url: " + "'" + contextPath + "/stagemonitor/public/rum'" + ",\n" : "";
+		return "<script src=\"" + contextPath + "/stagemonitor/public/rum/" + BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
 				beaconUrl +
@@ -36,7 +37,7 @@ public class BoomerangJsHtmlInjector implements HtmlInjector {
 	}
 
 	@Override
-	public boolean isActive() {
+	public boolean isActive(HttpServletRequest httpServletRequest) {
 		// if widget is enabled, inject as well to render page load time statistics in widget
 		// metrics won't be collected in this case, because the beacon_url is then set to null
 		return webPlugin.isRealUserMonitoringEnabled() || webPlugin.isWidgetEnabled();

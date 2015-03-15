@@ -2,6 +2,7 @@ package org.stagemonitor.web.monitor.widget;
 
 import java.io.IOException;
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +44,8 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 	}
 
 	@Override
-	public boolean isActive() {
-		return webPlugin.isWidgetEnabled();
+	public boolean isActive(HttpServletRequest httpServletRequest) {
+		return webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
 	}
 
 	@Override

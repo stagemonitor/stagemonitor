@@ -188,7 +188,7 @@ function renderAlertsTab() {
 					subscriptionsById = clonedSubscriptions;
 					renderSubscriptionsPartial();
 				}).fail(function (xhr) {
-					utils.errorMessage(xhr.responseText || "Failed to remove subscription");
+					utils.errorMessage("Failed to remove subscription", xhr);
 				});
 		});
 
@@ -214,7 +214,7 @@ function renderAlertsTab() {
 						subscriptionsById = clonedSubscriptions;
 						renderSubscriptionsPartial();
 					}).fail(function (xhr) {
-						utils.errorMessage(xhr.responseText || "Failed to save subscription");
+						utils.errorMessage("Failed to save subscription", xhr);
 					});
 			}
 		});
@@ -286,7 +286,7 @@ function renderAlertsTab() {
 					checksById = clonedChecks;
 					updateTable(checksTable, getChecksArray());
 				}).fail(function (xhr) {
-					utils.errorMessage(xhr.responseText || "Failed to remove check");
+					utils.errorMessage("Failed to remove check", xhr);
 				});
 		});
 
@@ -308,7 +308,7 @@ function renderAlertsTab() {
 						checksById = clonedChecks;
 						updateTable(checksTable, getChecksArray());
 					}).fail(function (xhr) {
-						utils.errorMessage(xhr.responseText || "Failed to save check");
+						utils.errorMessage("Failed to save check", xhr);
 					});
 			}
 		});

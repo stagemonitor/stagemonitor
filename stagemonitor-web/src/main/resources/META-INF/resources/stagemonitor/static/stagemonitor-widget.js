@@ -63,17 +63,6 @@ $(document).ready(function () {
 		}
 	});
 
-	// toast notification settings
-	$.growl(false, {
-		allow_dismiss: true,
-		placement: {
-			from: "top",
-			align: "center"
-		},
-		mouse_over: "pause",
-		delay: 5000
-	});
-
 	try {
 		window.parent.StagemonitorLoaded();
 	} catch (e) {
