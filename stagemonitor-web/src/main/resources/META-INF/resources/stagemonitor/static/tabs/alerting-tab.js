@@ -220,12 +220,14 @@ function renderAlertsTab() {
 		});
 
 		function renderSubscriptionModal(title, subscription) {
-			$("#subscription-modal-content").html(subscriptionModalTemplate({
-				title: title,
-				subscription: subscription,
-				alerterTypes: stagemonitor.alerterTypes
-			}));
-			$(".tip").tooltip({html: true});
+			$.getJSON(stagemonitor.baseUrl + "/stagemonitor/alerter-types", function(alerterTypes) {
+				$("#subscription-modal-content").html(subscriptionModalTemplate({
+					title: title,
+					subscription: subscription,
+					alerterTypes: alerterTypes
+				}));
+				$(".tip").tooltip({html: true});
+			});
 		}
 	}
 

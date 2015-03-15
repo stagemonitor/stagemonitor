@@ -34,7 +34,6 @@
 					configurationOptions = @@CONFIGURATION_OPTIONS@@;
 
 				stagemonitorWindow.stagemonitor.measurementSession = @@MEASUREMENT_SESSION@@;
-				stagemonitorWindow.stagemonitor.alerterTypes = @@ALERTER_TYPES@@;
 				var connectionId = generateUUID();
 				addXMLRequestCallback( function( xhr ) {
 					xhr.setRequestHeader("x-stagemonitor-connection-id", connectionId);

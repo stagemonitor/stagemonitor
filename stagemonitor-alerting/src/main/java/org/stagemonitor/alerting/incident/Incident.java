@@ -118,6 +118,7 @@ public class Incident {
 		return CheckResult.getMostSevereStatus(results);
 	}
 
+	@JsonIgnore
 	private int getConsecutiveFailuresFromCheckResults() {
 		int consecutiveFailures = 0;
 		for (CheckResults checkResultByInstance : checkResultsByMeasurementSession.values()) {
