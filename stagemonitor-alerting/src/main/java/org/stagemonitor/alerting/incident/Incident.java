@@ -56,7 +56,6 @@ public class Incident {
 	}
 
 	public Incident(Check check, MeasurementSession measurementSession, List<CheckResult> checkResults) {
-		this.oldStatus = CheckResult.Status.OK;
 		this.newStatus = CheckResult.getMostSevereStatus(checkResults);
 		this.checkId = check.getId();
 		this.checkName = check.getName();

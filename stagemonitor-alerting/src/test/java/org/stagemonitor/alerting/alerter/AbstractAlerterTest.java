@@ -7,11 +7,12 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import org.stagemonitor.alerting.AlertingPlugin;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 
-public abstract class AbstractAlerterTest {
+public class AbstractAlerterTest {
 
 	protected SimpleSource configurationSource;
 	protected Configuration configuration;
@@ -20,7 +21,7 @@ public abstract class AbstractAlerterTest {
 	public AbstractAlerterTest() {
 		configurationSource = new SimpleSource();
 		alertingPlugin = new AlertingPlugin();
-		configuration = new Configuration(Arrays.asList(alertingPlugin), Arrays.<ConfigurationSource>asList(configurationSource), null);
+		configuration = new Configuration(Arrays.asList(new CorePlugin(), alertingPlugin), Arrays.<ConfigurationSource>asList(configurationSource), null);
 	}
 
 	public AlertSender createAlertSender(Alerter alerter) {

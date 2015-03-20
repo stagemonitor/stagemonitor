@@ -118,7 +118,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 					"<#if incident.resolvedAt??>\n" +
 					"Resolved at: ${incident.resolvedAt?datetime?iso_local}<br>\n" +
 					"</#if>\n" +
-					"Old status: ${incident.oldStatus}<br>\n" +
+					"Old status: ${incident.oldStatus!'OK'}<br>\n" +
 					"New status: ${incident.newStatus}<br>\n" +
 					"Failing check<#if incident.failedChecks gt 1>s</#if>: ${incident.failedChecks}<br>\n" +
 					"Hosts: ${incident.hosts?join(\", \")}<br>\n" +
@@ -165,7 +165,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 					"<#if incident.resolvedAt??>\n" +
 					"Resolved at: ${incident.resolvedAt?datetime?iso_local}\n" +
 					"</#if>\n" +
-					"Old status: ${incident.oldStatus}\n" +
+					"Old status: ${incident.oldStatus!'OK'}\n" +
 					"New status: ${incident.newStatus}\n" +
 					"Failing check<#if incident.failedChecks gt 1>s</#if>: ${incident.failedChecks}\n" +
 					"Hosts: ${incident.hosts?join(\", \")}\n" +

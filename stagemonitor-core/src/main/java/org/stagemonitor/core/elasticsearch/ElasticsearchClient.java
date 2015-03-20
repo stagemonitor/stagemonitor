@@ -2,11 +2,15 @@ package org.stagemonitor.core.elasticsearch;
 
 import static org.stagemonitor.core.util.StringUtils.slugify;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -15,9 +19,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +29,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
-import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 
 public class ElasticsearchClient {
@@ -33,6 +37,7 @@ public class ElasticsearchClient {
 	private final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
 	private final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
 	private final String TITLE = "title";
+	private final HttpClient httpClient;
 	private String baseUrl;
 
 	public final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
@@ -61,14 +66,36 @@ public class ElasticsearchClient {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetricRegistry());
 		}
+		this.httpClient = new HttpClient();
 	}
 
 	public JsonNode getJson(final String path) throws IOException {
 		return JsonUtils.getMapper().readTree(new URL(baseUrl + path).openStream());
 	}
 
-	public <T> T getObject(final String path, TypeReference type) throws IOException {
-		return JsonUtils.getMapper().reader(type).readValue(getJson(path).get("_source"));
+	public <T> T getObject(final String path, Class<T> type) {
+		try {
+			return JsonUtils.getMapper().reader(type).readValue(getJson(path).get("_source"));
+		} catch (FileNotFoundException e) {
+			return null;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public <T> Collection<T> getAll(String path, int limit, Class<T> clazz) {
+		try {
+			JsonNode hits = getJson(path + "/_search?size=" + limit).get("hits").get("hits");
+			List<T> incidents = new ArrayList<T>(hits.size());
+			ObjectReader reader = JsonUtils.getMapper().reader(clazz);
+			for (JsonNode hit : hits) {
+				incidents.add(reader.<T>readValue(hit.get("_source")));
+			}
+			return incidents;
+		} catch (IOException e) {
+			logger.warn(e.getMessage(), e);
+			return Collections.emptyList();
+		}
 	}
 
 	public HttpURLConnection sendRequest(final String method, final String path) {
@@ -76,49 +103,10 @@ public class ElasticsearchClient {
 	}
 
 	public HttpURLConnection sendAsJson(final String method, final String path, final Object requestBody) {
-		HttpURLConnection connection = null;
 		if (baseUrl == null || baseUrl.isEmpty()) {
-			return connection;
+			return null;
 		}
-		try {
-			URL url = new URL(baseUrl + path);
-			connection = (HttpURLConnection) url.openConnection();
-			connection.setDoOutput(true);
-			connection.setRequestMethod(method);
-
-			writeRequestBody(requestBody, connection);
-
-			connection.getContent();
-		} catch (IOException e) {
-			String errorMessage = "";
-			if (connection != null) {
-				try {
-					errorMessage = IOUtils.toString(connection.getErrorStream());
-				} catch (IOException e1) {
-					logger.warn(e.getMessage(), e);
-				}
-			}
-			logger.warn(e.getMessage() + ": " + errorMessage);
-		}
-		return connection;
-	}
-
-	private void writeRequestBody(Object requestBody, HttpURLConnection connection) throws IOException {
-		if (requestBody != null) {
-			connection.setRequestProperty("Content-Type", "application/json");
-			OutputStream os = connection.getOutputStream();
-
-			if (requestBody instanceof InputStream) {
-				byte[] buf = new byte[8192];
-				int n;
-				while ((n = ((InputStream) requestBody).read(buf)) > 0) {
-					os.write(buf, 0, n);
-				}
-			} else {
-				JsonUtils.writeJsonToOutputStream(requestBody, os);
-			}
-			os.flush();
-		}
+		return httpClient.sendAsJson(method, baseUrl + path, requestBody);
 	}
 
 	public Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {

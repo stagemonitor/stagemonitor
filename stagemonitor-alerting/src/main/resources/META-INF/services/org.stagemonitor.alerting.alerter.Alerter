@@ -1,0 +1,3 @@
+org.stagemonitor.alerting.alerter.MailAlerter
+org.stagemonitor.alerting.alerter.HttpAlerter
+org.stagemonitor.alerting.alerter.ElasticsearchAlerter
