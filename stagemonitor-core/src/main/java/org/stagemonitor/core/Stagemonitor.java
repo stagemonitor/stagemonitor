@@ -26,6 +26,7 @@ public final class Stagemonitor {
 	private static volatile boolean disabled;
 	private static volatile MeasurementSession measurementSession;
 	private static List<String> pathsOfWidgetMetricTabPlugins = Collections.emptyList();
+	private static List<String> pathsOfWidgetTabPlugins = Collections.emptyList();
 	private static Iterable<StagemonitorPlugin> plugins;
 
 	static {
@@ -89,6 +90,7 @@ public final class Stagemonitor {
 		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
 		pathsOfWidgetMetricTabPlugins = new LinkedList<String>();
+		pathsOfWidgetTabPlugins = new LinkedList<String>();
 		for (StagemonitorPlugin stagemonitorPlugin : plugins) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 
@@ -105,6 +107,7 @@ public final class Stagemonitor {
 		try {
 			stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
 			pathsOfWidgetMetricTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetMetricTabPlugins());
+			pathsOfWidgetTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetTabPlugins());
 		} catch (Exception e) {
 			logger.warn("Error while initializing plugin " + pluginName + " (this exception is ignored)", e);
 		}
@@ -153,6 +156,12 @@ public final class Stagemonitor {
 		Stagemonitor.logger = logger;
 	}
 
+	/**
+	 * @see StagemonitorPlugin#getPathsOfWidgetTabPlugins()
+	 */
+	public static List<String> getPathsOfWidgetTabPlugins() {
+		return Collections.unmodifiableList(pathsOfWidgetTabPlugins);
+	}
 	/**
 	 * @see org.stagemonitor.core.StagemonitorPlugin#getPathsOfWidgetMetricTabPlugins()
 	 */

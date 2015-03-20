@@ -52,6 +52,7 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()))
 				.replace("@@MEASUREMENT_SESSION@@", JsonUtils.toJson(Stagemonitor.getMeasurementSession()))
+				.replace("@@PATHS_OF_TAB_PLUGINS@@", JsonUtils.toJson(Stagemonitor.getPathsOfWidgetTabPlugins()))
 				.replace("@@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@", JsonUtils.toJson(Stagemonitor.getPathsOfWidgetMetricTabPlugins()));
 	}
 }

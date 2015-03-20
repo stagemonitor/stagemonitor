@@ -1,5 +1,4 @@
 dependencies {
-	compile project(":stagemonitor-alerting")
 	compile project(":stagemonitor-requestmonitor")
 	compile project(":stagemonitor-jvm")
 	compile project(":stagemonitor-jdbc")

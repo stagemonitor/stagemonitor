@@ -1,4 +1,5 @@
 $(document).ready(function () {
+	window.tabPlugins = [];
 
 	window.stagemonitor = {
 		initialize: function (data, configurationSources, configurationOptions, baseUrl, contextPath, passwordSet, connectionId, pathsOfWidgetMetricTabPlugins) {
@@ -22,7 +23,7 @@ $(document).ready(function () {
 				} catch (e) {
 					console.log(e);
 				}
-				renderAlertsTab();
+				loadTabPlugins();
 				$(".tip").tooltip();
 			} catch (e) {
 				console.log(e);
@@ -34,6 +35,31 @@ $(document).ready(function () {
 			$(".tip").tooltip({html: true});
 		}
 	};
+
+	function loadTabPlugins() {
+		$.each(stagemonitor.pathsOfTabPlugins, function (i, tabPluginPath) {
+			utils.loadScripts([tabPluginPath + ".js"], function () {
+				$.each(tabPlugins, function (i, tabPlugin) {
+					try {
+						$("#tab-list").append('<li id="' + tabPlugin.tabId + '">' +
+							'	<a href="#' + tabPlugin.tabContentId + '" role="tab" data-toggle="tab" class="tip" data-placement="bottom"' +
+							'		title="' + (tabPlugin.tooltip || '') + '">' +
+							tabPlugin.label +
+							'	</a>' +
+							'</li>');
+
+						$("#tab-content").append('<div class="tab-pane" id="' + tabPlugin.tabContentId + '"></div>');
+
+						$.get(stagemonitor.contextPath + tabPluginPath + ".html", function (html) {
+							tabPlugin.renderTab(html);
+						});
+					} catch (e) {
+						console.log(e);
+					}
+				});
+			});
+		});
+	}
 
 	$("#stagemonitor-modal-close").on("click", function () {
 		window.stagemonitor.closeOverlay();

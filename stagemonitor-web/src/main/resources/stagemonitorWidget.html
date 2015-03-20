@@ -34,6 +34,7 @@
 					configurationOptions = @@CONFIGURATION_OPTIONS@@;
 
 				stagemonitorWindow.stagemonitor.measurementSession = @@MEASUREMENT_SESSION@@;
+				stagemonitorWindow.stagemonitor.pathsOfTabPlugins = @@PATHS_OF_TAB_PLUGINS@@;
 				var connectionId = generateUUID();
 				addXMLRequestCallback( function( xhr ) {
 					xhr.setRequestHeader("x-stagemonitor-connection-id", connectionId);

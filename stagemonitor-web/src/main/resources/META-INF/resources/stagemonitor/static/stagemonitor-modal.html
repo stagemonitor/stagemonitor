@@ -40,7 +40,6 @@
 	<script type="text/javascript" src="tabs/metrics-tab.js"></script>
 	<script type="text/javascript" src="tabs/metrics/graphRenderer.js"></script>
 	<script type="text/javascript" src="tabs/metrics/tableRenderer.js"></script>
-	<script type="text/javascript" src="tabs/alerting-tab.js"></script>
 </head>
 <body>
 <div class="container-fluid">
@@ -52,7 +51,7 @@
 			<button class="close" id="stagemonitor-modal-close"><span>&times;</span></button>
 		</h1>
 
-		<ul class="nav nav-tabs" role="tablist">
+		<ul id="tab-list" class="nav nav-tabs" role="tablist">
 			<li id="call-stack-tab" class="active">
 				<a href="#stagemonitor-home" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
 				   title="View method call tree of the current request including SQL statements">
@@ -90,16 +89,10 @@
 					Metrics
 				</a>
 			</li>
-			<li id="alerts-tab">
-				<a href="#stagemonitor-alerts" role="tab" data-toggle="tab" class="tip" data-placement="bottom"
-				   title="Show status and current incidents of the application.">
-					Alerts
-				</a>
-			</li>
 		</ul>
 	</div>
 
-	<div class="tab-content">
+	<div id="tab-content" class="tab-content">
 		<div class="tab-pane active" id="stagemonitor-home">
 			<!--tabs/call-tree-tab.html-->
 		</div>
@@ -257,10 +250,6 @@
 
 			<div id="metric-plugins" class="page-wrapper">
 			</div>
-		</div>
-
-		<div class="tab-pane" id="stagemonitor-alerts">
-			<!--tabs/alerting-tab.hbs-->
 		</div>
 
 	</div>

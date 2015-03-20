@@ -90,8 +90,10 @@
 																	  onclick="window.prompt('Copy to clipboard: Ctrl+C, Enter', '{{key}}');"
 																	  style="cursor: pointer;"></span>
 															</span>
+								{{#if description}}
 								<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip"
 									  data-placement="left" title="{{description}}"></span>
+								{{/if}}
 								<span class="tip glyphicon glyphicon-info-sign" data-toggle="tooltip"
 									  data-placement="left"
 									  title="The current source of this value is '{{nameOfCurrentConfigurationSource}}'"></span>

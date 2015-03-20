@@ -1,6 +1,8 @@
 package org.stagemonitor.alerting;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -208,6 +210,11 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 		new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession())
 				.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
+	}
+
+	@Override
+	public List<String> getPathsOfWidgetTabPlugins() {
+		return Arrays.asList("/stagemonitor/static/tabs/alert/alerting-tab");
 	}
 
 	public boolean isMuteAlerts() {
