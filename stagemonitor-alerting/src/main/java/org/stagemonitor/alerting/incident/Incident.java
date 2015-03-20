@@ -56,6 +56,7 @@ public class Incident {
 	}
 
 	public Incident(Check check, MeasurementSession measurementSession, List<CheckResult> checkResults) {
+		this.oldStatus = CheckResult.Status.OK;
 		this.newStatus = CheckResult.getMostSevereStatus(checkResults);
 		this.checkId = check.getId();
 		this.checkName = check.getName();
@@ -200,6 +201,14 @@ public class Incident {
 
 	public void setResolvedAt(Date resolvedAt) {
 		this.resolvedAt = resolvedAt;
+	}
+
+	public int getFailedChecks() {
+		int failedChecks = 0;
+		for (CheckResults checkResults : getCheckResults()) {
+			failedChecks += checkResults.getResults().size();
+		}
+		return failedChecks;
 	}
 
 	@Override

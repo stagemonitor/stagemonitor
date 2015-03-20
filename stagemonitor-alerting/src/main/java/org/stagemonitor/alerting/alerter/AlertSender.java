@@ -1,17 +1,23 @@
 package org.stagemonitor.alerting.alerter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckResult;
+import org.stagemonitor.alerting.check.MetricCategory;
+import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.incident.Incident;
+import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
 
 public class AlertSender {
@@ -46,22 +52,44 @@ public class AlertSender {
 		return alerterTypes;
 	}
 
+	public Incident sendTestAlert(Subscription subscription, CheckResult.Status status) {
+		Check check = new Check();
+		check.setName("Test Check");
+		check.setApplication("testApp");
+		check.setTarget(Pattern.compile("test"));
+		check.setMetricCategory(MetricCategory.TIMER);
+		check.getWarn().add(new Threshold("mean", Threshold.Operator.GREATER_EQUAL, 1));
+
+		Incident testIncident = new Incident(check, new MeasurementSession("testApp", "testHost", "testInstance"),
+				Arrays.asList(new CheckResult("test", 10, status)));
+
+		tryAlert(testIncident, subscription, alerterByType.get(subscription.getAlerterType()));
+		return testIncident;
+	}
+
 	public void sendAlerts(Check check, Incident incident) {
-		if (alertingPlugin.isMuteAlerts() || ! incident.isAlertIncident(check)) {
+		if (alertingPlugin.isMuteAlerts() || !incident.isAlertIncident(check)) {
 			return;
 		}
 		logAlerter.alert(incident, null);
 		for (Subscription subscription : alertingPlugin.getSubscriptionsByIds().values()) {
 			if (subscription.isAlertOn(incident.getNewStatus())) {
-				Alerter alerter = alerterByType.get(subscription.getAlerterType());
-				if (alerter != null && alerter.isAvailable()) {
-					alerter.alert(incident, subscription);
-				} else {
-					logger.warn("Alerter with type '{}' is not available. " +
-							"Either the name of the alerter is invalid or it is not configured correctly.",
-							subscription.getAlerterType());
-				}
+				tryAlert(incident, subscription, alerterByType.get(subscription.getAlerterType()));
 			}
+		}
+	}
+
+	private void tryAlert(Incident incident, Subscription subscription, Alerter alerter) {
+		if (alerter != null && alerter.isAvailable()) {
+			try {
+				alerter.alert(incident, subscription);
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		} else {
+			logger.warn("Alerter with type '{}' is not available. " +
+					"Either the name of the alerter is invalid or it is not configured correctly.",
+					subscription.getAlerterType());
 		}
 	}
 

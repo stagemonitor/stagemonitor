@@ -40,4 +40,12 @@ public class StringUtils {
 	public static String slugify(String s) {
 		return s.toLowerCase().replaceAll("[^\\w ]+", "").replaceAll("\\s+", "-");
 	}
+
+	public static boolean isNotEmpty(String s) {
+		return !isEmpty(s);
+	}
+
+	public static boolean isEmpty(String s) {
+		return s == null || s.isEmpty();
+	}
 }
