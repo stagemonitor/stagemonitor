@@ -188,7 +188,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Alerts short description freemarker template")
 			.description("Used for example for the email subject.")
-			.defaultValue("[${incident.newStatus}] ${incident.checkName} has ${incident.failedChecks} failing check<#if incident.failedChecks gt 1>s</#if>")
+			.defaultValue("[${incident.oldStatus!'OK'} -> ${incident.newStatus}] ${incident.checkName} has ${incident.failedChecks} failing check<#if incident.failedChecks gt 1>s</#if>")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
 

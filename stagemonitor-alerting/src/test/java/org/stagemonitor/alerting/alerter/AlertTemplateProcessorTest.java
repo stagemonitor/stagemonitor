@@ -20,7 +20,7 @@ public class AlertTemplateProcessorTest extends AbstractAlerterTest {
 
 	@Test
 	public void testProcessShortDescriptionTemplate() throws Exception {
-		assertEquals("[CRITICAL] Test Timer has 2 failing checks", alertTemplateProcessor.processShortDescriptionTemplate(createIncidentWithVersion("1", 1)));
+		assertEquals("[OK -> CRITICAL] Test Timer has 2 failing checks", alertTemplateProcessor.processShortDescriptionTemplate(createIncidentWithVersion("1", 1)));
 
 		// modify template
 		configurationSource.add("stagemonitor.alerts.template.shortDescription", "foo");
