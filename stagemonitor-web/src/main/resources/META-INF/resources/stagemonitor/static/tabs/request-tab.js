@@ -1,10 +1,17 @@
 function renderRequestTab(data) {
+	var $requestTab = $("#request-tab");
 	if (!data) {
-		$("#request-tab").hide();
-		$("#config-tab").addClass('active');
-		$("#stagemonitor-configuration").addClass('active');
+		$requestTab.hide();
+		// show config tab as fallback
+		if ($("#call-stack-tab").hasClass('active') || $requestTab.hasClass('active')) {
+			$("#config-tab").addClass('active');
+			$("#stagemonitor-configuration").addClass('active');
+		}
 		return;
+	} else {
+		$requestTab.show();
 	}
+
 	var thresholdExceededGlobal = false;
 	var requestsMetrics = processRequestsMetrics(data);
 
@@ -13,6 +20,7 @@ function renderRequestTab(data) {
 		var renderedMetricsTemplate = metricsTemplate(requestsMetrics);
 		var $stagemonitorRequest = $("#stagemonitor-request");
 		$stagemonitorRequest.html(renderedMetricsTemplate);
+		$(".tip").tooltip({html: true});
 	});
 
 
