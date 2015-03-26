@@ -1,5 +1,6 @@
 package org.stagemonitor.web.monitor.filter;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -103,6 +104,16 @@ public class HttpRequestMonitorFilterTest {
 		assertTrue(servletResponse.getContentAsString().contains("window.StagemonitorLoaded"));
 	}
 
+	@Test
+	public void testBinaryData() throws IOException, ServletException {
+		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
+		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse,
+				writeBinaryDataInResponseWhenCallingDoFilter(new byte[] {1}));
+
+		assertEquals(1, servletResponse.getContentAsByteArray().length);
+		assertEquals(1, servletResponse.getContentAsByteArray()[0]);
+	}
+
 	private MockHttpServletRequest requestWithAccept(String accept) {
 		final MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.addHeader("accept", accept);
@@ -149,7 +160,28 @@ public class HttpRequestMonitorFilterTest {
 			@Override
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				HttpServletResponse response = (HttpServletResponse) invocation.getArguments()[1];
-				response.getWriter().write(html);
+				if (Math.random() > 0.5) {
+					System.out.println("using writer");
+					response.getWriter().write(html);
+				} else {
+					System.out.println("using output stream");
+					response.getOutputStream().print(html);
+				}
+				response.flushBuffer();
+				response.setContentType("text/html");
+				return null;
+			}
+		}).when(filterChain).doFilter(any(ServletRequest.class), any(ServletResponse.class));
+		return filterChain;
+	}
+
+	private FilterChain writeBinaryDataInResponseWhenCallingDoFilter(final byte[] bytes) throws IOException, ServletException {
+		final FilterChain filterChain = mock(FilterChain.class);
+		doAnswer(new Answer() {
+			@Override
+			public Object answer(InvocationOnMock invocation) throws Throwable {
+				HttpServletResponse response = (HttpServletResponse) invocation.getArguments()[1];
+				response.getOutputStream().write(bytes);
 				response.flushBuffer();
 				response.setContentType("text/html");
 				return null;

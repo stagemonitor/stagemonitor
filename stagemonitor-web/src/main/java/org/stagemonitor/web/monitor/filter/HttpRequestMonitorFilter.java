@@ -174,27 +174,55 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 							  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
 		if (httpServletResponseBufferWrapper.getContentType() != null
 				&& httpServletResponseBufferWrapper.getContentType().contains("text/html")
-				&& httpServletRequest.getAttribute("stagemonitorInjected") == null
-				&& httpServletResponseBufferWrapper.isUsingWriter()) {
-			httpServletRequest.setAttribute("stagemonitorInjected", true);
-			String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
-			for (HtmlInjector htmlInjector : htmlInjectors) {
-				if (htmlInjector.isActive(httpServletRequest)) {
-					content = injectBeforeClosingBody(content, htmlInjector.getContentToInjectBeforeClosingBody(requestInformation));
-				}
+				&& httpServletRequest.getAttribute("stagemonitorInjected") == null) {
+			if (httpServletResponseBufferWrapper.isUsingWriter()) {
+				injectHtmlToWriter(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
+			} else {
+				injectHtmlToOutputStream(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
 			}
-			response.getWriter().write(content);
 		} else {
 			passthrough(response, httpServletResponseBufferWrapper);
 		}
 	}
 
-	private void passthrough(ServletResponse response, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper) throws IOException {
-		if (httpServletResponseBufferWrapper.isUsingWriter()) {
-			response.getWriter().write(httpServletResponseBufferWrapper.getWriter().getOutput().toString());
+	private void injectHtmlToOutputStream(ServletResponse response, HttpServletRequest httpServletRequest,
+										  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
+										  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+
+		String content = new String(httpServletResponseBufferWrapper.getOutputStream().getOutput().toByteArray(),
+				response.getCharacterEncoding());
+		if (content.contains("</body>")) {
+			httpServletRequest.setAttribute("stagemonitorInjected", true);
+			content = getContetToInject(httpServletRequest, requestInformation, content);
+			response.getOutputStream().print(content);
 		} else {
-			ByteArrayOutputStream output = httpServletResponseBufferWrapper.getOutputStream().getOutput();
-			output.writeTo(response.getOutputStream());
+			// this is no html
+			passthrough(response, httpServletResponseBufferWrapper);
+		}
+	}
+
+	private void injectHtmlToWriter(ServletResponse response, HttpServletRequest httpServletRequest, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+		httpServletRequest.setAttribute("stagemonitorInjected", true);
+		String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
+		content = getContetToInject(httpServletRequest, requestInformation, content);
+		response.getWriter().write(content);
+	}
+
+	private String getContetToInject(HttpServletRequest httpServletRequest, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation, String content) {
+		for (HtmlInjector htmlInjector : htmlInjectors) {
+			if (htmlInjector.isActive(httpServletRequest)) {
+				content = injectBeforeClosingBody(content, htmlInjector.getContentToInjectBeforeClosingBody(requestInformation));
+			}
+		}
+		return content;
+	}
+
+	private void passthrough(ServletResponse originalResponse, HttpServletResponseBufferWrapper responseWrapper) throws IOException {
+		if (responseWrapper.isUsingWriter()) {
+			originalResponse.getWriter().write(responseWrapper.getWriter().getOutput().toString());
+		} else {
+			ByteArrayOutputStream output = responseWrapper.getOutputStream().getOutput();
+			output.writeTo(originalResponse.getOutputStream());
 		}
 	}
 

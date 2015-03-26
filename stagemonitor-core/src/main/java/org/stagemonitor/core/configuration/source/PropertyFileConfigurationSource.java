@@ -70,7 +70,6 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 		if (resourceStream != null) {
 			try {
 				props.load(resourceStream);
-				logger.info("Successfully loaded {} from classpath", classpathLocation);
 				return props;
 			} catch (IOException e) {
 				logger.warn(e.getMessage() + " (this exception is ignored)", e);
@@ -91,7 +90,6 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 		try {
 			input = new FileInputStream(location);
 			props.load(input);
-			logger.info("Successfully loaded {} from file system", location);
 			return props;
 		} catch (FileNotFoundException ex) {
 			return null;
