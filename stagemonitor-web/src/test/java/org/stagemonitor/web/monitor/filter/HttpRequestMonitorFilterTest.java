@@ -200,10 +200,10 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		Assert.assertEquals("<html><body><script src=\"/stagemonitor/public/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
+		Assert.assertEquals("<html><body><script src=\"/stagemonitor/public/static/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
-				"      beacon_url: '/stagemonitor/public/rum',\n" +
+				"      beacon_url: '/stagemonitor/public/static/rum',\n" +
 				"      log: null\n" +
 				"   });\n" +
 				"   BOOMR.addVar(\"requestId\", \"null\");\n" +

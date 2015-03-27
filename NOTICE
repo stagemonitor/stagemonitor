@@ -26,7 +26,7 @@ This product bundles jQuery serializeObject, which is available under the "BSD" 
 stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/jquery.serialize-object.min.js
 
 This product bundles boomerang 0.9, which is available under the "BSD" license. For details, see
-stagemonitor-web/src/main/resources/META-INF/resources/rum/bommerang.js
+stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/public/static/rum/bommerang.js
 
 This product bundles Bootstrap Growl 2.0.1, which is available under the "MIT" license. For details, see
 stagemonitor-web/src/main/resources/META-INF/resources/stagemonitor/static/bootstrap/bootstrap-growl.min.js

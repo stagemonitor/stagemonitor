@@ -28,11 +28,11 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider {
 	 * A tab plugin consists of a javascript file and a html file.
 	 * <p/>
 	 * The files should be placed under
-	 * <code>src/main/resources/META-INF/resources/some/sub/folder/myPlugin[.js|.html]</code>
-	 * if you return the path <code>/some/sub/folder/myPlugin</code>
+	 * <code>src/main/resources/stagemonitor/static/some/sub/folder/myPlugin[.js|.html]</code>
+	 * if you return the path <code>/stagemonitor/static/some/sub/folder/myPlugin</code>
 	 * <p/>
-	 * As of servlet-api 3.0, all files under <code>src/main/resources/META-INF/resources/</code> are accessable
-	 * through HTTP.
+	 * The FileServlet serves all files under /src/main/resources/stagemonitor/static and
+	 * src/main/resources/stagemonitor/public/static
 	 *
 	 * @return the paths of the tab plugins
 	 */
@@ -45,14 +45,14 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider {
 	 * A widget metrics tab plugin consists of a javascript file and a html file.
 	 * <p/>
 	 * The files should be placed under
-	 * <code>src/main/resources/META-INF/resources/some/sub/folder/{pluginId}[.js|.html]</code>
+	 * <code>/src/main/resources/stagemonitor/static/some/sub/folder/{pluginId}[.js|.html]</code>
 	 * <p/>
-	 * As of servlet-api 3.0, all files under <code>src/main/resources/META-INF/resources/</code> are accessable
-	 * through HTTP.
+	 * The FileServlet serves all files under /src/main/resources/stagemonitor/static and
+	 * /src/main/resources/stagemonitor/public/static
 	 * <p/>
 	 * For documentation and a example of how a plugin should look like, see
-	 * <code>stagemonitor-ehcache/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics</code> and
-	 * <code>stagemonitor-jvm/src/main/resources/META-INF/resources/stagemonitor/static/tabs/metrics</code>
+	 * <code>stagemonitor-ehcache/src/main/resources/stagemonitor/static/tabs/metrics</code> and
+	 * <code>stagemonitor-jvm/src/main/resources/stagemonitor/static/tabs/metrics</code>
 	 *
 	 * @return the paths of the widget metric tab plugins
 	 */
