@@ -16,7 +16,7 @@ public class FileServlet extends HttpServlet {
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-		String requestURI = req.getRequestURI().replace("..", "");
+		String requestURI = req.getRequestURI().substring(req.getContextPath().length()).replace("..", "");
 		res.setContentType(getMimeType(requestURI));
 		InputStream inputStream = null;
 		try {
