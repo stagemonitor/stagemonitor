@@ -110,11 +110,6 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Alerts HTML freemarker template")
 			.defaultValue("<#-- @ftlvariable name=\"incident\" type=\"org.stagemonitor.alerting.incident.Incident\" -->\n" +
-					"<html>\n" +
-					"<head>\n" +
-					"\n" +
-					"</head>\n" +
-					"<body>\n" +
 					"<h3>Incident for check ${incident.checkName}</h3>\n" +
 					"First failure: ${incident.firstFailureAt?datetime?iso_local}<br>\n" +
 					"<#if incident.resolvedAt??>\n" +
@@ -152,8 +147,6 @@ public class AlertingPlugin extends StagemonitorPlugin {
 					"\t\t</#list>\n" +
 					"\t</tbody>\n" +
 					"</table>\n" +
-					"</body>\n" +
-					"</html>\n" +
 					"</#if>\n")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
