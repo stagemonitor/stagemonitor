@@ -203,7 +203,7 @@ public class HttpRequestMonitorFilterTest {
 		Assert.assertEquals("<html><body><script src=\"/stagemonitor/public/static/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
 				"<script>\n" +
 				"   BOOMR.init({\n" +
-				"      beacon_url: '/stagemonitor/public/static/rum',\n" +
+				"      beacon_url: '/stagemonitor/public/rum',\n" +
 				"      log: null\n" +
 				"   });\n" +
 				"   BOOMR.addVar(\"requestId\", \"null\");\n" +
