@@ -53,7 +53,7 @@ $(document).ready(function () {
 		toolbar.append('<span id="autoscoll-ajax" class="tip glyphicon glyphicon-chevron-down" data-toggle="tooltip" ' +
 			'data-placement="right" title="Auto select latest ajax request"></span> ');
 		var $autoscoll = $("#autoscoll-ajax");
-		if (JSON.parse(localStorage.getItem("stagemonitor-widget-ajax-autoscroll"))) {
+		if (isAutoscrollToLatestAjaxRequest()) {
 			$autoscoll.addClass('active');
 		}
 		$autoscoll.click(function () {
@@ -66,6 +66,12 @@ $(document).ready(function () {
 	addToolbar();
 });
 
+function isAutoscrollToLatestAjaxRequest() {
+	var autoscrollString = localStorage.getItem("stagemonitor-widget-ajax-autoscroll");
+	// default is true
+	return autoscrollString === null || JSON.parse(autoscrollString);
+}
+
 addAjaxRequestTrace = function (data) {
 	noOfRequestTraces++;
 	if (noOfRequestTraces > 0) {
@@ -74,7 +80,7 @@ addAjaxRequestTrace = function (data) {
 	}
 	var dataTable = $("#ajax-table").DataTable();
 	var node = dataTable.row.add(data).draw().node();
-	if (JSON.parse(localStorage.getItem("stagemonitor-widget-ajax-autoscroll"))) {
+	if (isAutoscrollToLatestAjaxRequest()) {
 		renderRequestTab(data);
 		renderCallTree(data);
 		var nodes = dataTable.rows().nodes();
