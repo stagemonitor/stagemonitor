@@ -47,11 +47,7 @@ public class AlertTemplateProcessorTest extends AbstractAlerterTest {
 
 	@Test
 	public void testProcessHtmlTemplate() throws Exception {
-		assertEquals(String.format("<html>\n" +
-				"<head>\n" +
-				"\n" +
-				"</head>\n" +
-				"<body>\n" +
+		assertEquals(String.format(
 				"<h3>Incident for check Test Timer</h3>\n" +
 				"First failure: %s<br>\n" +
 				"Old status: OK<br>\n" +
@@ -86,9 +82,7 @@ public class AlertTemplateProcessorTest extends AbstractAlerterTest {
 				"\t\t\t\t<td>10</td>\n" +
 				"\t\t\t</tr>\n" +
 				"\t</tbody>\n" +
-				"</table>\n" +
-				"</body>\n" +
-				"</html>\n", toFreemarkerIsoLocal(testIncident.getFirstFailureAt())),
+				"</table>\n", toFreemarkerIsoLocal(testIncident.getFirstFailureAt())),
 				alertTemplateProcessor.processHtmlTemplate(testIncident));
 
 	}
