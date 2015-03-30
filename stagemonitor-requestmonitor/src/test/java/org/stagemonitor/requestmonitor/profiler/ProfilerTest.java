@@ -1,128 +1,57 @@
 package org.stagemonitor.requestmonitor.profiler;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 public class ProfilerTest {
-	private static class TestClass {
-		static CallStackElement method0() {
-			final CallStackElement callStackElement = Profiler.activateProfiling("method0()");
-			try {
-				method1();
-				return callStackElement;
-			} finally {
-				final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-				Profiler.stop();
-				thisCallStackElement.setExecutionTime(1000000000);
-			}
-		}
-
-		static void method1() {
-			Profiler.start("method1()");
-			try {
-				method1_1();
-				method1_2();
-			} finally {
-				final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-				Profiler.stop();
-				thisCallStackElement.setExecutionTime(1000000000);
-			}
-		}
-
-		static void method1_1() {
-			Profiler.start("method1_1()");
-			try {
-				method1_1_1();
-				method1_1_2();
-			} finally {
-				final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-				Profiler.stop();
-				thisCallStackElement.setExecutionTime(500000000);
-
-			}
-		}
-
-		static void method1_1_1() {
-			Profiler.start("method1_1_1()");
-			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-			Profiler.stop();
-			thisCallStackElement.setExecutionTime(200000000);
-
-		}
-
-		static void method1_1_2() {
-			Profiler.start("method1_1_2()");
-			try {
-				method1_1_2_1();
-			} finally {
-				final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-				Profiler.stop();
-				thisCallStackElement.setExecutionTime(250000000);
-			}
-		}
-
-		static void method1_1_2_1() {
-			Profiler.start("method1_1_2_1()");
-			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-			Profiler.stop();
-			thisCallStackElement.setExecutionTime(50000000);
-		}
-
-		static void method1_2() {
-			Profiler.start("method1_2()");
-			Profiler.addCall("select * from user", 50000000);
-			Profiler.addCall("select * from address", 50000000);
-			method1_2_1();
-			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-			Profiler.stop();
-			thisCallStackElement.setExecutionTime(500000000);
-		}
-		static void method1_2_1() {
-			Profiler.start("method1_2_1()");
-			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
-			Profiler.stop();
-			thisCallStackElement.setExecutionTime(250000000);
-		}
-	}
 
 	@Test
 	public void testProfiler() {
-		final CallStackElement callStackElement = TestClass.method0();
-		assertEquals(
-						"----------------------------------------------------------------------\n" +
-						"Selftime (ms)              Total (ms)                 Method signature\n" +
-						"----------------------------------------------------------------------\n" +
-						"000000.00  000% ---------- 001000.00  100% |||||||||| method0()\n" +
-						"000000.00  000% ---------- 001000.00  100% |||||||||| `-- method1()\n" +
-						"000050.00  005% :--------- 000500.00  050% |||||-----     |-- method1_1()\n" +
-						"000200.00  020% ||-------- 000200.00  020% ||--------     |   |-- method1_1_1()\n" +
-						"000200.00  020% ||-------- 000250.00  025% ||:-------     |   `-- method1_1_2()\n" +
-						"000050.00  005% :--------- 000050.00  005% :---------     |       `-- method1_1_2_1()\n" +
-						"000150.00  015% |:-------- 000500.00  050% |||||-----     `-- method1_2()\n" +
-						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user\n" +
-						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address\n" +
-						"000250.00  025% ||:------- 000250.00  025% ||:-------         `-- method1_2_1()\n", callStackElement.toString());
-	}
-
-	@Test
-	public void testProfilerActive() {
-		assertFalse(Profiler.isProfilingActive());
-		Profiler.activateProfiling("");
-		assertTrue(Profiler.isProfilingActive());
-		Profiler.deactivateProfiling();
-		assertFalse(Profiler.isProfilingActive());
-	}
-
-	@Test
-	public void testNoProfilingIfNotActive() {
-		assertFalse(Profiler.isProfilingActive());
-		Profiler.start("dummy");
-		assertNull(Profiler.getMethodCallParent());
+		ProfilerTest profilerTest = new ProfilerTest();
+		CallStackElement total = Profiler.activateProfiling("total");
+		profilerTest.method1();
 		Profiler.stop();
+
+		Assert.assertEquals(total.toString(), 1, total.getChildren().size());
+		Assert.assertEquals(total.toString(), 3, total.getChildren().get(0).getChildren().size());
+		Assert.assertEquals(total.toString(), "int org.stagemonitor.requestmonitor.profiler.ProfilerTest.method5()",
+				total.getChildren().get(0).getChildren().get(2).getSignature());
+	}
+
+	public int method1() {
+		return method2(1) + method3() + method5();
+	}
+
+	private int method2(int i) {
+		return 1 + i;
+	}
+
+	private int method3() {
+		return method4();
+	}
+
+	private int method4() {
+		return 4;
+	}
+
+	private int method5() {
+		return method6() + method7();
+	}
+
+	private int method6() {
+		return 6;
+	}
+
+	private int method7() {
+		return method8();
+	}
+
+	private int method8() {
+		return method9();
+	}
+
+	private int method9() {
+		return 9;
 	}
 
 }

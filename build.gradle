@@ -58,6 +58,10 @@ subprojects {
 	}
 
 	test.testLogging.exceptionFormat = 'full'
+	test.dependsOn << ':stagemonitor-javaagent:jar'
+	test.doFirst {
+		jvmArgs "-javaagent:$rootProject.projectDir/stagemonitor-javaagent/build/libs/stagemonitor-javaagent-${version}.jar"
+	}
 
 	compileJava {
 		sourceCompatibility = 1.6

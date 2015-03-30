@@ -8,7 +8,7 @@ jar.doFirst{
 				"Agent-Class": "my.agent.MyAgent",
 				"Can-Redefine-Classes": true,
 				"Can-Retransform-Classes": true,
-				"Premain-Class": "JavassistInstrumenter"
+				"Premain-Class": "org.stagemonitor.instrument.JavassistInstrumenter"
 		)
 	}
 }

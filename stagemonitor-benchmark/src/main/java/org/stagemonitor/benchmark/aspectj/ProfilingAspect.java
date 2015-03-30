@@ -1,10 +1,11 @@
-package org.stagemonitor.requestmonitor.profiler;
+package org.stagemonitor.benchmark.aspectj;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 @Aspect
 public abstract class ProfilingAspect {

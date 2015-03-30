@@ -1,0 +1,13 @@
+dependencies {
+	compile project(":stagemonitor-core")
+}
+
+jar.doFirst{
+	manifest {
+		attributes("Manifest-Version" : "1.0",
+				"Can-Redefine-Classes": true,
+				"Can-Retransform-Classes": true,
+				"Premain-Class": "org.stagemonitor.agent.StagemonitorAgent"
+		)
+	}
+}

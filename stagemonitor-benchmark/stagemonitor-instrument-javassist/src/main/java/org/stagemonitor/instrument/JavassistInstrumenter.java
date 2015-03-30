@@ -1,17 +1,20 @@
 package org.stagemonitor.instrument;
 
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+
 public class JavassistInstrumenter implements ClassFileTransformer {
 
 	public static void premain(String agentArgs, Instrumentation inst) {
+//		for (ClassFileTransformer classFileTransformer : ServiceLoader.load(ClassFileTransformer.class)) {
+//			inst.addTransformer(classFileTransformer);
+//		}
 		inst.addTransformer(new JavassistInstrumenter());
 	}
 
@@ -19,7 +22,6 @@ public class JavassistInstrumenter implements ClassFileTransformer {
 							ProtectionDomain protectionDomain, byte[] classfileBuffer)
 			throws IllegalClassFormatException {
 
-		byte[] byteCode = classfileBuffer;
 
 		if (className.equals("org/stagemonitor/benchmark/profiler/ClassJavassistProfiled")) {
 
@@ -30,13 +32,13 @@ public class JavassistInstrumenter implements ClassFileTransformer {
 					m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start();");
 					m.insertAfter("org.stagemonitor.requestmonitor.profiler.Profiler.stop(\""+m.getLongName()+"\");", true);
 				}
-				byteCode = cc.toBytecode();
+				classfileBuffer = cc.toBytecode();
 				cc.detach();
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
 		}
 
-		return byteCode;
+		return classfileBuffer;
 	}
 }
