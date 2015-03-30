@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -114,7 +115,7 @@ public class RequestMonitor {
 		final boolean monitor = requestMonitorPlugin.isCollectRequestStats() && isWarmedUp();
 		if (monitor) {
 			if (!Stagemonitor.isStarted()) {
-				Stagemonitor.startMonitoring();
+				info.startup = Stagemonitor.startMonitoring();
 			}
 			beforeExecution(monitoredRequest, info);
 		}
@@ -203,10 +204,13 @@ public class RequestMonitor {
 															 RequestInformation<T> info) {
 		final T requestTrace = info.requestTrace;
 		try {
+			if (info.startup != null) {
+				info.startup.get();
+			}
 			if (info.monitorThisExecution() && requestTrace.getName() != null && !requestTrace.getName().isEmpty()) {
 				monitorAfterExecution(monitoredRequest, info);
 			}
-		} catch (RuntimeException e) {
+		} catch (Exception e) {
 			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 		} finally {
 			/*
@@ -330,6 +334,7 @@ public class RequestMonitor {
 		boolean forwardedExecution = false;
 		private Object executionResult = null;
 		private boolean monitorThisExecution = true;
+		private Future<?> startup;
 
 		boolean monitorThisExecution() {
 			return monitorThisExecution;
