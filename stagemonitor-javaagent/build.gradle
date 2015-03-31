@@ -1,7 +1,3 @@
-dependencies {
-	compile project(":stagemonitor-core")
-}
-
 jar.doFirst{
 	manifest {
 		attributes("Manifest-Version" : "1.0",
