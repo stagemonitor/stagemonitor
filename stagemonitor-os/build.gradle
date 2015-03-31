@@ -11,7 +11,3 @@ dependencies {
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
 }
-
-configurations {
-	compile.exclude module: 'aspectjtools'
-}
