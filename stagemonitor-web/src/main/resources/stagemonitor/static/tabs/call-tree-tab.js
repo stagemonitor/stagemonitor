@@ -50,6 +50,7 @@ function renderCallTree(data) {
 					anyChildExceedsThreshold: anyChildExceedsThreshold,
 					parentId: parentId,
 					myId: myId,
+					shortSignature: getShortSignature(callData.signature),
 					signature: callData.signature,
 					isShortened: false,
 					executionTimePercent: executionTimePercent,
@@ -61,6 +62,15 @@ function renderCallTree(data) {
 				myId = processCallTree(callTreeRows, callData.children, myId, myId + 1, totalExecutionTimeInNs);
 			}
 			return myId;
+		}
+
+		function getShortSignature(signature) {
+			if (!/^\S+ \S+\.\S+\(.*\)$/.test(signature)) {
+				// this is no method signature, its probably a SQL statement
+				return signature;
+			}
+			var split = signature.substring(0, signature.indexOf('(')).split(".");
+			return split[split.length - 2] + '.' + split[split.length - 1];
 		}
 	});
 }

@@ -10,7 +10,7 @@
 		<tbody>
 		{{#each callTreeRows}}
 		<tr class="{{#if executionTimeExceededThreshold}}warning{{/if}}" data-tt-expanded="{{#if anyChildExceedsThreshold}}true{{else}}false{{/if}}" data-tt-parent-id="{{parentId}}" data-tt-id="{{myId}}">
-			<td class="stagemonitor-calltree-signature">{{signature}}</td>
+			<td class="stagemonitor-calltree-signature" title="{{signature}}">{{shortSignature}}</td>
 			<td><div class="progress"><div class="progress-bar" style="width: {{executionTimePercent}}%">{{executionTimeInMs}}</div></div></td>
 			<td><div class="progress"><div class="progress-bar" style="width: {{selfExecutionTimePercent}}%">{{selfExecutionTimeInMs}}</div></div></td>
 		</tr>
