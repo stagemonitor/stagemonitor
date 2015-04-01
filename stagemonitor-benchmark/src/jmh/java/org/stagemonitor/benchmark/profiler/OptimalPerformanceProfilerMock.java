@@ -17,4 +17,9 @@ public class OptimalPerformanceProfilerMock {
 		times.add(dummy);
 		signatures.add(signature);
 	}
+
+	public static void clear() {
+		times.clear();
+		signatures.clear();
+	}
 }

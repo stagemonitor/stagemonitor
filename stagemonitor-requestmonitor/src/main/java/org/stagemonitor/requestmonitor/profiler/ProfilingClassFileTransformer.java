@@ -6,10 +6,8 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
-import javassist.CtField;
 import javassist.CtMethod;
 import javassist.LoaderClassPath;
 import javassist.NotFoundException;
@@ -53,7 +51,6 @@ public class ProfilingClassFileTransformer implements StagemonitorClassFileTrans
 
 		try {
 			ClassPool cp = ClassPool.getDefault();
-			CtClass stringClass = cp.getCtClass("java.lang.String");
 			cp.insertClassPath(new LoaderClassPath(loader));
 			CtClass cc = cp.makeClass(new java.io.ByteArrayInputStream(classfileBuffer));
 
@@ -63,9 +60,7 @@ public class ProfilingClassFileTransformer implements StagemonitorClassFileTrans
 					CtMethod m = declaredMethods[i];
 					if (!Modifier.isNative(m.getModifiers()) && !Modifier.isAbstract(m.getModifiers())) {
 						String signature = getSignature(cc, m);
-
-						String signatureFieldName = addSignatureField(stringClass, cc, i, signature);
-						m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start(" + signatureFieldName + ");");
+						m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start(\"" + signature + "\");");
 						m.insertAfter("org.stagemonitor.requestmonitor.profiler.Profiler.stop();", true);
 					}
 				}
@@ -77,15 +72,6 @@ public class ProfilingClassFileTransformer implements StagemonitorClassFileTrans
 			ex.printStackTrace();
 			throw new RuntimeException(ex);
 		}
-	}
-
-	private String addSignatureField(CtClass stringClass, CtClass cc, int i, String signature) throws CannotCompileException {
-		String signatureFieldName = "$sig_" + i;
-		CtField signatureField = new CtField(stringClass, signatureFieldName, cc);
-		signatureField.setModifiers(Modifier.PRIVATE | Modifier.STATIC | Modifier.FINAL);
-		// TODO .intern()?
-		cc.addField(signatureField, "\"" + signature + "\"");
-		return signatureFieldName;
 	}
 
 	private String getSignature(CtClass clazz, CtMethod method) throws NotFoundException {
@@ -109,9 +95,13 @@ public class ProfilingClassFileTransformer implements StagemonitorClassFileTrans
 		boolean instrument = includes.isEmpty();
 		for (String include : includes) {
 			if (className.startsWith(include)) {
-				instrument = true;
-				break;
+//				instrument = true;
+//				break;
+				return true;
 			}
+		}
+		if (!instrument) {
+			return false;
 		}
 		for (String exclude : excludes) {
 			if (className.startsWith(exclude)) {
