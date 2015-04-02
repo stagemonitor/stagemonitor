@@ -12,18 +12,21 @@ jmh {
 	benchmarkMode = 'AverageTime'
 	humanOutputFile = null
 	timeUnit = 'ns'
-	jvmArgs = "-javaagent:$rootProject.projectDir/stagemonitor-javaagent/build/libs/stagemonitor-javaagent-${version}.jar"
+	jvmArgs = "-javaagent:$rootProject.projectDir/stagemonitor-javaagent/build/libs/stagemonitor-javaagent-${version}.jar " +
+			"-javaagent:$rootProject.projectDir/stagemonitor-benchmark/stagemonitor-byte-buddy-agent/build/libs/stagemonitor-byte-buddy-agent-${version}.jar"
+	include = ['.*ProfilerBenchmark.*']
 //	profilers = ['HS_GC']
 }
 
-jmhJar.dependsOn << ':stagemonitor-javaagent:jar'
+jmhJar.dependsOn << ':stagemonitor-javaagent:jar' << ':stagemonitor-benchmark:stagemonitor-byte-buddy-agent:jar'
 
 dependencies {
-	compile project(":stagemonitor-spring-mvc")
-	compile project(":stagemonitor-logging")
-	compile project(":stagemonitor-ehcache")
-	compile 'org.apache.commons:commons-io:1.3.2'
-	compile 'org.slf4j:slf4j-simple:1.7.7'
+	jmh project(":stagemonitor-spring-mvc")
+	jmh project(":stagemonitor-logging")
+	jmh project(":stagemonitor-ehcache")
+	jmh project(":stagemonitor-benchmark:stagemonitor-byte-buddy-agent")
+	jmh 'org.apache.commons:commons-io:1.3.2'
+	jmh 'org.slf4j:slf4j-simple:1.7.7'
 }
 
 task exportConfigurationOptions(dependsOn: 'classes', type: JavaExec) {

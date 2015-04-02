@@ -33,10 +33,10 @@ public class StagemonitorAgent {
 			private void initClassFileTransformers(ClassLoader loader) {
 				if (classFileTransformers == null) {
 					try {
-						Class<?> classFileTransformerClass = loader.loadClass("org.stagemonitor.core.instrument.StagemonitorClassFileTransformer");
-						classFileTransformers = (Iterable<? extends ClassFileTransformer>) ServiceLoader.load(classFileTransformerClass, loader);
+						loader.loadClass("org.stagemonitor.core.Stagemonitor");
+						classFileTransformers = ServiceLoader.load(StagemonitorClassFileTransformer.class, loader);
 						for (ClassFileTransformer classFileTransformer : classFileTransformers) {
-							System.out.println("Registering " + classFileTransformer.getClass().getSimpleName());
+							System.out.println(classFileTransformer.getClass().getSimpleName());
 						}
 					} catch (ClassNotFoundException e) {
 						// ignore; this is probably not the application class loader

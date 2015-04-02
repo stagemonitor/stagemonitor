@@ -14,6 +14,7 @@ public class ProfilerBenchmark {
 
 	private ClassNotToProfile classNotToProfile;
 	private ClassJavassistProfiled classJavassistProfiled;
+	private ClassByteBuddyProfiled classByteBuddyProfiled;
 	private ClassManualProfiling classManualProfiling;
 	private ClassOptimalPerformanceProfied classOptimalPerformanceProfied;
 
@@ -23,9 +24,11 @@ public class ProfilerBenchmark {
 		classJavassistProfiled = new ClassJavassistProfiled();
 		classManualProfiling = new ClassManualProfiling();
 		classOptimalPerformanceProfied = new ClassOptimalPerformanceProfied();
+		classByteBuddyProfiled = new ClassByteBuddyProfiled();
 
 		Profiler.deactivateProfiling();
 		assertProfilingWorks(manual());
+		assertProfilingWorks(byteBuddy());
 		assertProfilingWorks(javassist());
 		Profiler.deactivateProfiling();
 	}
@@ -63,6 +66,14 @@ public class ProfilerBenchmark {
 	public CallStackElement javassist() {
 		CallStackElement root = Profiler.activateProfiling("root");
 		classJavassistProfiled.method1();
+		Profiler.stop();
+		return root;
+	}
+	
+	@Benchmark
+	public CallStackElement byteBuddy() {
+		CallStackElement root = Profiler.activateProfiling("root");
+		classByteBuddyProfiled.method1();
 		Profiler.stop();
 		return root;
 	}
