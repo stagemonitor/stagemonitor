@@ -5,7 +5,7 @@ import org.stagemonitor.alerting.incident.Incident;
 /**
  * An alerter reports incidents to some chanel like email.
  * <p/>
- * To add a custom {@link Alerter}, just implement the interface and create a file under
+ * To add a custom {@link Alerter}, just implement the interface and add the full qualified class name to
  * src/main/resources/META-INF/services/org.stagemonitor.alerting.alerter.Alerter.
  * The content of the file has to be the canonical class name of the alerter.
  */
