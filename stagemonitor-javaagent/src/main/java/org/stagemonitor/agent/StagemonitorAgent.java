@@ -34,9 +34,10 @@ public class StagemonitorAgent {
 				if (classFileTransformers == null) {
 					try {
 						loader.loadClass("org.stagemonitor.core.Stagemonitor");
+						// loader could load Stagemonitor - this is the application class loader
 						classFileTransformers = ServiceLoader.load(StagemonitorClassFileTransformer.class, loader);
 						for (ClassFileTransformer classFileTransformer : classFileTransformers) {
-							System.out.println(classFileTransformer.getClass().getSimpleName());
+							System.out.println("Applying " + classFileTransformer.getClass().getSimpleName());
 						}
 					} catch (ClassNotFoundException e) {
 						// ignore; this is probably not the application class loader
