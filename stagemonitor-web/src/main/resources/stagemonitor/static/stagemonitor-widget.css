@@ -157,3 +157,8 @@ body {
 	max-height: 20em;
 	overflow-y: auto;
 }
+
+.well-row-entry {
+	display: inline-block;
+	margin: 0 0.5em 0.5em 0;
+}
