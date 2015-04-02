@@ -1,4 +1,4 @@
-package org.stagemonitor.core.instrument;
+package org.stagemonitor.agent;
 
 import java.lang.instrument.ClassFileTransformer;
 

@@ -11,7 +11,7 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.LoaderClassPath;
 import javassist.NotFoundException;
-import org.stagemonitor.core.instrument.StagemonitorClassFileTransformer;
+import org.stagemonitor.agent.StagemonitorClassFileTransformer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class ProfilingClassFileTransformer implements StagemonitorClassFileTransformer {
@@ -95,9 +95,7 @@ public class ProfilingClassFileTransformer implements StagemonitorClassFileTrans
 		boolean instrument = includes.isEmpty();
 		for (String include : includes) {
 			if (className.startsWith(include)) {
-//				instrument = true;
-//				break;
-				return true;
+				return !hasMoreSpecificExclude(include);
 			}
 		}
 		if (!instrument) {
@@ -114,5 +112,14 @@ public class ProfilingClassFileTransformer implements StagemonitorClassFileTrans
 			}
 		}
 		return instrument;
+	}
+
+	private boolean hasMoreSpecificExclude(String include) {
+		for (String exclude : excludes) {
+			if (exclude.length() > include.length() && exclude.startsWith(include)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
