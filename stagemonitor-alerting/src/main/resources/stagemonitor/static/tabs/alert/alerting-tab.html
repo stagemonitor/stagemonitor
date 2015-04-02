@@ -127,13 +127,12 @@
 <!--Subscription partial-->
 <script id="subscriptions-partial-template" type="text/x-handlebars-template">
 	{{#each subscriptionsById}}
-	<span class="well well-sm" data-subscription-id="{{@key}}">
+	<span class="well well-sm well-row-entry" data-subscription-id="{{@key}}">
 		{{alerterType}}: {{target}}
 		<a href="#"><span class="edit-subscription glyphicon glyphicon-edit" data-toggle="modal"
 						  data-target="#subscription-modal"></span></a>
 		<a href="#"><span class="remove-subscription glyphicon glyphicon-remove"></span></a>
 	</span>
-	<span>&nbsp;</span>
 	{{/each}}
 	<button id="add-subscription" class="btn btn-primary" data-toggle="modal" data-target="#subscription-modal">
 		<span class="glyphicon glyphicon-plus"></span> Add
