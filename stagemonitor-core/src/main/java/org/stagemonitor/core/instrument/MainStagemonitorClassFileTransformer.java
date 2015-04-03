@@ -23,7 +23,6 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public Collection<String> excludeContaining;
 
 	public MainStagemonitorClassFileTransformer() {
-		System.out.println("MainStagemonitorClassFileTransformer()");
 		CorePlugin.getSimpleInstance();
 		instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class);
 		for (Object classFileTransformer : instrumenters) {
