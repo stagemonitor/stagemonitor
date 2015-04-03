@@ -6,6 +6,13 @@ import org.stagemonitor.core.metrics.MonitorGauges;
 @MonitorGauges
 public class GaugeTestObject {
 
+	public GaugeTestObject() {
+		this(1);
+	}
+
+	public GaugeTestObject(int i) {
+	}
+
 	@Gauge
 	private int gaugeDefault() {
 		return 1;

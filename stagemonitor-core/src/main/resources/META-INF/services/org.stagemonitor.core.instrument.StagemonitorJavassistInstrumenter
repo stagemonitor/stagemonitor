@@ -1,3 +1,4 @@
 org.stagemonitor.core.metrics.annotations.ExceptionMeteredInstrumenter
 org.stagemonitor.core.metrics.annotations.MeteredInstrumenter
 org.stagemonitor.core.metrics.annotations.TimedInstrumenter
+org.stagemonitor.core.metrics.annotations.GaugeInstrumenter
