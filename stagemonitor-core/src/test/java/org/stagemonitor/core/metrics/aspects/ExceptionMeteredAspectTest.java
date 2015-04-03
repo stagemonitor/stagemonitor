@@ -1,13 +1,15 @@
 package org.stagemonitor.core.metrics.aspects;
 
+import static org.junit.Assert.assertEquals;
+
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
-
-import static org.junit.Assert.assertEquals;
 
 public class ExceptionMeteredAspectTest {
 
@@ -64,8 +66,14 @@ public class ExceptionMeteredAspectTest {
 	}
 
 	@Before
-	public void before() {
+	@After
+	public void clearMetricRegistry() {
 		Stagemonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
+	}
+
+	@AfterClass
+	public static void resetStagemonitor() {
+		Stagemonitor.reset();
 	}
 
 	@Test
