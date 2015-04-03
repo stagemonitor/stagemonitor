@@ -55,8 +55,8 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			try {
 				for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
 					instrumenter.transformIncludedClass(ctClass);
-					classfileBuffer = ctClass.toBytecode();
 				}
+				classfileBuffer = ctClass.toBytecode();
 			} finally {
 				ctClass.detach();
 			}
