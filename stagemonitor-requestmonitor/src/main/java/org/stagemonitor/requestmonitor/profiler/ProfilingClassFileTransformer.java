@@ -1,76 +1,23 @@
 package org.stagemonitor.requestmonitor.profiler;
 
-import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.Modifier;
-import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.Collection;
 
-import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
-import javassist.LoaderClassPath;
 import javassist.NotFoundException;
-import org.stagemonitor.agent.StagemonitorClassFileTransformer;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
-public class ProfilingClassFileTransformer implements StagemonitorClassFileTransformer {
-
-	public Collection<String> includes;
-
-	public Collection<String> excludes;
-
-	public Collection<String> excludeContaining;
-
-	public ProfilingClassFileTransformer() {
-		RequestMonitorPlugin requestMonitorPlugin = RequestMonitorPlugin.getSimpleInstance();
-
-		excludeContaining = new ArrayList<String>(requestMonitorPlugin.getExcludeContaining().size());
-		for (String exclude : requestMonitorPlugin.getExcludeContaining()) {
-			excludeContaining.add(exclude.replace('.', '/'));
-		}
-
-		excludes = new ArrayList<String>(requestMonitorPlugin.getExcludePackages().size());
-		for (String exclude : requestMonitorPlugin.getExcludePackages()) {
-			excludes.add(exclude.replace('.', '/'));
-		}
-
-		includes = new ArrayList<String>(requestMonitorPlugin.getIncludePackages().size());
-		for (String include : requestMonitorPlugin.getIncludePackages()) {
-			includes.add(include.replace('.', '/'));
-		}
-	}
+public class ProfilingClassFileTransformer extends StagemonitorJavassistInstrumenter {
 
 	@Override
-	public byte[] transform(ClassLoader loader, String className, Class classBeingRedefined,
-							ProtectionDomain protectionDomain, byte[] classfileBuffer)
-			throws IllegalClassFormatException {
-		if (!isIncluded(className)) {
-			return classfileBuffer;
-		}
-
-		try {
-			ClassPool cp = ClassPool.getDefault();
-			cp.insertClassPath(new LoaderClassPath(loader));
-			CtClass cc = cp.makeClass(new java.io.ByteArrayInputStream(classfileBuffer));
-
-			try {
-				CtMethod[] declaredMethods = cc.getDeclaredMethods();
-				for (int i = 0; i < declaredMethods.length; i++) {
-					CtMethod m = declaredMethods[i];
-					if (!Modifier.isNative(m.getModifiers()) && !Modifier.isAbstract(m.getModifiers())) {
-						String signature = getSignature(cc, m);
-						m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start(\"" + signature + "\");");
-						m.insertAfter("org.stagemonitor.requestmonitor.profiler.Profiler.stop();", true);
-					}
-				}
-				return cc.toBytecode();
-			} finally {
-				cc.detach();
+	public void transformIncludedClass(CtClass ctClass) throws Exception {
+		CtMethod[] declaredMethods = ctClass.getDeclaredMethods();
+		for (CtMethod m : declaredMethods) {
+			if (!Modifier.isNative(m.getModifiers()) && !Modifier.isAbstract(m.getModifiers())) {
+				String signature = getSignature(ctClass, m);
+				m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start(\"" + signature + "\");");
+				m.insertAfter("org.stagemonitor.requestmonitor.profiler.Profiler.stop();", true);
 			}
-		} catch (Throwable ex) {
-			ex.printStackTrace();
-			throw new RuntimeException(ex);
 		}
 	}
 
@@ -88,38 +35,5 @@ public class ProfilingClassFileTransformer implements StagemonitorClassFileTrans
 		}
 		signature.append(')');
 		return signature.toString();
-	}
-
-	private boolean isIncluded(String className) {
-		// no includes -> include all
-		boolean instrument = includes.isEmpty();
-		for (String include : includes) {
-			if (className.startsWith(include)) {
-				return !hasMoreSpecificExclude(include);
-			}
-		}
-		if (!instrument) {
-			return false;
-		}
-		for (String exclude : excludes) {
-			if (className.startsWith(exclude)) {
-				return false;
-			}
-		}
-		for (String exclude : excludeContaining) {
-			if (className.contains(exclude)) {
-				return false;
-			}
-		}
-		return instrument;
-	}
-
-	private boolean hasMoreSpecificExclude(String include) {
-		for (String exclude : excludes) {
-			if (exclude.length() > include.length() && exclude.startsWith(include)) {
-				return true;
-			}
-		}
-		return false;
 	}
 }

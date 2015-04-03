@@ -4,14 +4,13 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
-import java.util.ServiceLoader;
 
 public class StagemonitorAgent {
 
 	public static void premain(String agentArgs, Instrumentation inst) {
 		inst.addTransformer(new ClassFileTransformer() {
 
-			private Iterable<? extends ClassFileTransformer> classFileTransformers;
+			private ClassFileTransformer mainStagemonitorClassFileTransformer;
 
 			@Override
 			public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
@@ -20,28 +19,26 @@ public class StagemonitorAgent {
 				if (loader == null) {
 					return classfileBuffer;
 				}
-				initClassFileTransformers(loader);
-				if (classFileTransformers != null) {
-					for (ClassFileTransformer classFileTransformer : classFileTransformers) {
-						classfileBuffer = classFileTransformer.transform(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+				if (mainStagemonitorClassFileTransformer == null) {
+					initClassFileTransformer(loader);
+				} else {
+					try {
+						return mainStagemonitorClassFileTransformer.transform(loader, className, classBeingRedefined,
+								protectionDomain, classfileBuffer);
+					} catch (Throwable t) {
+						t.printStackTrace();
 					}
 				}
 				return classfileBuffer;
 			}
 
 			@SuppressWarnings("unchecked")
-			private void initClassFileTransformers(ClassLoader loader) {
-				if (classFileTransformers == null) {
-					try {
-						loader.loadClass("org.stagemonitor.core.Stagemonitor");
-						// loader could load Stagemonitor - this is the application class loader
-						classFileTransformers = ServiceLoader.load(StagemonitorClassFileTransformer.class, loader);
-						for (ClassFileTransformer classFileTransformer : classFileTransformers) {
-							System.out.println("Applying " + classFileTransformer.getClass().getSimpleName());
-						}
-					} catch (ClassNotFoundException e) {
-						// ignore; this is probably not the application class loader
-					}
+			private void initClassFileTransformer(ClassLoader loader) {
+				try {
+					mainStagemonitorClassFileTransformer = (ClassFileTransformer) loader.loadClass("org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer").newInstance();
+					// loader could load Stagemonitor - this is the application class loader
+				} catch (Exception e) {
+					// ignore; this is probably not the application class loader
 				}
 			}
 		});
