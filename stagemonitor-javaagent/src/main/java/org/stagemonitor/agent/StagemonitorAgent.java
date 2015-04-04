@@ -4,13 +4,17 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.ServiceLoader;
 
 public class StagemonitorAgent {
 
-	public static void premain(String agentArgs, Instrumentation inst) {
+	private static Instrumentation instrumentation;
+
+	public static void premain(String agentArgs, final Instrumentation inst) {
+		instrumentation = inst;
 		inst.addTransformer(new ClassFileTransformer() {
 
-			private ClassFileTransformer mainStagemonitorClassFileTransformer;
+			private boolean initialized = false;
 
 			@Override
 			public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
@@ -19,15 +23,8 @@ public class StagemonitorAgent {
 				if (loader == null) {
 					return classfileBuffer;
 				}
-				if (mainStagemonitorClassFileTransformer == null) {
+				if (!initialized) {
 					initClassFileTransformer(loader);
-				} else {
-					try {
-						return mainStagemonitorClassFileTransformer.transform(loader, className, classBeingRedefined,
-								protectionDomain, classfileBuffer);
-					} catch (Throwable t) {
-						t.printStackTrace();
-					}
 				}
 				return classfileBuffer;
 			}
@@ -35,12 +32,19 @@ public class StagemonitorAgent {
 			@SuppressWarnings("unchecked")
 			private void initClassFileTransformer(ClassLoader loader) {
 				try {
-					mainStagemonitorClassFileTransformer = (ClassFileTransformer) loader.loadClass("org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer").newInstance();
-					// loader could load Stagemonitor - this is the application class loader
+					for (StagemonitorClassFileTransformer transformer : ServiceLoader.load(StagemonitorClassFileTransformer.class, loader)) {
+						inst.addTransformer(transformer, true);
+					}
+					// loader could load StagemonitorClassFileTransformer - this is the application class loader
+					initialized = true;
 				} catch (Exception e) {
 					// ignore; this is probably not the application class loader
 				}
 			}
 		});
+	}
+
+	public static Instrumentation getInstrumentation() {
+		return instrumentation;
 	}
 }
