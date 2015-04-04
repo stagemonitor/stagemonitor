@@ -24,21 +24,17 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final SpringMvcPlugin mvcPlugin;
-
 	public SpringMonitoredHttpRequest(HttpServletRequest httpServletRequest,
 									  StatusExposingByteCountingServletResponse statusExposingResponse,
 									  FilterChain filterChain, Configuration configuration) {
 
 		super(httpServletRequest, statusExposingResponse, filterChain, configuration);
-		mvcPlugin = configuration.getConfig(SpringMvcPlugin.class);
 	}
 
 	@Override
@@ -57,7 +53,7 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 				return name;
 			}
 		}
-		if (!mvcPlugin.isMonitorOnlySpringMvcRequests() || HandlerMappingServletContextListener.allHandlerMappings.isEmpty()) {
+		if (!webPlugin.isMonitorOnlySpringMvcRequests() || HandlerMappingServletContextListener.allHandlerMappings.isEmpty()) {
 			name = super.getRequestName();
 		}
 		return name;
@@ -76,11 +72,29 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
 		private static List<HandlerMapping> allHandlerMappings = Collections.emptyList();
 		private ServletContext servletContext;
+		private boolean springMvc;
+
+		public HandlerMappingServletContextListener() {
+			try {
+				Class.forName("org.springframework.web.servlet.HandlerMapping");
+				springMvc = true;
+			} catch (ClassNotFoundException e) {
+				springMvc = false;
+			}
+		}
 
 		@Override
 		public void contextInitialized(ServletContextEvent sce) {
-			servletContext = sce.getServletContext();
+			if (springMvc) {
+				servletContext = sce.getServletContext();
+			}
+		}
 
+		@Override
+		public void requestInitialized(ServletRequestEvent sre) {
+			if (springMvc && allHandlerMappings.isEmpty()) {
+				setAllHandlerMappings(getAllHandlerMappings(servletContext));
+			}
 		}
 
 		synchronized static void setAllHandlerMappings(List<HandlerMapping> allHandlerMappings) {
@@ -101,13 +115,6 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 				}
 			}
 			return result;
-		}
-
-		@Override
-		public void requestInitialized(ServletRequestEvent sre) {
-			if (allHandlerMappings.isEmpty()) {
-				setAllHandlerMappings(getAllHandlerMappings(servletContext));
-			}
 		}
 
 		@Override

@@ -45,7 +45,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.springmvc.SpringMvcPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
@@ -55,13 +54,12 @@ public class SpringRequestMonitorTest {
 	private MockHttpServletRequest mvcRequest = new MockHttpServletRequest("GET", "/test/requestName");
 	private MockHttpServletRequest nonMvcRequest = new MockHttpServletRequest("GET", "/META-INF/resources/stagemonitor/static/jquery.js");
 	private Configuration configuration = mock(Configuration.class);
-	private SpringMvcPlugin mvcPlugin = mock(SpringMvcPlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitor requestMonitor;
 	private MetricRegistry registry = new MetricRegistry();
-//	private SpringMVCRequestNameDeterminerAspect springMVCRequestNameDeterminerAspect;
+	//	private SpringMVCRequestNameDeterminerAspect springMVCRequestNameDeterminerAspect;
 	private final boolean useNameDeterminerAspect;
 	private HandlerMapping getRequestNameHandlerMapping;
 
@@ -92,7 +90,6 @@ public class SpringRequestMonitorTest {
 				return true;
 			}
 		});
-		when(configuration.getConfig(SpringMvcPlugin.class)).thenReturn(mvcPlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
@@ -155,7 +152,7 @@ public class SpringRequestMonitorTest {
 	@Test
 	public void testRequestMonitorMvcRequest() throws Exception {
 		System.out.println("useNameDeterminerAspect="+useNameDeterminerAspect);
-		when(mvcPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
+		when(webPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 
 		SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(mvcRequest);
 		registerAspect(monitoredRequest, mvcRequest, getRequestNameHandlerMapping.getHandler(mvcRequest));
@@ -175,7 +172,7 @@ public class SpringRequestMonitorTest {
 
 	@Test
 	public void testRequestMonitorNonMvcRequestDoMonitor() throws Exception {
-		when(mvcPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
+		when(webPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 
 		final SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(nonMvcRequest);
 		registerAspect(monitoredRequest, nonMvcRequest, null);
@@ -191,19 +188,21 @@ public class SpringRequestMonitorTest {
 
 	@Test
 	public void testRequestMonitorNonMvcRequestDontMonitor() throws Exception {
-		when(mvcPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(true);
+		when(webPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(true);
 
 		final SpringMonitoredHttpRequest monitoredRequest = createSpringMonitoredHttpRequest(nonMvcRequest);
 		registerAspect(monitoredRequest, nonMvcRequest, null);
 		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
-		Assert.assertEquals("", requestInformation.getRequestTrace().getName());
+		assertEquals("", requestInformation.getRequestTrace().getName());
 		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET *.js"), "server", "time", "total")));
 		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
 	}
 
-	private void registerAspect(SpringMonitoredHttpRequest monitoredRequest, final HttpServletRequest request, final HandlerExecutionChain mapping) throws Exception {
+	private void registerAspect(SpringMonitoredHttpRequest monitoredRequest, final HttpServletRequest request,
+								final HandlerExecutionChain mapping) throws Exception {
+
 		if (useNameDeterminerAspect) {
 //			when(monitoredRequest.execute()).thenAnswer(new Answer<Object>() {
 //				@Override
@@ -224,3 +223,4 @@ public class SpringRequestMonitorTest {
 		return Mockito.spy(new SpringMonitoredHttpRequest(request, response, new MockFilterChain(), configuration));
 	}
 }
+

@@ -9,5 +9,4 @@ include 'stagemonitor-alerting',
 		'stagemonitor-logging',
 		'stagemonitor-os',
 		'stagemonitor-requestmonitor',
-		'stagemonitor-spring-mvc',
 		'stagemonitor-web'

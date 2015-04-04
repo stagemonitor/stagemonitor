@@ -21,7 +21,7 @@ jmh {
 jmhJar.dependsOn << ':stagemonitor-javaagent:jar' << ':stagemonitor-benchmark:stagemonitor-byte-buddy-agent:jar'
 
 dependencies {
-	jmh project(":stagemonitor-spring-mvc")
+	jmh project(":stagemonitor-web")
 	jmh project(":stagemonitor-logging")
 	jmh project(":stagemonitor-ehcache")
 	jmh project(":stagemonitor-benchmark:stagemonitor-byte-buddy-agent")

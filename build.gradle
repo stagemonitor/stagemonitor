@@ -80,7 +80,7 @@ subprojects {
 		coverageIgnoreTrivial = true
 	}
 
-	if (!project.name.contains("benchmark") && !project.name.contains("javassist")) {
+	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
 		apply from: "$rootDir/gradle/publish-maven.gradle"
 	}
 
@@ -113,7 +113,7 @@ release {
 release.dependsOn test
 
 def getProjectsToTest() {
-	subprojects.findAll { !(it.toString() =~ "benchmark|starter") }
+	subprojects.findAll { !(it.toString() =~ "benchmark|buddy") }
 }
 
 test.dependsOn << projectsToTest*.tasks*.withType(Test).flatten()
