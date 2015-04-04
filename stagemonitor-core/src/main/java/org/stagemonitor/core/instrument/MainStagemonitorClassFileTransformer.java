@@ -1,6 +1,7 @@
 package org.stagemonitor.core.instrument;
 
 import java.io.IOException;
+import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
@@ -10,10 +11,9 @@ import java.util.ServiceLoader;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
-import org.stagemonitor.agent.StagemonitorClassFileTransformer;
 import org.stagemonitor.core.CorePlugin;
 
-public class MainStagemonitorClassFileTransformer implements StagemonitorClassFileTransformer {
+public class MainStagemonitorClassFileTransformer implements ClassFileTransformer {
 
 	private Iterable<StagemonitorJavassistInstrumenter> instrumenters;
 

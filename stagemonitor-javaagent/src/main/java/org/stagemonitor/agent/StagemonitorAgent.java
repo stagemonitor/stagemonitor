@@ -4,7 +4,6 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
-import java.util.ServiceLoader;
 
 public class StagemonitorAgent {
 
@@ -32,10 +31,11 @@ public class StagemonitorAgent {
 			@SuppressWarnings("unchecked")
 			private void initClassFileTransformer(ClassLoader loader) {
 				try {
-					for (StagemonitorClassFileTransformer transformer : ServiceLoader.load(StagemonitorClassFileTransformer.class, loader)) {
-						inst.addTransformer(transformer, true);
-					}
-					// loader could load StagemonitorClassFileTransformer - this is the application class loader
+					final ClassFileTransformer mainStagemonitorClassFileTransformer = (ClassFileTransformer) loader
+							.loadClass("org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer")
+							.newInstance();
+					inst.addTransformer(mainStagemonitorClassFileTransformer, true);
+					// loader could load MainStagemonitorClassFileTransformer - this is the application class loader
 					initialized = true;
 				} catch (Exception e) {
 					// ignore; this is probably not the application class loader

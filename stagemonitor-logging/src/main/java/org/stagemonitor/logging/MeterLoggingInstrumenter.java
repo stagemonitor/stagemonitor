@@ -11,15 +11,15 @@ import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtMethod;
 import org.stagemonitor.agent.ClassUtils;
-import org.stagemonitor.agent.StagemonitorClassFileTransformer;
 import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
+import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
 /**
  * Tracks the rate of calls to a logger.
  * <p/>
  * Currently has support for Logback, slf4j's simple logger and JDK14LoggerAdapter, log4j 1.x and 2.x
  */
-public class MeterLoggingInstrumenter implements StagemonitorClassFileTransformer {
+public class MeterLoggingInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	private Set<String> methodsToInstrument = new HashSet<String>() {{
 		add("trace");
@@ -39,7 +39,7 @@ public class MeterLoggingInstrumenter implements StagemonitorClassFileTransforme
 	}};
 
 	@Override
-	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+	public byte[] transformOtherClass(ClassLoader loader, String className, Class<?> classBeingRedefined,
 									  ProtectionDomain protectionDomain, byte[] classfileBuffer) {
 
 		if (loggerImplementations.contains(className)) {
