@@ -1,7 +1,9 @@
-package org.stagemonitor.requestmonitor.profiler;
+package org.stagemonitor.requestmonitor.prof;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 public class ProfilerTest {
 
@@ -14,7 +16,7 @@ public class ProfilerTest {
 
 		Assert.assertEquals(total.toString(), 1, total.getChildren().size());
 		Assert.assertEquals(total.toString(), 3, total.getChildren().get(0).getChildren().size());
-		Assert.assertEquals(total.toString(), "int org.stagemonitor.requestmonitor.profiler.ProfilerTest.method5()",
+		Assert.assertEquals(total.toString(), "int org.stagemonitor.requestmonitor.prof.ProfilerTest.method5()",
 				total.getChildren().get(0).getChildren().get(2).getSignature());
 	}
 

@@ -7,10 +7,15 @@ import javassist.CtMethod;
 import javassist.NotFoundException;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
-public class ProfilingClassFileTransformer extends StagemonitorJavassistInstrumenter {
+public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
+
+	private String profilerPackage = Profiler.class.getPackage().getName();
 
 	@Override
 	public void transformIncludedClass(CtClass ctClass) throws Exception {
+		if (ctClass.getPackageName().equals(profilerPackage)) {
+			return;
+		}
 		CtMethod[] declaredMethods = ctClass.getDeclaredMethods();
 		for (CtMethod m : declaredMethods) {
 			if (!Modifier.isNative(m.getModifiers()) && !Modifier.isAbstract(m.getModifiers())) {

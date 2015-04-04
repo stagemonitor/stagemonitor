@@ -1,4 +1,4 @@
-package org.stagemonitor.web.monitor;
+package org.stagemonitor.web.monitor.spring;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
@@ -27,7 +27,6 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +34,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -46,6 +47,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 @RunWith(value = Parameterized.class)
@@ -59,7 +61,6 @@ public class SpringRequestMonitorTest {
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitor requestMonitor;
 	private MetricRegistry registry = new MetricRegistry();
-	//	private SpringMVCRequestNameDeterminerAspect springMVCRequestNameDeterminerAspect;
 	private final boolean useNameDeterminerAspect;
 	private HandlerMapping getRequestNameHandlerMapping;
 
@@ -97,13 +98,7 @@ public class SpringRequestMonitorTest {
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
-//		springMVCRequestNameDeterminerAspect = Mockito.spy(new SpringMVCRequestNameDeterminerAspect(mvcPlugin, webPlugin));
-	}
-
-	@After
-	public void after() {
-//		verify(springMVCRequestNameDeterminerAspect, times(useNameDeterminerAspect ? 1 : 0))
-//				.aroundGetHandler(any(HttpServletRequest.class), any(HandlerExecutionChain.class));
+		SpringMvcRequestNameDeterminerInstrumenter.setWebPlugin(webPlugin);
 	}
 
 	private HandlerMapping createExceptionThrowingHandlerMapping() throws Exception {
@@ -183,7 +178,7 @@ public class SpringRequestMonitorTest {
 		assertEquals("GET *.js", requestInformation.getRequestTrace().getName());
 		assertNotNull(registry.getTimers().get(name("request", "GET-*:js", "server", "time", "total")));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
-		verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
+		verify(monitoredRequest, times(1)).getRequestName();
 	}
 
 	@Test
@@ -204,13 +199,13 @@ public class SpringRequestMonitorTest {
 								final HandlerExecutionChain mapping) throws Exception {
 
 		if (useNameDeterminerAspect) {
-//			when(monitoredRequest.execute()).thenAnswer(new Answer<Object>() {
-//				@Override
-//				public Object answer(InvocationOnMock invocation) throws Throwable {
-//					springMVCRequestNameDeterminerAspect.aroundGetHandler(request, mapping);
-//					return null;
-//				}
-//			});
+			when(monitoredRequest.execute()).thenAnswer(new Answer<Object>() {
+				@Override
+				public Object answer(InvocationOnMock invocation) throws Throwable {
+					SpringMvcRequestNameDeterminerInstrumenter.setRequestNameByHandler(mapping);
+					return null;
+				}
+			});
 		}
 	}
 

@@ -1,5 +1,6 @@
 package org.stagemonitor.core.instrument;
 
+import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
@@ -38,36 +39,40 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		if (loader == null) {
 			return classfileBuffer;
 		}
-		if (isIncluded(className)) {
-			classfileBuffer = transformIncluded(loader, classfileBuffer);
-		} else {
-			classfileBuffer = transformOther(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
-		}
-		return classfileBuffer;
-	}
-
-	private byte[] transformIncluded(ClassLoader loader, byte[] classfileBuffer) {
 		try {
-			ClassPool classPool = ClassPool.getDefault();
-			classPool.insertClassPath(new LoaderClassPath(loader));
-			CtClass ctClass = classPool.makeClass(new java.io.ByteArrayInputStream(classfileBuffer));
-			try {
-				for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
-					instrumenter.transformIncludedClass(ctClass);
-				}
-				classfileBuffer = ctClass.toBytecode();
-			} finally {
-				ctClass.detach();
+			if (isIncluded(className)) {
+				classfileBuffer = transformIncluded(loader, classfileBuffer);
+			} else {
+				classfileBuffer = transformOther(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
 			}
-		} catch (Throwable ex) {
-			ex.printStackTrace();
+		} catch (Exception ex) {
 			throw new RuntimeException(ex);
 		}
 		return classfileBuffer;
 	}
 
+	private byte[] transformIncluded(ClassLoader loader, byte[] classfileBuffer) throws Exception{
+		CtClass ctClass = getCtClass(loader, classfileBuffer);
+		try {
+			for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
+				instrumenter.transformIncludedClass(ctClass);
+			}
+			classfileBuffer = ctClass.toBytecode();
+		} finally {
+			ctClass.detach();
+		}
+
+		return classfileBuffer;
+	}
+
+	public static CtClass getCtClass(ClassLoader loader, byte[] classfileBuffer) throws IOException {
+		ClassPool classPool = ClassPool.getDefault();
+		classPool.insertClassPath(new LoaderClassPath(loader));
+		return classPool.makeClass(new java.io.ByteArrayInputStream(classfileBuffer));
+	}
+
 	private byte[] transformOther(ClassLoader loader, String className, Class<?> classBeingRedefined,
-								  ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+								  ProtectionDomain protectionDomain, byte[] classfileBuffer) throws Exception {
 		for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
 			classfileBuffer = instrumenter.transformOtherClass(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
 		}

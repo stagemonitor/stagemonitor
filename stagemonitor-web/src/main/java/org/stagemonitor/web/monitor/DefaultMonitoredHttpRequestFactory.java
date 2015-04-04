@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
+import org.stagemonitor.web.monitor.spring.SpringMonitoredHttpRequest;
 
 public class DefaultMonitoredHttpRequestFactory implements MonitoredHttpRequestFactory {
 

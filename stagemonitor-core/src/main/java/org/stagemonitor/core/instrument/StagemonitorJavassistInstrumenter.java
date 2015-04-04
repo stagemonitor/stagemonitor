@@ -1,6 +1,5 @@
 package org.stagemonitor.core.instrument;
 
-import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 
 import javassist.CtClass;
@@ -15,7 +14,7 @@ public abstract class StagemonitorJavassistInstrumenter {
 							   Class<?> classBeingRedefined,
 							   ProtectionDomain protectionDomain,
 							   byte[] classfileBuffer)
-			throws IllegalClassFormatException {
+			throws Exception {
 		return classfileBuffer;
 	}
 }

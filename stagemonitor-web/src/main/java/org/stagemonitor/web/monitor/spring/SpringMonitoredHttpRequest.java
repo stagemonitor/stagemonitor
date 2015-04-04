@@ -1,4 +1,4 @@
-package org.stagemonitor.web.monitor;
+package org.stagemonitor.web.monitor.spring;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +24,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
