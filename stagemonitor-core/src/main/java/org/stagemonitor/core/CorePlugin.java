@@ -192,11 +192,11 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Collection<String>> excludePackages = ConfigurationOption.stringsOption()
-			.key("stagemonitor.profiler.exclude")
+			.key("stagemonitor.instrument.exclude")
 			.dynamic(true)
 			.label("Excluded packages")
-			.description("Exclude packages and their sub-packages from the profiler. " +
-					"This option can only be set in stagemonitor.properties.")
+			.description("Exclude packages and their sub-packages from the instrumentation (for example the profiler). " +
+					"This option can only be set via properties files, environment variables and system properties.")
 			.defaultValue(new LinkedHashSet<String>() {{
 				add("antlr");
 				add("aopalliance");
@@ -260,12 +260,12 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Collection<String>> excludeContaining = ConfigurationOption.stringsOption()
-			.key("stagemonitor.profiler.excludeContaining")
+			.key("stagemonitor.instrument.excludeContaining")
 			.dynamic(true)
 			.label("Exclude containing")
-			.description("Exclude classes from the profiler that contain one of the following strings " +
-					"as part of their canonical class name. " +
-					"This option can only be set in stagemonitor.properties.")
+			.description("Exclude classes from the instrumentation (for example the profiler) that contain one of the " +
+					"following strings as part of their class name. " +
+					"This option can only be set via properties files, environment variables and system properties.")
 			.defaultValue(new LinkedHashSet<String>() {{
 				add("$JaxbAccessor");
 				add("$$");
@@ -274,11 +274,13 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Collection<String>> includePackages = ConfigurationOption.stringsOption()
-			.key("stagemonitor.profiler.include")
+			.key("stagemonitor.instrument.include")
 			.dynamic(true)
 			.label("Included packages")
-			.description("The packages that should be included for profiling. " +
-					"This option can only be set in stagemonitor.properties.")
+			.description("The packages that should be included for instrumentation (for example the profiler). " +
+					"If this property is empty, all packages (except for the excluded ones) are instrumented. " +
+					"You can exclude subpackages of a included package via `stagemonitor.instrument.exclude`. " +
+					"This option can only be set via properties files, environment variables and system properties.")
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();

@@ -53,8 +53,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.profiler.minExecutionTimeNanos")
 			.dynamic(false)
 			.label("Min execution time (nanos)")
-			.description("The minimal inclusive execution time in nanoseconds of a method to be included in a call stack. " +
-					"This option can only be set in stagemonitor.properties.")
+			.description("Don't show methods faster that value in the call tree." +
+					"This option can only be set via properties files, environment variables and system properties.")
 			.defaultValue(100000L)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
