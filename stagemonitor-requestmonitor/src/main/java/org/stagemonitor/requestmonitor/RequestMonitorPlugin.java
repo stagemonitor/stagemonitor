@@ -7,13 +7,11 @@ import java.util.List;
 
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.StagemonitorCoreConfigurationSourceInitializer;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.configuration.source.EnvironmentVariableConfigurationSource;
-import org.stagemonitor.core.configuration.source.PropertyFileConfigurationSource;
-import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
@@ -169,13 +167,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	 *         stagemonitor.properties and environment variables
 	 */
 	public static RequestMonitorPlugin getSimpleInstance() {
-		List<ConfigurationSource> simpleConfigurationSources = new ArrayList<ConfigurationSource>(3);
-		simpleConfigurationSources.add(new SystemPropertyConfigurationSource());
-		if (PropertyFileConfigurationSource.isPresent("stagemonitor.properties")) {
-			simpleConfigurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
-		}
-		simpleConfigurationSources.add(new EnvironmentVariableConfigurationSource());
-
+		List<ConfigurationSource> simpleConfigurationSources = new ArrayList<ConfigurationSource>(5);
+		new StagemonitorCoreConfigurationSourceInitializer().modifyConfigurationSources(simpleConfigurationSources);
 		return new Configuration(Arrays.asList(new RequestMonitorPlugin()), simpleConfigurationSources, null)
 				.getConfig(RequestMonitorPlugin.class);
 	}

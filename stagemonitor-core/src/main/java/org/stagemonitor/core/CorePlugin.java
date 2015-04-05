@@ -26,9 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.configuration.source.EnvironmentVariableConfigurationSource;
-import org.stagemonitor.core.configuration.source.PropertyFileConfigurationSource;
-import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
@@ -477,12 +474,8 @@ public class CorePlugin extends StagemonitorPlugin {
 	 *         stagemonitor.properties and environment variables
 	 */
 	public static CorePlugin getSimpleInstance() {
-		List<ConfigurationSource> simpleConfigurationSources = new ArrayList<ConfigurationSource>(3);
-		simpleConfigurationSources.add(new SystemPropertyConfigurationSource());
-		if (PropertyFileConfigurationSource.isPresent("stagemonitor.properties")) {
-			simpleConfigurationSources.add(new PropertyFileConfigurationSource("stagemonitor.properties"));
-		}
-		simpleConfigurationSources.add(new EnvironmentVariableConfigurationSource());
+		List<ConfigurationSource> simpleConfigurationSources = new ArrayList<ConfigurationSource>(5);
+		new StagemonitorCoreConfigurationSourceInitializer().modifyConfigurationSources(simpleConfigurationSources);
 
 		return new Configuration(Arrays.asList(new CorePlugin()), simpleConfigurationSources, null)
 				.getConfig(CorePlugin.class);
