@@ -27,7 +27,7 @@ import org.stagemonitor.junit.ExcludeOnTravis;
 @RunWith(ConditionalTravisTestRunner.class)
 public class OsPluginTest {
 
-	private final MetricRegistry metricRegistry = new MetricRegistry();
+	private MetricRegistry metricRegistry;
 	private static Sigar sigar;
 
 	static {
@@ -40,6 +40,7 @@ public class OsPluginTest {
 
 	@Before
 	public void setUp() throws Exception {
+		metricRegistry = new MetricRegistry();
 		OsPlugin osPlugin = new OsPlugin(sigar);
 		final Configuration configuration = mock(Configuration.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(mock(CorePlugin.class));
@@ -50,6 +51,7 @@ public class OsPluginTest {
 	public void testCpuUtilisation() throws Exception {
 		double cpu = Double.NaN;
 		for (int i = 0; i < 5 && Double.isNaN(cpu); i++) {
+			setUp();
 			cpu = getDoubleGauge("os.cpu.usage.sys") +
 					getDoubleGauge("os.cpu.usage.user") +
 					getDoubleGauge("os.cpu.usage.idle") +
