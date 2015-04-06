@@ -61,7 +61,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Reporting interval console")
 			.description("The amount of time between console reports (in seconds). " +
 					"To deactivate console reports, set this to a value below 1.")
-			.defaultValue(60)
+			.defaultValue(0)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> reportingIntervalAggregation = ConfigurationOption.integerOption()

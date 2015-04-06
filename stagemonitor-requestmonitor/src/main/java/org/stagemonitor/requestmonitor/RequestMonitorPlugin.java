@@ -67,7 +67,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Log call tree")
 			.description("Whether or not call stacks should be logged.")
-			.defaultValue(true)
+			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<String> requestTraceTtl = ConfigurationOption.stringOption()
