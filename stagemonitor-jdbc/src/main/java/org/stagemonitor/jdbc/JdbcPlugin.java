@@ -34,8 +34,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Class name of DataSource implementations")
 			.description("The class name of all known javax.sql.DataSource implementations. If your favourite implementation is " +
-					"not listed here, just add it to the list. " +
-					"This option can only be set via properties files, environment variables and system properties.")
+					"not listed here, just add it to the list.")
 			.defaultValue(SetValueConverter.immutableSet(
 					"org.apache.tomcat.jdbc.pool.DataSource",
 					"org.apache.tomcat.dbcp.dbcp.PoolingDataSource",

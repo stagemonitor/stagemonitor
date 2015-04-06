@@ -1,17 +1,14 @@
 package org.stagemonitor.requestmonitor;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StagemonitorCoreConfigurationSourceInitializer;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
@@ -53,8 +50,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.profiler.minExecutionTimeNanos")
 			.dynamic(false)
 			.label("Min execution time (nanos)")
-			.description("Don't show methods faster that value in the call tree." +
-					"This option can only be set via properties files, environment variables and system properties.")
+			.description("Don't show methods that executed faster than this value in the call tree (1 ns = 1,000,000 ms).")
 			.defaultValue(100000L)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
@@ -157,19 +153,5 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isCollectDbTimePerRequest() {
 		return collectDbTimePerRequest.getValue();
-	}
-
-	/**
-	 * Returns a instance of RequestMonitorPlugin whose only configuration sources are java system properties,
-	 * stagemonitor.properties and environment variables.
-	 *
-	 * @return a instance of RequestMonitorPlugin whose only configuration sources are java system properties,
-	 *         stagemonitor.properties and environment variables
-	 */
-	public static RequestMonitorPlugin getSimpleInstance() {
-		List<ConfigurationSource> simpleConfigurationSources = new ArrayList<ConfigurationSource>(5);
-		new StagemonitorCoreConfigurationSourceInitializer().modifyConfigurationSources(simpleConfigurationSources);
-		return new Configuration(Arrays.asList(new RequestMonitorPlugin()), simpleConfigurationSources, null)
-				.getConfig(RequestMonitorPlugin.class);
 	}
 }

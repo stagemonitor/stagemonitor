@@ -5,8 +5,6 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -25,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
@@ -195,8 +192,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.instrument.exclude")
 			.dynamic(true)
 			.label("Excluded packages")
-			.description("Exclude packages and their sub-packages from the instrumentation (for example the profiler). " +
-					"This option can only be set via properties files, environment variables and system properties.")
+			.description("Exclude packages and their sub-packages from the instrumentation (for example the profiler).")
 			.defaultValue(new LinkedHashSet<String>() {{
 				add("antlr");
 				add("aopalliance");
@@ -264,8 +260,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Exclude containing")
 			.description("Exclude classes from the instrumentation (for example the profiler) that contain one of the " +
-					"following strings as part of their class name. " +
-					"This option can only be set via properties files, environment variables and system properties.")
+					"following strings as part of their class name.")
 			.defaultValue(new LinkedHashSet<String>() {{
 				add("$JaxbAccessor");
 				add("$$");
@@ -279,8 +274,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Included packages")
 			.description("The packages that should be included for instrumentation (for example the profiler). " +
 					"If this property is empty, all packages (except for the excluded ones) are instrumented. " +
-					"You can exclude subpackages of a included package via `stagemonitor.instrument.exclude`. " +
-					"This option can only be set via properties files, environment variables and system properties.")
+					"You can exclude subpackages of a included package via `stagemonitor.instrument.exclude`.")
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -468,18 +462,4 @@ public class CorePlugin extends StagemonitorPlugin {
 		return excludePackages.getValue();
 	}
 
-	/**
-	 * Returns a instance of CorePlugin whose only configuration sources are java system properties,
-	 * stagemonitor.properties and environment variables.
-	 *
-	 * @return a instance of CorePlugin whose only configuration sources are java system properties,
-	 *         stagemonitor.properties and environment variables
-	 */
-	public static CorePlugin getSimpleInstance() {
-		List<ConfigurationSource> simpleConfigurationSources = new ArrayList<ConfigurationSource>(5);
-		new StagemonitorCoreConfigurationSourceInitializer().modifyConfigurationSources(simpleConfigurationSources);
-
-		return new Configuration(Arrays.asList(new CorePlugin()), simpleConfigurationSources, null)
-				.getConfig(CorePlugin.class);
-	}
 }

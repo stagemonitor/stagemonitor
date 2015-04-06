@@ -12,6 +12,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
 
 public class MainStagemonitorClassFileTransformer implements ClassFileTransformer {
 
@@ -24,7 +25,6 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public Collection<String> excludeContaining;
 
 	public MainStagemonitorClassFileTransformer() {
-		CorePlugin.getSimpleInstance();
 		instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class);
 		for (Object instrumenter : instrumenters) {
 			System.out.println("Registering " + instrumenter.getClass().getSimpleName());
@@ -121,7 +121,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	}
 
 	private void initIncludesAndExcludes() {
-		CorePlugin requestMonitorPlugin = CorePlugin.getSimpleInstance();
+		CorePlugin requestMonitorPlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 
 		excludeContaining = new ArrayList<String>(requestMonitorPlugin.getExcludeContaining().size());
 		for (String exclude : requestMonitorPlugin.getExcludeContaining()) {
