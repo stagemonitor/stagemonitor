@@ -1,16 +1,32 @@
-apply from: "$rootDir/gradle/aspectj.gradle"
-
-repositories {
-	maven { url 'https://raw.githubusercontent.com/stagemonitor/mvn-repo/master' }
+plugins {
+	id 'me.champeau.gradle.jmh' version '0.2.0'
 }
 
+apply plugin: 'me.champeau.gradle.jmh'
+
+jmh {
+	iterations = 5
+	fork = 2
+	warmupIterations = 1
+	warmupForks = 1
+	benchmarkMode = 'AverageTime'
+	humanOutputFile = null
+	timeUnit = 'ns'
+	jvmArgs = "-javaagent:$rootProject.projectDir/stagemonitor-javaagent/build/libs/stagemonitor-javaagent-${version}.jar " +
+			"-javaagent:$rootProject.projectDir/stagemonitor-benchmark/stagemonitor-byte-buddy-agent/build/libs/stagemonitor-byte-buddy-agent-${version}.jar"
+	include = ['.*ProfilerBenchmark.*']
+//	profilers = ['HS_GC']
+}
+
+jmhJar.dependsOn << ':stagemonitor-javaagent:jar' << ':stagemonitor-benchmark:stagemonitor-byte-buddy-agent:jar'
+
 dependencies {
-	compile project(":stagemonitor-spring-mvc")
-	compile project(":stagemonitor-logging")
-	compile project(":stagemonitor-ehcache")
-	compile 'com.google.caliper:caliper:1.0-beta-SNAPSHOT'
-	compile 'org.apache.commons:commons-io:1.3.2'
-	compile 'org.slf4j:slf4j-simple:1.7.7'
+	jmh project(":stagemonitor-web")
+	jmh project(":stagemonitor-logging")
+	jmh project(":stagemonitor-ehcache")
+	jmh project(":stagemonitor-benchmark:stagemonitor-byte-buddy-agent")
+	jmh 'org.apache.commons:commons-io:1.3.2'
+	jmh 'org.slf4j:slf4j-simple:1.7.7'
 }
 
 task exportConfigurationOptions(dependsOn: 'classes', type: JavaExec) {
@@ -18,65 +34,3 @@ task exportConfigurationOptions(dependsOn: 'classes', type: JavaExec) {
 	classpath = sourceSets.main.runtimeClasspath
 	args "$buildDir/configuration-options.json"
 }
-
-task simpleProfilerBenchmark(dependsOn: 'classes', type: JavaExec) {
-	main = 'com.google.caliper.runner.CaliperMain'
-	classpath = sourceSets.main.runtimeClasspath
-	args 'SimpleProfilerBenchmark', '--instrument', 'runtime', '--trials', '40'
-}
-
-task profilerBenchmark(dependsOn: ['classes', ':stagemonitor-benchmark:stagemonitor-instrument-javassist:jar'], type: JavaExec) {
-	doLast {
-		def javaagent = getJavaagentPath(project)
-		if (javaagent.contains(' ')) {
-			throw new IllegalArgumentException("Space detected in javaagent path: '$javaagent'\n" +
-					"copy this project in a directory without spaces and try again")
-		}
-	}
-	main = 'com.google.caliper.runner.CaliperMain'
-	classpath = sourceSets.main.runtimeClasspath
-
-	args 'ProfilerBenchmark', '--instrument', 'runtime', '--trials', '40',
-			"-Cvm.args=-javaagent:${getJavaagentPath(project)}"
-}
-
-
-
-task profilerAllocationBenchmark(dependsOn: ['classes', ':stagemonitor-benchmark:stagemonitor-instrument-javassist:jar'], type: JavaExec) {
-	doLast {
-		def javaagent = getJavaagentPath(project)
-		if (javaagent.contains(' ')) {
-			throw new IllegalArgumentException("Space detected in javaagent path: '$javaagent'\n" +
-					"copy this project in a directory without spaces and try again")
-		}
-	}
-	main = 'com.google.caliper.runner.CaliperMain'
-	classpath = sourceSets.main.runtimeClasspath
-
-	args 'ProfilerBenchmark', '--instrument', 'allocation', '--trials', '1',
-			"-Cvm.args=-javaagent:${getJavaagentPath(project)}"
-}
-
-private String getJavaagentPath(project) {
-	"$projectDir/stagemonitor-instrument-javassist/build/libs/stagemonitor-instrument-javassist.jar"
-	//"E:/stagemonitor-instrument-javassist-0.1-SNAPSHOT.jar"
-}
-
-task variableMethodsBenchmark(dependsOn: 'classes', type: JavaExec) {
-	main = 'com.google.caliper.runner.CaliperMain'
-	classpath = sourceSets.main.runtimeClasspath
-	args 'VariableMethodsBenchmark', '--instrument', 'runtime', '--trials', '40'
-}
-
-task instrumentationBenchmark(dependsOn: 'classes', type: JavaExec) {
-	main = 'com.google.caliper.runner.CaliperMain'
-	classpath = sourceSets.main.runtimeClasspath
-	args 'InstrumentationBenchmark', '--instrument', 'runtime', '--trials', '40'
-}
-
-task allBenchmarks(dependsOn: ['simpleProfilerBenchmark', 'profilerBenchmark', 'profilerAllocationBenchmark', 'variableMethodsBenchmark', 'instrumentationBenchmark'])
-
-configurations {
-	all*.exclude group: 'org.glassfish.jersey.core', module: 'jersey-client'
-}
-

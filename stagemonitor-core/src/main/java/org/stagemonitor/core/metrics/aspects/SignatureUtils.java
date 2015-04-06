@@ -1,23 +1,23 @@
 package org.stagemonitor.core.metrics.aspects;
 
-import org.aspectj.lang.Signature;
+import javassist.CtMethod;
+import org.stagemonitor.core.util.StringUtils;
 
 public final class SignatureUtils {
 
 	private SignatureUtils() {
 	}
 
-	public static String getSignature(Signature signature, String nameFromAnnotation, boolean absolute) {
+	public static String getSignature(CtMethod method, String nameFromAnnotation, boolean absolute) {
 		String className = null;
 		if (!absolute) {
-			className = signature.getDeclaringTypeName();
-			className = className.substring(className.lastIndexOf('.') + 1, className.length());
+			className = method.getDeclaringClass().getSimpleName();
 		}
-		return getSignature(className, signature.getName(), nameFromAnnotation, absolute);
+		return getSignature(className, method.getName(), nameFromAnnotation, absolute);
 	}
 
 	public static String getSignature(String simpleClassName, String methodName, String nameFromAnnotation, boolean absolute) {
-		String result = nameFromAnnotation.isEmpty() ? methodName : nameFromAnnotation;
+		String result = StringUtils.isEmpty(nameFromAnnotation) ? methodName : nameFromAnnotation;
 
 		if (!absolute) {
 			result = simpleClassName + "#" + result;

@@ -192,6 +192,17 @@ public class WebPlugin extends StagemonitorPlugin {
 			.defaultValue(null)
 			.configurationCategory(WEB_PLUGIN)
 			.build();
+	private ConfigurationOption<Boolean> onlyMvcOption = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.spring.monitorOnlySpringMvcRequests")
+			.dynamic(true)
+			.label("Monitor only SpringMVC requests")
+			.description("Whether or not requests should be ignored, if they will not be handled by a Spring MVC controller method.\n" +
+					"This is handy, if you are not interested in the performance of serving static files. " +
+					"Setting this to true can also significantly reduce the amount of files (and thus storing space) " +
+					"Graphite will allocate.")
+			.defaultValue(false)
+			.configurationCategory("Spring MVC Plugin")
+			.build();
 
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration config) {
@@ -214,6 +225,18 @@ public class WebPlugin extends StagemonitorPlugin {
 					mbeanMaxAttribute, mbeanQueueAttribute);
 			PooledResourceMetricsRegisterer.registerPooledResources(pools, registry);
 		}
+	}
+
+	@Override
+	public List<ConfigurationOption<?>> getConfigurationOptions() {
+		final List<ConfigurationOption<?>> configurationOptions = super.getConfigurationOptions();
+		try {
+			Class.forName("org.springframework.web.servlet.HandlerMapping");
+		} catch (ClassNotFoundException e) {
+			configurationOptions.remove(onlyMvcOption);
+		}
+
+		return configurationOptions;
 	}
 
 	private String getRequeredProperty(ConfigurationOption<String> option) {
@@ -279,5 +302,9 @@ public class WebPlugin extends StagemonitorPlugin {
 		}
 
 		return isWidgetEnabled() || configuration.isPasswordCorrect(request.getHeader(STAGEMONITOR_SHOW_WIDGET));
+	}
+
+	public boolean isMonitorOnlySpringMvcRequests() {
+		return onlyMvcOption.getValue();
 	}
 }

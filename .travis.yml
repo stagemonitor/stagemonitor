@@ -12,7 +12,7 @@ install:
 script:
   - ./gradlew test
 after_success:
-  - ./gradlew cobertura coveralls -PexcludeAspectTests
+  - ./gradlew cobertura coveralls
 
 addons:
   coverity_scan:

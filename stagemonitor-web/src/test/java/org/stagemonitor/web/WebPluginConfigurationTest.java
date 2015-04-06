@@ -1,5 +1,7 @@
 package org.stagemonitor.web;
 
+import static org.junit.Assert.assertEquals;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,8 +17,6 @@ import org.junit.Test;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
-
-import static org.junit.Assert.assertEquals;
 
 public class WebPluginConfigurationTest {
 
@@ -60,5 +60,7 @@ public class WebPluginConfigurationTest {
 		assertEquals(true, config.isRealUserMonitoringEnabled());
 		assertEquals(false, config.isCollectPageLoadTimesPerRequest());
 		assertEquals(false, config.isMonitorOnlyForwardedRequests());
+		assertEquals(false, config.isMonitorOnlySpringMvcRequests());
+
 	}
 }

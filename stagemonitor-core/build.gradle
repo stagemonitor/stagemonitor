@@ -1,4 +1,5 @@
 dependencies {
+	compile project(":stagemonitor-javaagent")
 	compile 'org.slf4j:slf4j-api:1.7.7'
 	compile 'io.dropwizard.metrics:metrics-core:3.1.0'
 	compile 'io.dropwizard.metrics:metrics-graphite:3.1.0'
@@ -6,20 +7,8 @@ dependencies {
 	compile 'io.dropwizard.metrics:metrics-json:3.1.0'
 	compile 'com.fasterxml.jackson.core:jackson-databind:2.4.4'
 	compile 'com.fasterxml.jackson.module:jackson-module-afterburner:2.4.4'
-	// necessary for load-time-weaving
-	compile 'org.aspectj:aspectjtools:1.8.4'
-	compile 'org.aspectj:aspectjrt:1.8.4'
+	compile 'org.javassist:javassist:3.19.0-GA'
 
 	testCompile 'org.elasticsearch:elasticsearch:1.4.1'
 	testCompile 'commons-io:commons-io:2.4'
 }
-
-// the aspectj compiler and cobertura don't like each other
-if (project.hasProperty('excludeAspectTests')) {
-	test {
-		exclude 'org/stagemonitor/core/metrics/aspects/**'
-	}
-} else {
-	apply from: "$rootDir/gradle/aspectj-test.gradle"
-}
-cobertura.coverageExcludes = ['.*org.stagemonitor.core.metrics.aspects.*']

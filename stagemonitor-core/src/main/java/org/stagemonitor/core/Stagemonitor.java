@@ -176,6 +176,7 @@ public final class Stagemonitor {
 		started = false;
 		disabled = false;
 		measurementSession = new MeasurementSession(null, null, null);
+		SharedMetricRegistries.clear();
 		reloadConfiguration();
 	}
 
