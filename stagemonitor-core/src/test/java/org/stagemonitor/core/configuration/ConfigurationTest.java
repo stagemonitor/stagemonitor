@@ -99,14 +99,14 @@ public class ConfigurationTest {
 	@Test
 	public void testUpdateConfigurationNonDynamicTransient() throws IOException {
 		configuration.addConfigurationSource(SimpleSource.forTest(STAGEMONITOR_PASSWORD, ""));
-		assertEquals(60, corePlugin.getConsoleReportingInterval());
+		assertEquals(0, corePlugin.getConsoleReportingInterval());
 		try {
 			configuration.save("stagemonitor.reporting.interval.console", "1", "Transient Configuration Source", null);
 			fail();
 		} catch (IllegalArgumentException e) {
 			assertEquals("Non dynamic options can't be saved to a transient configuration source.", e.getMessage());
 		}
-		assertEquals(60, corePlugin.getConsoleReportingInterval());
+		assertEquals(0, corePlugin.getConsoleReportingInterval());
 	}
 
 	@Test
@@ -117,7 +117,7 @@ public class ConfigurationTest {
 		when(persistentSourceMock.isSavingPersistent()).thenReturn(true);
 		when(persistentSourceMock.getName()).thenReturn("Test Persistent");
 		configuration.addConfigurationSource(persistentSourceMock);
-		assertEquals(60, corePlugin.getConsoleReportingInterval());
+		assertEquals(0, corePlugin.getConsoleReportingInterval());
 
 		configuration.save("stagemonitor.reporting.interval.console", "1", "Test Persistent", null);
 

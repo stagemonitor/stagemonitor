@@ -118,7 +118,7 @@ public class ConfigurationOptionTest {
 
 	@Test
 	public void testDefaultValues() {
-		assertEquals(60L, corePlugin.getConsoleReportingInterval());
+		assertEquals(0L, corePlugin.getConsoleReportingInterval());
 		assertEquals(true, corePlugin.reportToJMX());
 		assertEquals(60, corePlugin.getGraphiteReportingInterval());
 		assertEquals(null, corePlugin.getGraphiteHostName());

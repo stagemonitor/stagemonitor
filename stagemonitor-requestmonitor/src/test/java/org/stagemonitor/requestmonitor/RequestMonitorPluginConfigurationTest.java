@@ -1,5 +1,9 @@
 package org.stagemonitor.requestmonitor;
 
+import static org.junit.Assert.assertEquals;
+
+import java.lang.reflect.Method;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -7,10 +11,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
-
-import java.lang.reflect.Method;
-
-import static org.junit.Assert.assertEquals;
 
 public class RequestMonitorPluginConfigurationTest {
 
@@ -39,7 +39,7 @@ public class RequestMonitorPluginConfigurationTest {
 		assertEquals(false, config.isCollectCpuTime());
 
 		assertEquals(1, config.getCallStackEveryXRequestsToGroup());
-		assertEquals(true, config.isLogCallStacks());
+		assertEquals(false, config.isLogCallStacks());
 		assertEquals("1w", config.getRequestTraceTtl());
 	}
 }
