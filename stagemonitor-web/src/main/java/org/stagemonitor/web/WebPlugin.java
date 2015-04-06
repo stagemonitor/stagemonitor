@@ -2,7 +2,6 @@ package org.stagemonitor.web;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,6 +16,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
@@ -163,7 +163,9 @@ public class WebPlugin extends StagemonitorPlugin {
 					"A value of `/aaa` means, that all paths starting with `/aaa` should not be monitored." +
 					" It's recommended to not monitor static resources, as they are typically not interesting to " +
 					"monitor but consume resources when you do.")
-			.defaultValue(Collections.<String>emptyList())
+			.defaultValue(SetValueConverter.immutableSet(
+					// exclude paths of static vaadin resources
+					"/VAADIN"))
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> monitorOnlyForwardedRequests = ConfigurationOption.booleanOption()
