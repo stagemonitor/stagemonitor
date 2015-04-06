@@ -1,5 +1,18 @@
 package org.stagemonitor.jdbc;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
+import java.lang.management.ManagementFactory;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.sql.DataSource;
+
 import com.codahale.metrics.MetricRegistry;
 import com.p6spy.engine.spy.P6Core;
 import com.p6spy.engine.spy.P6SpyLoadableOptions;
@@ -12,19 +25,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.jdbc.p6spy.P6SpyMultiLogger;
 import org.stagemonitor.jdbc.p6spy.StagemonitorP6Logger;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.sql.DataSource;
-import java.lang.management.ManagementFactory;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-
-import static com.codahale.metrics.MetricRegistry.name;
 
 public class ConnectionMonitor {
 
@@ -72,7 +72,7 @@ public class ConnectionMonitor {
 		if (p6SpyAlreadyConfigured) {
 			P6SpyMultiLogger.addLogger(options.getAppenderInstance());
 		}
-		options.setAppender(P6SpyMultiLogger.class.getCanonicalName());
+		options.setAppender(P6SpyMultiLogger.class.getName());
 	}
 
 	public Connection monitorGetConnection(Connection connection, DataSource dataSource, long duration) throws SQLException {

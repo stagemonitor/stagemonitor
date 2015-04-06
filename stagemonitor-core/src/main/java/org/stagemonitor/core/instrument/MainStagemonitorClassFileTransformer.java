@@ -45,17 +45,21 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			} else {
 				classfileBuffer = transformOther(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
 			}
-		} catch (Exception ex) {
-			throw new RuntimeException(ex);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return classfileBuffer;
 	}
 
-	private byte[] transformIncluded(ClassLoader loader, byte[] classfileBuffer) throws Exception{
+	private byte[] transformIncluded(ClassLoader loader, byte[] classfileBuffer) throws Exception {
 		CtClass ctClass = getCtClass(loader, classfileBuffer);
 		try {
 			for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
-				instrumenter.transformIncludedClass(ctClass);
+				try {
+					instrumenter.transformIncludedClass(ctClass);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 			classfileBuffer = ctClass.toBytecode();
 		} finally {
@@ -68,13 +72,17 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public static CtClass getCtClass(ClassLoader loader, byte[] classfileBuffer) throws IOException {
 		ClassPool classPool = ClassPool.getDefault();
 		classPool.insertClassPath(new LoaderClassPath(loader));
-		return classPool.makeClass(new java.io.ByteArrayInputStream(classfileBuffer));
+		return classPool.makeClass(new java.io.ByteArrayInputStream(classfileBuffer), false);
 	}
 
 	private byte[] transformOther(ClassLoader loader, String className, Class<?> classBeingRedefined,
-								  ProtectionDomain protectionDomain, byte[] classfileBuffer) throws Exception {
+								  ProtectionDomain protectionDomain, byte[] classfileBuffer) {
 		for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
-			classfileBuffer = instrumenter.transformOtherClass(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+			try {
+				classfileBuffer = instrumenter.transformOtherClass(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		return classfileBuffer;
 	}
