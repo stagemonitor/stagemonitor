@@ -127,7 +127,7 @@ public class ConfigurationOption<T> {
 	 *
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Set}&lt{@link Integer}>
 	 */
-	public static ConfigurationOption.ConfigurationOptionBuilder<? extends Collection<Integer>> integersOption() {
+	public static ConfigurationOption.ConfigurationOptionBuilder<Collection<Integer>> integersOption() {
 		return ConfigurationOption.builder(SetValueConverter.INTEGERS, Collection.class);
 	}
 
