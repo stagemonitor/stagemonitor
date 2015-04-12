@@ -41,7 +41,16 @@ public class ProfilerTest {
 	}
 
 	private int method6() {
-		return 6;
+		int value = 1;
+		if (Math.random() > 0.5) {
+			return 6;
+		}
+		switch (value) {
+			case 1:
+				value = 6;
+				break;
+		}
+		return value;
 	}
 
 	private int method7() {

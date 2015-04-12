@@ -5,6 +5,10 @@ import java.lang.reflect.Modifier;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
+import javassist.bytecode.BadBytecode;
+import javassist.bytecode.CodeAttribute;
+import javassist.bytecode.CodeIterator;
+import javassist.bytecode.Opcode;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
 public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
@@ -13,17 +17,42 @@ public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	@Override
 	public void transformIncludedClass(CtClass ctClass) throws Exception {
-		if (ctClass.getPackageName().equals(profilerPackage)) {
+		if (ctClass.getPackageName().equals(profilerPackage) || ctClass.isInterface()) {
 			return;
 		}
 		CtMethod[] declaredMethods = ctClass.getDeclaredMethods();
 		for (CtMethod m : declaredMethods) {
-			if (!Modifier.isNative(m.getModifiers()) && !Modifier.isAbstract(m.getModifiers())) {
-				String signature = getSignature(ctClass, m);
-				m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start(\"" + signature + "\");");
+			if (!Modifier.isNative(m.getModifiers())
+					&& !Modifier.isAbstract(m.getModifiers())
+					&& !Modifier.isFinal(m.getModifiers())
+					&& ctClass.equals(m.getDeclaringClass())) {
+
+				// workaround for https://issues.jboss.org/browse/JASSIST-241
+				if (hasSwitchCase(m)) {
+					continue;
+				}
+				m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start(\"" + getSignature(ctClass, m) + "\");");
 				m.insertAfter("org.stagemonitor.requestmonitor.profiler.Profiler.stop();", true);
 			}
 		}
+	}
+
+	/**
+	 * Javassist has problems when a method contains a return statement before a switch case.
+	 *
+	 * @param m the method to check
+	 * @return <code>true</code>, if the method contains a switch case statement, <code>false</code> otherwise
+	 */
+	private boolean hasSwitchCase(CtMethod m) throws BadBytecode {
+		final CodeAttribute codeAttribute = m.getMethodInfo().getCodeAttribute();
+		for (CodeIterator ci = codeAttribute.iterator(); ci.hasNext(); ) {
+			int index = ci.next();
+			int op = ci.byteAt(index);
+			if (op == Opcode.TABLESWITCH || op == Opcode.LOOKUPSWITCH) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private String getSignature(CtClass clazz, CtMethod method) throws NotFoundException {

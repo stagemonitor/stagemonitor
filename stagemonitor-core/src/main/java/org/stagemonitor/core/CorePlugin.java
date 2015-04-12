@@ -220,6 +220,7 @@ public class CorePlugin extends StagemonitorPlugin {
 				add("net.java");
 				add("net.sf");
 				add("net.sourceforge");
+				add("oracle");
 				add("org.antlr");
 				add("org.apache");
 				add("org.aspectj");
