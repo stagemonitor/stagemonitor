@@ -30,10 +30,10 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public Collection<String> excludeContaining;
 
 	public MainStagemonitorClassFileTransformer() {
-		instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class);
-		for (Object instrumenter : instrumenters) {
-			logger.info("Registering " + instrumenter.getClass().getSimpleName());
-		}
+			instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class);
+			for (Object instrumenter : instrumenters) {
+				logger.info("Registering " + instrumenter.getClass().getSimpleName());
+			}
 		initIncludesAndExcludes();
 	}
 

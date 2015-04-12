@@ -26,7 +26,7 @@ public class SpringMvcRequestNameDeterminerInstrumenter extends StagemonitorJava
 		try {
 			ctClass.getDeclaredMethod("getHandler")
 					.insertAfter("org.stagemonitor.web.monitor.spring.SpringMvcRequestNameDeterminerInstrumenter" +
-							".setRequestNameByHandler($_)");
+							".setRequestNameByHandler($_);");
 			return ctClass.toBytecode();
 		} finally {
 			ctClass.detach();
