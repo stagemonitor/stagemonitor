@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.FrameworkServlet;
@@ -110,9 +110,12 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 			while (attributeNames.hasMoreElements()) {
 				String attributeName = (String) attributeNames.nextElement();
 				if (attributeName.startsWith(FrameworkServlet.SERVLET_CONTEXT_PREFIX)) {
-					WebApplicationContext webApplicationContext = WebApplicationContextUtils
+					ApplicationContext applicationContext = WebApplicationContextUtils
 							.getWebApplicationContext(servletContext, attributeName);
-					result.addAll(webApplicationContext.getBeansOfType(RequestMappingHandlerMapping.class).values());
+					do {
+						result.addAll(applicationContext.getBeansOfType(RequestMappingHandlerMapping.class).values());
+						applicationContext = applicationContext.getParent();
+					} while (applicationContext != null);
 				}
 			}
 			return result;
