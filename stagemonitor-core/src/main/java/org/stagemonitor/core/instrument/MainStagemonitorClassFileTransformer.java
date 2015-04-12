@@ -11,10 +11,15 @@ import java.util.ServiceLoader;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.core.Stagemonitor;
 
 public class MainStagemonitorClassFileTransformer implements ClassFileTransformer {
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private Iterable<StagemonitorJavassistInstrumenter> instrumenters;
 
@@ -27,7 +32,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public MainStagemonitorClassFileTransformer() {
 		instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class);
 		for (Object instrumenter : instrumenters) {
-			System.out.println("Registering " + instrumenter.getClass().getSimpleName());
+			logger.info("Registering " + instrumenter.getClass().getSimpleName());
 		}
 		initIncludesAndExcludes();
 	}
@@ -36,7 +41,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 							ProtectionDomain protectionDomain, byte[] classfileBuffer)
 			throws IllegalClassFormatException {
-		if (loader == null) {
+		if (loader == null || StringUtils.isEmpty(className)) {
 			return classfileBuffer;
 		}
 		try {
@@ -81,13 +86,19 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			try {
 				classfileBuffer = instrumenter.transformOtherClass(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.warn(e.getMessage(), e);
 			}
 		}
 		return classfileBuffer;
 	}
 
 	private boolean isIncluded(String className) {
+		for (String exclude : excludeContaining) {
+			if (className.contains(exclude)) {
+				return false;
+			}
+		}
+
 		// no includes -> include all
 		boolean instrument = includes.isEmpty();
 		for (String include : includes) {
@@ -100,11 +111,6 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		}
 		for (String exclude : excludes) {
 			if (className.startsWith(exclude)) {
-				return false;
-			}
-		}
-		for (String exclude : excludeContaining) {
-			if (className.contains(exclude)) {
 				return false;
 			}
 		}
