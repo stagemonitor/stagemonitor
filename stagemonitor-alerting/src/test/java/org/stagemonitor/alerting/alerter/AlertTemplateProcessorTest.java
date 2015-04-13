@@ -38,10 +38,19 @@ public class AlertTemplateProcessorTest extends AbstractAlerterTest {
 				"Hosts: testHost2\n" +
 				"Instances: testInstance\n" +
 				"\n" +
-				"host|instance|status|description|current value\n" +
-				"----|--------|------|-----------|-------------\n" +
-				"testHost2 | testInstance | CRITICAL | test | 10\n" +
-				"testHost2 | testInstance | ERROR | test | 10\n", toFreemarkerIsoLocal(testIncident.getFirstFailureAt())),
+				"Details:" +
+				"\n" +
+				"Host: testHost2\n" +
+				"Instance: testInstance\n" +
+				"Status: CRITICAL\n" +
+				"Description: test\n" +
+				"Current value: 10\n" +
+				"\n" +
+				"Host: testHost2\n" +
+				"Instance: testInstance\n" +
+				"Status: ERROR\n" +
+				"Description: test\n" +
+				"Current value: 10\n\n", toFreemarkerIsoLocal(testIncident.getFirstFailureAt())),
 				alertTemplateProcessor.processPlainTextTemplate(testIncident));
 	}
 

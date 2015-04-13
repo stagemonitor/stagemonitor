@@ -166,13 +166,18 @@ public class AlertingPlugin extends StagemonitorPlugin {
 					"Hosts: ${incident.hosts?join(\", \")}\n" +
 					"Instances: ${incident.instances?join(\", \")}\n" +
 					"\n" +
-					"host|instance|status|description|current value\n" +
-					"----|--------|------|-----------|-------------\n" +
+					"Details:" +
+					"\n" +
 					"<#list incident.checkResults as results>\n" +
-					"\t<#assign measurementSession=results.measurementSession/>\n" +
-					"\t<#list results.getResults() as result>\n" +
-					"${measurementSession.hostName} | ${measurementSession.instanceName} | ${result.status} | ${result.failingExpression} | ${result.currentValue}\n" +
-					"\t</#list>\n" +
+					"	<#assign measurementSession=results.measurementSession/>\n" +
+					"	<#list results.getResults() as result>\n" +
+					"Host: ${measurementSession.hostName}\n" +
+					"Instance: ${measurementSession.instanceName}\n" +
+					"Status: ${result.status}\n" +
+					"Description: ${result.failingExpression}\n" +
+					"Current value: ${result.currentValue}\n" +
+					"\n" +
+					"	</#list>" +
 					"</#list>")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
