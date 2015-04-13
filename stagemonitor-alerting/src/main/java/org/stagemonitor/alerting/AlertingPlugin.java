@@ -171,11 +171,11 @@ public class AlertingPlugin extends StagemonitorPlugin {
 					"<#list incident.checkResults as results>\n" +
 					"	<#assign measurementSession=results.measurementSession/>\n" +
 					"	<#list results.getResults() as result>\n" +
-					"Host: ${measurementSession.hostName}\n" +
-					"Instance: ${measurementSession.instanceName}\n" +
-					"Status: ${result.status}\n" +
-					"Description: ${result.failingExpression}\n" +
-					"Current value: ${result.currentValue}\n" +
+					"Host:			${measurementSession.hostName}\n" +
+					"Instance:		${measurementSession.instanceName}\n" +
+					"Status: 		${result.status}\n" +
+					"Description:	${result.failingExpression}\n" +
+					"Current value:	${result.currentValue}\n" +
 					"\n" +
 					"	</#list>" +
 					"</#list>")
