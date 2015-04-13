@@ -104,6 +104,21 @@ body {
 	left: 3px;
 }
 
+.wide-tooltip div.tooltip-inner {
+	max-width: 500px;
+}
+
+.tooltip-inner {
+	word-wrap: break-word;
+}
+
+.toolbar .active {
+	color: #428bca;
+}
+
+/*
+ * Call Tree Tab
+ */
 .indenter {
 	display: inline !important
 }
@@ -112,12 +127,8 @@ body {
 	margin-left: -19px;
 }
 
-.wide-tooltip div.tooltip-inner {
-	max-width: 500px;
-}
-
-.toolbar .active {
-	color: #428bca;
+.treetable span {
+	padding: 0;
 }
 
 /*

@@ -11,6 +11,7 @@ function renderCallTree(data) {
 			processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);
 			$stagemonitorHome.html("");
 			$stagemonitorHome.html(callTreeTemplate({callTreeRows: callTreeRows}));
+			$(".tip").tooltip();
 			var $calltree = $("#stagemonitor-calltree");
 			$calltree.treetable({
 				expandable: true,
@@ -45,14 +46,15 @@ function renderCallTree(data) {
 					return (e.executionTime / totalExecutionTimeInNs * 100) > thresholdPercent;
 				}).length > 0;
 
+				var shortSignature = getShortSignature(callData.signature);
 				callTreeRows.push({
 					executionTimeExceededThreshold: executionTimePercent > thresholdPercent,
 					anyChildExceedsThreshold: anyChildExceedsThreshold,
 					parentId: parentId,
 					myId: myId,
-					shortSignature: getShortSignature(callData.signature),
+					shortSignature: shortSignature,
 					signature: callData.signature,
-					isShortened: false,
+					isShortened: shortSignature != callData.signature,
 					executionTimePercent: executionTimePercent,
 					executionTimeInMs: executionTimeInMs,
 					selfExecutionTimePercent: selfExecutionTimePercent,
