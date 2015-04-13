@@ -108,6 +108,7 @@
 								return createStatusLabel(full.newStatus);
 							}
 						},
+						{ data: "failedChecks"},
 						{
 							render: function (data, type, full, meta) {
 								return '<a href="#" class="btn btn-default incident-details-btn" ' +
@@ -259,6 +260,7 @@
 							{ data: "name" },
 							{ data: "target" },
 							{ data: "alertAfterXFailures" },
+							{ data: "numberOfFailingChecks" },
 							{
 								render: function (data, type, full, meta) {
 									return '<span class="delete-check glyphicon glyphicon-' + (full.active ? 'ok' : 'remove') + '" aria-hidden="true"></span>';
