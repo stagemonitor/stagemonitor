@@ -34,8 +34,12 @@ public class LogAlerterTest extends AbstractAlerterTest {
 				"Hosts: testHost\n" +
 				"Instances: testInstance\n" +
 				"\n" +
-				"host|instance|status|description|current value\n" +
-				"----|--------|------|-----------|-------------\n" +
-				"testHost | testInstance | ERROR | test | 10\n", toFreemarkerIsoLocal(incident.getFirstFailureAt()))));
+				"Details:\n" +
+				"Host:\t\t\ttestHost\n" +
+				"Instance:\t\ttestInstance\n" +
+				"Status: \t\tERROR\n" +
+				"Description:\ttest\n" +
+				"Current value:\t10\n" +
+				"\n", toFreemarkerIsoLocal(incident.getFirstFailureAt()))));
 	}
 }
