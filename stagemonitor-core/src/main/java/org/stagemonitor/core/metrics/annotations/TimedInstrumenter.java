@@ -13,8 +13,8 @@ import org.stagemonitor.core.metrics.aspects.SignatureUtils;
 public class TimedInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	@Override
-	public void transformIncludedClass(CtClass ctClass) throws Exception {
-		for (CtMethod ctMethod : ctClass.getMethods()) {
+	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
+		for (CtMethod ctMethod : ctClass.getDeclaredMethods()) {
 			Timed timed = (Timed) ctMethod.getAnnotation(Timed.class);
 			if (timed != null) {
 				ctMethod.addLocalVariable("$_stm_time", ctClass.getClassPool().get(Timer.Context.class.getName()));

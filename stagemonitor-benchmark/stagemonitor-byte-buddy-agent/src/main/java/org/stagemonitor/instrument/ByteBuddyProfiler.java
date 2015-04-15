@@ -1,7 +1,6 @@
 package org.stagemonitor.instrument;
 
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -41,7 +40,7 @@ public class ByteBuddyProfiler {
 
 	public static class ProfilingInterceptor {
 		@RuntimeType
-		public static Object profile(@Origin String signature, @Origin Class clazz, @SuperCall Callable<?> zuper) throws Exception {
+		public static Object profile(@Origin String signature, @SuperCall Callable<?> zuper) throws Exception {
 			Profiler.start(signature);
 			try {
 				return zuper.call();
@@ -62,22 +61,5 @@ public class ByteBuddyProfiler {
 		}*/
 	}
 
-	private static String getSignature(Method method, Class clazz) {
-		StringBuilder signature = new StringBuilder()
-				.append(method.getReturnType().getSimpleName()).append(" ")
-				.append(clazz.getCanonicalName())
-				.append('.').append(method.getName())
-				.append("(");
-		Class<?>[] parameterTypes = method.getParameterTypes();
-		for (int i = 0; i < parameterTypes.length; i++) {
-			Class<?> paramClass = parameterTypes[i];
-			signature.append(paramClass.getSimpleName());
-			if (i < parameterTypes.length - 1) {
-				signature.append(' ');
-			}
-		}
-		signature.append(")");
-		return signature.toString();
-	}
 }
 

@@ -1,16 +1,24 @@
 package org.stagemonitor.core.metrics.aspects;
 
-import com.codahale.metrics.MetricRegistry;
-import org.junit.Test;
-import org.stagemonitor.core.Stagemonitor;
+import static org.junit.Assert.assertEquals;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import com.codahale.metrics.MetricRegistry;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public class GaugeAspectTest {
+
 	private GaugeTestObject testObject = new GaugeTestObject();
+
+	@BeforeClass
+	public static void attachProfiler() {
+		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+	}
 
 	@Test
 	public void testGaugeAspectDefault() {

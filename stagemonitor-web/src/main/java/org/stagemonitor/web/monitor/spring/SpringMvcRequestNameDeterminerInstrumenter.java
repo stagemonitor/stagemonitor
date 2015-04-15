@@ -1,9 +1,5 @@
 package org.stagemonitor.web.monitor.spring;
 
-import static org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer.getCtClass;
-
-import java.security.ProtectionDomain;
-
 import javassist.CtClass;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Stagemonitor;
@@ -16,21 +12,15 @@ public class SpringMvcRequestNameDeterminerInstrumenter extends StagemonitorJava
 	private static WebPlugin webPlugin = Stagemonitor.getConfiguration(WebPlugin.class);
 
 	@Override
-	public byte[] transformOtherClass(ClassLoader loader, String className, Class<?> classBeingRedefined,
-									  ProtectionDomain protectionDomain, byte[] classfileBuffer)
-			throws Exception {
-		if (!className.equals("org/springframework/web/servlet/DispatcherServlet")) {
-			return classfileBuffer;
-		}
-		CtClass ctClass = getCtClass(loader, classfileBuffer);
-		try {
-			ctClass.getDeclaredMethod("getHandler")
-					.insertAfter("org.stagemonitor.web.monitor.spring.SpringMvcRequestNameDeterminerInstrumenter" +
-							".setRequestNameByHandler($_);");
-			return ctClass.toBytecode();
-		} finally {
-			ctClass.detach();
-		}
+	public boolean isIncluded(String className) {
+		return className.equals("org/springframework/web/servlet/DispatcherServlet");
+	}
+
+	@Override
+	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
+		ctClass.getDeclaredMethod("getHandler")
+				.insertAfter("org.stagemonitor.web.monitor.spring.SpringMvcRequestNameDeterminerInstrumenter" +
+						".setRequestNameByHandler($_);");
 	}
 
 	public static void setRequestNameByHandler(HandlerExecutionChain handler) {

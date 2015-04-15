@@ -8,8 +8,10 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public class ExceptionMeteredAspectTest {
 
@@ -17,7 +19,7 @@ public class ExceptionMeteredAspectTest {
 
 	private static class TestObject {
 		@ExceptionMetered
-		public void exceptionMeteredDefault() {
+		private void exceptionMeteredDefault() {
 			throw null;
 		}
 
@@ -65,6 +67,11 @@ public class ExceptionMeteredAspectTest {
 		}
 	}
 
+	@BeforeClass
+	public static void attachProfiler() {
+		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+	}
+
 	@Before
 	@After
 	public void clearMetricRegistry() {
@@ -93,7 +100,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertEquals(0, Stagemonitor.getMetricRegistry().getMeters().size());
+		assertEquals(1, Stagemonitor.getMetricRegistry().getMeters().size());
 	}
 
 	@Test

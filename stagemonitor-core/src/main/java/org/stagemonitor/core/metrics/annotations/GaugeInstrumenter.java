@@ -22,7 +22,7 @@ public class GaugeInstrumenter extends StagemonitorJavassistInstrumenter {
 	private static final Logger logger = LoggerFactory.getLogger(GaugeInstrumenter.class);
 
 	@Override
-	public void transformIncludedClass(CtClass ctClass) throws Exception {
+	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
 		final MonitorGauges gaugeAnnotation = (MonitorGauges) ctClass.getAnnotation(MonitorGauges.class);
 		if (gaugeAnnotation != null) {
 			for (CtConstructor ctConstructor : ctClass.getDeclaredConstructors()) {

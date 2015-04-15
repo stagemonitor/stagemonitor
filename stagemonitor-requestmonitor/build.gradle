@@ -1,5 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-core")
+	testCompile 'net.sf.ehcache:ehcache-core:2.6.6'
 }
 
 task fatJar(type: Jar) {

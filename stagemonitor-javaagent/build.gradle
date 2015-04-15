@@ -3,7 +3,8 @@ jar.doFirst{
 		attributes("Manifest-Version" : "1.0",
 				"Can-Redefine-Classes": true,
 				"Can-Retransform-Classes": true,
-				"Premain-Class": "org.stagemonitor.agent.StagemonitorAgent"
+				"Premain-Class": "org.stagemonitor.agent.StagemonitorAgent",
+				"Agent-Class": "org.stagemonitor.agent.StagemonitorAgent"
 		)
 	}
 }

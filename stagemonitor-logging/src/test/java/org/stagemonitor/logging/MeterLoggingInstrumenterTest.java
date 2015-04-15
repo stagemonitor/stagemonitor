@@ -8,13 +8,20 @@ import java.util.SortedMap;
 import com.codahale.metrics.Meter;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public class MeterLoggingInstrumenterTest {
 
 	private Logger logger;
+
+	@BeforeClass
+	public static void attachProfiler() {
+		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+	}
 
 	@Before
 	@After

@@ -12,8 +12,8 @@ import org.stagemonitor.core.metrics.aspects.SignatureUtils;
 public class MeteredInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	@Override
-	public void transformIncludedClass(CtClass ctClass) throws Exception {
-		for (CtMethod ctMethod : ctClass.getMethods()) {
+	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
+		for (CtMethod ctMethod : ctClass.getDeclaredMethods()) {
 			Metered Metered = (Metered) ctMethod.getAnnotation(Metered.class);
 			if (Metered != null) {
 				final String signature = SignatureUtils.getSignature(ctMethod, Metered.name(),

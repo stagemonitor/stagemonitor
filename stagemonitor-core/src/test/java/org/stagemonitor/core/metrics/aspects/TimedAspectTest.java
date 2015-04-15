@@ -1,13 +1,15 @@
 package org.stagemonitor.core.metrics.aspects;
 
+import static org.junit.Assert.assertEquals;
+
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.Timed;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
-
-import static org.junit.Assert.assertEquals;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public class TimedAspectTest {
 
@@ -35,6 +37,11 @@ public class TimedAspectTest {
 		}
 	}
 
+	@BeforeClass
+	public static void attachProfiler() {
+		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+	}
+
 	@Before
 	public void before() {
 		Stagemonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
@@ -49,7 +56,7 @@ public class TimedAspectTest {
 	@Test
 	public void testTimedAspectPrivate() {
 		testObject.timedPrivate();
-		assertEquals(0, Stagemonitor.getMetricRegistry().getTimers().size());
+		assertEquals(1, Stagemonitor.getMetricRegistry().getTimers().size());
 	}
 
 	@Test

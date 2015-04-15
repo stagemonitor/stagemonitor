@@ -1,11 +1,10 @@
 package org.stagemonitor.core.instrument;
 
-import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
+import java.lang.instrument.Instrumentation;
+import java.lang.instrument.UnmodifiableClassException;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.ServiceLoader;
 
 import javassist.ClassPool;
@@ -13,21 +12,14 @@ import javassist.CtClass;
 import javassist.LoaderClassPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.agent.StagemonitorAgent;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.core.Stagemonitor;
 
 public class MainStagemonitorClassFileTransformer implements ClassFileTransformer {
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(MainStagemonitorClassFileTransformer.class);
 
 	private Iterable<StagemonitorJavassistInstrumenter> instrumenters;
-
-	public Collection<String> includes;
-
-	public Collection<String> excludes;
-
-	public Collection<String> excludeContaining;
 
 	public MainStagemonitorClassFileTransformer() {
 		instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class);
@@ -38,36 +30,74 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
-		initIncludesAndExcludes();
+	}
+
+	/**
+	 * Attaches the profiler and other instrumenters at runtime so that it is not necessary to add the
+	 * -javaagent command line argument.
+	 */
+	public static void performRuntimeAttachment() {
+		if (StagemonitorAgent.isInitializedViaJavaagent()) {
+			return;
+		}
+		try {
+			Instrumentation instrumentation = AgentLoader.loadAgent();
+			final MainStagemonitorClassFileTransformer transformer = new MainStagemonitorClassFileTransformer();
+			instrumentation.addTransformer(transformer, true);
+			long start = System.currentTimeMillis();
+			for (Class loadedClass : instrumentation.getAllLoadedClasses()) {
+				if (transformer.isIncluded(loadedClass.getName().replace(".", "/"))) {
+					try {
+						instrumentation.retransformClasses(loadedClass);
+					} catch (UnmodifiableClassException e) {
+						logger.warn(e.getMessage(), e);
+					}
+				}
+			}
+			logger.info("Retransformed classes in {} ms", System.currentTimeMillis() - start);
+		} catch (Exception e) {
+			logger.warn("Failed to perform runtime attachment of the stagemonitor agent. " +
+					"You can load the agent with the command line argument -javaagent:/path/to/stagemonitor-javaagent-<version>.jar", e);
+		}
 	}
 
 	@Override
-	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+	public synchronized byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 							ProtectionDomain protectionDomain, byte[] classfileBuffer)
 			throws IllegalClassFormatException {
+
 		if (loader == null || StringUtils.isEmpty(className)) {
 			return classfileBuffer;
 		}
 		try {
 			if (isIncluded(className)) {
-				classfileBuffer = transformIncluded(loader, classfileBuffer);
-			} else {
-				classfileBuffer = transformOther(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+				classfileBuffer = transform(loader, classfileBuffer, className);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.warn(e.getMessage(), e);
 		}
 		return classfileBuffer;
 	}
 
-	private byte[] transformIncluded(ClassLoader loader, byte[] classfileBuffer) throws Exception {
-		CtClass ctClass = getCtClass(loader, classfileBuffer);
+	private boolean isIncluded(String className) {
+		for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
+			if (instrumenter.isIncluded(className)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private byte[] transform(ClassLoader loader, byte[] classfileBuffer, String className) throws Exception {
+		CtClass ctClass = getCtClass(loader, classfileBuffer, className);
 		try {
 			for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
-				try {
-					instrumenter.transformIncludedClass(ctClass);
-				} catch (Exception e) {
-					e.printStackTrace();
+				if (instrumenter.isIncluded(className)) {
+					try {
+						instrumenter.transformClass(ctClass, loader);
+					} catch (Exception e) {
+						logger.warn(e.getMessage(), e);
+					}
 				}
 			}
 			classfileBuffer = ctClass.toBytecode();
@@ -78,75 +108,10 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		return classfileBuffer;
 	}
 
-	public static CtClass getCtClass(ClassLoader loader, byte[] classfileBuffer) throws IOException {
+	public CtClass getCtClass(ClassLoader loader, byte[] classfileBuffer, String className) throws Exception {
 		ClassPool classPool = ClassPool.getDefault();
 		classPool.insertClassPath(new LoaderClassPath(loader));
-		return classPool.makeClass(new java.io.ByteArrayInputStream(classfileBuffer), false);
-	}
-
-	private byte[] transformOther(ClassLoader loader, String className, Class<?> classBeingRedefined,
-								  ProtectionDomain protectionDomain, byte[] classfileBuffer) {
-		for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
-			try {
-				classfileBuffer = instrumenter.transformOtherClass(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
-			} catch (Exception e) {
-				logger.warn(e.getMessage(), e);
-			}
-		}
-		return classfileBuffer;
-	}
-
-	private boolean isIncluded(String className) {
-		for (String exclude : excludeContaining) {
-			if (className.contains(exclude)) {
-				return false;
-			}
-		}
-
-		// no includes -> include all
-		boolean instrument = includes.isEmpty();
-		for (String include : includes) {
-			if (className.startsWith(include)) {
-				return !hasMoreSpecificExclude(className, include);
-			}
-		}
-		if (!instrument) {
-			return false;
-		}
-		for (String exclude : excludes) {
-			if (className.startsWith(exclude)) {
-				return false;
-			}
-		}
-		return instrument;
-	}
-
-	private boolean hasMoreSpecificExclude(String className, String include) {
-		for (String exclude : excludes) {
-			if (exclude.length() > include.length() && exclude.startsWith(include) && className.startsWith(exclude)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void initIncludesAndExcludes() {
-		CorePlugin requestMonitorPlugin = Stagemonitor.getConfiguration(CorePlugin.class);
-
-		excludeContaining = new ArrayList<String>(requestMonitorPlugin.getExcludeContaining().size());
-		for (String exclude : requestMonitorPlugin.getExcludeContaining()) {
-			excludeContaining.add(exclude.replace('.', '/'));
-		}
-
-		excludes = new ArrayList<String>(requestMonitorPlugin.getExcludePackages().size());
-		for (String exclude : requestMonitorPlugin.getExcludePackages()) {
-			excludes.add(exclude.replace('.', '/'));
-		}
-
-		includes = new ArrayList<String>(requestMonitorPlugin.getIncludePackages().size());
-		for (String include : requestMonitorPlugin.getIncludePackages()) {
-			includes.add(include.replace('.', '/'));
-		}
+		return classPool.get(className.replace('/', '.'));
 	}
 
 }

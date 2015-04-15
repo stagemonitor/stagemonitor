@@ -1,30 +1,24 @@
 package org.stagemonitor.jdbc;
 
-import java.io.IOException;
+import java.lang.instrument.ClassDefinition;
 import java.lang.reflect.Method;
-import java.security.ProtectionDomain;
 import java.sql.Connection;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javax.sql.DataSource;
 
-import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtMethod;
-import javassist.CtNewMethod;
 import javassist.NotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.stagemonitor.agent.StagemonitorAgent;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
 public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	private static final String CONNECTION_MONITOR = ConnectionMonitor.class.getName();
 	private static final String MONITOR_GET_CONNECTION = CONNECTION_MONITOR + ".monitorGetConnection";
-	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private static final String STRING_CLASS_NAME = String.class.getName();
 	private final Set<String> dataSourceImplementations;
@@ -45,32 +39,31 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 	}
 
 	@Override
-	public byte[] transformOtherClass(ClassLoader loader, String className, Class<?> classBeingRedefined,
-									  ProtectionDomain protectionDomain, byte[] classfileBuffer)
-			throws Exception {
-		if (!dataSourceImplementations.contains(className)) {
-			return classfileBuffer;
-		}
+	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
 
 		try {
 			loader.loadClass("org.stagemonitor.core.Stagemonitor");
-			return transformConnectionPool(loader, classfileBuffer, false);
+			transformConnectionPool(ctClass, false);
 		} catch (ClassNotFoundException e) {
-			logger.info("The database connection pool {} is not loaded via the application class loader.", className);
-			return transformConnectionPool(loader, classfileBuffer, true);
+			// The database connection pool is not loaded via the application class loader
+			// so ConnectionMonitor#monitorConnection has to be invoked via reflection
+			transformConnectionPool(ctClass, true);
 		}
 	}
 
-	private byte[] transformConnectionPool(ClassLoader loader, byte[] classfileBuffer, boolean invokeViaReflection)
-			throws IOException, NotFoundException, CannotCompileException {
+	@Override
+	public boolean isIncluded(String className) {
+		return dataSourceImplementations.contains(className);
+	}
 
-		final CtClass ctClass = MainStagemonitorClassFileTransformer.getCtClass(loader, classfileBuffer);
+	private void transformConnectionPool(CtClass ctClass, boolean invokeViaReflection)
+			throws Exception {
+
 		for (CtMethod method : ctClass.getMethods()) {
 			if (isGetConnectionMethod(method)) {
 				instrument(ctClass, method, invokeViaReflection);
 			}
 		}
-		return ctClass.toBytecode();
 	}
 
 	/**
@@ -93,12 +86,12 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 	}
 
 	private void instrument(CtClass ctClass, CtMethod method, boolean invokeViaReflection)
-			throws CannotCompileException, NotFoundException {
+			throws Exception {
 
-		if (!ctClass.equals(method.getDeclaringClass())) {
-			method = overrideMethod(ctClass, method);
+		final CtClass declaringClass = method.getDeclaringClass();
+		if (declaringClass.isFrozen()) {
+			declaringClass.defrost();
 		}
-
 		method.addLocalVariable("$_stm_start", CtClass.longType);
 		method.insertBefore("$_stm_start = System.nanoTime();");
 		// $_ is the return value, which has to be casted to the return type ($r)
@@ -109,12 +102,10 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 			method.insertAfter("$_ = ($r) ((java.lang.reflect.Method) System.getProperties().get(\"" + MONITOR_GET_CONNECTION + "\"))" +
 					".invoke(System.getProperties().get(\"" + CONNECTION_MONITOR + "\"), new Object[]{$_, (javax.sql.DataSource) this, Long.valueOf(System.nanoTime() - $_stm_start)});");
 		}
-	}
 
-	private CtMethod overrideMethod(CtClass ctClass, CtMethod getConnectionMethodOfSuperclass)
-			throws NotFoundException, CannotCompileException {
-		final CtMethod m = CtNewMethod.delegator(getConnectionMethodOfSuperclass, ctClass);
-		ctClass.addMethod(m);
-		return m;
+		if (!ctClass.equals(declaringClass)) {
+			final ClassDefinition classDefinition = new ClassDefinition(Class.forName(declaringClass.getName()), declaringClass.toBytecode());
+			StagemonitorAgent.getInstrumentation().redefineClasses(classDefinition);
+		}
 	}
 }

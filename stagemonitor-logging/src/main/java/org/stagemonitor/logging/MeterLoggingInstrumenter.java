@@ -1,17 +1,14 @@
 package org.stagemonitor.logging;
 
 import java.lang.instrument.Instrumentation;
-import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtMethod;
 import org.stagemonitor.agent.ClassUtils;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
 /**
@@ -39,22 +36,12 @@ public class MeterLoggingInstrumenter extends StagemonitorJavassistInstrumenter 
 	}};
 
 	@Override
-	public byte[] transformOtherClass(ClassLoader loader, String className, Class<?> classBeingRedefined,
-									  ProtectionDomain protectionDomain, byte[] classfileBuffer) {
-
-		if (loggerImplementations.contains(className)) {
-			try {
-				final CtClass ctClass = MainStagemonitorClassFileTransformer.getCtClass(loader, classfileBuffer);
-				meterLoggerMethods(ctClass);
-				return ctClass.toBytecode();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		return classfileBuffer;
+	public boolean isIncluded(String className) {
+		return loggerImplementations.contains(className);
 	}
 
-	private void meterLoggerMethods(CtClass ctClass) throws CannotCompileException {
+	@Override
+	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
 		for (CtMethod ctMethod : ctClass.getMethods()) {
 			if (methodsToInstrument.contains(ctMethod.getName())) {
 				ctMethod.insertBefore("org.stagemonitor.core.Stagemonitor.getMetricRegistry()" +
@@ -63,6 +50,13 @@ public class MeterLoggingInstrumenter extends StagemonitorJavassistInstrumenter 
 		}
 	}
 
+	/**
+	 * The logger implementations are already loaded before the agent is initialized so they have to be
+	 * retransformed afterwards
+	 *
+	 * @param inst the instrumentation
+	 * @return the classes to retransform
+	 */
 	public static Collection<Class<?>> getClassesToRetransform(Instrumentation inst) {
 		Set<Class> allLoadedClasses = new HashSet<Class>(Arrays.asList(inst.getAllLoadedClasses()));
 		Set<Class<?>> result = new HashSet<Class<?>>();

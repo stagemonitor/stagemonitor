@@ -8,8 +8,10 @@ import com.codahale.metrics.annotation.Metered;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public class MeteredAspectTest {
 
@@ -37,6 +39,11 @@ public class MeteredAspectTest {
 		}
 	}
 
+	@BeforeClass
+	public static void attachProfiler() {
+		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+	}
+
 	@Before
 	@After
 	public void clearMetricRegistry() {
@@ -57,7 +64,7 @@ public class MeteredAspectTest {
 	@Test
 	public void testMeteredAspectPrivate() {
 		testObject.meteredPrivate();
-		assertEquals(0, Stagemonitor.getMetricRegistry().getMeters().size());
+		assertEquals(1, Stagemonitor.getMetricRegistry().getMeters().size());
 	}
 
 	@Test

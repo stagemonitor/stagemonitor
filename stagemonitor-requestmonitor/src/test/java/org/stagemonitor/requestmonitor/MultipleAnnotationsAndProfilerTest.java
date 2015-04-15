@@ -9,8 +9,10 @@ import com.codahale.metrics.annotation.Timed;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
@@ -19,11 +21,15 @@ public class MultipleAnnotationsAndProfilerTest {
 	private TestObject testObject = new TestObject();
 
 	private static class TestObject {
-
 		@Metered
 		@Timed
 		public void testMethod() {
 		}
+	}
+
+	@BeforeClass
+	public static void attachProfiler() {
+		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
 	}
 
 	@Before

@@ -1,11 +1,21 @@
 package org.stagemonitor.requestmonitor.prof;
 
+import net.sf.ehcache.pool.sizeof.AgentSizeOf;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 public class ProfilerTest {
+
+	@BeforeClass
+	public static void attachProfiler() {
+		new AgentSizeOf();
+		// Stagemonitor agent should pick up the instrumentation loaded by EhCache
+		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+	}
 
 	@Test
 	public void testProfiler() {

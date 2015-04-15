@@ -279,6 +279,16 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Boolean> attachAgentAtRuntime = ConfigurationOption.booleanOption()
+			.key("stagemonitor.instrument.runtimeAttach")
+			.dynamic(false)
+			.label("Attach agent at runtime")
+			.description("Attaches the agent via the Attach API at runtime and retransforms all currently loaded classes.")
+			.label("experimental")
+			.defaultValue(false)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+
 	private static MetricsAggregationReporter aggregationReporter;
 
 	private ElasticsearchClient elasticsearchClient;
@@ -463,4 +473,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		return excludePackages.getValue();
 	}
 
+	public boolean isAttachAgentAtRuntime() {
+		return attachAgentAtRuntime.getValue();
+	}
 }

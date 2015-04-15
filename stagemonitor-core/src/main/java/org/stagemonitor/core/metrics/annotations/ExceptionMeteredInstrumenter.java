@@ -12,8 +12,8 @@ import org.stagemonitor.core.metrics.aspects.SignatureUtils;
 public class ExceptionMeteredInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	@Override
-	public void transformIncludedClass(CtClass ctClass) throws Exception {
-		for (CtMethod ctMethod : ctClass.getMethods()) {
+	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
+		for (CtMethod ctMethod : ctClass.getDeclaredMethods()) {
 			ExceptionMetered exceptionMetered = (ExceptionMetered) ctMethod.getAnnotation(ExceptionMetered.class);
 			if (exceptionMetered != null) {
 				CtClass exceptionType = ctClass.getClassPool().get(exceptionMetered.cause().getName());

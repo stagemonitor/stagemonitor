@@ -3,17 +3,22 @@ package org.stagemonitor.agent;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
 
 public class StagemonitorAgent {
 
-	private static Instrumentation instrumentation;
+	private static final String INSTRUMENTATION_KEY = StagemonitorAgent.class + ".instrumentation";
 
+	private static boolean initializedViaJavaagent = false;
+
+	/**
+	 * Allows the installation of the agent via the -javaagent command line argument
+	 *
+	 * @param agentArgs the agent arguments
+	 * @param inst      the instrumentation
+	 */
 	public static void premain(String agentArgs, final Instrumentation inst) {
 		inst.addTransformer(new ClassFileTransformer() {
-
-			private boolean initialized = false;
 
 			@Override
 			public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
@@ -22,7 +27,7 @@ public class StagemonitorAgent {
 				if (loader == null) {
 					return classfileBuffer;
 				}
-				if (!initialized) {
+				if (!initializedViaJavaagent) {
 					initClassFileTransformer(loader);
 				}
 				return classfileBuffer;
@@ -31,13 +36,10 @@ public class StagemonitorAgent {
 			@SuppressWarnings("unchecked")
 			private void initClassFileTransformer(ClassLoader loader) {
 				try {
-					final ClassFileTransformer mainStagemonitorClassFileTransformer = (ClassFileTransformer) loader
-							.loadClass("org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer")
-							.newInstance();
+					final ClassFileTransformer mainStagemonitorClassFileTransformer = getMainStagemonitorClassFileTransformer(loader, inst);
 					inst.addTransformer(mainStagemonitorClassFileTransformer, true);
+					initializedViaJavaagent = true;
 					// loader could load MainStagemonitorClassFileTransformer - this is the application class loader
-					instrumentation = inst;
-					initialized = true;
 				} catch (Exception e) {
 					// ignore; this is probably not the application class loader
 				}
@@ -45,16 +47,32 @@ public class StagemonitorAgent {
 		});
 	}
 
+	private static ClassFileTransformer getMainStagemonitorClassFileTransformer(ClassLoader loader, Instrumentation inst)
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+		final Class<?> clazz = loader.loadClass("org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer");
+		System.getProperties().put(INSTRUMENTATION_KEY, inst);
+		return (ClassFileTransformer) clazz.newInstance();
+	}
+
+	/**
+	 * Allows the runtime installation of this agent via the Attach API
+	 *
+	 * @param args            the agent arguments
+	 * @param instrumentation the instrumentation
+	 */
+	public static void agentmain(String args, Instrumentation instrumentation) {
+		System.getProperties().put(INSTRUMENTATION_KEY, instrumentation);
+	}
+
 	public static Instrumentation getInstrumentation() {
 		try {
-			// instrumentation can't be accessed directly due to classloader issues
-			Field field = ClassLoader.getSystemClassLoader()
-					.loadClass(StagemonitorAgent.class.getName())
-					.getDeclaredField("instrumentation");
-			field.setAccessible(true);
-			return (Instrumentation) field.get(null);
+			return (Instrumentation) System.getProperties().get(INSTRUMENTATION_KEY);
 		} catch (Exception e) {
-			throw new IllegalStateException("The is not properly initialized", e);
+			throw new IllegalStateException("The agent is not properly initialized", e);
 		}
+	}
+
+	public static boolean isInitializedViaJavaagent() {
+		return initializedViaJavaagent;
 	}
 }

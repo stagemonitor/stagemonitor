@@ -16,7 +16,7 @@ public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 	private String profilerPackage = Profiler.class.getPackage().getName();
 
 	@Override
-	public void transformIncludedClass(CtClass ctClass) throws Exception {
+	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
 		if (ctClass.getPackageName().equals(profilerPackage) || ctClass.isInterface()) {
 			return;
 		}
