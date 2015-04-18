@@ -260,7 +260,6 @@
 							{ data: "name" },
 							{ data: "target" },
 							{ data: "alertAfterXFailures" },
-							{ data: "numberOfFailingChecks" },
 							{
 								render: function (data, type, full, meta) {
 									return '<span class="delete-check glyphicon glyphicon-' + (full.active ? 'ok' : 'remove') + '" aria-hidden="true"></span>';
