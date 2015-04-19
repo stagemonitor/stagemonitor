@@ -186,9 +186,9 @@ public class Configuration {
 		configurationReloader.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
-				logger.info("Beginning scheduled configuration reload (interval is {} sec)...", rate);
+				logger.debug("Beginning scheduled configuration reload (interval is {} sec)...", rate);
 				reloadDynamicConfigurationOptions();
-				logger.info("Finished scheduled configuration reload");
+				logger.debug("Finished scheduled configuration reload");
 			}
 		}, rate, rate, timeUnit);
 	}
