@@ -84,7 +84,7 @@ public class SpringRequestMonitorTest {
 				createHandlerMappingNotReturningHandlerMethod(),
 				getRequestNameHandlerMapping
 		);
-		SpringMonitoredHttpRequest.HandlerMappingServletContextListener.setAllHandlerMappings(handlerMappings);
+		SpringMonitoredHttpRequest.HandlerMappingsExtractor.setAllHandlerMappings(handlerMappings);
 		registry.removeMatching(new MetricFilter() {
 			@Override
 			public boolean matches(String name, Metric metric) {

@@ -104,12 +104,16 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
 	}
 
-	private static class HandlerMappingsExtractor {
+	static class HandlerMappingsExtractor {
 
-		synchronized static void initAllHandlerMappings(ServletContext servletContext) {
+		private synchronized static void initAllHandlerMappings(ServletContext servletContext) {
 			if (HandlerMappingServletContextListener.allHandlerMappings.isEmpty()) {
 				HandlerMappingServletContextListener.allHandlerMappings = getAllHandlerMappings(servletContext);
 			}
+		}
+
+		static void setAllHandlerMappings(List<HandlerMapping> handlerMappings) {
+			HandlerMappingServletContextListener.allHandlerMappings = handlerMappings;
 		}
 
 		private static List<HandlerMapping> getAllHandlerMappings(ServletContext servletContext) {
