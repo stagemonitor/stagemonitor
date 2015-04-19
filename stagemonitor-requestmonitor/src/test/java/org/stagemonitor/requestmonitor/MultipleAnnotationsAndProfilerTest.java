@@ -1,6 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -55,16 +56,12 @@ public class MultipleAnnotationsAndProfilerTest {
 
 	private void assertOneMeterExists(String name) {
 		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
-		assertEquals(1, metricRegistry.getMeters().size());
-		assertEquals(name, metricRegistry.getMeters().keySet().iterator().next());
-
+		assertNotNull(metricRegistry.getMeters().keySet().toString(), metricRegistry.getMeters().get(name));
 	}
 
 	private void assertOneTimerExists(String name) {
 		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
-		assertEquals(1, metricRegistry.getTimers().size());
-		assertEquals(name, metricRegistry.getTimers().keySet().iterator().next());
-
+		assertNotNull(metricRegistry.getTimers().keySet().toString(), metricRegistry.getTimers().get(name));
 	}
 
 }

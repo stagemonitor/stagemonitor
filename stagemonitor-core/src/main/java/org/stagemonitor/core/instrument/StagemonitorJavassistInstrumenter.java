@@ -20,20 +20,20 @@ public abstract class StagemonitorJavassistInstrumenter {
 	}
 
 	private static void initIncludesAndExcludes() {
-		CorePlugin requestMonitorPlugin = Stagemonitor.getConfiguration(CorePlugin.class);
+		CorePlugin corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 
-		excludeContaining = new ArrayList<String>(requestMonitorPlugin.getExcludeContaining().size());
-		for (String exclude : requestMonitorPlugin.getExcludeContaining()) {
+		excludeContaining = new ArrayList<String>(corePlugin.getExcludeContaining().size());
+		for (String exclude : corePlugin.getExcludeContaining()) {
 			excludeContaining.add(exclude.replace('.', '/'));
 		}
 
-		excludes = new ArrayList<String>(requestMonitorPlugin.getExcludePackages().size());
-		for (String exclude : requestMonitorPlugin.getExcludePackages()) {
+		excludes = new ArrayList<String>(corePlugin.getExcludePackages().size());
+		for (String exclude : corePlugin.getExcludePackages()) {
 			excludes.add(exclude.replace('.', '/'));
 		}
 
-		includes = new ArrayList<String>(requestMonitorPlugin.getIncludePackages().size());
-		for (String include : requestMonitorPlugin.getIncludePackages()) {
+		includes = new ArrayList<String>(corePlugin.getIncludePackages().size());
+		for (String include : corePlugin.getIncludePackages()) {
 			includes.add(include.replace('.', '/'));
 		}
 	}

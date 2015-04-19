@@ -18,8 +18,7 @@ public class RuntimeAgentAttacherListener implements ServletContextListener {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	@Override
-	public void contextInitialized(ServletContextEvent sce) {
+	public RuntimeAgentAttacherListener() {
 		final CorePlugin configuration = Stagemonitor.getConfiguration(CorePlugin.class);
 		if (configuration.isStagemonitorActive() && configuration.isAttachAgentAtRuntime()) {
 			try {
@@ -28,6 +27,10 @@ public class RuntimeAgentAttacherListener implements ServletContextListener {
 				logger.warn(e.getMessage(), e);
 			}
 		}
+	}
+
+	@Override
+	public void contextInitialized(ServletContextEvent sce) {
 	}
 
 	@Override

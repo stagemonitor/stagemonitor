@@ -1,6 +1,7 @@
 package org.stagemonitor.core.metrics.aspects;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -79,9 +80,7 @@ public class TimedAspectTest {
 
 	private void assertOneTimerExists(String name) {
 		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
-		assertEquals(metricRegistry.getTimers().keySet().toString(), 1, metricRegistry.getTimers().size());
-		assertEquals(name, metricRegistry.getTimers().keySet().iterator().next());
-
+		assertNotNull(metricRegistry.getTimers().keySet().toString(), metricRegistry.getTimers().get(name));
 	}
 
 }

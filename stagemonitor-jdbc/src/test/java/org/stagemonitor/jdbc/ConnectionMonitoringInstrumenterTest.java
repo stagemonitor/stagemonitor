@@ -76,20 +76,18 @@ public class ConnectionMonitoringInstrumenterTest {
 		final Connection connection = dataSource.getConnection();
 		assertNotEquals(connection, connection);
 		final SortedMap<String,Timer> timers = Stagemonitor.getMetricRegistry().getTimers();
-		assertEquals(1, timers.size());
 		assertNotNull(timers.keySet().toString(), timers.get("getConnection.jdbc:test-testUser"));
 	}
 
-//	@Test
+	@Test
 	public void monitorGetConnectionUsernamePassword() throws Exception {
 		final Connection connection = dataSource.getConnection("user", "pw");
 		assertNotEquals(connection, connection);
 		final SortedMap<String,Timer> timers = Stagemonitor.getMetricRegistry().getTimers();
-		assertEquals(1, timers.size());
 		assertNotNull(timers.keySet().toString(), timers.get("getConnection.jdbc:test-testUser"));
 	}
 
-//	@Test
+	@Test
 	public void testRecordSql() throws Exception {
 		final RequestMonitor.RequestInformation<RequestTrace> requestInformation = requestMonitor
 				.monitor(new MonitoredMethodRequest("testRecordSql()", new MonitoredMethodRequest.MethodExecution() {
