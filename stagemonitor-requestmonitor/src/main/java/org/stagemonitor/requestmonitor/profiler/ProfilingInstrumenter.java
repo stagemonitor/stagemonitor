@@ -10,14 +10,21 @@ import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.CodeIterator;
 import javassist.bytecode.Opcode;
 import org.stagemonitor.agent.ClassUtils;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
+
+	private RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getConfiguration(RequestMonitorPlugin.class);
 
 	private String profilerPackage = Profiler.class.getPackage().getName();
 
 	@Override
 	public boolean isIncluded(String className) {
+		if (!requestMonitorPlugin.isProfilerActive()) {
+			return false;
+		}
 		return super.isIncluded(className) || className.endsWith("Servlet");
 	}
 

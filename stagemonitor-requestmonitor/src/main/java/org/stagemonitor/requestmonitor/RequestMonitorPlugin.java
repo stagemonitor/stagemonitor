@@ -46,6 +46,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Boolean> profilerActive = ConfigurationOption.booleanOption()
+			.key("stagemonitor.profiler.active")
+			.dynamic(false)
+			.label("Activate Profiler")
+			.description("Whether or not the call tree profiler should be active.")
+			.defaultValue(true)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 	private final ConfigurationOption<Long> minExecutionTimeNanos = ConfigurationOption.longOption()
 			.key("stagemonitor.profiler.minExecutionTimeNanos")
 			.dynamic(false)
@@ -153,5 +161,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isCollectDbTimePerRequest() {
 		return collectDbTimePerRequest.getValue();
+	}
+
+	public boolean isProfilerActive() {
+		return profilerActive.getValue();
 	}
 }
