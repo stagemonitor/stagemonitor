@@ -9,6 +9,7 @@ import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.CodeIterator;
 import javassist.bytecode.Opcode;
+import org.stagemonitor.agent.ClassUtils;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
 public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
@@ -16,8 +17,13 @@ public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 	private String profilerPackage = Profiler.class.getPackage().getName();
 
 	@Override
+	public boolean isIncluded(String className) {
+		return super.isIncluded(className) || className.endsWith("Servlet");
+	}
+
+	@Override
 	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
-		if (ctClass.getPackageName().equals(profilerPackage) || ctClass.isInterface()) {
+		if (ctClass.getPackageName().equals(profilerPackage) || ctClass.isInterface() || !ClassUtils.canLoadClass(loader, "org.stagemonitor.requestmonitor.profiler.Profiler")) {
 			return;
 		}
 		CtMethod[] declaredMethods = ctClass.getDeclaredMethods();

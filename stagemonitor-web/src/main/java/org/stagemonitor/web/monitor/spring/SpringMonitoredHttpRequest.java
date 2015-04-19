@@ -22,6 +22,7 @@ import org.springframework.web.servlet.FrameworkServlet;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import org.stagemonitor.agent.ClassUtils;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -76,12 +77,7 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 		private boolean springMvc;
 
 		public HandlerMappingServletContextListener() {
-			try {
-				Class.forName("org.springframework.web.servlet.HandlerMapping");
-				springMvc = true;
-			} catch (ClassNotFoundException e) {
-				springMvc = false;
-			}
+			springMvc = ClassUtils.isPresent("HandlerMapping");
 		}
 
 		@Override
@@ -94,17 +90,29 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 		@Override
 		public void requestInitialized(ServletRequestEvent sre) {
 			if (springMvc && allHandlerMappings.isEmpty()) {
-				setAllHandlerMappings(getAllHandlerMappings(servletContext));
+				HandlerMappingsExtractor.initAllHandlerMappings(servletContext);
 			}
 		}
 
-		synchronized static void setAllHandlerMappings(List<HandlerMapping> allHandlerMappings) {
+		@Override
+		public void contextDestroyed(ServletContextEvent sce) {
+		}
+
+		@Override
+		public void requestDestroyed(ServletRequestEvent sre) {
+		}
+
+	}
+
+	private static class HandlerMappingsExtractor {
+
+		synchronized static void initAllHandlerMappings(ServletContext servletContext) {
 			if (HandlerMappingServletContextListener.allHandlerMappings.isEmpty()) {
-				HandlerMappingServletContextListener.allHandlerMappings = allHandlerMappings;
+				HandlerMappingServletContextListener.allHandlerMappings = getAllHandlerMappings(servletContext);
 			}
 		}
 
-		private List<HandlerMapping> getAllHandlerMappings(ServletContext servletContext) {
+		private static List<HandlerMapping> getAllHandlerMappings(ServletContext servletContext) {
 			List<HandlerMapping> result = new ArrayList<HandlerMapping>();
 			final Enumeration attributeNames = servletContext.getAttributeNames();
 			while (attributeNames.hasMoreElements()) {
@@ -121,12 +129,5 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 			return result;
 		}
 
-		@Override
-		public void contextDestroyed(ServletContextEvent sce) {
-		}
-
-		@Override
-		public void requestDestroyed(ServletRequestEvent sre) {
-		}
 	}
 }

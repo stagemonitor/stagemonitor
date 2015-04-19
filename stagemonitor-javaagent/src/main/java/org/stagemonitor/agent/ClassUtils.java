@@ -9,4 +9,20 @@ public class ClassUtils {
 			return null;
 		}
 	}
+
+	public static boolean isPresent(String className) {
+		return forNameOrNull(className) != null;
+	}
+
+	public static boolean canLoadClass(ClassLoader loader, String className) {
+		if (loader == null) {
+			loader = ClassLoader.getSystemClassLoader();
+		}
+		try {
+			loader.loadClass(className);
+			return true;
+		} catch (ClassNotFoundException e) {
+			return false;
+		}
+	}
 }

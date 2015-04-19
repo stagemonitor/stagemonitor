@@ -284,7 +284,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Attach agent at runtime")
 			.description("Attaches the agent via the Attach API at runtime and retransforms all currently loaded classes.")
-			.label("experimental")
+			.tags("experimental")
 			.defaultValue(false)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
