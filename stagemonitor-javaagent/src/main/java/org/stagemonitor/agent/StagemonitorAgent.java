@@ -9,7 +9,7 @@ public class StagemonitorAgent {
 
 	private static final String INSTRUMENTATION_KEY = StagemonitorAgent.class + ".instrumentation";
 
-	private static boolean initializedViaJavaagent = false;
+	private static boolean initialized = false;
 
 	/**
 	 * Allows the installation of the agent via the -javaagent command line argument
@@ -27,7 +27,7 @@ public class StagemonitorAgent {
 				if (loader == null) {
 					return classfileBuffer;
 				}
-				if (!initializedViaJavaagent) {
+				if (!initialized) {
 					initClassFileTransformer(loader);
 				}
 				return classfileBuffer;
@@ -38,7 +38,7 @@ public class StagemonitorAgent {
 				try {
 					final ClassFileTransformer mainStagemonitorClassFileTransformer = getMainStagemonitorClassFileTransformer(loader, inst);
 					inst.addTransformer(mainStagemonitorClassFileTransformer, true);
-					initializedViaJavaagent = true;
+					initialized = true;
 					// loader could load MainStagemonitorClassFileTransformer - this is the application class loader
 				} catch (Exception e) {
 					// ignore; this is probably not the application class loader
@@ -72,7 +72,4 @@ public class StagemonitorAgent {
 		}
 	}
 
-	public static boolean isInitializedViaJavaagent() {
-		return initializedViaJavaagent;
-	}
 }

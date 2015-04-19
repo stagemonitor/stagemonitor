@@ -46,13 +46,14 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	 * -javaagent command line argument.
 	 */
 	public static void performRuntimeAttachment() {
+		if (StagemonitorAgent.getInstrumentation() != null) {
+			// already initialized via -javaagent
+			return;
+		}
 		metricRegistry = Stagemonitor.getMetricRegistry();
 		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 
 		final Timer.Context time = metricRegistry.timer("internal.transform.performRuntimeAttachment").time();
-		if (StagemonitorAgent.isInitializedViaJavaagent()) {
-			return;
-		}
 		try {
 			Instrumentation instrumentation = AgentLoader.loadAgent();
 			long start = System.currentTimeMillis();
