@@ -27,8 +27,12 @@ public class MDCListener implements ServletRequestListener {
 	public void requestInitialized(ServletRequestEvent sre) {
 		if (corePlugin.isStagemonitorActive()) {
 			final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
-			MDC.put("application", measurementSession.getApplicationName());
-			MDC.put("host", measurementSession.getHostName());
+			if (measurementSession.getApplicationName() != null) {
+				MDC.put("application", measurementSession.getApplicationName());
+			}
+			if (measurementSession.getHostName() != null) {
+				MDC.put("host", measurementSession.getHostName());
+			}
 			String instanceName = measurementSession.getInstanceName();
 			if (instanceName == null) {
 				instanceName = sre.getServletRequest().getServerName();
