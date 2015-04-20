@@ -9,7 +9,7 @@ import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.CodeIterator;
 import javassist.bytecode.Opcode;
-import org.stagemonitor.agent.ClassUtils;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;

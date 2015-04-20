@@ -1,4 +1,4 @@
-package org.stagemonitor.agent;
+package org.stagemonitor.core.util;
 
 public class ClassUtils {
 

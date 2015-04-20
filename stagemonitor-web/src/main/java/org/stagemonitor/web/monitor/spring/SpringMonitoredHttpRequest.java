@@ -22,7 +22,7 @@ import org.springframework.web.servlet.FrameworkServlet;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-import org.stagemonitor.agent.ClassUtils;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -42,7 +42,7 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 	@Override
 	public String getRequestName() {
 		String name = "";
-		for (HandlerMapping handlerMapping : HandlerMappingServletContextListener.allHandlerMappings) {
+		for (HandlerMapping handlerMapping : (List<HandlerMapping>) HandlerMappingServletContextListener.allHandlerMappings) {
 			try {
 				HandlerExecutionChain handler = handlerMapping.getHandler(httpServletRequest);
 				name = getRequestNameFromHandler(handler);
@@ -72,12 +72,13 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 	@WebListener
 	public static class HandlerMappingServletContextListener implements ServletContextListener, ServletRequestListener {
 
-		private static List<HandlerMapping> allHandlerMappings = Collections.emptyList();
+		// don't use typed list so that wildfly does not fail if HandlerMapping is not on the classpath
+		private static List/*<HandlerMapping>*/ allHandlerMappings = Collections.emptyList();
 		private ServletContext servletContext;
 		private boolean springMvc;
 
 		public HandlerMappingServletContextListener() {
-			springMvc = ClassUtils.isPresent("HandlerMapping");
+			springMvc = ClassUtils.isPresent("org.springframework.web.servlet.HandlerMapping");
 		}
 
 		@Override

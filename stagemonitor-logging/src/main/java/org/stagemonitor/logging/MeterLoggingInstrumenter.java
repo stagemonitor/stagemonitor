@@ -8,7 +8,7 @@ import java.util.Set;
 
 import javassist.CtClass;
 import javassist.CtMethod;
-import org.stagemonitor.agent.ClassUtils;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
 /**
