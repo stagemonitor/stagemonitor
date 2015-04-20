@@ -1,7 +1,6 @@
 package org.stagemonitor.jdbc;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
@@ -73,16 +72,14 @@ public class ConnectionMonitoringInstrumenterTest {
 
 	@Test
 	public void monitorGetConnection() throws Exception {
-		final Connection connection = dataSource.getConnection();
-		assertNotEquals(connection, connection);
+		dataSource.getConnection();
 		final SortedMap<String,Timer> timers = Stagemonitor.getMetricRegistry().getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get("getConnection.jdbc:test-testUser"));
 	}
 
 	@Test
 	public void monitorGetConnectionUsernamePassword() throws Exception {
-		final Connection connection = dataSource.getConnection("user", "pw");
-		assertNotEquals(connection, connection);
+		dataSource.getConnection("user", "pw");
 		final SortedMap<String,Timer> timers = Stagemonitor.getMetricRegistry().getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get("getConnection.jdbc:test-testUser"));
 	}

@@ -1,4 +1,4 @@
 dependencies {
 	compile project(":stagemonitor-core")
-	compile 'io.dropwizard.metrics:metrics-jvm:3.1.0'
+	compile "io.dropwizard.metrics:metrics-jvm:$metricsVersion"
 }

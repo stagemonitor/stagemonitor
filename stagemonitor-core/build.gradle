@@ -1,13 +1,13 @@
 dependencies {
 	compile project(":stagemonitor-javaagent")
-	compile 'org.slf4j:slf4j-api:1.7.7'
-	compile 'io.dropwizard.metrics:metrics-core:3.1.0'
-	compile 'io.dropwizard.metrics:metrics-graphite:3.1.0'
-	compile 'io.dropwizard.metrics:metrics-annotation:3.1.0'
-	compile 'io.dropwizard.metrics:metrics-json:3.1.0'
-	compile 'com.fasterxml.jackson.core:jackson-databind:2.4.4'
-	compile 'com.fasterxml.jackson.module:jackson-module-afterburner:2.4.4'
-	compile 'org.javassist:javassist:3.19.0-GA'
+	compile "org.slf4j:slf4j-api:$slf4jVersion"
+	compile "io.dropwizard.metrics:metrics-core:$metricsVersion"
+	compile "io.dropwizard.metrics:metrics-graphite:$metricsVersion"
+	compile "io.dropwizard.metrics:metrics-annotation:$metricsVersion"
+	compile "io.dropwizard.metrics:metrics-json:$metricsVersion"
+	compile "com.fasterxml.jackson.core:jackson-databind:2.4.4"
+	compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"
+	compile "org.javassist:javassist:3.19.0-GA"
 
 	testCompile 'org.elasticsearch:elasticsearch:1.4.1'
 	testCompile 'commons-io:commons-io:2.4'

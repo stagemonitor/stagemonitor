@@ -35,6 +35,13 @@ apply plugin: 'release'
 apply plugin: 'cobertura'
 apply plugin: 'com.github.kt3k.coveralls'
 
+ext {
+	metricsVersion = '3.1.1'
+	slf4jVersion = '1.7.12'
+	jacksonVersion = '2.5.2'
+	esVersion = '1.5.1'
+}
+
 subprojects {
 	configurations {
 		provided
@@ -52,9 +59,9 @@ subprojects {
 	}
 
 	dependencies {
-		testCompile 'junit:junit:4.11'
-		testCompile 'org.mockito:mockito-all:1.10.8'
-		testCompile 'ch.qos.logback:logback-classic:1.1.2'
+		testCompile 'junit:junit:4.12'
+		testCompile 'org.mockito:mockito-all:1.10.19'
+		testCompile 'ch.qos.logback:logback-classic:1.1.3'
 	}
 
 	test.testLogging.exceptionFormat = 'full'
