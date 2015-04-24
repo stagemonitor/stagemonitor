@@ -26,6 +26,9 @@ public class GaugeInstrumenter extends StagemonitorJavassistInstrumenter {
 		final MonitorGauges gaugeAnnotation = (MonitorGauges) ctClass.getAnnotation(MonitorGauges.class);
 		if (gaugeAnnotation != null) {
 			for (CtConstructor ctConstructor : ctClass.getDeclaredConstructors()) {
+				// a constructor either calls this() super()
+				// if it does not explicitly call super() it is called implicitly
+				// by checking callsSuper(), we make sure that we're not instrumenting the class twice
 				if (ctConstructor.isConstructor() && ctConstructor.callsSuper()) {
 					ctConstructor.insertAfter("org.stagemonitor.core.metrics.annotations.GaugeInstrumenter.monitorGauges(this);");
 				}
