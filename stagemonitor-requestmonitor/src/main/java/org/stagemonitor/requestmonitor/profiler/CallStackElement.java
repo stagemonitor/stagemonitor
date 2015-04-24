@@ -1,11 +1,11 @@
 package org.stagemonitor.requestmonitor.profiler;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class CallStackElement {
 
@@ -130,9 +130,8 @@ public class CallStackElement {
 	public CallStackElement executionStopped(long timestamp, long minExecutionTime) {
 		// executionTime is initialized to start timestamp
 		long localExecutionTime = timestamp - this.executionTime;
-		if (localExecutionTime >= minExecutionTime) {
-			this.executionTime = localExecutionTime;
-		} else if (parent != null) {
+		this.executionTime = localExecutionTime;
+		if (localExecutionTime < minExecutionTime && parent != null) {
 			// <this> is always the last entry in parent.getChildren()
 			parent.removeLastChild();
 		}
