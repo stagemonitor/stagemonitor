@@ -33,12 +33,19 @@ public final class NativeUtils {
 	 */
 	public static String addResourcesToLibraryPath(List<String> nativeLibs, String parentDir) throws Exception {
 		StringBuilder newLibraryPath = new StringBuilder();
-		if (System.getProperty(JAVA_LIBRARY_PATH) != null) {
-			newLibraryPath.append(System.getProperty(JAVA_LIBRARY_PATH)).append(File.pathSeparatorChar);
+		final String libraryPath = System.getProperty(JAVA_LIBRARY_PATH);
+		if (libraryPath != null) {
+			newLibraryPath.append(libraryPath).append(File.pathSeparatorChar);
 		}
 		final File tempDirectory = new File(System.getProperty("java.io.tmpdir"), parentDir);
 		tempDirectory.mkdir();
 		newLibraryPath.append(tempDirectory.getAbsolutePath());
+
+		if (libraryPath != null && libraryPath.contains(tempDirectory.getAbsolutePath())) {
+			// this method has already been invoked
+			// no need to re-extractFromJarToTemp
+			return tempDirectory.getAbsolutePath();
+		}
 
 		for (String nativeLib : nativeLibs) {
 			extractFromJarToTemp(nativeLib, tempDirectory);

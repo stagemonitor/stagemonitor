@@ -39,7 +39,12 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 
 	private Sigar sigar;
 
-	public OsPlugin() throws IOException {
+	public OsPlugin() {
+		try {
+			loadNativeSigarLibs();
+		} catch (Exception e) {
+			logger.warn(e.getMessage() + " (this exception was ignored)", e);
+		}
 	}
 
 	public OsPlugin(Sigar sigar) {
@@ -84,7 +89,7 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 	}
 
 	public static Sigar newSigar() throws Exception {
-		final String libraryPath = NativeUtils.addResourcesToLibraryPath(getSigarBindings(), "sigar");
+		final String libraryPath = loadNativeSigarLibs();
 		try {
 			final Sigar s = new Sigar();
 			s.getCpuInfoList();
@@ -93,6 +98,10 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 			logger.warn("Please add -Djava.library.path={} system property to resolve the UnsatisfiedLinkError", libraryPath);
 			throw new RuntimeException(e);
 		}
+	}
+
+	private static String loadNativeSigarLibs() throws Exception {
+		return NativeUtils.addResourcesToLibraryPath(getSigarBindings(), "sigar");
 	}
 
 	/*
@@ -111,9 +120,9 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
 		argsConfigurationSource = getConfiguration(args);
 		Stagemonitor.startMonitoring(getMeasurementSession());
-		while (!Thread.currentThread().isInterrupted()) {
-			Thread.sleep(100);
-		}
+		System.out.println("Press key to exit");
+		System.in.read();
+		Stagemonitor.shutDown();
 	}
 
 	static MeasurementSession getMeasurementSession() {
