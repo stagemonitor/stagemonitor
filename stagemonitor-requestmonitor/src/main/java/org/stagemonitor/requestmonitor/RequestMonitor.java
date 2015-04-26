@@ -361,6 +361,9 @@ public class RequestMonitor {
 		}
 
 		private boolean profileThisExecution() {
+			if (!requestMonitorPlugin.isProfilerActive()) {
+				return false;
+			}
 			int callStackEveryXRequestsToGroup = requestMonitorPlugin.getCallStackEveryXRequestsToGroup();
 			if (callStackEveryXRequestsToGroup == 1) {
 				return true;
