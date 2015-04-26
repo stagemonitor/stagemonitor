@@ -51,6 +51,7 @@ public class ConnectionMonitoringInstrumenterTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
+		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
 
 		Stagemonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
 
