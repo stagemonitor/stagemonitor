@@ -122,9 +122,12 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 		synchronized (this) {
 			properties.put(key, value);
 			try {
-				final URL resource = getClass().getClassLoader().getResource(location);
+				URL resource = getClass().getClassLoader().getResource(location);
 				if (resource == null) {
-					throw new IOException();
+					resource = new URL("file://" + location);
+				}
+				if (!"file".equals(resource.getProtocol())) {
+					throw new IOException("Saving to property files inside a war, ear or jar is not possible.");
 				}
 				File file = new File(resource.toURI());
 				final FileOutputStream out = new FileOutputStream(file);
