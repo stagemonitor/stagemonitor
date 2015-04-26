@@ -38,7 +38,7 @@ public class JvmPlugin extends StagemonitorPlugin {
 				}
 			});
 		} catch (Exception e) {
-			logger.warn("Could not register cpu usage. (this exception is ignored)", e);
+			logger.warn("Could not register cpu usage. ({})", e.getMessage());
 		}
 		registry.register("online", new Gauge<Integer>() {
 			@Override
