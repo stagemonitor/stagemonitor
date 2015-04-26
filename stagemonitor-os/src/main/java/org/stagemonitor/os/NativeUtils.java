@@ -41,12 +41,6 @@ public final class NativeUtils {
 		tempDirectory.mkdir();
 		newLibraryPath.append(tempDirectory.getAbsolutePath());
 
-		if (libraryPath != null && libraryPath.contains(tempDirectory.getAbsolutePath())) {
-			// this method has already been invoked
-			// no need to re-extractFromJarToTemp
-			return tempDirectory.getAbsolutePath();
-		}
-
 		for (String nativeLib : nativeLibs) {
 			extractFromJarToTemp(nativeLib, tempDirectory);
 		}

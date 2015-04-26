@@ -15,6 +15,7 @@ import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.stagemonitor.core.CorePlugin;
@@ -28,23 +29,21 @@ import org.stagemonitor.junit.ExcludeOnTravis;
 public class OsPluginTest {
 
 	private MetricRegistry metricRegistry;
-	private static Sigar sigar;
+	private Sigar sigar;
+	private static OsPlugin osPlugin;
 
-	static {
-		try {
-			sigar = OsPlugin.newSigar();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+	@BeforeClass
+	public static void init() throws Exception {
+		osPlugin = new OsPlugin();
 	}
 
 	@Before
 	public void setUp() throws Exception {
 		metricRegistry = new MetricRegistry();
-		OsPlugin osPlugin = new OsPlugin(sigar);
 		final Configuration configuration = mock(Configuration.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(mock(CorePlugin.class));
 		osPlugin.initializePlugin(metricRegistry, configuration);
+		this.sigar = osPlugin.getSigar();
 	}
 
 	@Test

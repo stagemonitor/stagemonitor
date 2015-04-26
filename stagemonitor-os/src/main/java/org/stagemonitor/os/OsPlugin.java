@@ -41,14 +41,10 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 
 	public OsPlugin() {
 		try {
-			loadNativeSigarLibs();
+			loadNativeSigarBindings();
 		} catch (Exception e) {
 			logger.warn(e.getMessage() + " (this exception was ignored)", e);
 		}
-	}
-
-	public OsPlugin(Sigar sigar) {
-		this.sigar = sigar;
 	}
 
 	@Override
@@ -89,7 +85,7 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 	}
 
 	public static Sigar newSigar() throws Exception {
-		final String libraryPath = loadNativeSigarLibs();
+		final String libraryPath = loadNativeSigarBindings();
 		try {
 			final Sigar s = new Sigar();
 			s.getCpuInfoList();
@@ -100,7 +96,7 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		}
 	}
 
-	private static String loadNativeSigarLibs() throws Exception {
+	private static String loadNativeSigarBindings() throws Exception {
 		return NativeUtils.addResourcesToLibraryPath(getSigarBindings(), "sigar");
 	}
 
@@ -178,5 +174,9 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 	@Override
 	public List<String> getPathsOfWidgetMetricTabPlugins() {
 		return Arrays.asList("/stagemonitor/static/tabs/metrics/os-metrics");
+	}
+
+	public Sigar getSigar() {
+		return sigar;
 	}
 }
