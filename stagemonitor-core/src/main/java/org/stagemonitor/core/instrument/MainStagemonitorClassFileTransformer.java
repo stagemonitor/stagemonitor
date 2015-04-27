@@ -82,14 +82,19 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			return;
 		}
 
-		try {
 		final Timer.Context timeretransformClasses = metricRegistry.timer("internal.transform.retransformClasses").time();
-			instrumentation.retransformClasses(classesToRetransform.toArray(new Class[classesToRetransform.size()]));
-			if (corePlugin.isInternalMonitoringActive()) {
-				timeretransformClasses.stop();
+		for (Class<?> classToRetransform : classesToRetransform) {
+			try {
+				instrumentation.retransformClasses(classToRetransform);
+			} catch (Throwable e) {
+				logger.warn("Failed to retransform class {}", classToRetransform.getName());
+				logger.warn(e.getMessage(), e);
 			}
-		} catch (Exception e) {
-			logger.warn(e.getMessage(), e);
+		}
+
+//			instrumentation.retransformClasses(classesToRetransform.toArray(new Class[classesToRetransform.size()]));
+		if (corePlugin.isInternalMonitoringActive()) {
+			timeretransformClasses.stop();
 		}
 	}
 

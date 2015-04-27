@@ -30,7 +30,12 @@ public final class Stagemonitor {
 	private static Iterable<StagemonitorPlugin> plugins;
 
 	static {
-		reset();
+		try {
+			reset();
+		} catch (Throwable e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
 	}
 
 	private Stagemonitor() {

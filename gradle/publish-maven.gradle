@@ -1,4 +1,21 @@
 apply plugin: 'com.bmuschko.nexus'
+shadowJar {
+	classifier = ''
+	exclude 'LICENSE'
+	exclude 'NOTICE'
+	dependencies {
+		include(dependency('by.default:exclude:all'))
+	}
+//	relocate 'com.fasterxml', 'org.stagemonitor'
+	relocate 'javassist', 'org.stagemonitor.javassist'
+}
+
+artifacts {
+	archives shadowJar
+}
+
+uploadArchives.dependsOn << compileJava
+install.dependsOn << compileJava
 
 modifyPom {
 	project {

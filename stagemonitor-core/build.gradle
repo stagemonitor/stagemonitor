@@ -5,10 +5,19 @@ dependencies {
 	compile "io.dropwizard.metrics:metrics-graphite:$metricsVersion"
 	compile "io.dropwizard.metrics:metrics-annotation:$metricsVersion"
 	compile "io.dropwizard.metrics:metrics-json:$metricsVersion"
-	compile "com.fasterxml.jackson.core:jackson-databind:2.4.4"
+	compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 	compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"
-	compile "org.javassist:javassist:3.19.0-GA"
+	shade "org.javassist:javassist:3.19.0-GA"
 
 	testCompile 'org.elasticsearch:elasticsearch:1.4.1'
 	testCompile 'commons-io:commons-io:2.4'
+}
+
+shadowJar {
+	dependencies {
+//		include(dependency("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"))
+//		include(dependency("com.fasterxml.jackson.core:jackson-core:$jacksonVersion"))
+//		include(dependency("com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"))
+		include(dependency("org.javassist:javassist:3.19.0-GA"))
+	}
 }

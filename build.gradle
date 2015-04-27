@@ -22,6 +22,7 @@ buildscript {
 		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.0.0'
 		classpath 'com.github.townsfolk:gradle-release:1.2'
 		classpath 'com.bmuschko:gradle-nexus-plugin:2.0'
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
 	}
 }
 
@@ -43,16 +44,25 @@ ext {
 }
 
 subprojects {
-	configurations {
-		provided
-		compile.extendsFrom provided
-	}
+	group = "org.stagemonitor"
+
 	apply plugin: 'idea'
 	apply plugin: 'eclipse'
 	apply plugin: 'java'
 	apply plugin: 'cobertura'
+	apply plugin: 'com.github.johnrengelman.shadow'
 
-	group = "org.stagemonitor"
+	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
+		apply from: "$rootDir/gradle/publish-maven.gradle"
+	}
+
+	configurations {
+		provided
+		compile.extendsFrom provided
+
+		shade
+		compile.extendsFrom shade
+	}
 
 	repositories {
 		mavenCentral()
@@ -81,10 +91,6 @@ subprojects {
 	cobertura {
 		coverageFormats = []
 		coverageIgnoreTrivial = true
-	}
-
-	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
-		apply from: "$rootDir/gradle/publish-maven.gradle"
 	}
 
 	javadoc {
