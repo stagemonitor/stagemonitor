@@ -19,13 +19,13 @@ public class RuntimeAgentAttacherListener implements ServletContextListener {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public RuntimeAgentAttacherListener() {
-		final CorePlugin configuration = Stagemonitor.getConfiguration(CorePlugin.class);
-		if (configuration.isStagemonitorActive() && configuration.isAttachAgentAtRuntime()) {
-			try {
+		try {
+			final CorePlugin configuration = Stagemonitor.getConfiguration(CorePlugin.class);
+			if (configuration.isStagemonitorActive() && configuration.isAttachAgentAtRuntime()) {
 				MainStagemonitorClassFileTransformer.performRuntimeAttachment();
-			} catch (Exception e) {
-				logger.warn(e.getMessage(), e);
 			}
+		} catch (Exception e) {
+			logger.warn(e.getMessage(), e);
 		}
 	}
 
