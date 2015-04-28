@@ -31,7 +31,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public MainStagemonitorClassFileTransformer() {
 		metricRegistry = Stagemonitor.getMetricRegistry();
 		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
-		instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class);
+		instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class, Stagemonitor.class.getClassLoader());
 		try {
 			for (Object instrumenter : instrumenters) {
 				logger.info("Registering " + instrumenter.getClass().getSimpleName());
@@ -83,7 +83,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		}
 
 		try {
-			final Timer.Context timeretransformClasses = metricRegistry.timer("internal.transform.retransformClasses").time();
+		final Timer.Context timeretransformClasses = metricRegistry.timer("internal.transform.retransformClasses").time();
 			instrumentation.retransformClasses(classesToRetransform.toArray(new Class[classesToRetransform.size()]));
 			if (corePlugin.isInternalMonitoringActive()) {
 				timeretransformClasses.stop();

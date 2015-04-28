@@ -72,7 +72,7 @@ public class Configuration {
 	 */
 	public Configuration(Class<? extends ConfigurationOptionProvider> optionProviderClass,
 						 List<ConfigurationSource> configSources, String updateConfigPasswordKey) {
-		this(ServiceLoader.load(optionProviderClass), configSources, updateConfigPasswordKey);
+		this(ServiceLoader.load(optionProviderClass, Configuration.class.getClassLoader()), configSources, updateConfigPasswordKey);
 	}
 
 	/**

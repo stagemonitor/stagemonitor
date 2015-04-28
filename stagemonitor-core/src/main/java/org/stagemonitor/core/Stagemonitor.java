@@ -119,7 +119,7 @@ public final class Stagemonitor {
 	 */
 	public static void shutDown() {
 		measurementSession.setEndTimestamp(System.currentTimeMillis());
-		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class)) {
+		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class, Stagemonitor.class.getClassLoader())) {
 			stagemonitorPlugin.onShutDown();
 		}
 	}
@@ -182,16 +182,16 @@ public final class Stagemonitor {
 
 	private static void reloadConfiguration() {
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
-		for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class)) {
+		for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {
 			initializer.modifyConfigurationSources(configurationSources);
 		}
 		configurationSources.remove(null);
 
-		plugins = ServiceLoader.load(StagemonitorPlugin.class);
+		plugins = ServiceLoader.load(StagemonitorPlugin.class, Stagemonitor.class.getClassLoader());
 		configuration = new Configuration(plugins, configurationSources, STAGEMONITOR_PASSWORD);
 
 		try {
-			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class)) {
+			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {
 				initializer.onConfigurationInitialized(configuration);
 			}
 		} catch (Exception e) {

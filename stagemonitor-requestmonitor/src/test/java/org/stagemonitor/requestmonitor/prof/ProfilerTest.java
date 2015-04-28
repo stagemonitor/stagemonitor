@@ -21,7 +21,7 @@ public class ProfilerTest {
 	public void testProfiler() {
 		ProfilerTest profilerTest = new ProfilerTest();
 		CallStackElement total = Profiler.activateProfiling("total");
-		profilerTest.method1();
+		Assert.assertEquals(21, profilerTest.method1());
 		Profiler.stop();
 
 		Assert.assertEquals(total.toString(), 1, total.getChildren().size());
