@@ -32,7 +32,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<Boolean> collectRequestStats = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.collectRequestStats")
-			.dynamic(false)
+			.dynamic(true)
 			.label("Collect request stats")
 			.description("Whether or not metrics about requests (Call Stacks, response times, errors status codes) should be collected.")
 			.defaultValue(true)
