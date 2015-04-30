@@ -218,6 +218,9 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private void passthrough(ServletResponse originalResponse, HttpServletResponseBufferWrapper responseWrapper) throws IOException {
+		if (originalResponse.isCommitted()) {
+			return;
+		}
 		if (responseWrapper.isUsingWriter()) {
 			originalResponse.getWriter().write(responseWrapper.getWriter().getOutput().toString());
 		} else {
