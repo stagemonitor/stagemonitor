@@ -22,4 +22,4 @@ If you encounter any issues or if you have a question, don't hesitate to create 
 The mailing list can be found at https://github.com/stagemonitor/stagemonitor-mailinglist
 
 ## Build Locally
-To build this project locally, clone the repo and execute `./gradlew install` (Linux) `gradlew.bat install` (Windows) to install stagemonitor to your local maven repo (`~/.m2/repository/org/stagemonitor/`).
+To build this project locally, clone the repo and execute `./gradlew compileJava install` (Linux) `gradlew.bat compileJava install` (Windows) to install stagemonitor to your local maven repo (`~/.m2/repository/org/stagemonitor/`).
