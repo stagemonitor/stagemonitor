@@ -40,7 +40,6 @@ public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 					&& !Modifier.isFinal(m.getModifiers())
 					&& ctClass.equals(m.getDeclaringClass())) {
 
-				// workaround for https://issues.jboss.org/browse/JASSIST-241
 				if (hasSwitchCase(m)) {
 					continue;
 				}
@@ -52,6 +51,7 @@ public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	/**
 	 * Javassist has problems when a method contains a return statement before a switch case.
+	 * Workaround for https://issues.jboss.org/browse/JASSIST-241
 	 *
 	 * @param m the method to check
 	 * @return <code>true</code>, if the method contains a switch case statement, <code>false</code> otherwise

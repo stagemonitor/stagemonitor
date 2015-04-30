@@ -181,54 +181,8 @@ final class AgentLoader {
 		if (agentFile.getPath().endsWith(".jar") && agentFile.isFile()) {
 			return agentFile;
 		}
-		// fall back to stagemonitor-agent.jar which is inside stagemonitor-javaagent-<version>.jar
-		agentFile = getAgentJarFromResource();
-		if (agentFile != null) {
-			// the agent jar resource is only available in stagemonitor-javaagent-<version>.jar
-			// (see stagemonitor-javaagen/build.gradle) so during development it is not available
-			return agentFile;
-		}
 
-		// the last fallback is to dynamically create the jar
-		// this works during development, but for some obscure reason it does not work for example with tomcat
-		// the Attach Listener fails wich a ClassNotFoundException
 		return dynamicallyCreateAgentJar();
-	}
-
-	private static File getAgentJarFromResource() throws IOException {
-		URL agent = StagemonitorAgent.class.getClassLoader().getResource("stagemonitor-agent.jar");
-		if (agent == null) {
-			return null;
-		} else if (agent.getProtocol().equals("file")) {
-			return new File(agent.getFile());
-		} else {
-			File temp = File.createTempFile("stagemonitor-agent", ".jar");
-			try {
-				FileOutputStream fout = new FileOutputStream(temp);
-				try {
-					InputStream in = agent.openStream();
-					try {
-						byte[] buffer = new byte[1024];
-						while (true) {
-							int read = in.read(buffer);
-							if (read < 0) {
-								break;
-							} else {
-								fout.write(buffer, 0, read);
-							}
-						}
-					} finally {
-						in.close();
-					}
-				} finally {
-					fout.close();
-				}
-			} finally {
-				temp.deleteOnExit();
-			}
-			LOGGER.info("Extracted agent jar to temporary file " + temp);
-			return temp;
-		}
 	}
 
 	private static File dynamicallyCreateAgentJar() throws IOException {
@@ -236,8 +190,8 @@ final class AgentLoader {
 		try {
 			JarOutputStream out = new JarOutputStream(new FileOutputStream(temp), getManifest(StagemonitorAgent.class.getName()));
 			try {
-				final String agentLocation = '/' + StagemonitorAgent.class.getName().replace('.', '/') + ".class";
-				InputStream in = StagemonitorAgent.class.getResourceAsStream(agentLocation);
+				final String agentLocation = StagemonitorAgent.class.getName().replace('.', '/') + ".class";
+				InputStream in = StagemonitorAgent.class.getResourceAsStream("/" + agentLocation);
 				out.putNextEntry(new JarEntry(agentLocation));
 				IOUtils.copy(in, out);
 			} finally {

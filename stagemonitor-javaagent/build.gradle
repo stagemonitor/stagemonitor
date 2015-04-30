@@ -1,27 +1,9 @@
-ext.agentManifest = ["Manifest-Version" : "1.0",
-			"Can-Redefine-Classes": true,
-			"Can-Retransform-Classes": true,
-			"Premain-Class": "org.stagemonitor.agent.StagemonitorAgent",
-			"Agent-Class": "org.stagemonitor.agent.StagemonitorAgent"]
-
-task agentJar(type: Jar) {
-	archiveName = 'stagemonitor-agent.jar'
-	with jar
-	manifest {
-		attributes(agentManifest)
-	}
-}
-
-task copyAgentJar(type: Copy) {
-	dependsOn << agentJar
-	from 'build/libs/stagemonitor-agent.jar'
-	into 'build/resources/main'
-}
-
-jar.dependsOn << copyAgentJar
-
 jar.doFirst{
 	manifest {
-		attributes(agentManifest)
+		attributes("Manifest-Version" : "1.0",
+				"Can-Redefine-Classes": true,
+				"Can-Retransform-Classes": true,
+				"Premain-Class": "org.stagemonitor.agent.StagemonitorAgent",
+				"Agent-Class": "org.stagemonitor.agent.StagemonitorAgent")
 	}
 }
