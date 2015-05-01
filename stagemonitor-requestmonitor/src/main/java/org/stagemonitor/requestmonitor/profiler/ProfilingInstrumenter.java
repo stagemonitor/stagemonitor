@@ -25,7 +25,11 @@ public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 		if (!requestMonitorPlugin.isProfilerActive()) {
 			return false;
 		}
-		return super.isIncluded(className) || className.endsWith("Servlet");
+		return super.isIncluded(className) || isServlet(className);
+	}
+
+	private boolean isServlet(String className) {
+		return className.endsWith("Servlet") && !className.contains("stagemonitor");
 	}
 
 	@Override

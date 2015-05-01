@@ -62,7 +62,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			List<Class<?>> classesToRetransform = new LinkedList<Class<?>>();
 			for (Class loadedClass : instrumentation.getAllLoadedClasses()) {
 				final boolean included = transformer.isIncluded(loadedClass.getName().replace(".", "/"));
-				if (included && instrumentation.isModifiableClass(loadedClass)) {
+				if (included && instrumentation.isModifiableClass(loadedClass) && !loadedClass.isInterface()) {
 					classesToRetransform.add(loadedClass);
 				}
 			}
