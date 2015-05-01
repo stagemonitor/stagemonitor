@@ -9,6 +9,7 @@ import com.codahale.metrics.annotation.Timed;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.scheduling.annotation.Async;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
@@ -26,6 +27,7 @@ public class TimedAspectTest {
 		}
 
 		@Timed(absolute = true)
+		@Async
 		public void timedAbsolute() {
 		}
 
@@ -35,6 +37,10 @@ public class TimedAspectTest {
 
 		@Timed(name = "myTimedNameAbsolute", absolute = true)
 		public void timedNameAbsolute() {
+		}
+
+		@Async
+		public void asyncCall() {
 		}
 	}
 
@@ -76,6 +82,12 @@ public class TimedAspectTest {
 	public void testTimedNameAbsolute() {
 		testObject.timedNameAbsolute();
 		assertOneTimerExists("timer.myTimedNameAbsolute");
+	}
+
+	@Test
+	public void testAsyncAnnotation() {
+		testObject.asyncCall();
+		assertOneTimerExists("timer.TimedAspectTest$TestObject#asyncCall");
 	}
 
 	private void assertOneTimerExists(String name) {
