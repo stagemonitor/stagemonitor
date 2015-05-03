@@ -37,7 +37,7 @@ apply plugin: 'cobertura'
 apply plugin: 'com.github.kt3k.coveralls'
 
 ext {
-	metricsVersion = '3.1.1'
+	metricsVersion = '3.1.2'
 	slf4jVersion = '1.7.12'
 	jacksonVersion = '2.5.2'
 	esVersion = '1.5.1'
