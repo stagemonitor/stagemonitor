@@ -1,9 +1,17 @@
-jar.doFirst{
+ext.manifestAttributes = ["Manifest-Version" : "1.0",
+		"Can-Redefine-Classes": true,
+		"Can-Retransform-Classes": true,
+		"Premain-Class": "org.stagemonitor.agent.StagemonitorAgent",
+		"Agent-Class": "org.stagemonitor.agent.StagemonitorAgent"]
+
+jar.doFirst {
 	manifest {
-		attributes("Manifest-Version" : "1.0",
-				"Can-Redefine-Classes": true,
-				"Can-Retransform-Classes": true,
-				"Premain-Class": "org.stagemonitor.agent.StagemonitorAgent",
-				"Agent-Class": "org.stagemonitor.agent.StagemonitorAgent")
+		attributes(manifestAttributes)
+	}
+}
+
+shadowJar {
+	manifest {
+		attributes(manifestAttributes)
 	}
 }
