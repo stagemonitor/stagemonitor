@@ -109,9 +109,8 @@ public class RequestMonitor {
 				createMeasurementSession();
 			}
 
-			final boolean firstRequest = noOfRequests.get() == 0;
-			info.firstRequest = firstRequest;
-			if (Stagemonitor.getMeasurementSession().getInstanceName() == null && firstRequest) {
+			info.firstRequest = noOfRequests.get() == 0;
+			if (Stagemonitor.getMeasurementSession().getInstanceName() == null) {
 				getInstanceNameFromExecution(monitoredRequest);
 			}
 
