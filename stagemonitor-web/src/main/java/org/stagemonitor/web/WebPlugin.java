@@ -165,7 +165,9 @@ public class WebPlugin extends StagemonitorPlugin {
 					"monitor but consume resources when you do.")
 			.defaultValue(SetValueConverter.immutableSet(
 					// exclude paths of static vaadin resources
-					"/VAADIN"))
+					"/VAADIN/",
+					// don't monitor vaadin heatbeat
+					"/HEARTBEAT/"))
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> monitorOnlyForwardedRequests = ConfigurationOption.booleanOption()
