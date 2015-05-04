@@ -1,10 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import com.codahale.metrics.MetricRegistry;
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -14,6 +9,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+
+import com.codahale.metrics.MetricRegistry;
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
 
 public class MonitoredMethodExecutionTest {
 
@@ -37,13 +37,11 @@ public class MonitoredMethodExecutionTest {
 	public void testDoubleForwarding() throws Exception {
 		testObject.monitored1();
 		assertEquals(1, requestInformation1.getExecutionResult());
-		assertFalse(requestInformation1.forwardedExecution);
+		assertFalse(requestInformation1.isForwarded());
 		assertEquals("monitored1()", requestInformation1.requestTrace.getName());
 		assertEquals("1, test", requestInformation1.requestTrace.getParameter());
-		assertTrue(requestInformation2.forwardedExecution);
-		assertFalse("monitored2()", requestInformation2.monitorThisExecution()); // forwarded method executions are not monitored
-		assertTrue(requestInformation3.forwardedExecution);
-		assertFalse("monitored3()", requestInformation3.monitorThisExecution()); // forwarded method executions are not monitored
+		assertTrue(requestInformation2.isForwarded());
+		assertTrue(requestInformation3.isForwarded());
 
 		assertNotNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored1()"), "server", "time", "total" )));
 		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored2()"), "server", "time", "total" )));

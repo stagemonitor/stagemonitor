@@ -28,7 +28,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 			}
 		});
 
-		if (parameters != null && parameters.length > 1) {
+		if (parameters != null && parameters.length > 0) {
 			 String params = Arrays.asList(this.parameters).toString();
 			// remove rectangular brackets ([])
 			params = params.substring(1, params.length() - 1);

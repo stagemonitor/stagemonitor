@@ -1,5 +1,9 @@
 package org.stagemonitor.requestmonitor;
 
+import static com.codahale.metrics.MetricRegistry.name;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Date;
@@ -26,10 +30,6 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
-import static com.codahale.metrics.MetricRegistry.name;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
 public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
@@ -40,12 +40,11 @@ public class RequestMonitor {
 	 * Example: /a is forwarding the request to /b. /a is the forwarding request /b is the real or forwarded request.
 	 * Only /b will be measured, /a will be ignored.
 	 * <p/>
-	 * To enable this behaviour in a web environment, make sure to include
-	 * <code>&lt;dispatcher>FORWARD&lt;/dispatcher></code> in the web.xml filter definition.
+	 * To enable this behaviour in a web environment, make sure to set stagemonitor.web.monitorOnlyForwardedRequests to true.
 	 */
-	private static ThreadLocal<RequestTrace> request = new ThreadLocal<RequestTrace>();
+	private static ThreadLocal<RequestInformation<? extends RequestTrace>> request = new ThreadLocal<RequestInformation<? extends RequestTrace>>();
 
-	private static final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>(){{
+	private static final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>() {{
 		add(new LogRequestTraceReporter());
 		add(new ElasticsearchRequestTraceReporter());
 	}};
@@ -95,50 +94,84 @@ public class RequestMonitor {
 		Stagemonitor.setMeasurementSession(measurementSession);
 	}
 
-	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
-		long overhead1 = System.nanoTime();
+	public <T extends RequestTrace> void monitorStart(MonitoredRequest<T> monitoredRequest) {
+		final long start = System.nanoTime();
 		RequestInformation<T> info = new RequestInformation<T>();
-		if (!corePlugin.isStagemonitorActive()) {
-			info.executionResult = monitoredRequest.execute();
-			return info;
-		}
-
-		if (Stagemonitor.getMeasurementSession().isNull()) {
-			createMeasurementSession();
-		}
-
-		final boolean firstRequest = noOfRequests.get() == 0;
-		if (Stagemonitor.getMeasurementSession().getInstanceName() == null && firstRequest) {
-			getInstanceNameFromExecution(monitoredRequest);
-		}
-
-		final boolean monitor = requestMonitorPlugin.isCollectRequestStats() && isWarmedUp();
-		if (monitor) {
-			if (!Stagemonitor.isStarted()) {
-				info.startup = Stagemonitor.startMonitoring();
-			}
-			beforeExecution(monitoredRequest, info);
-		}
+		info.monitoredRequest = monitoredRequest;
+		detectForwardedRequest(info);
+		request.set(info);
 		try {
-			overhead1 = System.nanoTime() - overhead1;
-			info.executionResult = monitoredRequest.execute();
-			return info;
-		} catch (Exception e) {
-			recordException(info, e);
-			throw e;
-		} finally {
-			long overhead2 = System.nanoTime();
-			if (monitor) {
-				afterExecution(monitoredRequest, info);
+			if (!corePlugin.isStagemonitorActive()) {
+				return;
 			}
 
-			if (!firstRequest) {
-				trackOverhead(overhead1, overhead2);
+			if (Stagemonitor.getMeasurementSession().isNull()) {
+				createMeasurementSession();
 			}
+
+			final boolean firstRequest = noOfRequests.get() == 0;
+			info.firstRequest = firstRequest;
+			if (Stagemonitor.getMeasurementSession().getInstanceName() == null && firstRequest) {
+				getInstanceNameFromExecution(monitoredRequest);
+			}
+
+			if (info.monitorThisRequest()) {
+				if (!Stagemonitor.isStarted()) {
+					info.startup = Stagemonitor.startMonitoring();
+				}
+				beforeExecution(monitoredRequest, info);
+			}
+		} finally {
+			info.overhead1 = System.nanoTime() - start;
 		}
 	}
 
-	private void recordException(RequestInformation<?> info, Exception e) throws Exception {
+	public <T extends RequestTrace> void monitorStop() {
+		long overhead2 = System.nanoTime();
+		final RequestInformation<T> info = (RequestInformation<T>) request.get();
+		request.set(info.parent);
+		if (info.monitorThisRequest() && info.hasRequestName()) {
+			try {
+				if (info.startup != null) {
+					info.startup.get();
+				}
+				monitorAfterExecution(info.monitoredRequest, info);
+			} catch (Exception e) {
+				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
+			}
+		} else {
+			removeTimerIfCountIsZero(info);
+		}
+
+		cleanUpAfter(info);
+
+		if (!info.firstRequest) {
+			trackOverhead(info.overhead1, overhead2);
+		}
+	}
+
+	private <T extends RequestTrace> void cleanUpAfter(RequestInformation<T> info) {
+		if (info.requestTrace != null) {
+			Profiler.clearMethodCallParent();
+		}
+	}
+
+	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
+		try {
+			monitorStart(monitoredRequest);
+			final RequestInformation<T> info = (RequestInformation<T>) request.get();
+			info.executionResult = monitoredRequest.execute();
+			return info;
+		} catch (Exception e) {
+			recordException(e);
+			throw e;
+		} finally {
+			monitorStop();
+		}
+	}
+
+	public void recordException(Exception e) throws Exception {
+		final RequestInformation<? extends RequestTrace> info = request.get();
 		if (info.requestTrace != null) {
 			info.requestTrace.setException(e);
 		}
@@ -175,13 +208,7 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		info.requestTrace = monitoredRequest.createRequestTrace();
 		try {
-			detectForwardedRequest(monitoredRequest, info);
-			if (!info.monitorThisExecution) {
-				return;
-			}
-			request.set(info.requestTrace);
-
-			if (info.profileThisExecution()) {
+			if (info.profileThisRequest()) {
 				final CallStackElement root = Profiler.activateProfiling("total");
 				info.requestTrace.setCallStack(root);
 			}
@@ -190,62 +217,28 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> void detectForwardedRequest(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
+	private <T extends RequestTrace> void detectForwardedRequest(RequestInformation<T> info) {
 		if (request.get() != null) {
 			// there is already an request set in this thread -> this execution must have been forwarded
-			info.forwardedExecution = true;
-			if (!monitoredRequest.isMonitorForwardedExecutions()) {
-				info.monitorThisExecution = false;
-			}
-		}
-	}
-
-	private <T extends RequestTrace> void afterExecution(MonitoredRequest<T> monitoredRequest,
-															 RequestInformation<T> info) {
-		final T requestTrace = info.requestTrace;
-		try {
-			if (info.startup != null) {
-				info.startup.get();
-			}
-			if (info.monitorThisExecution() && requestTrace.getName() != null && !requestTrace.getName().isEmpty()) {
-				monitorAfterExecution(monitoredRequest, info);
-			}
-		} catch (Exception e) {
-			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
-		} finally {
-			/*
-			 * The forwarded execution is executed in the same thread.
-			 * Only remove the thread local on the topmost execution context,
-			 * otherwise info.isForwardingExecution() doesn't work
-			 */
-			if (!info.forwardedExecution) {
-				request.remove();
-			}
-			if (requestTrace != null) {
-				Profiler.clearMethodCallParent();
-			}
+			info.parent = (RequestInformation<T>) request.get();
+			info.parent.child = info;
 		}
 	}
 
 	private <T extends RequestTrace> void monitorAfterExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		final T requestTrace = info.requestTrace;
-		// if forwarded executions are not monitored, info.monitorThisExecution() would have returned false
-		if (!info.isForwardingExecution()) {
-			final long executionTime = System.nanoTime() - info.start;
-			final long cpuTime = getCpuTime() - info.startCpu;
-			requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
-			requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
-			monitoredRequest.onPostExecute(info);
+		final long executionTime = System.nanoTime() - info.start;
+		final long cpuTime = getCpuTime() - info.startCpu;
+		requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
+		requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
+		monitoredRequest.onPostExecute(info);
 
-			if (requestTrace.getCallStack() != null) {
-				Profiler.stop();
-				requestTrace.getCallStack().setSignature(requestTrace.getName());
-				reportRequestTrace(requestTrace);
-			}
-			trackMetrics(info, executionTime, cpuTime);
-		} else {
-			removeTimerIfCountIsZero(info);
+		if (requestTrace.getCallStack() != null) {
+			Profiler.stop();
+			requestTrace.getCallStack().setSignature(requestTrace.getName());
+			reportRequestTrace(requestTrace);
 		}
+		trackMetrics(info, executionTime, cpuTime);
 	}
 
 	private <T extends RequestTrace> void removeTimerIfCountIsZero(RequestInformation<T> info) {
@@ -331,13 +324,38 @@ public class RequestMonitor {
 		T requestTrace = null;
 		private long start = System.nanoTime();
 		private long startCpu = getCpuTime();
-		boolean forwardedExecution = false;
 		private Object executionResult = null;
-		private boolean monitorThisExecution = true;
 		private Future<?> startup;
+		private long overhead1;
+		private MonitoredRequest<T> monitoredRequest;
+		private boolean firstRequest;
+		private RequestInformation<T> parent;
+		private RequestInformation<T> child;
 
-		boolean monitorThisExecution() {
-			return monitorThisExecution;
+		/**
+		 * If the request has no name it means that it should not be monitored.
+		 *
+		 * @return <code>true</code>, if the request trace has a name, <code>false</code> otherwise
+		 */
+		private boolean hasRequestName() {
+			return requestTrace != null && requestTrace.getName() != null && !requestTrace.getName().isEmpty();
+		}
+
+		private boolean monitorThisRequest() {
+			if (!requestMonitorPlugin.isCollectRequestStats() || !isWarmedUp()) {
+				return false;
+			}
+
+			if (isForwarded() && isForwarding()) {
+				return false;
+			}
+			if (isForwarded()) {
+				return monitoredRequest.isMonitorForwardedExecutions();
+			}
+			if (isForwarding()) {
+				return !monitoredRequest.isMonitorForwardedExecutions();
+			}
+			return true;
 		}
 
 		public String getTimerName() {
@@ -349,7 +367,7 @@ public class RequestMonitor {
 		 * {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()} is <code>false</code>
 		 *
 		 * @return the request trace or <code>null</code>, if
-		 * {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()} is <code>false</code>
+		 *         {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()} is <code>false</code>
 		 */
 		public T getRequestTrace() {
 			return requestTrace;
@@ -360,7 +378,7 @@ public class RequestMonitor {
 			return metricRegistry.timer(getTimerMetricName(getTimerName()));
 		}
 
-		private boolean profileThisExecution() {
+		private boolean profileThisRequest() {
 			if (!requestMonitorPlugin.isProfilerActive()) {
 				return false;
 			}
@@ -393,8 +411,8 @@ public class RequestMonitor {
 		 *
 		 * @return true, if this request is a forwarding request, false otherwise
 		 */
-		private boolean isForwardingExecution() {
-			return !requestTrace.getId().equals(request.get().getId());
+		private boolean isForwarding() {
+			return child != null;
 		}
 
 		public Object getExecutionResult() {
@@ -407,9 +425,13 @@ public class RequestMonitor {
 					"requestTrace=" + requestTrace +
 					", start=" + start +
 					", startCpu=" + startCpu +
-					", forwardedExecution=" + forwardedExecution +
+					", forwardedExecution=" + isForwarded() +
 					", executionResult=" + executionResult +
 					'}';
+		}
+
+		public boolean isForwarded() {
+			return parent != null;
 		}
 	}
 
@@ -417,7 +439,8 @@ public class RequestMonitor {
 	 * @return the {@link RequestTrace} of the current request
 	 */
 	public static RequestTrace getRequest() {
-		return request.get();
+		final RequestInformation<? extends RequestTrace> requestInformation = request.get();
+		return requestInformation != null ? requestInformation.getRequestTrace() : null;
 	}
 
 	/**

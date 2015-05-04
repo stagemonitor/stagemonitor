@@ -1,5 +1,20 @@
 package org.stagemonitor.requestmonitor;
 
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.stagemonitor.core.Stagemonitor.getMetricRegistry;
+import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+
+import java.io.IOException;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import org.junit.Before;
@@ -10,21 +25,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import java.io.IOException;
-
-import static com.codahale.metrics.MetricRegistry.name;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.core.Stagemonitor.getMetricRegistry;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 public class MonitoredHttpExecutionForwardingTest {
 
@@ -47,9 +47,9 @@ public class MonitoredHttpExecutionForwardingTest {
 	public void testForwarding() throws Exception {
 		TestObject testObject = new TestObject(new RequestMonitor());
 		testObject.monitored1();
-		assertFalse(requestInformation1.forwardedExecution);
-		assertTrue(requestInformation2.forwardedExecution);
-		assertTrue(requestInformation3.forwardedExecution);
+		assertFalse(requestInformation1.isForwarded());
+		assertTrue(requestInformation2.isForwarded());
+		assertTrue(requestInformation3.isForwarded());
 
 		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
 		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
@@ -65,7 +65,7 @@ public class MonitoredHttpExecutionForwardingTest {
 		testObject.monitored3();
 		assertNull(requestInformation1);
 		assertNull(requestInformation2);
-		assertFalse(requestInformation3.forwardedExecution);
+		assertFalse(requestInformation3.isForwarded());
 
 		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
 		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
