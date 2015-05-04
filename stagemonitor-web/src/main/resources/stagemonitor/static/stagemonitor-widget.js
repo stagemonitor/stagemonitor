@@ -94,4 +94,11 @@ $(document).ready(function () {
 	} catch (e) {
 	}
 
+	$("#tab-content").on("click", ".branch", function (e) {
+		if (!$(e.target).hasClass("expander")) {
+			var treeTableNodeId = $(this).data("tt-id");
+			$("#stagemonitor-calltree").treetable("node", treeTableNodeId).toggle();
+		}
+	});
+
 });
