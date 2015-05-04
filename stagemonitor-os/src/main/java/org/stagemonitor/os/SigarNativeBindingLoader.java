@@ -6,63 +6,68 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.util.List;
+
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarLoader;
 
 /**
- * Simple library class for working with JNI (Java Native Interface)
- *
- * http://frommyplayground.com/how-to-load-native-jni-library-from-jar
+ * Extracts the native bindings for sigar and tells sigar where to find them.
+ * That way, that there is no need to specify the Java library path (<code>-Djava.library.path=/sigar</code>).
+ * <p/>
+ * Inspired by http://frommyplayground.com/how-to-load-native-jni-library-from-jar
  *
  * @author Adam Heirnich &lt;adam@adamh.cz&gt;, http://www.adamh.cz
  */
-public final class NativeUtils {
+public final class SigarNativeBindingLoader {
 
-	private static final String JAVA_LIBRARY_PATH = "java.library.path";
+	/**
+	 * This system property tells sigar where to find the native bindings
+	 */
+	private static final String SIGAR_PATH = "org.hyperic.sigar.path";
 
-	private NativeUtils() {
+	/**
+	 * This is the directory that contains the native bindings
+	 */
+	private static final String SIGAR_RESOURCE_DIR = "/sigar/";
+
+	private SigarNativeBindingLoader() {
 	}
 
 	/**
-	 * Adds native libs that are stored inside a jar file to the java library path.
+	 * Extracts the native bindings for sigar and tells sigar where to find them.
 	 *
-	 * @param nativeLibs the path to the native libs in jar file
-	 * @param parentDir the parent directory name the native libs should be stored to
 	 * @return the folder that contains the extracted nativeLibs
 	 * @throws Exception
 	 */
-	public static String addResourcesToLibraryPath(List<String> nativeLibs, String parentDir) throws Exception {
-		StringBuilder newLibraryPath = new StringBuilder();
-		final String libraryPath = System.getProperty(JAVA_LIBRARY_PATH);
-		if (libraryPath != null) {
-			newLibraryPath.append(libraryPath).append(File.pathSeparatorChar);
-		}
-		final File tempDirectory = new File(System.getProperty("java.io.tmpdir"), parentDir);
+	public static String loadNativeSigarBindings() throws Exception {
+		final File tempDirectory = new File(System.getProperty("java.io.tmpdir"), "sigar");
 		tempDirectory.mkdir();
-		newLibraryPath.append(tempDirectory.getAbsolutePath());
+		return loadNativeSigarBindings(tempDirectory);
+	}
 
-		for (String nativeLib : nativeLibs) {
-			extractFromJarToTemp(nativeLib, tempDirectory);
-		}
+	/**
+	 * Extracts the native bindings for sigar and tells sigar where to find them.
+	 *
+	 * @param nativeLibDir       the directory the native libs should be stored to
+	 * @return the folder that contains the extracted nativeLibs
+	 * @throws Exception
+	 */
+	private static String loadNativeSigarBindings(File nativeLibDir) throws Exception {
+		extractFromJarToTemp(SIGAR_RESOURCE_DIR + new SigarLoader(Sigar.class).getLibraryName(), nativeLibDir);
 
-		System.setProperty(JAVA_LIBRARY_PATH, newLibraryPath.toString());
-
-		final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
-		sysPathsField.setAccessible(true);
-		sysPathsField.set(null, null);
-		return tempDirectory.getAbsolutePath();
+		System.setProperty(SIGAR_PATH, nativeLibDir.getAbsolutePath());
+		return nativeLibDir.getAbsolutePath();
 	}
 
 	/**
 	 * Loads library from current JAR archive
-	 *
+	 * <p/>
 	 * The file from JAR is copied into system temporary directory and then loaded. The temporary file is deleted after exiting.
 	 * Method uses String as filename because the pathname is "abstract", not system-dependent.
 	 *
-	 *
-	 * @param path The filename inside JAR as absolute path (beginning with '/'), e.g. /package/File.ext
+	 * @param path          The filename inside JAR as absolute path (beginning with '/'), e.g. /package/File.ext
 	 * @param tempDirectory
-	 * @throws IOException If temporary file creation or read/write operation fails
+	 * @throws IOException              If temporary file creation or read/write operation fails
 	 * @throws IllegalArgumentException If source file (param path) does not exist
 	 * @throws IllegalArgumentException If the path is not absolute or if the filename is shorter than three characters (restriction of {@see File#createTempFile(java.lang.String, java.lang.String)}).
 	 */
@@ -105,7 +110,7 @@ public final class NativeUtils {
 		int readBytes;
 
 		// Open and check input stream
-		InputStream is = NativeUtils.class.getResourceAsStream(path);
+		InputStream is = SigarNativeBindingLoader.class.getResourceAsStream(path);
 		if (is == null) {
 			throw new FileNotFoundException("File " + path + " was not found inside JAR.");
 		}

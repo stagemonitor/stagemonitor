@@ -2,7 +2,6 @@ package org.stagemonitor.os;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -36,12 +35,13 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 
 	private final static Logger logger = LoggerFactory.getLogger(OsPlugin.class);
 	private static ConfigurationSource argsConfigurationSource;
+	private String sigarNativeBindingsPath;
 
 	private Sigar sigar;
 
 	public OsPlugin() {
 		try {
-			loadNativeSigarBindings();
+			sigarNativeBindingsPath = SigarNativeBindingLoader.loadNativeSigarBindings();
 		} catch (Exception e) {
 			logger.warn(e.getMessage() + " (this exception was ignored)", e);
 		}
@@ -84,20 +84,15 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		}
 	}
 
-	public static Sigar newSigar() throws Exception {
-		final String libraryPath = loadNativeSigarBindings();
+	private Sigar newSigar() throws Exception {
 		try {
 			final Sigar s = new Sigar();
 			s.getCpuInfoList();
 			return s;
 		} catch (UnsatisfiedLinkError e) {
-			logger.warn("Please add -Djava.library.path={} system property to resolve the UnsatisfiedLinkError", libraryPath);
-			throw new RuntimeException(e);
+			throw new RuntimeException("Could not load sigar native bindings. Please add -Djava.library.path=" +
+					sigarNativeBindingsPath + " system property to resolve the UnsatisfiedLinkError", e);
 		}
-	}
-
-	private static String loadNativeSigarBindings() throws Exception {
-		return NativeUtils.addResourcesToLibraryPath(getSigarBindings(), "sigar");
 	}
 
 	/*
@@ -139,25 +134,6 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 			source.add(split[0], split[1]);
 		}
 		return source;
-	}
-
-	private static List<String> getSigarBindings() {
-		List<String> sigarBindings = new ArrayList<String>();
-		sigarBindings.add("/sigar/libsigar-amd64-freebsd-6.so");
-		sigarBindings.add("/sigar/libsigar-amd64-linux.so");
-		sigarBindings.add("/sigar/libsigar-amd64-solaris.so");
-		sigarBindings.add("/sigar/libsigar-ia64-linux.so");
-		sigarBindings.add("/sigar/libsigar-sparc64-solaris.so");
-		sigarBindings.add("/sigar/libsigar-sparc-solaris.so");
-		sigarBindings.add("/sigar/libsigar-universal64-macosx.dylib");
-		sigarBindings.add("/sigar/libsigar-universal-macosx.dylib");
-		sigarBindings.add("/sigar/libsigar-x86-freebsd-5.so");
-		sigarBindings.add("/sigar/libsigar-x86-freebsd-6.so");
-		sigarBindings.add("/sigar/libsigar-x86-linux.so");
-		sigarBindings.add("/sigar/libsigar-x86-solaris.so");
-		sigarBindings.add("/sigar/sigar-amd64-winnt.dll");
-		sigarBindings.add("/sigar/sigar-x86-winnt.dll");
-		return sigarBindings;
 	}
 
 	@Override
