@@ -173,3 +173,11 @@ body {
 	display: inline-block;
 	margin: 0 0.5em 0.5em 0;
 }
+
+.branch td:hover {
+	cursor: pointer;
+}
+
+.branch:hover {
+	font-weight: bold;
+}
