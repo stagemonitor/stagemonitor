@@ -2,7 +2,7 @@ dependencies {
 	compile project(":stagemonitor-core")
 	provided 'javax.servlet:javax.servlet-api:3.0.1'
 
-	compile 'javax.mail:mail:1.4.7'
+	compile 'javax.mail:mail:1.4.1'
 	compile 'org.freemarker:freemarker:2.3.22'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
