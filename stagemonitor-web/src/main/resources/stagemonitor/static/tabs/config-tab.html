@@ -109,19 +109,30 @@
 
 							<div class="col-sm-2">
 								<input type="hidden" name="key" value="{{key}}">
-								{{#ifCond valueAsString.length '<' 50}}
-								<input name="value" value="{{valueAsString}}"
-								{{#ifCond valueType '==' 'Integer'}}type="number"{{/ifCond}}
-								{{#ifCond valueType '==' 'Long'}}type="number"{{/ifCond}}
-								{{#ifCond valueType '==' 'Boolean'}}
-								class="rounded" type="checkbox"
-								{{#ifCond valueAsString '==' 'true'}}checked{{/ifCond}}
+								{{#if sensitive}}
+									<input type="password" name="value" value="{{valueAsString}}" class="form-control rounded">
 								{{else}}
-								class="form-control rounded"
-								{{/ifCond}}>
-								{{else}}
-								<textarea class="form-control rounded" name="value">{{valueAsString}}</textarea>
-								{{/ifCond}}
+									{{#ifCond valueAsString.length '<' 50}}
+										<input name="value" value="{{valueAsString}}"
+										{{#ifCond valueType '==' 'Integer'}}
+											type="number"
+										{{/ifCond}}
+										{{#ifCond valueType '==' 'Long'}}
+											type="number"
+										{{/ifCond}}
+										{{#ifCond valueType '==' 'Boolean'}}
+											class="rounded" type="checkbox"
+											{{#ifCond valueAsString '==' 'true'}}
+												checked
+											{{/ifCond}}
+										{{else}}
+											class="form-control rounded"
+										{{/ifCond}}
+										>
+									{{else}}
+										<textarea class="form-control rounded" name="value">{{valueAsString}}</textarea>
+									{{/ifCond}}
+							    {{/if}}
 							</div>
 							<div style="display: inline-block"
 								 class="tip" data-toggle="tooltip" data-placement="top"

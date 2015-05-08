@@ -34,6 +34,7 @@ public class ConfigurationOption<T> {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final boolean dynamic;
+	private final boolean sensitive;
 	private final String key;
 	private final String label;
 	private final String description;
@@ -161,7 +162,7 @@ public class ConfigurationOption<T> {
 				.defaultValue(Collections.<K, V>emptyMap());
 	}
 
-	private ConfigurationOption(boolean dynamic, String key, String label, String description,
+	private ConfigurationOption(boolean dynamic, boolean sensitive, String key, String label, String description,
 								T defaultValue, String configurationCategory, ValueConverter<T> valueConverter,
 								Class<? super T> valueType, List<String> tags) {
 		this.dynamic = dynamic;
@@ -174,6 +175,7 @@ public class ConfigurationOption<T> {
 		this.configurationCategory = configurationCategory;
 		this.valueConverter = valueConverter;
 		this.valueType = valueType;
+		this.sensitive = sensitive;
 		setToDefault();
 	}
 
@@ -229,6 +231,17 @@ public class ConfigurationOption<T> {
 	 */
 	public String getValueAsString() {
 		return valueAsString;
+	}
+
+	/**
+	 * Returns <code>true</code>, if the value is sensitive, <code>false</code> otherwise.
+	 * If a value has sensitive content (e.g. password), it should be rendered
+	 * as an input of type="password", rather then as type="text".
+	 *
+	 * @return Returns <code>true</code>, if the value is sensitive, <code>false</code> otherwise.
+	 */
+	public boolean isSensitive() {
+		return sensitive;
 	}
 
 	/**
@@ -353,6 +366,7 @@ public class ConfigurationOption<T> {
 
 	public static class ConfigurationOptionBuilder<T> {
 		private boolean dynamic = false;
+		private boolean sensitive = false;
 		private String key;
 		private String label;
 		private String description;
@@ -368,7 +382,7 @@ public class ConfigurationOption<T> {
 		}
 
 		public ConfigurationOption<T> build() {
-			return new ConfigurationOption<T>(dynamic, key, label, description, defaultValue, configurationCategory,
+			return new ConfigurationOption<T>(dynamic, sensitive, key, label, description, defaultValue, configurationCategory,
 					valueConverter, valueType, Arrays.asList(tags));
 		}
 
@@ -404,6 +418,19 @@ public class ConfigurationOption<T> {
 
 		public ConfigurationOptionBuilder<T> tags(String... tags) {
 			this.tags = tags;
+			return this;
+		}
+
+		/**
+		 * Marks this ConfigurationOption as sensitive.
+		 * <p/>
+		 * If a value has sensitive content (e.g. password), it should be rendered
+		 * as an input of type="password", rather then as type="text".
+		 *
+		 * @return <code>this</code>, for chaining.
+		 */
+		public ConfigurationOptionBuilder<T> sensitive() {
+			this.sensitive = true;
 			return this;
 		}
 	}
