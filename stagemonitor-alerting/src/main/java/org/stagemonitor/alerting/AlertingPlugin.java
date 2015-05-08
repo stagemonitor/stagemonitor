@@ -75,6 +75,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("SMTP-Password")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
+			.sensitive()
 			.build();
 	private ConfigurationOption<String> smtpUser = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.smtp.user")
