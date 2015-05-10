@@ -43,7 +43,8 @@ public class JdbcPlugin extends StagemonitorPlugin {
 					"com.mchange.v2.c3p0.PooledDataSource",
 					"com.jolbox.bonecp.BoneCPDataSource",
 					"snaq.db.DBPoolDataSource",
-					"com.zaxxer.hikari.HikariDataSource"))
+					"com.zaxxer.hikari.HikariDataSource",
+					"org.jboss.jca.adapters.jdbc.WrapperDataSource"))
 			.configurationCategory(JDBC_PLUGIN)
 			.build();
 
