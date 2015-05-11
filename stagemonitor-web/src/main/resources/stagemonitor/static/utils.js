@@ -3,6 +3,13 @@ var utils = (function () {
 		return (str + '').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
 	};
 
+	// http://stackoverflow.com/questions/646628/how-to-check-if-a-string-startswith-another-string
+	if (typeof String.prototype.startsWith != 'function') {
+		String.prototype.startsWith = function (str){
+			return this.slice(0, str.length) == str;
+		};
+	}
+
 	function loadScript(path) {
 		var result = $.Deferred(),
 			script = document.createElement("script");

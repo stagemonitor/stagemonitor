@@ -56,6 +56,7 @@ function renderCallTree(data) {
 					signature: callData.signature,
 					isShortened: shortSignature != callData.signature,
 					executionTimePercent: executionTimePercent,
+					executionTimeInNs: callData.executionTime,
 					executionTimeInMs: executionTimeInMs,
 					selfExecutionTimePercent: selfExecutionTimePercent,
 					selfExecutionTimeInMs: selfExecutionTimeInMs

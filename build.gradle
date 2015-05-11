@@ -60,6 +60,9 @@ subprojects {
 		provided
 		compile.extendsFrom provided
 
+		optional
+		compile.extendsFrom optional
+
 		shade
 		compile.extendsFrom shade
 	}
