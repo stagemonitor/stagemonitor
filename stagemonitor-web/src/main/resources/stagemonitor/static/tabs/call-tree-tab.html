@@ -17,15 +17,20 @@
 		{{#each callTreeRows}}
 		<tr class="{{#if executionTimeExceededThreshold}}warning{{/if}}" data-tt-expanded="{{#if anyChildExceedsThreshold}}true{{else}}false{{/if}}" data-tt-parent-id="{{parentId}}" data-tt-id="{{myId}}">
 			<td class="stagemonitor-calltree-signature">
-				{{shortSignature}}
+				{{{createPreIfHasLineBreak shortSignature}}}
 				{{#if isShortened}}
 					<span class="wide-tooltip">
 						<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right" title="{{signature}}"></span>
 					</span>
 				{{/if}}
 			</td>
-			<td><div class="progress"><div class="progress-bar" style="width: {{executionTimePercent}}%">{{executionTimeInMs}}</div></div></td>
-			<td><div class="progress"><div class="progress-bar" style="width: {{selfExecutionTimePercent}}%">{{selfExecutionTimeInMs}}</div></div></td>
+			{{#ifCond executionTimeInNs '>' 0 }}
+				<td><div class="progress"><div class="progress-bar" style="width: {{executionTimePercent}}%">{{executionTimeInMs}}</div></div></td>
+				<td><div class="progress"><div class="progress-bar" style="width: {{selfExecutionTimePercent}}%">{{selfExecutionTimeInMs}}</div></div></td>
+			{{else}}
+				<td></td>
+				<td></td>
+			{{/ifCond}}
 		</tr>
 		{{/each}}
 		</tbody>

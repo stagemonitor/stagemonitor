@@ -2,6 +2,13 @@ body {
 	padding: 1em;
 }
 
+pre {
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	white-space: -moz-pre-wrap;
+	white-space: -o-pre-wrap;
+}
+
 .progress {
 	background-image: linear-gradient(to bottom, #999 0px, #bbb 100%);
 	margin-bottom: 0;

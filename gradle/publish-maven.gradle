@@ -21,7 +21,10 @@ modifyPom {
 	project {
 		dependencies {
 			def configurations = project.configurations
-			(configurations.compile.allDependencies - configurations.provided.allDependencies - configurations.shade.allDependencies).each { dep ->
+			(configurations.compile.allDependencies -
+					configurations.provided.allDependencies -
+					configurations.shade.allDependencies -
+					configurations.optional.allDependencies).each { dep ->
 				dependency {
 					groupId dep.group
 					artifactId dep.name
@@ -35,6 +38,14 @@ modifyPom {
 					artifactId dep.name
 					version dep.version
 					scope 'provided'
+				}
+			}
+			configurations.optional.allDependencies.each { dep ->
+				dependency {
+					groupId dep.group
+					artifactId dep.name
+					version dep.version
+					scope 'optional'
 				}
 			}
 		}
