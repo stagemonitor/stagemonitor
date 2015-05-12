@@ -11,4 +11,3 @@ out
 *.iws
 secring.gpg
 sonatype-credentials.properties
-spy.log
