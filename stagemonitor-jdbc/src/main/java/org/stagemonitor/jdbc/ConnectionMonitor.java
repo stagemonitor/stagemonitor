@@ -15,6 +15,7 @@ import javax.sql.DataSource;
 
 import com.codahale.metrics.MetricRegistry;
 import com.p6spy.engine.spy.P6Core;
+import com.p6spy.engine.spy.P6SpyLoadableOptions;
 import com.p6spy.engine.spy.P6SpyOptions;
 import com.p6spy.engine.spy.option.EnvironmentVariables;
 import com.p6spy.engine.spy.option.SpyDotProperties;
@@ -52,9 +53,16 @@ public class ConnectionMonitor {
 		if (!p6SpyAlreadyConfigured && ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class))) {
 			active = true;
 			if (collectSql) {
+				// set p6spy options before p6spy is initialized
+				// this avoids that spy.log is being created
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.JMX, Boolean.FALSE.toString());
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.APPENDER, P6SpyMultiLogger.class.getName());
 				P6SpyMultiLogger.addLogger(new StagemonitorP6Logger(configuration, this.metricRegistry));
+				P6SpyLoadableOptions options = P6SpyOptions.getActiveInstance();
+				// p6spy might already been initialized
+				// for example, wildfily loads all drivers and thus the P6SpyDriver on startup
+				// which happens before stagemonitor's initialisation
+				options.setAppender(P6SpyMultiLogger.class.getName());
 				P6Core.initialize();
 			}
 		} else {
