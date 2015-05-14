@@ -12,6 +12,7 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 import org.stagemonitor.agent.StagemonitorAgent;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
@@ -21,26 +22,29 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 	private static final String MONITOR_GET_CONNECTION = CONNECTION_MONITOR + ".monitorGetConnection";
 
 	private static final String STRING_CLASS_NAME = String.class.getName();
-	private final Set<String> dataSourceImplementations;
+	private final Set<String> dataSourceImplementations = new HashSet<String>();
 
-	public static final ConnectionMonitor connectionMonitor = new ConnectionMonitor(Stagemonitor.getConfiguration(), Stagemonitor.getMetricRegistry());
+	public static ConnectionMonitor connectionMonitor;
+	private final boolean active;
 
 	public ConnectionMonitoringInstrumenter() throws NoSuchMethodException {
-		final Collection<String> impls = Stagemonitor.getConfiguration(JdbcPlugin.class).getDataSourceImplementations();
-		dataSourceImplementations = new HashSet<String>();
-		for (String impl : impls) {
-			dataSourceImplementations.add(impl.replace('.', '/'));
-		}
-		final Method monitorGetConnectionMethod = connectionMonitor.getClass()
-				.getMethod("monitorGetConnection", Connection.class, DataSource.class, long.class);
+		this.active = ConnectionMonitor.isActive(Stagemonitor.getConfiguration(CorePlugin.class));
+		if (active) {
+			connectionMonitor = new ConnectionMonitor(Stagemonitor.getConfiguration(), Stagemonitor.getMetricRegistry());
+			final Collection<String> impls = Stagemonitor.getConfiguration(JdbcPlugin.class).getDataSourceImplementations();
+			for (String impl : impls) {
+				dataSourceImplementations.add(impl.replace('.', '/'));
+			}
+			final Method monitorGetConnectionMethod = connectionMonitor.getClass()
+					.getMethod("monitorGetConnection", Connection.class, DataSource.class, long.class);
 
-		System.getProperties().put(MONITOR_GET_CONNECTION, monitorGetConnectionMethod);
-		System.getProperties().put(CONNECTION_MONITOR, connectionMonitor);
+			System.getProperties().put(MONITOR_GET_CONNECTION, monitorGetConnectionMethod);
+			System.getProperties().put(CONNECTION_MONITOR, connectionMonitor);
+		}
 	}
 
 	@Override
 	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
-
 		try {
 			loader.loadClass("org.stagemonitor.core.Stagemonitor");
 			transformConnectionPool(ctClass, false);
@@ -53,7 +57,7 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 
 	@Override
 	public boolean isIncluded(String className) {
-		return dataSourceImplementations.contains(className);
+		return active && dataSourceImplementations.contains(className);
 	}
 
 	private void transformConnectionPool(CtClass ctClass, boolean invokeViaReflection)
@@ -99,8 +103,9 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 			method.insertAfter("$_ = ($r) org.stagemonitor.jdbc.ConnectionMonitoringInstrumenter.connectionMonitor" +
 					".monitorGetConnection($_, (javax.sql.DataSource) this, System.nanoTime() - $_stm_start);");
 		} else {
+			final String methodParams = "new Object[]{$_, (javax.sql.DataSource) this, Long.valueOf(System.nanoTime() - $_stm_start)}";
 			method.insertAfter("$_ = ($r) ((java.lang.reflect.Method) System.getProperties().get(\"" + MONITOR_GET_CONNECTION + "\"))" +
-					".invoke(System.getProperties().get(\"" + CONNECTION_MONITOR + "\"), new Object[]{$_, (javax.sql.DataSource) this, Long.valueOf(System.nanoTime() - $_stm_start)});");
+					".invoke(System.getProperties().get(\"" + CONNECTION_MONITOR + "\"), " + methodParams + ");");
 		}
 
 		if (!ctClass.equals(declaringClass)) {

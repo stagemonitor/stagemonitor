@@ -3,7 +3,6 @@ package org.stagemonitor.jdbc;
 import static com.codahale.metrics.MetricRegistry.name;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -12,8 +11,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import javax.sql.DataSource;
 
 import com.codahale.metrics.MetricRegistry;
@@ -55,7 +52,7 @@ public class ConnectionMonitor {
 		if (!p6SpyAlreadyConfigured && ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class))) {
 			active = true;
 			if (collectSql) {
-				unregisterP6SpyMBeans();
+				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.JMX, Boolean.FALSE.toString());
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.APPENDER, P6SpyMultiLogger.class.getName());
 				P6SpyMultiLogger.addLogger(new StagemonitorP6Logger(configuration, this.metricRegistry));
 				P6Core.initialize();
@@ -65,6 +62,11 @@ public class ConnectionMonitor {
 		}
 	}
 
+	/**
+	 * Gets the configuration options of p6spy without initializing it, because otherwise a spy.log file would be created.
+	 *
+	 * @return the configuration options of p6spy
+	 */
 	private Map<String, String> getP6SpyOptions() {
 		Map<String, String> p6SpyOptions = new HashMap<String, String>();
 		p6SpyOptions.putAll(P6SpyOptions.defaults);
@@ -79,17 +81,6 @@ public class ConnectionMonitor {
 		p6SpyOptions.putAll(new EnvironmentVariables().getOptions());
 		p6SpyOptions.putAll(new SystemProperties().getOptions());
 		return p6SpyOptions;
-	}
-
-	private void unregisterP6SpyMBeans() {
-		final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-		try {
-			for (ObjectName objectName : mbs.queryNames(new ObjectName("com.p6spy.*:name=*"), null)) {
-				mbs.unregisterMBean(objectName);
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	public Connection monitorGetConnection(Connection connection, DataSource dataSource, long duration) throws SQLException {
