@@ -16,9 +16,9 @@ import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 @WebListener
 public class RuntimeAgentAttacherListener implements ServletContextListener {
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(RuntimeAgentAttacherListener.class);
 
-	public RuntimeAgentAttacherListener() {
+	static  {
 		try {
 			final CorePlugin configuration = Stagemonitor.getConfiguration(CorePlugin.class);
 			if (configuration.isStagemonitorActive() && configuration.isAttachAgentAtRuntime()) {
