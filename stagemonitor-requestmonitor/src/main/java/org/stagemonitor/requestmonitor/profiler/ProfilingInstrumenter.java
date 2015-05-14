@@ -42,7 +42,8 @@ public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 			if (!Modifier.isNative(m.getModifiers())
 					&& !Modifier.isAbstract(m.getModifiers())
 					&& !Modifier.isFinal(m.getModifiers())
-					&& ctClass.equals(m.getDeclaringClass())) {
+					&& ctClass.equals(m.getDeclaringClass())
+					&& !m.getName().contains("access$")) {
 
 				if (hasSwitchCase(m)) {
 					continue;

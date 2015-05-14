@@ -30,6 +30,21 @@ public class ProfilerTest {
 				total.getChildren().get(0).getChildren().get(2).getSignature());
 	}
 
+	@Test
+	public void testInnerPrivateMethod() {
+		class Test {
+			private void test() {
+			}
+		}
+
+		Test test = new Test();
+		CallStackElement total = Profiler.activateProfiling("total");
+		test.test();
+		Profiler.stop();
+
+		Assert.assertFalse(total.toString(), total.getChildren().iterator().next().getSignature().contains("access$"));
+	}
+
 	public int method1() {
 		return method2(1) + method3() + method5();
 	}

@@ -260,12 +260,13 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.instrument.excludeContaining")
 			.dynamic(true)
 			.label("Exclude containing")
-			.description("Exclude classes from the instrumentation (for example the profiler) that contain one of the " +
+			.description("Exclude classes from the instrumentation (for example from profiling) that contain one of the " +
 					"following strings as part of their class name.")
 			.defaultValue(new LinkedHashSet<String>() {{
 				add("$JaxbAccessor");
 				add("$$");
 				add("CGLIB");
+				add("EnhancerBy");
 			}})
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
