@@ -40,14 +40,6 @@ modifyPom {
 					scope 'provided'
 				}
 			}
-			configurations.optional.allDependencies.each { dep ->
-				dependency {
-					groupId dep.group
-					artifactId dep.name
-					version dep.version
-					scope 'optional'
-				}
-			}
 		}
 		name "${project.group}:${project.name}"
 		description "an open source solution to application performance monitoring for java server applications"
