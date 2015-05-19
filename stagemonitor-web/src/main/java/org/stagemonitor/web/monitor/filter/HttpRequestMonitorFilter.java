@@ -5,6 +5,7 @@ import static javax.servlet.DispatcherType.REQUEST;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -193,7 +194,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 				response.getCharacterEncoding());
 		if (content.contains("</body>")) {
 			httpServletRequest.setAttribute("stagemonitorInjected", true);
-			content = getContetToInject(httpServletRequest, requestInformation, content);
+			content = getContentToInject(httpServletRequest, requestInformation, content);
+			adjustContentLengthHeaderIfSet(response, httpServletResponseBufferWrapper, content);
 			response.getOutputStream().print(content);
 		} else {
 			// this is no html
@@ -201,14 +203,27 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 	}
 
+	private void adjustContentLengthHeaderIfSet(ServletResponse response, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper, String content) {
+		if (httpServletResponseBufferWrapper.containsHeader("Content-Length")) {
+			try {
+				// get correct size for target encoding
+				int newContentLength = content.getBytes(response.getCharacterEncoding()).length;
+				response.setContentLength(newContentLength);
+			} catch (UnsupportedEncodingException e) {
+				logger.error("could not calculate content length for new Content-Length-Header", e);
+			}
+		}
+	}
+
 	private void injectHtmlToWriter(ServletResponse response, HttpServletRequest httpServletRequest, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
 		httpServletRequest.setAttribute("stagemonitorInjected", true);
 		String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
-		content = getContetToInject(httpServletRequest, requestInformation, content);
+		content = getContentToInject(httpServletRequest, requestInformation, content);
+		adjustContentLengthHeaderIfSet(response, httpServletResponseBufferWrapper, content);
 		response.getWriter().write(content);
 	}
 
-	private String getContetToInject(HttpServletRequest httpServletRequest, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation, String content) {
+	private String getContentToInject(HttpServletRequest httpServletRequest, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation, String content) {
 		for (HtmlInjector htmlInjector : htmlInjectors) {
 			if (htmlInjector.isActive(httpServletRequest)) {
 				content = injectBeforeClosingBody(content, htmlInjector.getContentToInjectBeforeClosingBody(requestInformation));
