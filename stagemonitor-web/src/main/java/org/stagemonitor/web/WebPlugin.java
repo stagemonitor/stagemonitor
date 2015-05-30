@@ -1,5 +1,8 @@
 package org.stagemonitor.web;
 
+import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
+import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -10,23 +13,17 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 import com.codahale.metrics.MetricRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.pool.MBeanPooledResourceImpl;
-import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 
 public class WebPlugin extends StagemonitorPlugin {
 
 	public static final String STAGEMONITOR_SHOW_WIDGET = "X-Stagemonitor-Show-Widget";
 	private static final String WEB_PLUGIN = "Web Plugin";
-	private final Logger logger = LoggerFactory.getLogger(getClass());
-	boolean requiredPropertiesSet = true;
 	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
 			.key("stagemonitor.requestmonitor.http.requestparams.confidential.regex")
 			.dynamic(true)
@@ -94,43 +91,6 @@ public class WebPlugin extends StagemonitorPlugin {
 						put(Pattern.compile("(.*).jpeg$"), "*.jpeg");
 						put(Pattern.compile("(.*).png$"), "*.png");
 					}})
-			.configurationCategory(WEB_PLUGIN)
-			.build();
-	// TODO descriptions
-	private final ConfigurationOption<String> serverThreadPoolObjectName = ConfigurationOption.stringOption()
-			.key("stagemonitor.server.threadpool.objectName")
-			.label("Server Thread Pool MBean Object Name")
-			.description("")
-			.configurationCategory(WEB_PLUGIN)
-			.build(); 
-	private final ConfigurationOption<String> serverThreadPoolMBeanPropertyName = ConfigurationOption.stringOption()
-			.key("stagemonitor.server.threadpool.mbeanKeyPropertyName")
-			.label("Server Thread Pool MBean Property Name")
-			.description("")
-			.configurationCategory(WEB_PLUGIN)
-			.build(); 
-	private final ConfigurationOption<String> serverThreadPoolMBeanActiveAttribute = ConfigurationOption.stringOption()
-			.key("stagemonitor.server.threadpool.mbeanActiveAttribute")
-			.label("Server Thread Pool MBean Active Attribute")
-			.description("")
-			.configurationCategory(WEB_PLUGIN)
-			.build(); 
-	private final ConfigurationOption<String> serverThreadPoolMBeanCountAttribute = ConfigurationOption.stringOption()
-			.key("stagemonitor.server.threadpool.mbeanCountAttribute")
-			.label("Server Thread Pool MBean Count Attribute")
-			.description("")
-			.configurationCategory(WEB_PLUGIN)
-			.build(); 
-	private final ConfigurationOption<String> serverThreadPoolMBeanMaxAttribute = ConfigurationOption.stringOption()
-			.key("stagemonitor.server.threadpool.mbeanMaxAttribute")
-			.label("Server Thread Pool MBean Max Attribute")
-			.description("")
-			.configurationCategory(WEB_PLUGIN)
-			.build(); 
-	private final ConfigurationOption<String> serverThreadPoolMBeanQueueAttribute = ConfigurationOption.stringOption()
-			.key("stagemonitor.server.threadpool.mbeanQueueAttribute")
-			.label("Server Thread Pool MBean Queue Attribute")
-			.description("")
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> rumEnabled = ConfigurationOption.booleanOption()
@@ -210,25 +170,10 @@ public class WebPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(MetricRegistry registry, Configuration config) {
-		monitorServerThreadPool(registry, config.getConfig(WebPlugin.class));
+		registerPooledResources(registry, tomcatThreadPools());
 		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
 		elasticsearchClient.sendGrafanaDashboardAsync("Server.json");
 		elasticsearchClient.sendGrafanaDashboardAsync("KPIs over Time.json");
-	}
-
-	private void monitorServerThreadPool(MetricRegistry registry, WebPlugin webPlugin) {
-		final String objectName = getRequeredProperty(webPlugin.serverThreadPoolObjectName);
-		final String mbeanKeyPropertyName = getRequeredProperty(webPlugin.serverThreadPoolMBeanPropertyName);
-		final String mbeanActiveAttribute = getRequeredProperty(webPlugin.serverThreadPoolMBeanActiveAttribute);
-		final String mbeanCountAttribute = getRequeredProperty(webPlugin.serverThreadPoolMBeanCountAttribute);
-		final String mbeanMaxAttribute = getRequeredProperty(webPlugin.serverThreadPoolMBeanMaxAttribute);
-		final String mbeanQueueAttribute = webPlugin.serverThreadPoolMBeanQueueAttribute.getValue();
-		if (requiredPropertiesSet) {
-			final List<MBeanPooledResourceImpl> pools = MBeanPooledResourceImpl.of(objectName,
-					"server.threadpool", mbeanKeyPropertyName, mbeanActiveAttribute, mbeanCountAttribute,
-					mbeanMaxAttribute, mbeanQueueAttribute);
-			PooledResourceMetricsRegisterer.registerPooledResources(pools, registry);
-		}
 	}
 
 	@Override
@@ -241,15 +186,6 @@ public class WebPlugin extends StagemonitorPlugin {
 		}
 
 		return configurationOptions;
-	}
-
-	private String getRequeredProperty(ConfigurationOption<String> option) {
-		String requredProperty = option.getValue();
-		if (requredProperty == null || requredProperty.isEmpty()) {
-			logger.info(option.getKey() + " is empty, Server Plugin deactivated");
-			requiredPropertiesSet = false;
-		}
-		return requredProperty;
 	}
 
 	public boolean isCollectHttpHeaders() {

@@ -24,17 +24,17 @@ public class JavaThreadPoolMetricsCollectorImpl implements PooledResource {
 	}
 
 	@Override
-	public int getThreadPoolSize() {
+	public int getActualPoolSize() {
 		return threadPool.getPoolSize();
 	}
 
 	@Override
-	public int getThreadPoolNumActiveThreads() {
+	public int getPoolNumActive() {
 		return threadPool.getActiveCount();
 	}
 
 	@Override
-	public Integer getThreadPoolNumTasksPending() {
+	public Integer getNumTasksPending() {
 		return threadPool.getQueue().size();
 	}
 }

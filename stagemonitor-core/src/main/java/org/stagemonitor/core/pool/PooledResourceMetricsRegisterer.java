@@ -1,17 +1,17 @@
 package org.stagemonitor.core.pool;
 
+import java.util.List;
+
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.RatioGauge;
-
-import java.util.List;
 
 public final class PooledResourceMetricsRegisterer {
 
 	private PooledResourceMetricsRegisterer() {
 	}
 
-	public static void registerPooledResources(List<? extends PooledResource> pooledResources, MetricRegistry registry) {
+	public static void registerPooledResources(MetricRegistry registry, List<? extends PooledResource> pooledResources) {
 		for (PooledResource pooledResource : pooledResources) {
 			registerPooledResource(pooledResource, registry);
 		}
@@ -22,13 +22,13 @@ public final class PooledResourceMetricsRegisterer {
 		registry.register(name + ".active", new Gauge<Integer>() {
 			@Override
 			public Integer getValue() {
-				return pooledResource.getThreadPoolNumActiveThreads();
+				return pooledResource.getPoolNumActive();
 			}
 		});
 		registry.register(name + ".count", new Gauge<Integer>() {
 			@Override
 			public Integer getValue() {
-				return pooledResource.getThreadPoolSize();
+				return pooledResource.getActualPoolSize();
 			}
 		});
 		registry.register(name + ".max", new Gauge<Integer>() {
@@ -37,18 +37,18 @@ public final class PooledResourceMetricsRegisterer {
 				return pooledResource.getMaxPoolSize();
 			}
 		});
-		if (pooledResource.getThreadPoolNumTasksPending() != null) {
+		if (pooledResource.getNumTasksPending() != null) {
 			registry.register(name + ".queued", new Gauge<Integer>() {
 				@Override
 				public Integer getValue() {
-					return pooledResource.getThreadPoolNumTasksPending();
+					return pooledResource.getNumTasksPending();
 				}
 			});
 		}
 		registry.register(name + ".usage", new RatioGauge() {
 			@Override
 			protected Ratio getRatio() {
-			return Ratio.of(pooledResource.getThreadPoolNumActiveThreads(), pooledResource.getMaxPoolSize());
+				return Ratio.of(pooledResource.getPoolNumActive(), pooledResource.getMaxPoolSize());
 			}
 		});
 	}
