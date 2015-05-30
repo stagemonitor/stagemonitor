@@ -116,7 +116,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Application name")
 			.description("The name of the application.\n" +
 					"Either this property or the display-name in web.xml is mandatory!")
-			.defaultValue(null)
+			.defaultValue("My Application")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
 			.build();
@@ -206,6 +206,7 @@ public class CorePlugin extends StagemonitorPlugin {
 				add("com.google");
 				add("com.maxmind");
 				add("com.oracle");
+				add("com.p6spy");
 				add("com.rome");
 				add("com.spartial");
 				add("com.sun");
@@ -220,6 +221,8 @@ public class CorePlugin extends StagemonitorPlugin {
 				add("net.java");
 				add("net.sf");
 				add("net.sourceforge");
+				add("nz.net");
+				add("ognl");
 				add("oracle");
 				add("org.antlr");
 				add("org.apache");
@@ -228,6 +231,7 @@ public class CorePlugin extends StagemonitorPlugin {
 				add("org.eclipse");
 				add("org.freemarker");
 				add("org.glassfish");
+				add("org.groovy");
 				add("org.hibernate");
 				add("org.hsqldb");
 				add("org.jadira");
@@ -237,15 +241,19 @@ public class CorePlugin extends StagemonitorPlugin {
 				add("org.joda");
 				add("org.jsoup");
 				add("org.json");
+				add("org.unbescape");
 				add("org.elasticsearch");
 				add("org.slf4j");
 				add("org.springframework");
 				add("org.stagemonitor");
+				add("org.thymeleaf");
 				add("org.yaml");
 				add("org.wildfly");
 				add("org.zeroturnaround");
+				add("org.xml");
 				add("io.dropwizard");
 				add("freemarker");
+				add("javassist");
 				add("uadetector");
 				add("p6spy");
 				add("rome");
