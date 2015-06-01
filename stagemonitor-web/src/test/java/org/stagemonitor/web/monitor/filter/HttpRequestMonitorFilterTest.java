@@ -105,6 +105,15 @@ public class HttpRequestMonitorFilterTest {
 	}
 
 	@Test
+	public void testWidgetInjectionAdjustsContentLengthHeader() throws IOException, ServletException {
+		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
+		servletResponse.setContentLength(testHtml.length());
+		servletResponse.setCharacterEncoding("utf-8");
+		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
+		assertEquals(5534, servletResponse.getContentLength());
+	}
+
+	@Test
 	public void testBinaryData() throws IOException, ServletException {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse,
@@ -160,7 +169,7 @@ public class HttpRequestMonitorFilterTest {
 			@Override
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				HttpServletResponse response = (HttpServletResponse) invocation.getArguments()[1];
-				if (Math.random() > 0.5) {
+				if (Math.random() > 0.5) { // TODO: non deterministic test behaviour
 					System.out.println("using writer");
 					response.getWriter().write(html);
 				} else {
