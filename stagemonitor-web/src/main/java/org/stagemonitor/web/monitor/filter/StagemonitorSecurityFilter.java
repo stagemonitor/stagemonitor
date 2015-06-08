@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,7 +26,6 @@ import org.stagemonitor.web.WebPlugin;
  * For custom control whether the in browser widget should be displayed, set the request attribute
  * 'X-Stagemonitor-Show-Widget' with a Boolean value.
  */
-@WebFilter("/stagemonitor/*")
 public class StagemonitorSecurityFilter extends AbstractExclusionFilter {
 
 	private final WebPlugin webPlugin;

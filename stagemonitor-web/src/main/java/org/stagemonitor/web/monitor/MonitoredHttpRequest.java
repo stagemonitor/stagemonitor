@@ -1,5 +1,18 @@
 package org.stagemonitor.web.monitor;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
+import java.security.Principal;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.http.HttpServletRequest;
+
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
@@ -10,20 +23,6 @@ import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
-import javax.servlet.http.HttpServletRequest;
-import java.security.Principal;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
-
-import static com.codahale.metrics.MetricRegistry.name;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
@@ -232,7 +231,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		return true;
 	}
 
-	@WebListener
 	public static class StagemonitorServletContextListener implements ServletContextListener {
 
 		@Override

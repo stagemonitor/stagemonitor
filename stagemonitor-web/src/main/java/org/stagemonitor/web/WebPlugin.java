@@ -5,25 +5,63 @@ import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registe
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
 import javax.servlet.http.HttpServletRequest;
 
 import com.codahale.metrics.MetricRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
+import org.stagemonitor.web.configuration.ConfigurationServlet;
+import org.stagemonitor.web.logging.MDCListener;
+import org.stagemonitor.web.metrics.StagemonitorMetricsServlet;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
+import org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter;
+import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
+import org.stagemonitor.web.monitor.rum.RumServlet;
+import org.stagemonitor.web.monitor.servlet.FileServlet;
+import org.stagemonitor.web.monitor.spring.SpringMonitoredHttpRequest;
+import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
+import org.stagemonitor.web.session.SessionCounter;
 
-public class WebPlugin extends StagemonitorPlugin {
+public class WebPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
 
 	public static final String STAGEMONITOR_SHOW_WIDGET = "X-Stagemonitor-Show-Widget";
+
 	private static final String WEB_PLUGIN = "Web Plugin";
+
+	private static final Logger logger = LoggerFactory.getLogger(WebPlugin.class);
+
+	static  {
+		try {
+			final CorePlugin configuration = Stagemonitor.getConfiguration(CorePlugin.class);
+			if (configuration.isStagemonitorActive() && configuration.isAttachAgentAtRuntime()) {
+				MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+			}
+		} catch (Exception e) {
+			logger.warn(e.getMessage(), e);
+		}
+	}
+
 	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
 			.key("stagemonitor.requestmonitor.http.requestparams.confidential.regex")
 			.dynamic(true)
@@ -246,5 +284,36 @@ public class WebPlugin extends StagemonitorPlugin {
 
 	public boolean isMonitorOnlySpringMvcRequests() {
 		return onlyMvcOption.getValue();
+	}
+
+	@Override
+	public void onStartup(Set<Class<?>> c, ServletContext ctx) throws ServletException {
+		ctx.addServlet(ConfigurationServlet.class.getSimpleName(), new ConfigurationServlet())
+				.addMapping(ConfigurationServlet.CONFIGURATION_ENDPOINT);
+		ctx.addServlet(StagemonitorMetricsServlet.class.getSimpleName(), new StagemonitorMetricsServlet())
+				.addMapping("/stagemonitor/metrics");
+		ctx.addServlet(RumServlet.class.getSimpleName(), new RumServlet())
+				.addMapping("/stagemonitor/public/rum");
+		ctx.addServlet(FileServlet.class.getSimpleName(), new FileServlet())
+				.addMapping("/stagemonitor/static/*", "/stagemonitor/public/static/*");
+
+		final ServletRegistration.Dynamic requestTraceServlet = ctx.addServlet(RequestTraceServlet.class.getSimpleName(), new RequestTraceServlet());
+		requestTraceServlet.addMapping("/stagemonitor/request-traces");
+		requestTraceServlet.setAsyncSupported(true);
+
+
+		final FilterRegistration.Dynamic securityFilter = ctx.addFilter(StagemonitorSecurityFilter.class.getSimpleName(), new StagemonitorSecurityFilter());
+		securityFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/stagemonitor/*");
+		securityFilter.setAsyncSupported(true);
+
+		final FilterRegistration.Dynamic monitorFilter = ctx.addFilter(HttpRequestMonitorFilter.class.getSimpleName(), new HttpRequestMonitorFilter());
+		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), false, "/*");
+		monitorFilter.setAsyncSupported(true);
+
+
+		ctx.addListener(MDCListener.class);
+		ctx.addListener(MonitoredHttpRequest.StagemonitorServletContextListener.class);
+		ctx.addListener(SpringMonitoredHttpRequest.HandlerMappingServletContextListener.class);
+		ctx.addListener(SessionCounter.class);
 	}
 }

@@ -17,7 +17,7 @@ import org.stagemonitor.core.Stagemonitor;
  * Because the earlier the agent is attached, the less classes have to be retransformed, which is a expensive operation.
  *
  * Some application server as wildfly load all Driver implementations with a ServiceLoader at startup and even
- * before @WebListener classes are loaded.
+ * before ServletContainerInitializer classes are loaded.
  */
 public class StagemonitorRuntimeAgentAttacherDriver implements Driver {
 

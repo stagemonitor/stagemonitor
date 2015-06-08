@@ -3,7 +3,6 @@ package org.stagemonitor.web.logging;
 import java.util.UUID;
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.ServletRequestListener;
-import javax.servlet.annotation.WebListener;
 
 import org.slf4j.MDC;
 import org.stagemonitor.core.CorePlugin;
@@ -16,7 +15,6 @@ import org.stagemonitor.core.Stagemonitor;
  * If you are using logback or log4j, you can append this to your pattern to append the properties to each log entry:
  * <code>R:[%X{requestId}] A:[%X{application}] H:[%X{host}] I:[%X{instance}]</code>
  */
-@WebListener
 public class MDCListener implements ServletRequestListener {
 
 	public static final String STAGEMONITOR_REQUEST_ID_ATTR = "stagemonitor-request-id";

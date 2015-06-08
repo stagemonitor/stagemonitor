@@ -1,5 +1,12 @@
 package org.stagemonitor.web.metrics;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -8,20 +15,11 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.web.WebPlugin;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.OutputStream;
-
 /**
  * A servlet which returns the metrics in a given registry as an {@code application/json} response.
  * Derived from com.codahale.metrics.servlets.MetricsServlet
  * (https://github.com/dropwizard/metrics/blob/master/metrics-servlets/src/main/java/com/codahale/metrics/servlets/MetricsServlet.java)
  */
-@WebServlet("/stagemonitor/metrics")
 public class StagemonitorMetricsServlet extends HttpServlet {
 
 	private final MetricRegistry registry;

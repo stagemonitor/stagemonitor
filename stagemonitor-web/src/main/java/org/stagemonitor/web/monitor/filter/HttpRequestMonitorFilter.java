@@ -1,7 +1,6 @@
 package org.stagemonitor.web.monitor.filter;
 
 import static javax.servlet.DispatcherType.FORWARD;
-import static javax.servlet.DispatcherType.REQUEST;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,7 +15,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -36,7 +34,6 @@ import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.MonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
-@WebFilter(urlPatterns = "/*", asyncSupported = true, dispatcherTypes = {REQUEST, FORWARD})
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
 	private static final Logger logger = LoggerFactory.getLogger(HttpRequestMonitorFilter.class);

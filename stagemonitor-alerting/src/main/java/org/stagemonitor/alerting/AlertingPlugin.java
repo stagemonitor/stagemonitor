@@ -4,7 +4,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -12,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.alerter.AlertSender;
 import org.stagemonitor.alerting.alerter.AlertTemplateProcessor;
+import org.stagemonitor.alerting.alerter.AlerterTypeServlet;
+import org.stagemonitor.alerting.alerter.IncidentServlet;
 import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
@@ -23,7 +29,7 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 
-public class AlertingPlugin extends StagemonitorPlugin {
+public class AlertingPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -285,6 +291,16 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			alertTemplateProcessor = new AlertTemplateProcessor(this);
 		}
 		return alertTemplateProcessor;
+	}
+
+	@Override
+	public void onStartup(Set<Class<?>> c, ServletContext ctx) throws ServletException {
+		final AlertingPlugin alertingPlugin = Stagemonitor.getConfiguration(AlertingPlugin.class);
+		ctx.addServlet(AlerterTypeServlet.class.getSimpleName(), new AlerterTypeServlet(alertingPlugin, Stagemonitor.getMeasurementSession()))
+				.addMapping("/stagemonitor/alerter-types");
+
+		ctx.addServlet(IncidentServlet.class.getSimpleName(), new IncidentServlet(alertingPlugin))
+				.addMapping("/stagemonitor/incidents");
 	}
 
 }

@@ -10,7 +10,6 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.ServletRequestListener;
-import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -22,8 +21,8 @@ import org.springframework.web.servlet.FrameworkServlet;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -69,7 +68,6 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 		return "";
 	}
 
-	@WebListener
 	public static class HandlerMappingServletContextListener implements ServletContextListener, ServletRequestListener {
 
 		// don't use typed list so that wildfly does not fail if HandlerMapping is not on the classpath

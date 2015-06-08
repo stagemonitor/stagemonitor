@@ -1,22 +1,5 @@
 package org.stagemonitor.web.monitor.widget;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestTrace;
-import org.stagemonitor.requestmonitor.RequestTraceReporter;
-import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,8 +14,23 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = "/stagemonitor/request-traces", asyncSupported = true)
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.requestmonitor.RequestTraceReporter;
+import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
+
 public class RequestTraceServlet extends HttpServlet implements RequestTraceReporter {
 
 	public static final String CONNECTION_ID = "x-stagemonitor-connection-id";

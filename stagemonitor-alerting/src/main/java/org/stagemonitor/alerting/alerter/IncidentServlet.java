@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,7 +16,6 @@ import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 
-@WebServlet(urlPatterns = "/stagemonitor/incidents")
 public class IncidentServlet extends HttpServlet {
 
 	private final AlertingPlugin alertingPlugin;
