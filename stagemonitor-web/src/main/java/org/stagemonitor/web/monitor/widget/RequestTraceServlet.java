@@ -124,7 +124,11 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 				@Override
 				public void onTimeout(AsyncEvent event) throws IOException {
 					connectionIdToAsyncContextMap.remove(connectionId, event.getAsyncContext());
-					writeEmptyResponse((HttpServletResponse)event.getSuppliedResponse());
+					try {
+						writeEmptyResponse((HttpServletResponse)event.getSuppliedResponse());
+					} catch (IOException e) {
+						// the client has probably aborted the request
+					}
 				}
 
 				@Override
