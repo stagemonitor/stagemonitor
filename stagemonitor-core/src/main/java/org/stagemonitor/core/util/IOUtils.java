@@ -56,4 +56,8 @@ public class IOUtils {
 			closeQuietly(is);
 		}
 	}
+
+	public static String getResourceAsString(String name) throws IOException {
+		return toString(IOUtils.class.getClassLoader().getResourceAsStream(name));
+	}
 }

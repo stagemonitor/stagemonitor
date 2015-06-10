@@ -23,23 +23,31 @@ $(document).ready(function () {
 			}
 		},
 		thresholdExceeded: false,
-		renderPageLoadTime: function (data) {
-			doRenderPageLoadTime(data);
+		renderPageLoadTime: function (pageLoadTimeData) {
+			stagemonitor.pageLoadTimeData = pageLoadTimeData;
+			if (stagemonitor.initialized) {
+				doRenderPageLoadTime();
+			}
 		},
 		initialized: false,
 		onOpen: function () {
 			if (!stagemonitor.initialized) {
-				renderCallTree();
-				renderRequestTab(stagemonitor.requestTrace);
-				renderConfigTab(stagemonitor.configurationSources, stagemonitor.configurationOptions, stagemonitor.passwordSet);
 				try {
-					renderMetricsTab();
+					renderCallTree();
+					renderRequestTab(stagemonitor.requestTrace);
+					doRenderPageLoadTime();
+					renderConfigTab(stagemonitor.configurationSources, stagemonitor.configurationOptions, stagemonitor.passwordSet);
+					try {
+						renderMetricsTab();
+					} catch (e) {
+						console.log(e);
+					}
+					loadTabPlugins();
+					$(".tip").tooltip();
+					stagemonitor.initialized = true;
 				} catch (e) {
 					console.log(e);
 				}
-				loadTabPlugins();
-				$(".tip").tooltip();
-				stagemonitor.initialized = true;
 			}
 		}
 	};
@@ -58,8 +66,9 @@ $(document).ready(function () {
 
 						$("#tab-content").append('<div class="tab-pane" id="' + tabPlugin.tabContentId + '"></div>');
 
-						$.get(stagemonitor.contextPath + tabPluginPath + ".html", function (html) {
+						$.get(tabPluginPath + ".html", function (html) {
 							tabPlugin.renderTab(html);
+							$(".tip").tooltip();
 						});
 					} catch (e) {
 						console.log(e);

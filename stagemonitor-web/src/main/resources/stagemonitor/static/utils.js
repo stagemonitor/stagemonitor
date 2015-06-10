@@ -15,7 +15,7 @@ var utils = (function () {
 			script = document.createElement("script");
 		script.async = "async";
 		script.type = "text/javascript";
-		script.src = stagemonitor.contextPath + path;
+		script.src = path;
 		script.onload = script.onreadystatechange = function (_, isAbort) {
 			if (!script.readyState || /loaded|complete/.test(script.readyState)) {
 				if (isAbort)

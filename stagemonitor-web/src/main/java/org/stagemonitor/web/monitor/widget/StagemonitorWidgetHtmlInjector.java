@@ -1,6 +1,9 @@
 package org.stagemonitor.web.monitor.widget;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,13 +24,15 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 	private WebPlugin webPlugin;
 	private Configuration configuration;
 	private String widgetTemplate;
+	private String contextPath;
 
 	@Override
 	public void init(Configuration configuration, ServletContext servletContext) {
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		try {
-			this.widgetTemplate = buildWidgetTemplate(servletContext.getContextPath());
+			contextPath = servletContext.getContextPath();
+			this.widgetTemplate = buildWidgetTemplate(contextPath);
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
 			this.widgetTemplate = "";
@@ -35,7 +40,7 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 	}
 
 	private String buildWidgetTemplate(String contextPath) throws IOException {
-		return IOUtils.toString(getClass().getClassLoader().getResourceAsStream("stagemonitorWidget.html"))
+		return IOUtils.getResourceAsString("stagemonitorWidget.html")
 				.replace("@@CONTEXT_PREFIX_PATH@@", contextPath);
 	}
 
@@ -50,12 +55,22 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 		if (requestInformation != null) {
 			requestTrace = requestInformation.getRequestTrace();
 		}
+		final List<String> pathsOfWidgetTabPlugins = new ArrayList<String>();
+		for (String path : Stagemonitor.getPathsOfWidgetTabPlugins()) {
+			pathsOfWidgetTabPlugins.add(contextPath + path);
+		}
+
+		final List<String> pathsOfWidgetMetricTabPlugins = new ArrayList<String>();
+		for (String path : Stagemonitor.getPathsOfWidgetMetricTabPlugins()) {
+			pathsOfWidgetMetricTabPlugins.add(contextPath + path);
+		}
+
 		return widgetTemplate.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", requestTrace != null ? requestTrace.toJson() : "null")
 				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByCategory()))
 				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()))
 				.replace("@@MEASUREMENT_SESSION@@", JsonUtils.toJson(Stagemonitor.getMeasurementSession()))
-				.replace("@@PATHS_OF_TAB_PLUGINS@@", JsonUtils.toJson(Stagemonitor.getPathsOfWidgetTabPlugins()))
-				.replace("@@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@", JsonUtils.toJson(Stagemonitor.getPathsOfWidgetMetricTabPlugins()));
+				.replace("@@PATHS_OF_TAB_PLUGINS@@", JsonUtils.toJson(pathsOfWidgetTabPlugins))
+				.replace("@@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@", JsonUtils.toJson(pathsOfWidgetMetricTabPlugins));
 	}
 }

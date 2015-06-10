@@ -1,3 +1,7 @@
+<div id="stagemonitor-overlay">
+	<iframe id="stagemonitor-modal"></iframe>
+</div>
+
 <script type="text/javascript">
 	(function () {
 		if (typeof(BOOMR) != 'undefined') {
@@ -11,6 +15,24 @@
 				}
 			});
 		}
+
+		var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
+		var contextPath = "@@CONTEXT_PREFIX_PATH@@";
+
+		var xmlhttp = new XMLHttpRequest();
+		xmlhttp.onreadystatechange = function () {
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+				var doc = stagemonitorWindow.document;
+				doc.open();
+				doc.write(xmlhttp.responseText
+						.split("href=\"").join("href=\"" + contextPath)
+						.split("src=\"").join("src=\"" + contextPath));
+				doc.close();
+			}
+		};
+		xmlhttp.open("GET", "@@CONTEXT_PREFIX_PATH@@/stagemonitor/static/stagemonitor-modal.html", true);
+		xmlhttp.send();
+
 		window.StagemonitorLoaded = function () {
 			var executeOnDomReady = [],
 				isDomReady = function () {
@@ -26,8 +48,7 @@
 				};
 
 			executeOnDomReady.push(function () {
-				var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow,
-					stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
+				var stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
 					stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
 					data = @@JSON_REQUEST_TACE_PLACEHOLDER@@,
 					configurationSources = @@CONFIGURATION_SOURCES@@,
@@ -50,7 +71,7 @@
 				};
 
 				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions,
-						window.location.origin + "@@CONTEXT_PREFIX_PATH@@", "@@CONTEXT_PREFIX_PATH@@",
+						window.location.origin + "@@CONTEXT_PREFIX_PATH@@", contextPath,
 						@@CONFIGURATION_PWD_SET@@, connectionId, @@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@);
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 				stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
@@ -148,11 +169,7 @@
 		height: 100%;
 		width: 100%;
 	}
-	</style>
-
-<div id="stagemonitor-overlay">
-	<iframe id="stagemonitor-modal" src="@@CONTEXT_PREFIX_PATH@@/stagemonitor/static/stagemonitor-modal.html"></iframe>
-</div>
+</style>
 
 <div id="stagemonitor-overlay-show" class="stagemonitor-threshold-ok">
 	<img src="@@CONTEXT_PREFIX_PATH@@/stagemonitor/static/stagemonitor.png" />

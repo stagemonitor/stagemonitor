@@ -1,5 +1,5 @@
 renderConfigTab = function (configurationSources, configurationOptions, passwordSet) {
-	$.get("tabs/config-tab.html", function (template) {
+	$.get(stagemonitor.contextPath + "/stagemonitor/static/tabs/config-tab.html", function (template) {
 		var configurationTemplate = Handlebars.compile($(template).html());
 
 		var $configTab = $("#stagemonitor-configuration");

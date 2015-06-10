@@ -15,7 +15,7 @@ function renderRequestTab(data) {
 	var thresholdExceededGlobal = false;
 	var requestsMetrics = processRequestsMetrics(data);
 
-	$.get("tabs/request-tab.html", function (template) {
+	$.get(stagemonitor.contextPath + "/stagemonitor/static/tabs/request-tab.html", function (template) {
 		var metricsTemplate = Handlebars.compile($(template).html());
 		var renderedMetricsTemplate = metricsTemplate(requestsMetrics);
 		var $stagemonitorRequest = $("#stagemonitor-request");
@@ -89,11 +89,15 @@ function renderRequestTab(data) {
 	stagemonitor.thresholdExceeded |= thresholdExceededGlobal;
 }
 
-function doRenderPageLoadTime(data) {
+function doRenderPageLoadTime() {
+	if (!data) {
+		return;
+	}
+	var data = stagemonitor.pageLoadTimeData;
 	var thresholdMs = localStorage.getItem("widget-settings-execution-threshold-milliseconds");
 	var thresholdExceeded = data.totalPageLoadTime > thresholdMs;
 
-	$.get("tabs/request-tab-page-load-time.html", function (template) {
+	$.get(stagemonitor.contextPath + "/stagemonitor/static/tabs/request-tab-page-load-time.html", function (template) {
 		var pageLoadTimeTemplate = Handlebars.compile($(template).html());
 		var model = {
 			networkMs: data.timeToFirstByte - data.serverTime,

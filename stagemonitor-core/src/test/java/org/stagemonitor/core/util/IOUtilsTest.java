@@ -1,11 +1,11 @@
 package org.stagemonitor.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class IOUtilsTest {
 
@@ -29,9 +29,13 @@ public class IOUtilsTest {
 
 	@Test
 	public void testToString() throws IOException {
-		final byte[] array = "test".getBytes();
-		final ByteArrayInputStream bios = new ByteArrayInputStream(array);
+		final ByteArrayInputStream bios = new ByteArrayInputStream("test".getBytes());
 		Assert.assertEquals("test", IOUtils.toString(bios));
+	}
+
+	@Test
+	public void testGetResourceAsString() throws Exception {
+		Assert.assertEquals("foo=bar", IOUtils.getResourceAsString("test.properties"));
 	}
 
 }

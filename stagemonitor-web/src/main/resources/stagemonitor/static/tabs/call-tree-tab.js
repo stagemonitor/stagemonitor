@@ -9,7 +9,7 @@ function renderCallTree(callTree) {
 	if (stagemonitor.callTree === stagemonitor.renderedCallTree) {
 		return;
 	}
-	$.get("tabs/call-tree-tab.html", function (template) {
+	$.get(stagemonitor.contextPath + "/stagemonitor/static/tabs/call-tree-tab.html", function (template) {
 		var callTreeTemplate = Handlebars.compile($(template).html());
 
 		var $stagemonitorHome = $("#stagemonitor-home");

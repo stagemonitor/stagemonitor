@@ -91,7 +91,7 @@ function renderMetricsTab() {
 	}
 
 	function loadPluginHtml(pluginPath) {
-		return $('#' + getPluginId(pluginPath)).load(stagemonitor.contextPath + pluginPath + ".html");
+		return $('#' + getPluginId(pluginPath)).load(pluginPath + ".html");
 	}
 
 	function getMetricsFromServer(onMetricsReceived) {
