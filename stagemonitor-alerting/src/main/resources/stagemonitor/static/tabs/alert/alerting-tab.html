@@ -158,7 +158,7 @@
 				<label>Type</label>
 				<select name="alerterType" class="form-control">
 					{{#each alerterTypes}}
-						<option value="{{this}}">{{this}}</option>
+						<option value="{{this}}" {{#ifCond @root.subscription.alerterType '==' this}}selected{{/ifCond}}>{{this}}</option>
 					{{/each}}
 				</select>
 			</div>
