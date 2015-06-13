@@ -124,36 +124,38 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 					"</#if>\n" +
 					"Old status: ${incident.oldStatus!'OK'}<br>\n" +
 					"New status: ${incident.newStatus}<br>\n" +
+					"<#if incident.failedChecks gt 0>" +
 					"Failing check<#if incident.failedChecks gt 1>s</#if>: ${incident.failedChecks}<br>\n" +
 					"Hosts: ${incident.hosts?join(\", \")}<br>\n" +
 					"Instances: ${incident.instances?join(\", \")}<br><br>\n" +
 					"\n" +
-					"<#if incident.checkResults?has_content>\n" +
+					"	<#if incident.checkResults?has_content>\n" +
 					"<table>\n" +
-					"\t<thead>\n" +
-					"\t<tr>\n" +
-					"\t\t<th>Host</th>\n" +
-					"\t\t<th>Instance</th>\n" +
-					"\t\t<th>Status</th>\n" +
-					"\t\t<th>Description</th>\n" +
-					"\t\t<th>Current Value</th>\n" +
-					"\t</tr>\n" +
-					"\t</thead>\n" +
-					"\t<tbody>\n" +
-					"\t\t<#list incident.checkResults as results>\n" +
-					"\t\t\t<#assign measurementSession=results.measurementSession/>\n" +
-					"\t\t\t<#list results.getResults() as result>\n" +
-					"\t\t\t<tr>\n" +
-					"\t\t\t\t<td>${measurementSession.hostName}</td>\n" +
-					"\t\t\t\t<td>${measurementSession.instanceName}</td>\n" +
-					"\t\t\t\t<td>${result.status}</td>\n" +
-					"\t\t\t\t<td>${result.failingExpression}</td>\n" +
-					"\t\t\t\t<td>${result.currentValue}</td>\n" +
-					"\t\t\t</tr>\n" +
-					"\t\t\t</#list>\n" +
-					"\t\t</#list>\n" +
-					"\t</tbody>\n" +
+					"	<thead>\n" +
+					"	<tr>\n" +
+					"		<th>Host</th>\n" +
+					"		<th>Instance</th>\n" +
+					"		<th>Status</th>\n" +
+					"		<th>Description</th>\n" +
+					"		<th>Current Value</th>\n" +
+					"	</tr>\n" +
+					"	</thead>\n" +
+					"	<tbody>\n" +
+					"		<#list incident.checkResults as results>\n" +
+					"			<#assign measurementSession=results.measurementSession/>\n" +
+					"			<#list results.getResults() as result>\n" +
+					"			<tr>\n" +
+					"				<td>${measurementSession.hostName}</td>\n" +
+					"				<td>${measurementSession.instanceName}</td>\n" +
+					"				<td>${result.status}</td>\n" +
+					"				<td>${result.failingExpression}</td>\n" +
+					"				<td>${result.currentValue}</td>\n" +
+					"			</tr>\n" +
+					"			</#list>\n" +
+					"		</#list>\n" +
+					"	</tbody>\n" +
 					"</table>\n" +
+					"	</#if>\n" +
 					"</#if>\n")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
@@ -169,6 +171,7 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 					"</#if>\n" +
 					"Old status: ${incident.oldStatus!'OK'}\n" +
 					"New status: ${incident.newStatus}\n" +
+					"<#if incident.failedChecks gt 0>" + 
 					"Failing check<#if incident.failedChecks gt 1>s</#if>: ${incident.failedChecks}\n" +
 					"Hosts: ${incident.hosts?join(\", \")}\n" +
 					"Instances: ${incident.instances?join(\", \")}\n" +
@@ -176,16 +179,17 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 					"Details:" +
 					"\n" +
 					"<#list incident.checkResults as results>\n" +
-					"	<#assign measurementSession=results.measurementSession/>\n" +
-					"	<#list results.getResults() as result>\n" +
+					"<#assign measurementSession=results.measurementSession/>\n" +
+					"<#list results.getResults() as result>\n" +
 					"Host:			${measurementSession.hostName}\n" +
 					"Instance:		${measurementSession.instanceName}\n" +
 					"Status: 		${result.status}\n" +
 					"Description:	${result.failingExpression}\n" +
 					"Current value:	${result.currentValue}\n" +
 					"\n" +
-					"	</#list>" +
-					"</#list>")
+					"</#list>" +
+					"</#list>" +
+					"</#if>")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
 	private ConfigurationOption<String> shortDescriptionAlertTemplate = ConfigurationOption.stringOption()
