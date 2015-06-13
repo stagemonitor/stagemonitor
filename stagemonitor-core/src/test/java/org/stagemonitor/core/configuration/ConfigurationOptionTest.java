@@ -1,9 +1,5 @@
 package org.stagemonitor.core.configuration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -18,6 +14,10 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.source.SimpleSource;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ConfigurationOptionTest {
 
@@ -123,7 +123,7 @@ public class ConfigurationOptionTest {
 		assertEquals(60, corePlugin.getGraphiteReportingInterval());
 		assertEquals(null, corePlugin.getGraphiteHostName());
 		assertEquals(2003, corePlugin.getGraphitePort());
-		assertEquals(null, corePlugin.getApplicationName());
+		assertEquals("My Application", corePlugin.getApplicationName());
 		assertEquals(null, corePlugin.getInstanceName());
 		assertEquals(Collections.<Pattern>emptyList(), corePlugin.getExcludedMetricsPatterns());
 	}
