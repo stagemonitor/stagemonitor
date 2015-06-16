@@ -1,7 +1,5 @@
 package org.stagemonitor.web.monitor;
 
-import static com.codahale.metrics.MetricRegistry.name;
-
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -23,6 +21,8 @@ import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
@@ -100,7 +100,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		return determineRequestNameImmediately;
 	}
 
-	private String getClientIp(HttpServletRequest request) {
+	public static String getClientIp(HttpServletRequest request) {
 		String ip = request.getHeader("X-Forwarded-For");
 		ip = getIpFromHeaderIfNotAlreadySet("X-Real-IP", request, ip);
 		ip = getIpFromHeaderIfNotAlreadySet("Proxy-Client-IP", request, ip);
@@ -113,7 +113,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		return ip;
 	}
 
-	private String getIpFromHeaderIfNotAlreadySet(String header, HttpServletRequest request, String ip) {
+	private static String getIpFromHeaderIfNotAlreadySet(String header, HttpServletRequest request, String ip) {
 		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
 			ip = request.getHeader(header);
 		}

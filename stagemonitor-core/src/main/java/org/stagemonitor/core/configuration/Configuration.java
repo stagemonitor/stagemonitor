@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
+import org.stagemonitor.core.util.StringUtils;
 
 public class Configuration {
 
@@ -311,7 +312,10 @@ public class Configuration {
 			assertPasswordCorrect(password);
 			return true;
 		} catch (IllegalStateException e) {
-			logger.error(e.getMessage(), e);
+			if (StringUtils.isNotEmpty(password)) {
+				// someone probably tried to guess the password
+				logger.error(e.getMessage());
+			}
 			return false;
 		}
 	}

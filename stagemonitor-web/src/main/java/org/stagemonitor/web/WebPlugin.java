@@ -1,8 +1,5 @@
 package org.stagemonitor.web;
 
-import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
-import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -31,6 +28,7 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.metrics.StagemonitorMetricsServlet;
@@ -42,6 +40,9 @@ import org.stagemonitor.web.monitor.servlet.FileServlet;
 import org.stagemonitor.web.monitor.spring.SpringMonitoredHttpRequest;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
 import org.stagemonitor.web.session.SessionCounter;
+
+import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
+import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
 
 public class WebPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
 
@@ -99,7 +100,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.dynamic(true)
 			.label("Do not collect headers")
 			.description("A list of (case insensitive) header names that should not be collected.")
-			.defaultValue(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")))
+			.defaultValue(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization", STAGEMONITOR_SHOW_WIDGET)))
 			.configurationCategory(WEB_PLUGIN)
 			.tags("security-relevant")
 			.build();
@@ -279,7 +280,20 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			return (Boolean) request.getAttribute(STAGEMONITOR_SHOW_WIDGET);
 		}
 
-		return isWidgetEnabled() || configuration.isPasswordCorrect(request.getHeader(STAGEMONITOR_SHOW_WIDGET));
+		return isWidgetEnabled() || isPasswordInShowWidgetHeaderCorrect(request, configuration);
+	}
+
+	private boolean isPasswordInShowWidgetHeaderCorrect(HttpServletRequest request, Configuration configuration) {
+		String password = request.getHeader(STAGEMONITOR_SHOW_WIDGET);
+		try {
+			configuration.assertPasswordCorrect(password);
+			return true;
+		} catch (IllegalStateException e) {
+			if (StringUtils.isNotEmpty(password)) {
+				logger.error("{} This might be a malicious attempt to guess the password of the {} header. The request was initiated from the ip {}.", e.getMessage(), STAGEMONITOR_SHOW_WIDGET, MonitoredHttpRequest.getClientIp(request));
+			}
+			return false;
+		}
 	}
 
 	public boolean isMonitorOnlySpringMvcRequests() {
