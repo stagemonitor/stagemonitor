@@ -34,7 +34,7 @@ public class WebPluginConfigurationTest {
 	@Test
 	public void testDefaultValues() {
 		assertEquals(true, config.isCollectHttpHeaders());
-		assertEquals(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization")), config.getExcludeHeaders());
+		assertEquals(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization", WebPlugin.STAGEMONITOR_SHOW_WIDGET)), config.getExcludeHeaders());
 		final Collection<Pattern> confidentialQueryParams = config.getRequestParamsConfidential();
 		final List<String> confidentialQueryParamsAsString = new ArrayList<String>(confidentialQueryParams.size());
 		for (Pattern confidentialQueryParam : confidentialQueryParams) {
