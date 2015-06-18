@@ -5,10 +5,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class IOUtils {
 
 	private static final int EOF = -1;
 	private static final int BUFFER_SIZE = 4096;
+	private static final Logger logger = LoggerFactory.getLogger(IOUtils.class);
 
 	public static void copy(InputStream input, OutputStream output) throws IOException {
 		int n = 0;
@@ -31,5 +35,25 @@ public class IOUtils {
 			stringBuilder.append(buffer, 0, n);
 		}
 		return stringBuilder.toString();
+	}
+
+	public static void closeQuietly(InputStream is) {
+		if (is != null) {
+			try {
+				is.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
+	}
+
+	public static void consumeAndClose(InputStream is) {
+		try {
+			while (is.read() != EOF) {}
+		} catch (IOException e) {
+			logger.warn(e.getMessage(), e);
+		} finally {
+			closeQuietly(is);
+		}
 	}
 }

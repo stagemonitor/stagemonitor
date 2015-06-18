@@ -1,11 +1,8 @@
 package org.stagemonitor.core.elasticsearch;
 
-import static org.stagemonitor.core.util.StringUtils.slugify;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,6 +28,8 @@ import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
+
+import static org.stagemonitor.core.util.StringUtils.slugify;
 
 public class ElasticsearchClient {
 
@@ -86,25 +85,25 @@ public class ElasticsearchClient {
 	public <T> Collection<T> getAll(String path, int limit, Class<T> clazz) {
 		try {
 			JsonNode hits = getJson(path + "/_search?size=" + limit).get("hits").get("hits");
-			List<T> incidents = new ArrayList<T>(hits.size());
+			List<T> all = new ArrayList<T>(hits.size());
 			ObjectReader reader = JsonUtils.getMapper().reader(clazz);
 			for (JsonNode hit : hits) {
-				incidents.add(reader.<T>readValue(hit.get("_source")));
+				all.add(reader.<T>readValue(hit.get("_source")));
 			}
-			return incidents;
+			return all;
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
 			return Collections.emptyList();
 		}
 	}
 
-	public HttpURLConnection sendRequest(final String method, final String path) {
+	public int sendRequest(final String method, final String path) {
 		return sendAsJson(method, path, null);
 	}
 
-	public HttpURLConnection sendAsJson(final String method, final String path, final Object requestBody) {
+	public int sendAsJson(final String method, final String path, final Object requestBody) {
 		if (baseUrl == null || baseUrl.isEmpty()) {
-			return null;
+			return -1;
 		}
 		return httpClient.sendAsJson(method, baseUrl + path, requestBody);
 	}

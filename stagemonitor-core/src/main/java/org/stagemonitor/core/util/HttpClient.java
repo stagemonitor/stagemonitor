@@ -14,15 +14,11 @@ public class HttpClient {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	public HttpURLConnection sendRequest(final String method, final String url) {
-		return sendAsJson(method, url, null, null);
-	}
-
-	public HttpURLConnection sendAsJson(final String method, final String url, final Object requestBody) {
+	public int sendAsJson(final String method, final String url, final Object requestBody) {
 		return sendAsJson(method, url, requestBody, null);
 	}
 
-	public HttpURLConnection sendAsJson(final String method, final String url, final Object requestBody, final Map<String, String> headerFields) {
+	public int sendAsJson(final String method, final String url, final Object requestBody, final Map<String, String> headerFields) {
 		HttpURLConnection connection = null;
 		try {
 			connection = (HttpURLConnection) new URL(url).openConnection();
@@ -36,19 +32,38 @@ public class HttpClient {
 
 			writeRequestBody(requestBody, connection);
 
-			connection.getContent();
+			IOUtils.consumeAndClose(connection.getInputStream());
+
+			return connection.getResponseCode();
 		} catch (IOException e) {
-			String errorMessage = "";
 			if (connection != null) {
-				try {
-					errorMessage = IOUtils.toString(connection.getErrorStream());
-				} catch (IOException e1) {
-					logger.warn(e.getMessage(), e);
-				}
+				logger.warn(e.getMessage() + ": " + getErrorMessage(connection));
+				return getResponseCode(connection, e);
+			} else {
+				return -1;
 			}
-			logger.warn(e.getMessage() + ": " + errorMessage);
 		}
-		return connection;
+	}
+
+	private int getResponseCode(HttpURLConnection connection, IOException e) {
+		try {
+			return connection.getResponseCode();
+		} catch (IOException e1) {
+			logger.warn(e.getMessage());
+			return -1;
+		}
+	}
+
+	private String getErrorMessage(HttpURLConnection connection) {
+		InputStream errorStream = null;
+		try {
+			errorStream = connection.getErrorStream();
+			return IOUtils.toString(errorStream);
+		} catch (IOException e) {
+			return e.getMessage();
+		} finally {
+			IOUtils.closeQuietly(errorStream);
+		}
 	}
 
 	private void writeRequestBody(Object requestBody, HttpURLConnection connection) throws IOException {

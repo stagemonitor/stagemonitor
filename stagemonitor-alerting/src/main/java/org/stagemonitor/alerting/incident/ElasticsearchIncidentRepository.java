@@ -1,7 +1,5 @@
 package org.stagemonitor.alerting.incident;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Collection;
 
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -44,14 +42,7 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 		return "?version=" + incident.getVersion() + "&version_type=external";
 	}
 
-	private boolean hasNoConflict(HttpURLConnection connection) {
-		if (connection == null) {
-			return true;
-		}
-		try {
-			return connection.getResponseCode() != 409;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+	private boolean hasNoConflict(int statusCode) {
+		return statusCode != 409;
 	}
 }
