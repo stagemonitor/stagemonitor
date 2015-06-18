@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.scheduling.annotation.Async;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public class TimedAspectTest {
 
@@ -46,7 +45,7 @@ public class TimedAspectTest {
 
 	@BeforeClass
 	public static void attachProfiler() {
-		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+		Stagemonitor.init();
 	}
 
 	@Before

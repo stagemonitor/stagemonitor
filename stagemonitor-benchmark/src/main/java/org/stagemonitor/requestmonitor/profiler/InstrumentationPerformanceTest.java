@@ -17,7 +17,6 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
 public class InstrumentationPerformanceTest  {
@@ -27,7 +26,7 @@ public class InstrumentationPerformanceTest  {
 	public static void main(String[] args) throws Exception {
 		final Timer.Context timer = Stagemonitor.getMetricRegistry().timer("startElasticsearch").time();
 		startElasticsearch();
-		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+		Stagemonitor.init();
 		timer.stop();
 		printResults();
 		node.stop();

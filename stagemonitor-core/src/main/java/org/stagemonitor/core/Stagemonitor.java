@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public final class Stagemonitor {
 
@@ -39,6 +40,13 @@ public final class Stagemonitor {
 	}
 
 	private Stagemonitor() {
+	}
+
+	/**
+	 * Just makes sure the static initializer is executed
+	 */
+	public static void init() {
+		// intentionally left blank
 	}
 
 	public synchronized static void setMeasurementSession(MeasurementSession measurementSession) {
@@ -183,6 +191,7 @@ public final class Stagemonitor {
 		measurementSession = new MeasurementSession(null, null, null);
 		SharedMetricRegistries.clear();
 		reloadConfiguration();
+		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
 	}
 
 	private static void reloadConfiguration() {

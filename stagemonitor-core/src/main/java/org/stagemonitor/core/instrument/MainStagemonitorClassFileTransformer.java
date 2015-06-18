@@ -52,6 +52,9 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		}
 		metricRegistry = Stagemonitor.getMetricRegistry();
 		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
+		if (!corePlugin.isStagemonitorActive() || !corePlugin.isAttachAgentAtRuntime()) {
+			return;
+		}
 
 		final Timer.Context time = metricRegistry.timer("internal.transform.performRuntimeAttachment").time();
 		try {

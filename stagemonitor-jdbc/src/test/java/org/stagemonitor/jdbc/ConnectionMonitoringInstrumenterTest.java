@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.SortedMap;
 import java.util.logging.Logger;
+
 import javax.sql.DataSource;
 
 import com.codahale.metrics.MetricFilter;
@@ -25,7 +26,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -43,7 +43,7 @@ public class ConnectionMonitoringInstrumenterTest {
 
 	@BeforeClass
 	public static void attachProfiler() {
-		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+		Stagemonitor.init();
 	}
 
 	@Before

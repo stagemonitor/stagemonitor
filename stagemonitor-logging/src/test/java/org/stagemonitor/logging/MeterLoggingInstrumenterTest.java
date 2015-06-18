@@ -12,7 +12,6 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public class MeterLoggingInstrumenterTest {
 
@@ -20,7 +19,7 @@ public class MeterLoggingInstrumenterTest {
 
 	@BeforeClass
 	public static void attachProfiler() {
-		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+		Stagemonitor.init();
 	}
 
 	@Before

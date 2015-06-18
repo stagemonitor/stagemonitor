@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 
 public class MeteredAspectTest {
 
@@ -41,7 +40,7 @@ public class MeteredAspectTest {
 
 	@BeforeClass
 	public static void attachProfiler() {
-		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+		Stagemonitor.init();
 	}
 
 	@Before

@@ -5,8 +5,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
@@ -14,7 +14,7 @@ public class ElasticsearchSearchQueryInstrumenterTest extends AbstractElasticsea
 
 	@BeforeClass
 	public static void attachProfiler() {
-		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+		Stagemonitor.init();
 	}
 
 	@Test

@@ -8,8 +8,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 
 /**
@@ -21,17 +19,8 @@ import org.stagemonitor.core.Stagemonitor;
  */
 public class StagemonitorRuntimeAgentAttacherDriver implements Driver {
 
-	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(StagemonitorRuntimeAgentAttacherDriver.class);
-
 	static  {
-		try {
-			final CorePlugin configuration = Stagemonitor.getConfiguration(CorePlugin.class);
-			if (configuration.isStagemonitorActive() && configuration.isAttachAgentAtRuntime()) {
-				MainStagemonitorClassFileTransformer.performRuntimeAttachment();
-			}
-		} catch (Exception e) {
-			logger.warn(e.getMessage(), e);
-		}
+		Stagemonitor.init();
 	}
 
 	@Override

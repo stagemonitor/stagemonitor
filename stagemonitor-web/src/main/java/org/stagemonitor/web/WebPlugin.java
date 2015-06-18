@@ -1,5 +1,8 @@
 package org.stagemonitor.web;
 
+import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
+import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -9,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContainerInitializer;
@@ -27,7 +31,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.logging.MDCListener;
@@ -41,9 +44,6 @@ import org.stagemonitor.web.monitor.spring.SpringMonitoredHttpRequest;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
 import org.stagemonitor.web.session.SessionCounter;
 
-import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
-import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
-
 public class WebPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
 
 	public static final String STAGEMONITOR_SHOW_WIDGET = "X-Stagemonitor-Show-Widget";
@@ -53,14 +53,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	private static final Logger logger = LoggerFactory.getLogger(WebPlugin.class);
 
 	static  {
-		try {
-			final CorePlugin configuration = Stagemonitor.getConfiguration(CorePlugin.class);
-			if (configuration.isStagemonitorActive() && configuration.isAttachAgentAtRuntime()) {
-				MainStagemonitorClassFileTransformer.performRuntimeAttachment();
-			}
-		} catch (Exception e) {
-			logger.warn(e.getMessage(), e);
-		}
+		Stagemonitor.init();
 	}
 
 	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
