@@ -90,10 +90,6 @@ public class RequestMonitor {
 		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
 	}
 
-	public void setMeasurementSession(MeasurementSession measurementSession) {
-		Stagemonitor.setMeasurementSession(measurementSession);
-	}
-
 	public <T extends RequestTrace> void monitorStart(MonitoredRequest<T> monitoredRequest) {
 		final long start = System.nanoTime();
 		RequestInformation<T> info = new RequestInformation<T>();
@@ -200,7 +196,7 @@ public class RequestMonitor {
 		if (Stagemonitor.getMeasurementSession().isNull()) {
 			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), MeasurementSession.getNameOfLocalHost(),
 					corePlugin.getInstanceName());
-			setMeasurementSession(session);
+			Stagemonitor.setMeasurementSession(session);
 		}
 	}
 
