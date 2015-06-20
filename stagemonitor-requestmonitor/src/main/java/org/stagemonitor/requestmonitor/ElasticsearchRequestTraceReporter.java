@@ -7,6 +7,7 @@ import java.util.TimeZone;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.util.StringUtils;
 
 /**
  * An implementation of {@link RequestTraceReporter} that sends the {@link RequestTrace} to Elasticsearch
@@ -43,7 +44,6 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	@Override
 	public boolean isActive() {
-		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
-		return elasticsearchUrl != null && !elasticsearchUrl.isEmpty();
+		return StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl());
 	}
 }

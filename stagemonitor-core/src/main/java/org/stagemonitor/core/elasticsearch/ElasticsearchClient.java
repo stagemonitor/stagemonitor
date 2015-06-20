@@ -1,5 +1,7 @@
 package org.stagemonitor.core.elasticsearch;
 
+import static org.stagemonitor.core.util.StringUtils.slugify;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,8 +30,7 @@ import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
-
-import static org.stagemonitor.core.util.StringUtils.slugify;
+import org.stagemonitor.core.util.StringUtils;
 
 public class ElasticsearchClient {
 
@@ -37,8 +38,8 @@ public class ElasticsearchClient {
 	private final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
-	private String baseUrl;
-
+	private final CorePlugin corePlugin;
+	
 	public final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
 			new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
 		@Override
@@ -56,12 +57,8 @@ public class ElasticsearchClient {
 	}
 
 	public ElasticsearchClient(CorePlugin corePlugin) {
-		this(corePlugin.getElasticsearchUrl(), corePlugin.isInternalMonitoringActive());
-	}
-
-	public ElasticsearchClient(String baseUrl, boolean internalMonitoringActive) {
-		this.baseUrl = baseUrl;
-		if (internalMonitoringActive) {
+		this.corePlugin = corePlugin;
+		if (corePlugin.isInternalMonitoringActive()) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetricRegistry());
 		}
@@ -69,7 +66,7 @@ public class ElasticsearchClient {
 	}
 
 	public JsonNode getJson(final String path) throws IOException {
-		return JsonUtils.getMapper().readTree(new URL(baseUrl + path).openStream());
+		return JsonUtils.getMapper().readTree(new URL(corePlugin.getElasticsearchUrl() + path).openStream());
 	}
 
 	public <T> T getObject(final String path, Class<T> type) {
@@ -102,14 +99,14 @@ public class ElasticsearchClient {
 	}
 
 	public int sendAsJson(final String method, final String path, final Object requestBody) {
-		if (baseUrl == null || baseUrl.isEmpty()) {
+		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
 			return -1;
 		}
-		return httpClient.sendAsJson(method, baseUrl + path, requestBody);
+		return httpClient.sendAsJson(method, corePlugin.getElasticsearchUrl() + path, requestBody);
 	}
 
 	public Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
-		if (baseUrl != null && !baseUrl.isEmpty()) {
+		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
 			return asyncRestPool.submit(new Runnable() {
 				@Override
 				public void run() {
@@ -129,7 +126,7 @@ public class ElasticsearchClient {
 	}
 
 	public Future<?> sendDashboardAsync(String path, String dashboardPath) {
-		if (baseUrl != null && !baseUrl.isEmpty()) {
+		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
 				final String titleSlug = slugify(dashboard.get(TITLE).asText());
@@ -177,10 +174,6 @@ public class ElasticsearchClient {
 
 	String getMajorMinorVersionFromFullVersionString(String value) {
 		return value.substring(0, value.lastIndexOf('.'));
-	}
-
-	public void setBaseUrl(String baseUrl) {
-		this.baseUrl = baseUrl;
 	}
 
 	private class CompletedFuture<T> implements Future<T> {
