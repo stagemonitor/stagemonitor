@@ -27,7 +27,6 @@ public class MonitorRequestsInstrumenterTest {
 		Stagemonitor.init();
 	}
 
-
 	@Before
 	public void before() {
 		testClass = new TestClass();

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -23,7 +24,8 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
@@ -31,11 +33,14 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
+	private final RequestMonitorPlugin requestMonitorPlugin;
+
 	public SpringMonitoredHttpRequest(HttpServletRequest httpServletRequest,
 									  StatusExposingByteCountingServletResponse statusExposingResponse,
 									  FilterChain filterChain, Configuration configuration) {
 
 		super(httpServletRequest, statusExposingResponse, filterChain, configuration);
+		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 	}
 
 	@Override
@@ -44,7 +49,7 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 		for (HandlerMapping handlerMapping : (List<HandlerMapping>) HandlerMappingServletContextListener.allHandlerMappings) {
 			try {
 				HandlerExecutionChain handler = handlerMapping.getHandler(httpServletRequest);
-				name = getRequestNameFromHandler(handler);
+				name = getRequestNameFromHandler(handler, requestMonitorPlugin.getBusinessTransactionNamingStrategy());
 			} catch (Exception e) {
 				// ignore, try next
 				logger.warn(e.getMessage(), e);
@@ -60,10 +65,11 @@ public class SpringMonitoredHttpRequest extends MonitoredHttpRequest {
 		return name;
 	}
 
-	public static String getRequestNameFromHandler(HandlerExecutionChain handler) {
+	public static String getRequestNameFromHandler(HandlerExecutionChain handler, BusinessTransactionNamingStrategy businessTransactionNamingStrategy) {
 		if (handler != null && handler.getHandler() instanceof HandlerMethod) {
 			HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
-			return StringUtils.splitCamelCase(StringUtils.capitalize(handlerMethod.getMethod().getName()));
+			return businessTransactionNamingStrategy.getBusinessTransationName(handlerMethod.getBeanType().getSimpleName(),
+					handlerMethod.getMethod().getName());
 		}
 		return "";
 	}

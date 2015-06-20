@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.converter.BooleanValueConverter;
 import org.stagemonitor.core.configuration.converter.DoubleValueConverter;
+import org.stagemonitor.core.configuration.converter.EnumValueConverter;
 import org.stagemonitor.core.configuration.converter.IntegerValueConverter;
 import org.stagemonitor.core.configuration.converter.JsonValueConverter;
 import org.stagemonitor.core.configuration.converter.LongValueConverter;
@@ -160,6 +161,15 @@ public class ConfigurationOption<T> {
 	public static <K, V> ConfigurationOptionBuilder<Map<K, V>> mapOption(ValueConverter<K> keyConverter, ValueConverter<V> valueConverter) {
 		return new ConfigurationOptionBuilder<Map<K, V>>(new MapValueConverter<K, V>(keyConverter, valueConverter), Map.class)
 				.defaultValue(Collections.<K, V>emptyMap());
+	}
+
+	/**
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is an {@link Enum}
+	 *
+	 * @return a {@link ConfigurationOptionBuilder} whose value is an {@link Enum}
+	 */
+	public static <T extends Enum<T>> ConfigurationOptionBuilder<T> enumOption(Class<T> clazz) {
+		return new ConfigurationOptionBuilder<T>(new EnumValueConverter<T>(clazz), clazz);
 	}
 
 	private ConfigurationOption(boolean dynamic, boolean sensitive, String key, String label, String description,

@@ -97,6 +97,18 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<BusinessTransactionNamingStrategy> businessTransactionNamingStrategy = ConfigurationOption.enumOption(BusinessTransactionNamingStrategy.class)
+			.key("stagemonitor.businessTransaction.namingStrategy")
+			.dynamic(false)
+			.label("Business Transaction naming strategy")
+			.description("Defines how to name a business transaction that was detected by a method call. " +
+					"For example a Spring-MVC controller method or a method that is annotated with @"+MonitorRequests.class.getSimpleName()+". " +
+					BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE + ": Say Hello " +
+					BusinessTransactionNamingStrategy.CLASS_NAME_DOT_METHOD_NAME + ": HelloController.sayHello " +
+					BusinessTransactionNamingStrategy.CLASS_NAME_HASH_METHOD_NAME + ": HelloController#sayHello ")
+			.defaultValue(BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 
 	private static RequestMonitor requestMonitor;
 
@@ -165,5 +177,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isProfilerActive() {
 		return profilerActive.getValue();
+	}
+
+	public BusinessTransactionNamingStrategy getBusinessTransactionNamingStrategy() {
+		return businessTransactionNamingStrategy.getValue();
 	}
 }

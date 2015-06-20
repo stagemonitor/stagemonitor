@@ -5,11 +5,13 @@ import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 
 public class SpringMvcRequestNameDeterminerInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	private static WebPlugin webPlugin = Stagemonitor.getConfiguration(WebPlugin.class);
+	private static RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getConfiguration(RequestMonitorPlugin.class);
 
 	@Override
 	public boolean isIncluded(String className) {
@@ -27,7 +29,8 @@ public class SpringMvcRequestNameDeterminerInstrumenter extends StagemonitorJava
 		if (RequestMonitor.getRequest() != null) {
 			String requestName = "";
 			if (handler != null) {
-				requestName = SpringMonitoredHttpRequest.getRequestNameFromHandler(handler);
+				requestName = SpringMonitoredHttpRequest.getRequestNameFromHandler(handler,
+						requestMonitorPlugin.getBusinessTransactionNamingStrategy());
 			}
 			// requests with empty names don't get monitored
 			// requestNames with non null values don't get overwritten and avoid GetNameCallback#getName to be called
