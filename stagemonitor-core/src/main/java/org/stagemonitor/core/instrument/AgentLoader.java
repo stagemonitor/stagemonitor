@@ -176,10 +176,14 @@ final class AgentLoader {
 	}
 
 	private static File getAgentFile() throws IOException, URISyntaxException {
-		// first try to get stagemonitor-javaagent-<version>.jar
-		File agentFile = new File(StagemonitorAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-		if (agentFile.getPath().endsWith(".jar") && agentFile.isFile()) {
-			return agentFile;
+		try {
+			// first try to get stagemonitor-javaagent-<version>.jar
+			File agentFile = new File(StagemonitorAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+			if (agentFile.getPath().endsWith(".jar") && agentFile.isFile()) {
+				return agentFile;
+			}
+		} catch (Exception e) {
+			// ignore
 		}
 
 		return dynamicallyCreateAgentJar();
