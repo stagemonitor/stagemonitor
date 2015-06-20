@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -112,15 +113,15 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		return request instanceof HttpServletRequest && response instanceof HttpServletResponse;
 	}
 
-	private void doMonitor(HttpServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+	private void doMonitor(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
 
 		final StatusExposingByteCountingServletResponse responseWrapper;
 		HttpServletResponseBufferWrapper httpServletResponseBufferWrapper = null;
 		if (isInjectContentToHtml(request)) {
-			httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper((HttpServletResponse) response);
+			httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper(response);
 			responseWrapper = new StatusExposingByteCountingServletResponse(httpServletResponseBufferWrapper);
 		} else {
-			responseWrapper = new StatusExposingByteCountingServletResponse((HttpServletResponse) response);
+			responseWrapper = new StatusExposingByteCountingServletResponse(response);
 		}
 
 		try {
@@ -170,7 +171,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		return requestMonitor.monitor(monitoredRequest);
 	}
 
-	protected void injectHtml(ServletResponse response, HttpServletRequest httpServletRequest,
+	protected void injectHtml(HttpServletResponse response, HttpServletRequest httpServletRequest,
 							  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
 							  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
 		if (httpServletResponseBufferWrapper.getContentType() != null
@@ -181,12 +182,15 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			} else {
 				injectHtmlToOutputStream(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
 			}
+			if (StringUtils.isNotEmpty(response.getHeader("Content-Length"))) {
+				response.setContentLength(-1);
+			}
 		} else {
 			passthrough(response, httpServletResponseBufferWrapper);
 		}
 	}
 
-	private void injectHtmlToOutputStream(ServletResponse response, HttpServletRequest httpServletRequest,
+	private void injectHtmlToOutputStream(HttpServletResponse response, HttpServletRequest httpServletRequest,
 										  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
 										  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
 
