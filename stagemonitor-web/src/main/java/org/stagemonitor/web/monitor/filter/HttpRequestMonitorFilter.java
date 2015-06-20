@@ -25,6 +25,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
@@ -70,7 +71,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
 		final MeasurementSession measurementSession = new MeasurementSession(getApplicationName(filterConfig),
 				MeasurementSession.getNameOfLocalHost(), corePlugin.getInstanceName());
-		requestMonitor.setMeasurementSession(measurementSession);
+		Stagemonitor.setMeasurementSession(measurementSession);
 		final ServletContext servletContext = filterConfig.getServletContext();
 		atLeastServletApi3 = servletContext.getMajorVersion() >= 3;
 
@@ -82,8 +83,11 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	private String getApplicationName(FilterConfig filterConfig) {
 		String name = corePlugin.getApplicationName();
-		if (name == null || name.isEmpty()) {
+		if (StringUtils.isEmpty(name)) {
 			name = filterConfig.getServletContext().getServletContextName();
+		}
+		if (StringUtils.isEmpty(name)) {
+			name = CorePlugin.DEFAULT_APPLICATION_NAME;
 		}
 		return name;
 	}

@@ -1,5 +1,8 @@
 package org.stagemonitor.core;
 
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -27,9 +30,6 @@ import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SimpleElasticsearchReporter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
-
-import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 /**
  * This class contains the configuration options for stagemonitor's core functionality
@@ -118,7 +118,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Application name")
 			.description("The name of the application.\n" +
 					"Either this property or the display-name in web.xml is mandatory!")
-			.defaultValue(DEFAULT_APPLICATION_NAME)
+			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
 			.build();
