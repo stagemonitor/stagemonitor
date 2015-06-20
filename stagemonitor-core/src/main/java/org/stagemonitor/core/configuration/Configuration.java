@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.util.StringUtils;
 
 public class Configuration {
 
@@ -308,16 +307,10 @@ public class Configuration {
 	 * @return <code>true</code>, if the password is correct, <code>false</code> otherwise
 	 */
 	public boolean isPasswordCorrect(String password) {
-		try {
-			assertPasswordCorrect(password);
-			return true;
-		} catch (IllegalStateException e) {
-			if (StringUtils.isNotEmpty(password)) {
-				// someone probably tried to guess the password
-				logger.error(e.getMessage());
-			}
-			return false;
+		if (password == null) {
+			password = "";
 		}
+		return isPasswordSet() && getString(updateConfigPasswordKey).equals(password);
 	}
 
 	/**
@@ -327,15 +320,11 @@ public class Configuration {
 	 * @throws IllegalStateException if the password did not match
 	 */
 	public void assertPasswordCorrect(String password) {
-		if (password == null) {
-			password = "";
-		}
-		String updateConfigPassword = getString(updateConfigPasswordKey);
-		if (updateConfigPassword == null) {
+		if (!isPasswordSet()) {
 			throw new IllegalStateException("'" + updateConfigPasswordKey + "' is not set.");
 		}
 
-		if (!updateConfigPassword.equals(password)) {
+		if (!isPasswordCorrect(password)) {
 			throw new IllegalStateException("Wrong password for '" + updateConfigPasswordKey + "'.");
 		}
 	}

@@ -278,12 +278,15 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 
 	private boolean isPasswordInShowWidgetHeaderCorrect(HttpServletRequest request, Configuration configuration) {
 		String password = request.getHeader(STAGEMONITOR_SHOW_WIDGET);
-		try {
-			configuration.assertPasswordCorrect(password);
+		if (configuration.isPasswordCorrect(password)) {
 			return true;
-		} catch (IllegalStateException e) {
+		} else {
 			if (StringUtils.isNotEmpty(password)) {
-				logger.error("{} This might be a malicious attempt to guess the password of the {} header. The request was initiated from the ip {}.", e.getMessage(), STAGEMONITOR_SHOW_WIDGET, MonitoredHttpRequest.getClientIp(request));
+				logger.error("The password transmitted via the header {} is not correct. " +
+						"This might be a malicious attempt to guess the value of {}. " +
+						"The request was initiated from the ip {}.",
+						STAGEMONITOR_SHOW_WIDGET, Stagemonitor.STAGEMONITOR_PASSWORD,
+						MonitoredHttpRequest.getClientIp(request));
 			}
 			return false;
 		}
