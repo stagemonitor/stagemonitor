@@ -1,5 +1,8 @@
 package org.stagemonitor.core.configuration;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -11,6 +14,7 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class AbstractElasticsearchTest {
@@ -42,7 +46,9 @@ public class AbstractElasticsearchTest {
 					.put("index.number_of_replicas", "0")
 					.put("discovery.zen.ping.multicast.enabled", "false");
 			elasticsearchUrl = "http://localhost:" + elasticsearchPort;
-			elasticsearchClient = new ElasticsearchClient(elasticsearchUrl, false);
+			final CorePlugin corePlugin = mock(CorePlugin.class);
+			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
+			elasticsearchClient = new ElasticsearchClient(corePlugin);
 
 			node = nodeBuilder.node();
 			node.client().admin().cluster().prepareHealth().setWaitForGreenStatus().get();

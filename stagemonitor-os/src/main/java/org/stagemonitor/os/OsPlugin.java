@@ -49,16 +49,12 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
-		final CorePlugin config = configuration.getConfig(CorePlugin.class);
-		final String elasticsearchUrl = config.getElasticsearchUrl();
-		if (elasticsearchUrl != null && !elasticsearchUrl.isEmpty()) {
-			ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
-			elasticsearchClient.sendGrafanaDashboardAsync("CPU.json");
-			elasticsearchClient.sendGrafanaDashboardAsync("Filesystem.json");
-			elasticsearchClient.sendGrafanaDashboardAsync("Memory.json");
-			elasticsearchClient.sendGrafanaDashboardAsync("Network.json");
-			elasticsearchClient.sendGrafanaDashboardAsync("OS Overview.json");
-		}
+		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
+		elasticsearchClient.sendGrafanaDashboardAsync("CPU.json");
+		elasticsearchClient.sendGrafanaDashboardAsync("Filesystem.json");
+		elasticsearchClient.sendGrafanaDashboardAsync("Memory.json");
+		elasticsearchClient.sendGrafanaDashboardAsync("Network.json");
+		elasticsearchClient.sendGrafanaDashboardAsync("OS Overview.json");
 
 		if (sigar == null) {
 			sigar = newSigar();

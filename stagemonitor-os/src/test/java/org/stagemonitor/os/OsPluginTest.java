@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
@@ -41,7 +42,9 @@ public class OsPluginTest {
 	public void setUp() throws Exception {
 		metricRegistry = new MetricRegistry();
 		final Configuration configuration = mock(Configuration.class);
-		when(configuration.getConfig(CorePlugin.class)).thenReturn(mock(CorePlugin.class));
+		final CorePlugin corePlugin = mock(CorePlugin.class);
+		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		osPlugin.initializePlugin(metricRegistry, configuration);
 		this.sigar = osPlugin.getSigar();
 	}
