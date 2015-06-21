@@ -9,11 +9,11 @@ env:
     - secure: "YQn9t0lo5f1XosuJ7j7bKVHv91WCqruzpIZed+2AxbZyq0e/9aE0GcOydynio3slWZg/b6X/SRg7M52RKPETyc6ZZ72DPVQ1wIb2LkiQ0cTlaxiKqSLgqsVgmZ4lWFgZz9FvF4dHLRx8WKjpqdiy/mQ07TxicUoSqJf2AtuazQs="
     - secure: "kYo83ZxCaBdbflliPIboYZW6QR9qBuMK0YrFsrO2DE7MXUZWsJVq1HaRWwv1jIxAojaAggxNay/2xLvkc/JRWnglYXLEqS16yuHFP0mA33Th4w3Wnmy8CDGTVPRaRHZzwtBjGWiMrnBen8BEyVt72qQLXKL8TJV/x4UBVO9cao4="
 install:
-  - ./gradlew assemble --stacktrace
+  - gradle assemble --stacktrace
 script:
-  - ./gradlew test
+  - gradle test
 after_success:
-  - ./gradlew cobertura coveralls
+  - gradle cobertura coveralls
 
 addons:
   coverity_scan:
@@ -21,6 +21,6 @@ addons:
       name: "stagemonitor/stagemonitor"
       description: "Build submitted via Travis CI"
     notification_email: felix.barnsteiner@gmail.com
-    build_command_prepend: "./gradlew clean"
-    build_command:   "./gradlew compileJava"
+    build_command_prepend: "gradle clean"
+    build_command:   "gradle compileJava"
     branch_pattern: coverity
