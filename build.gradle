@@ -39,8 +39,8 @@ apply plugin: 'com.github.kt3k.coveralls'
 ext {
 	metricsVersion = '3.1.2'
 	slf4jVersion = '1.7.12'
-	jacksonVersion = '2.5.2'
-	esVersion = '1.5.1'
+	jacksonVersion = '2.5.4'
+	esVersion = '1.6.0'
 }
 
 subprojects {
