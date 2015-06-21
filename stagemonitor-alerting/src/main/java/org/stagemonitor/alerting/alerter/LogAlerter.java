@@ -45,4 +45,9 @@ public class LogAlerter implements Alerter {
 	public boolean isAvailable() {
 		return true;
 	}
+
+	@Override
+	public String getTargetLabel() {
+		return null;
+	}
 }

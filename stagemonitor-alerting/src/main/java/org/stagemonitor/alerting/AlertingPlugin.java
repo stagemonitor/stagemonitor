@@ -111,7 +111,15 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 			.defaultValue("alert@stagemonitor.org")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.build();
-
+	private ConfigurationOption<String> pushbulletAccessToken = ConfigurationOption.stringOption()
+			.key("stagemonitor.alerts.pushbullet.accessToken")
+			.dynamic(true)
+			.label("Pushbullet Access Token")
+			.description("The Access Token for the Pushbullet API. You can find it in your Pushbullet account settings.")
+			.defaultValue(null)
+			.configurationCategory(ALERTING_PLUGIN_NAME)
+			.sensitive()
+			.build();
 	private ConfigurationOption<String> htmlAlertTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.template.html")
 			.dynamic(true)
@@ -246,6 +254,11 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 		return incidentRepository;
 	}
 
+	/**
+	 * Returns the alert sender. It may be null if the alerting plugin has not yet been initialized.
+	 *
+	 * @return the alert sender or <code>null</code>
+	 */
 	public AlertSender getAlertSender() {
 		return alertSender;
 	}
@@ -295,6 +308,10 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 			alertTemplateProcessor = new AlertTemplateProcessor(this);
 		}
 		return alertTemplateProcessor;
+	}
+
+	public String getPushbulletAccessToken() {
+		return pushbulletAccessToken.getValue();
 	}
 
 	@Override

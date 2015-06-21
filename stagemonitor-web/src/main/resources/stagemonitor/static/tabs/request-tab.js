@@ -112,6 +112,7 @@ function doRenderPageLoadTime(data) {
 		var renderedMetricsTemplate = pageLoadTimeTemplate(model);
 		var $stagemonitorRequest = $("#stagemonitor-request");
 		$stagemonitorRequest.prepend(renderedMetricsTemplate);
+		$(".tip").tooltip({html: true});
 	});
 
 	stagemonitor.thresholdExceeded |= thresholdExceeded;

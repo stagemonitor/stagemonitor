@@ -7,17 +7,20 @@ import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.StringUtils;
 
 public class PushbulletAlerter implements Alerter {
 
 	private final AlertTemplateProcessor alertTemplateProcessor;
+	private final AlertingPlugin alertingPlugin;
 
 	public PushbulletAlerter() {
 		this(Stagemonitor.getConfiguration(AlertingPlugin.class));
 	}
 
 	public PushbulletAlerter(AlertingPlugin alertingPlugin) {
-		this.alertTemplateProcessor = alertingPlugin.getAlertTemplateProcessor();
+		this.alertingPlugin = alertingPlugin;
+		this.alertTemplateProcessor = this.alertingPlugin.getAlertTemplateProcessor();
 	}
 
 	@Override
@@ -27,11 +30,11 @@ public class PushbulletAlerter implements Alerter {
 				alertTemplateProcessor.processPlainTextTemplate(incident));
 	}
 
-	public void sendPushbulletNotification(String apiToken, String subject, String content) {
+	public void sendPushbulletNotification(String channelTag, String subject, String content) {
 		HttpClient client = new HttpClient();
-		PushbulletNotification notification = new PushbulletNotification(subject, content);
+		PushbulletNotification notification = new PushbulletNotification(subject, content, channelTag);
 		Map<String, String> authorizationHeader = new HashMap<String, String>();
-		authorizationHeader.put("Authorization", "Bearer " + apiToken);
+		authorizationHeader.put("Authorization", "Bearer " + alertingPlugin.getPushbulletAccessToken());
 		client.sendAsJson("POST", "https://api.pushbullet.com/v2/pushes", notification, authorizationHeader);
 	}
 
@@ -42,6 +45,11 @@ public class PushbulletAlerter implements Alerter {
 
 	@Override
 	public boolean isAvailable() {
-		return true;
+		return StringUtils.isNotEmpty(alertingPlugin.getPushbulletAccessToken());
+	}
+
+	@Override
+	public String getTargetLabel() {
+		return "Channel Tag";
 	}
 }

@@ -79,4 +79,9 @@ public class MailAlerter implements Alerter {
 		return isNotEmpty(alertingPlugin.getSmtpHost()) && isNotEmpty(alertingPlugin.getSmtpFrom());
 	}
 
+	@Override
+	public String getTargetLabel() {
+		return "Email Address";
+	}
+
 }

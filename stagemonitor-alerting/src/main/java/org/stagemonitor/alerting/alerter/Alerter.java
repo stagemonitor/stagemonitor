@@ -33,4 +33,14 @@ public interface Alerter {
 	 */
 	boolean isAvailable();
 
+	/**
+	 * The label of the target parameter that is used in {@link Subscription#target}
+	 * <p/>
+	 * For example "Email address" for the Email alerter. Returning <code>null</code> means that
+	 * this alerter does not have a target parameter.
+	 *
+	 * @return The label of the target parameter that is used in {@link Subscription#target}
+	 */
+	String getTargetLabel();
+
 }
