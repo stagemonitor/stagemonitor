@@ -7,6 +7,7 @@ dependencies {
 	provided 'javax.servlet:javax.servlet-api:3.0.1'
 	// optional
 	provided 'org.springframework:spring-webmvc:3.1.0.RELEASE'
+	provided 'org.jboss.resteasy:resteasy-jaxrs:3.0.10.Final'
 
 	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
 	testCompile 'org.springframework:spring-test:4.1.0.RELEASE'
