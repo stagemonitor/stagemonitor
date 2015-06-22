@@ -69,6 +69,8 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 					classesToRetransform.add(loadedClass);
 				}
 			}
+			logger.info("Retransforming {} classes...", classesToRetransform.size());
+			logger.debug("Classes to retransform: {}", classesToRetransform);
 			retransformClasses(instrumentation, classesToRetransform, transformer);
 			logger.info("Retransformed {} classes in {} ms", classesToRetransform.size(), System.currentTimeMillis() - start);
 		} catch (Exception e) {
@@ -144,7 +146,8 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 							timeTransfomer.stop();
 						}
 					} catch (Exception e) {
-						logger.warn(e.getMessage(), e);
+						logger.warn("An exception occured while transfroming class " + className +
+								". This is usually nothing to worry about, because the class is just not instrumented", e);
 					}
 				}
 			}
