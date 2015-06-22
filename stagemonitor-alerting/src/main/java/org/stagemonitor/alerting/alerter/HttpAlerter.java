@@ -26,4 +26,9 @@ public class HttpAlerter implements Alerter {
 		return true;
 	}
 
+	@Override
+	public String getTargetLabel() {
+		return "URL";
+	}
+
 }

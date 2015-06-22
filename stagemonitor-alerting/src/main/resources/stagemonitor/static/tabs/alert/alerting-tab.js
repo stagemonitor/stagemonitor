@@ -174,7 +174,9 @@
 				});
 
 				$("#subscriptions").on("click", "#add-subscription", function () {
-					renderSubscriptionModal("Add Subscription", {});
+					renderSubscriptionModal("Add Subscription", {
+						alertOnBackToOk: true, alertOnWarn: true, alertOnError: true, alertOnCritical: true
+					});
 				});
 
 				$("#subscriptions").on("click", ".edit-subscription", function () {
@@ -224,6 +226,11 @@
 					}
 				});
 
+				$subscriptionModal.on('change', "#alerter-type-select", function () {
+					var optionSelected = $("option:selected", this);
+					$("#alerter-target").html(optionSelected.data('target-label'));
+				});
+
 				function renderSubscriptionModal(title, subscription) {
 					$.getJSON(stagemonitor.baseUrl + "/stagemonitor/alerter-types", function(alerterTypes) {
 						$("#subscription-modal-content").html(subscriptionModalTemplate({
@@ -231,6 +238,10 @@
 							subscription: subscription,
 							alerterTypes: alerterTypes
 						}));
+						// trigger onChange
+						var activeAlerterType = subscription.alerterType || alerterTypes[0].alerterType;
+						$("#alerter-type-select").val(activeAlerterType).change();
+
 						$(".tip").tooltip({html: true});
 					});
 				}
@@ -340,7 +351,12 @@
 				});
 
 				$(".add-check").click(function () {
-					renderCheckModal("Add Check", {application: stagemonitor.measurementSession.applicationName, active: true, alertAfterXFailures: 1, thresholds: {WARN: [], ERROR: [], CRITICAL: []}});
+					renderCheckModal("Add Check", {
+						application: stagemonitor.measurementSession.applicationName,
+						active: true,
+						alertAfterXFailures: 1,
+						thresholds: {WARN: [], ERROR: [], CRITICAL: []}
+					});
 				});
 
 				function getCheckFromForm() {

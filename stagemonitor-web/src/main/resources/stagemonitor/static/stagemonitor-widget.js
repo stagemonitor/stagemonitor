@@ -32,7 +32,6 @@ $(document).ready(function () {
 		thresholdExceeded: false,
 		renderPageLoadTime: function (data) {
 			doRenderPageLoadTime(data);
-			$(".tip").tooltip({html: true});
 		}
 	};
 

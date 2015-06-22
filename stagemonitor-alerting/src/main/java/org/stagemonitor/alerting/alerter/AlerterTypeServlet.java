@@ -1,8 +1,8 @@
 package org.stagemonitor.alerting.alerter;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -32,14 +32,12 @@ public class AlerterTypeServlet extends HttpServlet {
 	 */
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		Collection<String> availableAlerters;
 		if (alertingPlugin.getAlertSender() != null) {
-			availableAlerters = alertingPlugin.getAlertSender().getAvailableAlerters();
+			JsonUtils.writeJsonToOutputStream(alertingPlugin.getAlertSender().getAvailableAlerters(),
+					resp.getOutputStream());
 		} else {
-			availableAlerters = Collections.emptyList();
+			JsonUtils.writeJsonToOutputStream(Collections.emptyList(), resp.getOutputStream());
 		}
-
-		JsonUtils.writeJsonToOutputStream(availableAlerters, resp.getOutputStream());
 	}
 
 	@Override

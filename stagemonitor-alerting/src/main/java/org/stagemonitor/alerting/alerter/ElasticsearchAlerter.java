@@ -39,4 +39,9 @@ public class ElasticsearchAlerter implements Alerter {
 	public boolean isAvailable() {
 		return StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl());
 	}
+
+	@Override
+	public String getTargetLabel() {
+		return "Index";
+	}
 }
