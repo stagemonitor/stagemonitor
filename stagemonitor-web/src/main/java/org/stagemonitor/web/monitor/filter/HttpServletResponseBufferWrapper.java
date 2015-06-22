@@ -1,12 +1,13 @@
 package org.stagemonitor.web.monitor.filter;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper {
 
@@ -15,6 +16,7 @@ public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper
 
 	private BufferingPrintWriter printWriter;
 	private boolean usingWriter = false;
+	private boolean committed = false;
 
 
 	public HttpServletResponseBufferWrapper(HttpServletResponse response) {
@@ -48,6 +50,7 @@ public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper
 	@Override
 	public void flushBuffer() throws IOException {
 		// the purpose of this wrapper is to buffer all the content
+		committed = true;
 	}
 
 	@Override
@@ -57,10 +60,57 @@ public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper
 
 	@Override
 	public void resetBuffer() {
+		assertNotCommitted();
 		servletOutputStream = null;
 		usingOutputStream = false;
 		printWriter = null;
 		usingWriter = false;
+	}
+
+	@Override
+	public void reset() {
+		resetBuffer();
+		super.reset();
+	}
+
+	@Override
+	public void sendError(int sc, String msg) throws IOException {
+		assertNotCommitted();
+		super.sendError(sc, msg);
+		committed = true;
+	}
+
+	@Override
+	public void sendError(int sc) throws IOException {
+		assertNotCommitted();
+		super.sendError(sc);
+		committed = true;
+	}
+
+	@Override
+	public void sendRedirect(String location) throws IOException {
+		assertNotCommitted();
+		super.sendRedirect(location);
+		committed = true;
+	}
+
+	@Override
+	public void setStatus(int sc, String sm) {
+		if (!isCommitted()) {
+			super.setStatus(sc, sm);
+		}
+	}
+
+	@Override
+	public void setStatus(int sc) {
+		if (!isCommitted()) {
+			super.setStatus(sc);
+		}
+	}
+
+	@Override
+	public boolean isCommitted() {
+		return committed || super.isCommitted();
 	}
 
 	public boolean isUsingWriter() {
@@ -90,6 +140,12 @@ public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper
 
 		public CharArrayWriter getOutput() {
 			return output;
+		}
+	}
+
+	private void assertNotCommitted() {
+		if (isCommitted()) {
+			throw new IllegalStateException("The response has already been committed");
 		}
 	}
 
