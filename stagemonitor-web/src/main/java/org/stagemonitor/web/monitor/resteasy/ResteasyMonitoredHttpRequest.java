@@ -58,7 +58,7 @@ public class ResteasyMonitoredHttpRequest extends MonitoredHttpRequest {
 			name = getRequestNameFromInvoker(invoker, requestMonitorPlugin.getBusinessTransactionNamingStrategy());
 
 			if (!name.isEmpty()) {
-			  return name;
+				return name;
 			}
 
 			if (!webPlugin.isMonitorOnlyResteasyRequests()) {
