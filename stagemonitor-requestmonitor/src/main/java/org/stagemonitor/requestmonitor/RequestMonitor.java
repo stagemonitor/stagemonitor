@@ -165,7 +165,7 @@ public class RequestMonitor {
 		}
 	}
 
-	public void recordException(Exception e) throws Exception {
+	public void recordException(Exception e) {
 		final RequestInformation<? extends RequestTrace> info = request.get();
 		if (info.requestTrace != null) {
 			info.requestTrace.setException(e);
