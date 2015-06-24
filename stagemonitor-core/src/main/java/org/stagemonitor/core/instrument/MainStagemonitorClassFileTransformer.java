@@ -4,6 +4,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -24,17 +25,23 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 
 	private static final Logger logger = LoggerFactory.getLogger(MainStagemonitorClassFileTransformer.class);
 
-	private Iterable<StagemonitorJavassistInstrumenter> instrumenters;
+	private List<StagemonitorJavassistInstrumenter> instrumenters = new ArrayList<StagemonitorJavassistInstrumenter>();
 	private static MetricRegistry metricRegistry;
 	private static CorePlugin corePlugin;
 
 	public MainStagemonitorClassFileTransformer() {
 		metricRegistry = Stagemonitor.getMetricRegistry();
 		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
-		instrumenters = ServiceLoader.load(StagemonitorJavassistInstrumenter.class, Stagemonitor.class.getClassLoader());
 		try {
-			for (Object instrumenter : instrumenters) {
-				logger.info("Registering " + instrumenter.getClass().getSimpleName());
+			final ServiceLoader<StagemonitorJavassistInstrumenter> loader = ServiceLoader
+					.load(StagemonitorJavassistInstrumenter.class, Stagemonitor.class.getClassLoader());
+			for (StagemonitorJavassistInstrumenter instrumenter : loader) {
+				if (!corePlugin.getExcludedInstrumenters().contains(instrumenter.getClass().getSimpleName())) {
+					logger.info("Registering " + instrumenter.getClass().getSimpleName());
+					instrumenters.add(instrumenter);
+				} else {
+					logger.info("Not registering excluded " + instrumenter.getClass().getSimpleName());
+				}
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();

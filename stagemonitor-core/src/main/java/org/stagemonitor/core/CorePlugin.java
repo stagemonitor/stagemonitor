@@ -298,6 +298,14 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Collection<String>> excludedInstrumenters = ConfigurationOption.stringsOption()
+			.key("stagemonitor.instrument.excludedInstrumenter")
+			.dynamic(false)
+			.label("Excluded Instrumenters")
+			.description("A list of the simple class names of StagemonitorJavassistInstrumenters that should not be applied")
+			.defaultValue(Collections.<String>emptySet())
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
 
 	private static MetricsAggregationReporter aggregationReporter;
 
@@ -485,5 +493,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public boolean isAttachAgentAtRuntime() {
 		return attachAgentAtRuntime.getValue();
+	}
+
+	public Collection<String> getExcludedInstrumenters() {
+		return excludedInstrumenters.getValue();
 	}
 }
