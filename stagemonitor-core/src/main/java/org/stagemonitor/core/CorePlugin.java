@@ -3,8 +3,11 @@ package org.stagemonitor.core;
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -309,6 +312,8 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	private static MetricsAggregationReporter aggregationReporter;
 
+	private List<Closeable> reporters = new ArrayList<Closeable>();
+
 	private ElasticsearchClient elasticsearchClient;
 
 	@Override
@@ -350,6 +355,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		if (reportingInterval > 0) {
 			aggregationReporter = new MetricsAggregationReporter(metricRegistry, allFilters, onShutdownReporters);
 			aggregationReporter.start(reportingInterval, TimeUnit.SECONDS);
+			reporters.add(aggregationReporter);
 		}
 	}
 
@@ -358,13 +364,15 @@ public class CorePlugin extends StagemonitorPlugin {
 										 MetricFilter filter, CorePlugin corePlugin) {
 		String graphiteHostName = corePlugin.getGraphiteHostName();
 		if (graphiteHostName != null && !graphiteHostName.isEmpty()) {
-			GraphiteReporter.forRegistry(metricRegistry)
+			final GraphiteReporter graphiteReporter = GraphiteReporter.forRegistry(metricRegistry)
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
 					.filter(filter)
-					.build(new Graphite(new InetSocketAddress(graphiteHostName, corePlugin.getGraphitePort())))
-					.start(reportingInterval, TimeUnit.SECONDS);
+					.build(new Graphite(new InetSocketAddress(graphiteHostName, corePlugin.getGraphitePort())));
+
+			graphiteReporter.start(reportingInterval, TimeUnit.SECONDS);
+			reporters.add(graphiteReporter);
 		}
 	}
 
@@ -385,13 +393,16 @@ public class CorePlugin extends StagemonitorPlugin {
 		onShutdownReporters.add(reporter);
 		if (reportingInterval > 0) {
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
+			reporters.add(reporter);
 		}
 	}
 
 	private void reportToJMX(MetricRegistry metricRegistry, MetricFilter filter) {
-		JmxReporter.forRegistry(metricRegistry)
+		final JmxReporter reporter = JmxReporter.forRegistry(metricRegistry)
 				.filter(filter)
-				.build().start();
+				.build();
+		reporter.start();
+		reporters.add(reporter);
 	}
 
 	@Override
@@ -401,6 +412,14 @@ public class CorePlugin extends StagemonitorPlugin {
 					"## Aggregated report for this measurement session ##\n" +
 					"####################################################\n");
 			aggregationReporter.onShutDown();
+		}
+
+		for (Closeable reporter : reporters) {
+			try {
+				reporter.close();
+			} catch (IOException e) {
+				logger.warn(e.getMessage(), e);
+			}
 		}
 	}
 
