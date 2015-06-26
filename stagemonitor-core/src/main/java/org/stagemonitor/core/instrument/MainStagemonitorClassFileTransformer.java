@@ -5,9 +5,11 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -28,6 +30,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	private List<StagemonitorJavassistInstrumenter> instrumenters = new ArrayList<StagemonitorJavassistInstrumenter>();
 	private static MetricRegistry metricRegistry;
 	private static CorePlugin corePlugin;
+	private static Set<ClassLoader> classLoaders = new HashSet<ClassLoader>();
 
 	public MainStagemonitorClassFileTransformer() {
 		metricRegistry = Stagemonitor.getMetricRegistry();
@@ -53,6 +56,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	 * -javaagent command line argument.
 	 */
 	public static void performRuntimeAttachment() {
+		classLoaders.add(MainStagemonitorClassFileTransformer.class.getClassLoader());
 		if (StagemonitorAgent.getInstrumentation() != null) {
 			// already initialized via -javaagent
 			return;
@@ -115,7 +119,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 										 ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 
 		final Timer.Context time = metricRegistry.timer("internal.transform.All").time();
-		if (loader == null || StringUtils.isEmpty(className)) {
+		if (loader == null || StringUtils.isEmpty(className) || !classLoaders.contains(loader)) {
 			return classfileBuffer;
 		}
 		try {
@@ -171,6 +175,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public CtClass getCtClass(ClassLoader loader, byte[] classfileBuffer, String className) throws Exception {
 		ClassPool classPool = ClassPool.getDefault();
 		classPool.insertClassPath(new LoaderClassPath(loader));
+		classPool.appendSystemPath();
 		return classPool.get(className.replace('/', '.'));
 	}
 
