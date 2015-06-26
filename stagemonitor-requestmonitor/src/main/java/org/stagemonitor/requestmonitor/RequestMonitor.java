@@ -447,4 +447,11 @@ public class RequestMonitor {
 		requestTraceReporters.add(0, requestTraceReporter);
 	}
 
+	/**
+	 * Shuts down the internal thread pool
+	 */
+	public void close() {
+		asyncRequestTraceReporterPool.shutdown();
+	}
+
 }

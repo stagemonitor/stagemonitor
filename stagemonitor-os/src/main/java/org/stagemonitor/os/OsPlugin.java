@@ -80,6 +80,13 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		}
 	}
 
+	@Override
+	public void onShutDown() {
+		if (sigar != null) {
+			sigar.close();
+		}
+	}
+
 	private Sigar newSigar() throws Exception {
 		try {
 			final Sigar s = new Sigar();

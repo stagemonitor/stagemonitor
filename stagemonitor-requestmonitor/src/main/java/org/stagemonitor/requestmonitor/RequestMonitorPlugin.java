@@ -182,4 +182,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	public BusinessTransactionNamingStrategy getBusinessTransactionNamingStrategy() {
 		return businessTransactionNamingStrategy.getValue();
 	}
+
+	@Override
+	public void onShutDown() {
+		getRequestMonitor().close();
+	}
 }

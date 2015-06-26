@@ -29,6 +29,7 @@ public final class Stagemonitor {
 	private static List<String> pathsOfWidgetMetricTabPlugins = Collections.emptyList();
 	private static List<String> pathsOfWidgetTabPlugins = Collections.emptyList();
 	private static Iterable<StagemonitorPlugin> plugins;
+	private static List<Runnable> onShutdownActions = new LinkedList<Runnable>();
 
 	static {
 		try {
@@ -115,12 +116,17 @@ public final class Stagemonitor {
 		}
 	}
 
-	private static void initializePlugin(StagemonitorPlugin stagemonitorPlugin, String pluginName) {
+	private static void initializePlugin(final StagemonitorPlugin stagemonitorPlugin, String pluginName) {
 		logger.info("Initializing plugin {}", pluginName);
 		try {
 			stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
 			pathsOfWidgetMetricTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetMetricTabPlugins());
 			pathsOfWidgetTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetTabPlugins());
+			onShutdownActions.add(new Runnable() {
+				public void run() {
+					stagemonitorPlugin.onShutDown();
+				}
+			});
 		} catch (Exception e) {
 			logger.warn("Error while initializing plugin " + pluginName + " (this exception is ignored)", e);
 		}
@@ -132,9 +138,14 @@ public final class Stagemonitor {
 	 */
 	public static void shutDown() {
 		measurementSession.setEndTimestamp(System.currentTimeMillis());
-		for (StagemonitorPlugin stagemonitorPlugin : ServiceLoader.load(StagemonitorPlugin.class, Stagemonitor.class.getClassLoader())) {
-			stagemonitorPlugin.onShutDown();
+		for (Runnable onShutdownAction : onShutdownActions) {
+			try {
+				onShutdownAction.run();
+			} catch (RuntimeException e) {
+				logger.warn(e.getMessage(), e);
+			}
 		}
+		configuration.close();
 	}
 
 	public static MetricRegistry getMetricRegistry() {
@@ -195,6 +206,9 @@ public final class Stagemonitor {
 	}
 
 	private static void reloadConfiguration() {
+		if (configuration != null) {
+			configuration.close();
+		}
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
 		for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {
 			initializer.modifyConfigurationSources(configurationSources);

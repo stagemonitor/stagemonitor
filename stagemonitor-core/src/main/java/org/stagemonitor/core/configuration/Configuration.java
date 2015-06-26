@@ -392,5 +392,11 @@ public class Configuration {
 		return property;
 	}
 
+	/**
+	 * Shuts down the internal thread pool
+	 */
+	public void close() {
+		configurationReloader.shutdown();
+	}
 
 }

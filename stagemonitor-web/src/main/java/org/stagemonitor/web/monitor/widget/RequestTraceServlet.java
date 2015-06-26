@@ -259,4 +259,9 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			connectionIdToRequestTracesMap.remove(entry.getKey(), new ConcurrentLinkedQueue<HttpRequestTrace>());
 		}
 	}
+
+	@Override
+	public void destroy() {
+		oldRequestTracesRemoverPool.shutdown();
+	}
 }
