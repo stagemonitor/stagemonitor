@@ -41,6 +41,7 @@ ext {
 	slf4jVersion = '1.7.12'
 	jacksonVersion = '2.5.4'
 	esVersion = '1.6.0'
+	javassistVersion = '3.20.0-GA'
 }
 
 subprojects {

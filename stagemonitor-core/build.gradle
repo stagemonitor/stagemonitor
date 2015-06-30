@@ -7,7 +7,7 @@ dependencies {
 	compile "io.dropwizard.metrics:metrics-json:$metricsVersion"
 	compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 	compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"
-	shade "org.javassist:javassist:3.19.0-GA"
+	shade "org.javassist:javassist:$javassistVersion"
 
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
 	testCompile 'commons-io:commons-io:2.4'
@@ -16,6 +16,6 @@ dependencies {
 
 shadowJar {
 	dependencies {
-		include(dependency("org.javassist:javassist:3.19.0-GA"))
+		include(dependency("org.javassist:javassist:$javassistVersion"))
 	}
 }
