@@ -1,5 +1,10 @@
 package org.stagemonitor.web.monitor;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
@@ -7,9 +12,6 @@ import net.sf.uadetector.service.UADetectorServiceFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * This class extends the generic request trace with data specific for http requests
@@ -35,10 +37,13 @@ public class HttpRequestTrace extends RequestTrace {
 	private final String sessionId;
 	@JsonIgnore
 	private final String connectionId;
+	@JsonIgnore
+	private final HttpServletRequest request;
 
-	public HttpRequestTrace(String requestId, GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
+	public HttpRequestTrace(HttpServletRequest httpServletRequest, String requestId, GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
 							String sessionId, String connectionId) {
 		super(requestId, getNameCallback);
+		this.request = httpServletRequest;
 		this.url = url;
 		this.headers = headers;
 		this.sessionId = sessionId;
@@ -154,6 +159,10 @@ public class HttpRequestTrace extends RequestTrace {
 	 */
 	public String getConnectionId() {
 		return connectionId;
+	}
+
+	public HttpServletRequest getRequest() {
+		return request;
 	}
 
 	@Override

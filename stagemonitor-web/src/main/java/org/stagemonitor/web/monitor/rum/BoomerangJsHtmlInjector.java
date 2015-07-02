@@ -14,9 +14,11 @@ public class BoomerangJsHtmlInjector implements HtmlInjector {
 	public static final String BOOMERANG_FILENAME = "boomerang-56c823668fc.min.js";
 	private WebPlugin webPlugin;
 	private String boomerangTemplate;
+	private Configuration configuration;
 
 	@Override
 	public void init(Configuration configuration, ServletContext servletContext) {
+		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.boomerangTemplate = buildBoomerangTemplate(servletContext.getContextPath());
 	}
@@ -40,7 +42,7 @@ public class BoomerangJsHtmlInjector implements HtmlInjector {
 	public boolean isActive(HttpServletRequest httpServletRequest) {
 		// if widget is enabled, inject as well to render page load time statistics in widget
 		// metrics won't be collected in this case, because the beacon_url is then set to null
-		return webPlugin.isRealUserMonitoringEnabled() || webPlugin.isWidgetEnabled();
+		return webPlugin.isRealUserMonitoringEnabled() || webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
 	}
 
 	@Override

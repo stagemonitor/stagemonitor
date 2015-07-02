@@ -37,7 +37,7 @@ public class LogRequestTraceReporter implements RequestTraceReporter {
 	}
 
 	@Override
-	public boolean isActive() {
+	public <T extends RequestTrace> boolean isActive(T requestTrace) {
 		return requestMonitorPlugin.isLogCallStacks();
 	}
 }

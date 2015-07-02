@@ -14,6 +14,6 @@ public interface RequestTraceReporter {
 	 *
 	 * @return <code>true</code>, if this {@link RequestTraceReporter} is active, <code>false</code> otherwise
 	 */
-	public boolean isActive();
+	public <T extends RequestTrace> boolean isActive(T requestTrace);
 
 }

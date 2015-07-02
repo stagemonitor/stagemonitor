@@ -1,12 +1,15 @@
 package org.stagemonitor.web.monitor.widget;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,10 +35,12 @@ public class RequestTraceServletTest {
 	@Before
 	public void setUp() throws Exception {
 		webPlugin = mock(WebPlugin.class);
-		Mockito.when(webPlugin.isWidgetEnabled()).thenReturn(Boolean.TRUE);
-		requestTraceServlet = new RequestTraceServlet(webPlugin);
+		Mockito.when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
+		Configuration configuration = mock(Configuration.class);
+		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
+		requestTraceServlet = new RequestTraceServlet(configuration);
 		connectionId = UUID.randomUUID().toString();
-		httpRequestTrace = new HttpRequestTrace(null, new RequestTrace.GetNameCallback() {
+		httpRequestTrace = new HttpRequestTrace(new MockHttpServletRequest(), null, new RequestTrace.GetNameCallback() {
 			@Override
 			public String getName() {
 				return "test";
@@ -147,18 +152,18 @@ public class RequestTraceServletTest {
 
 	@Test
 	public void testWidgetDeactivated() throws Exception {
-		Mockito.when(webPlugin.isWidgetEnabled()).thenReturn(Boolean.FALSE);
-		Mockito.when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(MockHttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.FALSE);
-
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
+		Mockito.when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(eq(request), any(Configuration.class))).thenReturn(Boolean.FALSE);
 
 		Configuration configuration = mock(Configuration.class);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		new MockFilterChain(requestTraceServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 
 		Assert.assertEquals(404, response.getStatus());
-		Assert.assertFalse(requestTraceServlet.isActive());
+		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
+		when(requestTrace.getRequest()).thenReturn(request);
+		Assert.assertFalse(requestTraceServlet.isActive(requestTrace));
 	}
 }

@@ -286,7 +286,7 @@ public class RequestMonitor {
 				@Override
 				public void run() {
 					for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
-						if (requestTraceReporter.isActive()) {
+						if (requestTraceReporter.isActive(requestTrace)) {
 							try {
 								requestTraceReporter.reportRequestTrace(requestTrace);
 							} catch (Exception e) {

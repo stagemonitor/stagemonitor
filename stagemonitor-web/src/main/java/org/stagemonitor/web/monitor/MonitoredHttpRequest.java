@@ -1,11 +1,14 @@
 package org.stagemonitor.web.monitor;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -21,8 +24,6 @@ import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
-
-import static com.codahale.metrics.MetricRegistry.name;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
@@ -76,7 +77,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 			};
 		}
 		final String requestId = (String) httpServletRequest.getAttribute(MDCListener.STAGEMONITOR_REQUEST_ID_ATTR);
-		HttpRequestTrace request = new HttpRequestTrace(requestId, nameCallback, url, headers, method, sessionId, connectionId);
+		HttpRequestTrace request = new HttpRequestTrace(httpServletRequest, requestId, nameCallback, url, headers, method, sessionId, connectionId);
 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();

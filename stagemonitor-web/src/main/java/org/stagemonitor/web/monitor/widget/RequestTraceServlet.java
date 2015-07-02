@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.RequestTraceReporter;
@@ -40,6 +42,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	private final AtomicBoolean alreadyWarnedIfAsyncNotSupported = new AtomicBoolean(false);
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final WebPlugin webPlugin;
+	private final Configuration configuration;
 	private ConcurrentMap<String, ConcurrentLinkedQueue<HttpRequestTrace>> connectionIdToRequestTracesMap =
 			new ConcurrentHashMap<String, ConcurrentLinkedQueue<HttpRequestTrace>>();
 	private ConcurrentMap<String, AsyncContext> connectionIdToAsyncContextMap =
@@ -62,12 +65,13 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 
 
 	public RequestTraceServlet() {
-		this(Stagemonitor.getConfiguration(WebPlugin.class));
+		this(Stagemonitor.getConfiguration());
 	}
 
-	public RequestTraceServlet(WebPlugin webPlugin) {
+	public RequestTraceServlet(Configuration configuration) {
 		RequestMonitor.addRequestTraceReporter(this);
-		this.webPlugin = webPlugin;
+		this.configuration = configuration;
+		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		oldRequestTracesRemoverPool.schedule(new OldRequestTraceRemover(), MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
 	}
 
@@ -148,7 +152,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 
 	@Override
 	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) throws IOException {
-		if (isActive() && requestTrace instanceof HttpRequestTrace) {
+		if (isActive(requestTrace) && requestTrace instanceof HttpRequestTrace) {
 			HttpRequestTrace httpRequestTrace = (HttpRequestTrace) requestTrace;
 
 			final String connectionId = httpRequestTrace.getConnectionId();
@@ -224,8 +228,13 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	}
 
 	@Override
-	public boolean isActive() {
-		return webPlugin.isWidgetEnabled();
+	public <T extends RequestTrace> boolean isActive(T requestTrace) {
+		if (requestTrace instanceof HttpRequestTrace) {
+			final HttpRequestTrace httpRequestTrace = (HttpRequestTrace) requestTrace;
+			return webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpRequestTrace.getRequest(), configuration);
+		} else {
+			return false;
+		}
 	}
 
 	/**
