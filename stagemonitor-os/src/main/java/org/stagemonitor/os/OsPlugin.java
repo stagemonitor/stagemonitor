@@ -35,17 +35,8 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 
 	private final static Logger logger = LoggerFactory.getLogger(OsPlugin.class);
 	private static ConfigurationSource argsConfigurationSource;
-	private String sigarNativeBindingsPath;
 
 	private Sigar sigar;
-
-	public OsPlugin() {
-		try {
-			sigarNativeBindingsPath = SigarNativeBindingLoader.loadNativeSigarBindings();
-		} catch (Exception e) {
-			logger.warn(e.getMessage() + " (this exception was ignored)", e);
-		}
-	}
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
@@ -57,6 +48,12 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		elasticsearchClient.sendGrafanaDashboardAsync("OS Overview.json");
 
 		if (sigar == null) {
+			if (!SigarNativeBindingLoader.loadNativeSigarBindings()) {
+				// redeploys are a problem, because the native libs can only be loaded by one class loader
+				// this would lead to a UnsatisfiedLinkError: Native Library sigar already loaded in another class loader
+				throw new RuntimeException("The OsPlugin only works with one application per JVM " +
+						"and does not work after a redeploy");
+			}
 			sigar = newSigar();
 		}
 		metricRegistry.registerAll(init(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0])));
@@ -84,6 +81,7 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 	public void onShutDown() {
 		if (sigar != null) {
 			sigar.close();
+			sigar = null;
 		}
 	}
 
@@ -93,8 +91,7 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 			s.getCpuInfoList();
 			return s;
 		} catch (UnsatisfiedLinkError e) {
-			throw new RuntimeException("Could not load sigar native bindings. Please add -Djava.library.path=" +
-					sigarNativeBindingsPath + " system property to resolve the UnsatisfiedLinkError", e);
+			throw new RuntimeException(e);
 		}
 	}
 

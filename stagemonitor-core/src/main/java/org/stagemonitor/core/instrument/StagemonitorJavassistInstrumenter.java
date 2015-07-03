@@ -79,6 +79,19 @@ public abstract class StagemonitorJavassistInstrumenter {
 		return instrument;
 	}
 
+	/**
+	 * By default, only allows transformation of classes if they are loaded by the same class loader as this class.
+	 * <p/>
+	 * This avoids ClassNotFoundExceptions that can happen when instrumenting classes whose class loaders don't have
+	 * access to stagemonitor classes, for example the Profiler class.
+	 * <p/>
+	 * Also, this prevents to transform classes that are loaded by another class loader, for example when multiple
+	 * applications are deployed in a single Application Server.
+	 */
+	public boolean isTransformClassesOfClassLoader(ClassLoader classLoader) {
+		return classLoader == getClass().getClassLoader();
+	}
+
 	private boolean hasMoreSpecificExclude(String className, String include) {
 		for (String exclude : excludes) {
 			if (exclude.length() > include.length() && exclude.startsWith(include) && className.startsWith(exclude)) {

@@ -36,13 +36,19 @@ public final class SigarNativeBindingLoader {
 	/**
 	 * Extracts the native bindings for sigar and tells sigar where to find them.
 	 *
-	 * @return the folder that contains the extracted nativeLibs
+	 * @return <code>false</code>, if sigar has already been set up, <code>true</code> otherwise
 	 * @throws Exception
 	 */
-	public static String loadNativeSigarBindings() throws Exception {
+	public static boolean loadNativeSigarBindings() throws Exception {
+		final String sigarPath = System.getProperty(SIGAR_PATH);
+		if (sigarPath != null) {
+			// sigar is already set up
+			return false;
+		}
 		final File tempDirectory = new File(System.getProperty("java.io.tmpdir"), "sigar");
 		tempDirectory.mkdir();
-		return loadNativeSigarBindings(tempDirectory);
+		loadNativeSigarBindings(tempDirectory);
+		return true;
 	}
 
 	/**
@@ -52,11 +58,11 @@ public final class SigarNativeBindingLoader {
 	 * @return the folder that contains the extracted nativeLibs
 	 * @throws Exception
 	 */
-	private static String loadNativeSigarBindings(File nativeLibDir) throws Exception {
+	private static void loadNativeSigarBindings(File nativeLibDir) throws Exception {
 		extractFromJarToTemp(SIGAR_RESOURCE_DIR + new SigarLoader(Sigar.class).getLibraryName(), nativeLibDir);
 
 		System.setProperty(SIGAR_PATH, nativeLibDir.getAbsolutePath());
-		return nativeLibDir.getAbsolutePath();
+		nativeLibDir.getAbsolutePath();
 	}
 
 	/**

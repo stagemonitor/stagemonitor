@@ -98,6 +98,12 @@ public final class Stagemonitor {
 		initializePlugins();
 		logger.info("Measurement Session is initialized: " + measurementSession);
 		started = true;
+		// in case the application does not directly call shutDown
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			public void run() {
+				shutDown();
+			}
+		}));
 	}
 
 	private static void initializePlugins() {
@@ -136,7 +142,11 @@ public final class Stagemonitor {
 	 * Should be called when the server is shutting down.
 	 * Calls the {@link StagemonitorPlugin#onShutDown()} method of all plugins
 	 */
-	public static void shutDown() {
+	public static synchronized void shutDown() {
+		if (measurementSession.getEndTimestamp() != null) {
+			// shutDown has already been called
+			return;
+		}
 		measurementSession.setEndTimestamp(System.currentTimeMillis());
 		for (Runnable onShutdownAction : onShutdownActions) {
 			try {
@@ -202,7 +212,7 @@ public final class Stagemonitor {
 		measurementSession = new MeasurementSession(null, null, null);
 		SharedMetricRegistries.clear();
 		reloadConfiguration();
-		MainStagemonitorClassFileTransformer.performRuntimeAttachment();
+		onShutdownActions.add(MainStagemonitorClassFileTransformer.performRuntimeAttachment());
 	}
 
 	private static void reloadConfiguration() {

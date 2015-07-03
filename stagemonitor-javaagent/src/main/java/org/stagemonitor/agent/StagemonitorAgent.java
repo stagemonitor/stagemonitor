@@ -8,6 +8,7 @@ import java.security.ProtectionDomain;
 public class StagemonitorAgent {
 
 	private static final String INSTRUMENTATION_KEY = StagemonitorAgent.class + ".instrumentation";
+	private static final String INITIALIZED_VIA_JAVAAGENT = StagemonitorAgent.class + ".javaagent";
 
 	private static boolean initialized = false;
 
@@ -18,6 +19,7 @@ public class StagemonitorAgent {
 	 * @param inst      the instrumentation
 	 */
 	public static void premain(String agentArgs, final Instrumentation inst) {
+		System.setProperty(INITIALIZED_VIA_JAVAAGENT, Boolean.TRUE.toString());
 		inst.addTransformer(new ClassFileTransformer() {
 
 			@Override
@@ -72,4 +74,7 @@ public class StagemonitorAgent {
 		}
 	}
 
+	public static boolean isInitializedViaJavaagent() {
+		return Boolean.getBoolean(INITIALIZED_VIA_JAVAAGENT);
+	}
 }

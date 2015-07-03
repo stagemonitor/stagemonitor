@@ -212,6 +212,7 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 	private AlertSender alertSender;
 	private IncidentRepository incidentRepository;
 	private AlertTemplateProcessor alertTemplateProcessor;
+	private ThresholdMonitoringReporter thresholdMonitoringReporter;
 
 	@Override
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
@@ -225,8 +226,13 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 		}
 		logger.info("Using {} for storing incidents.", incidentRepository.getClass().getSimpleName());
 
-		new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession())
-				.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
+		thresholdMonitoringReporter = new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession());
+		thresholdMonitoringReporter.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
+	}
+
+	@Override
+	public void onShutDown() {
+		thresholdMonitoringReporter.close();
 	}
 
 	@Override
