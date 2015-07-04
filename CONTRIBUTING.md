@@ -47,8 +47,6 @@ If the output is different from above, do not sign the CLA and let us know.
 If you are a individual wanting to contribute, you have to read and sign the
 ([individual CLA](https://github.com/stagemonitor/stagemonitor/blob/master/cla/cla-individual-1.0.md))
 
-The CLA was created with [Harmony](http://selector.harmonyagreements.org).
-
 Put the following in the file `cla/contributors/[your-github-userid].md`:
 
 ```
