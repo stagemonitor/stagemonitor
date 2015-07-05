@@ -54,6 +54,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	public HttpRequestMonitorFilter(Configuration configuration, MetricRegistry metricRegistry) {
 		super(configuration.getConfig(WebPlugin.class).getExcludedRequestPaths());
+		logger.debug("Instantiating HttpRequestMonitorFilter");
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
@@ -97,8 +98,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	public final void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
 		setCachingHeadersForBommerangJs(request, response);
-		if (corePlugin.isStagemonitorActive() && isHttpRequest(request, response) &&
-				!isInternalRequest(request) && onlyMonitorForwardedRequestsIfConfigured(request)) {
+		if (corePlugin.isStagemonitorActive() && !isInternalRequest(request) &&
+				onlyMonitorForwardedRequestsIfConfigured(request)) {
 			doMonitor(request, response, filterChain);
 		} else {
 			filterChain.doFilter(request, response);
@@ -107,10 +108,6 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	private boolean onlyMonitorForwardedRequestsIfConfigured(ServletRequest request) {
 		return request.getDispatcherType() != FORWARD || webPlugin.isMonitorOnlyForwardedRequests();
-	}
-
-	private boolean isHttpRequest(ServletRequest request, ServletResponse response) {
-		return request instanceof HttpServletRequest && response instanceof HttpServletResponse;
 	}
 
 	private void doMonitor(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -134,18 +131,19 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 	}
 
-	private void setCachingHeadersForBommerangJs(ServletRequest request, ServletResponse response) {
-		if (isHttpRequest(request, response)) {
-			final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-			if (httpServletRequest.getRequestURI().endsWith(BoomerangJsHtmlInjector.BOOMERANG_FILENAME)) {
-				final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-				httpServletResponse.setHeader("cache-control", "public, max-age=315360000");
-			}
+	// TODO move to FileServlet
+	private void setCachingHeadersForBommerangJs(HttpServletRequest request, HttpServletResponse response) {
+		if (request.getRequestURI().endsWith(BoomerangJsHtmlInjector.BOOMERANG_FILENAME)) {
+			response.setHeader("cache-control", "public, max-age=315360000");
 		}
 	}
 
 	private boolean isInjectContentToHtml(HttpServletRequest httpServletRequest) {
-		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive(httpServletRequest) ;
+		if (logger.isDebugEnabled()) {
+			logger.debug("atLeastServletApi3={} isHtmlRequested={} isAtLeastOneHtmlInjectorActive={}",
+					atLeastServletApi3, isHtmlRequested(httpServletRequest), isAtLeastOneHtmlInjectorActive(httpServletRequest));
+		}
+		return atLeastServletApi3 && isHtmlRequested(httpServletRequest) && isAtLeastOneHtmlInjectorActive(httpServletRequest);
 	}
 
 	private boolean isAtLeastOneHtmlInjectorActive(HttpServletRequest httpServletRequest) {
@@ -174,6 +172,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	protected void injectHtml(HttpServletResponse response, HttpServletRequest httpServletRequest,
 							  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
 							  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+		logger.debug("injectHtml: contentType={}", httpServletResponseBufferWrapper.getContentType());
 		if (httpServletResponseBufferWrapper.getContentType() != null
 				&& httpServletResponseBufferWrapper.getContentType().contains("text/html")
 				&& httpServletRequest.getAttribute("stagemonitorInjected") == null) {
