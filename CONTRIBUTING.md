@@ -4,7 +4,7 @@
 If you want to submit a non-trivial pull request like implementing a new feature, you have to sign a CLA.
 But don't worry, the process is really simple.
 
-### Signing to CLA
+### Sign the CLA
 To sign the CLA (which was created with [Harmony](http://selector.harmonyagreements.org)), all you have to do is to
 include an additional file to your pull request under `cla/contributors/[your-github-userid].md`. The content of the
 file differs if you are a individual or are contributing on behalf of an entity.
