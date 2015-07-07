@@ -1,7 +1,5 @@
 package org.stagemonitor.os;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -108,12 +106,11 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		}
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
+	public static void main(String[] args) throws InterruptedException {
 		argsConfigurationSource = getConfiguration(args);
 		Stagemonitor.startMonitoring(getMeasurementSession());
-		System.out.println("Press enter to exit");
-		System.in.read();
-		Stagemonitor.shutDown();
+		System.out.println("Interrupt (Ctrl + C) to exit");
+		Thread.currentThread().join();
 	}
 
 	static MeasurementSession getMeasurementSession() {
