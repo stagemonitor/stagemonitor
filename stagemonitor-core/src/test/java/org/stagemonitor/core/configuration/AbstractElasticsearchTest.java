@@ -14,8 +14,10 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.junit.ConditionalTravisTestRunner;
 
 public class AbstractElasticsearchTest {
 

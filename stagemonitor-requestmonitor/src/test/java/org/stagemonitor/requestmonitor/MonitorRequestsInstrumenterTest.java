@@ -14,8 +14,12 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.junit.ConditionalTravisTestRunner;
+import org.stagemonitor.junit.ExcludeOnTravis;
 
+@RunWith(ConditionalTravisTestRunner.class)
 public class MonitorRequestsInstrumenterTest {
 
 	private TestClass testClass;
@@ -40,6 +44,7 @@ public class MonitorRequestsInstrumenterTest {
 	}
 
 	@Test
+	@ExcludeOnTravis
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		assertNotNull(requestInformation);
@@ -57,6 +62,7 @@ public class MonitorRequestsInstrumenterTest {
 
 
 	@Test
+	@ExcludeOnTravis
 	public void testMonitorRequestsThrowingException() throws Exception {
 		try {
 			testClass.monitorThrowException();

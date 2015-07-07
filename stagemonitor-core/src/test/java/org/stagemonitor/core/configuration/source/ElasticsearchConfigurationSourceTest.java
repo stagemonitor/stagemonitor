@@ -11,10 +11,14 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
+import org.stagemonitor.junit.ConditionalTravisTestRunner;
+import org.stagemonitor.junit.ExcludeOnTravis;
 
+@RunWith(ConditionalTravisTestRunner.class)
 public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchTest {
 
 	private ElasticsearchConfigurationSource configurationSource;
@@ -61,6 +65,7 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 	}
 
 	@Test
+	@ExcludeOnTravis
 	public void testMapping() throws Exception {
 		InputStream resourceAsStream = getClass().getClassLoader()
 				.getResourceAsStream("stagemonitor-elasticsearch-mapping.json");
