@@ -13,8 +13,7 @@ file differs if you are a individual or are contributing on behalf of an entity.
 
 ### Entity CLA
 If you are contributing on behalf of your employer, or as part of your role as an employee, you have to read and sign
-the ([entity CLA](https://github.com/stagemonitor/stagemonitor/blob/master/cla/cla-entity-1.0.md)) in the name of your
-employer. You have to make sure that that's okay before you sign.
+the ([entity CLA](https://github.com/stagemonitor/stagemonitor/blob/master/cla/cla-entity-1.0.md)) in the name of your employer. You have to make sure that that's okay before you sign. Note that you also have to sign the individual CLA to cover any contributions which are not owned by your employer (for example if you contribute in your spare time).
 
 
 Put the following in the file `cla/contributors/[your-github-userid].md`:
@@ -31,6 +30,19 @@ agreement and sign this declaration.
 Signed,
 
 [your full name], [name of employer]
+https://github.com/[your-github-userid]
+
+[date (yyyy-MM-dd)]
+
+I hereby agree to the terms of the Individual Contributors License
+Agreement, with MD5 checksum 3455f69ed223b9e5712f8bb3abf38190.
+
+I furthermore declare that I am authorized and able to make this
+agreement and sign this declaration.
+
+Signed,
+
+[your full name]
 https://github.com/[your-github-userid]
 ```
 
