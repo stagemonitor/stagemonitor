@@ -188,7 +188,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.defaultValue(null)
 			.configurationCategory(WEB_PLUGIN)
 			.build();
-	private ConfigurationOption<Boolean> onlyMvcOption = ConfigurationOption.booleanOption()
+	private ConfigurationOption<Boolean> monitorOnlySpringMvcOption = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.spring.monitorOnlySpringMvcRequests")
 			.dynamic(true)
 			.label("Monitor only SpringMVC requests")
@@ -198,6 +198,17 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"Graphite will allocate.")
 			.defaultValue(false)
 			.configurationCategory("Spring MVC Plugin")
+			.build();
+	private ConfigurationOption<Boolean> monitorOnlyResteasyOption = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.resteasy.monitorOnlyResteasyRequests")
+			.dynamic(true)
+			.label("Monitor only Resteasy reqeusts")
+			.description("Whether or not requests should be ignored, if they will not be handled by a Resteasy resource method.\n" +
+					"This is handy, if you are not interested in the performance of serving static files. " +
+					"Setting this to true can also significantly reduce the amount of files (and thus storing space) " +
+					"Graphite will allocate.")
+			.defaultValue(false)
+			.configurationCategory("Resteasy Plugin")
 			.build();
 
 	@Override
@@ -214,7 +225,13 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		try {
 			Class.forName("org.springframework.web.servlet.HandlerMapping");
 		} catch (ClassNotFoundException e) {
-			configurationOptions.remove(onlyMvcOption);
+			configurationOptions.remove(monitorOnlySpringMvcOption);
+		}
+
+		try {
+			Class.forName("org.jboss.resteasy.core.ResourceMethodRegistry");
+		} catch (ClassNotFoundException e) {
+			configurationOptions.remove(monitorOnlyResteasyOption);
 		}
 
 		return configurationOptions;
@@ -293,7 +310,11 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	}
 
 	public boolean isMonitorOnlySpringMvcRequests() {
-		return onlyMvcOption.getValue();
+		return monitorOnlySpringMvcOption.getValue();
+	}
+
+	public boolean isMonitorOnlyResteasyRequests() {
+		return monitorOnlyResteasyOption.getValue();
 	}
 
 	@Override
