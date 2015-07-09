@@ -280,6 +280,7 @@ public class CorePlugin extends StagemonitorPlugin {
 				add("$$");
 				add("CGLIB");
 				add("EnhancerBy");
+				add("$Proxy");
 			}})
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
