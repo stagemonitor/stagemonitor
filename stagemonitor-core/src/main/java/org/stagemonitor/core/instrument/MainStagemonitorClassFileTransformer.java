@@ -5,9 +5,13 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -25,15 +29,22 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 
 	private static final Runnable NOOP_ON_SHUTDOWN_ACTION = new Runnable() { public void run() {} };
 	private static final Logger logger = LoggerFactory.getLogger(MainStagemonitorClassFileTransformer.class);
+	private static final String IGNORED_CLASSLOADERS_KEY = MainStagemonitorClassFileTransformer.class.getName() + "hashCodesOfClassLoadersToIgnore";
 
 	private List<StagemonitorJavassistInstrumenter> instrumenters = new ArrayList<StagemonitorJavassistInstrumenter>();
 	private static MetricRegistry metricRegistry;
 	private static CorePlugin corePlugin;
 	private static boolean runtimeAttached = false;
+	private static Map<Integer, ClassPool> classPoolsByClassLoaderHash = new HashMap<Integer, ClassPool>();
+	private static Set<Integer> hashCodesOfClassLoadersToIgnore = new HashSet<Integer>();
 
 	public MainStagemonitorClassFileTransformer() {
 		metricRegistry = Stagemonitor.getMetricRegistry();
 		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
+		if (!System.getProperties().containsKey(IGNORED_CLASSLOADERS_KEY)) {
+			System.getProperties().put(IGNORED_CLASSLOADERS_KEY, new HashSet<Integer>());
+		}
+		hashCodesOfClassLoadersToIgnore = (Set<Integer>) System.getProperties().get(IGNORED_CLASSLOADERS_KEY);
 		try {
 			final ServiceLoader<StagemonitorJavassistInstrumenter> loader = ServiceLoader
 					.load(StagemonitorJavassistInstrumenter.class, Stagemonitor.class.getClassLoader());
@@ -77,6 +88,9 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			onShutdownAction = new Runnable() {
 				public void run() {
 					instrumentation.removeTransformer(transformer);
+					final int classLoaderHash = System.identityHashCode(MainStagemonitorClassFileTransformer.class.getClassLoader());
+					// This ClassLoader is shutting down so don't try to retransform classes of it in the future
+					hashCodesOfClassLoadersToIgnore.add(classLoaderHash);
 				}
 			};
 
@@ -130,7 +144,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			return classfileBuffer;
 		}
 		try {
-			if (isIncluded(className)) {
+			if (isIncluded(className, loader)) {
 				classfileBuffer = transformWithJavassist(loader, classfileBuffer, className);
 			}
 		} catch (Throwable e) {
@@ -144,24 +158,16 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	}
 
 	private boolean isRetransformClass(Class loadedClass, Instrumentation instrumentation) {
-		return isTransformClassesOfClassLoader(loadedClass.getClassLoader()) &&
-				!loadedClass.isInterface() &&
+		final ClassLoader classLoader = loadedClass.getClassLoader();
+		return !loadedClass.isInterface() &&
 				instrumentation.isModifiableClass(loadedClass) &&
-				isIncluded(loadedClass.getName().replace(".", "/"));
+				!hashCodesOfClassLoadersToIgnore.contains(System.identityHashCode(classLoader)) &&
+				isIncluded(loadedClass.getName().replace(".", "/"), classLoader);
 	}
 
-	private boolean isIncluded(String className) {
+	private boolean isIncluded(String className, ClassLoader loader) {
 		for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
-			if (instrumenter.isIncluded(className)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean isTransformClassesOfClassLoader(ClassLoader loader) {
-		for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
-			if (instrumenter.isTransformClassesOfClassLoader(loader)) {
+			if (instrumenter.isIncluded(className) && instrumenter.isTransformClassesOfClassLoader(loader)) {
 				return true;
 			}
 		}
@@ -197,9 +203,15 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	}
 
 	public CtClass getCtClass(ClassLoader loader, byte[] classfileBuffer, String className) throws Exception {
-		ClassPool classPool = ClassPool.getDefault();
-		classPool.insertClassPath(new LoaderClassPath(loader));
-		classPool.appendSystemPath();
+		final int classLoaderHash = System.identityHashCode(loader);
+		ClassPool classPool;
+		if (classPoolsByClassLoaderHash.containsKey(classLoaderHash)) {
+			classPool = classPoolsByClassLoaderHash.get(classLoaderHash);
+		} else {
+			classPool = new ClassPool(true);
+			classPool.insertClassPath(new LoaderClassPath(loader));
+			classPoolsByClassLoaderHash.put(classLoaderHash, classPool);
+		}
 		return classPool.get(className.replace('/', '.'));
 	}
 

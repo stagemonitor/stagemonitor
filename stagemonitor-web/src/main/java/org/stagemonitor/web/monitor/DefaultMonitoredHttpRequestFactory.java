@@ -4,6 +4,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.resteasy.ResteasyMonitoredHttpRequest;
 import org.stagemonitor.web.monitor.spring.SpringMonitoredHttpRequest;
@@ -14,19 +15,8 @@ public class DefaultMonitoredHttpRequestFactory implements MonitoredHttpRequestF
 	private boolean resteasy;
 
 	public DefaultMonitoredHttpRequestFactory() {
-		try {
-			Class.forName("org.springframework.web.servlet.HandlerMapping");
-			springMvc = true;
-		} catch (ClassNotFoundException e) {
-			springMvc = false;
-		}
-
-		try {
-			Class.forName("org.jboss.resteasy.core.ResourceMethodRegistry");
-			resteasy = true;
-		} catch (ClassNotFoundException e) {
-			resteasy = false;
-		}
+		springMvc = ClassUtils.isPresent("org.springframework.web.servlet.HandlerMapping");
+		resteasy = ClassUtils.isPresent("org.jboss.resteasy.core.ResourceMethodRegistry");
 	}
 
 	@Override

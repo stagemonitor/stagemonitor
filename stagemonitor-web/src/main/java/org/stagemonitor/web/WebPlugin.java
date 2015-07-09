@@ -31,6 +31,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.logging.MDCListener;
@@ -222,15 +223,11 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	@Override
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		final List<ConfigurationOption<?>> configurationOptions = super.getConfigurationOptions();
-		try {
-			Class.forName("org.springframework.web.servlet.HandlerMapping");
-		} catch (ClassNotFoundException e) {
+		if (!ClassUtils.isPresent("org.springframework.web.servlet.HandlerMapping")) {
 			configurationOptions.remove(monitorOnlySpringMvcOption);
 		}
 
-		try {
-			Class.forName("org.jboss.resteasy.core.ResourceMethodRegistry");
-		} catch (ClassNotFoundException e) {
+		if (!ClassUtils.isPresent("org.jboss.resteasy.core.ResourceMethodRegistry")) {
 			configurationOptions.remove(monitorOnlyResteasyOption);
 		}
 

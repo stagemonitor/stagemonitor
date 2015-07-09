@@ -7,6 +7,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +49,10 @@ public class RequestMonitor {
 		add(new LogRequestTraceReporter());
 		add(new ElasticsearchRequestTraceReporter());
 	}};
+
+	private final List<Runnable> onBeforeRequestCallbacks = new LinkedList<Runnable>();
+
+	private final List<Runnable> onAfterRequestCallbacks = new LinkedList<Runnable>();
 
 	private static ExecutorService asyncRequestTraceReporterPool = Executors.newSingleThreadExecutor(new ThreadFactory() {
 		@Override
@@ -143,6 +148,14 @@ public class RequestMonitor {
 		if (!info.firstRequest) {
 			trackOverhead(info.overhead1, overhead2);
 		}
+
+		for (Runnable onAfterRequestCallback : onAfterRequestCallbacks) {
+			try {
+				onAfterRequestCallback.run();
+			} catch (RuntimeException e) {
+				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
+			}
+		}
 	}
 
 	private <T extends RequestTrace> void cleanUpAfter(RequestInformation<T> info) {
@@ -209,6 +222,13 @@ public class RequestMonitor {
 			}
 		} catch (RuntimeException e) {
 			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
+		}
+		for (Runnable onBeforeRequestCallback : onBeforeRequestCallbacks) {
+			try {
+				onBeforeRequestCallback.run();
+			} catch (RuntimeException e) {
+				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
+			}
 		}
 	}
 
@@ -452,6 +472,29 @@ public class RequestMonitor {
 	 */
 	public void close() {
 		asyncRequestTraceReporterPool.shutdown();
+		request.remove();
+	}
+
+	/**
+	 * Registers a callback that is called before a request gets executed
+	 * <p/>
+	 * This is a internal method. The API is likely to change!
+	 *
+	 * @param onBeforeRequestCallback The callback
+	 */
+	public void addOnBeforeRequestCallback(Runnable onBeforeRequestCallback) {
+		onBeforeRequestCallbacks.add(onBeforeRequestCallback);
+	}
+
+	/**
+	 * Registers a callback that is called after a request has been executed
+	 * <p/>
+	 * This is a internal method. The API is likely to change!
+	 *
+	 * @param onAfterRequestCallback The callback
+	 */
+	public void addOnAfterRequestCallback(Runnable onAfterRequestCallback) {
+		onAfterRequestCallbacks.add(onAfterRequestCallback);
 	}
 
 }
