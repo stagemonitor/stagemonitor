@@ -12,7 +12,10 @@ import javax.sql.DataSource;
 import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtMethod;
+import javassist.Modifier;
 import javassist.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.agent.StagemonitorAgent;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
@@ -22,6 +25,8 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstrumenter {
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private static final String CONNECTION_MONITOR = ConnectionMonitor.class.getName();
 
@@ -125,6 +130,11 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 		try {
 			method = ctClass.getMethod(name, descriptor);
 		} catch (NotFoundException e) {
+			return;
+		}
+
+		if (Modifier.isAbstract(method.getModifiers())) {
+			logger.warn("Trying to instrument a abstract method ({}) of class {}", method, ctClass.getName());
 			return;
 		}
 		final CtClass declaringClass = method.getDeclaringClass();
