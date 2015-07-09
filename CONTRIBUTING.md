@@ -32,6 +32,8 @@ Signed,
 [your full name], [name of employer]
 https://github.com/[your-github-userid]
 
+---
+
 [date (yyyy-MM-dd)]
 
 I hereby agree to the terms of the Individual Contributors License
