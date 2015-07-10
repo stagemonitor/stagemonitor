@@ -283,6 +283,10 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	}
 
 	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request, Configuration configuration) {
+		if (logger.isDebugEnabled()) {
+			logger.debug("isWidgetAndStagemonitorEndpointsAllowed: request attribute={}, isWidgetEnabled={}, isPasswordInShowWidgetHeaderCorrect={}",
+					request.getAttribute(STAGEMONITOR_SHOW_WIDGET), isWidgetEnabled(), isPasswordInShowWidgetHeaderCorrect(request, configuration));
+		}
 		if (request.getAttribute(STAGEMONITOR_SHOW_WIDGET) != null) {
 			return (Boolean) request.getAttribute(STAGEMONITOR_SHOW_WIDGET);
 		}
