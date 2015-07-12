@@ -283,15 +283,18 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	}
 
 	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request, Configuration configuration) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("isWidgetAndStagemonitorEndpointsAllowed: request attribute={}, isWidgetEnabled={}, isPasswordInShowWidgetHeaderCorrect={}",
-					request.getAttribute(STAGEMONITOR_SHOW_WIDGET), isWidgetEnabled(), isPasswordInShowWidgetHeaderCorrect(request, configuration));
-		}
-		if (request.getAttribute(STAGEMONITOR_SHOW_WIDGET) != null) {
-			return (Boolean) request.getAttribute(STAGEMONITOR_SHOW_WIDGET);
+		final Boolean showWidgetAttr = (Boolean) request.getAttribute(STAGEMONITOR_SHOW_WIDGET);
+		if (showWidgetAttr != null) {
+			logger.debug("isWidgetAndStagemonitorEndpointsAllowed: showWidgetAttr={}", showWidgetAttr);
+			return showWidgetAttr;
 		}
 
-		return isWidgetEnabled() || isPasswordInShowWidgetHeaderCorrect(request, configuration);
+		final boolean widgetEnabled = isWidgetEnabled();
+		final boolean passwordInShowWidgetHeaderCorrect = isPasswordInShowWidgetHeaderCorrect(request, configuration);
+		final boolean result = widgetEnabled || passwordInShowWidgetHeaderCorrect;
+		logger.debug("isWidgetAndStagemonitorEndpointsAllowed: isWidgetEnabled={}, isPasswordInShowWidgetHeaderCorrect={}, result={}",
+				widgetEnabled, passwordInShowWidgetHeaderCorrect, result);
+		return result;
 	}
 
 	private boolean isPasswordInShowWidgetHeaderCorrect(HttpServletRequest request, Configuration configuration) {
