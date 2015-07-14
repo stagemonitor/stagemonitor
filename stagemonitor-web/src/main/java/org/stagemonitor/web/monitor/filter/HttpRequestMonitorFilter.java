@@ -193,12 +193,13 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 										  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
 										  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
 
+		logger.debug("injectHtmlToOutputStream - encoding={}", response.getCharacterEncoding());
 		String content = new String(httpServletResponseBufferWrapper.getOutputStream().getOutput().toByteArray(),
 				response.getCharacterEncoding());
 		if (content.contains("</body>")) {
 			httpServletRequest.setAttribute("stagemonitorInjected", true);
 			content = getContetToInject(httpServletRequest, requestInformation, content);
-			response.getOutputStream().print(content);
+			response.getOutputStream().write(content.getBytes(response.getCharacterEncoding()));
 		} else {
 			// this is no html
 			passthrough(response, httpServletResponseBufferWrapper);
@@ -206,6 +207,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private void injectHtmlToWriter(ServletResponse response, HttpServletRequest httpServletRequest, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+		logger.debug("injectHtmlToWriter - encoding={}", response.getCharacterEncoding());
 		httpServletRequest.setAttribute("stagemonitorInjected", true);
 		String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
 		content = getContetToInject(httpServletRequest, requestInformation, content);
