@@ -1,11 +1,16 @@
 /*
  * RELEASING A NEW VERSION
- *  - 'gradle release'. This is what will happen:
+ *  - set the following properties in ~/.gradle/gradle.properties
+ *    - nexusUsername=<username>
+ *    - nexusPassword=<pwd>
+ *    - signing.secretKeyRingFile=<file>
+ *    - signing.password=<passphrase>
+ *  - Execute 'gradle release'. This is what will happen:
  *    - all tests are executed locally
  *    - you will be asked for the version number of the release and the next development (SNAPSHOT) version
  *    - the gradle release plugin will then tag and push the release to github
- *  - checkout the release tag e.g. 'git checkout 0.11.0'
- *  - execute 'gradle uploadArchives -PnexusUsername=<username> -PnexusPassword=<pwd> -Psigning.secretKeyRingFile=<file> -Psigning.password=<passphrase>'
+ *    - checks out the just created release tag e.g. '0.11.0'
+ *    - executes 'gradle uploadArchives'
  *  - Release the deployment at https://oss.sonatype.org/#welcome
  *    more information is available under http://central.sonatype.org/pages/releasing-the-deployment.html
  *
@@ -20,10 +25,13 @@ buildscript {
 	dependencies {
 		classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
 		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.0.0'
-		classpath 'com.github.townsfolk:gradle-release:1.2'
 		classpath 'com.bmuschko:gradle-nexus-plugin:2.0'
 		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
 	}
+}
+
+plugins {
+	id 'net.researchgate.release' version '2.1.2'
 }
 
 repositories {
@@ -32,7 +40,6 @@ repositories {
 
 apply plugin: 'idea'
 apply plugin: 'eclipse'
-apply plugin: 'release'
 apply plugin: 'cobertura'
 apply plugin: 'com.github.kt3k.coveralls'
 
@@ -119,11 +126,11 @@ release {
 	preTagCommitMessage = 'release '
 	tagCommitMessage = 'release '
 	newVersionCommitMessage = 'next development version '
-	failOnSnapshotDependencies = false // snapshot for caliper is needed in benchmark
-	requireBranch = null
-	failOnCommitNeeded = false
+	git {
+		requireBranch = null
+	}
 }
-release.dependsOn test
+afterReleaseBuild.dependsOn uploadArchives
 
 def getProjectsToTest() {
 	subprojects.findAll { !(it.toString() =~ "benchmark|buddy") }
