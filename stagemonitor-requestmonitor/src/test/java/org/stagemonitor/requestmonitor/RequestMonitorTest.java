@@ -135,6 +135,15 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testProfileThisExecutionActiveEvery2Requests() throws Exception {
+		RequestMonitor.addRequestTraceReporter(new RequestTraceReporter() {
+			@Override
+			public <T extends RequestTrace> void reportRequestTrace(T requestTrace) throws Exception {
+			}
+			@Override
+			public <T extends RequestTrace> boolean isActive(T requestTrace) {
+				return true;
+			}
+		});
 		testProfileThisExecutionHelper(2, 0, false);
 		testProfileThisExecutionHelper(2, 1, false);
 		testProfileThisExecutionHelper(2, 2, true);

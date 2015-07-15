@@ -76,8 +76,8 @@ public class ManualProfilerTest {
 
 		static void method1_2() {
 			Profiler.start("method1_2()");
-			Profiler.addCall("select * from user", 50000000);
-			Profiler.addCall("select * from address", 50000000);
+			Profiler.addIOCall("select * from user", 50000000);
+			Profiler.addIOCall("select * from address", 50000000);
 			method1_2_1();
 			final CallStackElement thisCallStackElement = Profiler.getMethodCallParent();
 			Profiler.stop();
@@ -105,8 +105,8 @@ public class ManualProfilerTest {
 						"000200.00  020% ||-------- 000250.00  025% ||:-------     |   `-- method1_1_2()\n" +
 						"000050.00  005% :--------- 000050.00  005% :---------     |       `-- method1_1_2_1()\n" +
 						"000150.00  015% |:-------- 000500.00  050% |||||-----     `-- method1_2()\n" +
-						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user\n" +
-						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address\n" +
+						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user \n" +
+						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address \n" +
 						"000250.00  025% ||:------- 000250.00  025% ||:-------         `-- method1_2_1()\n", callStackElement.toString());
 	}
 
@@ -123,7 +123,11 @@ public class ManualProfilerTest {
 						"000050.00  005% :--------- 000500.00  050% |||||-----     |-- method1_1()\n" +
 						"000200.00  020% ||-------- 000200.00  020% ||--------     |   |-- method1_1_1()\n" +
 						"000250.00  025% ||:------- 000250.00  025% ||:-------     |   `-- method1_1_2()\n" +
-						"000250.00  025% ||:------- 000500.00  050% |||||-----     `-- method1_2()\n" +
+						// method1_1_2_1 is excluded, because execution time 50 < 51
+						"000150.00  015% |:-------- 000500.00  050% |||||-----     `-- method1_2()\n" +
+						// io queries are not excluded even though execution time 50 < 51
+						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user \n" +
+						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address \n" +
 						"000250.00  025% ||:------- 000250.00  025% ||:-------         `-- method1_2_1()\n", callStackElement.toString());
 	}
 
@@ -142,8 +146,8 @@ public class ManualProfilerTest {
 						"000200.00  020% ||-------- 000250.00  025% ||:-------     |   `-- method1_1_2()\n" +
 						"000050.00  005% :--------- 000050.00  005% :---------     |       `-- method1_1_2_1()\n" +
 						"000150.00  015% |:-------- 000500.00  050% |||||-----     `-- method1_2()\n" +
-						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user\n" +
-						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address\n" +
+						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user \n" +
+						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address \n" +
 						"000250.00  025% ||:------- 000250.00  025% ||:-------         `-- method1_2_1()\n", callStackElement.toString());
 	}
 

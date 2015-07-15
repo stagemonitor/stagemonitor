@@ -64,10 +64,10 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<Double> minExecutionTimePercent = ConfigurationOption.doubleOption()
 			.key("stagemonitor.profiler.minExecutionTimePercent")
-			.dynamic(false)
+			.dynamic(true)
 			.label("Min execution time (%)")
 			.description("Don't show methods that executed faster than this value in the call tree (0.5 or 0,5 means 0.5%).")
-			.defaultValue(1d)
+			.defaultValue(0.5)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Integer> callStackEveryXRequestsToGroup = ConfigurationOption.integerOption()

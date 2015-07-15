@@ -252,7 +252,10 @@ public class RequestMonitor {
 			Profiler.stop();
 			requestTrace.getCallStack().setSignature(requestTrace.getName());
 			final CallStackElement callTree = requestTrace.getCallStack();
-			callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * requestMonitorPlugin.getMinExecutionTimePercent()));
+			final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
+			if (minExecutionTimeMultiplier > 0d) {
+				callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
+			}
 			reportRequestTrace(requestTrace);
 		}
 		trackMetrics(info, executionTime, cpuTime);
@@ -410,7 +413,8 @@ public class RequestMonitor {
 			if (requestTimer.getCount() == 0) {
 				return false;
 			}
-			return requestTimer.getCount() % callStackEveryXRequestsToGroup == 0;
+			final boolean profilingActive = requestTimer.getCount() % callStackEveryXRequestsToGroup == 0;
+			return profilingActive && isAnyRequestTraceReporterActive(getRequestTrace());
 		}
 
 		/**
@@ -450,6 +454,15 @@ public class RequestMonitor {
 		public boolean isForwarded() {
 			return parent != null;
 		}
+	}
+
+	private boolean isAnyRequestTraceReporterActive(RequestTrace requestTrace) {
+		for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
+			if (requestTraceReporter.isActive(requestTrace)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

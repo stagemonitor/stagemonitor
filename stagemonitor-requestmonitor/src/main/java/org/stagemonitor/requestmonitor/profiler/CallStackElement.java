@@ -50,12 +50,17 @@ public class CallStackElement {
 	public void removeCallsFasterThan(long thresholdNs) {
 		for (Iterator<CallStackElement> iterator = children.iterator(); iterator.hasNext(); ) {
 			CallStackElement child = iterator.next();
-			if (child.executionTime < thresholdNs) {
+			if (child.executionTime < thresholdNs && !child.isIOQuery()) {
 				iterator.remove();
 			} else {
 				child.removeCallsFasterThan(thresholdNs);
 			}
 		}
+	}
+
+	private boolean isIOQuery() {
+		// that might be a bit ugly, but it saves reference to a boolean and thus memory
+		return signature.charAt(signature.length() - 1) == ' ';
 	}
 
 	/**

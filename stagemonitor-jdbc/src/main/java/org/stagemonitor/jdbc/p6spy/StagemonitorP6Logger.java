@@ -1,5 +1,9 @@
 package org.stagemonitor.jdbc.p6spy;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
+import java.util.concurrent.TimeUnit;
+
 import com.codahale.metrics.MetricRegistry;
 import com.p6spy.engine.logging.Category;
 import com.p6spy.engine.spy.appender.P6Logger;
@@ -9,10 +13,6 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
-
-import java.util.concurrent.TimeUnit;
-
-import static com.codahale.metrics.MetricRegistry.name;
 
 public class StagemonitorP6Logger implements P6Logger {
 
@@ -51,9 +51,9 @@ public class StagemonitorP6Logger implements P6Logger {
 
 	private void addSqlToCallStack(long elapsed, String prepared, String sql) {
 		if (jdbcPlugin.isCollectPreparedStatementParameters()) {
-			Profiler.addCall(sql, TimeUnit.MILLISECONDS.toNanos(elapsed));
+			Profiler.addIOCall(sql, TimeUnit.MILLISECONDS.toNanos(elapsed));
 		} else {
-			Profiler.addCall(prepared, TimeUnit.MILLISECONDS.toNanos(elapsed));
+			Profiler.addIOCall(prepared, TimeUnit.MILLISECONDS.toNanos(elapsed));
 		}
 	}
 
