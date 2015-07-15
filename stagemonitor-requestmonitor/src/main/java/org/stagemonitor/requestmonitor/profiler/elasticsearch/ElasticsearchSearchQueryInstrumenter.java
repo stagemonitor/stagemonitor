@@ -23,7 +23,7 @@ public class ElasticsearchSearchQueryInstrumenter extends StagemonitorJavassistI
 		final CtMethod doExecuteMethod = actionRequestBuilder.getDeclaredMethod("doExecute");
 		actionRequestBuilder.getClassPool().importPackage("org.stagemonitor.requestmonitor.profiler.elasticsearch");
 		actionRequestBuilder.getClassPool().importPackage("org.stagemonitor.requestmonitor.profiler");
-		doExecuteMethod.insertBefore("Profiler.addCall(ElasticsearchSearchQueryInstrumenter.getSearchRequestAsString(this), 0L);");
+		doExecuteMethod.insertBefore("Profiler.addIOCall(ElasticsearchSearchQueryInstrumenter.getSearchRequestAsString(this), 0L);");
 	}
 
 	@Override

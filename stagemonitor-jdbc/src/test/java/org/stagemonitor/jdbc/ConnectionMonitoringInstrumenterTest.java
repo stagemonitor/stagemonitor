@@ -105,7 +105,7 @@ public class ConnectionMonitoringInstrumenterTest {
 		assertEquals("testRecordSql()", callStack.getSignature());
 		assertEquals("public void org.stagemonitor.jdbc.ConnectionMonitoringInstrumenterTest.testRecordSql()",
 				callStack.getChildren().get(0).getSignature());
-		assertEquals("SELECT * from STAGEMONITOR", callStack.getChildren().get(0).getChildren().get(0).getSignature());
+		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getSignature());
 	}
 
 	private static class AbstractTestDataSource {

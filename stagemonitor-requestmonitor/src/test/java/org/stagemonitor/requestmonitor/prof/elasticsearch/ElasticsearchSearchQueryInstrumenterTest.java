@@ -28,12 +28,12 @@ public class ElasticsearchSearchQueryInstrumenterTest extends AbstractElasticsea
 				"  \"query\" : {\n" +
 				"    \"match_all\" : { }\n" +
 				"  }\n" +
-				"}", total.getChildren().get(0).getSignature());
+				"} ", total.getChildren().get(0).getSignature());
 		Assert.assertEquals("POST /_search?search_type=count\n" +
 				"{\n" +
 				"  \"query\" : {\n" +
 				"    \"match_all\" : { }\n" +
 				"  }\n" +
-				"}", total.getChildren().get(1).getSignature());
+				"} ", total.getChildren().get(1).getSignature());
 	}
 }

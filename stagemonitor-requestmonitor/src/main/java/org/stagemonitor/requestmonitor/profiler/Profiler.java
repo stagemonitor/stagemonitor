@@ -26,6 +26,10 @@ public final class Profiler {
 		}
 	}
 
+	public static void addIOCall(String signature, long executionTimeNanos) {
+		addCall(signature + ' ', executionTimeNanos);
+	}
+
 	public static void addCall(String signature, long executionTimeNanos) {
 		final CallStackElement currentCall = methodCallParent.get();
 		new CallStackElement(currentCall, signature, executionTimeNanos);
