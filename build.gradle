@@ -5,10 +5,10 @@
  *    - nexusPassword=<pwd>
  *    - signing.secretKeyRingFile=<file>
  *    - signing.password=<passphrase>
- *  - Execute 'gradle release'. This is what will happen:
+ *  - Execute ./release.sh. This is what will happen:
  *    - all tests are executed locally
  *    - you will be asked for the version number of the release and the next development (SNAPSHOT) version
- *    - the gradle release plugin will then tag and push the release to github
+ *    - the gradle release plugin will then tag and push the release tag to github
  *    - checks out the just created release tag e.g. '0.11.0'
  *    - executes 'gradle uploadArchives'
  *  - Release the deployment at https://oss.sonatype.org/#welcome
@@ -130,7 +130,6 @@ release {
 		requireBranch = null
 	}
 }
-afterReleaseBuild.dependsOn uploadArchives
 
 def getProjectsToTest() {
 	subprojects.findAll { !(it.toString() =~ "benchmark|buddy") }
