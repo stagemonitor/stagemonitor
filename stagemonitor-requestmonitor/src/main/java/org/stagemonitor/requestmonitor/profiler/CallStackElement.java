@@ -1,6 +1,7 @@
 package org.stagemonitor.requestmonitor.profiler;
 
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +44,17 @@ public class CallStackElement {
 		if (parent != null) {
 			this.parent = parent;
 			parent.getChildren().add(this);
+		}
+	}
+
+	public void removeCallsFasterThan(long thresholdNs) {
+		for (Iterator<CallStackElement> iterator = children.iterator(); iterator.hasNext(); ) {
+			CallStackElement child = iterator.next();
+			if (child.executionTime < thresholdNs) {
+				iterator.remove();
+			} else {
+				child.removeCallsFasterThan(thresholdNs);
+			}
 		}
 	}
 

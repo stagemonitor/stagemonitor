@@ -251,6 +251,8 @@ public class RequestMonitor {
 		if (requestTrace.getCallStack() != null) {
 			Profiler.stop();
 			requestTrace.getCallStack().setSignature(requestTrace.getName());
+			final CallStackElement callTree = requestTrace.getCallStack();
+			callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * requestMonitorPlugin.getMinExecutionTimePercent()));
 			reportRequestTrace(requestTrace);
 		}
 		trackMetrics(info, executionTime, cpuTime);
