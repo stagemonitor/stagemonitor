@@ -62,6 +62,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(100000L)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Double> minExecutionTimePercent = ConfigurationOption.doubleOption()
+			.key("stagemonitor.profiler.minExecutionTimePercent")
+			.dynamic(false)
+			.label("Min execution time (%)")
+			.description("Don't show methods that executed faster than this value in the call tree (0.5 or 0,5 means 0.5%).")
+			.defaultValue(1d)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 	private final ConfigurationOption<Integer> callStackEveryXRequestsToGroup = ConfigurationOption.integerOption()
 			.key("stagemonitor.profiler.callStackEveryXRequestsToGroup")
 			.dynamic(true)
@@ -186,5 +194,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	@Override
 	public void onShutDown() {
 		getRequestMonitor().close();
+	}
+
+	public double getMinExecutionTimePercent() {
+		return minExecutionTimePercent.getValue();
 	}
 }
