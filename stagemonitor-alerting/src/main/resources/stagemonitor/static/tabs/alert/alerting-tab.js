@@ -204,6 +204,24 @@
 				}
 
 				var $subscriptionModal = $("#subscription-modal");
+				$subscriptionModal.on('click', "#test-alert", function () {
+					var $subscriptionForm = $("#subscription-form");
+					if ($subscriptionForm.parsley().validate()) {
+						var subscription = $subscriptionForm.serializeObject();
+
+						$.ajax({
+							url: stagemonitor.baseUrl + "/stagemonitor/test-alert?status=" + $("#test-alert-status").val(),
+							type: 'POST',
+							data: JSON.stringify(subscription),
+							contentType: 'application/json'
+						}).done(function () {
+								utils.successMessage("Successfully sent test alert");
+							}).fail(function (xhr) {
+								utils.errorMessage("Failed to send test alert", xhr);
+							});
+					}
+				});
+
 				$subscriptionModal.on('click', "#save-subscription", function () {
 					var $subscriptionForm = $("#subscription-form");
 					if ($subscriptionForm.parsley().validate()) {

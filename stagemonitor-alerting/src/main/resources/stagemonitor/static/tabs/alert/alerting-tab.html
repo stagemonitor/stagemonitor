@@ -193,12 +193,32 @@
 				</div>
 			</div>
 		</form>
+		<form id="test-alert-form">
+			<fieldset>
+				<legend>Send test alert</legend>
+				<div class="form-group">
+					<label for="test-alert-status">Status</label>
+					<select id="test-alert-status" name="status" class="form-control">
+						<option value="OK">OK</option>
+						<option value="WARN" selected>Warn</option>
+						<option value="ERROR">Error</option>
+						<option value="CRITICAL">Critical</option>
+					</select>
+				</div>
+				<button id="test-alert" type="button" class="btn btn-default">Send Alert</button>
+			</fieldset>
+		</form>
 	</div>
 	<div class="modal-footer">
-		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-		<button id="save-subscription" type="button" class="btn btn-primary tip"
-				title="To change the configuration source this check is saved to or to enter the configuration update
-				password, go to the configuration tab">Save</button>
+		<div class="form-group pull-left">
+
+		</div>
+		<div>
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			<button id="save-subscription" type="button" class="btn btn-primary tip"
+					title="To change the configuration source this check is saved to or to enter the configuration update
+					password, go to the configuration tab">Save</button>
+		</div>
 	</div>
 </script>   <!--Subscription Modal-->
 

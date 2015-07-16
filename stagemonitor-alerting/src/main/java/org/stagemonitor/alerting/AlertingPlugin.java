@@ -19,6 +19,7 @@ import org.stagemonitor.alerting.alerter.AlertTemplateProcessor;
 import org.stagemonitor.alerting.alerter.AlerterTypeServlet;
 import org.stagemonitor.alerting.alerter.IncidentServlet;
 import org.stagemonitor.alerting.alerter.Subscription;
+import org.stagemonitor.alerting.alerter.TestAlertSenderServlet;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
 import org.stagemonitor.alerting.incident.ElasticsearchIncidentRepository;
@@ -328,6 +329,9 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 
 		ctx.addServlet(IncidentServlet.class.getSimpleName(), new IncidentServlet(alertingPlugin))
 				.addMapping("/stagemonitor/incidents");
+
+		ctx.addServlet(TestAlertSenderServlet.class.getSimpleName(), new TestAlertSenderServlet())
+				.addMapping("/stagemonitor/test-alert");
 	}
 
 }
