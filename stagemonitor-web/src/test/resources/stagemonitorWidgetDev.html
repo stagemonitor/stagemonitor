@@ -66,6 +66,7 @@
 
 					stagemonitorWindow.stagemonitor.openOverlay = function () {
 						stagemonitorOverlay.style.display = "block";
+						stagemonitorWindow.stagemonitor.onOpen();
 					};
 
 					stagemonitorWindow.stagemonitor.closeOverlay = function () {
@@ -80,6 +81,8 @@
 								"/stagemonitor-ehcache/src/main/resources/stagemonitor/static/tabs/metrics/ehcache-metrics",
 								"/stagemonitor-os/src/main/resources/stagemonitor/static/tabs/metrics/os-metrics"
 							]);
+					stagemonitorWindow.stagemonitor.onOpen();
+
 					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 					stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 					stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);

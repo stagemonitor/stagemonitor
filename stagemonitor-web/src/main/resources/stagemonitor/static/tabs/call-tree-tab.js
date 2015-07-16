@@ -1,12 +1,22 @@
-function renderCallTree(data) {
+function setCallTree(callTree) {
+	stagemonitor.callTree = callTree;
+}
+
+function renderCallTree(callTree) {
+	if (callTree) {
+		setCallTree(callTree);
+	}
+	if (stagemonitor.callTree === stagemonitor.renderedCallTree) {
+		return;
+	}
 	$.get("tabs/call-tree-tab.html", function (template) {
 		var callTreeTemplate = Handlebars.compile($(template).html());
 
 		var $stagemonitorHome = $("#stagemonitor-home");
 		var $callStackTab = $("#call-stack-tab");
-		if (data && data.callStackJson !== undefined) {
+		if (stagemonitor.callTree && stagemonitor.callTree.callStackJson !== undefined) {
 			$callStackTab.show();
-			var callTree = JSON.parse(data.callStackJson);
+			var callTree = JSON.parse(stagemonitor.callTree.callStackJson);
 			var callTreeRows = [];
 			processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);
 			$stagemonitorHome.html("");
@@ -23,6 +33,7 @@ function renderCallTree(data) {
 			$calltree.find("tr[data-tt-expanded='false']").each(function () {
 				$calltree.treetable("collapseNode", $(this).attr("data-tt-id"));
 			});
+			stagemonitor.renderedCallTree = stagemonitor.callTree;
 
 		} else {
 			$callStackTab.hide();
