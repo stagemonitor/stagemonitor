@@ -210,7 +210,7 @@
 						var subscription = $subscriptionForm.serializeObject();
 
 						$.ajax({
-							url: stagemonitor.baseUrl + "/stagemonitor/test-alert?status=" + $("#test-alert-status").val(),
+							url: stagemonitor.baseUrl + "/stagemonitor/test-alert?status=WARN",
 							type: 'POST',
 							data: JSON.stringify(subscription),
 							contentType: 'application/json'
