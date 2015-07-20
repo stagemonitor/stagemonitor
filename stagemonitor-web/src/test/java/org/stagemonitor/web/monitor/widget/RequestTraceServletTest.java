@@ -5,6 +5,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
@@ -20,6 +21,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
@@ -38,7 +40,7 @@ public class RequestTraceServletTest {
 		Mockito.when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
 		Configuration configuration = mock(Configuration.class);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		requestTraceServlet = new RequestTraceServlet(configuration);
+		requestTraceServlet = new RequestTraceServlet(configuration, 1500);
 		connectionId = UUID.randomUUID().toString();
 		httpRequestTrace = new HttpRequestTrace(new MockHttpServletRequest(), null, new RequestTrace.GetNameCallback() {
 			@Override
@@ -77,40 +79,43 @@ public class RequestTraceServletTest {
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
 	}
 
-	@Test
-	public void testRequestTraceAfterRequest() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
-		request.addParameter("connectionId", connectionId);
-		request.setAsyncSupported(true);
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		requestTraceServlet.service(request, response);
+	private void performNonBlockingRequest(final HttpServletRequest request, final MockHttpServletResponse response) throws Exception {
+		final Object lock = new Object();
+		synchronized (lock) {
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						synchronized (lock) {
+							lock.notifyAll();
+						}
+						requestTraceServlet.service(request, response);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}).start();
+			lock.wait();
+		}
+//		Thread.sleep(100);
+	}
 
-		requestTraceServlet.reportRequestTrace(httpRequestTrace);
-
-		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
-		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
+	private void waitForResponse(MockHttpServletResponse response) throws UnsupportedEncodingException, InterruptedException {
+		while (StringUtils.isEmpty(response.getContentAsString())) {
+			Thread.sleep(10);
+		}
 	}
 
 	@Test
-	public void testRequestTraceAfterRequestAsyncNotSupported() throws Exception {
+	public void testRequestTraceAfterRequest() throws Exception {
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
 		request.setAsyncSupported(false);
 		final MockHttpServletResponse response = new MockHttpServletResponse();
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					requestTraceServlet.service(request, response);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}).start();
+		performNonBlockingRequest(request, response);
 
-		Thread.sleep(500);
 		requestTraceServlet.reportRequestTrace(httpRequestTrace);
-		Thread.sleep(500);
+		waitForResponse(response);
 
 		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
@@ -122,11 +127,12 @@ public class RequestTraceServletTest {
 		request.addParameter("connectionId", UUID.randomUUID().toString());
 		request.setAsyncSupported(true);
 		MockHttpServletResponse response = new MockHttpServletResponse();
-		requestTraceServlet.service(request, response);
+		performNonBlockingRequest(request, response);
 
 		requestTraceServlet.reportRequestTrace(httpRequestTrace);
+		waitForResponse(response);
 
-		Assert.assertEquals("", response.getContentAsString());
+		Assert.assertEquals("[]", response.getContentAsString());
 	}
 
 	@Test
