@@ -1,4 +1,5 @@
 language: java
+sudo: false
 jdk:
   - oraclejdk7
 env:
@@ -13,6 +14,11 @@ script:
   - ./gradlew test
 after_success:
   - ./gradlew cobertura coveralls
+
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/.gradle
 
 addons:
   coverity_scan:
