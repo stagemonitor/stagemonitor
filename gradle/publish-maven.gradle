@@ -17,6 +17,13 @@ artifacts {
 uploadArchives.dependsOn << compileJava
 install.dependsOn << compileJava
 
+task setIntegrationSnapshotVersion << {
+	project.version = "integration-SNAPSHOT"
+}
+install.mustRunAfter setIntegrationSnapshotVersion
+
+task installIntegrationSnapshot(dependsOn: [setIntegrationSnapshotVersion, install]) {}
+
 modifyPom {
 	project {
 		dependencies {
