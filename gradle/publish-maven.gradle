@@ -21,6 +21,7 @@ task setIntegrationSnapshotVersion << {
 	project.version = "integration-SNAPSHOT"
 }
 install.mustRunAfter setIntegrationSnapshotVersion
+compileJava.mustRunAfter setIntegrationSnapshotVersion
 
 task installIntegrationSnapshot(dependsOn: [setIntegrationSnapshotVersion, install]) {}
 
