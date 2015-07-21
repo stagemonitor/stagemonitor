@@ -29,7 +29,7 @@ public class InstrumentationPerformanceTest  {
 		Stagemonitor.init();
 		timer.stop();
 		printResults();
-		node.stop();
+		System.exit(0);
 	}
 
 	private static void startElasticsearch() {
