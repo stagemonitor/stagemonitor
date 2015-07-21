@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.profiler;
+package org.stagemonitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,7 @@ public class InstrumentationPerformanceTest  {
 		Stagemonitor.init();
 		timer.stop();
 		printResults();
-		System.exit(0);
+		node.close();
 	}
 
 	private static void startElasticsearch() {
