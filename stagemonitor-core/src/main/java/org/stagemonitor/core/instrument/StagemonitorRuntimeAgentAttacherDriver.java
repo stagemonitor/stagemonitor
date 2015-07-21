@@ -53,7 +53,6 @@ public class StagemonitorRuntimeAgentAttacherDriver implements Driver {
 		return false;
 	}
 
-	@Override
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
 		throw new SQLFeatureNotSupportedException();
 	}
