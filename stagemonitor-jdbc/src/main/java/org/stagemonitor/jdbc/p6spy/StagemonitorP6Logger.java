@@ -8,6 +8,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.p6spy.engine.logging.Category;
 import com.p6spy.engine.spy.appender.P6Logger;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.jdbc.JdbcPlugin;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
@@ -26,7 +27,10 @@ public class StagemonitorP6Logger implements P6Logger {
 
 	@Override
 	public void logSQL(int connectionId, String now, long elapsed, Category category, String prepared, String sql) {
-		if (sql != null && !sql.isEmpty()) {
+		if (StringUtils.isNotEmpty(prepared)) {
+			if (StringUtils.isEmpty(sql)) {
+				sql = prepared;
+			}
 			RequestTrace request = RequestMonitor.getRequest();
 			if (request != null) {
 				request.dbCallCompleted(elapsed);
