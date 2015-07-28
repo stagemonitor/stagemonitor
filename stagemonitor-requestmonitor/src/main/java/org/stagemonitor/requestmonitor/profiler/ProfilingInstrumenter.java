@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor.profiler;
 
 import java.lang.reflect.Modifier;
 
+import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
@@ -40,9 +41,14 @@ public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 					&& !Modifier.isFinal(m.getModifiers())
 					&& ctClass.equals(m.getDeclaringClass())
 					&& !m.getName().contains("access$")) {
-
-				m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start(\"" + getSignature(ctClass, m) + "\");");
-				m.insertAfter("org.stagemonitor.requestmonitor.profiler.Profiler.stop();", true);
+				try {
+					m.insertBefore("org.stagemonitor.requestmonitor.profiler.Profiler.start(\"" + getSignature(ctClass, m) + "\");");
+					m.insertAfter("org.stagemonitor.requestmonitor.profiler.Profiler.stop();", true);
+				} catch (CannotCompileException e) {
+					// ignore
+				} catch (NotFoundException e) {
+					// ignore
+				}
 			}
 		}
 	}
