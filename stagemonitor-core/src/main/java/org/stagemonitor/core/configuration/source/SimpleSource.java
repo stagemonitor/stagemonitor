@@ -9,11 +9,12 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class SimpleSource extends AbstractConfigurationSource {
 
+	public static final String NAME = "Transient Configuration Source";
 	private final ConcurrentMap<String, String> config = new ConcurrentHashMap<String, String>();
 	private final String name;
 
 	public SimpleSource() {
-		this("Transient Configuration Source");
+		this(NAME);
 	}
 
 	public SimpleSource(String name) {
