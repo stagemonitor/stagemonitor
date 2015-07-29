@@ -6,6 +6,7 @@ import java.util.Collection;
 import javassist.CtClass;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.util.ClassUtils;
 
 public abstract class StagemonitorJavassistInstrumenter {
 
@@ -89,7 +90,7 @@ public abstract class StagemonitorJavassistInstrumenter {
 	 * applications are deployed in a single Application Server.
 	 */
 	public boolean isTransformClassesOfClassLoader(ClassLoader classLoader) {
-		return classLoader == getClass().getClassLoader();
+		return ClassUtils.canLoadClass(classLoader, this.getClass().getName());
 	}
 
 	private boolean hasMoreSpecificExclude(String className, String include) {
