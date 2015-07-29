@@ -65,7 +65,7 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 		final SearchResponse searchResponse = client.prepareSearch("stagemonitor").setTypes("measurementSessions").get();
 		assertEquals(1, searchResponse.getHits().totalHits());
 		assertEquals(JsonUtils.getMapper().readTree(String.format("{\"applicationName\":null," +
-				"\"hostName\":null," +
+				"\"hostName\":\"%s\"," +
 				"\"instanceName\":null," +
 				"\"startTimestamp\":%d," +
 				"\"endTimestamp\":null," +
@@ -76,7 +76,9 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 				"\"histograms\":{\"histogram\":{\"count\":1,\"max\":2,\"mean\":4.0,\"min\":4,\"p50\":6.0,\"p75\":7.0,\"p95\":8.0,\"p98\":9.0,\"p99\":10.0,\"p999\":11.0,\"stddev\":5.0}}," +
 				"\"meters\":{\"meter\":{\"count\":4,\"m15_rate\":5.0,\"m1_rate\":3.0,\"m5_rate\":4.0,\"mean_rate\":2.0,\"units\":\"events/second\"}}," +
 				"\"timers\":{\"timer\":{\"count\":1000000,\"max\":2.0,\"mean\":4.0,\"min\":4.0,\"p50\":6.0,\"p75\":7.0,\"p95\":8.0,\"p98\":9.0,\"p99\":10.0,\"p999\":11.0,\"stddev\":5.0,\"m15_rate\":5000000.0,\"m1_rate\":3000000.0,\"m5_rate\":4000000.0,\"mean_rate\":2000000.0,\"duration_units\":\"milliseconds\",\"rate_units\":\"calls/second\"}}}",
-				Stagemonitor.getMeasurementSession().getStartTimestamp(), Stagemonitor.getMeasurementSession().getStart())),
+				Stagemonitor.getMeasurementSession().getHostName(),
+				Stagemonitor.getMeasurementSession().getStartTimestamp(),
+				Stagemonitor.getMeasurementSession().getStart())),
 				JsonUtils.getMapper().readTree(searchResponse.getHits().getAt(0).getSourceAsString()));
 	}
 

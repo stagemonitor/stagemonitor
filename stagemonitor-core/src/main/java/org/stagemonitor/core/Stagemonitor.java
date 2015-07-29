@@ -75,10 +75,16 @@ public final class Stagemonitor {
 		}
 	}
 
+	public synchronized static Future<?> startMonitoring(MeasurementSession measurementSession) {
+		setMeasurementSession(measurementSession);
+		return startMonitoring();
+	}
+
 	private synchronized static void doStartMonitoring() {
 		if (measurementSession.isInitialized() && !started) {
+			logger.info("Measurement Session is initialized: " + measurementSession);
 			try {
-				start(measurementSession);
+				start();
 			} catch (RuntimeException e) {
 				logger.warn("Error while trying to start monitoring. (this exception is ignored)", e);
 			}
@@ -89,14 +95,8 @@ public final class Stagemonitor {
 		}
 	}
 
-	public synchronized static Future<?> startMonitoring(MeasurementSession measurementSession) {
-		setMeasurementSession(measurementSession);
-		return startMonitoring();
-	}
-
-	private static void start(MeasurementSession measurementSession) {
+	private static void start() {
 		initializePlugins();
-		logger.info("Measurement Session is initialized: " + measurementSession);
 		started = true;
 		// in case the application does not directly call shutDown
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -212,7 +212,15 @@ public final class Stagemonitor {
 		measurementSession = new MeasurementSession(null, null, null);
 		SharedMetricRegistries.clear();
 		reloadConfiguration();
+		tryStartMonitoring();
 		onShutdownActions.add(MainStagemonitorClassFileTransformer.performRuntimeAttachment());
+	}
+
+	private static void tryStartMonitoring() {
+		CorePlugin corePlugin = getConfiguration(CorePlugin.class);
+		MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(),
+				MeasurementSession.getNameOfLocalHost(), corePlugin.getInstanceName());
+		startMonitoring(session);
 	}
 
 	private static void reloadConfiguration() {

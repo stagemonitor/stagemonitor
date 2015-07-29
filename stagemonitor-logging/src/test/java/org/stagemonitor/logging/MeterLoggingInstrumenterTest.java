@@ -36,7 +36,6 @@ public class MeterLoggingInstrumenterTest {
 
 		logger.error("test");
 		final SortedMap<String,Meter> meters = Stagemonitor.getMetricRegistry().getMeters();
-		assertEquals(1, meters.size());
 		assertNotNull(meters.get("logging.error"));
 		assertEquals(1, meters.get("logging.error").getCount());
 	}

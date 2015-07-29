@@ -29,7 +29,6 @@ public class StagemonitorTest {
 		Stagemonitor.setConfiguration(configuration);
 		Stagemonitor.setLogger(logger);
 		assertFalse(Stagemonitor.isStarted());
-		assertTrue(Stagemonitor.getMeasurementSession().isNull());
 	}
 
 	@After
