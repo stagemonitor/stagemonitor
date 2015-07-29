@@ -15,14 +15,17 @@ public class ClassUtils {
 	}
 
 	public static boolean canLoadClass(ClassLoader loader, String className) {
+		return loadClassOrReturnNull(loader, className) != null;
+	}
+
+	public static Class<?> loadClassOrReturnNull(ClassLoader loader, String className) {
 		if (loader == null) {
 			loader = ClassLoader.getSystemClassLoader();
 		}
 		try {
-			loader.loadClass(className);
-			return true;
+			return loader.loadClass(className);
 		} catch (ClassNotFoundException e) {
-			return false;
+			return null;
 		}
 	}
 }

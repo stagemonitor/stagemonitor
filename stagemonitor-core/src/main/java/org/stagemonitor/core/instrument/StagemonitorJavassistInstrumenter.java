@@ -90,7 +90,9 @@ public abstract class StagemonitorJavassistInstrumenter {
 	 * applications are deployed in a single Application Server.
 	 */
 	public boolean isTransformClassesOfClassLoader(ClassLoader classLoader) {
-		return ClassUtils.canLoadClass(classLoader, this.getClass().getName());
+		// only returns true if this class was loaded by the provided classLoader or by a parent of it
+		// i.e. only if it is from the same application
+		return ClassUtils.loadClassOrReturnNull(classLoader, getClass().getName()) == getClass();
 	}
 
 	private boolean hasMoreSpecificExclude(String className, String include) {
