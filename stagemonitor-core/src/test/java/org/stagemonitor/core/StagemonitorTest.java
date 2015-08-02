@@ -3,6 +3,7 @@ package org.stagemonitor.core;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -85,7 +86,7 @@ public class StagemonitorTest {
 		final MeasurementSession measurementSession = new MeasurementSession(null, "testHost", "testInstance");
 		Stagemonitor.startMonitoring(measurementSession).get();
 
-		verify(logger).warn("Measurement Session is not initialized: {}", measurementSession);
+		verify(logger, atLeastOnce()).warn("Measurement Session is not initialized: {}", measurementSession);
 	}
 
 }
