@@ -55,9 +55,11 @@ var tableRenderer = (function () {
 
 	function updateTable(metrics, metricTable) {
 		var data = getData(metrics, metricTable);
-		metricTable.table.fnClearTable(false);
-		metricTable.table.fnAddData(data, false);
-		metricTable.table.DataTable().draw(false);
+		if (data.length > 0) {
+			metricTable.table.fnClearTable(false);
+			metricTable.table.fnAddData(data, false);
+			metricTable.table.DataTable().draw(false);
+		}
 		restoreSelectedRow(metricTable);
 	}
 

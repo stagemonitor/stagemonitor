@@ -1,6 +1,8 @@
 package org.stagemonitor.jdbc;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
@@ -58,6 +60,11 @@ public class JdbcPlugin extends StagemonitorPlugin {
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
 		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
 		elasticsearchClient.sendGrafanaDashboardAsync("DB Queries.json");
+	}
+
+	@Override
+	public List<String> getPathsOfWidgetMetricTabPlugins() {
+		return Collections.singletonList("/stagemonitor/static/tabs/metrics/jdbc-metrics");
 	}
 
 	public boolean isCollectSql() {

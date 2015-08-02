@@ -1,59 +1,53 @@
 (function () {
 	plugins.push(
 		{
-			id: "request-metrics",
-			label: "Requests",
+			id: "jdbc-metrics",
+			label: "JDBC",
 			table: {
-				bindto: "#request-table",
+				bindto: "#jdbc-table",
 				nameLabel: "Name",
 				columns: [
 					{
 						metricCategory: "timers",
-						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metricPathRegex: /db.([^\.]+).time.statement/,
 						metric: "m1_rate",
 						title: "Requests/s"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metricPathRegex: /db.([^\.]+).time.statement/,
 						metric: "max",
 						title: "Max"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metricPathRegex: /db.([^\.]+).time.statement/,
 						metric: "mean",
 						title: "Mean"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metricPathRegex: /db.([^\.]+).time.statement/,
 						metric: "min",
 						title: "Min"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metricPathRegex: /db.([^\.]+).time.statement/,
 						metric: "p50",
 						title: "p50"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metricPathRegex: /db.([^\.]+).time.statement/,
 						metric: "p95",
 						title: "p95"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /request.([^\.]+).server.time.total/,
+						metricPathRegex: /db.([^\.]+).time.statement/,
 						metric: "stddev",
 						title: "Std. Dev."
-					},
-					{
-						metricCategory: "meters",
-						metricPathRegex: /request.([^\.]+).server.meter.db/,
-						metric: "m1_rate",
-						title: "SQLs/sec"
 					}
 				],
 				graphTemplates: {
@@ -61,23 +55,23 @@
 					templates: [
 						{
 							template: {
-								bindto: '#time',
+								bindto: '#jdbc-time',
 								min: 0,
 								format: 'ms',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "timers", metricPathRegex: "request.(${rowName}).server.time.total", metric: "mean" }
+									{ metricCategory: "timers", metricPathRegex: "db.(${rowName}).time.statement", metric: "mean" }
 								]
 							}
 						},
 						{
 							template: {
-								bindto: '#throughput',
+								bindto: '#jdbc-throughput',
 								min: 0,
 								format: 'requests/sec',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "timers", metricPathRegex: "request.(${rowName}).server.time.total", metric: "m1_rate"}
+									{ metricCategory: "timers", metricPathRegex: "db.(${rowName}).time.statement", metric: "m1_rate"}
 								]
 							}
 						}
