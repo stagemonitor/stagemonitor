@@ -72,7 +72,7 @@
 
 				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions,
 						window.location.origin + "@@CONTEXT_PREFIX_PATH@@", contextPath,
-						@@CONFIGURATION_PWD_SET@@, connectionId, @@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@);
+						@@CONFIGURATION_PWD_SET@@, connectionId, @@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@, @@OPEN_IMMEDIATELY@@);
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 				stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 				stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
@@ -122,7 +122,7 @@
 </script>
 <style>
 	#stagemonitor-overlay {
-		display: none;
+		display: @@OVERLAY_DISPLAY@@;
 		position: fixed;
 		background-color: rgba(0, 0, 0, 0.5);
 		width: 100%;

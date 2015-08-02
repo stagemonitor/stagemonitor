@@ -104,8 +104,7 @@
 								"/stagemonitor-jvm/src/main/resources/stagemonitor/static/tabs/metrics/jvm-metrics",
 								"/stagemonitor-ehcache/src/main/resources/stagemonitor/static/tabs/metrics/ehcache-metrics",
 								"/stagemonitor-os/src/main/resources/stagemonitor/static/tabs/metrics/os-metrics"
-							]);
-					stagemonitorWindow.stagemonitor.onOpen();
+							], true);
 
 					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 					stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";

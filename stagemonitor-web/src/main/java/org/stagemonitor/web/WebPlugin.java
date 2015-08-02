@@ -43,6 +43,7 @@ import org.stagemonitor.web.monitor.rum.RumServlet;
 import org.stagemonitor.web.monitor.servlet.FileServlet;
 import org.stagemonitor.web.monitor.spring.SpringMonitoredHttpRequest;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
+import org.stagemonitor.web.monitor.widget.WidgetServlet;
 import org.stagemonitor.web.session.SessionCounter;
 
 public class WebPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
@@ -331,6 +332,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 				.addMapping("/stagemonitor/public/rum");
 		ctx.addServlet(FileServlet.class.getSimpleName(), new FileServlet())
 				.addMapping("/stagemonitor/static/*", "/stagemonitor/public/static/*");
+		ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
+				.addMapping("/stagemonitor");
 
 		final ServletRegistration.Dynamic requestTraceServlet = ctx.addServlet(RequestTraceServlet.class.getSimpleName(), new RequestTraceServlet());
 		requestTraceServlet.addMapping("/stagemonitor/request-traces");

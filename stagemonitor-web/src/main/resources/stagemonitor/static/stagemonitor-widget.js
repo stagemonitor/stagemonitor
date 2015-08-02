@@ -2,7 +2,8 @@ $(document).ready(function () {
 	window.tabPlugins = [];
 
 	window.stagemonitor = {
-		initialize: function (data, configurationSources, configurationOptions, baseUrl, contextPath, passwordSet, connectionId, pathsOfWidgetMetricTabPlugins) {
+		initialize: function (data, configurationSources, configurationOptions, baseUrl, contextPath, passwordSet,
+							  connectionId, pathsOfWidgetMetricTabPlugins, openImmediately) {
 			try {
 				stagemonitor.requestTrace = data;
 				stagemonitor.configurationSources = configurationSources;
@@ -17,6 +18,9 @@ $(document).ready(function () {
 				$("#call-stack-tab").find("a").click(function () {
 					renderCallTree();
 				});
+				if (openImmediately) {
+					window.stagemonitor.onOpen();
+				}
 
 			} catch (e) {
 				console.log(e);
@@ -109,6 +113,7 @@ $(document).ready(function () {
 	try {
 		window.parent.StagemonitorLoaded();
 	} catch (e) {
+		console.log(e);
 	}
 
 	$("#tab-content").on("click", ".branch", function (e) {

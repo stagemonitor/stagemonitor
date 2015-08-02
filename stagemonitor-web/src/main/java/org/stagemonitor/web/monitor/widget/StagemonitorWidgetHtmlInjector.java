@@ -20,11 +20,25 @@ import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
 public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 
-	private Logger logger = LoggerFactory.getLogger(getClass());
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+
+	/**
+	 * Whether the in browser widget should be opened automatically
+	 * (without needing to click on the speaker icon)
+	 */
+	private final boolean openImmediately;
 	private WebPlugin webPlugin;
 	private Configuration configuration;
 	private String widgetTemplate;
 	private String contextPath;
+
+	public StagemonitorWidgetHtmlInjector() {
+		this(false);
+	}
+
+	public StagemonitorWidgetHtmlInjector(boolean openImmediately) {
+		this.openImmediately = openImmediately;
+	}
 
 	@Override
 	public void init(Configuration configuration, ServletContext servletContext) {
@@ -41,7 +55,9 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 
 	private String buildWidgetTemplate(String contextPath) throws IOException {
 		return IOUtils.getResourceAsString("stagemonitorWidget.html")
-				.replace("@@CONTEXT_PREFIX_PATH@@", contextPath);
+				.replace("@@CONTEXT_PREFIX_PATH@@", contextPath)
+				.replace("@@OPEN_IMMEDIATELY@@", Boolean.toString(openImmediately))
+				.replace("@@OVERLAY_DISPLAY@@", openImmediately ? "block" : "none");
 	}
 
 	@Override
