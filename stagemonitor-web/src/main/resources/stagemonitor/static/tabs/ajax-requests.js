@@ -37,7 +37,6 @@ $(document).ready(function () {
 			$(this).removeClass('selected');
 			renderRequestTab(rootRequestTrace);
 			renderCallTree(rootRequestTrace);
-			doRenderPageLoadTime();
 		}
 	});
 	function addToolbar() {

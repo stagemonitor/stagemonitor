@@ -1,6 +1,13 @@
-function renderRequestTab(data) {
+function setRequestTrace(requestTrace) {
+	stagemonitor.requestTrace = requestTrace;
+}
+
+function renderRequestTab(requestTrace) {
+	if (requestTrace) {
+		setRequestTrace(requestTrace)
+	}
 	var $requestTab = $("#request-tab");
-	if (!data) {
+	if (!stagemonitor.requestTrace) {
 		$requestTab.hide();
 		// show config tab as fallback
 		if ($("#call-stack-tab").hasClass('active') || $requestTab.hasClass('active')) {
@@ -13,7 +20,7 @@ function renderRequestTab(data) {
 	}
 
 	var thresholdExceededGlobal = false;
-	var requestsMetrics = processRequestsMetrics(data);
+	var requestsMetrics = processRequestsMetrics(stagemonitor.requestTrace);
 
 	$.get(stagemonitor.contextPath + "/stagemonitor/static/tabs/request-tab.html", function (template) {
 		var metricsTemplate = Handlebars.compile($(template).html());
@@ -22,7 +29,6 @@ function renderRequestTab(data) {
 		$stagemonitorRequest.html(renderedMetricsTemplate);
 		$(".tip").tooltip({html: true});
 	});
-
 
 	function processRequestsMetrics(requestData) {
 		var exceededThreshold = function (key, value) {
@@ -87,10 +93,12 @@ function renderRequestTab(data) {
 	}
 
 	stagemonitor.thresholdExceeded |= thresholdExceededGlobal;
+	if (stagemonitor.requestTrace.pageLoadTime) {
+		doRenderPageLoadTime(stagemonitor.requestTrace.pageLoadTime);
+	}
 }
 
-function doRenderPageLoadTime() {
-	var data = stagemonitor.pageLoadTimeData;
+function doRenderPageLoadTime(data) {
 	if (!data) {
 		return;
 	}

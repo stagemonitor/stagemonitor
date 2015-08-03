@@ -5,7 +5,7 @@ $(document).ready(function () {
 		initialize: function (data, configurationSources, configurationOptions, baseUrl, contextPath, passwordSet,
 							  connectionId, pathsOfWidgetMetricTabPlugins, openImmediately) {
 			try {
-				stagemonitor.requestTrace = data;
+				stagemonitor.rootRequestTrace = data;
 				stagemonitor.configurationSources = configurationSources;
 				stagemonitor.configurationOptions = configurationOptions;
 				stagemonitor.baseUrl = baseUrl;
@@ -14,6 +14,7 @@ $(document).ready(function () {
 				stagemonitor.connectionId = connectionId;
 				stagemonitor.pathsOfWidgetMetricTabPlugins = pathsOfWidgetMetricTabPlugins;
 				setCallTree(data);
+				setRequestTrace(data);
 				listenForAjaxRequestTraces(data, connectionId);
 				$("#call-stack-tab").find("a").click(function () {
 					renderCallTree();
@@ -28,9 +29,9 @@ $(document).ready(function () {
 		},
 		thresholdExceeded: false,
 		renderPageLoadTime: function (pageLoadTimeData) {
-			stagemonitor.pageLoadTimeData = pageLoadTimeData;
+			stagemonitor.rootRequestTrace.pageLoadTime = pageLoadTimeData;
 			if (stagemonitor.initialized) {
-				doRenderPageLoadTime();
+				renderRequestTab();
 			}
 		},
 		initialized: false,
@@ -38,8 +39,7 @@ $(document).ready(function () {
 			if (!stagemonitor.initialized) {
 				try {
 					renderCallTree();
-					renderRequestTab(stagemonitor.requestTrace);
-					doRenderPageLoadTime();
+					renderRequestTab();
 					renderConfigTab(stagemonitor.configurationSources, stagemonitor.configurationOptions, stagemonitor.passwordSet);
 					try {
 						renderMetricsTab();
