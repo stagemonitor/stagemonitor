@@ -34,20 +34,20 @@
 		xmlhttp.send();
 
 		window.StagemonitorLoaded = function () {
-			var executeOnDomReady = [],
-				isDomReady = function () {
-					return document.readyState === "interactive";
-				},
-				executeCallbacksOnceIfDomReady = function () {
-					if (isDomReady()) {
-						while (executeOnDomReady.length > 0) {
-							var fn = executeOnDomReady.pop();
-							fn();
-						}
+
+			function isDomLoaded() {
+				return document.readyState === "complete";
+			}
+			if (isDomLoaded()) {
+				init();
+			} else {
+				document.onreadystatechange = function () {
+					if (isDomLoaded()) {
+						init();
 					}
 				};
-
-			executeOnDomReady.push(function () {
+			}
+			function init() {
 				var stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
 					stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
 					data = @@JSON_REQUEST_TACE_PLACEHOLDER@@,
@@ -76,10 +76,8 @@
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 				stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 				stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
-			});
+			};
 
-			document.onreadystatechange = executeCallbacksOnceIfDomReady;
-			executeCallbacksOnceIfDomReady();
 		};
 
 		function generateUUID(){

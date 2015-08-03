@@ -58,20 +58,19 @@
 			xmlhttp.send();
 
 			window.StagemonitorLoaded = function () {
-				var executeOnDomReady = [],
-						isDomReady = function () {
-							return document.readyState === "interactive";
-						},
-						executeCallbacksOnceIfDomReady = function () {
-							if (isDomReady()) {
-								while (executeOnDomReady.length > 0) {
-									var fn = executeOnDomReady.pop();
-									fn();
-								}
-							}
-						};
-
-				executeOnDomReady.push(function () {
+				function isDomLoaded() {
+					return document.readyState === "interactive";
+				}
+				if (isDomLoaded()) {
+					init();
+				} else {
+					document.onreadystatechange = function () {
+						if (isDomLoaded()) {
+							init();
+						}
+					};
+				}
+				function init() {
 					var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow,
 							stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
 							stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
@@ -109,10 +108,7 @@
 					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 					stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 					stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
-				});
-
-				document.onreadystatechange = executeCallbacksOnceIfDomReady;
-				executeCallbacksOnceIfDomReady();
+				}
 			};
 
 			function generateUUID(){
