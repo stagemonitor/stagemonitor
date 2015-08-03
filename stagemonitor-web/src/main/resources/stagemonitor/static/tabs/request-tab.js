@@ -9,10 +9,11 @@ function renderRequestTab(requestTrace) {
 	var $requestTab = $("#request-tab");
 	if (!stagemonitor.requestTrace) {
 		$requestTab.hide();
-		// show config tab as fallback
+		// show metrics tab as fallback
 		if ($("#call-stack-tab").hasClass('active') || $requestTab.hasClass('active')) {
-			$("#config-tab").addClass('active');
-			$("#stagemonitor-configuration").addClass('active');
+			$("#metrics-tab").addClass('active');
+			$("#stagemonitor-metrics").addClass('active');
+			$("#metrics-tab").find("a").trigger('click');
 		}
 		return;
 	} else {
