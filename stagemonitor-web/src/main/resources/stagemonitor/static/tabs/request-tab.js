@@ -90,10 +90,10 @@ function renderRequestTab(data) {
 }
 
 function doRenderPageLoadTime() {
+	var data = stagemonitor.pageLoadTimeData;
 	if (!data) {
 		return;
 	}
-	var data = stagemonitor.pageLoadTimeData;
 	var thresholdMs = localStorage.getItem("widget-settings-execution-threshold-milliseconds");
 	var thresholdExceeded = data.totalPageLoadTime > thresholdMs;
 
