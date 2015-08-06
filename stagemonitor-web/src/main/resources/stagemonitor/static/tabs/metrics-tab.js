@@ -31,7 +31,15 @@ function renderMetricsTab() {
 	function loadHtmlOfPlugins() {
 		$.when.apply(null, $.map(stagemonitor.pathsOfWidgetMetricTabPlugins, loadPluginHtml)).done(function () {
 			// render graphs lazily when user clicks on metrics tab
-			$("#metrics-tab").find("a").one('click', function () {
+			if ($("#stagemonitor-metrics").hasClass("active")) {
+				renderGraphs();
+			} else {
+				$("#metrics-tab").find("a").one('click', function () {
+					renderGraphs();
+				});
+			}
+
+			function renderGraphs() {
 				$.each(plugins, function (i, plugin) {
 					plugin.onHtmlInitialized && plugin.onHtmlInitialized();
 				});
@@ -40,7 +48,7 @@ function renderMetricsTab() {
 				setInterval(function () {
 					getMetricsFromServer(onMetricsReceived);
 				}, tickMs);
-			});
+			}
 		});
 	}
 
@@ -91,7 +99,9 @@ function renderMetricsTab() {
 	}
 
 	function loadPluginHtml(pluginPath) {
-		return $('#' + getPluginId(pluginPath)).load(pluginPath + ".html");
+		return $.get(pluginPath + ".html", function (data) {
+			$('#' + getPluginId(pluginPath)).html(data);
+		});
 	}
 
 	function getMetricsFromServer(onMetricsReceived) {
