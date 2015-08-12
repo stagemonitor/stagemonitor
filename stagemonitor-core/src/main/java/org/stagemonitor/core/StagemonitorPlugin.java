@@ -6,17 +6,30 @@ import java.util.List;
 import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 /**
- * Can be used for stagemonitor Plugins. The {@link #initializePlugin(MetricRegistry, org.stagemonitor.core.configuration.Configuration)} )} Method serves as a initialize callback
- * for plugins that are not invoked by the application otherwise.
+ * Base class for stagemonitor Plugins.
+ *
+ * The {@link #initializePlugin(Metric2Registry, Configuration)} )} method serves as a initialisation callback
+ * for plugins.
  */
 public abstract class StagemonitorPlugin extends ConfigurationOptionProvider {
 
 	/**
 	 * Implementing classes have to initialize the plugin by registering their metrics the
-	 * {@link com.codahale.metrics.MetricRegistry}
+	 * {@link Metric2Registry}
 	 */
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
+	}
+
+	/**
+	 * Implementing classes have to initialize the plugin by registering their metrics the
+	 * {@link com.codahale.metrics.MetricRegistry}
+	 *
+	 * @deprecated Use {@link #initializePlugin(Metric2Registry, Configuration)}
+	 */
+	@Deprecated
 	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
 	}
 

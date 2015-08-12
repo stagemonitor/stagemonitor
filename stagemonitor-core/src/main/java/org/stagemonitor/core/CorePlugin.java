@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -27,12 +28,14 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SimpleElasticsearchReporter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 /**
  * This class contains the configuration options for stagemonitor's core functionality
@@ -318,12 +321,20 @@ public class CorePlugin extends StagemonitorPlugin {
 	private ElasticsearchClient elasticsearchClient;
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
 		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
 		final Integer reloadInterval = corePlugin.getReloadConfigurationInterval();
 		if (reloadInterval > 0) {
 			configuration.scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
 		}
+
+		metricRegistry.register(MetricName.name("online").build(), new Gauge<Integer>() {
+			@Override
+			public Integer getValue() {
+				return 1;
+			}
+		});
+
 
 		corePlugin.getElasticsearchClient().sendGrafanaDashboardAsync("Custom Metrics.json");
 		InputStream resourceAsStream = getClass().getClassLoader()
@@ -333,10 +344,10 @@ public class CorePlugin extends StagemonitorPlugin {
 		registerReporters(elasticsearchClient, metricRegistry, corePlugin);
 	}
 
-	private void registerReporters(ElasticsearchClient elasticsearchClient, MetricRegistry metricRegistry, CorePlugin corePlugin) {
+	private void registerReporters(ElasticsearchClient elasticsearchClient, Metric2Registry metric2Registry, CorePlugin corePlugin) {
 		RegexMetricFilter regexFilter = new RegexMetricFilter(corePlugin.getExcludedMetricsPatterns());
-
 		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
+		MetricRegistry metricRegistry = metric2Registry.getMetricRegistry();
 
 		reportToGraphite(metricRegistry, corePlugin.getGraphiteReportingInterval(),
 				Stagemonitor.getMeasurementSession(), allFilters, corePlugin);
