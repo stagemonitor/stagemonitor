@@ -1,11 +1,15 @@
 package org.stagemonitor.logging;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import javassist.CtClass;
 import javassist.CtMethod;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 /**
  * Tracks the rate of calls to a logger.
@@ -13,6 +17,8 @@ import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
  * Currently has support for Logback, slf4j's simple logger and JDK14LoggerAdapter, log4j 1.x and 2.x
  */
 public class MeterLoggingInstrumenter extends StagemonitorJavassistInstrumenter {
+
+	private final static Metric2Registry registry = Stagemonitor.getMetric2Registry();
 
 	private Set<String> methodsToInstrument = new HashSet<String>() {{
 		add("trace");
@@ -40,10 +46,13 @@ public class MeterLoggingInstrumenter extends StagemonitorJavassistInstrumenter 
 	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
 		for (CtMethod ctMethod : ctClass.getMethods()) {
 			if (methodsToInstrument.contains(ctMethod.getName())) {
-				ctMethod.insertBefore("org.stagemonitor.core.Stagemonitor.getMetricRegistry()" +
-						".meter(\"logging." + ctMethod.getName() + "\").mark();");
+				ctMethod.insertBefore("org.stagemonitor.logging.MeterLoggingInstrumenter.trackLog(\"" + ctMethod.getName() + "\");");
 			}
 		}
+	}
+
+	public static void trackLog(String logLevel) {
+		registry.meter(name("logging").tag("log_level", logLevel).build()).mark();
 	}
 
 }
