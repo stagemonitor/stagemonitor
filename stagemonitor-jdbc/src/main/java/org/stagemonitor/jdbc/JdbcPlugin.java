@@ -4,13 +4,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class JdbcPlugin extends StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
@@ -57,7 +57,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 			.build();
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
 		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
 		elasticsearchClient.sendGrafanaDashboardAsync("DB Queries.json");
 	}

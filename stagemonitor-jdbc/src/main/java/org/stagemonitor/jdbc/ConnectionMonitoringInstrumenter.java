@@ -45,7 +45,7 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 		this.active = ConnectionMonitor.isActive(Stagemonitor.getConfiguration(CorePlugin.class));
 		RequestMonitor requestMonitor = Stagemonitor.getConfiguration().getConfig(RequestMonitorPlugin.class).getRequestMonitor();
 		if (active) {
-			connectionMonitor = new ConnectionMonitor(Stagemonitor.getConfiguration(), Stagemonitor.getMetricRegistry());
+			connectionMonitor = new ConnectionMonitor(Stagemonitor.getConfiguration(), Stagemonitor.getMetric2Registry());
 			final Method monitorGetConnectionMethod = connectionMonitor.getClass()
 					.getMethod("monitorGetConnection", Connection.class, DataSource.class, long.class);
 			makeReflectionInvocationFaster(monitorGetConnectionMethod);
