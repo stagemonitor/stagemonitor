@@ -1,14 +1,10 @@
 package org.stagemonitor.logging;
 
-import java.lang.instrument.Instrumentation;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import javassist.CtClass;
 import javassist.CtMethod;
-import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
 /**
@@ -50,27 +46,4 @@ public class MeterLoggingInstrumenter extends StagemonitorJavassistInstrumenter 
 		}
 	}
 
-	/**
-	 * The logger implementations are already loaded before the agent is initialized so they have to be
-	 * retransformed afterwards
-	 *
-	 * @param inst the instrumentation
-	 * @return the classes to retransform
-	 */
-	public static Collection<Class<?>> getClassesToRetransform(Instrumentation inst) {
-		Set<Class> allLoadedClasses = new HashSet<Class>(Arrays.asList(inst.getAllLoadedClasses()));
-		Set<Class<?>> result = new HashSet<Class<?>>();
-		for (String loggerImplementation : loggerImplementations) {
-			addClassIfLoaded(result, loggerImplementation.replace("/", "."), allLoadedClasses);
-		}
-
-		return result;
-	}
-
-	private static void addClassIfLoaded(Set<Class<?>> result, String className, Set<Class> allLoadedClasses) {
-		final Class<?> clazz = ClassUtils.forNameOrNull(className);
-		if (allLoadedClasses.contains(clazz)) {
-			result.add(clazz);
-		}
-	}
 }

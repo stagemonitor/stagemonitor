@@ -32,8 +32,6 @@ public class MeterLoggingInstrumenterTest {
 
 	@Test
 	public void testLogging() throws Exception {
-		new LoggingPlugin().retransformLogger();
-
 		logger.error("test");
 		final SortedMap<String,Meter> meters = Stagemonitor.getMetricRegistry().getMeters();
 		assertNotNull(meters.get("logging.error"));
