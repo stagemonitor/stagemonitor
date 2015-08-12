@@ -24,18 +24,16 @@ public class MetricName {
 		this.tags = tags;
 	}
 
+	public MetricName withTag(String key, String value) {
+		return withTags(Collections.singletonMap(key, value));
+	}
+
 	public MetricName withTags(Map<String, String> prefixTags) {
 		return name(name).tags(prefixTags).tags(this.tags).build();
 	}
 
 	public static Builder name(String name) {
 		return new Builder(name);
-	}
-
-	public static FluentLinkedHashMap tags(String key, String value) {
-		final FluentLinkedHashMap tags = new FluentLinkedHashMap();
-		tags.put(key, value);
-		return tags;
 	}
 
 	public String getName() {
@@ -86,8 +84,8 @@ public class MetricName {
 			this.name = name;
 		}
 
-		public Builder tag(String key, String value) {
-			this.tags.put(key, value);
+		public Builder tag(String key, Object value) {
+			this.tags.put(key, value.toString());
 			return this;
 		}
 
@@ -111,21 +109,9 @@ public class MetricName {
 		}
 	}
 
-	public static class FluentLinkedHashMap extends LinkedHashMap<String, String> {
-
-		public FluentLinkedHashMap addTag(String key, String value) {
-			put(key, value);
-			return this;
-		}
-
-		public FluentLinkedHashMap addTags(Map<String, String> tags) {
-			putAll(tags);
-			return this;
-		}
-	}
-
 	@Override
 	public String toString() {
 		return "name='" + name + '\'' + ", tags=" + tags;
 	}
+
 }

@@ -1,5 +1,7 @@
 package org.stagemonitor.core.pool;
 
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+
 /**
  * Represents metrics of a pooled resource like a application server thread pool or a JDBC connection pool
  */
@@ -11,7 +13,7 @@ public interface PooledResource {
 	 *
 	 * @return the name of the pool.
 	 */
-	String getName();
+	MetricName getName();
 
 	/**
 	 * Returns the maximal size of the pool.

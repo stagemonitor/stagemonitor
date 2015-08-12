@@ -60,7 +60,7 @@ public class ElasticsearchClient {
 		this.corePlugin = corePlugin;
 		if (corePlugin.isInternalMonitoringActive()) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
-			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetricRegistry());
+			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetric2Registry());
 		}
 		this.httpClient = new HttpClient();
 	}

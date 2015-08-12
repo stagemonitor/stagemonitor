@@ -379,7 +379,7 @@ public class RequestMonitor {
 		}
 
 		public String getTimerName() {
-			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(requestTrace.getName()));
+			return name(requestTrace.getName());
 		}
 
 		/**
