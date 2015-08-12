@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +29,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class AlertingPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
 
@@ -216,7 +217,7 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 	private ThresholdMonitoringReporter thresholdMonitoringReporter;
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
 		final AlertingPlugin alertingPlugin = configuration.getConfig(AlertingPlugin.class);
 		alertSender = new AlertSender(configuration);
 		CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
@@ -227,7 +228,7 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 		}
 		logger.info("Using {} for storing incidents.", incidentRepository.getClass().getSimpleName());
 
-		thresholdMonitoringReporter = new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession());
+		thresholdMonitoringReporter = new ThresholdMonitoringReporter(metricRegistry.getMetricRegistry(), alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession());
 		thresholdMonitoringReporter.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
 	}
 
