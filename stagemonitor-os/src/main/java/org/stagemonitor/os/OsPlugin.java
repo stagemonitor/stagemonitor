@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.codahale.metrics.MetricRegistry;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.NetRoute;
 import org.hyperic.sigar.Sigar;
@@ -21,6 +20,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.os.metrics.AbstractSigarMetricSet;
 import org.stagemonitor.os.metrics.CpuMetricSet;
 import org.stagemonitor.os.metrics.EmptySigarMetricSet;
@@ -37,7 +37,7 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 	private Sigar sigar;
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
 		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
 		elasticsearchClient.sendGrafanaDashboardAsync("CPU.json");
 		elasticsearchClient.sendGrafanaDashboardAsync("Filesystem.json");

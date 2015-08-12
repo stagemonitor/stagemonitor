@@ -52,11 +52,11 @@ public class MetricName {
 	 * @return A graphite compliant name
 	 */
 	public String toGraphiteName() {
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder(GraphiteSanitizer.sanitizeGraphiteMetricSegment(name));
 		for (String value : tags.values()) {
-			sb.append(GraphiteSanitizer.sanitizeGraphiteMetricSegment(value)).append('.');
+			sb.append('.').append(GraphiteSanitizer.sanitizeGraphiteMetricSegment(value));
 		}
-		return sb.append(GraphiteSanitizer.sanitizeGraphiteMetricSegment(name)).toString();
+		return sb.toString();
 	}
 
 	@Override
@@ -88,6 +88,16 @@ public class MetricName {
 
 		public Builder tag(String key, String value) {
 			this.tags.put(key, value);
+			return this;
+		}
+
+		public Builder type(String value) {
+			this.tags.put("type", value);
+			return this;
+		}
+
+		public Builder unit(String value) {
+			this.tags.put("unit", value);
 			return this;
 		}
 

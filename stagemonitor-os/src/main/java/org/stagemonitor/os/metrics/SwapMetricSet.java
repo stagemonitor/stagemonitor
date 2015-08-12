@@ -1,14 +1,17 @@
 package org.stagemonitor.os.metrics;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.RatioGauge;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.Swap;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class SwapMetricSet extends AbstractSigarMetricSet<Swap> {
 
@@ -22,40 +25,40 @@ public class SwapMetricSet extends AbstractSigarMetricSet<Swap> {
 	}
 
 	@Override
-	public Map<String, Metric> getMetrics() {
-		Map<String, Metric> metrics = new HashMap<String, Metric>();
-		metrics.put("os.swap.usage.free", new Gauge<Long>() {
+	public Map<MetricName, Metric> getMetrics() {
+		Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
+		metrics.put(name("swap_usage").type("free").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getFree();
 			}
 		});
-		metrics.put("os.swap.usage.used", new Gauge<Long>() {
+		metrics.put(name("swap_usage").type("used").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getUsed();
 			}
 		});
-		metrics.put("os.swap.usage.total", new Gauge<Long>() {
+		metrics.put(name("swap_usage").type("total").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getTotal();
 			}
 		});
-		metrics.put("os.swap.usage-percent", new RatioGauge() {
+		metrics.put(name("swap_usage-percent").build(), new RatioGauge() {
 			@Override
 			protected Ratio getRatio() {
 				return Ratio.of(getSnapshot().getUsed(), getSnapshot().getTotal());
 			}
 		});
 
-		metrics.put("os.swap.page.in", new Gauge<Long>() {
+		metrics.put(name("swap_pages").type("in").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getPageIn();
 			}
 		});
-		metrics.put("os.swap.page.out", new Gauge<Long>() {
+		metrics.put(name("swap_pages").type("out").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getPageOut();

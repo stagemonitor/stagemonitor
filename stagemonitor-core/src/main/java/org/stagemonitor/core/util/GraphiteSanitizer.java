@@ -28,6 +28,11 @@ public final class GraphiteSanitizer {
 	 * @return the metricNameSegment that contains only characters that graphite can handle
 	 */
 	public static String sanitizeGraphiteMetricSegment(String metricNameSegment) {
-		return DISALLOWED_CHARS.matcher(metricNameSegment.replace('.', ':').replace(' ', '-').replace('/', '|')).replaceAll("_");
+		return DISALLOWED_CHARS.matcher(metricNameSegment
+				.replace('.', ':')
+				.replace(' ', '-')
+				.replace('/', '|')
+				.replace('\\', '|'))
+				.replaceAll("_");
 	}
 }

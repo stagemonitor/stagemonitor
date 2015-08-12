@@ -1,5 +1,13 @@
 package org.stagemonitor.os.metrics;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
 import org.hyperic.sigar.CpuInfo;
@@ -8,12 +16,7 @@ import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.HashMap;
-import java.util.Map;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class CpuMetricSet extends AbstractSigarMetricSet<CpuPerc> {
 
@@ -27,82 +30,82 @@ public class CpuMetricSet extends AbstractSigarMetricSet<CpuPerc> {
 	}
 
 	@Override
-	protected CpuPerc loadSnapshot(Sigar sigar) throws SigarException{
+	CpuPerc loadSnapshot(Sigar sigar) throws SigarException {
 		return sigar.getCpuPerc();
 	}
 
 	@Override
-	public Map<String, Metric> getMetrics() {
-		Map<String, Metric> metrics = new HashMap<String, Metric>();
-		metrics.put("os.cpu.usage.sys", new Gauge<Double>() {
+	public Map<MetricName, Metric> getMetrics() {
+		Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
+		metrics.put(name("cpu_usage").type("sys").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getSys();
 			}
 		});
-		metrics.put("os.cpu.usage.user", new Gauge<Double>() {
+		metrics.put(name("cpu_usage").type("user").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getUser();
 			}
 		});
-		metrics.put("os.cpu.usage.idle", new Gauge<Double>() {
+		metrics.put(name("cpu_usage").type("idle").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getIdle();
 			}
 		});
-		metrics.put("os.cpu.usage.nice", new Gauge<Double>() {
+		metrics.put(name("cpu_usage").type("nice").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getNice();
 			}
 		});
-		metrics.put("os.cpu.usage.wait", new Gauge<Double>() {
+		metrics.put(name("cpu_usage").type("wait").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getWait();
 			}
 		});
-		metrics.put("os.cpu.usage.interrupt", new Gauge<Double>() {
+		metrics.put(name("cpu_usage").type("interrupt").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getIrq();
 			}
 		});
-		metrics.put("os.cpu.usage.soft-interrupt", new Gauge<Double>() {
+		metrics.put(name("cpu_usage").type("soft-interrupt").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getSoftIrq();
 			}
 		});
-		metrics.put("os.cpu.usage.stolen", new Gauge<Double>() {
+		metrics.put(name("cpu_usage").type("stolen").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getStolen();
 			}
 		});
-		metrics.put("os.cpu.usage-percent", new Gauge<Double>() {
+		metrics.put(name("cpu_usage_percent").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
 				return getSnapshot().getCombined();
 			}
 		});
 
-		metrics.put("os.cpu.info.mhz", new Gauge<Integer>() {
+		metrics.put(name("cpu_info_mhz").build(), new Gauge<Integer>() {
 			@Override
 			public Integer getValue() {
 				return cpuInfo.getMhz();
 			}
 		});
-		metrics.put("os.cpu.info.cores", new Gauge<Integer>() {
+		metrics.put(name("cpu_info_cores").build(), new Gauge<Integer>() {
 			@Override
 			public Integer getValue() {
 				return cpuInfo.getTotalCores();
 			}
 		});
 		if (cpuInfo.getCacheSize() != Sigar.FIELD_NOTIMPL) {
-			metrics.put("os.cpu.info.cache", new Gauge<Long>() {
+			metrics.put(name("cpu_info.cache").build(), new Gauge<Long>() {
 				@Override
 				public Long getValue() {
 					return cpuInfo.getCacheSize();
@@ -115,13 +118,13 @@ public class CpuMetricSet extends AbstractSigarMetricSet<CpuPerc> {
 					ManagementFactory.getPlatformMBeanServer(), ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME,
 					OperatingSystemMXBean.class);
 			if (operatingSystemMXBean.getSystemLoadAverage() >= 0) {
-				metrics.put("os.cpu.queueLength", new Gauge<Double>() {
+				metrics.put(name("cpu_queueLength").build(), new Gauge<Double>() {
 					@Override
 					public Double getValue() {
 						return Math.max(0.0, operatingSystemMXBean.getSystemLoadAverage() - operatingSystemMXBean.getAvailableProcessors());
 					}
 				});
-				metrics.put("os.cpu.load.1m", new Gauge<Double>() {
+				metrics.put(name("cpu_load").tag("timeframe", "1m").build(), new Gauge<Double>() {
 					@Override
 					public Double getValue() {
 						return operatingSystemMXBean.getSystemLoadAverage();

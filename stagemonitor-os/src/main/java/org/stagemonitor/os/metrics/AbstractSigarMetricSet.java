@@ -1,13 +1,13 @@
 package org.stagemonitor.os.metrics;
 
-import com.codahale.metrics.CachedGauge;
-import com.codahale.metrics.MetricSet;
-import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
-
 import java.util.concurrent.TimeUnit;
 
-public abstract class AbstractSigarMetricSet<T> implements MetricSet {
+import com.codahale.metrics.CachedGauge;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
+import org.stagemonitor.core.metrics.metrics2.Metric2Set;
+
+public abstract class AbstractSigarMetricSet<T> implements Metric2Set {
 
 	private final Sigar sigar;
 
