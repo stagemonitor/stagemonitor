@@ -219,7 +219,7 @@ public final class Stagemonitor {
 		disabled = false;
 		measurementSession = new MeasurementSession(null, null, null);
 		SharedMetricRegistries.clear();
-		metric2Registry = new Metric2Registry(getMetricRegistry());
+		metric2Registry = new Metric2Registry();
 		reloadConfiguration();
 		tryStartMonitoring();
 		onShutdownActions.add(MainStagemonitorClassFileTransformer.performRuntimeAttachment());

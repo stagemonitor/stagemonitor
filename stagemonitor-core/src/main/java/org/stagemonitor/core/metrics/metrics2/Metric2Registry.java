@@ -28,16 +28,12 @@ public class Metric2Registry implements Metric2Set {
 	private final MetricRegistryAdapter metricRegistryAdapter;
 
 	public Metric2Registry() {
-		this(new MetricRegistry(), new ConcurrentHashMap<MetricName, Metric>());
+		this(new ConcurrentHashMap<MetricName, Metric>());
 	}
 
-	public Metric2Registry(MetricRegistry legacyRegistry) {
-		this(legacyRegistry, new ConcurrentHashMap<MetricName, Metric>());
-	}
-
-	public Metric2Registry(MetricRegistry legacyRegistry, ConcurrentMap<MetricName, Metric> metrics) {
+	public Metric2Registry(ConcurrentMap<MetricName, Metric> metrics) {
 		this.metrics = metrics;
-		metricRegistryAdapter = new MetricRegistryAdapter(legacyRegistry, this);
+		metricRegistryAdapter = new MetricRegistryAdapter(this);
 	}
 
 	/**
@@ -367,9 +363,9 @@ public class Metric2Registry implements Metric2Set {
 	}
 
 	/**
-	 * Returns a read only adapter for the legacy {@link MetricRegistry}
+	 * Returns a adapter for the legacy {@link MetricRegistry}
 	 *
-	 * @return a read only adapter for the legacy {@link MetricRegistry}
+	 * @return a adapter for the legacy {@link MetricRegistry}
 	 */
 	public MetricRegistry getMetricRegistry() {
 		return metricRegistryAdapter;
