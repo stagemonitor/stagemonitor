@@ -118,10 +118,10 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].server.threadpool.*.usage,[[group]],'maxSeries')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].server_thread_pool.*,[[group]],'maxSeries')"
 						},
 						{
-							"target": "alias(maxSeries(stagemonitor.[[application]].[[instance]].[[host]].server.threadpool.*.usage),'max')",
+							"target": "alias(maxSeries(stagemonitor.[[application]].[[instance]].[[host]].server_thread_pool.*),'max')",
 							"hide": true
 						}
 					],
@@ -196,10 +196,10 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].web.sessions.count,[[group]],'sumSeries')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].http_sessions,[[group]],'sumSeries')"
 						},
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].web.sessions.count),'total')",
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions),'total')",
 							"hide": true
 						}
 					],

@@ -11,11 +11,11 @@ public class SessionCounter implements HttpSessionListener {
 
 	@Override
 	public void sessionCreated(HttpSessionEvent se) {
-		Stagemonitor.getMetric2Registry().counter(name("web_sessions").build()).inc();
+		Stagemonitor.getMetric2Registry().counter(name("http_sessions").build()).inc();
 	}
 
 	@Override
 	public void sessionDestroyed(HttpSessionEvent se) {
-		Stagemonitor.getMetric2Registry().counter(name("web_sessions").build()).dec();
+		Stagemonitor.getMetric2Registry().counter(name("http_sessions").build()).dec();
 	}
 }
