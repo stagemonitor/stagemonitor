@@ -94,6 +94,16 @@ public class MetricName {
 			return this;
 		}
 
+		public Builder tier(String value) {
+			this.tags.put("tier", value);
+			return this;
+		}
+
+		public Builder layer(String value) {
+			this.tags.put("layer", value);
+			return this;
+		}
+
 		public Builder unit(String value) {
 			this.tags.put("unit", value);
 			return this;

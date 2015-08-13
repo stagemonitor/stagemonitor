@@ -45,31 +45,31 @@ public class RumServletTest {
 		assertEquals(200, resp.getStatus());
 		assertEquals("image/png", resp.getContentType());
 
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "browser").type("dom_processing").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "browser").type("page_rendering").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "browser").type("dom_processing").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "browser").type("page_rendering").build()));
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "browser").type("dom_processing").build()).getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "browser").type("page_rendering").build()).getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "browser").type("dom_processing").build()).getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "browser").type("page_rendering").build()).getSnapshot().getMax());
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("browser").layer("dom_processing").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("browser").layer("page_rendering").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("browser").layer("dom_processing").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("browser").layer("page_rendering").build()));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("browser").layer("dom_processing").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("browser").layer("page_rendering").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("browser").layer("dom_processing").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("browser").layer("page_rendering").build()).getSnapshot().getMax());
 
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "network").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "network").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("network").layer("total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("network").layer("total").build()));
 		// t_resp-serverTime
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "network").build()).getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "network").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("network").layer("total").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("network").layer("total").build()).getSnapshot().getMax());
 
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "total").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("total").layer("total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("total").layer("total").build()));
 		// t_page + t_resp
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "total").build()).getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "total").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("total").layer("total").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("total").layer("total").build()).getSnapshot().getMax());
 
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "server_rum").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "server_rum").build()));
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "server_rum").build()).getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "server_rum").build()).getSnapshot().getMax());
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("server_rum").layer("total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("server_rum").layer("total").build()));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("server_rum").layer("total").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("server_rum").layer("total").build()).getSnapshot().getMax());
 	}
 
 	@Test
@@ -88,26 +88,26 @@ public class RumServletTest {
 
 		assertEquals(200, resp.getStatus());
 
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "browser").type("dom_processing").build()));
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "browser").type("page_rendering").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "browser").type("dom_processing").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "browser").type("page_rendering").build()));
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "browser").type("dom_processing").build()).getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "browser").type("page_rendering").build()).getSnapshot().getMax());
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("browser").layer("dom_processing").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("browser").layer("page_rendering").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("browser").layer("dom_processing").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("browser").layer("page_rendering").build()));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("browser").layer("dom_processing").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("browser").layer("page_rendering").build()).getSnapshot().getMax());
 
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "network").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "network").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("network").layer("total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("network").layer("total").build()));
 		// t_resp-serverTime
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "network").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("network").layer("total").build()).getSnapshot().getMax());
 
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "total").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "total").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("total").layer("total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("total").layer("total").build()));
 		// t_page + t_resp
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "total").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("total").layer("total").build()).getSnapshot().getMax());
 
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tag("tier", "server_rum").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "server_rum").build()));
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time").tag("request_name", "All").tag("tier", "server_rum").build()).getSnapshot().getMax());
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", requestName).tier("server_rum").layer("total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "All").tier("server_rum").layer("total").build()));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time").tag("request_name", "All").tier("server_rum").layer("total").build()).getSnapshot().getMax());
 	}
 
 	@Test(expected = IllegalArgumentException.class)

@@ -54,9 +54,9 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
 		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
 
-		assertNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored1").tag("tier", "server").tag("layer", "total").build()));
-		assertNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored2").tag("tier", "server").tag("layer", "total").build()));
-		assertNotNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored3").tag("tier", "server").tag("layer", "total").build()));
+		assertNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored1").tier("server").layer("total").build()));
+		assertNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored2").tier("server").layer("total").build()));
+		assertNotNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored3").tier("server").layer("total").build()));
 	}
 
 	@Test
@@ -70,9 +70,9 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
 		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
 
-		assertNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored1").tag("tier", "server").tag("layer", "total").build()));
-		assertNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored2").tag("tier", "server").tag("layer", "total").build()));
-		assertNotNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored3").tag("tier", "server").tag("layer", "total").build()));
+		assertNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored1").tier("server").layer("total").build()));
+		assertNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored2").tier("server").layer("total").build()));
+		assertNotNull(getMetric2Registry().getTimers().get(name("response_time").tag("request_name", "GET /monitored3").tier("server").layer("total").build()));
 	}
 
 

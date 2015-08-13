@@ -24,7 +24,6 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -43,6 +42,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 
 public class ThresholdMonitoringReporterTest {
@@ -69,10 +69,10 @@ public class ThresholdMonitoringReporterTest {
 		alerter = mock(Alerter.class);
 		when(alerter.getAlerterType()).thenReturn("Test Alerter");
 		when(alerter.isAvailable()).thenReturn(true);
-		AlertSender alertSender = new AlertSender(configuration, Arrays.asList(alerter));
+		AlertSender alertSender = new AlertSender(configuration, Collections.singletonList(alerter));
 
 		incidentRepository = spy(new ConcurrentMapIncidentRepository(new ConcurrentHashMap<String, Incident>()));
-		thresholdMonitoringReporter = new ThresholdMonitoringReporter(new MetricRegistry(), alertingPlugin,
+		thresholdMonitoringReporter = new ThresholdMonitoringReporter(new Metric2Registry(), alertingPlugin,
 				alertSender, incidentRepository, measurementSession);
 	}
 

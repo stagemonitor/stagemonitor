@@ -228,7 +228,7 @@ public class AlertingPlugin extends StagemonitorPlugin implements ServletContain
 		}
 		logger.info("Using {} for storing incidents.", incidentRepository.getClass().getSimpleName());
 
-		thresholdMonitoringReporter = new ThresholdMonitoringReporter(metricRegistry.getMetricRegistry(), alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession());
+		thresholdMonitoringReporter = new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession());
 		thresholdMonitoringReporter.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
 	}
 

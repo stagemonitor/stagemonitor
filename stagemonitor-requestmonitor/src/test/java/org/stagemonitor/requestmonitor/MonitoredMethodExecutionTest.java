@@ -42,10 +42,10 @@ public class MonitoredMethodExecutionTest {
 		assertTrue(requestInformation2.isForwarded());
 		assertTrue(requestInformation3.isForwarded());
 
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored1()").tag("tier", "server").tag("layer", "total").build()));
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored2()").tag("tier", "server").tag("layer", "total").build()));
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored3()").tag("tier", "server").tag("layer", "total").build()));
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "notMonitored()").tag("tier", "server").tag("layer", "total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored1()").tier("server").layer("total").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored2()").tier("server").layer("total").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored3()").tier("server").layer("total").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "notMonitored()").tier("server").layer("total").build()));
 	}
 
 	@Test
@@ -53,10 +53,10 @@ public class MonitoredMethodExecutionTest {
 		testObject.monitored3();
 		assertEquals(1, requestInformation3.getExecutionResult());
 
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored1()").tag("tier", "server").tag("layer", "total").build()));
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored2()").tag("tier", "server").tag("layer", "total").build()));
-		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored3()").tag("tier", "server").tag("layer", "total").build()));
-		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "notMonitored()").tag("tier", "server").tag("layer", "total").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored1()").tier("server").layer("total").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored2()").tier("server").layer("total").build()));
+		assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "monitored3()").tier("server").layer("total").build()));
+		assertNull(registry.getTimers().get(name("response_time").tag("request_name", "notMonitored()").tier("server").layer("total").build()));
 	}
 
 	private class TestObject {

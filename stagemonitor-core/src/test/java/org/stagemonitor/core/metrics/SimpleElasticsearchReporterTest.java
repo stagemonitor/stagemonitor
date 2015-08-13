@@ -13,7 +13,6 @@ import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.snapshot;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
 
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.junit.Before;
@@ -23,6 +22,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 
 public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
@@ -36,7 +36,7 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(corePlugin.getAggregationReportingInterval()).thenReturn(30L);
-		new CorePlugin().initializePlugin(new MetricRegistry(), configuration);
+		new CorePlugin().initializePlugin(new Metric2Registry(), configuration);
 		while (!elasticsearchClient.asyncRestPool.getQueue().isEmpty()) {
 			// give the async tasks time to complete
 			Thread.sleep(10);

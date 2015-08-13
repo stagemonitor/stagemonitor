@@ -59,7 +59,7 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals("void org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClass.getRequestInformation()", requestTrace.getCallStack().getChildren().get(0).getChildren().get(0).getSignature());
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").tag("tier", "server").tag("layer", "total").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").tier("server").layer("total").build()));
 	}
 
 	@Test
@@ -76,7 +76,7 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals(NullPointerException.class.getName(), requestTrace.getExceptionClass());
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorThrowException").tag("tier", "server").tag("layer", "total").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorThrowException").tier("server").layer("total").build()));
 	}
 
 	private static class TestClass {
