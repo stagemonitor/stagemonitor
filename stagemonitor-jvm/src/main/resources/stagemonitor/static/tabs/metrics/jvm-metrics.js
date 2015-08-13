@@ -36,7 +36,7 @@
 					fill: 0.1,
 					format: 'percent',
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "jvm.cpu.process.(usage)", metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: "jvm_process_cpu_(usage)", metric: "value" }
 					]
 				},
 				{
