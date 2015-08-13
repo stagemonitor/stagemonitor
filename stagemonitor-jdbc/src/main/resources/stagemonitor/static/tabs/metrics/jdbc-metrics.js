@@ -9,43 +9,43 @@
 				columns: [
 					{
 						metricCategory: "timers",
-						metricPathRegex: /db.([^\.]+).time.statement/,
+						metricPathRegex: /jdbc_statement.(.+)/,
 						metric: "m1_rate",
 						title: "Requests/s"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /db.([^\.]+).time.statement/,
+						metricPathRegex: /jdbc_statement.(.+)/,
 						metric: "max",
 						title: "Max"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /db.([^\.]+).time.statement/,
+						metricPathRegex: /jdbc_statement.(.+)/,
 						metric: "mean",
 						title: "Mean"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /db.([^\.]+).time.statement/,
+						metricPathRegex: /jdbc_statement.(.+)/,
 						metric: "min",
 						title: "Min"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /db.([^\.]+).time.statement/,
+						metricPathRegex: /jdbc_statement.(.+)/,
 						metric: "p50",
 						title: "p50"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /db.([^\.]+).time.statement/,
+						metricPathRegex: /jdbc_statement.(.+)/,
 						metric: "p95",
 						title: "p95"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /db.([^\.]+).time.statement/,
+						metricPathRegex: /jdbc_statement.(.+)/,
 						metric: "stddev",
 						title: "Std. Dev."
 					}
@@ -60,7 +60,7 @@
 								format: 'ms',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "timers", metricPathRegex: "db.(${rowName}).time.statement", metric: "mean" }
+									{ metricCategory: "timers", metricPathRegex: "jdbc_statement.(${rowName})", metric: "mean" }
 								]
 							}
 						},
@@ -71,7 +71,7 @@
 								format: 'requests/sec',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "timers", metricPathRegex: "db.(${rowName}).time.statement", metric: "m1_rate"}
+									{ metricCategory: "timers", metricPathRegex: "jdbc_statement.(${rowName})", metric: "m1_rate"}
 								]
 							}
 						}
