@@ -154,7 +154,7 @@ public class SpringRequestMonitorTest {
 		final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals(1, requestInformation.getRequestTimer().getCount());
-		assertEquals("Test-Get-Request-Name", requestInformation.getTimerName());
+		assertEquals("Test-Get-Request-Name", requestInformation.getRequestName());
 		assertEquals("Test Get Request Name", requestInformation.getRequestTrace().getName());
 		assertEquals("/test/requestName", requestInformation.getRequestTrace().getUrl());
 		assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
@@ -174,7 +174,7 @@ public class SpringRequestMonitorTest {
 		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals(1, requestInformation.getRequestTimer().getCount());
-		assertEquals("GET-*:js", requestInformation.getTimerName());
+		assertEquals("GET-*:js", requestInformation.getRequestName());
 		assertEquals("GET *.js", requestInformation.getRequestTrace().getName());
 		assertNotNull(registry.getTimers().get(name("request", "GET-*:js", "server", "time", "total")));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());

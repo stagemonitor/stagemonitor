@@ -4,12 +4,12 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
@@ -121,7 +121,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	private static RequestMonitor requestMonitor;
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
 		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
 		addElasticsearchMapping(elasticsearchClient);
 		elasticsearchClient.sendGrafanaDashboardAsync("Request.json");

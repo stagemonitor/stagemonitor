@@ -200,7 +200,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		int status = responseWrapper.getStatus();
 		HttpRequestTrace request = info.getRequestTrace();
 		request.setStatusCode(status);
-		metricRegistry.meter(name("request_throughput").tag("http_code", status).tag("request_name", info.getTimerName()).build()).mark();
+		metricRegistry.meter(name("request_throughput").tag("http_code", status).tag("request_name", info.getRequestName()).build()).mark();
 		metricRegistry.meter(name("request_throughput").tag("http_code", status).tag("request_name", "All").build()).mark();
 		if (status >= 400) {
 			request.setError(true);
