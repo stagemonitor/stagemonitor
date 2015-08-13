@@ -13,7 +13,6 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,6 +26,7 @@ import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 
 public class ThresholdMonitoringReporter extends ScheduledReporter {
@@ -39,10 +39,10 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 	private final MeasurementSession measurementSession;
 	private final AlertingPlugin alertingPlugin;
 
-	protected ThresholdMonitoringReporter(MetricRegistry registry, AlertingPlugin alertingPlugin,
+	protected ThresholdMonitoringReporter(Metric2Registry registry, AlertingPlugin alertingPlugin,
 										  AlertSender alertSender, IncidentRepository incidentRepository,
 										  MeasurementSession measurementSession) {
-		super(registry, "threshold-monitoring-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+		super(registry.getMetricRegistry(), "threshold-monitoring-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
 		this.alertingPlugin = alertingPlugin;
 		this.alertSender = alertSender;
 		this.incidentRepository = incidentRepository;
