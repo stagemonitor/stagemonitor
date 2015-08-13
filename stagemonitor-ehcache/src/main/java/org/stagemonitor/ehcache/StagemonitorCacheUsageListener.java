@@ -23,8 +23,8 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 		this.cacheName = cacheName;
 		this.registry = registry;
 		this.timeGet = timeGet;
-		allCacheHitsMetricName = name("total_cache_hits").tag("cache_name", cacheName).build();
-		allCacheMissesMetricName = name("total_cache_misses").tag("cache_name", cacheName).build();
+		allCacheHitsMetricName = name("cache_hits").tag("cache_name", cacheName).tier("All").build();
+		allCacheMissesMetricName = name("cache_misses").tag("cache_name", cacheName).tier("All").build();
 	}
 
 	@Override
@@ -106,25 +106,25 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 	@Override
 	public void notifyGetTimeNanos(long nanos) {
 		if (timeGet) {
-			registry.timer(name("cache_get").tag("cache_name", cacheName).build()).update(nanos, TimeUnit.NANOSECONDS);
+			registry.timer(name("cache_get").tag("cache_name", cacheName).tier("All").build()).update(nanos, TimeUnit.NANOSECONDS);
 		} else {
-			registry.meter(name("cache_get").tag("cache_name", cacheName).build()).mark();
+			registry.meter(name("cache_get").tag("cache_name", cacheName).tier("All").build()).mark();
 		}
 	}
 
 	@Override
 	public void notifyCacheElementEvicted() {
-		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "eviction").build()).mark();
+		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "eviction").tier("All").build()).mark();
 	}
 
 	@Override
 	public void notifyCacheElementExpired() {
-		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "expire").build()).mark();
+		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "expire").tier("All").build()).mark();
 	}
 
 	@Override
 	public void notifyCacheElementRemoved() {
-		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "remove").build()).mark();
+		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "remove").tier("All").build()).mark();
 	}
 
 	@Override

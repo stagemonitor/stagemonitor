@@ -32,21 +32,21 @@ public class EhCacheMetricSet implements Metric2Set {
 	public Map<MetricName, Metric> getMetrics() {
 		final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
 
-		metrics.put(name("total_hit_ratio").tag("cache_name", cacheName).build(), new RatioGauge() {
+		metrics.put(name("cache_hit_ratio").tag("cache_name", cacheName).tier("All").build(), new RatioGauge() {
 			@Override
 			public Ratio getRatio() {
 				return cacheUsageListener.getHitRatio1Min();
 			}
 		});
 
-		metrics.put(name("size_count").tag("cache_name", cacheName).build(), new Gauge<Long>() {
+		metrics.put(name("cache_size_count").tag("cache_name", cacheName).tier("All").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return cache.getLiveCacheStatistics().getSize();
 			}
 		});
 
-		metrics.put(name("bytes_used").tag("cache_name", cacheName).build(), new Gauge<Long>() {
+		metrics.put(name("cache_size_bytes").tag("cache_name", cacheName).tier("All").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return cache.getLiveCacheStatistics().getLocalDiskSizeInBytes() +

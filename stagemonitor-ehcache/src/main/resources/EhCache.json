@@ -134,7 +134,7 @@
 					},
 					"targets": [
 						{
-							"target": "lowestAverage(groupByNode(summarize(scale(stagemonitor.[[application]].[[instance]].[[host]].cache.*.access.hit.total.ratio,100),'10minute','avg'),5,'[[aggregation]]'),10)"
+							"target": "lowestAverage(groupByNode(summarize(scale(stagemonitor.[[application]].[[instance]].[[host]].cache_hit_ratio.*.All,100),'10minute','avg'),5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
@@ -225,7 +225,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache.*.bytes.used,5,'[[aggregation]]'),10)",
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache_size_bytes.*.All,5,'[[aggregation]]'),10)",
 							"hide": false
 						}
 					],
@@ -304,7 +304,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache.*.get.p75,5,'[[aggregation]]'),10)"
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache_get.*.All.p75,5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
@@ -365,7 +365,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache.*.get.m1_rate,5,'[[aggregation]]'),10)"
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache_get.*.All,5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
@@ -425,7 +425,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache.*.delete.expire.m1_rate,5,'[[aggregation]]'),10)"
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache_delete.*.expire.All.m1_rate,5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
