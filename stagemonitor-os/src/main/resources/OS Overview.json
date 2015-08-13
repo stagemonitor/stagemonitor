@@ -114,11 +114,11 @@
 					},
 					"targets": [
 						{
-							"target": "sortByMinima(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.usage.*,'idle'),7,'maxSeries'))",
+							"target": "sortByMinima(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].cpu_usage.*,'idle'),5,'maxSeries'))",
 							"hide": false
 						},
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.usage.idle,7,'maxSeries')",
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cpu_usage.idle,5,'maxSeries')",
 							"hide": false
 						}
 					],
@@ -185,10 +185,10 @@
 					},
 					"targets": [
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.*.read.bytes),'1min','last'),0),'receive')"
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].network_io.*.read.bytes),'1min','last'),0),'receive')"
 						},
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.*.write.bytes),'1min','last'),0),'send')"
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].network_io.*.write.bytes),'1min','last'),0),'send')"
 						}
 					],
 					"aliasColors": {},
@@ -258,10 +258,10 @@
 					},
 					"targets": [
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.fs.*.reads.bytes),'1min','last'),0),'reads')"
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].disk_io.*.read),'1min','last'),0),'reads')"
 						},
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.fs.*.writes.bytes),'1min','last'),0),'writes')"
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].disk_io.*.write),'1min','last'),0),'writes')"
 						}
 					],
 					"aliasColors": {},
@@ -321,7 +321,7 @@
 					},
 					"targets": [
 						{
-							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.fs.*.usage.*,8,'sum'),'free')"
+							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].disk_usage.*.*,6,'sum'),'free')"
 						}
 					],
 					"aliasColors": {},
@@ -391,7 +391,7 @@
 					},
 					"targets": [
 						{
-							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.mem.usage.*,7,'maxSeries'),'free')"
+							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].mem_usage.*,5,'maxSeries'),'free')"
 						}
 					],
 					"aliasColors": {},
@@ -451,7 +451,7 @@
 					},
 					"targets": [
 						{
-							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.swap.usage.*,7,'maxSeries'),'free')"
+							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].swap_usage.*,5,'maxSeries'),'free')"
 						}
 					],
 					"aliasColors": {},

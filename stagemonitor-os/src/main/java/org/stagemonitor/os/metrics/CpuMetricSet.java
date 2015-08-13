@@ -105,7 +105,7 @@ public class CpuMetricSet extends AbstractSigarMetricSet<CpuPerc> {
 			}
 		});
 		if (cpuInfo.getCacheSize() != Sigar.FIELD_NOTIMPL) {
-			metrics.put(name("cpu_info.cache").build(), new Gauge<Long>() {
+			metrics.put(name("cpu_info_cache").build(), new Gauge<Long>() {
 				@Override
 				public Long getValue() {
 					return cpuInfo.getCacheSize();

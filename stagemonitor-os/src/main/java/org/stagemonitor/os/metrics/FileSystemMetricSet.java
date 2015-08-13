@@ -24,19 +24,19 @@ public class FileSystemMetricSet extends AbstractSigarMetricSet<FileSystemUsage>
 	@Override
 	public Map<MetricName, Metric> getMetrics() {
 		Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
-		metrics.put(name("disk_usage").type("total").tag("mountpoint", mountpoint).build(), new Gauge<Long>() {
+		metrics.put(name("disk_usage").tag("mountpoint", mountpoint).type("total").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getTotal() * 1024;
 			}
 		});
-		metrics.put(name("disk_usage").type("free").tag("mountpoint", mountpoint).build(), new Gauge<Long>() {
+		metrics.put(name("disk_usage").tag("mountpoint", mountpoint).type("free").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getFree()* 1024;
 			}
 		});
-		metrics.put(name("disk_usage").type("used").tag("mountpoint", mountpoint).build(), new Gauge<Long>() {
+		metrics.put(name("disk_usage").tag("mountpoint", mountpoint).type("used").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getUsed()* 1024;
@@ -48,13 +48,13 @@ public class FileSystemMetricSet extends AbstractSigarMetricSet<FileSystemUsage>
 				return getSnapshot().getUsePercent();
 			}
 		});
-		metrics.put(name("disk_bytes_read").tag("mountpoint", mountpoint).build(), new Gauge<Long>() {
+		metrics.put(name("disk_io").tag("mountpoint", mountpoint).type("read").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getDiskReadBytes();
 			}
 		});
-		metrics.put(name("disk_bytes_written").tag("mountpoint", mountpoint).build(), new Gauge<Long>() {
+		metrics.put(name("disk_io").tag("mountpoint", mountpoint).type("write").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getDiskWriteBytes();

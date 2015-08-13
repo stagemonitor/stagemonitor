@@ -114,7 +114,7 @@
 					},
 					"targets": [
 						{
-							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.mem.usage.*,7,'maxSeries'),'free')",
+							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].mem_usage.*,5,'maxSeries'),'free')",
 							"hide": false
 						}
 					],
@@ -175,7 +175,7 @@
 					},
 					"targets": [
 						{
-							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.swap.usage.*,7,'maxSeries'),'free')",
+							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].swap_usage.*,5,'maxSeries'),'free')",
 							"hide": false
 						}
 					],
@@ -236,7 +236,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.swap.page.*,7,'maxSeries')",
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].swap_pages.*,5,'maxSeries')",
 							"hide": false
 						}
 					],

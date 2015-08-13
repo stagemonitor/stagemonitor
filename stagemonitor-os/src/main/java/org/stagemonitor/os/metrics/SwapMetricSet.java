@@ -45,7 +45,7 @@ public class SwapMetricSet extends AbstractSigarMetricSet<Swap> {
 				return getSnapshot().getTotal();
 			}
 		});
-		metrics.put(name("swap_usage-percent").build(), new RatioGauge() {
+		metrics.put(name("swap_usage_percent").build(), new RatioGauge() {
 			@Override
 			protected Ratio getRatio() {
 				return Ratio.of(getSnapshot().getUsed(), getSnapshot().getTotal());

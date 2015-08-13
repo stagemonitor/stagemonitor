@@ -114,10 +114,10 @@
 					},
 					"targets": [
 						{
-							"target": "sortByMinima(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.usage.*,'idle'),7,'maxSeries'))"
+							"target": "sortByMinima(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].cpu_usage.*,'idle'),5,'maxSeries'))"
 						},
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.usage.idle,7,'maxSeries')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cpu_usage.idle,5,'maxSeries')"
 						}
 					],
 					"aliasColors": {},
@@ -177,7 +177,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.load.1m,3,'maxSeries')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cpu_load.1m,3,'maxSeries')"
 						}
 					],
 					"aliasColors": {},
@@ -237,10 +237,10 @@
 					},
 					"targets": [
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.info.cores),'cores')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].cpu_info_cores),'cores')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].os.cpu.info.mhz),'Mhz')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].cpu_info_mhz),'Mhz')"
 						}
 					],
 					"aliasColors": {},

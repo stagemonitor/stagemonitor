@@ -49,7 +49,7 @@
 				{
 					"type": "filter",
 					"name": "filesystem",
-					"query": "stagemonitor.[[application]].[[instance]].[[host]].os.fs.*",
+					"query": "stagemonitor.[[application]].[[instance]].[[host]].disk_usage_percent.*",
 					"includeAll": true,
 					"options": [
 						{
@@ -130,11 +130,11 @@
 					},
 					"targets": [
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.fs.[[filesystem]].reads.bytes),'1min','last'),0),'reads')",
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].disk_io.[[filesystem]].read),'1min','last'),0),'reads')",
 							"hide": false
 						},
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.fs.[[filesystem]].writes.bytes),'1min','last'),0),'writes')",
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].disk_io.[[filesystem]].write),'1min','last'),0),'writes')",
 							"hide": false
 						}
 					],
@@ -195,7 +195,7 @@
 					},
 					"targets": [
 						{
-							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].os.fs.[[filesystem]].usage.*,8,'sum'),'free')"
+							"target": "exclude(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].disk_usage.[[filesystem]].*,6,'sum'),'free')"
 						}
 					],
 					"aliasColors": {},
@@ -255,7 +255,7 @@
 					},
 					"targets": [
 						{
-							"target": "alias(maxSeries(stagemonitor.[[application]].[[instance]].[[host]].os.fs.[[filesystem]].disk.queue),'Disk Queue')"
+							"target": "alias(maxSeries(stagemonitor.[[application]].[[instance]].[[host]].disk_queue.[[filesystem]]),'Disk Queue')"
 						}
 					],
 					"aliasColors": {},

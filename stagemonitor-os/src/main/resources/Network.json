@@ -49,7 +49,7 @@
 				{
 					"type": "filter",
 					"name": "interface",
-					"query": "stagemonitor.[[application]].[[instance]].[[host]].os.net.*",
+					"query": "stagemonitor.[[application]].[[instance]].[[host]].network_io.*",
 					"includeAll": true,
 					"options": [
 						{
@@ -130,11 +130,11 @@
 					},
 					"targets": [
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.[[interface]].read.bytes),'1min','last'),0),'receive')",
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].network_io.[[interface]].read.bytes),'1min','last'),0),'receive')",
 							"hide": false
 						},
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.[[interface]].write.bytes),'1min','last'),0),'send')",
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].network_io.[[interface]].write.bytes),'1min','last'),0),'send')",
 							"hide": false
 						}
 					],
@@ -195,19 +195,19 @@
 					},
 					"targets": [
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.[[interface]].read.errors),'1min','last'),0),'errors receive')",
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].network_io.[[interface]].read.errors),'1min','last'),0),'errors receive')",
 							"hide": false
 						},
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.[[interface]].read.dropped),'1min','last'),0),'dropped receive')",
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].network_io.[[interface]].read.dropped),'1min','last'),0),'dropped receive')",
 							"hide": false
 						},
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.[[interface]].write.errors),'1min','last'),0),'errors send')",
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].network_io.[[interface]].write.errors),'1min','last'),0),'errors send')",
 							"hide": false
 						},
 						{
-							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].os.net.[[interface]].write.dropped),'1min','last'),0),'dropped send')",
+							"target": "alias(nonNegativeDerivative(summarize(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].network_io.[[interface]].write.dropped),'1min','last'),0),'dropped send')",
 							"hide": false
 						}
 					],
