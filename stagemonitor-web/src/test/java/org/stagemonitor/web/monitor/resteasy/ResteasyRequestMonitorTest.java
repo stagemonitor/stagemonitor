@@ -1,20 +1,31 @@
 package org.stagemonitor.web.monitor.resteasy;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
-import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
-import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.CLASS_NAME_HASH_METHOD_NAME;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.CLASS_NAME_DOT_METHOD_NAME;
+import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.CLASS_NAME_HASH_METHOD_NAME;
+import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletRequest;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
 import org.jboss.resteasy.core.ResourceInvoker;
 import org.jboss.resteasy.core.ResourceMethodInvoker;
 import org.jboss.resteasy.mock.MockHttpRequest;
@@ -29,25 +40,17 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.regex.Pattern;
 
 @RunWith(value = Parameterized.class)
 public class ResteasyRequestMonitorTest {
@@ -59,7 +62,7 @@ public class ResteasyRequestMonitorTest {
     private WebPlugin webPlugin = mock(WebPlugin.class);
     private CorePlugin corePlugin = mock(CorePlugin.class);
     private RequestMonitor requestMonitor;
-    private MetricRegistry registry = new MetricRegistry();
+    private Metric2Registry registry = new Metric2Registry();
     private final boolean useNameDeterminerAspect;
     private Registry getRequestNameRegistry;
 
@@ -137,13 +140,13 @@ public class ResteasyRequestMonitorTest {
         final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
         assertEquals(1, requestInformation.getRequestTimer().getCount());
-        assertEquals("Test-Get-Request-Name", requestInformation.getRequestName());
+        assertEquals("Test Get Request Name", requestInformation.getRequestName());
         assertEquals("Test Get Request Name", requestInformation.getRequestTrace().getName());
         assertEquals("/test/requestName", requestInformation.getRequestTrace().getUrl());
         assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
         assertEquals("GET", requestInformation.getRequestTrace().getMethod());
         Assert.assertNull(requestInformation.getExecutionResult());
-        assertNotNull(registry.getTimers().get(name("request", "Test-Get-Request-Name", "server", "time", "total")));
+        assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "Test Get Request Name").tag("tier", "server").tag("layer", "total").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
@@ -165,7 +168,7 @@ public class ResteasyRequestMonitorTest {
         assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
         assertEquals("GET", requestInformation.getRequestTrace().getMethod());
         Assert.assertNull(requestInformation.getExecutionResult());
-        assertNotNull(registry.getTimers().get(name("request", "TestResource#testGetRequestName", "server", "time", "total")));
+        assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "TestResource#testGetRequestName").tag("tier", "server").tag("layer", "total").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
@@ -181,14 +184,13 @@ public class ResteasyRequestMonitorTest {
         final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
         assertEquals(1, requestInformation.getRequestTimer().getCount());
-        // Timer names repalces '.' with ':' for graphite
-        assertEquals("TestResource:testGetRequestName", requestInformation.getRequestName());
+        assertEquals("TestResource.testGetRequestName", requestInformation.getRequestName());
         assertEquals("TestResource.testGetRequestName", requestInformation.getRequestTrace().getName());
         assertEquals("/test/requestName", requestInformation.getRequestTrace().getUrl());
         assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
         assertEquals("GET", requestInformation.getRequestTrace().getMethod());
         Assert.assertNull(requestInformation.getExecutionResult());
-        assertNotNull(registry.getTimers().get(name("request", "TestResource:testGetRequestName", "server", "time", "total")));
+        assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "TestResource.testGetRequestName").tag("tier", "server").tag("layer", "total").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
@@ -203,9 +205,9 @@ public class ResteasyRequestMonitorTest {
         RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
         assertEquals(1, requestInformation.getRequestTimer().getCount());
-        assertEquals("GET-*:js", requestInformation.getRequestName());
+        assertEquals("GET *.js", requestInformation.getRequestName());
         assertEquals("GET *.js", requestInformation.getRequestTrace().getName());
-        assertNotNull(registry.getTimers().get(name("request", "GET-*:js", "server", "time", "total")));
+        assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "GET *.js").tag("tier", "server").tag("layer", "total").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(1)).getRequestName();
     }
@@ -220,7 +222,7 @@ public class ResteasyRequestMonitorTest {
         RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
         assertEquals("", requestInformation.getRequestTrace().getName());
-        assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET *.js"), "server", "time", "total")));
+        assertNull(registry.getTimers().get(name("response_time").tag("request_name", "GET *.js").tag("tier", "server").tag("layer", "total").build()));
         verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }

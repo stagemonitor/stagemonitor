@@ -67,7 +67,7 @@ public class ConnectionMonitoringInstrumenterTest {
 
 		when(connection.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
 		when(connection.createStatement()).thenReturn(mock(Statement.class));
-		requestMonitor = new RequestMonitor(corePlugin, Stagemonitor.getMetricRegistry(), requestMonitorPlugin);
+		requestMonitor = new RequestMonitor(corePlugin, Stagemonitor.getMetric2Registry(), requestMonitorPlugin);
 	}
 
 	@AfterClass

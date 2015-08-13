@@ -1,4 +1,4 @@
-package org.stagemonitor.core.metrics.aspects;
+package org.stagemonitor.core.metrics.annotations;
 
 import com.codahale.metrics.annotation.Gauge;
 import org.stagemonitor.core.metrics.MonitorGauges;

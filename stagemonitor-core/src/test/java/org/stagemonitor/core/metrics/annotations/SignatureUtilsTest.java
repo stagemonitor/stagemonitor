@@ -1,10 +1,11 @@
-package org.stagemonitor.core.metrics.aspects;
+package org.stagemonitor.core.metrics.annotations;
 
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import org.junit.Assert;
 import org.junit.Test;
+import org.stagemonitor.core.metrics.aspects.SignatureUtils;
 
 public class SignatureUtilsTest {
 

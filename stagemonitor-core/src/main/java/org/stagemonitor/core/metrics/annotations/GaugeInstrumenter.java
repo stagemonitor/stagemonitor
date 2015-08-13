@@ -1,6 +1,6 @@
 package org.stagemonitor.core.metrics.annotations;
 
-import static com.codahale.metrics.MetricRegistry.name;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.lang.reflect.Method;
 
@@ -56,7 +56,7 @@ public class GaugeInstrumenter extends StagemonitorJavassistInstrumenter {
 	}
 
 	private static void registerGauge(final Object object, final Method method, final String signature) {
-		Stagemonitor.getMetricRegistry().register(name("gauge", signature), new com.codahale.metrics.Gauge() {
+		Stagemonitor.getMetric2Registry().register(name("gauge_" + signature).build(), new com.codahale.metrics.Gauge() {
 			@Override
 			public Object getValue() {
 				try {

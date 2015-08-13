@@ -3,15 +3,15 @@ package org.stagemonitor.requestmonitor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import org.junit.After;
 import org.junit.Before;
@@ -21,12 +21,15 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+
 
 public class RequestMonitorTest {
 
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-	private MetricRegistry registry = mock(MetricRegistry.class);
+	private Metric2Registry registry = mock(Metric2Registry.class);
 	private RequestMonitor requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
 
 	@Before
@@ -35,8 +38,8 @@ public class RequestMonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
-		when(registry.timer(anyString())).thenReturn(mock(Timer.class));
-		when(registry.meter(anyString())).thenReturn(mock(Meter.class));
+		when(registry.timer(any(MetricName.class))).thenReturn(mock(Timer.class));
+		when(registry.meter(any(MetricName.class))).thenReturn(mock(Meter.class));
 	}
 
 	@After
@@ -94,16 +97,16 @@ public class RequestMonitorTest {
 		when(corePlugin.isInternalMonitoringActive()).thenReturn(true);
 
 		requestMonitor.monitor(createMonitoredRequest());
-		verify(registry, times(0)).timer("internal.overhead.RequestMonitor");
+		verify(registry, times(0)).timer(name("internal_overhead_request_monitor").build());
 
 		requestMonitor.monitor(createMonitoredRequest());
-		verify(registry, times(1)).timer("internal.overhead.RequestMonitor");
+		verify(registry, times(1)).timer(name("internal_overhead_request_monitor").build());
 	}
 
 	private void internalMonitoringTestHelper(boolean active) throws Exception {
 		when(corePlugin.isInternalMonitoringActive()).thenReturn(active);
 		requestMonitor.monitor(createMonitoredRequest());
-		verify(registry, times(active ? 1 : 0)).timer("internal.overhead.RequestMonitor");
+		verify(registry, times(active ? 1 : 0)).timer(name("internal_overhead_request_monitor").build());
 	}
 
 	private MonitoredRequest<RequestTrace> createMonitoredRequest() throws Exception {
@@ -139,6 +142,7 @@ public class RequestMonitorTest {
 			@Override
 			public <T extends RequestTrace> void reportRequestTrace(T requestTrace) throws Exception {
 			}
+
 			@Override
 			public <T extends RequestTrace> boolean isActive(T requestTrace) {
 				return true;
@@ -155,7 +159,7 @@ public class RequestMonitorTest {
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(callStackEveryXRequestsToGroup);
 		final Timer timer = mock(Timer.class);
 		when(timer.getCount()).thenReturn(timerCount);
-		when(registry.timer("request.test.server.time.total")).thenReturn(timer);
+		when(registry.timer(name("response_time").tag("request_name", "test").tag("tier", "server").tag("layer", "total").build())).thenReturn(timer);
 
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		if (callStackExpected) {

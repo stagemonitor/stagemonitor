@@ -1,18 +1,20 @@
-package org.stagemonitor.core.metrics.aspects;
+package org.stagemonitor.core.metrics.annotations;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.Timed;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.scheduling.annotation.Async;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
-public class TimedAspectTest {
+public class TimedInstrumenterTest {
 
 	private TestObject testObject = new TestObject();
 
@@ -50,47 +52,48 @@ public class TimedAspectTest {
 
 	@Before
 	public void before() {
-		Stagemonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
+		TimedInstrumenter.init();
+		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 	}
 
 	@Test
 	public void testTimedAspectDefault() {
 		testObject.timedDefault();
-		assertOneTimerExists("timer.TimedAspectTest$TestObject#timedDefault");
+		assertOneTimerExists(name("timer").tag("signature", "TimedInstrumenterTest$TestObject#timedDefault").build());
 	}
 
 	@Test
 	public void testTimedAspectPrivate() {
 		testObject.timedPrivate();
-		assertEquals(1, Stagemonitor.getMetricRegistry().getTimers().size());
+		assertEquals(1, Stagemonitor.getMetric2Registry().getTimers().size());
 	}
 
 	@Test
 	public void testTimedAspectAbsolute() {
 		testObject.timedAbsolute();
-		assertOneTimerExists("timer.timedAbsolute");
+		assertOneTimerExists(name("timer").tag("signature", "timedAbsolute").build());
 	}
 
 	@Test
 	public void testTimedName() {
 		testObject.timedName();
-		assertOneTimerExists("timer.TimedAspectTest$TestObject#myTimedName");
+		assertOneTimerExists(name("timer").tag("signature", "TimedInstrumenterTest$TestObject#myTimedName").build());
 	}
 
 	@Test
 	public void testTimedNameAbsolute() {
 		testObject.timedNameAbsolute();
-		assertOneTimerExists("timer.myTimedNameAbsolute");
+		assertOneTimerExists(name("timer").tag("signature", "myTimedNameAbsolute").build());
 	}
 
 	@Test
 	public void testAsyncAnnotation() {
 		testObject.asyncCall();
-		assertOneTimerExists("timer.TimedAspectTest$TestObject#asyncCall");
+		assertOneTimerExists(name("timer").tag("signature", "TimedInstrumenterTest$TestObject#asyncCall").build());
 	}
 
-	private void assertOneTimerExists(String name) {
-		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
+	private void assertOneTimerExists(MetricName name) {
+		final Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
 		assertNotNull(metricRegistry.getTimers().keySet().toString(), metricRegistry.getTimers().get(name));
 	}
 

@@ -1,9 +1,9 @@
-package org.stagemonitor.core.metrics.aspects;
+package org.stagemonitor.core.metrics.annotations;
 
 import static org.junit.Assert.assertEquals;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -11,8 +11,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
-public class ExceptionMeteredAspectTest {
+public class ExceptionMeteredInstrumenterTest {
 
 	private TestObject testObject = new TestObject();
 
@@ -74,7 +76,8 @@ public class ExceptionMeteredAspectTest {
 	@Before
 	@After
 	public void clearMetricRegistry() {
-		Stagemonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
+		ExceptionMeteredInstrumenter.init();
+		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 	}
 
 	@AfterClass
@@ -89,7 +92,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneTimerExists("meter.ExceptionMeteredAspectTest$TestObject#exceptionMeteredDefault.exceptions");
+		assertOneMeterExists(name("exception_rate").tag("signature", "ExceptionMeteredInstrumenterTest$TestObject#exceptionMeteredDefault").build());
 	}
 
 	@Test
@@ -99,7 +102,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertEquals(1, Stagemonitor.getMetricRegistry().getMeters().size());
+		assertEquals(1, Stagemonitor.getMetric2Registry().getMeters().size());
 	}
 
 	@Test
@@ -109,7 +112,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneTimerExists("meter.exceptionMeteredAbsolute.exceptions");
+		assertOneMeterExists(name("exception_rate").tag("signature", "exceptionMeteredAbsolute").build());
 	}
 
 	@Test
@@ -119,7 +122,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneTimerExists("meter.ExceptionMeteredAspectTest$TestObject#myExceptionMeteredName.exceptions");
+		assertOneMeterExists(name("exception_rate").tag("signature", "ExceptionMeteredInstrumenterTest$TestObject#myExceptionMeteredName").build());
 	}
 
 	@Test
@@ -129,7 +132,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneTimerExists("meter.myExceptionMeteredNameAbsolute.exceptions");
+		assertOneMeterExists(name("exception_rate").tag("signature", "myExceptionMeteredNameAbsolute").build());
 	}
 
 	@Test
@@ -139,7 +142,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneTimerExists("meter.exceptionMeteredCauseExact.exceptions");
+		assertOneMeterExists(name("exception_rate").tag("signature", "exceptionMeteredCauseExact").build());
 	}
 
 	@Test
@@ -149,7 +152,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneTimerExists("meter.exceptionMeteredCauseSubtype.exceptions");
+		assertOneMeterExists(name("exception_rate").tag("signature", "exceptionMeteredCauseSubtype").build());
 	}
 
 	@Test
@@ -159,7 +162,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
+		final Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
 		assertEquals(0, metricRegistry.getMeters().size());
 	}
 
@@ -170,7 +173,7 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
+		final Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
 		assertEquals(0, metricRegistry.getMeters().size());
 	}
 
@@ -181,12 +184,12 @@ public class ExceptionMeteredAspectTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
+		final Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
 		assertEquals(0, metricRegistry.getMeters().size());
 	}
 
-	private void assertOneTimerExists(String timerName) {
-		final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
+	private void assertOneMeterExists(MetricName timerName) {
+		final Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
 		assertEquals(1, metricRegistry.getMeters().size());
 		assertEquals(timerName, metricRegistry.getMeters().keySet().iterator().next());
 	}

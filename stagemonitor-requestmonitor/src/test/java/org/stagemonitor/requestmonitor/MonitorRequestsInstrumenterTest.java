@@ -3,12 +3,12 @@ package org.stagemonitor.requestmonitor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.lang.reflect.Field;
-import java.util.SortedMap;
+import java.util.Map;
 
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -16,6 +16,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
@@ -24,7 +26,7 @@ public class MonitorRequestsInstrumenterTest {
 
 	private TestClass testClass;
 	private static RequestMonitor.RequestInformation<? extends RequestTrace> requestInformation;
-	private MetricRegistry metricRegistry;
+	private Metric2Registry metricRegistry;
 
 	@BeforeClass
 	public static void attachProfiler() {
@@ -34,7 +36,7 @@ public class MonitorRequestsInstrumenterTest {
 	@Before
 	public void before() {
 		testClass = new TestClass();
-		metricRegistry = Stagemonitor.getMetricRegistry();
+		metricRegistry = Stagemonitor.getMetric2Registry();
 		metricRegistry.removeMatching(MetricFilter.ALL);
 	}
 
@@ -56,10 +58,9 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals(1, requestTrace.getCallStack().getChildren().get(0).getChildren().size());
 		assertEquals("void org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClass.getRequestInformation()", requestTrace.getCallStack().getChildren().get(0).getChildren().get(0).getSignature());
 
-		final SortedMap<String,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get("request.MonitorRequestsInstrumenterTest$TestClass#monitorMe.server.time.total"));
+		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").tag("tier", "server").tag("layer", "total").build()));
 	}
-
 
 	@Test
 	@ExcludeOnTravis
@@ -74,8 +75,8 @@ public class MonitorRequestsInstrumenterTest {
 		final RequestTrace requestTrace = requestInformation.getRequestTrace();
 		assertEquals(NullPointerException.class.getName(), requestTrace.getExceptionClass());
 
-		final SortedMap<String, Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get("request.MonitorRequestsInstrumenterTest$TestClass#monitorThrowException.server.time.total"));
+		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorThrowException").tag("tier", "server").tag("layer", "total").build()));
 	}
 
 	private static class TestClass {

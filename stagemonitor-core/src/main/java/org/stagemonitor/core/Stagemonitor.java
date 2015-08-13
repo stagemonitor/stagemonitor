@@ -163,7 +163,7 @@ public final class Stagemonitor {
 
 	@Deprecated
 	public static MetricRegistry getMetricRegistry() {
-		return SharedMetricRegistries.getOrCreate("stagemonitor");
+		return metric2Registry.getMetricRegistry();
 	}
 
 	public static Metric2Registry getMetric2Registry() {

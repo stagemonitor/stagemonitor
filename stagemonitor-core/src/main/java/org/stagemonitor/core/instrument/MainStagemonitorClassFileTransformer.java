@@ -1,5 +1,7 @@
 package org.stagemonitor.core.instrument;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
@@ -13,7 +15,6 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.agent.StagemonitorAgent;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.StringUtils;
 
 public class MainStagemonitorClassFileTransformer implements ClassFileTransformer {
@@ -32,14 +34,14 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	private static final String IGNORED_CLASSLOADERS_KEY = MainStagemonitorClassFileTransformer.class.getName() + "hashCodesOfClassLoadersToIgnore";
 
 	private List<StagemonitorJavassistInstrumenter> instrumenters = new ArrayList<StagemonitorJavassistInstrumenter>();
-	private static MetricRegistry metricRegistry;
+	private static Metric2Registry metricRegistry;
 	private static CorePlugin corePlugin;
 	private static boolean runtimeAttached = false;
 	private static Map<Integer, ClassPool> classPoolsByClassLoaderHash = new HashMap<Integer, ClassPool>();
 	private static Set<Integer> hashCodesOfClassLoadersToIgnore = new HashSet<Integer>();
 
 	public MainStagemonitorClassFileTransformer() {
-		metricRegistry = Stagemonitor.getMetricRegistry();
+		metricRegistry = Stagemonitor.getMetric2Registry();
 		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 		if (!System.getProperties().containsKey(IGNORED_CLASSLOADERS_KEY)) {
 			System.getProperties().put(IGNORED_CLASSLOADERS_KEY, new HashSet<Integer>());
@@ -72,13 +74,13 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			return NOOP_ON_SHUTDOWN_ACTION;
 		}
 		runtimeAttached = true;
-		metricRegistry = Stagemonitor.getMetricRegistry();
+		metricRegistry = Stagemonitor.getMetric2Registry();
 		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 		if (!corePlugin.isStagemonitorActive() || !corePlugin.isAttachAgentAtRuntime()) {
 			return NOOP_ON_SHUTDOWN_ACTION;
 		}
 
-		final Timer.Context time = metricRegistry.timer("internal.transform.performRuntimeAttachment").time();
+		final Timer.Context time = metricRegistry.timer(name("internal_runtime_attachment_time").build()).time();
 		Runnable onShutdownAction = NOOP_ON_SHUTDOWN_ACTION;
 		try {
 			final Instrumentation instrumentation = AgentLoader.loadAgent();
@@ -119,7 +121,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			return;
 		}
 
-		final Timer.Context timeretransformClasses = metricRegistry.timer("internal.transform.retransformClasses").time();
+		final Timer.Context timeretransformClasses = metricRegistry.timer(name("internal_retransform_classes_time").build()).time();
 		for (Class<?> classToRetransform : classesToRetransform) {
 			try {
 				instrumentation.retransformClasses(classToRetransform);
@@ -139,7 +141,6 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	public synchronized byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 										 ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 
-		final Timer.Context time = metricRegistry.timer("internal.transform.All").time();
 		if (loader == null || StringUtils.isEmpty(className)) {
 			return classfileBuffer;
 		}
@@ -150,9 +151,6 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		} catch (Throwable e) {
 			logger.warn("Failed to transform class {}", className);
 			logger.debug(e.getMessage(), e);
-		}
-		if (corePlugin.isInternalMonitoringActive()) {
-			time.stop();
 		}
 		return classfileBuffer;
 	}
@@ -175,13 +173,16 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	}
 
 	private byte[] transformWithJavassist(ClassLoader loader, byte[] classfileBuffer, String className) throws Exception {
-		final Timer.Context time = metricRegistry.timer("internal.transform.javassist.All").time();
 		CtClass ctClass = getCtClass(loader, classfileBuffer, className);
 		try {
 			for (StagemonitorJavassistInstrumenter instrumenter : instrumenters) {
 				if (instrumenter.isIncluded(className) && instrumenter.isTransformClassesOfClassLoader(loader)) {
 					try {
-						final Timer.Context timeTransfomer = metricRegistry.timer("internal.transform.javassist." + instrumenter.getClass().getSimpleName()).time();
+						final Timer.Context timeTransfomer = metricRegistry.timer(name("internal_retransform_classes_time")
+								.type("javassist")
+								.tag("instrumenter", instrumenter.getClass().getSimpleName())
+								.build())
+								.time();
 						instrumenter.transformClass(ctClass, loader);
 						if (corePlugin.isInternalMonitoringActive()) {
 							timeTransfomer.stop();
@@ -195,9 +196,6 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			classfileBuffer = ctClass.toBytecode();
 		} finally {
 			ctClass.detach();
-		}
-		if (corePlugin.isInternalMonitoringActive()) {
-			time.stop();
 		}
 		return classfileBuffer;
 	}
