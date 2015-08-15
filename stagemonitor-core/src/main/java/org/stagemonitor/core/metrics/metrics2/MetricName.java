@@ -3,6 +3,7 @@ package org.stagemonitor.core.metrics.metrics2;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 import org.stagemonitor.core.util.GraphiteSanitizer;
 
@@ -14,6 +15,8 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
  * See also http://metrics20.org/
  */
 public class MetricName {
+
+	private String influxDbLineProtocolString;
 
 	private final String name;
 
@@ -117,11 +120,36 @@ public class MetricName {
 		public MetricName build() {
 			return new MetricName(name, tags);
 		}
+
 	}
 
 	@Override
 	public String toString() {
 		return "name='" + name + '\'' + ", tags=" + tags;
+	}
+
+	public String getInfluxDbLineProtocolString() {
+		if (influxDbLineProtocolString == null) {
+			final StringBuilder sb = new StringBuilder(name.length() + tags.size() * 16 + tags.size());
+			sb.append(escapeForInfluxDB(name));
+			appendTags(sb, tags);
+			sb.append(' ');
+			influxDbLineProtocolString = sb.toString();
+		}
+		return influxDbLineProtocolString;
+	}
+
+	private void appendTags(StringBuilder sb, LinkedHashMap<String, String> tags) {
+		for (String key : new TreeSet<String>(tags.keySet())) {
+			sb.append(',').append(escapeForInfluxDB(key)).append('=').append(escapeForInfluxDB(tags.get(key)));
+		}
+	}
+
+	private static String escapeForInfluxDB(String s) {
+		if (s.indexOf(',') != -1 || s.indexOf(' ') != -1) {
+			return s.replace(" ", "\\ ").replace(",", "\\,");
+		}
+		return s;
 	}
 
 }
