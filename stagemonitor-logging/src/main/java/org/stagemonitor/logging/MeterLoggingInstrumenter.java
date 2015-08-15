@@ -4,12 +4,15 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javassist.CtClass;
 import javassist.CtMethod;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 /**
  * Tracks the rate of calls to a logger.
@@ -19,6 +22,8 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 public class MeterLoggingInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	private final static Metric2Registry registry = Stagemonitor.getMetric2Registry();
+
+	private final static ConcurrentMap<String, MetricName> loggingMetricNameCache = new ConcurrentHashMap<String, MetricName>();
 
 	private Set<String> methodsToInstrument = new HashSet<String>() {{
 		add("trace");
@@ -52,7 +57,13 @@ public class MeterLoggingInstrumenter extends StagemonitorJavassistInstrumenter 
 	}
 
 	public static void trackLog(String logLevel) {
-		registry.meter(name("logging").tag("log_level", logLevel).build()).mark();
+		MetricName name = loggingMetricNameCache.get(logLevel);
+		if (name == null) {
+			name = name("logging").tag("log_level", logLevel).build();
+			// we don't care about race conditions
+			loggingMetricNameCache.put(logLevel, name);
+		}
+		registry.meter(name).mark();
 	}
 
 }
