@@ -92,7 +92,7 @@ public class OsPluginTest {
 		assertEquals(getLongGauge(name("swap_usage").type("total").build()),
 				getLongGauge(name("swap_usage").type("used").build()) + getLongGauge(name("swap_usage").type("free").build()));
 
-		double swapPercent = getDoubleGauge(name("swap_usage-percent").build());
+		double swapPercent = getDoubleGauge(name("swap_usage_percent").build());
 		assertTrue(swapPercent >= 0 || Double.isNaN(swapPercent));
 		assertTrue(swapPercent <= 1 || Double.isNaN(swapPercent));
 		assertTrue(getLongGauge(name("swap_pages").type("in").build()) >= 0);
@@ -122,15 +122,15 @@ public class OsPluginTest {
 	public void testNetworkMetrics() throws Exception {
 		final String ifname = sigar.getNetRouteList()[0].getIfname();
 
-		assertTrue(getLongGauge(name("network_read_bytes").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_read_packets").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_read_errors").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_read_dropped").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("read").unit("bytes").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("read").unit("packets").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("read").unit("errors").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("read").unit("dropped").tag("ifname", ifname).build()) >= 0);
 
-		assertTrue(getLongGauge(name("network_write_bytes").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_write_packets").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_write_errors").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_write_dropped").tag("ifname", ifname).build()) >= -1);
+		assertTrue(getLongGauge(name("network_io").type("write").unit("bytes").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("write").unit("packets").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("write").unit("errors").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("write").unit("dropped").tag("ifname", ifname).build()) >= -1);
 	}
 
 	@Test
@@ -159,8 +159,8 @@ public class OsPluginTest {
 		String mountPoint = getFirstMountPoint();
 		assertTrue(metricRegistry.getGauges().keySet().toString(), getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) >= 0);
 		assertTrue(getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) <= 1);
-		assertTrue(getLongGauge(name("disk_bytes_read").tag("mountpoint", mountPoint).build()) >= 0);
-		assertTrue(getLongGauge(name("disk_bytes_written").tag("mountpoint", mountPoint).build()) >= 0);
+		assertTrue(getLongGauge(name("disk_io").type("read").tag("mountpoint", mountPoint).build()) >= 0);
+		assertTrue(getLongGauge(name("disk_io").type("write").tag("mountpoint", mountPoint).build()) >= 0);
 		assertTrue(getDoubleGauge(name("disk_queue").tag("mountpoint", mountPoint).build()) >= -1);
 	}
 

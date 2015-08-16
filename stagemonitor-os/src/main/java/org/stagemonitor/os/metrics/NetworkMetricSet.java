@@ -32,6 +32,12 @@ public class NetworkMetricSet extends AbstractSigarMetricSet<NetInterfaceStat> {
 				return getSnapshot().getRxBytes();
 			}
 		});
+		metrics.put(name("network_io").tag("ifname", ifname).type("read").unit("packets").build(), new Gauge<Long>() {
+			@Override
+			public Long getValue() {
+				return getSnapshot().getRxPackets();
+			}
+		});
 		metrics.put(name("network_io").tag("ifname", ifname).type("read").unit("errors").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
