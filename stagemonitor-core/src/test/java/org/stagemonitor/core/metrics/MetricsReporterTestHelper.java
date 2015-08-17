@@ -78,6 +78,14 @@ public class MetricsReporterTestHelper {
 		return new TreeMap<String, T>();
 	}
 
+	public static SortedTableLogReporterTest.FluentMap<String, Object> objectMap(String name, Object metric) {
+		return map(name, metric);
+	}
+
+	public static <T> SortedTableLogReporterTest.FluentMap<String, T> map(String name, T metric, Class<T> clazz) {
+		return map(name, metric);
+	}
+
 	public static <T> SortedTableLogReporterTest.FluentMap<String, T> map(String name, T metric) {
 		final SortedTableLogReporterTest.FluentMap<String, T> map = new SortedTableLogReporterTest.FluentMap<String, T>();
 		map.put(name, metric);
@@ -91,6 +99,12 @@ public class MetricsReporterTestHelper {
 	public static <T> Map<MetricName, T> metricNameMap(MetricName name, T metric) {
 		Map<MetricName, T> map = new HashMap<MetricName, T>();
 		map.put(name, metric);
+		return map;
+	}
+	public static <T> Map<MetricName, T> metricNameMap(MetricName name, T metric, MetricName name2, T metric2) {
+		Map<MetricName, T> map = new HashMap<MetricName, T>();
+		map.put(name, metric);
+		map.put(name2, metric2);
 		return map;
 	}
 

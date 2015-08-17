@@ -55,4 +55,10 @@ public class StringUtils {
 	public static String asCsv(String[] strings) {
 		return SetValueConverter.STRINGS_VALUE_CONVERTER.toString(Arrays.asList(strings));
 	}
+
+	public static String getLogstashStyleDate() {
+		final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		return dateFormat.format(new Date());
+	}
 }

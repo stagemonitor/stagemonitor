@@ -1,7 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
-import java.io.InputStream;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.stagemonitor.core.CorePlugin;
@@ -123,21 +122,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
 		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
-		addElasticsearchMapping(elasticsearchClient);
+		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-index-template.json", "stagemonitor");
 		elasticsearchClient.sendGrafanaDashboardAsync("Request.json");
 		elasticsearchClient.sendKibanaDashboardAsync("Recent Requests.json");
 	}
 
-	private void addElasticsearchMapping(ElasticsearchClient elasticsearchClient) {
-		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
-		// async, because it is not possible, that request traces are reaching elasticsearch before the mapping is set
-		// that is, because a single thread executor is used that executes the request in a linear queue (LinkedBlockingQueue)
-		elasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor", resourceAsStream);
-	}
-
 	@Override
 	public List<String> getPathsOfWidgetMetricTabPlugins() {
-		return Arrays.asList("/stagemonitor/static/tabs/metrics/request-metrics");
+		return Collections.singletonList("/stagemonitor/static/tabs/metrics/request-metrics");
 	}
 
 	public RequestMonitor getRequestMonitor() {

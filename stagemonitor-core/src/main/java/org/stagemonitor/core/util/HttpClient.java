@@ -43,7 +43,7 @@ public class HttpClient {
 		});
 	}
 
-	private int send(final String method, final String url, final Map<String, String> headerFields, HttpURLConnectionHandler httpURLConnectionWriter) {
+	public int send(final String method, final String url, final Map<String, String> headerFields, HttpURLConnectionHandler httpURLConnectionWriter) {
 		HttpURLConnection connection = null;
 		try {
 			connection = (HttpURLConnection) new URL(url).openConnection();
@@ -110,7 +110,7 @@ public class HttpClient {
 		}
 	}
 
-	private interface HttpURLConnectionHandler {
+	public interface HttpURLConnectionHandler {
 		void withHttpURLConnection(HttpURLConnection connection) throws IOException;
 	}
 }

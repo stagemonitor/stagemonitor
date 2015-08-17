@@ -1,0 +1,39 @@
+{
+    "template": "stagemonitor-metrics-*",
+    "settings": {
+        "index": {
+            "refresh_interval": "5s"
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "dynamic_templates": [
+                {
+                    "tags": {
+                        "path_match": "tags.*",
+                        "mapping": { "type": "string", "index": "not_analyzed", "doc_values": true }
+                    }
+                },
+                {
+                    "values": {
+                        "match": "values.*",
+                        "match_mapping_type": "string",
+                        "mapping": { "type": "string", "index": "not_analyzed", "doc_values": true }
+                    }
+                }
+            ],
+            "_all": { "enabled": false },
+            "properties": {
+              "@timestamp": { "type": "date" },
+              "name": { "type": "string", "index": "not_analyzed", "doc_values": true },
+              "values": {
+                "properties": {
+                  "value": {
+                    "type": "double"
+                  }
+                }
+              }
+            }
+        }
+    }
+}

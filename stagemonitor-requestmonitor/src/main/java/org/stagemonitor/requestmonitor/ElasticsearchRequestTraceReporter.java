@@ -1,9 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -32,9 +28,7 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	@Override
 	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) {
-		final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
-		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		String path = String.format("/stagemonitor-%s/executions/%s", dateFormat.format(new Date()), requestTrace.getId());
+		String path = String.format("/stagemonitor-%s/executions/%s", StringUtils.getLogstashStyleDate(), requestTrace.getId());
 		final String ttl = requestMonitorPlugin.getRequestTraceTtl();
 		if (ttl != null && !ttl.isEmpty()) {
 			path += "?ttl=" + ttl;

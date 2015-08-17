@@ -29,6 +29,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 
@@ -136,6 +137,10 @@ public class ElasticsearchClient {
 			}
 		}
 		return new CompletedFuture<Object>(null);
+	}
+
+	public Future<?> sendMappingTemplateAsync(String templatePath, String templateName) {
+		return sendAsJsonAsync("PUT", "/_template/" + templateName, IOUtils.getResourceAsStream(templatePath));
 	}
 
 	ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
