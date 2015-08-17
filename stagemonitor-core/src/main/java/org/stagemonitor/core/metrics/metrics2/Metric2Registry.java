@@ -264,7 +264,7 @@ public class Metric2Registry implements Metric2Set {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected  <T extends Metric> Map<MetricName, T> getMetrics(Class<T> klass, MetricFilter filter) {
+	protected <T extends Metric> Map<MetricName, T> getMetrics(Class<T> klass, MetricFilter filter) {
 		final Map<MetricName, T> metrics = new HashMap<MetricName, T>();
 		for (Map.Entry<MetricName, Metric> entry : this.metrics.entrySet()) {
 			if (klass.isInstance(entry.getValue()) && filter.matches(entry.getKey().toGraphiteName(), entry.getValue())) {

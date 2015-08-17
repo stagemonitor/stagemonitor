@@ -1,17 +1,20 @@
 package org.stagemonitor.core.metrics;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
-
-import java.util.SortedMap;
-import java.util.TreeMap;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class MetricsReporterTestHelper {
 
@@ -77,6 +80,16 @@ public class MetricsReporterTestHelper {
 
 	public static <T> SortedTableLogReporterTest.FluentMap<String, T> map(String name, T metric) {
 		final SortedTableLogReporterTest.FluentMap<String, T> map = new SortedTableLogReporterTest.FluentMap<String, T>();
+		map.put(name, metric);
+		return map;
+	}
+
+	public static <T> Map<MetricName, T> metricNameMap(Class<T> clazz) {
+		return new HashMap<MetricName, T>();
+	}
+
+	public static <T> Map<MetricName, T> metricNameMap(MetricName name, T metric) {
+		Map<MetricName, T> map = new HashMap<MetricName, T>();
 		map.put(name, metric);
 		return map;
 	}

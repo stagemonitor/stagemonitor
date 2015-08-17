@@ -133,13 +133,18 @@ public class MetricName {
 			final StringBuilder sb = new StringBuilder(name.length() + tags.size() * 16 + tags.size());
 			sb.append(escapeForInfluxDB(name));
 			appendTags(sb, tags);
-			sb.append(' ');
 			influxDbLineProtocolString = sb.toString();
 		}
 		return influxDbLineProtocolString;
 	}
 
-	private void appendTags(StringBuilder sb, LinkedHashMap<String, String> tags) {
+	public static String getInfluxDbTags(Map<String, String> tags) {
+		final StringBuilder sb = new StringBuilder();
+		appendTags(sb, tags);
+		return sb.toString();
+	}
+
+	private static void appendTags(StringBuilder sb, Map<String, String> tags) {
 		for (String key : new TreeSet<String>(tags.keySet())) {
 			sb.append(',').append(escapeForInfluxDB(key)).append('=').append(escapeForInfluxDB(tags.get(key)));
 		}

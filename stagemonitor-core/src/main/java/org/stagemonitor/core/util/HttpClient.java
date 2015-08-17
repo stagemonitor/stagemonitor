@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -19,6 +20,30 @@ public class HttpClient {
 	}
 
 	public int sendAsJson(final String method, final String url, final Object requestBody, final Map<String, String> headerFields) {
+		return send(method, url, headerFields, new HttpURLConnectionHandler() {
+			@Override
+			public void withHttpURLConnection(HttpURLConnection connection) throws IOException {
+				writeRequestBody(requestBody, connection);
+			}
+		});
+	}
+
+	public int send(String method, String url, final List<String> requestBodyLines) {
+
+		return send(method, url, null, new HttpURLConnectionHandler() {
+			@Override
+			public void withHttpURLConnection(HttpURLConnection connection) throws IOException {
+				final OutputStream os = connection.getOutputStream();
+				for (String line : requestBodyLines) {
+					os.write(line.getBytes("UTF-8"));
+					os.write('\n');
+				}
+				os.flush();
+			}
+		});
+	}
+
+	private int send(final String method, final String url, final Map<String, String> headerFields, HttpURLConnectionHandler httpURLConnectionWriter) {
 		HttpURLConnection connection = null;
 		try {
 			connection = (HttpURLConnection) new URL(url).openConnection();
@@ -30,7 +55,8 @@ public class HttpClient {
 				}
 			}
 
-			writeRequestBody(requestBody, connection);
+			httpURLConnectionWriter.withHttpURLConnection(connection);
+
 
 			IOUtils.consumeAndClose(connection.getInputStream());
 
@@ -82,5 +108,9 @@ public class HttpClient {
 			}
 			os.flush();
 		}
+	}
+
+	private interface HttpURLConnectionHandler {
+		void withHttpURLConnection(HttpURLConnection connection) throws IOException;
 	}
 }

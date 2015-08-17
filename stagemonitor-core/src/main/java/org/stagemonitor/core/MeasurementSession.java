@@ -5,6 +5,8 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 import java.net.InetAddress;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -81,6 +83,15 @@ public class MeasurementSession {
 	@JsonIgnore
 	public boolean isNull() {
 		return applicationName == null && instanceName == null && hostName == null;
+	}
+
+	@JsonIgnore
+	public Map<String, String> asMap() {
+		final TreeMap<String, String> result = new TreeMap<String, String>();
+		result.put("application", applicationName);
+		result.put("host", hostName);
+		result.put("instance", instanceName);
+		return result;
 	}
 
 	@Override

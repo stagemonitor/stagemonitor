@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
@@ -36,6 +38,8 @@ import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SimpleElasticsearchReporter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.StringUtils;
 
 /**
  * This class contains the configuration options for stagemonitor's core functionality
@@ -99,6 +103,7 @@ public class CorePlugin extends StagemonitorPlugin {
 					"To deactivate graphite reporting, set this to a value below 1, or don't provide " +
 					"stagemonitor.reporting.graphite.hostName.")
 			.defaultValue(60)
+			.tags("metrics-store", "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> graphiteHostName = ConfigurationOption.stringOption()
@@ -108,6 +113,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("The name of the host where graphite is running. This setting is mandatory, if you want " +
 					"to use the grafana dashboards.")
 			.defaultValue(null)
+			.tags("metrics-store", "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> graphitePort = ConfigurationOption.integerOption()
@@ -116,6 +122,34 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Carbon port")
 			.description("The port where carbon is listening.")
 			.defaultValue(2003)
+			.tags("metrics-store", "graphite")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<String> influxDbUrl = ConfigurationOption.stringOption()
+			.key("stagemonitor.reporting.influxdb.baseUrl")
+			.dynamic(true)
+			.label("InfluxDB URL")
+			.description("The URL of your InfluxDB installation.")
+			.defaultValue(null)
+			.tags("metrics-store", "influx-db")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<String> influxDbDb = ConfigurationOption.stringOption()
+			.key("stagemonitor.reporting.influxdb.db")
+			.dynamic(true)
+			.label("InfluxDB database")
+			.description("The target database")
+			.defaultValue("stagemonitor")
+			.tags("metrics-store", "influx-db")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<Integer> reportingIntervalInfluxDb = ConfigurationOption.integerOption()
+			.key("stagemonitor.reporting.interval.influxdb")
+			.dynamic(false)
+			.label("Reporting interval InfluxDb")
+			.description("The amount of time between the metrics are reported to InfluxDB (in seconds).")
+			.defaultValue(60)
+			.tags("metrics-store", "influx-db")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> applicationName = ConfigurationOption.stringOption()
@@ -351,6 +385,8 @@ public class CorePlugin extends StagemonitorPlugin {
 
 		reportToGraphite(metricRegistry, corePlugin.getGraphiteReportingInterval(),
 				Stagemonitor.getMeasurementSession(), allFilters, corePlugin);
+		reportToInfluxDb(metric2Registry, corePlugin.reportingIntervalInfluxDb.getValue(),
+				Stagemonitor.getMeasurementSession(), corePlugin);
 
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
 		onShutdownReporters.add(new SimpleElasticsearchReporter(elasticsearchClient, metricRegistry, "simple-es-reporter", allFilters));
@@ -367,6 +403,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		if (reportingInterval > 0) {
 			aggregationReporter = new MetricsAggregationReporter(metricRegistry, allFilters, onShutdownReporters);
 			aggregationReporter.start(reportingInterval, TimeUnit.SECONDS);
+			aggregationReporter.report();
 			reporters.add(aggregationReporter);
 		}
 	}
@@ -375,7 +412,7 @@ public class CorePlugin extends StagemonitorPlugin {
 										 MeasurementSession measurementSession,
 										 MetricFilter filter, CorePlugin corePlugin) {
 		String graphiteHostName = corePlugin.getGraphiteHostName();
-		if (graphiteHostName != null && !graphiteHostName.isEmpty()) {
+		if (StringUtils.isNotEmpty(graphiteHostName)) {
 			final GraphiteReporter graphiteReporter = GraphiteReporter.forRegistry(metricRegistry)
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.SECONDS)
@@ -385,6 +422,23 @@ public class CorePlugin extends StagemonitorPlugin {
 
 			graphiteReporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(graphiteReporter);
+		}
+	}
+
+	private void reportToInfluxDb(Metric2Registry metricRegistry, int reportingInterval,
+								  MeasurementSession measurementSession,
+								  CorePlugin corePlugin) {
+
+		if (StringUtils.isNotEmpty(corePlugin.getInfluxDbUrl()) && reportingInterval > 0) {
+			logger.info("Sending metrics to InfluxDB ({}) every {}s", corePlugin.getInfluxDbUrl(), reportingInterval);
+			final InfluxDbReporter reporter = new InfluxDbReporter(metricRegistry, Metric2Filter.ALL,
+					TimeUnit.SECONDS,
+					TimeUnit.MILLISECONDS, measurementSession.asMap(), new HttpClient(), corePlugin);
+
+			reporter.start(reportingInterval, TimeUnit.SECONDS);
+			reporters.add(reporter);
+		} else {
+			logger.info("Not sending metrics to InfluxDB (url={}, interval={}s)", corePlugin.getInfluxDbUrl(), reportingInterval);
 		}
 	}
 
@@ -483,7 +537,10 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	public String getElasticsearchUrl() {
-		final String url = elasticsearchUrl.getValue();
+		return removeTrailingSlash(elasticsearchUrl.getValue());
+	}
+
+	private String removeTrailingSlash(String url) {
 		if (url != null && url.endsWith("/")) {
 			return url.substring(0, url.length() - 1);
 		}
@@ -528,5 +585,13 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public Collection<String> getExcludedInstrumenters() {
 		return excludedInstrumenters.getValue();
+	}
+
+	public String getInfluxDbUrl() {
+		return removeTrailingSlash(influxDbUrl.getValue());
+	}
+
+	public String getInfluxDbDb() {
+		return influxDbDb.getValue();
 	}
 }
