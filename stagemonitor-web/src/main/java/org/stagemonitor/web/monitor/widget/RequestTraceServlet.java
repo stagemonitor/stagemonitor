@@ -14,7 +14,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +40,6 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	private final Configuration configuration;
 	private final long requestTimeout;
 	private ConcurrentMap<String, ConcurrentLinkedQueue<HttpRequestTrace>> connectionIdToRequestTracesMap = new ConcurrentHashMap<String, ConcurrentLinkedQueue<HttpRequestTrace>>();
-	private ConcurrentMap<String, AsyncContext> connectionIdToAsyncContextMap = new ConcurrentHashMap<String, AsyncContext>();
 	private ConcurrentMap<String, Object> connectionIdToLockMap = new ConcurrentHashMap<String, Object>();
 
 	/**
@@ -96,11 +94,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			} finally {
 				connectionIdToLockMap.remove(connectionId, lock);
 			}
-			if (connectionIdToRequestTracesMap.containsKey(connectionId)) {
-				writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
-			} else {
-				writeEmptyResponse(resp);
-			}
+			writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
 		}
 	}
 
@@ -112,14 +106,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			final String connectionId = httpRequestTrace.getConnectionId();
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
 				logger.debug("reportRequestTrace {} ({})", requestTrace.getName(), requestTrace.getTimestamp());
-				final AsyncContext asyncContext = connectionIdToAsyncContextMap.remove(connectionId);
-				if (isActive(asyncContext)) {
-					logger.debug("asyncContext {}", httpRequestTrace.getConnectionId());
-					writeRequestTracesToResponse((HttpServletResponse) asyncContext.getResponse(), getAllRequestTraces(httpRequestTrace, connectionId));
-					asyncContext.complete();
-				} else {
-					bufferRequestTrace(connectionId, httpRequestTrace);
-				}
+				bufferRequestTrace(connectionId, httpRequestTrace);
 
 				final Object lock = connectionIdToLockMap.remove(connectionId);
 				if (lock != null) {
@@ -129,25 +116,6 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 				}
 			}
 		}
-	}
-
-	private boolean isActive(AsyncContext asyncContext) {
-		try {
-			return asyncContext != null && !asyncContext.getResponse().isCommitted();
-		} catch (RuntimeException e) {
-			return false;
-		}
-	}
-
-	private Collection<HttpRequestTrace> getAllRequestTraces(HttpRequestTrace httpRequestTrace, String connectionId) {
-		Collection<HttpRequestTrace> allRequestTraces = new ConcurrentLinkedQueue<HttpRequestTrace>();
-		allRequestTraces.add(httpRequestTrace);
-
-		final ConcurrentLinkedQueue<HttpRequestTrace> bufferedRequestTraces = connectionIdToRequestTracesMap.remove(connectionId);
-		if (bufferedRequestTraces != null) {
-			allRequestTraces.addAll(bufferedRequestTraces);
-		}
-		return allRequestTraces;
 	}
 
 	private void bufferRequestTrace(String connectionId, HttpRequestTrace requestTrace) {
@@ -164,6 +132,9 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 
 	private void writeRequestTracesToResponse(HttpServletResponse response, Collection<HttpRequestTrace> requestTraces)
 			throws IOException {
+		if (requestTraces == null) {
+			requestTraces = Collections.emptyList();
+		}
 		response.setContentType("application/json");
 		response.setHeader("Pragma", "no-cache");
 		response.setCharacterEncoding("UTF-8");
@@ -175,10 +146,6 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 		}
 		response.getOutputStream().print(jsonResponse.toString());
 		response.getOutputStream().close();
-	}
-
-	private void writeEmptyResponse(HttpServletResponse resp) throws IOException {
-		writeRequestTracesToResponse(resp, Collections.<HttpRequestTrace>emptyList());
 	}
 
 	@Override
