@@ -72,9 +72,10 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		final String connectionId = req.getParameter("connectionId");
 		if (connectionId != null && !connectionId.trim().isEmpty()) {
-			if (connectionIdToRequestTracesMap.containsKey(connectionId)) {
+			final ConcurrentLinkedQueue<HttpRequestTrace> traces = connectionIdToRequestTracesMap.remove(connectionId);
+			if (traces != null) {
 				logger.debug("picking up buffered requests");
-				writeRequestTracesToResponse(resp, connectionIdToRequestTracesMap.remove(connectionId));
+				writeRequestTracesToResponse(resp, traces);
 			} else {
 				blockingWaitForRequestTrace(connectionId, resp);
 			}
