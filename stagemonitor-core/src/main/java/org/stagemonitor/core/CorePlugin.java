@@ -366,8 +366,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
-		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
-		final Integer reloadInterval = corePlugin.getReloadConfigurationInterval();
+		final Integer reloadInterval = getReloadConfigurationInterval();
 		if (reloadInterval > 0) {
 			configuration.scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
 		}
@@ -379,31 +378,31 @@ public class CorePlugin extends StagemonitorPlugin {
 			}
 		});
 
-		ElasticsearchClient elasticsearchClient1 = corePlugin.getElasticsearchClient();
-		elasticsearchClient1.sendGrafanaDashboardAsync("Custom Metrics.json");
-		elasticsearchClient1.sendAsJsonAsync("PUT", "/stagemonitor", IOUtils.getResourceAsStream("stagemonitor-elasticsearch-mapping.json"));
-		registerReporters(this.elasticsearchClient, metricRegistry, corePlugin);
+		ElasticsearchClient elasticsearchClient = getElasticsearchClient();
+		elasticsearchClient.sendGrafanaDashboardAsync("Custom Metrics.json");
+		elasticsearchClient.sendAsJsonAsync("PUT", "/stagemonitor", IOUtils.getResourceAsStream("stagemonitor-elasticsearch-mapping.json"));
+		registerReporters(this.elasticsearchClient, metricRegistry);
 	}
 
-	private void registerReporters(ElasticsearchClient elasticsearchClient, Metric2Registry metric2Registry, CorePlugin corePlugin) {
-		RegexMetricFilter regexFilter = new RegexMetricFilter(corePlugin.getExcludedMetricsPatterns());
+	private void registerReporters(ElasticsearchClient elasticsearchClient, Metric2Registry metric2Registry) {
+		RegexMetricFilter regexFilter = new RegexMetricFilter(getExcludedMetricsPatterns());
 		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
 		MetricRegistry metricRegistry = metric2Registry.getMetricRegistry();
 
-		reportToGraphite(metricRegistry, corePlugin.getGraphiteReportingInterval(),
-				Stagemonitor.getMeasurementSession(), allFilters, corePlugin);
-		reportToInfluxDb(metric2Registry, corePlugin.reportingIntervalInfluxDb.getValue(),
-				Stagemonitor.getMeasurementSession(), corePlugin);
-		reportToElasticsearch(metric2Registry, corePlugin.reportingIntervalElasticsearch.getValue(),
-				Stagemonitor.getMeasurementSession(), corePlugin);
+		reportToGraphite(metricRegistry, getGraphiteReportingInterval(),
+				Stagemonitor.getMeasurementSession(), allFilters);
+		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(),
+				Stagemonitor.getMeasurementSession());
+		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
+				Stagemonitor.getMeasurementSession());
 
 
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
 		onShutdownReporters.add(new SimpleElasticsearchReporter(elasticsearchClient, metricRegistry, "simple-es-reporter", allFilters));
 
-		reportToConsole(metricRegistry, corePlugin.getConsoleReportingInterval(), allFilters, onShutdownReporters);
-		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, corePlugin.getAggregationReportingInterval());
-		if (corePlugin.reportToJMX()) {
+		reportToConsole(metricRegistry, getConsoleReportingInterval(), allFilters, onShutdownReporters);
+		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, getAggregationReportingInterval());
+		if (reportToJMX()) {
 			reportToJMX(metricRegistry, allFilters);
 		}
 	}
@@ -420,15 +419,15 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	private void reportToGraphite(MetricRegistry metricRegistry, long reportingInterval,
 										 MeasurementSession measurementSession,
-										 MetricFilter filter, CorePlugin corePlugin) {
-		String graphiteHostName = corePlugin.getGraphiteHostName();
+										 MetricFilter filter) {
+		String graphiteHostName = getGraphiteHostName();
 		if (StringUtils.isNotEmpty(graphiteHostName)) {
 			final GraphiteReporter graphiteReporter = GraphiteReporter.forRegistry(metricRegistry)
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
 					.filter(filter)
-					.build(new Graphite(new InetSocketAddress(graphiteHostName, corePlugin.getGraphitePort())));
+					.build(new Graphite(new InetSocketAddress(graphiteHostName, getGraphitePort())));
 
 			graphiteReporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(graphiteReporter);
@@ -436,35 +435,34 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	private void reportToInfluxDb(Metric2Registry metricRegistry, int reportingInterval,
-								  MeasurementSession measurementSession,
-								  CorePlugin corePlugin) {
+								  MeasurementSession measurementSession) {
 
-		if (StringUtils.isNotEmpty(corePlugin.getInfluxDbUrl()) && reportingInterval > 0) {
-			logger.info("Sending metrics to InfluxDB ({}) every {}s", corePlugin.getInfluxDbUrl(), reportingInterval);
+		if (StringUtils.isNotEmpty(getInfluxDbUrl()) && reportingInterval > 0) {
+			logger.info("Sending metrics to InfluxDB ({}) every {}s", getInfluxDbUrl(), reportingInterval);
 			final InfluxDbReporter reporter = new InfluxDbReporter(metricRegistry, Metric2Filter.ALL,
 					TimeUnit.SECONDS,
-					TimeUnit.MILLISECONDS, measurementSession.asMap(), new HttpClient(), corePlugin);
+					TimeUnit.MILLISECONDS, measurementSession.asMap(), new HttpClient(), this);
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
 		} else {
-			logger.info("Not sending metrics to InfluxDB (url={}, interval={}s)", corePlugin.getInfluxDbUrl(), reportingInterval);
+			logger.info("Not sending metrics to InfluxDB (url={}, interval={}s)", getInfluxDbUrl(), reportingInterval);
 		}
 	}
 
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
-									   MeasurementSession measurementSession, CorePlugin corePlugin) {
-		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl()) && reportingInterval > 0) {
-			logger.info("Sending metrics to Elasticsearch ({}) every {}s", corePlugin.getElasticsearchUrl(), reportingInterval);
+									   MeasurementSession measurementSession) {
+		if (StringUtils.isNotEmpty(getElasticsearchUrl()) && reportingInterval > 0) {
+			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrl(), reportingInterval);
 			elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-metrics-index-template.json", "stagemonitor-metrics");
 			final ElasticsearchReporter reporter = new ElasticsearchReporter(metricRegistry, Metric2Filter.ALL,
 					TimeUnit.SECONDS,
-					TimeUnit.MILLISECONDS, measurementSession.asMap(), new HttpClient(), corePlugin);
+					TimeUnit.MILLISECONDS, measurementSession.asMap(), new HttpClient(), this);
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
 		} else {
-			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", corePlugin.getElasticsearchUrl(), reportingInterval);
+			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrl(), reportingInterval);
 		}
 	}
 
@@ -520,6 +518,10 @@ public class CorePlugin extends StagemonitorPlugin {
 			elasticsearchClient = new ElasticsearchClient();
 		}
 		return elasticsearchClient;
+	}
+
+	public void setElasticsearchClient(ElasticsearchClient elasticsearchClient) {
+		this.elasticsearchClient = elasticsearchClient;
 	}
 
 	public boolean isStagemonitorActive() {

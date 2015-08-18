@@ -92,14 +92,17 @@ public class ElasticsearchReporterTest {
 						.add("tags", map("app", "test")
 								.add("type", "user")
 								.add("core", "1"))
-						.add("values", map("value", 3)),
+						.add("values", map("value", 3.0)),
 				asMap(jsons.split("\n")[1]));
 
+		// only number-gauges are supported
+		// in elasticsearch a field can only have one datatype
+		// the values.value field has the type double so it can't store strings
 		assertEquals(
 				objectMap("@timestamp", timestamp)
 						.add("name", "gauge2")
 						.add("tags", map("app", "test"))
-						.add("values", map("value", "foo")),
+						.add("values", map()),
 				asMap(jsons.split("\n")[3]));
 	}
 
