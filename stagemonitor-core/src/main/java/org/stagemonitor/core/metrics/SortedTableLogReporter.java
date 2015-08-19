@@ -1,5 +1,17 @@
 package org.stagemonitor.core.metrics;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -12,16 +24,7 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.concurrent.TimeUnit;
+import org.stagemonitor.core.Stagemonitor;
 
 public class SortedTableLogReporter extends ScheduledReporter {
 	/**
@@ -138,6 +141,8 @@ public class SortedTableLogReporter extends ScheduledReporter {
 	public void report(SortedMap<String, Gauge> gauges, SortedMap<String, Counter> counters, SortedMap<String, Histogram> histograms,
 					   SortedMap<String, Meter> meters, SortedMap<String, Timer> timers) {
 
+		final Timer.Context time = Stagemonitor.getMetric2Registry().timer(name("reporting_time").tag("reporter", "log").build()).time();
+
 		StringBuilder sb = new StringBuilder(1000);
 		printWithBanner("Metrics", '=', sb);
 		sb.append('\n');
@@ -153,6 +158,7 @@ public class SortedTableLogReporter extends ScheduledReporter {
 			log.error(e.getMessage(), e);
 		} finally {
 			log.info(sb.toString());
+			time.stop();
 		}
 	}
 

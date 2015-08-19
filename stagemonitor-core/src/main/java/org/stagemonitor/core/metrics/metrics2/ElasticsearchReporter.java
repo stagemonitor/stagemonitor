@@ -1,10 +1,10 @@
 package org.stagemonitor.core.metrics.metrics2;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -26,9 +26,6 @@ import org.stagemonitor.core.util.StringUtils;
 
 public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
-	private static final int MAX_BATCH_SIZE = 5000;
-
-	private List<String> batchLines = new ArrayList<String>(MAX_BATCH_SIZE);
 	private final Map<String, String> globalTags;
 	private HttpClient httpClient;
 	private final Clock clock;
@@ -68,12 +65,13 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Histogram> histograms,
 							  final Map<MetricName, Meter> meters,
 							  final Map<MetricName, Timer> timers) {
+		final Timer.Context time = registry.timer(name("reporting_time").tag("reporter", "elasticsearch").build()).time();
 		httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null, new HttpClient.HttpURLConnectionHandler() {
 			@Override
 			public void withHttpURLConnection(HttpURLConnection connection) throws IOException {
 				String bulkAction = "{ \"index\" : " +
-						"{ \"_index\" : \"stagemonitor-metrics-" + StringUtils.getLogstashStyleDate() +
-						"\", \"_type\" : \"metrics\" } " +
+						"{ \"_index\" : \"stagemonitor-metrics-" + StringUtils.getLogstashStyleDate() + "\", " +
+						"\"_type\" : \"metrics\" } " +
 						"}\n";
 				byte[] bulkActionBytes = bulkAction.getBytes("UTF-8");
 				final OutputStream os = connection.getOutputStream();
@@ -81,6 +79,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 				os.close();
 			}
 		});
+		time.stop();
 	}
 
 	public void reportMetrics(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters, Map<MetricName, Histogram> histograms, final Map<MetricName, Meter> meters, Map<MetricName, Timer> timers, OutputStream os, byte[] bulkActionBytes) throws IOException {

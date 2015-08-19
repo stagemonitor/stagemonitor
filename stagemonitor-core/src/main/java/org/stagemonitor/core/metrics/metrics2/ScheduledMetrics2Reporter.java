@@ -14,7 +14,7 @@ import com.codahale.metrics.Timer;
 
 public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 
-	private final Metric2Registry registry;
+	protected final Metric2Registry registry;
 	private final Metric2Filter filter;
 
 	protected ScheduledMetrics2Reporter(Metric2Registry registry, Metric2Filter filter, TimeUnit rateUnit, TimeUnit durationUnit) {

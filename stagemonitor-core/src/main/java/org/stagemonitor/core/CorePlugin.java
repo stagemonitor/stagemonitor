@@ -127,7 +127,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> influxDbUrl = ConfigurationOption.stringOption()
-			.key("stagemonitor.reporting.influxdb.baseUrl")
+			.key("stagemonitor.reporting.influxdb.url")
 			.dynamic(true)
 			.label("InfluxDB URL")
 			.description("The URL of your InfluxDB installation.")

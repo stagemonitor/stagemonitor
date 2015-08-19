@@ -43,7 +43,7 @@ public class InfluxDbReporterTest {
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getInfluxDbUrl()).thenReturn("http://localhost:8086");
 		when(corePlugin.getInfluxDbDb()).thenReturn("stm");
-		influxDbReporter = new InfluxDbReporter(null, null, TimeUnit.SECONDS, TimeUnit.NANOSECONDS, singletonMap("app", "test"), httpClient, clock, corePlugin);
+		influxDbReporter = new InfluxDbReporter(new Metric2Registry(), null, TimeUnit.SECONDS, TimeUnit.NANOSECONDS, singletonMap("app", "test"), httpClient, clock, corePlugin);
 	}
 
 	@Test
@@ -57,6 +57,19 @@ public class InfluxDbReporterTest {
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
 				eq(singletonList(format("cpu_usage,core=1,type=user,app=test value=3 %d", timestamp))));
+	}
+
+	@Test
+	public void testReportGaugesExponent() throws Exception {
+		influxDbReporter.reportMetrics(
+				metricNameMap(name("cpu_usage").type("user").tag("core", "1").build(), gauge(1e-8)),
+				metricNameMap(Counter.class),
+				metricNameMap(Histogram.class),
+				metricNameMap(Meter.class),
+				metricNameMap(Timer.class));
+
+		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
+				eq(singletonList(format("cpu_usage,core=1,type=user,app=test value=1.0e-8 %d", timestamp))));
 	}
 
 	@Test

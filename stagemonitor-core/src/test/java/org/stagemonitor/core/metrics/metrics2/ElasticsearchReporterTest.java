@@ -60,7 +60,7 @@ public class ElasticsearchReporterTest {
 				return 200;
 			}
 		});
-		elasticsearchReporter = new ElasticsearchReporter(mock(Metric2Registry.class),
+		elasticsearchReporter = new ElasticsearchReporter(new Metric2Registry(),
 				Metric2Filter.ALL, TimeUnit.SECONDS, TimeUnit.NANOSECONDS, singletonMap("app", "test"),
 				httpClient, clock, mock(CorePlugin.class));
 		out = new ByteArrayOutputStream();

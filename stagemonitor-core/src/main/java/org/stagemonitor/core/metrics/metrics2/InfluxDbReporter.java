@@ -1,5 +1,7 @@
 package org.stagemonitor.core.metrics.metrics2;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 							  Map<MetricName, Meter> meters,
 							  Map<MetricName, Timer> timers) {
 
+		final Timer.Context time = registry.timer(name("reporting_time").tag("reporter", "influxdb").build()).time();
 		long timestamp = clock.getTime();
 		reportGauges(gauges, timestamp);
 		reportCounter(counters, timestamp);
@@ -67,6 +70,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		reportMeters(meters, timestamp);
 		reportTimers(timers, timestamp);
 		flush();
+		time.stop();
 	}
 
 	private void reportGauges(Map<MetricName, Gauge> gauges, long timestamp) {
@@ -174,7 +178,8 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		if (result.equals("NaN") || result.contains("Infinity")) {
 			return "null";
 		} else {
-			return result;
+			// InfluxDB wants the exponent to be in lower case
+			return result.replace('E', 'e');
 		}
 	}
 
