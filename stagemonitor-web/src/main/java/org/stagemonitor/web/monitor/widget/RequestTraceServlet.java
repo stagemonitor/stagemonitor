@@ -166,6 +166,8 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 			throws IOException {
 		response.setContentType("application/json");
 		response.setHeader("Pragma", "no-cache");
+		response.setHeader("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate");
+		response.setHeader("Expires", "0");
 		response.setCharacterEncoding("UTF-8");
 
 		final ArrayList<String> jsonResponse = new ArrayList<String>(requestTraces.size());
