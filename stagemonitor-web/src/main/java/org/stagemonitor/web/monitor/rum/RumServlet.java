@@ -34,7 +34,7 @@ public class RumServlet extends HttpServlet {
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if (webPlugin.isRealUserMonitoringEnabled()) {
-			// Boomerang is requesting a image, so set appropriate header to not confuse browsers
+			// Boomerang is requesting an image, so set appropriate header to not confuse browsers
 			resp.setContentType("image/png");
 
 			final String requestName = getRequiredParam(req, "requestName");
@@ -42,7 +42,6 @@ public class RumServlet extends HttpServlet {
 			final long timeToFirstByte = Long.parseLong(getRequiredParam(req, "timeToFirstByte"));
 			final long domProcessing = Long.parseLong(getRequiredParam(req, "domProcessing"));
 			final long pageRendering = Long.parseLong(getRequiredParam(req, "pageRendering"));
-			final long totalTime = timeToFirstByte + domProcessing + pageRendering;
 			final long networkTime = timeToFirstByte - serverTime;
 
 			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Dom Processing").build()).update(domProcessing, MILLISECONDS);
