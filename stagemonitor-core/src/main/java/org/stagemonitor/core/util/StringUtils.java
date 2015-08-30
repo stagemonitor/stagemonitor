@@ -57,8 +57,12 @@ public class StringUtils {
 	}
 
 	public static String getLogstashStyleDate() {
+		return getLogstashStyleDate(System.currentTimeMillis());
+	}
+
+	public static String getLogstashStyleDate(long time) {
 		final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
 		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return dateFormat.format(new Date());
+		return dateFormat.format(new Date(time));
 	}
 }

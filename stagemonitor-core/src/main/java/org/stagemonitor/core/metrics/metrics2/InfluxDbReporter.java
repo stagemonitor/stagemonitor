@@ -76,7 +76,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 	private void reportGauges(Map<MetricName, Gauge> gauges, long timestamp) {
 		for (Map.Entry<MetricName, Gauge> entry : gauges.entrySet()) {
 			reportLine(entry.getKey().getInfluxDbLineProtocolString(),
-					"value=" + getValueForInfluxDb(entry.getValue().getValue()), timestamp);
+					"value=" + getGaugeValueForInfluxDb(entry.getValue().getValue()), timestamp);
 		}
 	}
 
@@ -149,10 +149,8 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		batchLines = new ArrayList<String>(MAX_BATCH_SIZE);
 	}
 
-	private String getValueForInfluxDb(Object value) {
-		if (value instanceof Integer || value instanceof Long) {
-			return getIntegerValue(value);
-		} else if (value instanceof Number) {
+	private String getGaugeValueForInfluxDb(Object value) {
+		if (value instanceof Number) {
 			return getFloatValue(value);
 		} else if (value instanceof Boolean) {
 			return value.toString();

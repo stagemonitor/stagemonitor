@@ -1,7 +1,11 @@
 package org.stagemonitor.requestmonitor;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Date;
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,20 +15,13 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Date;
-import java.util.UUID;
-
 /**
  * A request trace is a data structure containing all the important information about a request.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestTrace {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	@JsonIgnore
 	private final String id;
 	private final GetNameCallback getNameCallback;
 	private String name;
@@ -40,11 +37,8 @@ public class RequestTrace {
 	@JsonIgnore
 	private long timestampEnd;
 	private String parameter;
-	@JsonProperty("@application")
 	private final String application;
-	@JsonProperty("@host")
 	private final String host;
-	@JsonProperty("@instance")
 	private final String instance;
 	private String exceptionMessage;
 	private String exceptionClass;
@@ -68,6 +62,10 @@ public class RequestTrace {
 
 	public void setError(boolean failed) {
 		this.error = failed;
+	}
+
+	public String getStatus() {
+		return error ? "Error" : "OK";
 	}
 
 	public String getId() {

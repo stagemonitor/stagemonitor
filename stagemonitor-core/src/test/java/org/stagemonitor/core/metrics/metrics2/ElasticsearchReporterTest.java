@@ -61,7 +61,7 @@ public class ElasticsearchReporterTest {
 			}
 		});
 		elasticsearchReporter = new ElasticsearchReporter(new Metric2Registry(),
-				Metric2Filter.ALL, TimeUnit.SECONDS, TimeUnit.NANOSECONDS, singletonMap("app", "test"),
+				Metric2Filter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, singletonMap("app", "test"),
 				httpClient, clock, mock(CorePlugin.class));
 		out = new ByteArrayOutputStream();
 	}

@@ -28,12 +28,12 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	@Override
 	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) {
-		String path = String.format("/stagemonitor-%s/executions/%s", StringUtils.getLogstashStyleDate(), requestTrace.getId());
+		String path = String.format("/stagemonitor-requests-%s/requests", StringUtils.getLogstashStyleDate());
 		final String ttl = requestMonitorPlugin.getRequestTraceTtl();
 		if (ttl != null && !ttl.isEmpty()) {
 			path += "?ttl=" + ttl;
 		}
-		elasticsearchClient.sendAsJsonAsync("PUT", path, requestTrace);
+		elasticsearchClient.sendAsJsonAsync("POST", path, requestTrace);
 	}
 
 	@Override

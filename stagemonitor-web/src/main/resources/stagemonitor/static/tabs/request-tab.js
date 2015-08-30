@@ -62,9 +62,9 @@ function renderRequestTab(requestTrace) {
 			"statusCode": {name: "Status code", description: "The HTTP status code of a request."},
 			"method": {name: "Method", description: "The HTTP method of the request."},
 			"@timestamp": {name: "Timestamp", description: "The date and time the request entered the server."},
-			"@application": {name: "Application name", description: "The name of the application that handled the request. This value is obtained from the display-name of web.xml. Alternatively, you can use the stagemonitor.applicationName property of the stagemonitor.properties configuration file."},
-			"@host": {name: "Host accessing", description: "The name of the host of the server that handled the request."},
-			"@instance": {name: "Instance", description: "The name of the instance of the application that handled the request. The instance name is useful, if you have different environments for the same application (maybe even on the same host). However, it leads to errors if you have a application with the same instance name on the same host. By default, the instance name is the domain name of the server and it is obtained from the first incoming request. You can also choose to set a fixed instance name."}
+			"application": {name: "Application name", description: "The name of the application that handled the request. This value is obtained from the display-name of web.xml. Alternatively, you can use the stagemonitor.applicationName property of the stagemonitor.properties configuration file."},
+			"host": {name: "Host accessing", description: "The name of the host of the server that handled the request."},
+			"instance": {name: "Instance", description: "The name of the instance of the application that handled the request. The instance name is useful, if you have different environments for the same application (maybe even on the same host). However, it leads to errors if you have a application with the same instance name on the same host. By default, the instance name is the domain name of the server and it is obtained from the first incoming request. You can also choose to set a fixed instance name."}
 		};
 		var excludedProperties = ["callStackJson", "headers", "userAgent"];
 		var metrics = [];

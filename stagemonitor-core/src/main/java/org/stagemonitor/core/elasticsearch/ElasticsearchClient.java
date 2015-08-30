@@ -5,11 +5,14 @@ import static org.stagemonitor.core.util.StringUtils.slugify;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -141,6 +144,29 @@ public class ElasticsearchClient {
 
 	public Future<?> sendMappingTemplateAsync(String templatePath, String templateName) {
 		return sendAsJsonAsync("PUT", "/_template/" + templateName, IOUtils.getResourceAsStream(templatePath));
+	}
+
+	public Future<Integer> sendBulkAsync(final InputStream is) {
+		return asyncRestPool.submit(new Callable<Integer>() {
+			@Override
+			public Integer call() throws Exception {
+				return sendBulk(is);
+			}
+		});
+	}
+
+	public int sendBulk(final InputStream is) {
+		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
+			return -1;
+		}
+		return httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null, new HttpClient.HttpURLConnectionHandler() {
+			@Override
+			public void withHttpURLConnection(HttpURLConnection connection) throws IOException {
+				final OutputStream os = connection.getOutputStream();
+				IOUtils.copy(is, os);
+				os.close();
+			}
+		});
 	}
 
 	ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {

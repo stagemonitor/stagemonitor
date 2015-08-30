@@ -1,53 +1,66 @@
 {
-	"template": "stagemonitor-*",
+	"template": "stagemonitor-requests-*",
 	"settings" : {
 		"index" : {
-			"store" : { "compress" : { "stored" : true, "tv": true } },
 			"refresh_interval" : "5s"
 		}
 	},
 	"mappings": {
 		"_default_": {
 			"_ttl" : { "enabled" : true },
-			"dynamic_templates" : [ {
-				"http_headers": {
-					"path_match": "headers.*",
-					"mapping": { "type": "string", "index": "not_analyzed" }
-				}
-			},
-			{
-				"string_fields" : {
-					"match" : "*",
-					"match_mapping_type" : "string",
-					"mapping" : {
-						"type" : "string", "index" : "analyzed", "omit_norms" : true,
-						"fields" : {
-							"raw" : {"type": "string", "index" : "not_analyzed", "ignore_above" : 256}
-						}
+			"dynamic_templates" : [
+				{
+					"http_headers": {
+						"path_match": "headers.*",
+						"mapping": { "type": "string", "index": "not_analyzed", "include_in_all" : false }
 					}
+				},
+				{
+					"user_agent": {
+						"path_match": "userAgent.*",
+						"mapping": { "type": "string", "index": "not_analyzed", "include_in_all" : false }
+					}
+				},
+				{
+					"string_fields" : {
+						"match" : "*",
+						"match_mapping_type" : "string",
+						"mapping" : {
+							"type": "string", "index" : "not_analyzed", "ignore_above" : 256, "include_in_all" : false}
+						}
 				}
-			} ],
+			],
 			"_source" : {
 				"excludes" : ["callStackJson"]
 			},
 			"properties": {
-				"@timestamp": {
-					"type": "date",
-					"format": "dateOptionalTime"
-				},
-				"callStack": {
-					"type": "string",
-					"index": "no"
-				},
-				"callStackJson": {
-					"type": "string",
-					"index": "no",
-					"store": "yes"
-				},
-				"clientIp": {
-					"type": "string",
-					"index": "not_analyzed"
-				}
+				"@timestamp":			{"type": "date", "format": "dateOptionalTime", "include_in_all" : false},
+				"id":					{"type": "string", "index": "not_analyzed", "include_in_all" : false},
+				"application":			{"type": "string", "index": "not_analyzed"},
+				"host":					{"type": "string", "index": "not_analyzed"},
+				"instance":				{"type": "string", "index": "not_analyzed"},
+				"bytesWritten":			{"type": "integer", "include_in_all" : false},
+				"callStack":			{"type": "string", "index": "no", "include_in_all" : false},
+				"callStackJson":		{"type": "string", "index": "no","store": "yes", "include_in_all" : false},
+				"clientIp":				{"type": "string", "index": "not_analyzed", "include_in_all" : false},
+				"error":				{"type": "boolean", "include_in_all" : false},
+				"exceptionClass":		{"type": "string", "index": "not_analyzed", "include_in_all" : false},
+				"exceptionMessage":		{"type": "string", "index": "not_analyzed", "include_in_all" : false},
+				"exceptionStackTrace":	{"type": "string", "index": "not_analyzed", "include_in_all" : false},
+				"executionCountDb":		{"type": "integer", "include_in_all" : false},
+				"executionTime":		{"type": "integer", "include_in_all" : false},
+				"executionTimeCpu":		{"type": "integer", "include_in_all" : false},
+				"executionTimeDb":		{"type": "integer", "include_in_all" : false},
+				"method":				{"type": "string", "index": "not_analyzed"},
+				"name":					{"type": "string","analyzer": "standard",
+											"fields": { "raw": {"type": "string", "index": "not_analyzed", "include_in_all" : false}}},
+				"parameter":			{"type": "string", "index": "not_analyzed", "include_in_all" : false},
+				"sessionId":			{"type": "string", "index": "not_analyzed", "include_in_all" : false},
+				"status":				{"type": "string", "index": "not_analyzed", "include_in_all" : false},
+				"statusCode":			{"type": "integer", "include_in_all" : false},
+				"url":					{"type": "string","analyzer": "standard",
+											"fields": { "raw": {"type": "string", "index": "not_analyzed", "include_in_all" : false}}},
+				"username":				{"type": "string", "index": "not_analyzed"}
 			}
 		}
 	}

@@ -278,7 +278,7 @@
 	"failover": false,
 	"index": {
 		"interval": "day",
-		"pattern": "[stagemonitor-]YYYY.MM.DD",
+		"pattern": "[stagemonitor-requests-]YYYY.MM.DD",
 		"default": "NO_TIME_FILTER_OR_INDEX_PATTERN_NOT_MATCHED",
 		"warm_fields": true
 	},

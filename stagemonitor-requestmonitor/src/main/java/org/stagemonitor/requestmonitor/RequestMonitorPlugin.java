@@ -9,6 +9,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.util.IOUtils;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
@@ -121,10 +122,17 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
-		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-index-template.json", "stagemonitor");
-		elasticsearchClient.sendGrafanaDashboardAsync("Request.json");
+		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
+		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-index-template.json", "stagemonitor-requests");
 		elasticsearchClient.sendKibanaDashboardAsync("Recent Requests.json");
+		if (corePlugin.isReportToGraphite()) {
+			elasticsearchClient.sendGrafanaDashboardAsync("Request.json");
+		}
+		if (corePlugin.isReportToElasticsearch()) {
+			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("RequestDashboard.bulk"));
+			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("RequestDetails.bulk"));
+		}
 	}
 
 	@Override

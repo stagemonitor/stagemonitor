@@ -45,17 +45,15 @@ public class RumServlet extends HttpServlet {
 			final long totalTime = timeToFirstByte + domProcessing + pageRendering;
 			final long networkTime = timeToFirstByte - serverTime;
 
-			metricRegistry.timer(name("response_time").tag("request_name", "All").tier("browser").layer("dom_processing").build()).update(domProcessing, MILLISECONDS);
-			metricRegistry.timer(name("response_time").tag("request_name", "All").tier("browser").layer("page_rendering").build()).update(pageRendering, MILLISECONDS);
-			metricRegistry.timer(name("response_time").tag("request_name", "All").tier("network").layer("total").build()).update(networkTime, MILLISECONDS);
-			metricRegistry.timer(name("response_time").tag("request_name", "All").tier("total").layer("total").build()).update(totalTime, MILLISECONDS);
-			metricRegistry.timer(name("response_time").tag("request_name", "All").tier("server_rum").layer("total").build()).update(serverTime, MILLISECONDS);
+			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Dom Processing").build()).update(domProcessing, MILLISECONDS);
+			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Page Rendering").build()).update(pageRendering, MILLISECONDS);
+			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Network").build()).update(networkTime, MILLISECONDS);
+			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Server").build()).update(serverTime, MILLISECONDS);
 			if (webPlugin.isCollectPageLoadTimesPerRequest()) {
-				metricRegistry.timer(name("response_time").tag("request_name", requestName).tier("browser").layer("dom_processing").build()).update(domProcessing, MILLISECONDS);
-				metricRegistry.timer(name("response_time").tag("request_name", requestName).tier("browser").layer("page_rendering").build()).update(pageRendering, MILLISECONDS);
-				metricRegistry.timer(name("response_time").tag("request_name", requestName).tier("network").layer("total").build()).update(networkTime, MILLISECONDS);
-				metricRegistry.timer(name("response_time").tag("request_name", requestName).tier("total").layer("total").build()).update(totalTime, MILLISECONDS);
-				metricRegistry.timer(name("response_time").tag("request_name", requestName).tier("server_rum").layer("total").build()).update(serverTime, MILLISECONDS);
+				metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Dom Processing").build()).update(domProcessing, MILLISECONDS);
+				metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Page Rendering").build()).update(pageRendering, MILLISECONDS);
+				metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Network").build()).update(networkTime, MILLISECONDS);
+				metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Server").build()).update(serverTime, MILLISECONDS);
 			}
 		} else {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);

@@ -119,25 +119,25 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	}
 
 	private void writeSnapshot(Snapshot snapshot, JsonGenerator jg) throws IOException {
-		jg.writeNumberField("min", snapshot.getMin());
-		jg.writeNumberField("max", snapshot.getMax());
-		jg.writeNumberField("mean", snapshot.getMean());
-		jg.writeNumberField("median", snapshot.getMedian());
-		jg.writeNumberField("std", snapshot.getStdDev());
-		jg.writeNumberField("p25", snapshot.getValue(0.25));
-		jg.writeNumberField("p75", snapshot.get75thPercentile());
-		jg.writeNumberField("p95", snapshot.get95thPercentile());
-		jg.writeNumberField("p98", snapshot.get98thPercentile());
-		jg.writeNumberField("p99", snapshot.get99thPercentile());
-		jg.writeNumberField("p999", snapshot.get999thPercentile());
+		jg.writeNumberField("min", convertDuration(snapshot.getMin()));
+		jg.writeNumberField("max", convertDuration(snapshot.getMax()));
+		jg.writeNumberField("mean", convertDuration(snapshot.getMean()));
+		jg.writeNumberField("median", convertDuration(snapshot.getMedian()));
+		jg.writeNumberField("std", convertDuration(snapshot.getStdDev()));
+		jg.writeNumberField("p25", convertDuration(snapshot.getValue(0.25)));
+		jg.writeNumberField("p75", convertDuration(snapshot.get75thPercentile()));
+		jg.writeNumberField("p95", convertDuration(snapshot.get95thPercentile()));
+		jg.writeNumberField("p98", convertDuration(snapshot.get98thPercentile()));
+		jg.writeNumberField("p99", convertDuration(snapshot.get99thPercentile()));
+		jg.writeNumberField("p999", convertDuration(snapshot.get999thPercentile()));
 	}
 
 	private void writeMetered(Metered metered, JsonGenerator jg) throws IOException {
 		jg.writeNumberField("count", metered.getCount());
-		jg.writeNumberField("m1_rate", metered.getOneMinuteRate());
-		jg.writeNumberField("m5_rate", metered.getFiveMinuteRate());
-		jg.writeNumberField("m15_rate", metered.getFifteenMinuteRate());
-		jg.writeNumberField("mean_rate", metered.getMeanRate());
+		jg.writeNumberField("m1_rate", convertRate(metered.getOneMinuteRate()));
+		jg.writeNumberField("m5_rate", convertRate(metered.getFiveMinuteRate()));
+		jg.writeNumberField("m15_rate", convertRate(metered.getFifteenMinuteRate()));
+		jg.writeNumberField("mean_rate", convertRate(metered.getMeanRate()));
 	}
 
 	private <T extends Metric> void reportMetric(Map<MetricName, T> metrics, long timestamp, ValueWriter<T> valueWriter, OutputStream os, byte[] bulkActionBytes) throws IOException {
@@ -145,20 +145,12 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			os.write(bulkActionBytes);
 			final JsonGenerator jg = jfactory.createGenerator(os);
 			jg.writeStartObject();
-
 			MetricName metricName = entry.getKey();
 			jg.writeNumberField("@timestamp", timestamp);
 			jg.writeStringField("name", metricName.getName());
-
-			jg.writeObjectFieldStart("tags");
 			writeMap(jg, metricName.getTags());
 			writeMap(jg, globalTags);
-			jg.writeEndObject();
-
-			jg.writeObjectFieldStart("values");
 			valueWriter.writeValues(entry.getValue(), jg);
-			jg.writeEndObject();
-
 			jg.writeEndObject();
 			jg.flush();
 			os.write('\n');

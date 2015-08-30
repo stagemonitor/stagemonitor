@@ -25,7 +25,7 @@
 				{
 					"type": "filter",
 					"name": "request",
-					"query": "stagemonitor.[[application]].[[instance]].[[host]].response_time.*",
+					"query": "stagemonitor.[[application]].[[instance]].[[host]].response_time_server.*",
 					"includeAll": false,
 					"current": {
 						"text": "All",
@@ -35,7 +35,7 @@
 				{
 					"type": "filter",
 					"name": "time",
-					"query": "stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].{total,server}",
+					"query": "stagemonitor.[[application]].[[instance]].[[host]].response_time_server.[[request]].{total,server}",
 					"options": [
 						{
 							"text": "server",
@@ -143,19 +143,19 @@
 					},
 					"targets": [
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].[[time]].total.p95),'p95')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.[[request]].[[time]].total.p95),'p95')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].[[time]].total.p75),'p75')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.[[request]].[[time]].total.p75),'p75')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].[[time]].total.p50),'p50')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.[[request]].[[time]].total.p50),'p50')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].[[time]].total.mean),'avg')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.[[request]].[[time]].total.mean),'avg')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].[[time]].total.min),'min')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.[[request]].[[time]].total.min),'min')"
 						}
 					],
 					"aliasColors": {
@@ -251,10 +251,10 @@
 					},
 					"targets": [
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].server.total.m1_rate),'total')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.[[request]].total.m1_rate),'total')"
 						},
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate.[[request]].server.total.m1_rate),'failed')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate.[[request]].total.m1_rate),'failed')"
 						}
 					],
 					"aliasColors": {
@@ -397,7 +397,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time.*.[[time]].total.mean,'All'),5,'avg'),5)"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.*.[[time]].total.mean,'All'),5,'avg'),5)"
 						}
 					],
 					"aliasColors": {},
@@ -458,7 +458,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time.*.[[time]].total.p95,'All'),5,'avg'),5)"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.*.[[time]].total.p95,'All'),5,'avg'),5)"
 						}
 					],
 					"aliasColors": {},
@@ -519,11 +519,11 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time.*.server.total.m1_rate,'All'),5,'sum'),5)",
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.*.total.m1_rate,'All'),5,'sum'),5)",
 							"hide": false
 						},
 						{
-							"target": "highestAverage(groupByNode(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].server.total.count,'All'),0),5,'sum'),5)",
+							"target": "highestAverage(groupByNode(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.[[request]].total.count,'All'),0),5,'sum'),5)",
 							"hide": true
 						}
 					],
@@ -586,11 +586,11 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].error_rate.*.server.total,'All'),0),5,'sum'),5)",
+							"target": "highestAverage(groupByNode(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].error_rate.*.total,'All'),0),5,'sum'),5)",
 							"hide": true
 						},
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].error_rate.*.server.total.m1_rate,'All'),5,'sum'),5)"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].error_rate.*.total.m1_rate,'All'),5,'sum'),5)"
 						}
 					],
 					"aliasColors": {},
@@ -685,14 +685,16 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].network.total.mean,6,'avg')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].response_time_rum.[[request]].Network.mean,6,'avg')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].server_rum.total.mean),'server')",
-							"hide": false
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_rum.[[request]].Server.mean),'Server')",
 						},
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].response_time.[[request]].browser.*.mean,8,'avg')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].response_time_rum.[[request]].Page_Rendering.mean,8,'avg')"
+						},
+						{
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].response_time_rum.[[request]].Dom_Processing.mean,8,'avg')"
 						}
 					],
 					"aliasColors": {
