@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 /**
  * A request trace is a data structure containing all the important information about a request.
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestTrace {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());

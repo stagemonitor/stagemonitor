@@ -171,8 +171,7 @@ public class ElasticsearchClient {
 
 	ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
 		final ObjectMapper mapper = JsonUtils.getMapper();
-		final InputStream dashboardStram = ElasticsearchClient.class.getClassLoader().getResourceAsStream(dashboardPath);
-		final ObjectNode dashboard = (ObjectNode) mapper.readTree(dashboardStram);
+		final ObjectNode dashboard = (ObjectNode) mapper.readTree(IOUtils.getResourceAsStream(dashboardPath));
 		dashboard.put(TITLE, dashboard.get(TITLE).asText() + STAGEMONITOR_MAJOR_MINOR_VERSION);
 		ObjectNode dashboardElasticsearchFormat = mapper.createObjectNode();
 		dashboardElasticsearchFormat.put("user", "guest");

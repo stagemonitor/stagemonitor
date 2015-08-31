@@ -11,6 +11,7 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.util.IOUtils;
 
 public class JdbcPlugin extends StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
@@ -58,8 +59,14 @@ public class JdbcPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
-		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendGrafanaDashboardAsync("DB Queries.json");
+		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
+		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		if (corePlugin.isReportToGraphite()) {
+			elasticsearchClient.sendGrafanaDashboardAsync("DB Queries.json");
+		}
+		if (corePlugin.isReportToElasticsearch()) {
+			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("JdbcDashboard.bulk"));
+		}
 	}
 
 	@Override
