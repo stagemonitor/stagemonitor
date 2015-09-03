@@ -18,9 +18,10 @@ public class MonitorRequestsInstrumenter extends StagemonitorJavassistInstrument
 
 	@Override
 	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
+		final MonitorRequests classAnnotation = (MonitorRequests) ctClass.getAnnotation(MonitorRequests.class);
 		for (CtMethod ctMethod : ctClass.getDeclaredMethods()) {
 			MonitorRequests monitorRequests = (MonitorRequests) ctMethod.getAnnotation(MonitorRequests.class);
-			if (monitorRequests != null) {
+			if (monitorRequests != null || (classAnnotation != null && Modifier.isPublic(ctMethod.getModifiers()))) {
 				monitorMethodCall(ctClass, ctMethod);
 			}
 		}
