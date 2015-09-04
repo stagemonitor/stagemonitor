@@ -31,6 +31,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
+import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
@@ -206,37 +207,8 @@ public class ElasticsearchClient {
 		return value.substring(0, value.lastIndexOf('.'));
 	}
 
-	private class CompletedFuture<T> implements Future<T> {
-		private final T result;
-
-		public CompletedFuture(final T result) {
-			this.result = result;
-		}
-
-		@Override
-		public boolean cancel(final boolean b) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return true;
-		}
-
-		@Override
-		public T get() {
-			return this.result;
-		}
-
-		@Override
-		public T get(final long l, final TimeUnit timeUnit) {
-			return get();
-		}
+	public void close() {
+		asyncRestPool.shutdown();
 	}
 
 }

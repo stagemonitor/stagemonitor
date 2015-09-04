@@ -103,6 +103,8 @@ public class HttpClient {
 				while ((n = ((InputStream) requestBody).read(buf)) > 0) {
 					os.write(buf, 0, n);
 				}
+			} else if (requestBody instanceof String) {
+				os.write(((String)requestBody).getBytes("UTF-8"));
 			} else {
 				JsonUtils.writeJsonToOutputStream(requestBody, os);
 			}

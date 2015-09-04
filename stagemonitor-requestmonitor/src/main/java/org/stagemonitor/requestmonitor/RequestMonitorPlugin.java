@@ -1,5 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -8,6 +9,7 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.IOUtils;
 
@@ -123,16 +125,23 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
 		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
-		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-index-template.json", "stagemonitor-requests");
-		elasticsearchClient.sendKibanaDashboardAsync("Recent Requests.json");
+		elasticsearchClient.sendKibanaDashboardAsync("kibana/Recent Requests.json");
 		if (corePlugin.isReportToGraphite()) {
-			elasticsearchClient.sendGrafanaDashboardAsync("Request.json");
+			elasticsearchClient.sendGrafanaDashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("RequestDashboard.bulk"));
-			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("RequestDetails.bulk"));
+			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("kibana/RequestDashboard.bulk"));
+			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("kibana/RequestDetails.bulk"));
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 		}
+	}
+
+
+	public static void main(String[] args) throws IOException {
+		System.out.println("{\"dashboard\":" + IOUtils.getResourceAsString("grafana/ElasticsearchRequestDashboard.json") + ",\"overwrite\": false}");
 	}
 
 	@Override

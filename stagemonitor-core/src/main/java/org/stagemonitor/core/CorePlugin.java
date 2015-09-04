@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.OrMetricFilter;
@@ -357,12 +358,34 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<String> grafanaUrl = ConfigurationOption.stringOption()
+			.key("stagemonitor.grafana.url")
+			.dynamic(true)
+			.label("Grafana URL")
+			.description("The URL of your Grafana 2.0 installation")
+			.defaultValue(null)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags("grafana")
+			.build();
+	private final ConfigurationOption<String> grafanaApiKey = ConfigurationOption.stringOption()
+			.key("stagemonitor.grafana.apiKey")
+			.dynamic(true)
+			.label("Grafana API Key")
+			.description("The API Key of your Grafana 2.0 installation. " +
+					"See http://docs.grafana.org/reference/http_api/#create-api-token how to create a key. " +
+					"The key has to have the editor role.")
+			.defaultValue(null)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags("grafana")
+			.sensitive()
+			.build();
 
 	private static MetricsAggregationReporter aggregationReporter;
 
 	private List<Closeable> reporters = new ArrayList<Closeable>();
 
 	private ElasticsearchClient elasticsearchClient;
+	private GrafanaClient grafanaClient;
 
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
@@ -512,6 +535,9 @@ public class CorePlugin extends StagemonitorPlugin {
 				logger.warn(e.getMessage(), e);
 			}
 		}
+
+		getElasticsearchClient().close();
+		getGrafanaClient().close();
 	}
 
 	public ElasticsearchClient getElasticsearchClient() {
@@ -519,6 +545,13 @@ public class CorePlugin extends StagemonitorPlugin {
 			elasticsearchClient = new ElasticsearchClient();
 		}
 		return elasticsearchClient;
+	}
+
+	public GrafanaClient getGrafanaClient() {
+		if (grafanaClient == null) {
+			grafanaClient = new GrafanaClient(this, new HttpClient());
+		}
+		return grafanaClient;
 	}
 
 	public void setElasticsearchClient(ElasticsearchClient elasticsearchClient) {
@@ -631,5 +664,13 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public boolean isReportToGraphite() {
 		return StringUtils.isNotEmpty(getGraphiteHostName());
+	}
+
+	public String getGrafanaUrl() {
+		return removeTrailingSlash(grafanaUrl.getValue());
+	}
+
+	public String getGrafanaApiKey() {
+		return grafanaApiKey.getValue();
 	}
 }
