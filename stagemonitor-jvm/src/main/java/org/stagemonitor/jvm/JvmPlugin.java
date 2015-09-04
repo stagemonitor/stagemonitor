@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -14,15 +16,32 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.Metric2Set;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.metrics.metrics2.MetricNameConverter;
 
 public class JvmPlugin extends StagemonitorPlugin {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
 	public void initializePlugin(Metric2Registry registry, Configuration configuration) {
-		// TODO
-//		registry.register(name("jvm_gc").build(), new GarbageCollectorMetricSet());
-//		registry.register(name("jvm_memory").build(), new MemoryUsageGaugeSet());
+		registry.registerAll(Metric2Set.Converter.convert(new GarbageCollectorMetricSet(), new MetricNameConverter() {
+			@Override
+			public MetricName convert(String name) {
+				final String[] split = name.split("\\.");
+				return name("jvm_gc_" + split[1]).tag("collector", split[0]).build();
+			}
+		}));
+		registry.registerAll(Metric2Set.Converter.convert(new MemoryUsageGaugeSet(), new MetricNameConverter() {
+			@Override
+			public MetricName convert(String name) {
+				final String[] split = name.split("\\.");
+				if (split.length == 3) {
+					return name("jvm_memory_" + split[0]).tag("memory_pool", split[1]).type(split[2]).build();
+				}
+				return name("jvm_memory_" + split[0].replace('-', '_')).type(split[1]).build();
+			}
+		}));
 
 		final CpuUtilisationWatch cpuWatch;
 		try {
@@ -51,4 +70,5 @@ public class JvmPlugin extends StagemonitorPlugin {
 	public List<String> getPathsOfWidgetMetricTabPlugins() {
 		return Collections.singletonList("/stagemonitor/static/tabs/metrics/jvm-metrics");
 	}
+
 }

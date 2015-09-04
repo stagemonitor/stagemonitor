@@ -2,9 +2,9 @@ package org.stagemonitor.core.metrics.metrics2;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -133,8 +133,8 @@ public class Metric2Registry implements Metric2Set {
 	 *
 	 * @return the names of all the metrics
 	 */
-	public SortedSet<MetricName> getNames() {
-		return Collections.unmodifiableSortedSet(new TreeSet<MetricName>(metrics.keySet()));
+	public Set<MetricName> getNames() {
+		return Collections.unmodifiableSet(new HashSet<MetricName>(metrics.keySet()));
 	}
 
 	/**

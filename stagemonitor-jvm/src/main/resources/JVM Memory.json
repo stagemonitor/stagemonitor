@@ -122,14 +122,13 @@
 					},
 					"targets": [
 						{
-							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.heap.max),'max')",
-							"hide": false
+							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_heap.max),'max')"
 						},
 						{
-							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.heap.committed),'committed')"
+							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_heap.committed),'committed')"
 						},
 						{
-							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.heap.used),'used')"
+							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_heap.used),'used')"
 						}
 					],
 					"aliasColors": {},
@@ -201,13 +200,13 @@
 					},
 					"targets": [
 						{
-							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.non-heap.max),'max')"
+							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_non_heap.max),'max')"
 						},
 						{
-							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.non-heap.committed),'committed')"
+							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_non_heap.committed),'committed')"
 						},
 						{
-							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.non-heap.used),'used')"
+							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_non_heap.used),'used')"
 						}
 					],
 					"aliasColors": {},
@@ -289,7 +288,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(nonNegativeDerivative(stagemonitor.[[application]].[[instance]].[[host]].jvm.gc.*.time),6,'[[aggregation]]')"
+							"target": "groupByNode(nonNegativeDerivative(stagemonitor.[[application]].[[instance]].[[host]].jvm_gc_time.*),5,'[[aggregation]]')"
 						}
 					],
 					"aliasColors": {},
@@ -363,7 +362,7 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.pools.*.usage,7,'[[aggregation]]')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_pools.*.usage,5,'[[aggregation]]')"
 						}
 					],
 					"aliasColors": {},
