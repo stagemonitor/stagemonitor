@@ -15,6 +15,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Set;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -61,9 +62,16 @@ public class JvmPlugin extends StagemonitorPlugin {
 			logger.warn("Could not register cpu usage. ({})", e.getMessage());
 		}
 
-		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendGrafanaDashboardAsync("JVM Memory.json");
-		elasticsearchClient.sendGrafanaDashboardAsync("JVM Overview.json");
+		final CorePlugin config = configuration.getConfig(CorePlugin.class);
+		ElasticsearchClient elasticsearchClient = config.getElasticsearchClient();
+		final GrafanaClient grafanaClient = config.getGrafanaClient();
+		if (config.isReportToGraphite()) {
+			elasticsearchClient.sendGrafanaDashboardAsync("JVM Memory.json");
+			elasticsearchClient.sendGrafanaDashboardAsync("JVM Overview.json");
+		}
+		if (config.isReportToElasticsearch()) {
+			grafanaClient.sendGrafanaDashboardAsync("JvmDashboard.bulk");
+		}
 	}
 
 	@Override
