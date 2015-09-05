@@ -1,6 +1,5 @@
 package org.stagemonitor.web.monitor.widget;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,16 +43,11 @@ public class StagemonitorWidgetHtmlInjector implements HtmlInjector {
 	public void init(Configuration configuration, ServletContext servletContext) {
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
-		try {
-			contextPath = servletContext.getContextPath();
-			this.widgetTemplate = buildWidgetTemplate(contextPath);
-		} catch (IOException e) {
-			logger.warn(e.getMessage(), e);
-			this.widgetTemplate = "";
-		}
+		contextPath = servletContext.getContextPath();
+		this.widgetTemplate = buildWidgetTemplate(contextPath);
 	}
 
-	private String buildWidgetTemplate(String contextPath) throws IOException {
+	private String buildWidgetTemplate(String contextPath) {
 		return IOUtils.getResourceAsString("stagemonitorWidget.html")
 				.replace("@@CONTEXT_PREFIX_PATH@@", contextPath)
 				.replace("@@OPEN_IMMEDIATELY@@", Boolean.toString(openImmediately))

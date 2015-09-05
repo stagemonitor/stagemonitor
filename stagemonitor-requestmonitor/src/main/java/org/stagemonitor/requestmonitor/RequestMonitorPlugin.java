@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -137,11 +136,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("kibana/RequestDetails.bulk"));
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 		}
-	}
-
-
-	public static void main(String[] args) throws IOException {
-		System.out.println("{\"dashboard\":" + IOUtils.getResourceAsString("grafana/ElasticsearchRequestDashboard.json") + ",\"overwrite\": false}");
 	}
 
 	@Override

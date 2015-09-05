@@ -61,7 +61,11 @@ public class IOUtils {
 		return IOUtils.class.getClassLoader().getResourceAsStream(name);
 	}
 
-	public static String getResourceAsString(String name) throws IOException {
-		return toString(getResourceAsStream(name));
+	public static String getResourceAsString(String name) {
+		try {
+			return toString(getResourceAsStream(name));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
