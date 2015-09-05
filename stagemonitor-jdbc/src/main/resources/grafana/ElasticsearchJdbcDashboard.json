@@ -1,6 +1,6 @@
 {
-  "title": "Request Metrics",
-  "originalTitle": "Request Metrics",
+  "title": "JDBC",
+  "originalTitle": "JDBC",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -19,7 +19,7 @@
           "datasource": null,
           "editable": true,
           "error": false,
-          "fill": 0,
+          "fill": 1,
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
@@ -47,7 +47,7 @@
           "links": [],
           "nullPointMode": "connected",
           "percentage": false,
-          "pointradius": 1,
+          "pointradius": 5,
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
@@ -58,12 +58,12 @@
             {
               "bucketAggs": [
                 {
-                  "type": "terms",
-                  "field": "@hostname"
+                  "field": "signature",
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
-                  "field": "@timestamp"
+                  "field": "@timestamp",
+                  "type": "date_histogram"
                 }
               ],
               "groupByFields": [],
@@ -71,25 +71,9 @@
                 {
                   "agg": "avg",
                   "field": "p99"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p95"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p75"
-                },
-                {
-                  "agg": "avg",
-                  "field": "median"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p25"
                 }
               ],
-              "query": "name: response_time_server AND layer: total AND !request_name: All",
+              "query": "name: jdbc_statement AND !signature: All",
               "refId": "A",
               "select": [
                 {
@@ -118,7 +102,7 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Response Time",
+          "title": "JDBC Response Time",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -151,7 +135,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 2,
-          "leftYAxisLabel": "Requests/s",
+          "leftYAxisLabel": "Queries/s",
           "legend": {
             "avg": false,
             "current": false,
@@ -177,27 +161,22 @@
             {
               "bucketAggs": [
                 {
-                  "type": "terms",
-                  "field": "http_status"
+                  "field": "signature",
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
-                  "field": "@timestamp"
+                  "field": "@timestamp",
+                  "type": "date_histogram"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "http_code"
-                }
-              ],
-              "hide": false,
+              "groupByFields": [],
               "metrics": [
                 {
                   "agg": "avg",
                   "field": "m1_rate"
                 }
               ],
-              "query": "name: request_throughput AND !request_name: All",
+              "query": "name: jdbc_statement AND !signature: All",
               "refId": "A",
               "select": [
                 {
@@ -210,7 +189,7 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Throughput by Status",
+          "title": "Average Queries/Second",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -229,7 +208,7 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "350px",
+      "height": "250px",
       "panels": [
         {
           "aliasColors": {},
@@ -277,7 +256,7 @@
               "bucketAggs": [
                 {
                   "type": "terms",
-                  "field": "request_name"
+                  "field": "signature"
                 },
                 {
                   "type": "date_histogram",
@@ -286,21 +265,21 @@
               ],
               "groupByFields": [
                 {
-                  "field": "request_name"
+                  "field": "signature"
                 }
               ],
               "metrics": [
                 {
                   "agg": "avg",
-                  "field": "median"
+                  "field": "p75"
                 }
               ],
-              "query": "name: response_time_server AND layer: total AND !request_name: All",
+              "query": "name: jdbc_statement AND !signature: All",
               "refId": "A",
               "select": [
                 {
                   "agg": "avg",
-                  "field": "median"
+                  "field": "p75"
                 }
               ],
               "timeField": "@timestamp"
@@ -308,7 +287,7 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Slowest Requests (Median)",
+          "title": "Slowest Queries (p75)",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -332,6 +311,105 @@
             "leftLogBase": 1,
             "leftMax": null,
             "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 4,
+          "leftYAxisLabel": "Queries/s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "bucketAggs": [
+                {
+                  "type": "terms",
+                  "field": "request_name"
+                },
+                {
+                  "type": "date_histogram",
+                  "field": "@timestamp"
+                }
+              ],
+              "groupByFields": [
+                {
+                  "field": "request_name"
+                }
+              ],
+              "metrics": [
+                {
+                  "agg": "avg",
+                  "field": "m1_rate"
+                }
+              ],
+              "query": "name: response_time_server AND layer: jdbc AND !request_name: All",
+              "refId": "A",
+              "select": [
+                {
+                  "agg": "avg",
+                  "field": "m1_rate"
+                }
+              ],
+              "timeField": "@timestamp"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Requests with most Queries/sec",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -366,128 +444,22 @@
             {
               "bucketAggs": [
                 {
-                  "type": "terms",
-                  "field": "request_name"
-                },
-                {
-                  "type": "date_histogram",
-                  "field": "@timestamp"
+                  "field": "@timestamp",
+                  "type": "date_histogram"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "request_name"
-                }
-              ],
-              "metrics": [
-                {
-                  "agg": "avg",
-                  "field": "m1_rate"
-                }
-              ],
-              "query": "name: response_time_server AND layer: total AND !request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "m1_rate"
-                }
-              ],
-              "timeField": "@timestamp"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Highest Throughput",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ]
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "350px",
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": null,
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 4,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "type": "terms",
-                  "field": "request_name"
-                },
-                {
-                  "type": "date_histogram",
-                  "field": "@timestamp"
-                }
-              ],
-              "groupByFields": [
-                {
-                  "field": "request_name"
-                }
-              ],
+              "groupByFields": [],
               "metrics": [
                 {
                   "agg": "avg",
                   "field": "p95"
                 }
               ],
-              "query": "name: response_time_server AND layer: total AND !request_name: All",
+              "query": "name: get_jdbc_connection",
               "refId": "A",
               "select": [
                 {
-                  "agg": "avg",
+                  "agg": "max",
                   "field": "p95"
                 }
               ],
@@ -496,7 +468,7 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Slowest Requests (p95)",
+          "title": "Time to get Connection (p95)",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -519,7 +491,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": 0,
+            "leftMin": null,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -554,130 +526,27 @@
             {
               "bucketAggs": [
                 {
-                  "type": "terms",
-                  "field": "request_name"
-                },
-                {
-                  "type": "date_histogram",
-                  "field": "@timestamp"
-                }
-              ],
-              "groupByFields": [
-                {
-                  "field": "request_name"
-                }
-              ],
-              "metrics": [
-                {
-                  "agg": "avg",
-                  "field": "m1_rate"
-                }
-              ],
-              "query": "name: error_rate AND !request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "m1_rate"
-                }
-              ],
-              "timeField": "@timestamp"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Most Errors",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ]
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "350px",
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": null,
-          "decimals": 2,
-          "editable": true,
-          "error": false,
-          "fill": 8,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 7,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "field": "@hostname",
-                  "type": "terms"
-                },
-                {
                   "field": "@timestamp",
                   "type": "date_histogram"
                 }
               ],
               "groupByFields": [
                 {
-                  "field": "layer"
+                  "field": "signature"
                 }
               ],
               "metrics": [
                 {
                   "agg": "avg",
-                  "field": "mean"
+                  "field": "m1_rate"
                 }
               ],
-              "query": "name: response_time_rum AND request_name: All",
+              "query": "name: jdbc_statement AND !signature: All",
               "refId": "A",
               "select": [
                 {
                   "agg": "avg",
-                  "field": "mean"
+                  "field": "m1_rate"
                 }
               ],
               "timeField": "@timestamp"
@@ -685,10 +554,10 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Page Load Time Breakdown",
+          "title": "Most Frequent Queries",
           "tooltip": {
             "shared": true,
-            "value_type": "individual"
+            "value_type": "cumulative"
           },
           "type": "graph",
           "x-axis": true,
@@ -736,40 +605,16 @@
     }
   ],
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "templating": {
-    "list": [
-      {
-        "allFormat": "wildcard",
-        "current": {
-          "text": "All",
-          "value": "*"
-        },
-        "datasource": null,
-        "includeAll": true,
-        "multi": false,
-        "multiFormat": "glob",
-        "name": "Application",
-        "options": [
-          {
-            "selected": true,
-            "text": "All",
-            "value": "*"
-          }
-        ],
-        "query": "*",
-        "refresh_on_load": false,
-        "regex": "application",
-        "type": "query"
-      }
-    ]
+    "list": []
   },
   "annotations": {
     "list": []
   },
   "schemaVersion": 6,
-  "version": 6,
+  "version": 7,
   "links": []
 }
