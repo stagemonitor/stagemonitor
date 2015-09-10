@@ -58,8 +58,6 @@ public class EhCachePlugin extends StagemonitorPlugin {
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchEhCache.json");
-		}
-		if (corePlugin.isReportToElasticsearch()) {
 			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("kibana/EhCache.bulk"));
 		}
 	}
