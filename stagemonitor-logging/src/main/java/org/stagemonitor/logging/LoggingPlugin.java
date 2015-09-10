@@ -14,7 +14,7 @@ public class LoggingPlugin extends StagemonitorPlugin {
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
 		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendGrafanaDashboardAsync("Logging.json");
+		elasticsearchClient.sendGrafana1DashboardAsync("Logging.json");
 	}
 
 	@Override

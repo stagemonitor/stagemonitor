@@ -10,7 +10,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testSendDashboard() throws Exception {
-		elasticsearchClient.sendGrafanaDashboardAsync("Test Dashboard.json").get();
+		elasticsearchClient.sendGrafana1DashboardAsync("Test Dashboard.json").get();
 		refresh();
 		final JsonNode dashboard = elasticsearchClient.getJson("/grafana-dash/dashboard/test-title");
 		assertEquals("test-title", dashboard.get("_id").textValue());

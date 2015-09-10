@@ -122,7 +122,7 @@ public class ElasticsearchClient {
 		return new CompletedFuture<Object>(null);
 	}
 
-	public Future<?> sendGrafanaDashboardAsync(String dashboardPath) {
+	public Future<?> sendGrafana1DashboardAsync(String dashboardPath) {
 		return sendDashboardAsync("/grafana-dash/dashboard/", dashboardPath);
 	}
 

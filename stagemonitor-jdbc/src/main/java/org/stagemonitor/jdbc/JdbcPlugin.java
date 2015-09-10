@@ -62,7 +62,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		if (corePlugin.isReportToGraphite()) {
-			elasticsearchClient.sendGrafanaDashboardAsync("grafana/Grafana1GraphiteDBQueries.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteDBQueries.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("JdbcDashboard.bulk"));

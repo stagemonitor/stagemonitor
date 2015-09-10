@@ -217,8 +217,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	public void initializePlugin(Metric2Registry registry, Configuration config) {
 		registerPooledResources(registry, tomcatThreadPools());
 		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendGrafanaDashboardAsync("Server.json");
-		elasticsearchClient.sendGrafanaDashboardAsync("KPIs over Time.json");
+		elasticsearchClient.sendGrafana1DashboardAsync("Server.json");
+		elasticsearchClient.sendGrafana1DashboardAsync("KPIs over Time.json");
 	}
 
 	@Override
