@@ -19,10 +19,24 @@
             "_all": { "enabled": false },
             "_source": { "enabled": false },
             "properties": {
-                "@timestamp": { "type": "date" },
-                "value": {
-                   "type": "double"
-                }
+              "@timestamp": { "type": "date",    "doc_values": true },
+              "count":      { "type": "integer", "doc_values": true },
+              "m1_rate":    { "type": "double",  "doc_values": true },
+              "m5_rate":    { "type": "double",  "doc_values": true },
+              "m15_rate":   { "type": "double",  "doc_values": true },
+              "max":        { "type": "double",  "doc_values": true },
+              "mean":       { "type": "double",  "doc_values": true },
+              "mean_rate":  { "type": "double",  "doc_values": true },
+              "median":     { "type": "double",  "doc_values": true },
+              "min":        { "type": "double",  "doc_values": true },
+              "p25":        { "type": "double",  "doc_values": true },
+              "p75":        { "type": "double",  "doc_values": true },
+              "p95":        { "type": "double",  "doc_values": true },
+              "p98":        { "type": "double",  "doc_values": true },
+              "p99":        { "type": "double",  "doc_values": true },
+              "p999":       { "type": "double",  "doc_values": true },
+              "std":        { "type": "double",  "doc_values": true },
+              "value":      { "type": "double",  "doc_values": true }
             }
         }
     }
