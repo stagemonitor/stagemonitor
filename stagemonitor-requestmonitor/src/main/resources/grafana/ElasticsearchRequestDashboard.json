@@ -14,7 +14,13 @@
       "height": "350px",
       "panels": [
         {
-          "aliasColors": {},
+          "aliasColors": {
+            "Average p99": "#B7DBAB",
+            "Average p25": "#3F6833",
+            "Average median": "#508642",
+            "Average p75": "#629E51",
+            "Average p95": "#7EB26D"
+          },
           "bars": false,
           "datasource": null,
           "editable": true,
@@ -58,35 +64,41 @@
             {
               "bucketAggs": [
                 {
-                  "type": "terms",
-                  "field": "@hostname"
-                },
-                {
-                  "type": "date_histogram",
-                  "field": "@timestamp"
+                  "field": "@timestamp",
+                  "type": "date_histogram"
                 }
               ],
               "groupByFields": [],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "p99"
+                  "field": "p99",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 },
                 {
-                  "agg": "avg",
-                  "field": "p95"
+                  "field": "p95",
+                  "id": "2",
+                  "settings": {},
+                  "type": "avg"
                 },
                 {
-                  "agg": "avg",
-                  "field": "p75"
+                  "field": "p75",
+                  "id": "3",
+                  "settings": {},
+                  "type": "avg"
                 },
                 {
-                  "agg": "avg",
-                  "field": "median"
+                  "field": "median",
+                  "id": "4",
+                  "settings": {},
+                  "type": "avg"
                 },
                 {
-                  "agg": "avg",
-                  "field": "p25"
+                  "field": "p25",
+                  "id": "5",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: response_time_server AND layer: total AND !request_name: All",
@@ -132,7 +144,10 @@
           ]
         },
         {
-          "aliasColors": {},
+          "aliasColors": {
+            "200": "#508642",
+            "500": "#E24D42"
+          },
           "bars": false,
           "datasource": null,
           "editable": true,
@@ -177,12 +192,24 @@
             {
               "bucketAggs": [
                 {
+                  "field": "http_code",
+                  "id": "2",
+                  "order": "desc",
+                  "orderBy": "_term",
+                  "size": "0",
                   "type": "terms",
-                  "field": "http_status"
+                  "settings": {
+                    "order": "desc",
+                    "size": "5",
+                    "orderBy": "1"
+                  }
                 },
                 {
+                  "field": "@timestamp",
                   "type": "date_histogram",
-                  "field": "@timestamp"
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [
@@ -193,8 +220,10 @@
               "hide": false,
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "m1_rate"
+                  "field": "m1_rate",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: request_throughput AND !request_name: All",
@@ -229,7 +258,7 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "350px",
+      "height": "450px",
       "panels": [
         {
           "aliasColors": {},
@@ -252,13 +281,14 @@
           },
           "id": 3,
           "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -276,12 +306,23 @@
             {
               "bucketAggs": [
                 {
+                  "field": "request_name",
+                  "order": "desc",
+                  "orderBy": "1",
+                  "size": "5",
                   "type": "terms",
-                  "field": "request_name"
+                  "settings": {
+                    "order": "desc",
+                    "size": "5",
+                    "orderBy": "1"
+                  }
                 },
                 {
+                  "field": "@timestamp",
                   "type": "date_histogram",
-                  "field": "@timestamp"
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [
@@ -291,8 +332,10 @@
               ],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "median"
+                  "field": "median",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: response_time_server AND layer: total AND !request_name: All",
@@ -342,13 +385,14 @@
           },
           "id": 5,
           "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -366,12 +410,23 @@
             {
               "bucketAggs": [
                 {
+                  "field": "request_name",
+                  "order": "desc",
+                  "orderBy": "1",
+                  "size": "5",
                   "type": "terms",
-                  "field": "request_name"
+                  "settings": {
+                    "order": "desc",
+                    "size": "5",
+                    "orderBy": "1"
+                  }
                 },
                 {
+                  "field": "@timestamp",
                   "type": "date_histogram",
-                  "field": "@timestamp"
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [
@@ -381,8 +436,10 @@
               ],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "m1_rate"
+                  "field": "m1_rate",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: response_time_server AND layer: total AND !request_name: All",
@@ -417,7 +474,7 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "350px",
+      "height": "450px",
       "panels": [
         {
           "aliasColors": {},
@@ -440,13 +497,14 @@
           },
           "id": 4,
           "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -464,12 +522,23 @@
             {
               "bucketAggs": [
                 {
+                  "field": "request_name",
+                  "order": "desc",
+                  "orderBy": "1",
+                  "size": "5",
                   "type": "terms",
-                  "field": "request_name"
+                  "settings": {
+                    "order": "desc",
+                    "size": "5",
+                    "orderBy": "1"
+                  }
                 },
                 {
+                  "field": "@timestamp",
                   "type": "date_histogram",
-                  "field": "@timestamp"
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [
@@ -479,8 +548,10 @@
               ],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "p95"
+                  "field": "p95",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: response_time_server AND layer: total AND !request_name: All",
@@ -530,13 +601,14 @@
           },
           "id": 6,
           "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -554,12 +626,15 @@
             {
               "bucketAggs": [
                 {
-                  "type": "terms",
-                  "field": "request_name"
+                  "field": "request_name",
+                  "order": "desc",
+                  "orderBy": "1",
+                  "size": "5",
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
-                  "field": "@timestamp"
+                  "field": "@timestamp",
+                  "type": "date_histogram"
                 }
               ],
               "groupByFields": [
@@ -569,8 +644,10 @@
               ],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "m1_rate"
+                  "field": "m1_rate",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: error_rate AND !request_name: All",
@@ -608,10 +685,15 @@
       "height": "350px",
       "panels": [
         {
-          "aliasColors": {},
+          "aliasColors": {
+            "Server": "#5195CE",
+            "Page Rendering": "#447EBC",
+            "Network": "#1F78C1",
+            "Dom Processing": "#0A437C"
+          },
           "bars": false,
           "datasource": null,
-          "decimals": 2,
+          "decimals": null,
           "editable": true,
           "error": false,
           "fill": 8,
@@ -653,12 +735,23 @@
             {
               "bucketAggs": [
                 {
-                  "field": "@hostname",
-                  "type": "terms"
+                  "field": "layer",
+                  "order": "desc",
+                  "orderBy": "_term",
+                  "size": "0",
+                  "type": "terms",
+                  "settings": {
+                    "order": "asc",
+                    "size": "0",
+                    "orderBy": "_term"
+                  }
                 },
                 {
                   "field": "@timestamp",
-                  "type": "date_histogram"
+                  "type": "date_histogram",
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [
@@ -668,8 +761,10 @@
               ],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "mean"
+                  "field": "mean",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: response_time_rum AND request_name: All",
@@ -754,12 +849,18 @@
         "name": "Application",
         "options": [
           {
-            "selected": true,
             "text": "All",
-            "value": "*"
+            "value": "*",
+            "selected": true
+          },
+          {
+            "text": "application",
+            "value": "application",
+            "selected": false
           }
         ],
         "query": "*",
+        "refresh": true,
         "refresh_on_load": false,
         "regex": "application",
         "type": "query"
@@ -769,7 +870,8 @@
   "annotations": {
     "list": []
   },
+  "refresh": "30s",
   "schemaVersion": 6,
-  "version": 6,
+  "version": 16,
   "links": []
 }

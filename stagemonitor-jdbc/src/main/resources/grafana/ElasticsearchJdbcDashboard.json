@@ -14,7 +14,13 @@
       "height": "350px",
       "panels": [
         {
-          "aliasColors": {},
+          "aliasColors": {
+            "median": "#7EB26D",
+            "p25": "#9AC48A",
+            "p75": "#629E51",
+            "p95": "#508642",
+            "p99": "#3F6833"
+          },
           "bars": false,
           "datasource": null,
           "editable": true,
@@ -34,13 +40,13 @@
           },
           "id": 1,
           "legend": {
-            "avg": false,
-            "current": false,
+            "avg": true,
+            "current": true,
             "max": false,
             "min": false,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -58,19 +64,44 @@
             {
               "bucketAggs": [
                 {
-                  "field": "signature",
-                  "type": "terms"
-                },
-                {
                   "field": "@timestamp",
-                  "type": "date_histogram"
+                  "type": "date_histogram",
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "p99"
+                  "field": "p99",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
+                },
+                {
+                  "field": "p95",
+                  "id": "2",
+                  "settings": {},
+                  "type": "avg"
+                },
+                {
+                  "field": "p75",
+                  "id": "3",
+                  "settings": {},
+                  "type": "avg"
+                },
+                {
+                  "field": "median",
+                  "id": "4",
+                  "settings": {},
+                  "type": "avg"
+                },
+                {
+                  "field": "p25",
+                  "id": "5",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: jdbc_statement AND !signature: All",
@@ -137,13 +168,13 @@
           "id": 2,
           "leftYAxisLabel": "Queries/s",
           "legend": {
-            "avg": false,
-            "current": false,
+            "avg": true,
+            "current": true,
             "max": false,
             "min": false,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -161,19 +192,20 @@
             {
               "bucketAggs": [
                 {
-                  "field": "signature",
-                  "type": "terms"
-                },
-                {
                   "field": "@timestamp",
-                  "type": "date_histogram"
+                  "type": "date_histogram",
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "m1_rate"
+                  "field": "m1_rate",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: jdbc_statement AND !signature: All",
@@ -208,7 +240,7 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "250px",
+      "height": "450px",
       "panels": [
         {
           "aliasColors": {},
@@ -231,13 +263,14 @@
           },
           "id": 3,
           "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
             "show": true,
             "total": false,
-            "values": false
+            "values": true,
+            "alignAsTable": true
           },
           "lines": true,
           "linewidth": 2,
@@ -255,12 +288,23 @@
             {
               "bucketAggs": [
                 {
+                  "field": "signature",
+                  "order": "desc",
+                  "orderBy": "1",
+                  "size": "5",
                   "type": "terms",
-                  "field": "signature"
+                  "settings": {
+                    "order": "desc",
+                    "size": "5",
+                    "orderBy": "1"
+                  }
                 },
                 {
+                  "field": "@timestamp",
                   "type": "date_histogram",
-                  "field": "@timestamp"
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [
@@ -270,8 +314,10 @@
               ],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "p75"
+                  "field": "p75",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: jdbc_statement AND !signature: All",
@@ -322,13 +368,14 @@
           "id": 4,
           "leftYAxisLabel": "Queries/s",
           "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
             "show": true,
             "total": false,
-            "values": false
+            "values": true,
+            "alignAsTable": true
           },
           "lines": true,
           "linewidth": 2,
@@ -346,12 +393,23 @@
             {
               "bucketAggs": [
                 {
+                  "field": "request_name",
+                  "order": "desc",
+                  "orderBy": "1",
+                  "size": "5",
                   "type": "terms",
-                  "field": "request_name"
+                  "settings": {
+                    "order": "desc",
+                    "size": "5",
+                    "orderBy": "1"
+                  }
                 },
                 {
+                  "field": "@timestamp",
                   "type": "date_histogram",
-                  "field": "@timestamp"
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [
@@ -361,8 +419,10 @@
               ],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "m1_rate"
+                  "field": "m1_rate",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: response_time_server AND layer: jdbc AND !request_name: All",
@@ -397,7 +457,7 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "250px",
+      "height": "450px",
       "panels": [
         {
           "aliasColors": {},
@@ -409,7 +469,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -445,14 +505,19 @@
               "bucketAggs": [
                 {
                   "field": "@timestamp",
-                  "type": "date_histogram"
+                  "type": "date_histogram",
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "p95"
+                  "field": "p95",
+                  "id": "1",
+                  "settings": {},
+                  "type": "max"
                 }
               ],
               "query": "name: get_jdbc_connection",
@@ -491,7 +556,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -502,13 +567,14 @@
           },
           "id": 6,
           "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
             "show": true,
             "total": false,
-            "values": false
+            "values": true,
+            "alignAsTable": true
           },
           "lines": true,
           "linewidth": 2,
@@ -526,8 +592,21 @@
             {
               "bucketAggs": [
                 {
+                  "type": "terms",
+                  "field": "signature",
+                  "id": "2",
+                  "settings": {
+                    "order": "desc",
+                    "size": "5",
+                    "orderBy": "1"
+                  }
+                },
+                {
                   "field": "@timestamp",
-                  "type": "date_histogram"
+                  "type": "date_histogram",
+                  "settings": {
+                    "interval": "auto"
+                  }
                 }
               ],
               "groupByFields": [
@@ -537,8 +616,10 @@
               ],
               "metrics": [
                 {
-                  "agg": "avg",
-                  "field": "m1_rate"
+                  "field": "m1_rate",
+                  "id": "1",
+                  "settings": {},
+                  "type": "avg"
                 }
               ],
               "query": "name: jdbc_statement AND !signature: All",
@@ -605,7 +686,7 @@
     }
   ],
   "time": {
-    "from": "now-6h",
+    "from": "now-1h",
     "to": "now"
   },
   "templating": {
@@ -614,7 +695,8 @@
   "annotations": {
     "list": []
   },
+  "refresh": "30s",
   "schemaVersion": 6,
-  "version": 7,
+  "version": 10,
   "links": []
 }
