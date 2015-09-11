@@ -30,7 +30,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	private HttpClient httpClient;
 	private final Clock clock;
 	private final CorePlugin corePlugin;
-	JsonFactory jfactory = new JsonFactory();
+	private JsonFactory jfactory = new JsonFactory();
 
 	public ElasticsearchReporter(Metric2Registry registry,
 								 Metric2Filter filter,
@@ -88,8 +88,15 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		reportMetric(gauges, timestamp, new ValueWriter<Gauge>() {
 			public void writeValues(Gauge gauge, JsonGenerator jg) throws IOException {
 				final Object value = gauge.getValue();
+				if (value == null) {
+					return;
+				}
 				if (value instanceof Number) {
 					jg.writeNumberField("value", ((Number)value).doubleValue());
+				} else if (value instanceof Boolean) {
+					jg.writeBooleanField("value_boolean", (Boolean) value);
+				} else {
+					jg.writeStringField("value_string", value.toString());
 				}
 			}
 		}, os, bulkActionBytes);

@@ -75,8 +75,10 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 
 	private void reportGauges(Map<MetricName, Gauge> gauges, long timestamp) {
 		for (Map.Entry<MetricName, Gauge> entry : gauges.entrySet()) {
-			reportLine(entry.getKey().getInfluxDbLineProtocolString(),
-					"value=" + getGaugeValueForInfluxDb(entry.getValue().getValue()), timestamp);
+			final String value = getGaugeValueForInfluxDb(entry.getValue().getValue());
+			if (value != null) {
+				reportLine(entry.getKey().getInfluxDbLineProtocolString(), value, timestamp);
+			}
 		}
 	}
 
@@ -150,12 +152,19 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 	}
 
 	private String getGaugeValueForInfluxDb(Object value) {
+		if (value == null) {
+			return null;
+		}
 		if (value instanceof Number) {
-			return getFloatValue(value);
+			final String floatValue = getFloatValue(value);
+			if (floatValue == null) {
+				return null;
+			}
+			return "value=" + floatValue;
 		} else if (value instanceof Boolean) {
-			return value.toString();
+			return "value_boolean=" + value.toString();
 		} else {
-			return getStringValue(Objects.toString(value));
+			return "value_string=" + getStringValue(Objects.toString(value));
 		}
 	}
 
@@ -174,7 +183,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 	private String getFloatValue(Object number) {
 		String result = number.toString();
 		if (result.equals("NaN") || result.contains("Infinity")) {
-			return "null";
+			return null;
 		} else {
 			// InfluxDB wants the exponent to be in lower case
 			return result.replace('E', 'e');

@@ -15,6 +15,7 @@ import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.metricName
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Clock;
@@ -57,6 +58,45 @@ public class InfluxDbReporterTest {
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
 				eq(singletonList(format("cpu_usage,core=1,type=user,app=test value=3 %d", timestamp))));
+	}
+
+	@Test
+	public void testReportNullGauge() throws Exception {
+		influxDbReporter.reportMetrics(
+				metricNameMap(name("cpu_usage").type("user").tag("core", "1").build(), gauge(null)),
+				metricNameMap(Counter.class),
+				metricNameMap(Histogram.class),
+				metricNameMap(Meter.class),
+				metricNameMap(Timer.class));
+
+		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
+				eq(Collections.<String>emptyList()));
+	}
+
+	@Test
+	public void testReportBooleanGauge() throws Exception {
+		influxDbReporter.reportMetrics(
+				metricNameMap(name("gauge").build(), gauge(true)),
+				metricNameMap(Counter.class),
+				metricNameMap(Histogram.class),
+				metricNameMap(Meter.class),
+				metricNameMap(Timer.class));
+
+		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
+				eq(singletonList(format("gauge,app=test value_boolean=true %d", timestamp))));
+	}
+
+	@Test
+	public void testReportStringGauge() throws Exception {
+		influxDbReporter.reportMetrics(
+				metricNameMap(name("gauge").build(), gauge("foo")),
+				metricNameMap(Counter.class),
+				metricNameMap(Histogram.class),
+				metricNameMap(Meter.class),
+				metricNameMap(Timer.class));
+
+		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
+				eq(singletonList(format("gauge,app=test value_string=\"foo\" %d", timestamp))));
 	}
 
 	@Test

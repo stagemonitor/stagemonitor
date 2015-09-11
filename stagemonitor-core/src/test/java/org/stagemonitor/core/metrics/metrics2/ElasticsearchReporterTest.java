@@ -61,7 +61,7 @@ public class ElasticsearchReporterTest {
 			}
 		});
 		elasticsearchReporter = new ElasticsearchReporter(new Metric2Registry(),
-				Metric2Filter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, singletonMap("app", "test"),
+				Metric2Filter.ALL, TimeUnit.SECONDS, TimeUnit.NANOSECONDS, singletonMap("app", "test"),
 				httpClient, clock, mock(CorePlugin.class));
 		out = new ByteArrayOutputStream();
 	}
@@ -70,8 +70,7 @@ public class ElasticsearchReporterTest {
 	public void testReportGauges() throws Exception {
 		elasticsearchReporter.reportMetrics(
 				metricNameMap(
-						name("cpu_usage").type("user").tag("core", "1").build(), gauge(3),
-						name("gauge2").build(), gauge("foo")
+						name("cpu_usage").type("user").tag("core", "1").build(), gauge(3)
 				),
 				metricNameMap(Counter.class),
 				metricNameMap(Histogram.class),
@@ -79,7 +78,7 @@ public class ElasticsearchReporterTest {
 				metricNameMap(Timer.class));
 
 		final String jsons = new String(out.toByteArray());
-		assertEquals(jsons, 4, jsons.split("\n").length);
+		assertEquals(jsons, 2, jsons.split("\n").length);
 
 		assertEquals(
 				objectMap("index", map("_type", "metrics")
@@ -88,22 +87,62 @@ public class ElasticsearchReporterTest {
 
 		assertEquals(
 				objectMap("@timestamp", timestamp)
-						.add("name", "cpu_usage")
-						.add("tags", map("app", "test")
-								.add("type", "user")
-								.add("core", "1"))
-						.add("values", map("value", 3.0)),
+					.add("name", "cpu_usage")
+					.add("app", "test")
+					.add("type", "user")
+					.add("core", "1")
+					.add("value", 3.0),
 				asMap(jsons.split("\n")[1]));
+	}
 
-		// only number-gauges are supported
-		// in elasticsearch a field can only have one datatype
-		// the values.value field has the type double so it can't store strings
+	@Test
+	public void testReportNullGauge() throws Exception {
+		elasticsearchReporter.reportMetrics(
+				metricNameMap(name("gauge").build(), gauge(null)),
+				metricNameMap(Counter.class),
+				metricNameMap(Histogram.class),
+				metricNameMap(Meter.class),
+				metricNameMap(Timer.class));
+
 		assertEquals(
 				objectMap("@timestamp", timestamp)
-						.add("name", "gauge2")
-						.add("tags", map("app", "test"))
-						.add("values", map()),
-				asMap(jsons.split("\n")[3]));
+						.add("name", "gauge")
+						.add("app", "test"),
+				asMap(out));
+	}
+
+	@Test
+	public void testReportBooleanGauge() throws Exception {
+		elasticsearchReporter.reportMetrics(
+				metricNameMap(name("gauge").build(), gauge(true)),
+				metricNameMap(Counter.class),
+				metricNameMap(Histogram.class),
+				metricNameMap(Meter.class),
+				metricNameMap(Timer.class));
+
+		assertEquals(
+				objectMap("@timestamp", timestamp)
+						.add("name", "gauge")
+						.add("app", "test")
+						.add("value_boolean", true),
+				asMap(out));
+	}
+
+	@Test
+	public void testReportStringGauge() throws Exception {
+		elasticsearchReporter.reportMetrics(
+				metricNameMap(name("gauge").build(), gauge("foo")),
+				metricNameMap(Counter.class),
+				metricNameMap(Histogram.class),
+				metricNameMap(Meter.class),
+				metricNameMap(Timer.class));
+
+		assertEquals(
+				objectMap("@timestamp", timestamp)
+						.add("name", "gauge")
+						.add("app", "test")
+						.add("value_string", "foo"),
+				asMap(out));
 	}
 
 	@Test
@@ -118,8 +157,8 @@ public class ElasticsearchReporterTest {
 		assertEquals(
 				map("@timestamp", timestamp, Object.class)
 						.add("name", "web_sessions")
-						.add("tags", map("app", "test"))
-						.add("values", map("count", 123)),
+						.add("app", "test")
+						.add("count", 123),
 				asMap(out));
 	}
 
@@ -134,19 +173,19 @@ public class ElasticsearchReporterTest {
 
 		assertEquals(objectMap("@timestamp", timestamp)
 						.add("name", "histogram")
-						.add("tags", map("app", "test"))
-						.add("values", objectMap("count", 1)
-								.add("max", 2)
-								.add("mean", 4.0)
-								.add("median", 6.0)
-								.add("min", 4)
-								.add("p25", 0.0)
-								.add("p75", 7.0)
-								.add("p95", 8.0)
-								.add("p98", 9.0)
-								.add("p99", 10.0)
-								.add("p999", 11.0)
-								.add("std", 5.0)),
+						.add("app", "test")
+						.add("count", 1)
+						.add("max", 2.0)
+						.add("mean", 4.0)
+						.add("median", 6.0)
+						.add("min", 4.0)
+						.add("p25", 0.0)
+						.add("p75", 7.0)
+						.add("p95", 8.0)
+						.add("p98", 9.0)
+						.add("p99", 10.0)
+						.add("p999", 11.0)
+						.add("std", 5.0),
 				asMap(out));
 	}
 
@@ -161,13 +200,12 @@ public class ElasticsearchReporterTest {
 
 		assertEquals(map("@timestamp", timestamp, Object.class)
 						.add("name", "meter")
-						.add("tags", map("app", "test"))
-						.add("values", objectMap("count", 10)
-										.add("m15_rate", 5.0)
-										.add("m1_rate", 3.0)
-										.add("m5_rate", 4.0)
-										.add("mean_rate", 2.0)
-						),
+						.add("app", "test")
+						.add("count", 10)
+						.add("m15_rate", 5.0)
+						.add("m1_rate", 3.0)
+						.add("m5_rate", 4.0)
+						.add("mean_rate", 2.0),
 				asMap(out));
 	}
 
@@ -182,23 +220,23 @@ public class ElasticsearchReporterTest {
 
 		assertEquals(map("@timestamp", timestamp, Object.class)
 						.add("name", "response_time")
-						.add("tags", map("app", "test"))
-						.add("values", objectMap("count", 1)
-								.add("m15_rate", 5.0)
-								.add("m1_rate", 3.0)
-								.add("m5_rate", 4.0)
-								.add("mean_rate", 2.0)
-								.add("max", 2)
-								.add("mean", 4.0)
-								.add("median", 6.0)
-								.add("min", 4)
-								.add("p25", 0.0)
-								.add("p75", 7.0)
-								.add("p95", 8.0)
-								.add("p98", 9.0)
-								.add("p99", 10.0)
-								.add("p999", 11.0)
-								.add("std", 5.0)),
+						.add("app", "test")
+						.add("count", 1)
+						.add("m15_rate", 5.0)
+						.add("m1_rate", 3.0)
+						.add("m5_rate", 4.0)
+						.add("mean_rate", 2.0)
+						.add("max", 2.0)
+						.add("mean", 4.0)
+						.add("median", 6.0)
+						.add("min", 4.0)
+						.add("p25", 0.0)
+						.add("p75", 7.0)
+						.add("p95", 8.0)
+						.add("p98", 9.0)
+						.add("p99", 10.0)
+						.add("p999", 11.0)
+						.add("std", 5.0),
 				asMap(out));
 	}
 
