@@ -181,9 +181,6 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			} else {
 				injectHtmlToOutputStream(response, httpServletRequest, httpServletResponseBufferWrapper, requestInformation);
 			}
-			if (StringUtils.isNotEmpty(response.getHeader("Content-Length"))) {
-				response.setContentLength(-1);
-			}
 		} else {
 			passthrough(response, httpServletResponseBufferWrapper);
 		}
@@ -199,7 +196,9 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		if (content.contains("</body>")) {
 			httpServletRequest.setAttribute("stagemonitorInjected", true);
 			content = getContetToInject(httpServletRequest, requestInformation, content);
-			response.getOutputStream().write(content.getBytes(response.getCharacterEncoding()));
+			final byte[] bytes = content.getBytes(response.getCharacterEncoding());
+			response.setContentLength(bytes.length);
+			response.getOutputStream().write(bytes);
 		} else {
 			// this is no html
 			passthrough(response, httpServletResponseBufferWrapper);

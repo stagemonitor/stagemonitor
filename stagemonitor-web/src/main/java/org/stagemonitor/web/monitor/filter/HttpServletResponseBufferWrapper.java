@@ -48,6 +48,11 @@ public class HttpServletResponseBufferWrapper extends HttpServletResponseWrapper
 	}
 
 	@Override
+	public void setContentLength(int len) {
+		// ignore
+	}
+
+	@Override
 	public void flushBuffer() throws IOException {
 		// the purpose of this wrapper is to buffer all the content
 		committed = true;
