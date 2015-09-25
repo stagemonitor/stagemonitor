@@ -63,7 +63,7 @@ public class GrafanaClient {
 		jsonData.put("timeField", "@timestamp");
 		jsonData.put("interval", "Daily");
 		dataSource.put("jsonData", jsonData);
-		return asyncGrafanaRequest("POST", "/api/datasources/db", dataSource);
+		return asyncGrafanaRequest("POST", "/api/datasources", dataSource);
 
 	}
 
