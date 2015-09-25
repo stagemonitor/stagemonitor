@@ -122,7 +122,7 @@ public class InfluxDbReporterTest {
 				metricNameMap(Timer.class));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("web_sessions,app=test count=123 %d", timestamp))));
+				eq(singletonList(format("web_sessions,app=test count=123i %d", timestamp))));
 	}
 
 	@Test
@@ -135,7 +135,7 @@ public class InfluxDbReporterTest {
 				metricNameMap(Timer.class));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("histogram,app=test count=1,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
+				eq(singletonList(format("histogram,app=test count=1i,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
 	}
 
 	@Test
@@ -148,7 +148,7 @@ public class InfluxDbReporterTest {
 				metricNameMap(Timer.class));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("meter,app=test count=10,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0 %d", timestamp))));
+				eq(singletonList(format("meter,app=test count=10i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0 %d", timestamp))));
 	}
 
 	@Test
@@ -161,6 +161,6 @@ public class InfluxDbReporterTest {
 				metricNameMap(name("response_time").build(), timer(4)));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("response_time,app=test count=1,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
+				eq(singletonList(format("response_time,app=test count=1i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
 	}
 }

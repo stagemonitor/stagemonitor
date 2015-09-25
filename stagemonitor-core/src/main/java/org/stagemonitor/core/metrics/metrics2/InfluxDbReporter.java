@@ -169,7 +169,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 	}
 
 	private String getIntegerValue(Object integer) {
-		return integer.toString();
+		return integer.toString() + "i";
 	}
 
 	private String getDuration(double duration) {
