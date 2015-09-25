@@ -1,45 +1,49 @@
 {
-    "template": "stagemonitor-metrics-*",
-    "settings": {
-        "index": {
-            "refresh_interval": "5s"
-        }
-    },
-    "mappings": {
-        "_default_": {
-            "dynamic_templates": [
-                {
-                    "strings": {
-                        "match": "*",
-                        "match_mapping_type": "string",
-                        "mapping": { "type": "string", "index": "not_analyzed", "doc_values": true }
-                    }
-                }
-            ],
-            "_all": { "enabled": false },
-            "_source": { "enabled": false },
-            "properties": {
-              "@timestamp":    { "type": "date",    "doc_values": true },
-              "count":         { "type": "integer", "doc_values": true },
-              "m1_rate":       { "type": "double",  "doc_values": true },
-              "m5_rate":       { "type": "double",  "doc_values": true },
-              "m15_rate":      { "type": "double",  "doc_values": true },
-              "max":           { "type": "double",  "doc_values": true },
-              "mean":          { "type": "double",  "doc_values": true },
-              "mean_rate":     { "type": "double",  "doc_values": true },
-              "median":        { "type": "double",  "doc_values": true },
-              "min":           { "type": "double",  "doc_values": true },
-              "p25":           { "type": "double",  "doc_values": true },
-              "p75":           { "type": "double",  "doc_values": true },
-              "p95":           { "type": "double",  "doc_values": true },
-              "p98":           { "type": "double",  "doc_values": true },
-              "p99":           { "type": "double",  "doc_values": true },
-              "p999":          { "type": "double",  "doc_values": true },
-              "std":           { "type": "double",  "doc_values": true },
-              "value":         { "type": "double",  "doc_values": true },
-              "value_boolean": { "type": "boolean", "doc_values": true },
-              "value_string":  { "type": "string",  "doc_values": true, "index": "not_analyzed" }
-            }
-        }
+  "template": "stagemonitor-metrics-*",
+  "settings": {
+    "index": {
+      "refresh_interval": "5s"
     }
+  },
+  "mappings": {
+    "_default_": {
+      "dynamic_templates": [
+        {
+          "strings": {
+            "match": "*",
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "string",
+              "index": "not_analyzed",
+              "doc_values": true
+            }
+          }
+        }
+      ],
+      "_all":            { "enabled": false },
+      "_source":         { "enabled": false },
+      "properties": {
+        "@timestamp":    { "type": "date",    "doc_values": true },
+        "count":         { "type": "integer", "doc_values": true },
+        "m1_rate":       { "type": "float",   "doc_values": true },
+        "m5_rate":       { "type": "float",   "doc_values": true },
+        "m15_rate":      { "type": "float",   "doc_values": true },
+        "max":           { "type": "integer", "doc_values": true },
+        "mean":          { "type": "integer", "doc_values": true },
+        "mean_rate":     { "type": "float",   "doc_values": true },
+        "median":        { "type": "float",   "doc_values": true },
+        "min":           { "type": "float",   "doc_values": true },
+        "p25":           { "type": "float",   "doc_values": true },
+        "p75":           { "type": "float",   "doc_values": true },
+        "p95":           { "type": "float",   "doc_values": true },
+        "p98":           { "type": "float",   "doc_values": true },
+        "p99":           { "type": "float",   "doc_values": true },
+        "p999":          { "type": "float",   "doc_values": true },
+        "std":           { "type": "float",   "doc_values": true },
+        "value":         { "type": "float",   "doc_values": true },
+        "value_boolean": { "type": "boolean", "doc_values": true },
+        "value_string":  { "type": "string",  "doc_values": true, "index": "not_analyzed" }
+      }
+    }
+  }
 }
