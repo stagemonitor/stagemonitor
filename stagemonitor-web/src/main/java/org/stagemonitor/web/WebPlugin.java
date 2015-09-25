@@ -32,6 +32,7 @@ import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.logging.MDCListener;
@@ -216,9 +217,15 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	@Override
 	public void initializePlugin(Metric2Registry registry, Configuration config) {
 		registerPooledResources(registry, tomcatThreadPools());
-		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendGrafana1DashboardAsync("Server.json");
-		elasticsearchClient.sendGrafana1DashboardAsync("KPIs over Time.json");
+		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
+		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		if (corePlugin.isReportToGraphite()) {
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Server.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/KPIs over Time.json");
+		}
+		if (corePlugin.isReportToElasticsearch()) {
+			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("kibana/ApplicationServer.bulk"));
+		}
 	}
 
 	@Override
