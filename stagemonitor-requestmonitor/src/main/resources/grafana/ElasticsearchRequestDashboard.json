@@ -15,14 +15,14 @@
       "panels": [
         {
           "aliasColors": {
-            "Average p99": "#B7DBAB",
-            "Average p25": "#3F6833",
             "Average median": "#508642",
+            "Average p25": "#3F6833",
             "Average p75": "#629E51",
-            "Average p95": "#7EB26D"
+            "Average p95": "#7EB26D",
+            "Average p99": "#B7DBAB"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -65,66 +65,52 @@
               "bucketAggs": [
                 {
                   "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto"
+                  },
                   "type": "date_histogram"
                 }
               ],
-              "groupByFields": [],
               "metrics": [
                 {
                   "field": "p99",
                   "id": "1",
+                  "meta": {},
                   "settings": {},
                   "type": "avg"
                 },
                 {
                   "field": "p95",
-                  "id": "2",
+                  "id": "3",
+                  "meta": {},
                   "settings": {},
                   "type": "avg"
                 },
                 {
                   "field": "p75",
-                  "id": "3",
+                  "id": "4",
+                  "meta": {},
                   "settings": {},
                   "type": "avg"
                 },
                 {
                   "field": "median",
-                  "id": "4",
+                  "id": "5",
+                  "meta": {},
                   "settings": {},
                   "type": "avg"
                 },
                 {
                   "field": "p25",
-                  "id": "5",
+                  "id": "6",
+                  "meta": {},
                   "settings": {},
                   "type": "avg"
                 }
               ],
               "query": "name: response_time_server AND layer: total AND !request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "p99"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p95"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p75"
-                },
-                {
-                  "agg": "avg",
-                  "field": "median"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p25"
-                }
-              ],
+              "refId": "B",
               "timeField": "@timestamp"
             }
           ],
@@ -149,7 +135,7 @@
             "500": "#E24D42"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -190,14 +176,22 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "m1_rate",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
-                  "field": "http_code",
-                  "id": "2",
-                  "order": "desc",
-                  "orderBy": "_term",
-                  "size": "0",
                   "type": "terms",
+                  "field": "http_code",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
                     "size": "5",
@@ -205,36 +199,16 @@
                   }
                 },
                 {
-                  "field": "@timestamp",
                   "type": "date_histogram",
+                  "id": "2",
                   "settings": {
                     "interval": "auto"
-                  }
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "http_code"
-                }
-              ],
-              "hide": false,
-              "metrics": [
-                {
-                  "field": "m1_rate",
-                  "id": "1",
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: request_throughput AND !request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "m1_rate"
-                }
-              ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: request_throughput AND !request_name: All"
             }
           ],
           "timeFrom": null,
@@ -263,7 +237,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -304,13 +278,22 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "median",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
-                  "field": "request_name",
-                  "order": "desc",
-                  "orderBy": "1",
-                  "size": "5",
                   "type": "terms",
+                  "field": "request_name",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
                     "size": "5",
@@ -318,35 +301,16 @@
                   }
                 },
                 {
-                  "field": "@timestamp",
                   "type": "date_histogram",
+                  "id": "2",
                   "settings": {
                     "interval": "auto"
-                  }
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "request_name"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "median",
-                  "id": "1",
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: response_time_server AND layer: total AND !request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "median"
-                }
-              ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: response_time_server AND layer: total AND !request_name: All"
             }
           ],
           "timeFrom": null,
@@ -367,7 +331,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -408,13 +372,22 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "m1_rate",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
-                  "field": "request_name",
-                  "order": "desc",
-                  "orderBy": "1",
-                  "size": "5",
                   "type": "terms",
+                  "field": "request_name",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
                     "size": "5",
@@ -422,35 +395,16 @@
                   }
                 },
                 {
-                  "field": "@timestamp",
                   "type": "date_histogram",
+                  "id": "2",
                   "settings": {
                     "interval": "auto"
-                  }
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "request_name"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "m1_rate",
-                  "id": "1",
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: response_time_server AND layer: total AND !request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "m1_rate"
-                }
-              ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: response_time_server AND layer: total AND !request_name: All"
             }
           ],
           "timeFrom": null,
@@ -479,7 +433,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -520,13 +474,22 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "p95",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
-                  "field": "request_name",
-                  "order": "desc",
-                  "orderBy": "1",
-                  "size": "5",
                   "type": "terms",
+                  "field": "request_name",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
                     "size": "5",
@@ -534,35 +497,16 @@
                   }
                 },
                 {
-                  "field": "@timestamp",
                   "type": "date_histogram",
+                  "id": "2",
                   "settings": {
                     "interval": "auto"
-                  }
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "request_name"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "p95",
-                  "id": "1",
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: response_time_server AND layer: total AND !request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "p95"
-                }
-              ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: response_time_server AND layer: total AND !request_name: All"
             }
           ],
           "timeFrom": null,
@@ -583,7 +527,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -624,41 +568,39 @@
           "steppedLine": false,
           "targets": [
             {
-              "bucketAggs": [
-                {
-                  "field": "request_name",
-                  "order": "desc",
-                  "orderBy": "1",
-                  "size": "5",
-                  "type": "terms"
-                },
-                {
-                  "field": "@timestamp",
-                  "type": "date_histogram"
-                }
-              ],
-              "groupByFields": [
-                {
-                  "field": "request_name"
-                }
-              ],
+              "refId": "A",
               "metrics": [
                 {
-                  "field": "m1_rate",
+                  "type": "avg",
                   "id": "1",
+                  "field": "m1_rate",
                   "settings": {},
-                  "type": "avg"
+                  "meta": {}
                 }
               ],
-              "query": "name: error_rate AND !request_name: All",
-              "refId": "A",
-              "select": [
+              "bucketAggs": [
                 {
-                  "agg": "avg",
-                  "field": "m1_rate"
+                  "type": "terms",
+                  "field": "request_name",
+                  "id": "3",
+                  "fake": true,
+                  "settings": {
+                    "order": "desc",
+                    "size": "5",
+                    "orderBy": "1"
+                  }
+                },
+                {
+                  "type": "date_histogram",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto"
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: error_rate AND !request_name: All"
             }
           ],
           "timeFrom": null,
@@ -686,13 +628,13 @@
       "panels": [
         {
           "aliasColors": {
-            "Server": "#5195CE",
-            "Page Rendering": "#447EBC",
+            "Dom Processing": "#0A437C",
             "Network": "#1F78C1",
-            "Dom Processing": "#0A437C"
+            "Page Rendering": "#447EBC",
+            "Server": "#5195CE"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "decimals": null,
           "editable": true,
           "error": false,
@@ -733,13 +675,22 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "mean",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
-                  "field": "layer",
-                  "order": "desc",
-                  "orderBy": "_term",
-                  "size": "0",
                   "type": "terms",
+                  "field": "layer",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "asc",
                     "size": "0",
@@ -747,35 +698,16 @@
                   }
                 },
                 {
-                  "field": "@timestamp",
                   "type": "date_histogram",
+                  "id": "2",
                   "settings": {
                     "interval": "auto"
-                  }
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "layer"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "mean",
-                  "id": "1",
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: response_time_rum AND request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "mean"
-                }
-              ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: response_time_rum AND request_name: All"
             }
           ],
           "timeFrom": null,
@@ -797,73 +729,79 @@
       "title": "New row"
     }
   ],
-  "nav": [
-    {
-      "collapse": false,
-      "enable": true,
-      "notice": false,
-      "now": true,
-      "refresh_intervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ],
-      "status": "Stable",
-      "time_options": [
-        "5m",
-        "15m",
-        "1h",
-        "6h",
-        "12h",
-        "24h",
-        "2d",
-        "7d",
-        "30d"
-      ],
-      "type": "timepicker"
-    }
-  ],
   "time": {
     "from": "now-1h",
     "to": "now"
   },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "type": "timepicker"
+  },
   "templating": {
     "list": [
       {
-        "allFormat": "wildcard",
-        "current": {
-          "text": "All",
-          "value": "*"
-        },
-        "datasource": null,
-        "includeAll": true,
+        "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "includeAll": false,
         "multi": false,
-        "multiFormat": "glob",
+        "multiFormat": "lucene",
         "name": "Application",
-        "options": [
-          {
-            "text": "All",
-            "value": "*",
-            "selected": true
-          },
-          {
-            "text": "application",
-            "value": "application",
-            "selected": false
-          }
-        ],
-        "query": "*",
+        "query": "{\"find\": \"terms\", \"field\": \"application\"}",
         "refresh": true,
         "refresh_on_load": false,
-        "regex": "application",
+        "regex": "",
         "type": "query"
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Host",
+        "includeAll": true,
+        "allFormat": "lucene",
+        "multi": true,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"host\"}",
+        "refresh": true
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Instance",
+        "includeAll": true,
+        "allFormat": "lucene",
+        "multi": true,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
+        "refresh": true
       }
     ]
   },
@@ -871,7 +809,7 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 6,
-  "version": 16,
+  "schemaVersion": 7,
+  "version": 5,
   "links": []
 }

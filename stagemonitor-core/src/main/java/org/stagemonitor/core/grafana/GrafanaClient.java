@@ -56,7 +56,7 @@ public class GrafanaClient {
 		dataSource.put("url", url);
 		dataSource.put("access", "proxy");
 		dataSource.put("database", "[stagemonitor-metrics-]YYYY.MM.DD");
-		dataSource.put("isDefault", true);
+		dataSource.put("isDefault", false);
 		dataSource.put("type", "elasticsearch");
 		dataSource.put("basicAuth", false);
 		Map<String, Object> jsonData = new HashMap<String, Object>();
