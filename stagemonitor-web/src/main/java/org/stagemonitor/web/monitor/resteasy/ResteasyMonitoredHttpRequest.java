@@ -33,7 +33,7 @@ import java.util.Enumeration;
  * <p>This class will use the Resteasy jax-rs resource class and method for naming the request.
  */
 public class ResteasyMonitoredHttpRequest extends MonitoredHttpRequest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ResteasyMonitoredHttpRequest.class);
+	private static final Logger logger = LoggerFactory.getLogger(ResteasyMonitoredHttpRequest.class);
 
 	private static String servletMappingPrefix;
 
@@ -62,10 +62,7 @@ public class ResteasyMonitoredHttpRequest extends MonitoredHttpRequest {
 				ResourceInvoker invoker = registry.getResourceInvoker(request);
 				name = getRequestNameFromInvoker(invoker, requestMonitorPlugin.getBusinessTransactionNamingStrategy());
 			} catch (Exception e) {
-
-				if (LOGGER.isDebugEnabled()) {
-					LOGGER.debug("Unable to determine name from jax-rs resource", e);
-				}
+				logger.debug("Unable to determine name from jax-rs resource", e);
 
 				if (!webPlugin.isMonitorOnlyResteasyRequests()) {
 					// Fallback to default naming if the route is unknown to Resteasy.
