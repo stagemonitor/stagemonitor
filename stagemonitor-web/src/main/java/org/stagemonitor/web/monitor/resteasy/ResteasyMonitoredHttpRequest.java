@@ -9,6 +9,8 @@ import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.Registry;
 import org.jboss.resteasy.spi.ResteasyAsynchronousContext;
 import org.jboss.resteasy.spi.ResteasyUriInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -31,6 +33,8 @@ import java.util.Enumeration;
  * <p>This class will use the Resteasy jax-rs resource class and method for naming the request.
  */
 public class ResteasyMonitoredHttpRequest extends MonitoredHttpRequest {
+	private static final Logger logger = LoggerFactory.getLogger(ResteasyMonitoredHttpRequest.class);
+
 	private static String servletMappingPrefix;
 
 	private final RequestMonitorPlugin requestMonitorPlugin;
@@ -54,8 +58,17 @@ public class ResteasyMonitoredHttpRequest extends MonitoredHttpRequest {
 			name = super.getRequestName();
 		} else {
 			HttpRequest request = new RegistryLookupHttpRequest(httpServletRequest, servletMappingPrefix);
-			ResourceInvoker invoker = registry.getResourceInvoker(request);
-			name = getRequestNameFromInvoker(invoker, requestMonitorPlugin.getBusinessTransactionNamingStrategy());
+			try {
+				ResourceInvoker invoker = registry.getResourceInvoker(request);
+				name = getRequestNameFromInvoker(invoker, requestMonitorPlugin.getBusinessTransactionNamingStrategy());
+			} catch (Exception e) {
+				logger.debug("Unable to determine name from jax-rs resource", e);
+
+				if (!webPlugin.isMonitorOnlyResteasyRequests()) {
+					// Fallback to default naming if the route is unknown to Resteasy.
+					name = super.getRequestName();
+				}
+			}
 
 			if (!name.isEmpty()) {
 				return name;

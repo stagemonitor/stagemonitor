@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.NotFoundException;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
@@ -55,8 +56,10 @@ import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResp
 @RunWith(value = Parameterized.class)
 public class ResteasyRequestMonitorTest {
     private MockHttpServletRequest resteasyServletRequest = new MockHttpServletRequest("GET", "/test/requestName");
+    private MockHttpServletRequest resteasyServletNotFoundRequest = new MockHttpServletRequest("GET", "/not-found");
     private MockHttpServletRequest nonResteasyServletRequest = new MockHttpServletRequest("GET", "/META-INF/resources/stagemonitor/static/jquery.js");
     private MockHttpRequest resteasyRequest;
+    private MockHttpRequest notFoundRequest;
     private Configuration configuration = mock(Configuration.class);
     private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
     private WebPlugin webPlugin = mock(WebPlugin.class);
@@ -83,8 +86,10 @@ public class ResteasyRequestMonitorTest {
     @Before
     public void before() throws Exception {
         resteasyRequest = MockHttpRequest.create(resteasyServletRequest.getMethod(), resteasyServletRequest.getRequestURI());
+        notFoundRequest = MockHttpRequest.create(resteasyServletRequest.getMethod(), "not-found");
         getRequestNameRegistry = createRegistry(resteasyRequest, TestResource.class.getMethod("testGetRequestName"));
         resteasyServletRequest.getServletContext().setAttribute(Registry.class.getName(), getRequestNameRegistry);
+        resteasyServletNotFoundRequest.getServletContext().setAttribute(Registry.class.getName(), getRequestNameRegistry);
         nonResteasyServletRequest.getServletContext().setAttribute(Registry.class.getName(), getRequestNameRegistry);
         registry.removeMatching(new MetricFilter() {
             @Override
@@ -171,6 +176,48 @@ public class ResteasyRequestMonitorTest {
         assertNotNull(registry.getTimers().get(name("response_time").tag("request_name", "TestResource#testGetRequestName").tier("server").layer("total").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
+    }
+
+
+    @Test
+    public void testRequestMonitorResteasyNotFoundException() throws Exception {
+        System.out.println("useNameDeterminerAspect=" + useNameDeterminerAspect);
+        when(webPlugin.isMonitorOnlyResteasyRequests()).thenReturn(false);
+        when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(CLASS_NAME_HASH_METHOD_NAME);
+
+        ArgumentMatcher<HttpRequest> notFoundRequestMatcher = new ArgumentMatcher<HttpRequest>() {
+            @Override
+            public boolean matches(Object argument) {
+                if (argument == null) {
+                    return false;
+                }
+
+                if (!HttpRequest.class.isAssignableFrom(argument.getClass())) {
+                    return false;
+                }
+
+                HttpRequest other = (HttpRequest) argument;
+                return notFoundRequest.getUri().getPath().equals(other.getUri().getPath())
+                        && notFoundRequest.getHttpMethod().equals(other.getHttpMethod());
+            }
+        };
+
+        when(getRequestNameRegistry.getResourceInvoker(argThat(notFoundRequestMatcher))).thenThrow(new NotFoundException());
+
+
+        ResteasyMonitoredHttpRequest monitoredRequest = createResteasyMonitoredHttpRequest(resteasyServletNotFoundRequest);
+        final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
+
+        assertEquals(1, requestInformation.getRequestTimer().getCount());
+        assertEquals("GET-|not-found", requestInformation.getTimerName());
+        assertEquals("GET /not-found", requestInformation.getRequestTrace().getName());
+        assertEquals("/not-found", requestInformation.getRequestTrace().getUrl());
+        assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
+        assertEquals("GET", requestInformation.getRequestTrace().getMethod());
+        Assert.assertNull(requestInformation.getExecutionResult());
+        assertNotNull(registry.getTimers().get(name("request", "GET-|not-found", "server", "time", "total")));
+        verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
+        verify(monitoredRequest, times(1)).getRequestName();
     }
 
     @Test

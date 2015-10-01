@@ -51,6 +51,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	public static final String DEFAULT_APPLICATION_NAME = "My Application";
 
 	private static final String CORE_PLUGIN_NAME = "Core";
+	public static final String POOLS_QUEUE_CAPACITY_LIMIT_KEY = "stagemonitor.threadPools.queueCapacityLimit";
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -379,6 +380,18 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags("grafana")
 			.sensitive()
 			.build();
+	private final ConfigurationOption<Integer> threadPoolQueueCapacityLimit = ConfigurationOption.integerOption()
+			.key(POOLS_QUEUE_CAPACITY_LIMIT_KEY)
+			.dynamic(false)
+			.label("Thread Pool Queue Capacity Limit")
+			.description("Sets a limit to the number of pending tasks in the ExecutorServices stagemonitor uses. " +
+					"These are thread pools that are used for example to report request traces to elasticsearch. " +
+					"If elasticsearch is unreachable or your application encounters a spike in incoming requests this limit could be reached. " +
+					"It is used to prevent the queue from growing indefinitely. ")
+			.defaultValue(1000)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags("advanced")
+			.build();
 
 	private static MetricsAggregationReporter aggregationReporter;
 
@@ -676,5 +689,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public String getGrafanaApiKey() {
 		return grafanaApiKey.getValue();
+	}
+
+	public int getThreadPoolQueueCapacityLimit() {
+		return threadPoolQueueCapacityLimit.getValue();
 	}
 }
