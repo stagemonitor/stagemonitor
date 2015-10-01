@@ -99,6 +99,7 @@ public class SpringRequestMonitorTest {
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));

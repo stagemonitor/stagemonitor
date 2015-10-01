@@ -34,7 +34,7 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 		final CorePlugin corePlugin = new CorePlugin();
 		corePlugin.setElasticsearchClient(elasticsearchClient);
 		corePlugin.initializePlugin(new Metric2Registry(), configuration);
-		while (!elasticsearchClient.asyncRestPool.getQueue().isEmpty()) {
+		while (!elasticsearchClient.isPoolQueueEmpty()) {
 			// give the async tasks time to complete
 			Thread.sleep(10);
 		}

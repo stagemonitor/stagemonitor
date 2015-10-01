@@ -52,6 +52,7 @@ public class ConnectionMonitoringInstrumenterTest {
 	@Before
 	public void setUp() throws Exception {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
