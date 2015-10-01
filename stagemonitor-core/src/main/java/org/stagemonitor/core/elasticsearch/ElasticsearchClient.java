@@ -11,10 +11,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -28,6 +26,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
+import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -40,17 +39,7 @@ public class ElasticsearchClient {
 	private final HttpClient httpClient;
 	private final CorePlugin corePlugin;
 	
-	public final ThreadPoolExecutor asyncRestPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-			new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r);
-			thread.setDaemon(true);
-			thread.setName("async-elasticsearch");
-			return thread;
-		}
-	});
-
+	private final ThreadPoolExecutor asyncRestPool;
 
 	public ElasticsearchClient() {
 		this(Stagemonitor.getConfiguration().getConfig(CorePlugin.class));
@@ -58,6 +47,8 @@ public class ElasticsearchClient {
 
 	public ElasticsearchClient(CorePlugin corePlugin) {
 		this.corePlugin = corePlugin;
+		asyncRestPool = ExecutorUtils
+				.createSingleThreadDeamonPool("async-elasticsearch", corePlugin.getThreadPoolQueueCapacityLimit());
 		if (corePlugin.isInternalMonitoringActive()) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetricRegistry());
@@ -107,12 +98,16 @@ public class ElasticsearchClient {
 
 	public Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
 		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
-			return asyncRestPool.submit(new Runnable() {
-				@Override
-				public void run() {
-					sendAsJson(method, path, requestBody);
-				}
-			});
+			try {
+				return asyncRestPool.submit(new Runnable() {
+					@Override
+					public void run() {
+						sendAsJson(method, path, requestBody);
+					}
+				});
+			} catch (RejectedExecutionException e) {
+				ExecutorUtils.logRejectionWarning(e);
+			}
 		}
 		return new CompletedFuture<Object>(null);
 	}

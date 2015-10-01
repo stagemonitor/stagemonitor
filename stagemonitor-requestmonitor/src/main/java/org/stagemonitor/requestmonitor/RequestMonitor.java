@@ -11,10 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,6 +26,7 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.GraphiteSanitizer;
+import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
@@ -54,15 +53,7 @@ public class RequestMonitor {
 
 	private final List<Runnable> onAfterRequestCallbacks = new LinkedList<Runnable>();
 
-	private static ExecutorService asyncRequestTraceReporterPool = Executors.newSingleThreadExecutor(new ThreadFactory() {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r);
-			thread.setDaemon(true);
-			thread.setName("async-request-reporter");
-			return thread;
-		}
-	});
+	private ExecutorService asyncRequestTraceReporterPool;
 
 	private int warmupRequests = 0;
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
@@ -93,6 +84,8 @@ public class RequestMonitor {
 		this.requestMonitorPlugin = requestMonitorPlugin;
 		warmupRequests = requestMonitorPlugin.getNoOfWarmupRequests();
 		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
+		asyncRequestTraceReporterPool = ExecutorUtils
+				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit());
 	}
 
 	public <T extends RequestTrace> void monitorStart(MonitoredRequest<T> monitoredRequest) {
@@ -322,7 +315,7 @@ public class RequestMonitor {
 				}
 			});
 		} catch (RejectedExecutionException e) {
-			logger.warn(e.getMessage() + " (this exception is ignored)", e);
+			ExecutorUtils.logRejectionWarning(e);
 		}
 	}
 
