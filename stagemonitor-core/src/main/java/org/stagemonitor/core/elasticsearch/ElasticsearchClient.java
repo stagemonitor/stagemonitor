@@ -147,6 +147,10 @@ public class ElasticsearchClient {
 		return sendAsJsonAsync("PUT", "/_template/" + templateName, IOUtils.getResourceAsStream(templatePath));
 	}
 
+	public Future<Integer> sendBulkAsync(String resource) {
+		return sendBulkAsync(IOUtils.getResourceAsStream(resource));
+	}
+
 	public Future<Integer> sendBulkAsync(final InputStream is) {
 		return asyncRestPool.submit(new Callable<Integer>() {
 			@Override

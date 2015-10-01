@@ -70,7 +70,8 @@ public class JvmPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteJvmOverview.json");
 		}
 		if (config.isReportToElasticsearch()) {
-			grafanaClient.sendGrafanaDashboardAsync("kibana/JvmDashboard.bulk");
+			elasticsearchClient.sendBulkAsync("kibana/JvmDashboard.bulk");
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchJvm.json");
 		}
 	}
 

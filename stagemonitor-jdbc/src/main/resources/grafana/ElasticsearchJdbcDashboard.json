@@ -22,7 +22,7 @@
             "p99": "#3F6833"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -62,73 +62,57 @@
           "steppedLine": false,
           "targets": [
             {
-              "bucketAggs": [
-                {
-                  "field": "@timestamp",
-                  "type": "date_histogram",
-                  "settings": {
-                    "interval": "auto"
-                  }
-                }
-              ],
-              "groupByFields": [],
+              "refId": "A",
               "metrics": [
                 {
-                  "field": "p99",
+                  "type": "avg",
                   "id": "1",
+                  "field": "p99",
                   "settings": {},
-                  "type": "avg"
+                  "meta": {}
                 },
                 {
+                  "type": "avg",
                   "field": "p95",
-                  "id": "2",
-                  "settings": {},
-                  "type": "avg"
-                },
-                {
-                  "field": "p75",
                   "id": "3",
                   "settings": {},
-                  "type": "avg"
+                  "meta": {}
                 },
                 {
-                  "field": "median",
+                  "type": "avg",
+                  "field": "p75",
                   "id": "4",
                   "settings": {},
-                  "type": "avg"
+                  "meta": {}
                 },
                 {
-                  "field": "p25",
+                  "type": "avg",
+                  "field": "median",
                   "id": "5",
                   "settings": {},
-                  "type": "avg"
+                  "meta": {}
+                },
+                {
+                  "type": "avg",
+                  "field": "p25",
+                  "id": "6",
+                  "settings": {},
+                  "meta": {}
                 }
               ],
-              "query": "name: jdbc_statement AND !signature: All",
-              "refId": "A",
-              "select": [
+              "bucketAggs": [
                 {
-                  "agg": "avg",
-                  "field": "p99"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p95"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p75"
-                },
-                {
-                  "agg": "avg",
-                  "field": "median"
-                },
-                {
-                  "agg": "avg",
-                  "field": "p25"
+                  "type": "date_histogram",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto"
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: jdbc_statement AND application: \\\"$Application\" AND host: \\\"$Host\\\" AND instance \\\"$Instance\\\" AND signature: $Signature",
+              "alias": "{{field}}"
             }
           ],
           "timeFrom": null,
@@ -149,7 +133,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -190,33 +174,28 @@
           "steppedLine": false,
           "targets": [
             {
-              "bucketAggs": [
-                {
-                  "field": "@timestamp",
-                  "type": "date_histogram",
-                  "settings": {
-                    "interval": "auto"
-                  }
-                }
-              ],
-              "groupByFields": [],
+              "refId": "A",
               "metrics": [
                 {
-                  "field": "m1_rate",
+                  "type": "avg",
                   "id": "1",
+                  "field": "m1_rate",
                   "settings": {},
-                  "type": "avg"
+                  "meta": {}
                 }
               ],
-              "query": "name: jdbc_statement AND !signature: All",
-              "refId": "A",
-              "select": [
+              "bucketAggs": [
                 {
-                  "agg": "avg",
-                  "field": "m1_rate"
+                  "type": "date_histogram",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto"
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: jdbc_statement AND application: \\\"$Application\" AND host: \\\"$Host\\\" AND instance \\\"$Instance\\\" AND signature: $Signature"
             }
           ],
           "timeFrom": null,
@@ -245,7 +224,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -263,14 +242,14 @@
           },
           "id": 3,
           "legend": {
+            "alignAsTable": true,
             "avg": true,
             "current": true,
             "max": true,
             "min": true,
             "show": true,
             "total": false,
-            "values": true,
-            "alignAsTable": true
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -286,13 +265,22 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "p75",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
-                  "field": "signature",
-                  "order": "desc",
-                  "orderBy": "1",
-                  "size": "5",
                   "type": "terms",
+                  "field": "signature",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
                     "size": "5",
@@ -300,35 +288,16 @@
                   }
                 },
                 {
-                  "field": "@timestamp",
                   "type": "date_histogram",
+                  "id": "2",
                   "settings": {
                     "interval": "auto"
-                  }
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "signature"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "p75",
-                  "id": "1",
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: jdbc_statement AND !signature: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "p75"
-                }
-              ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: jdbc_statement AND signature: $Signature"
             }
           ],
           "timeFrom": null,
@@ -349,7 +318,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -368,14 +337,14 @@
           "id": 4,
           "leftYAxisLabel": "Queries/s",
           "legend": {
+            "alignAsTable": true,
             "avg": true,
             "current": true,
             "max": true,
             "min": true,
             "show": true,
             "total": false,
-            "values": true,
-            "alignAsTable": true
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -391,13 +360,22 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "m1_rate",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
-                  "field": "request_name",
-                  "order": "desc",
-                  "orderBy": "1",
-                  "size": "5",
                   "type": "terms",
+                  "field": "request_name",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
                     "size": "5",
@@ -405,35 +383,16 @@
                   }
                 },
                 {
-                  "field": "@timestamp",
                   "type": "date_histogram",
+                  "id": "2",
                   "settings": {
                     "interval": "auto"
-                  }
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "request_name"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "m1_rate",
-                  "id": "1",
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: response_time_server AND layer: jdbc AND !request_name: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "m1_rate"
-                }
-              ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: response_time_server AND layer: jdbc AND !request_name: All"
             }
           ],
           "timeFrom": null,
@@ -462,7 +421,8 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -502,33 +462,29 @@
           "steppedLine": false,
           "targets": [
             {
-              "bucketAggs": [
-                {
-                  "field": "@timestamp",
-                  "type": "date_histogram",
-                  "settings": {
-                    "interval": "auto"
-                  }
-                }
-              ],
-              "groupByFields": [],
+              "refId": "A",
               "metrics": [
                 {
-                  "field": "p95",
+                  "type": "max",
                   "id": "1",
+                  "field": "p95",
                   "settings": {},
-                  "type": "max"
+                  "meta": {}
                 }
               ],
-              "query": "name: get_jdbc_connection",
-              "refId": "A",
-              "select": [
+              "bucketAggs": [
                 {
-                  "agg": "max",
-                  "field": "p95"
+                  "type": "date_histogram",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto"
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: get_jdbc_connection AND application: \\\"$Application\" AND host: \\\"$Host\\\" AND instance \\\"$Instance\\\" AND signature: $Signature",
+              "alias": ""
             }
           ],
           "timeFrom": null,
@@ -549,7 +505,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -567,14 +523,14 @@
           },
           "id": 6,
           "legend": {
+            "alignAsTable": true,
             "avg": true,
             "current": true,
             "max": true,
             "min": true,
             "show": true,
             "total": false,
-            "values": true,
-            "alignAsTable": true
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -590,11 +546,22 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "m1_rate",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
                   "type": "terms",
                   "field": "signature",
-                  "id": "2",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
                     "size": "5",
@@ -602,35 +569,16 @@
                   }
                 },
                 {
-                  "field": "@timestamp",
                   "type": "date_histogram",
+                  "id": "2",
                   "settings": {
                     "interval": "auto"
-                  }
+                  },
+                  "field": "@timestamp"
                 }
               ],
-              "groupByFields": [
-                {
-                  "field": "signature"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "m1_rate",
-                  "id": "1",
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: jdbc_statement AND !signature: All",
-              "refId": "A",
-              "select": [
-                {
-                  "agg": "avg",
-                  "field": "m1_rate"
-                }
-              ],
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: jdbc_statement AND application: \\\"$Application\" AND host: \\\"$Host\\\" AND instance \\\"$Instance\\\" AND signature: $Signature"
             }
           ],
           "timeFrom": null,
@@ -652,51 +600,103 @@
       "title": "New row"
     }
   ],
-  "nav": [
-    {
-      "collapse": false,
-      "enable": true,
-      "notice": false,
-      "now": true,
-      "refresh_intervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ],
-      "status": "Stable",
-      "time_options": [
-        "5m",
-        "15m",
-        "1h",
-        "6h",
-        "12h",
-        "24h",
-        "2d",
-        "7d",
-        "30d"
-      ],
-      "type": "timepicker"
-    }
-  ],
   "time": {
     "from": "now-1h",
     "to": "now"
   },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "type": "timepicker"
+  },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "includeAll": false,
+        "multi": false,
+        "multiFormat": "lucene",
+        "name": "Application",
+        "query": "{\"find\": \"terms\", \"field\": \"application\"}",
+        "refresh": true,
+        "refresh_on_load": false,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Host",
+        "includeAll": true,
+        "allFormat": "lucene",
+        "multi": true,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"host\"}",
+        "refresh": true
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Instance",
+        "includeAll": true,
+        "allFormat": "lucene",
+        "multi": true,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
+        "refresh": true
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Signature",
+        "includeAll": false,
+        "allFormat": "lucene",
+        "multi": false,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"signature\", \"query\": \"name: jdbc_statement\"}",
+        "current": {
+          "text": "All",
+          "value": "All"
+        },
+        "refresh": true
+      }
+    ]
   },
   "annotations": {
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 6,
-  "version": 10,
+  "schemaVersion": 7,
+  "version": 1,
   "links": []
 }

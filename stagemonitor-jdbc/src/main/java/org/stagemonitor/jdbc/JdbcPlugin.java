@@ -10,8 +10,8 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.util.IOUtils;
 
 public class JdbcPlugin extends StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
@@ -61,11 +61,13 @@ public class JdbcPlugin extends StagemonitorPlugin {
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
 		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteDBQueries.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("JdbcDashboard.bulk"));
+			elasticsearchClient.sendBulkAsync("kibana/JdbcDashboard.bulk");
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchJdbcDashboard.json");
 		}
 	}
 

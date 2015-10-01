@@ -12,7 +12,6 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.util.IOUtils;
 
 public class EhCachePlugin extends StagemonitorPlugin {
 
@@ -58,7 +57,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchEhCache.json");
-			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("kibana/EhCache.bulk"));
+			elasticsearchClient.sendBulkAsync("kibana/EhCache.bulk");
 		}
 	}
 

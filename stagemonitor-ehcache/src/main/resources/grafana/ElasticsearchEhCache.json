@@ -16,7 +16,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -57,38 +57,39 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "value",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
+                  "type": "terms",
                   "field": "cache_name",
                   "id": "3",
+                  "fake": true,
                   "settings": {
-                    "order": "asc",
-                    "orderBy": "1",
-                    "size": "10"
-                  },
-                  "type": "terms"
+                    "order": "desc",
+                    "size": "10",
+                    "orderBy": "1"
+                  }
                 },
                 {
-                  "field": "@timestamp",
+                  "type": "date_histogram",
                   "id": "2",
                   "settings": {
                     "interval": "auto"
                   },
-                  "type": "date_histogram"
+                  "field": "@timestamp"
                 }
               ],
-              "metrics": [
-                {
-                  "field": "value",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: cache_hit_ratio AND tier: All",
-              "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: cache_hit_ratio AND tier: All"
             }
           ],
           "timeFrom": null,
@@ -109,7 +110,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -149,38 +150,39 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "value",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
+                  "type": "terms",
                   "field": "cache_name",
                   "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "orderBy": "1",
-                    "size": "10"
-                  },
-                  "type": "terms"
+                    "size": "10",
+                    "orderBy": "1"
+                  }
                 },
                 {
-                  "field": "@timestamp",
+                  "type": "date_histogram",
                   "id": "2",
                   "settings": {
                     "interval": "auto"
                   },
-                  "type": "date_histogram"
+                  "field": "@timestamp"
                 }
               ],
-              "metrics": [
-                {
-                  "field": "value",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: cache_size_bytes",
-              "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: cache_size_bytes"
             }
           ],
           "timeFrom": null,
@@ -209,7 +211,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -249,38 +251,39 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "p75",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
+                  "type": "terms",
                   "field": "cache_name",
                   "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "orderBy": "1",
-                    "size": "10"
-                  },
-                  "type": "terms"
+                    "size": "10",
+                    "orderBy": "1"
+                  }
                 },
                 {
-                  "field": "@timestamp",
+                  "type": "date_histogram",
                   "id": "2",
                   "settings": {
                     "interval": "auto"
                   },
-                  "type": "date_histogram"
+                  "field": "@timestamp"
                 }
               ],
-              "metrics": [
-                {
-                  "field": "p75",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: cache_get tier: All",
-              "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: cache_get tier: All"
             }
           ],
           "timeFrom": null,
@@ -301,7 +304,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -342,38 +345,39 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "m5_rate",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
+                  "type": "terms",
                   "field": "cache_name",
                   "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "orderBy": "1",
-                    "size": "10"
-                  },
-                  "type": "terms"
+                    "size": "10",
+                    "orderBy": "1"
+                  }
                 },
                 {
-                  "field": "@timestamp",
+                  "type": "date_histogram",
                   "id": "2",
                   "settings": {
                     "interval": "auto"
                   },
-                  "type": "date_histogram"
+                  "field": "@timestamp"
                 }
               ],
-              "metrics": [
-                {
-                  "field": "m5_rate",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: cache_get tier: All",
-              "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: cache_get tier: All"
             }
           ],
           "timeFrom": null,
@@ -394,7 +398,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -435,38 +439,39 @@
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
+              "metrics": [
+                {
+                  "type": "avg",
+                  "id": "1",
+                  "field": "m5_rate",
+                  "settings": {},
+                  "meta": {}
+                }
+              ],
               "bucketAggs": [
                 {
+                  "type": "terms",
                   "field": "cache_name",
-                  "id": "4",
+                  "id": "3",
+                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "orderBy": "1",
-                    "size": "10"
-                  },
-                  "type": "terms"
+                    "size": "10",
+                    "orderBy": "1"
+                  }
                 },
                 {
-                  "field": "@timestamp",
+                  "type": "date_histogram",
                   "id": "2",
                   "settings": {
                     "interval": "auto"
                   },
-                  "type": "date_histogram"
+                  "field": "@timestamp"
                 }
               ],
-              "metrics": [
-                {
-                  "field": "m5_rate",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-              "query": "name: cache_delete AND reason: expire AND tier: All",
-              "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "query": "name: cache_delete AND reason: expire AND tier: All"
             }
           ],
           "timeFrom": null,
@@ -488,51 +493,87 @@
       "title": "New row"
     }
   ],
-  "nav": [
-    {
-      "collapse": false,
-      "enable": true,
-      "notice": false,
-      "now": true,
-      "refresh_intervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ],
-      "status": "Stable",
-      "time_options": [
-        "5m",
-        "15m",
-        "1h",
-        "6h",
-        "12h",
-        "24h",
-        "2d",
-        "7d",
-        "30d"
-      ],
-      "type": "timepicker"
-    }
-  ],
   "time": {
     "from": "now-1h",
     "to": "now"
   },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "type": "timepicker"
+  },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "includeAll": false,
+        "multi": false,
+        "multiFormat": "lucene",
+        "name": "Application",
+        "query": "{\"find\": \"terms\", \"field\": \"application\"}",
+        "refresh": true,
+        "refresh_on_load": false,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Host",
+        "includeAll": true,
+        "allFormat": "lucene",
+        "multi": true,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"host\"}",
+        "refresh": true
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Instance",
+        "includeAll": true,
+        "allFormat": "lucene",
+        "multi": true,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
+        "refresh": true
+      }
+    ]
   },
   "annotations": {
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 6,
-  "version": 5,
+  "schemaVersion": 7,
+  "version": 1,
   "links": []
 }
