@@ -21,8 +21,6 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
-import java.util.SortedMap;
-
 @RunWith(ConditionalTravisTestRunner.class)
 public class MonitorRequestsInstrumenterTest {
 
@@ -64,7 +62,7 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals("void org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClass.getRequestInformation()", requestTrace.getCallStack().getChildren().get(0).getChildren().get(0).getSignature());
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").tier("server").layer("total").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").layer("total").build()));
 	}
 
 	@Test
@@ -81,7 +79,7 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals(NullPointerException.class.getName(), requestTrace.getExceptionClass());
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorThrowException").tier("server").layer("total").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorThrowException").layer("total").build()));
 	}
 
 	private static class TestClass {
@@ -121,8 +119,8 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals(1, requestTrace.getCallStack().getChildren().get(0).getChildren().size());
 		assertEquals("void org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass.getRequestInformation()", requestTrace.getCallStack().getChildren().get(0).getChildren().get(0).getSignature());
 
-		final SortedMap<String,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get("request.MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe.server.time.total"));
+		final Map<MetricName, Timer> timers = metricRegistry.getTimers();
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe").layer("total").build()));
 	}
 
 

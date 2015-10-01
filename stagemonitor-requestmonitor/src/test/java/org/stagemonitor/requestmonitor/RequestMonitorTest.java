@@ -39,8 +39,8 @@ public class RequestMonitorTest {
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
-		when(registry.timer(anyString())).thenReturn(mock(Timer.class));
-		when(registry.meter(anyString())).thenReturn(mock(Meter.class));
+		when(registry.timer(any(MetricName.class))).thenReturn(mock(Timer.class));
+		when(registry.meter(any(MetricName.class))).thenReturn(mock(Meter.class));
 		requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
 	}
 
