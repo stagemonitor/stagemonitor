@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -142,17 +141,21 @@ public class ElasticsearchClient {
 		return sendAsJsonAsync("PUT", "/_template/" + templateName, IOUtils.getResourceAsStream(templatePath));
 	}
 
-	public Future<Integer> sendBulkAsync(String resource) {
-		return sendBulkAsync(IOUtils.getResourceAsStream(resource));
+	public void sendBulkAsync(String resource) {
+		sendBulkAsync(IOUtils.getResourceAsStream(resource));
 	}
 
-	public Future<Integer> sendBulkAsync(final InputStream is) {
-		return asyncRestPool.submit(new Callable<Integer>() {
-			@Override
-			public Integer call() throws Exception {
-				return sendBulk(is);
-			}
-		});
+	public void sendBulkAsync(final InputStream is) {
+		try {
+			asyncRestPool.submit(new Runnable() {
+				@Override
+				public void run() {
+					sendBulk(is);
+				}
+			});
+		} catch (RejectedExecutionException e) {
+			ExecutorUtils.logRejectionWarning(e);
+		}
 	}
 
 	public int sendBulk(final InputStream is) {
