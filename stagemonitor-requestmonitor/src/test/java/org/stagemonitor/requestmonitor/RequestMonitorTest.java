@@ -27,16 +27,18 @@ public class RequestMonitorTest {
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 	private MetricRegistry registry = mock(MetricRegistry.class);
-	private RequestMonitor requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
+	private RequestMonitor requestMonitor;
 
 	@Before
 	public void before() {
 		Stagemonitor.reset();
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
 		when(registry.timer(anyString())).thenReturn(mock(Timer.class));
 		when(registry.meter(anyString())).thenReturn(mock(Meter.class));
+		requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
 	}
 
 	@After

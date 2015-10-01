@@ -23,6 +23,7 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 	@Before
 	public void setUp() throws Exception {
 		when(corePlugin.getElasticsearchConfigurationSourceProfiles()).thenReturn(Arrays.asList("test"));
+		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		ElasticsearchClient elasticsearchClient = new ElasticsearchClient(corePlugin);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);

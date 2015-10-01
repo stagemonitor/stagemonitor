@@ -5,12 +5,26 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
-import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
-import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.CLASS_NAME_HASH_METHOD_NAME;
 import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.CLASS_NAME_DOT_METHOD_NAME;
+import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.CLASS_NAME_HASH_METHOD_NAME;
+import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.NotFoundException;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
@@ -29,7 +43,6 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -40,15 +53,6 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.NotFoundException;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.regex.Pattern;
 
 @RunWith(value = Parameterized.class)
 public class ResteasyRequestMonitorTest {
@@ -98,6 +102,7 @@ public class ResteasyRequestMonitorTest {
         when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
         when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
         when(corePlugin.isStagemonitorActive()).thenReturn(true);
+        when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
         when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
         when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
         when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));

@@ -172,6 +172,10 @@ public class ElasticsearchClient {
 		return value.substring(0, value.lastIndexOf('.'));
 	}
 
+	public boolean isPoolQueueEmpty() {
+		return asyncRestPool.getQueue().isEmpty();
+	}
+
 	private class CompletedFuture<T> implements Future<T> {
 		private final T result;
 

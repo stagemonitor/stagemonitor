@@ -23,14 +23,16 @@ public class MonitoredMethodExecutionTest {
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 	private final MetricRegistry registry = new MetricRegistry();
-	private TestObject testObject = new TestObject(new RequestMonitor(corePlugin, registry, requestMonitorPlugin));
+	private TestObject testObject;
 
 	@Before
 	public void clearState() {
 		when(requestMonitorPlugin.getNoOfWarmupRequests()).thenReturn(0);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		requestInformation1 = requestInformation2 = requestInformation3 = null;
+		testObject = new TestObject(new RequestMonitor(corePlugin, registry, requestMonitorPlugin));
 	}
 
 	@Test
