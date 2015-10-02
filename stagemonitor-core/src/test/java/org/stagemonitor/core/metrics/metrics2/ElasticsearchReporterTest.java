@@ -248,6 +248,7 @@ public class ElasticsearchReporterTest {
 	private Map<String, Object> asMap(String json) throws java.io.IOException {
 		final TreeMap<String, Object> result = new TreeMap<String, Object>();
 		result.putAll(JsonUtils.getMapper().readValue(json, Map.class));
+		result.remove("@series");
 		return result;
 	}
 }

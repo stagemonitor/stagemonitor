@@ -5,6 +5,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 import java.net.InetAddress;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -91,7 +92,7 @@ public class MeasurementSession {
 		result.put("application", applicationName);
 		result.put("host", hostName);
 		result.put("instance", instanceName);
-		return result;
+		return Collections.unmodifiableMap(result);
 	}
 
 	@Override
