@@ -42,12 +42,12 @@ public class RequestTraceServletTest {
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		requestTraceServlet = new RequestTraceServlet(configuration, 1500);
 		connectionId = UUID.randomUUID().toString();
-		httpRequestTrace = new HttpRequestTrace(new MockHttpServletRequest(), null, new RequestTrace.GetNameCallback() {
+		httpRequestTrace = new HttpRequestTrace(null, new RequestTrace.GetNameCallback() {
 			@Override
 			public String getName() {
 				return "test";
 			}
-		}, "/test", Collections.<String, String>emptyMap(), "GET", null, connectionId);
+		}, "/test", Collections.<String, String>emptyMap(), "GET", null, connectionId, true);
 	}
 
 	@Test
@@ -169,7 +169,6 @@ public class RequestTraceServletTest {
 
 		Assert.assertEquals(404, response.getStatus());
 		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
-		when(requestTrace.getRequest()).thenReturn(request);
 		Assert.assertFalse(requestTraceServlet.isActive(requestTrace));
 	}
 }

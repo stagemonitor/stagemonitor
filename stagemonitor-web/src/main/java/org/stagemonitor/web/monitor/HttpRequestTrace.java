@@ -3,8 +3,6 @@ package org.stagemonitor.web.monitor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
@@ -38,17 +36,17 @@ public class HttpRequestTrace extends RequestTrace {
 	@JsonIgnore
 	private final String connectionId;
 	@JsonIgnore
-	private final HttpServletRequest request;
+	private final boolean showWidgetAllowed;
 
-	public HttpRequestTrace(HttpServletRequest httpServletRequest, String requestId, GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
-							String sessionId, String connectionId) {
+	public HttpRequestTrace(String requestId, GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
+							String sessionId, String connectionId, boolean showWidgetAllowed) {
 		super(requestId, getNameCallback);
-		this.request = httpServletRequest;
 		this.url = url;
 		this.headers = headers;
 		this.sessionId = sessionId;
 		this.connectionId = connectionId;
 		this.method = method;
+		this.showWidgetAllowed = showWidgetAllowed;
 	}
 
 	public static class UserAgentInformation {
@@ -161,8 +159,8 @@ public class HttpRequestTrace extends RequestTrace {
 		return connectionId;
 	}
 
-	public HttpServletRequest getRequest() {
-		return request;
+	public boolean isShowWidgetAllowed() {
+		return showWidgetAllowed;
 	}
 
 	@Override

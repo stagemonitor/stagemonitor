@@ -341,7 +341,10 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 
 
 		final FilterRegistration.Dynamic securityFilter = ctx.addFilter(StagemonitorSecurityFilter.class.getSimpleName(), new StagemonitorSecurityFilter());
-		securityFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/stagemonitor/*");
+		// Add as last filter so that other filters have the chance to set the
+		// WebPlugin.STAGEMONITOR_SHOW_WIDGET request attribute that overrides the widget visibility.
+		// That way the application can decide whether a particular user is allowed to see the widget.P
+		securityFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/stagemonitor/*");
 		securityFilter.setAsyncSupported(true);
 
 		final FilterRegistration.Dynamic monitorFilter = ctx.addFilter(HttpRequestMonitorFilter.class.getSimpleName(), new HttpRequestMonitorFilter());
