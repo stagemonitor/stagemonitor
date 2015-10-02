@@ -154,10 +154,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	@Override
 	public <T extends RequestTrace> boolean isActive(T requestTrace) {
 		if (requestTrace instanceof HttpRequestTrace) {
-			final HttpRequestTrace httpRequestTrace = (HttpRequestTrace) requestTrace;
-			final boolean active = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpRequestTrace.getRequest(), configuration);
-			logger.debug("RequestTraceServlet#isActive: {}", active);
-			return active;
+			return ((HttpRequestTrace) requestTrace).isShowWidgetAllowed();
 		} else {
 			logger.warn("RequestTrace is not instanceof HttpRequestTrace: {}", requestTrace);
 			return false;
