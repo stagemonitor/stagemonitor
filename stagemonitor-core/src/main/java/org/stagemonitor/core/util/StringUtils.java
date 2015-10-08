@@ -67,6 +67,9 @@ public class StringUtils {
 	}
 
 	public static String replaceWhitespacesWithDash(String s) {
+		if (s == null) {
+			return null;
+		}
 		return s.replaceAll("\\s", "-");
 	}
 }
