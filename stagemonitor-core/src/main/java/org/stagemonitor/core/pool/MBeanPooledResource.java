@@ -70,7 +70,7 @@ public class MBeanPooledResource implements PooledResource {
 
 	@Override
 	public MetricName getName() {
-		return MetricName.name(poolTypeName).tag("name", name).build();
+		return MetricName.name(poolTypeName).tag("pool_name", name).build();
 	}
 
 	@Override

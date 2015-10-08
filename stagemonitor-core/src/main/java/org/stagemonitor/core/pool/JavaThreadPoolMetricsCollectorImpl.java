@@ -17,7 +17,7 @@ public class JavaThreadPoolMetricsCollectorImpl implements PooledResource {
 
 	@Override
 	public MetricName getName() {
-		return MetricName.name("thread-pool").tag("name", name).build();
+		return MetricName.name("thread_pool").tag("pool_name", name).build();
 	}
 
 	@Override
