@@ -3,6 +3,7 @@ package org.stagemonitor.core;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+import static org.stagemonitor.core.util.StringUtils.replaceWhitespacesWithDash;
 
 import java.net.InetAddress;
 import java.util.Collections;
@@ -31,9 +32,9 @@ public class MeasurementSession {
 							  @JsonProperty("hostName") String hostName,
 							  @JsonProperty("instanceName") String instanceName) {
 
-		this.applicationName = applicationName;
-		this.hostName = hostName;
-		this.instanceName = instanceName;
+		this.applicationName = replaceWhitespacesWithDash(applicationName);
+		this.hostName = replaceWhitespacesWithDash(hostName);
+		this.instanceName = replaceWhitespacesWithDash(instanceName);
 		stringRepresentation = "[application=" + applicationName + "] [instance=" + instanceName + "] [host=" + hostName + "]";
 		startTimestamp = System.currentTimeMillis();
 	}
