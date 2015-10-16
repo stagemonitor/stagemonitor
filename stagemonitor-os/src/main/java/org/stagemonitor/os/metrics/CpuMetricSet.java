@@ -40,55 +40,55 @@ public class CpuMetricSet extends AbstractSigarMetricSet<CpuPerc> {
 		metrics.put(name("cpu_usage").type("sys").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getSys();
+				return getSnapshot().getSys() * 100.0;
 			}
 		});
 		metrics.put(name("cpu_usage").type("user").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getUser();
+				return getSnapshot().getUser() * 100.0;
 			}
 		});
 		metrics.put(name("cpu_usage").type("idle").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getIdle();
+				return getSnapshot().getIdle() * 100.0;
 			}
 		});
 		metrics.put(name("cpu_usage").type("nice").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getNice();
+				return getSnapshot().getNice() * 100.0;
 			}
 		});
 		metrics.put(name("cpu_usage").type("wait").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getWait();
+				return getSnapshot().getWait() * 100.0;
 			}
 		});
 		metrics.put(name("cpu_usage").type("interrupt").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getIrq();
+				return getSnapshot().getIrq() * 100.0;
 			}
 		});
 		metrics.put(name("cpu_usage").type("soft-interrupt").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getSoftIrq();
+				return getSnapshot().getSoftIrq() * 100.0;
 			}
 		});
 		metrics.put(name("cpu_usage").type("stolen").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getStolen();
+				return getSnapshot().getStolen() * 100.0;
 			}
 		});
 		metrics.put(name("cpu_usage_percent").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getCombined();
+				return getSnapshot().getCombined() * 100.0;
 			}
 		});
 

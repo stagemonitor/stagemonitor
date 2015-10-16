@@ -68,7 +68,7 @@ public class OsPluginTest {
 		assertEquals(1.0, cpu, 0.000001);
 
 		assertTrue(getDoubleGauge(name("cpu_usage_percent").build()) >= 0);
-		assertTrue(getDoubleGauge(name("cpu_usage_percent").build()) <= 1);
+		assertTrue(getDoubleGauge(name("cpu_usage_percent").build()) <= 100);
 	}
 
 	@Test
@@ -84,7 +84,7 @@ public class OsPluginTest {
 
 		final double usage = getDoubleGauge(name("mem_usage_percent").build());
 		assertTrue(Double.toString(usage), usage >= 0);
-		assertTrue(Double.toString(usage), usage <= 1);
+		assertTrue(Double.toString(usage), usage <= 100);
 	}
 
 	@Test
@@ -94,7 +94,7 @@ public class OsPluginTest {
 
 		double swapPercent = getDoubleGauge(name("swap_usage_percent").build());
 		assertTrue(swapPercent >= 0 || Double.isNaN(swapPercent));
-		assertTrue(swapPercent <= 1 || Double.isNaN(swapPercent));
+		assertTrue(swapPercent <= 100 || Double.isNaN(swapPercent));
 		assertTrue(getLongGauge(name("swap_pages").type("in").build()) >= 0);
 		assertTrue(getLongGauge(name("swap_pages").type("out").build()) >= 0);
 	}
@@ -158,7 +158,7 @@ public class OsPluginTest {
 	public void testFileSystemMetrics() throws Exception {
 		String mountPoint = getFirstMountPoint();
 		assertTrue(metricRegistry.getGauges().keySet().toString(), getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) >= 0);
-		assertTrue(getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) <= 1);
+		assertTrue(getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) <= 100);
 		assertTrue(getLongGauge(name("disk_io").type("read").tag("mountpoint", mountPoint).build()) >= 0);
 		assertTrue(getLongGauge(name("disk_io").type("write").tag("mountpoint", mountPoint).build()) >= 0);
 		assertTrue(getDoubleGauge(name("disk_queue").tag("mountpoint", mountPoint).build()) >= -1);

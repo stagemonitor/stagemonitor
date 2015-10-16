@@ -407,13 +407,13 @@
 					},
 					"targets": [
 						{
-							"target": "alias(scale(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_process_cpu_usage),100),'now')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_process_cpu_usage),'now')"
 						},
 						{
-							"target": "alias(scale(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_process_cpu_usage),'7d'),100),'-7d')"
+							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_process_cpu_usage),'7d'),'-7d')"
 						},
 						{
-							"target": "alias(scale(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_process_cpu_usage),'28d'),100),'-28d')"
+							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_process_cpu_usage),'28d'),'-28d')"
 						}
 					],
 					"aliasColors": {

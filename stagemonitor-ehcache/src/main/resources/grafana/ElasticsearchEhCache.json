@@ -89,7 +89,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: cache_hit_ratio AND tier: All"
+              "query": "name: cache_hit_ratio AND tier: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -182,7 +182,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: cache_size_bytes"
+              "query": "name: cache_size_bytes AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -283,7 +283,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: cache_get tier: All"
+              "query": "name: cache_get tier: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -377,7 +377,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: cache_get tier: All"
+              "query": "name: cache_get tier: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -471,7 +471,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: cache_delete AND reason: expire AND tier: All"
+              "query": "name: cache_delete AND reason: expire AND tier: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,

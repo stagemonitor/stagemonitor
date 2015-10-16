@@ -33,19 +33,19 @@ public class FileSystemMetricSet extends AbstractSigarMetricSet<FileSystemUsage>
 		metrics.put(name("disk_usage").tag("mountpoint", mountpoint).type("free").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return getSnapshot().getFree()* 1024;
+				return getSnapshot().getFree() * 1024;
 			}
 		});
 		metrics.put(name("disk_usage").tag("mountpoint", mountpoint).type("used").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
-				return getSnapshot().getUsed()* 1024;
+				return getSnapshot().getUsed() * 1024;
 			}
 		});
 		metrics.put(name("disk_usage_percent").tag("mountpoint", mountpoint).build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getUsePercent();
+				return getSnapshot().getUsePercent() * 100.0;
 			}
 		});
 		metrics.put(name("disk_io").tag("mountpoint", mountpoint).type("read").build(), new Gauge<Long>() {

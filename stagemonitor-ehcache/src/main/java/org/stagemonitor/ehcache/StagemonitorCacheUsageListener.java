@@ -80,7 +80,7 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 		final Meter hitRate = registry.meter(allCacheHitsMetricName);
 		final Meter missRate = registry.meter(allCacheMissesMetricName);
 		final double oneMinuteHitRate = hitRate.getOneMinuteRate();
-		return Ratio.of(oneMinuteHitRate, oneMinuteHitRate + missRate.getOneMinuteRate());
+		return Ratio.of(oneMinuteHitRate * 100.0, oneMinuteHitRate + missRate.getOneMinuteRate());
 	}
 
 	@Override

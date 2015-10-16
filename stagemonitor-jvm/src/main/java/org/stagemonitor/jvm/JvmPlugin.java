@@ -52,7 +52,7 @@ public class JvmPlugin extends StagemonitorPlugin {
 				@Override
 				public Float getValue() {
 					try {
-						return cpuWatch.getCpuUsagePercent();
+						return cpuWatch.getCpuUsagePercent() * 100F;
 					} finally {
 						cpuWatch.start();
 					}

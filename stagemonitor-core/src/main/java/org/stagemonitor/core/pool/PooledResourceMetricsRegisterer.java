@@ -49,7 +49,7 @@ public final class PooledResourceMetricsRegisterer {
 		registry.register(name.withTag("type", "usage"), new RatioGauge() {
 			@Override
 			protected Ratio getRatio() {
-				return Ratio.of(pooledResource.getPoolNumActive(), pooledResource.getMaxPoolSize());
+				return Ratio.of(pooledResource.getPoolNumActive() * 100.0, pooledResource.getMaxPoolSize());
 			}
 		});
 	}
