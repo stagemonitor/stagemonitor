@@ -65,7 +65,8 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 		this.requestTimeout = requestTimeout;
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
-		oldRequestTracesRemoverPool.schedule(new OldRequestTraceRemover(), MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
+		oldRequestTracesRemoverPool.scheduleAtFixedRate(new OldRequestTraceRemover(), 
+				MAX_REQUEST_TRACE_BUFFERING_TIME, MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
 	}
 
 	@Override
