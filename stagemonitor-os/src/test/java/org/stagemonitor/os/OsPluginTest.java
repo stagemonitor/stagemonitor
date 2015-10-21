@@ -65,7 +65,7 @@ public class OsPluginTest {
 					getDoubleGauge(name("cpu_usage").type("stolen").build());
 		}
 
-		assertEquals(1.0, cpu, 0.000001);
+		assertEquals(100.0, cpu, 0.000001);
 
 		assertTrue(getDoubleGauge(name("cpu_usage_percent").build()) >= 0);
 		assertTrue(getDoubleGauge(name("cpu_usage_percent").build()) <= 100);
