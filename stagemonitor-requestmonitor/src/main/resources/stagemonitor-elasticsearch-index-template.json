@@ -7,7 +7,6 @@
   },
   "mappings": {
     "_default_": {
-      "_ttl" : { "enabled" : true },
       "dynamic_templates" : [
         {
           "http_headers": {

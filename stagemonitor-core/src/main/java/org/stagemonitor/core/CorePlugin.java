@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
@@ -161,6 +163,15 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Reporting interval Elasticsearch")
 			.description("The amount of time between the metrics are reported to Elasticsearch (in seconds).")
 			.defaultValue(60)
+			.tags("metrics-store", "elasticsearch")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<Integer> deleteElasticsearchMetricsAfterDays = ConfigurationOption.integerOption()
+			.key("stagemonitor.reporting.elasticsearch.deleteMetricsAfterDays")
+			.dynamic(false)
+			.label("Delete ES metrics after (days)")
+			.description("The number of days after the metrics stored in elasticsearch should be deleted. Set below 1 to deactivate.")
+			.defaultValue(-1)
 			.tags("metrics-store", "elasticsearch")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -399,6 +410,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	private ElasticsearchClient elasticsearchClient;
 	private GrafanaClient grafanaClient;
+	private IndexSelector indexSelector = new IndexSelector(new Clock.UserTimeClock());
 
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
@@ -502,6 +514,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
+			elasticsearchClient.scheduleOptimizeAndDeleteOfOldIndices("stagemonitor-metrics-", 1, deleteElasticsearchMetricsAfterDays.getValue());
 		} else {
 			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrl(), reportingInterval);
 		}
@@ -693,5 +706,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public int getThreadPoolQueueCapacityLimit() {
 		return threadPoolQueueCapacityLimit.getValue();
+	}
+
+	public IndexSelector getIndexSelector() {
+		return indexSelector;
 	}
 }

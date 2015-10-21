@@ -40,6 +40,5 @@ public class RequestMonitorPluginConfigurationTest {
 
 		assertEquals(1, config.getCallStackEveryXRequestsToGroup());
 		assertEquals(false, config.isLogCallStacks());
-		assertEquals("1w", config.getRequestTraceTtl());
 	}
 }

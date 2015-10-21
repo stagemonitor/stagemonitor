@@ -86,14 +86,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<String> requestTraceTtl = ConfigurationOption.stringOption()
-			.key("stagemonitor.requestmonitor.requestTraceTTL")
+	private final ConfigurationOption<Integer> deleteRequestTracesAfterDays = ConfigurationOption.integerOption()
+			.key("stagemonitor.requestmonitor.deleteRequestTracesAfterDays")
 			.dynamic(true)
-			.label("Request trace ttl")
-			.description("When set, call stacks will be deleted automatically after the specified interval\n" +
-					"In case you do not specify a time unit like d (days), m (minutes), h (hours), " +
-					"ms (milliseconds) or w (weeks), milliseconds is used as default unit.")
-			.defaultValue("1w")
+			.label("Delete request traces after (days)")
+			.description("When set, call stacks will be deleted automatically after the specified days. " +
+					"Set to a negative value to never delete request traces.")
+			.defaultValue(7)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
@@ -134,6 +133,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendBulkAsync("kibana/RequestDashboard.bulk");
 			elasticsearchClient.sendBulkAsync("kibana/RequestDetails.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
+			elasticsearchClient.scheduleOptimizeAndDeleteOfOldIndices("stagemonitor-requests-", 1, deleteRequestTracesAfterDays.getValue());
 		}
 	}
 
@@ -175,10 +175,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isLogCallStacks() {
 		return logCallStacks.getValue();
-	}
-
-	public String getRequestTraceTtl() {
-		return requestTraceTtl.getValue();
 	}
 
 	public boolean isCollectDbTimePerRequest() {

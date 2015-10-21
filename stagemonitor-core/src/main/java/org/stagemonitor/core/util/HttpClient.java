@@ -15,6 +15,15 @@ public class HttpClient {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
+	public int send(final String method, final String url) {
+		return send(method, url, null, new HttpURLConnectionHandler() {
+			@Override
+			public void withHttpURLConnection(HttpURLConnection connection) throws IOException {
+				// noop
+			}
+		});
+	}
+
 	public int sendAsJson(final String method, final String url, final Object requestBody) {
 		return sendAsJson(method, url, requestBody, null);
 	}

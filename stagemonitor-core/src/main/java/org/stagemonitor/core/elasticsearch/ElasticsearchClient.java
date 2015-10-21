@@ -12,10 +12,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -30,6 +31,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.CompletedFuture;
+import org.stagemonitor.core.util.DateUtils;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.IOUtils;
@@ -173,6 +175,24 @@ public class ElasticsearchClient {
 		});
 	}
 
+	public int deleteIndices(String indexPattern) {
+		return execute("DELETE", indexPattern + "?timeout=20m", "Deleting indices: {}");
+	}
+
+	public int optimizeIndices(String indexPattern) {
+		return execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h", "Optimizing indices: {}");
+	}
+
+	private int execute(String method, String path, String logMessage) {
+		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
+		if (StringUtils.isEmpty(elasticsearchUrl)) {
+			return -1;
+		}
+		final String url = elasticsearchUrl + "/" + path;
+		logger.info(logMessage, url);
+		return httpClient.send(method, url);
+	}
+
 	ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
 		final ObjectMapper mapper = JsonUtils.getMapper();
 		final ObjectNode dashboard = (ObjectNode) mapper.readTree(IOUtils.getResourceAsStream(dashboardPath));
@@ -216,6 +236,27 @@ public class ElasticsearchClient {
 
 	public void close() {
 		asyncRestPool.shutdown();
+	}
+
+	/**
+	 * Performs an optimize and delete on logstash-style index patterns
+	 *
+	 * @param indexPrefix the prefix of the logstash-style index pattern
+	 * @param optimizeIndicesOlderThanDays
+	 * @param deleteIndicesOlderThanDays
+	 */
+	public void scheduleOptimizeAndDeleteOfOldIndices(String indexPrefix, int optimizeIndicesOlderThanDays, int deleteIndicesOlderThanDays) {
+		Timer timer = new Timer(indexPrefix + "elasticsearch-tasks", true);
+
+		if (optimizeIndicesOlderThanDays > 0) {
+			final TimerTask optimizeIndicesTask = new OptimizeIndicesTask(corePlugin.getIndexSelector(), indexPrefix, optimizeIndicesOlderThanDays, this);
+			timer.schedule(optimizeIndicesTask, DateUtils.getNextDateAtHour(2), DateUtils.getDayInMillis());
+		}
+
+		if (deleteIndicesOlderThanDays > 0) {
+			final TimerTask deleteIndicesTask = new DeleteIndicesTask(corePlugin.getIndexSelector(), indexPrefix, deleteIndicesOlderThanDays, this);
+			timer.schedule(deleteIndicesTask, DateUtils.getNextDateAtHour(1), DateUtils.getDayInMillis());
+		}
 	}
 
 }

@@ -11,7 +11,6 @@ import org.stagemonitor.core.util.StringUtils;
 public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	private final CorePlugin corePlugin;
-	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final ElasticsearchClient elasticsearchClient;
 
 	public ElasticsearchRequestTraceReporter() {
@@ -22,17 +21,12 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin,
 											 ElasticsearchClient elasticsearchClient) {
 		this.corePlugin = corePlugin;
-		this.requestMonitorPlugin = requestMonitorPlugin;
 		this.elasticsearchClient = elasticsearchClient;
 	}
 
 	@Override
 	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) {
 		String path = String.format("/stagemonitor-requests-%s/requests", StringUtils.getLogstashStyleDate());
-		final String ttl = requestMonitorPlugin.getRequestTraceTtl();
-		if (ttl != null && !ttl.isEmpty()) {
-			path += "?ttl=" + ttl;
-		}
 		elasticsearchClient.sendAsJsonAsync("POST", path, requestTrace);
 	}
 
