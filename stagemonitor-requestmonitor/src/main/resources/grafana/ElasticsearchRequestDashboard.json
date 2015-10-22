@@ -707,7 +707,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: response_time_rum AND request_name: All"
+              "query": "name: response_time_rum AND request_name: All AND !layer: All"
             }
           ],
           "timeFrom": null,

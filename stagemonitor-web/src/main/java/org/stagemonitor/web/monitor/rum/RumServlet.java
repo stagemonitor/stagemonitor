@@ -44,19 +44,21 @@ public class RumServlet extends HttpServlet {
 			final long pageRendering = Long.parseLong(getRequiredParam(req, "pageRendering"));
 			final long networkTime = timeToFirstByte - serverTime;
 
-			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Dom Processing").build()).update(domProcessing, MILLISECONDS);
-			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Page Rendering").build()).update(pageRendering, MILLISECONDS);
-			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Network").build()).update(networkTime, MILLISECONDS);
-			metricRegistry.timer(name("response_time_rum").tag("request_name", "All").layer("Server").build()).update(serverTime, MILLISECONDS);
+			trackPageLoadTime("All", serverTime, domProcessing, pageRendering, networkTime);
 			if (webPlugin.isCollectPageLoadTimesPerRequest()) {
-				metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Dom Processing").build()).update(domProcessing, MILLISECONDS);
-				metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Page Rendering").build()).update(pageRendering, MILLISECONDS);
-				metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Network").build()).update(networkTime, MILLISECONDS);
-				metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Server").build()).update(serverTime, MILLISECONDS);
+				trackPageLoadTime(requestName, serverTime, domProcessing, pageRendering, networkTime);
 			}
 		} else {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
+	}
+
+	private void trackPageLoadTime(String requestName, long serverTime, long domProcessing, long pageRendering, long networkTime) {
+		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Dom Processing").build()).update(domProcessing, MILLISECONDS);
+		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Page Rendering").build()).update(pageRendering, MILLISECONDS);
+		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Network").build()).update(networkTime, MILLISECONDS);
+		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Server").build()).update(serverTime, MILLISECONDS);
+		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("All").build()).update(serverTime+ networkTime + pageRendering + domProcessing, MILLISECONDS);
 	}
 
 	private String getRequiredParam(HttpServletRequest req, String parameterName) {
