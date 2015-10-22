@@ -33,7 +33,6 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	private final Clock clock;
 	private final CorePlugin corePlugin;
 	private JsonFactory jfactory = new JsonFactory();
-	private final int globalTagsHash;
 
 	public ElasticsearchReporter(Metric2Registry registry,
 								 Metric2Filter filter,
@@ -60,7 +59,6 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		this.httpClient = httpClient;
 		this.clock = clock;
 		jfactory.setCodec(JsonUtils.getMapper());
-		globalTagsHash = globalTags.hashCode();
 	}
 
 	@Override
@@ -161,7 +159,6 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			jg.writeStringField("name", metricName.getName());
 			writeMap(jg, metricName.getTags());
 			writeMap(jg, globalTags);
-			jg.writeNumberField("@series", metricName.getName().hashCode() + globalTagsHash + metricName.getTags().hashCode());
 			valueWriter.writeValues(entry.getValue(), jg);
 			jg.writeEndObject();
 			jg.flush();
