@@ -116,7 +116,8 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "Row"
@@ -229,7 +230,8 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "New row"

@@ -128,7 +128,8 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -211,7 +212,8 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "Row"
@@ -313,7 +315,8 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -408,7 +411,8 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "New row"
@@ -500,7 +504,8 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -594,7 +599,8 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "New row"

@@ -108,7 +108,8 @@
           "y_formats": [
             "bytes",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {
@@ -205,7 +206,8 @@
           "y_formats": [
             "bytes",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "Row"
@@ -311,7 +313,8 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -405,7 +408,8 @@
           "y_formats": [
             "none",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "New row"
@@ -497,6 +501,7 @@
             "percent",
             "short"
           ],
+          "interval": ">1m",
           "decimals": null
         }
       ],

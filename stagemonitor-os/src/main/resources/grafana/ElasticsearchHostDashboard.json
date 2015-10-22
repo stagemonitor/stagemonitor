@@ -104,7 +104,8 @@
           "y_formats": [
             "percent",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -213,7 +214,8 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "Row"
@@ -598,7 +600,8 @@
           "y_formats": [
             "bytes",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -691,7 +694,8 @@
           "y_formats": [
             "bytes",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -784,7 +788,8 @@
           "y_formats": [
             "none",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "New row"
@@ -885,7 +890,8 @@
           "y_formats": [
             "bytes",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -978,7 +984,8 @@
           "y_formats": [
             "percent",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         },
         {
           "aliasColors": {},
@@ -1071,7 +1078,8 @@
           "y_formats": [
             "none",
             "short"
-          ]
+          ],
+          "interval": ">1m"
         }
       ],
       "title": "New row"
@@ -1185,6 +1193,7 @@
             "bytes",
             "short"
           ],
+          "interval": ">1m",
           "links": []
         },
         {
@@ -1291,6 +1300,7 @@
             "none",
             "short"
           ],
+          "interval": ">1m",
           "links": []
         },
         {
@@ -1397,6 +1407,7 @@
             "none",
             "short"
           ],
+          "interval": ">1m",
           "links": []
         }
       ],
@@ -1512,6 +1523,7 @@
             "bytes",
             "short"
           ],
+          "interval": ">1m",
           "links": []
         },
         {
@@ -1618,6 +1630,7 @@
             "none",
             "short"
           ],
+          "interval": ">1m",
           "links": []
         },
         {
@@ -1724,6 +1737,7 @@
             "none",
             "short"
           ],
+          "interval": ">1m",
           "links": []
         }
       ]
