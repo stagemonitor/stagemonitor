@@ -19,10 +19,10 @@ public class IndexSelector {
 	/**
 	 * Returns an Elasticsearch index pattern that only includes indices that are older than the specified amount of days
 	 * <p/>
-	 * Your indices are ought to have the pattern [prefix][YYYY.mm.DD]
+	 * Your indices are ought to have the pattern [prefix]YYYY.MM.DD
 	 * <p/>
 	 * See also https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-index.html
-	 * @param prefix the index prefix
+	 * @param prefix the index prefix e.g. 'stagemonitor-metrics-'
 	 * @param days the number days that should be excluded
 	 * @return The Elasticsearch index pattern that only includes indices that are older than the specified amount of days
 	 */
@@ -32,9 +32,9 @@ public class IndexSelector {
 		// stagemonitor-metrics-*,-stagemonitor-metrics-2015.10.*,-stagemonitor-metrics-2015.09.30
 		final StringBuilder indexPattern = new StringBuilder(prefix).append('*');
 
-		final GregorianCalendar now = getNow();
+		final GregorianCalendar now = getNowUTC();
 		final GregorianCalendar lastDayToExclude = getLastDayToExclude(days);
-		final GregorianCalendar alreadyExcluded = getNow();
+		final GregorianCalendar alreadyExcluded = getNowUTC();
 
 		excludeMonths(prefix, now, indexPattern, lastDayToExclude, alreadyExcluded);
 		excludeDays(prefix, indexPattern, lastDayToExclude, alreadyExcluded);
@@ -49,7 +49,7 @@ public class IndexSelector {
 		}
 
 		for (int i = 0; i < excludedMonths; i++) {
-			// ,-YYYY.mm.*
+			// ,[prefix]YYYY.MM.*
 			final int year = alreadyExcluded.get(Calendar.YEAR);
 			final int month = alreadyExcluded.get(Calendar.MONTH);
 			sb.append(",-")
@@ -68,19 +68,19 @@ public class IndexSelector {
 	}
 
 	private GregorianCalendar getLastDayToExclude(int days) {
-		final GregorianCalendar lastDayToExclude = getNow();
+		final GregorianCalendar lastDayToExclude = getNowUTC();
 		lastDayToExclude.add(Calendar.DAY_OF_YEAR, days * -1);
 		return lastDayToExclude;
 	}
 
-	private GregorianCalendar getNow() {
+	private GregorianCalendar getNowUTC() {
 		final GregorianCalendar now = new GregorianCalendar();
 		now.setTimeZone(TimeZone.getTimeZone("UTC"));
 		now.setTime(new Date(clock.getTime()));
 		return now;
 	}
 
-	private String formatTwoDigitsLeadingZero(int i) {
+	private static String formatTwoDigitsLeadingZero(int i) {
 		return String.format("%02d", i);
 	}
 }

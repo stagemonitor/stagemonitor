@@ -15,6 +15,9 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
+/**
+ * Serves as a backwards compatibility bridge between {@link Metric2Registry} and {@link MetricRegistry}
+ */
 public class MetricRegistryAdapter extends MetricRegistry {
 
 	private final Metric2Registry metric2Registry;

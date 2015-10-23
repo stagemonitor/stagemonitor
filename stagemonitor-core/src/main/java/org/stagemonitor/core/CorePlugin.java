@@ -385,7 +385,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Grafana API Key")
 			.description("The API Key of your Grafana 2.0 installation. " +
 					"See http://docs.grafana.org/reference/http_api/#create-api-token how to create a key. " +
-					"The key has to have the editor role.")
+					"The key has to have the admin role. This is necessary so that stagemonitor can automatically add " +
+					"datasources and dashboards to Grafana.")
 			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("grafana")
@@ -686,7 +687,6 @@ public class CorePlugin extends StagemonitorPlugin {
 	public String getInfluxDbDb() {
 		return influxDbDb.getValue();
 	}
-
 
 	public boolean isReportToElasticsearch() {
 		return StringUtils.isNotEmpty(getElasticsearchUrl()) && reportingIntervalElasticsearch.getValue() > 0;

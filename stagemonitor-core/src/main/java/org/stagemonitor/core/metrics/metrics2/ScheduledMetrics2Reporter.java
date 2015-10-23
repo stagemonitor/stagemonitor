@@ -12,6 +12,9 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
 
+/**
+ * A {@link ScheduledReporter} that works with a {@link Metric2Registry}
+ */
 public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 
 	protected final Metric2Registry registry;

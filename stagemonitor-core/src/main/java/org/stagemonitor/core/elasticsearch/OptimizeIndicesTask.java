@@ -2,6 +2,12 @@ package org.stagemonitor.core.elasticsearch;
 
 import java.util.TimerTask;
 
+/**
+ * A task that runs periodically and calls _optimize on old Elasticsearch logstash-style indices.
+ * <p/>
+ * By optimizing, we are reducing the index size and make the overall index performance a bit faster.
+ * But an optimisation process is I/O heavy.
+ */
 public class OptimizeIndicesTask extends TimerTask {
 
 	private final String indexPrefix;

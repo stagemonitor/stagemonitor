@@ -2,6 +2,9 @@ package org.stagemonitor.core.elasticsearch;
 
 import java.util.TimerTask;
 
+/**
+ * A task that runs periodically and deletes old Elasticsearch logstash-style indices
+ */
 public class DeleteIndicesTask extends TimerTask {
 
 	private final String indexPrefix;

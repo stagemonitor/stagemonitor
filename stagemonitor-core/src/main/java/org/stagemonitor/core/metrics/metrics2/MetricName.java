@@ -20,6 +20,7 @@ public class MetricName {
 
 	private final String name;
 
+	// The insertion order is important for the correctness of #toGraphiteName
 	private final LinkedHashMap<String, String> tags;
 
 	private MetricName(String name, LinkedHashMap<String, String> tags) {

@@ -25,22 +25,6 @@ public interface Metric2Set {
 	class Converter {
 		private final static Logger logger = LoggerFactory.getLogger(Converter.class);
 
-		public static Metric2Set convert(final MetricSet metricSet, final Map<String, MetricName> metricNameMapping) {
-			return new Metric2Set() {
-				@Override
-				public Map<MetricName, Metric> getMetrics() {
-					final HashMap<MetricName, Metric> result = new HashMap<MetricName, Metric>();
-					for (Map.Entry<String, Metric> entry : metricSet.getMetrics().entrySet()) {
-						if (metricNameMapping.containsKey(entry.getKey())) {
-							result.put(metricNameMapping.get(entry.getKey()), entry.getValue());
-						} else {
-							logger.warn("No mapping for key " + entry.getKey());
-						}
-					}
-					return result;
-				}
-			};
-		}
 		public static Metric2Set convert(final MetricSet metricSet, final MetricNameConverter converter) {
 			return new Metric2Set() {
 				@Override

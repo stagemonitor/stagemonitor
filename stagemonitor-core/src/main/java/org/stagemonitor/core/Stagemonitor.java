@@ -161,6 +161,9 @@ public final class Stagemonitor {
 		configuration.close();
 	}
 
+	/**
+	 * @deprecated use {@link #getMetric2Registry()}
+	 */
 	@Deprecated
 	public static MetricRegistry getMetricRegistry() {
 		return metric2Registry.getMetricRegistry();

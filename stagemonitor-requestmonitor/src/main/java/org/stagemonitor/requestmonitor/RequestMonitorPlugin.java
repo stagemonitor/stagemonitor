@@ -124,14 +124,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-index-template.json", "stagemonitor-requests");
+		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-request-index-template.json", "stagemonitor-requests");
 		elasticsearchClient.sendKibanaDashboardAsync("kibana/Recent Requests.json");
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			elasticsearchClient.sendBulkAsync("kibana/RequestDashboard.bulk");
-			elasticsearchClient.sendBulkAsync("kibana/RequestDetails.bulk");
+			elasticsearchClient.sendBulkAsync("kibana/RequestAnalysis.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 			elasticsearchClient.scheduleOptimizeAndDeleteOfOldIndices("stagemonitor-requests-", 1, deleteRequestTracesAfterDays.getValue());
 		}

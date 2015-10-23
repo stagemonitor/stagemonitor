@@ -239,7 +239,7 @@ public class ElasticsearchClient {
 	}
 
 	/**
-	 * Performs an optimize and delete on logstash-style index patterns
+	 * Performs an optimize and delete on logstash-style index patterns [prefix]YYYY.MM.DD
 	 *
 	 * @param indexPrefix the prefix of the logstash-style index pattern
 	 * @param optimizeIndicesOlderThanDays
