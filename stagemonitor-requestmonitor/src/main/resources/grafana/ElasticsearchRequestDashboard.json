@@ -15,11 +15,11 @@
       "panels": [
         {
           "aliasColors": {
-            "Average median": "#508642",
-            "Average p25": "#3F6833",
-            "Average p75": "#629E51",
-            "Average p95": "#7EB26D",
-            "Average p99": "#B7DBAB"
+            "median": "#0A437C",
+            "p25": "#052B51",
+            "p75": "#1F78C1",
+            "p95": "#5195CE",
+            "p99": "#64B0C8"
           },
           "bars": false,
           "datasource": "ES stagemonitor",
@@ -111,7 +111,8 @@
               ],
               "query": "name: response_time_server AND layer: total AND !request_name: All",
               "refId": "B",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "alias": "{{field}}"
             }
           ],
           "timeFrom": null,
@@ -127,8 +128,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {
@@ -225,8 +225,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "Row"
@@ -328,8 +327,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {},
@@ -423,8 +421,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "New row"
@@ -526,8 +523,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {},
@@ -621,8 +617,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "New row"
@@ -729,8 +724,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "New row"

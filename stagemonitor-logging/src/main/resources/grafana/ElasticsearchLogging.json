@@ -111,8 +111,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {
@@ -212,8 +211,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "Row"

@@ -111,7 +111,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND application: \\\"$Application\" AND host: \\\"$Host\\\" AND instance \\\"$Instance\\\" AND signature: $Signature",
+              "query": "name: jdbc_statement AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance",
               "alias": "{{field}}"
             }
           ],
@@ -128,8 +128,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {},
@@ -196,7 +195,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND application: \\\"$Application\" AND host: \\\"$Host\\\" AND instance \\\"$Instance\\\" AND signature: $Signature"
+              "query": "name: jdbc_statement AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -212,8 +211,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "Row"
@@ -315,8 +313,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {},
@@ -411,8 +408,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "New row"
@@ -487,7 +483,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: get_jdbc_connection AND application: \\\"$Application\" AND host: \\\"$Host\\\" AND instance \\\"$Instance\\\" AND signature: $Signature",
+              "query": "name: get_jdbc_connection AND application: $Application AND host: $Host AND instance: $Instance",
               "alias": ""
             }
           ],
@@ -504,8 +500,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {},
@@ -583,7 +578,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND application: \\\"$Application\" AND host: \\\"$Host\\\" AND instance \\\"$Instance\\\" AND signature: $Signature"
+              "query": "name: jdbc_statement AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -599,8 +594,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "New row"

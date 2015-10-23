@@ -20,6 +20,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.os.metrics.AbstractSigarMetricSet;
 import org.stagemonitor.os.metrics.CpuMetricSet;
@@ -38,12 +39,21 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
-		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendGrafana1DashboardAsync("CPU.json");
-		elasticsearchClient.sendGrafana1DashboardAsync("Filesystem.json");
-		elasticsearchClient.sendGrafana1DashboardAsync("Memory.json");
-		elasticsearchClient.sendGrafana1DashboardAsync("Network.json");
-		elasticsearchClient.sendGrafana1DashboardAsync("OS Overview.json");
+		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
+
+		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		if (corePlugin.isReportToGraphite()) {
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/CPU.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Filesystem.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Memory.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Network.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/OS Overview.json");
+		}
+		if (corePlugin.isReportToElasticsearch()) {
+			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchHostDashboard.json");
+			elasticsearchClient.sendBulkAsync("kibana/HostDashboard.bulk");
+		}
 
 		if (sigar == null) {
 			if (!SigarNativeBindingLoader.loadNativeSigarBindings()) {

@@ -30,6 +30,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -223,7 +224,9 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/KPIs over Time.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
+			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 			elasticsearchClient.sendBulkAsync("kibana/ApplicationServer.bulk");
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		}
 	}
 

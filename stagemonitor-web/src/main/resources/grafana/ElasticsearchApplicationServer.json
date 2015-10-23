@@ -116,8 +116,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "Row"
@@ -137,7 +136,7 @@
           "fill": 1,
           "grid": {
             "leftLogBase": 1,
-            "leftMax": 1,
+            "leftMax": 100,
             "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
@@ -230,8 +229,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "New row"

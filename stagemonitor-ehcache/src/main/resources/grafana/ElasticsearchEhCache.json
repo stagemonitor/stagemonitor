@@ -22,7 +22,7 @@
           "fill": 1,
           "grid": {
             "leftLogBase": 1,
-            "leftMax": 1,
+            "leftMax": 100,
             "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
@@ -103,10 +103,9 @@
           "x-axis": true,
           "y-axis": true,
           "y_formats": [
-            "short",
+            "percent",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {},
@@ -199,8 +198,7 @@
           "y_formats": [
             "bytes",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "Row"
@@ -301,8 +299,7 @@
           "y_formats": [
             "ms",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {},
@@ -396,8 +393,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         },
         {
           "aliasColors": {},
@@ -491,8 +487,7 @@
           "y_formats": [
             "short",
             "short"
-          ],
-          "interval": ">1m"
+          ]
         }
       ],
       "title": "New row"

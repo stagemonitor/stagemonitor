@@ -39,7 +39,7 @@ public class GrafanaClient {
 				.createSingleThreadDeamonPool("async-grafana", corePlugin.getThreadPoolQueueCapacityLimit());
 	}
 
-	public void createElasticsearchDatasource(final String name, final String url) {
+	public void createElasticsearchDatasource(final String name, final String url, int reportingInterval) {
 		Map<String, Object> dataSource = new HashMap<String, Object>();
 		dataSource.put("name", name);
 		dataSource.put("url", url);
@@ -51,6 +51,7 @@ public class GrafanaClient {
 		Map<String, Object> jsonData = new HashMap<String, Object>();
 		jsonData.put("timeField", "@timestamp");
 		jsonData.put("interval", "Daily");
+		jsonData.put("timeInterval", ">" + reportingInterval + "s");
 		dataSource.put("jsonData", jsonData);
 		asyncGrafanaRequest("POST", "/api/datasources", dataSource);
 	}
