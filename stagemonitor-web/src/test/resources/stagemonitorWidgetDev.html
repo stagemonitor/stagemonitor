@@ -59,7 +59,7 @@
 
 			window.StagemonitorLoaded = function () {
 				function isDomLoaded() {
-					return document.readyState === "interactive";
+					return document.readyState === "complete";
 				}
 				if (isDomLoaded()) {
 					init();
