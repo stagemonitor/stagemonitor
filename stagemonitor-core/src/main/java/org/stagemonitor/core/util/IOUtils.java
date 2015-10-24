@@ -27,6 +27,9 @@ public class IOUtils {
 	}
 
 	public static String toString(InputStream input) throws IOException {
+		if (input == null) {
+			return null;
+		}
 		final InputStreamReader inputStreamReader = new InputStreamReader(input);
 		final StringBuilder stringBuilder = new StringBuilder();
 		final char[] buffer = new char[BUFFER_SIZE];
