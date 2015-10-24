@@ -71,7 +71,7 @@
 								// the minimal value of the y-axis in the graph
 								min: 0,
 								// the maximum value of the y-axis in the graph
-								max: 1,
+								max: 100,
 								// the format of the values
 								// one of percent|bytes|ms
 								// or some arbitrary string that is appended to the values e.g. 'requests/sec'

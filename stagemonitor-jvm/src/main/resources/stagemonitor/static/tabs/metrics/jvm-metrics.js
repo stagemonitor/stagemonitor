@@ -23,7 +23,7 @@
 				{
 					bindto: '#memory-pools',
 					min: 0,
-					max: 1,
+					max: 100,
 					format: 'percent',
 					columns: [
 						{ metricCategory: "gauges", metricPathRegex: /jvm_memory_pools.([^\.]+).usage/, metric: "value" }
@@ -32,7 +32,7 @@
 				{
 					bindto: '#cpu',
 					min: 0,
-					max: 1,
+					max: 100,
 					fill: 0.1,
 					format: 'percent',
 					columns: [

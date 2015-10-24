@@ -7,7 +7,7 @@
 				{
 					bindto: '#os-cpu',
 					min: 0,
-					max: 1,
+					max: 100,
 					format: 'percent',
 					stack: true,
 					fill: 0.1,
@@ -45,7 +45,7 @@
 				{
 					bindto: '#fs-usage',
 					min: 0,
-					max: 1,
+					max: 100,
 					format: 'percent',
 					columns: [
 						{ metricCategory: "gauges", metricPathRegex: /disk_usage_percent.([^\.]+)/, metric: "value" }
