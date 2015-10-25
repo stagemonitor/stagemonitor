@@ -72,7 +72,7 @@ public class HttpClient {
 			return connection.getResponseCode();
 		} catch (IOException e) {
 			if (connection != null) {
-				logger.warn(e.getMessage() + ": " + getErrorMessage(connection));
+				logger.warn(e.getMessage() + " " + connection.getURL() + ": " + getErrorMessage(connection));
 				return getResponseCode(connection, e);
 			} else {
 				return -1;
@@ -93,12 +93,15 @@ public class HttpClient {
 		InputStream errorStream = null;
 		try {
 			errorStream = connection.getErrorStream();
-			return IOUtils.toString(errorStream);
+			if (errorStream != null) {
+				return IOUtils.toString(errorStream);
+			}
 		} catch (IOException e) {
 			return e.getMessage();
 		} finally {
 			IOUtils.closeQuietly(errorStream);
 		}
+		return "";
 	}
 
 	private void writeRequestBody(Object requestBody, HttpURLConnection connection) throws IOException {
