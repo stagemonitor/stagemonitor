@@ -3,9 +3,9 @@ package org.stagemonitor.core;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -29,7 +29,7 @@ public final class Stagemonitor {
 	private static List<String> pathsOfWidgetMetricTabPlugins = Collections.emptyList();
 	private static List<String> pathsOfWidgetTabPlugins = Collections.emptyList();
 	private static Iterable<StagemonitorPlugin> plugins;
-	private static List<Runnable> onShutdownActions = new LinkedList<Runnable>();
+	private static List<Runnable> onShutdownActions = new CopyOnWriteArrayList<Runnable>();
 
 	static {
 		try {
@@ -109,8 +109,8 @@ public final class Stagemonitor {
 	private static void initializePlugins() {
 		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
-		pathsOfWidgetMetricTabPlugins = new LinkedList<String>();
-		pathsOfWidgetTabPlugins = new LinkedList<String>();
+		pathsOfWidgetMetricTabPlugins = new CopyOnWriteArrayList<String>();
+		pathsOfWidgetTabPlugins = new CopyOnWriteArrayList<String>();
 		for (StagemonitorPlugin stagemonitorPlugin : plugins) {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 
