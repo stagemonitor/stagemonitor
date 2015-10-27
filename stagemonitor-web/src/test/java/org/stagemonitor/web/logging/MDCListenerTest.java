@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletRequestEvent;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,11 +28,13 @@ public class MDCListenerTest {
 	@Before
 	public void setUp() throws Exception {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 		MDC.clear();
 	}
 

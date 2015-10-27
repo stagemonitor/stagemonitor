@@ -1,7 +1,15 @@
 package org.stagemonitor.requestmonitor;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+import java.lang.reflect.Field;
+import java.util.SortedMap;
+
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -11,13 +19,6 @@ import org.junit.runner.RunWith;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
-
-import java.lang.reflect.Field;
-import java.util.SortedMap;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 @RunWith(ConditionalTravisTestRunner.class)
 public class MonitorRequestsInstrumenterTest {
@@ -44,6 +45,7 @@ public class MonitorRequestsInstrumenterTest {
 	@AfterClass
 	public static void resetStagemonitor() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test
