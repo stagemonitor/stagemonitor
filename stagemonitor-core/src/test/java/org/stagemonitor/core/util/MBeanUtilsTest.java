@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.*;
 import org.stagemonitor.core.Stagemonitor;
 
@@ -16,6 +17,7 @@ public class MBeanUtilsTest {
 	@AfterClass
 	public static void resetStagemonitor() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test

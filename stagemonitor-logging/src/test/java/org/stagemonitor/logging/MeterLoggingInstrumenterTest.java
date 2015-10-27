@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import java.util.SortedMap;
 
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -27,6 +28,7 @@ public class MeterLoggingInstrumenterTest {
 	@After
 	public void reinit() throws Exception {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 		logger = LoggerFactory.getLogger(getClass());
 	}
 

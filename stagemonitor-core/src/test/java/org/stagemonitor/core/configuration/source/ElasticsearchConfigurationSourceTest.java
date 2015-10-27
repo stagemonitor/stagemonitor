@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -24,6 +25,7 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 	@AfterClass
 	public static void reset() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Before

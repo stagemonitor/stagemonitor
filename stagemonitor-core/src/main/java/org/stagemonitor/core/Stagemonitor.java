@@ -204,13 +204,12 @@ public final class Stagemonitor {
 	}
 
 	/**
-	 * Should only be used by the internal unit tests
+	 * Should only be used outside of this class by the internal unit tests
 	 */
 	public static void reset() {
 		started = false;
 		disabled = false;
 		measurementSession = new MeasurementSession(null, null, null);
-		SharedMetricRegistries.clear();
 		reloadConfiguration();
 		tryStartMonitoring();
 		onShutdownActions.add(MainStagemonitorClassFileTransformer.performRuntimeAttachment());

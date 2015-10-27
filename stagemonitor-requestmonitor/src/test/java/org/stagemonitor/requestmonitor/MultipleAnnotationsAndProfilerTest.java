@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import org.junit.After;
@@ -41,6 +42,7 @@ public class MultipleAnnotationsAndProfilerTest {
 	@AfterClass
 	public static void resetStagemonitor() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test

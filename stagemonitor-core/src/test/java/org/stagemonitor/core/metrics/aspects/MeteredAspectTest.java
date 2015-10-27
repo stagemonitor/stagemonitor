@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.Metered;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -52,6 +53,7 @@ public class MeteredAspectTest {
 	@AfterClass
 	public static void resetStagemonitor() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test

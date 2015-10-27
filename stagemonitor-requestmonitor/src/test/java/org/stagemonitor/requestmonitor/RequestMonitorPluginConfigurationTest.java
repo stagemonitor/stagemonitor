@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Method;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,6 +20,7 @@ public class RequestMonitorPluginConfigurationTest {
 	@Before
 	public void before() throws Exception {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 		Configuration configuration = new Configuration(StagemonitorPlugin.class);
 		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerOptionProvider", ConfigurationOptionProvider.class);
 		registerPluginConfiguration.setAccessible(true);
@@ -29,6 +31,7 @@ public class RequestMonitorPluginConfigurationTest {
 	@After
 	public void cleanUp() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test
