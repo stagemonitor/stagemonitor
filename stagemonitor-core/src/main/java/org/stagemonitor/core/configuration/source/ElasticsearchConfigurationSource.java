@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 	private final String path;
 	private final ElasticsearchClient elasticsearchClient;
 	private final String configurationId;
-	private Map<String, String> configuration = new HashMap<String, String>();
+	private Map<String, String> configuration = new ConcurrentHashMap<String, String>();
 
 	public ElasticsearchConfigurationSource(ElasticsearchClient elasticsearchClient, String configurationId) {
 		this.elasticsearchClient = elasticsearchClient;
@@ -47,10 +48,10 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 
 	@Override
 	public void save(String key, String value) throws IOException {
-		synchronized (this) {
-			configuration.put(key, value);
-			elasticsearchClient.sendAsJson("PUT", path, configuration);
-		}
+		final HashMap<String, String> configToSend = new HashMap<String, String>(configuration);
+		configToSend.put(key, value);
+		elasticsearchClient.sendAsJson("PUT", path, configToSend);
+		configuration.put(key, value);
 	}
 
 	@Override
