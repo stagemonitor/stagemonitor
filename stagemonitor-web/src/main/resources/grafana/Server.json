@@ -66,11 +66,11 @@
 					"y-axis": true,
 					"scale": 1,
 					"grid": {
-						"threshold1": 0.8,
-						"threshold2": 0.95,
+						"threshold1": 80,
+						"threshold2": 95,
 						"threshold1Color": "rgba(223, 241, 30, 0.33)",
 						"threshold2Color": "rgba(234, 112, 112, 0.22)",
-						"leftMax": 1,
+						"leftMax": 100,
 						"rightMax": null,
 						"leftMin": 0,
 						"rightMin": null
@@ -118,10 +118,10 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].server_thread_pool.*,[[group]],'maxSeries')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].server_thread_pool.usage.*,[[group]],'maxSeries')"
 						},
 						{
-							"target": "alias(maxSeries(stagemonitor.[[application]].[[instance]].[[host]].server_thread_pool.*),'max')",
+							"target": "alias(maxSeries(stagemonitor.[[application]].[[instance]].[[host]].server_thread_pool.usage.*),'max')",
 							"hide": true
 						}
 					],
@@ -131,7 +131,7 @@
 					"datasource": null,
 					"renderer": "flot",
 					"y_formats": [
-						"none",
+						"percent",
 						"none"
 					]
 				},
@@ -196,10 +196,10 @@
 					},
 					"targets": [
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].http_sessions,[[group]],'sumSeries')"
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].http_sessions.count,[[group]],'sumSeries')"
 						},
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions),'total')",
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions.count),'total')",
 							"hide": true
 						}
 					],

@@ -66,11 +66,11 @@
 					"y-axis": true,
 					"scale": 1,
 					"grid": {
-						"threshold1": 0.8,
-						"threshold2": 0.95,
+						"threshold1": 80,
+						"threshold2": 95,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
 						"threshold2Color": "rgba(234, 112, 112, 0.22)",
-						"leftMax": 1,
+						"leftMax": 100,
 						"rightMax": null,
 						"leftMin": 0,
 						"rightMin": null
@@ -118,10 +118,10 @@
 					},
 					"targets": [
 						{
-							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm.cpu.process.usage),'cpu')"
+							"target": "alias([[aggregation]](stagemonitor.[[application]].[[instance]].[[host]].jvm_process_cpu_usage),'cpu')"
 						},
 						{
-							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].jvm.cpu.process.usage,2,'maxSeries')",
+							"target": "groupByNode(stagemonitor.[[application]].[[instance]].[[host]].jvm_process_cpu_usage,2,'maxSeries')",
 							"hide": true
 						}
 					],
@@ -130,7 +130,7 @@
 					"title": "Process CPU usage",
 					"datasource": null,
 					"renderer": "flot",
-					"y_formats": ["none", "none"],
+					"y_formats": ["percent", "none"],
 					"error": "application is not defined"
 				},
 				{

@@ -629,13 +629,13 @@
 					},
 					"targets": [
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions),'now')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions.count),'now')"
 						},
 						{
-							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions),'7d'),'-7d')"
+							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions.count),'7d'),'-7d')"
 						},
 						{
-							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions),'28d'),'-28d')"
+							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].http_sessions.count),'28d'),'-28d')"
 						}
 					],
 					"aliasColors": {

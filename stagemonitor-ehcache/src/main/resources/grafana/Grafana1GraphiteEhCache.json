@@ -134,7 +134,7 @@
 					},
 					"targets": [
 						{
-							"target": "lowestAverage(groupByNode(summarize(scale(stagemonitor.[[application]].[[instance]].[[host]].cache_hit_ratio.*.All,100),'10minute','avg'),5,'[[aggregation]]'),10)"
+							"target": "lowestAverage(groupByNode(summarize(stagemonitor.[[application]].[[instance]].[[host]].cache_hit_ratio.*.All,'10minute','avg'),5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
@@ -365,7 +365,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache_get.*.All,5,'[[aggregation]]'),10)"
+							"target": "highestAverage(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cache_get.*.All.m1_rate,5,'[[aggregation]]'),10)"
 						}
 					],
 					"aliasColors": {},
