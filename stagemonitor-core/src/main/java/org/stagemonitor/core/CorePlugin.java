@@ -428,7 +428,9 @@ public class CorePlugin extends StagemonitorPlugin {
 		});
 
 		ElasticsearchClient elasticsearchClient = getElasticsearchClient();
-		elasticsearchClient.sendGrafana1DashboardAsync("Custom Metrics.json");
+		if (isReportToGraphite()) {
+			elasticsearchClient.sendGrafana1DashboardAsync("Custom Metrics.json");
+		}
 		elasticsearchClient.sendAsJsonAsync("PUT", "/stagemonitor", IOUtils.getResourceAsStream("stagemonitor-elasticsearch-mapping.json"));
 		if (isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = getGrafanaClient();

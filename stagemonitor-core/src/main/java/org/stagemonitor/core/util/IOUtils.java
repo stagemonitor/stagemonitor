@@ -51,6 +51,9 @@ public class IOUtils {
 	}
 
 	public static void consumeAndClose(InputStream is) {
+		if (is == null) {
+			return;
+		}
 		try {
 			while (is.read() != EOF) {}
 		} catch (IOException e) {

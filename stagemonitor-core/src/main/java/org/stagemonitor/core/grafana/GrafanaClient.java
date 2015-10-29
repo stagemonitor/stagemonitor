@@ -1,17 +1,20 @@
 package org.stagemonitor.core.grafana;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 
 /**
@@ -64,8 +67,14 @@ public class GrafanaClient {
 	 * @param classPathLocation The location of the dashboard
 	 */
 	public void sendGrafanaDashboardAsync(final String classPathLocation) {
-		final String requestBody = "{\"dashboard\":" + IOUtils.getResourceAsString(classPathLocation) + ",\"overwrite\": false}";
-		asyncGrafanaRequest("POST", "/api/dashboards/db", requestBody);
+		try {
+			final ObjectNode dashboard = (ObjectNode) JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(classPathLocation));
+			dashboard.put("editable", false);
+			final String requestBody = "{\"dashboard\":" + dashboard + ",\"overwrite\": true}";
+			asyncGrafanaRequest("POST", "/api/dashboards/db", requestBody);
+		} catch (IOException e) {
+			logger.warn(e.getMessage(), e);
+		}
 	}
 
 	private void asyncGrafanaRequest(final String method, final String path, final Object requestBody) {

@@ -4,7 +4,6 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,15 +67,14 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Meter> meters,
 							  final Map<MetricName, Timer> timers) {
 		final Timer.Context time = registry.timer(name("reporting_time").tag("reporter", "elasticsearch").build()).time();
-		httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null, new HttpClient.HttpURLConnectionHandler() {
+		httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null, new HttpClient.OutputStreamHandler() {
 			@Override
-			public void withHttpURLConnection(HttpURLConnection connection) throws IOException {
+			public void withHttpURLConnection(OutputStream os) throws IOException {
 				String bulkAction = "{ \"index\" : " +
 						"{ \"_index\" : \"stagemonitor-metrics-" + StringUtils.getLogstashStyleDate() + "\", " +
 						"\"_type\" : \"metrics\" } " +
 						"}\n";
 				byte[] bulkActionBytes = bulkAction.getBytes("UTF-8");
-				final OutputStream os = connection.getOutputStream();
 				reportMetrics(gauges, counters, histograms, meters, timers, os, bulkActionBytes);
 				os.close();
 			}

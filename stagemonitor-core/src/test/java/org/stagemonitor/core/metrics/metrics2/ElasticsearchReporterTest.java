@@ -50,13 +50,13 @@ public class ElasticsearchReporterTest {
 		timestamp = System.currentTimeMillis();
 		when(clock.getTime()).thenReturn(timestamp);
 		final HttpClient httpClient = mock(HttpClient.class);
-		when(httpClient.send(anyString(), anyString(), anyMap(), any(HttpClient.HttpURLConnectionHandler.class))).thenAnswer(new Answer<Integer>() {
+		when(httpClient.send(anyString(), anyString(), anyMap(), any(HttpClient.OutputStreamHandler.class))).thenAnswer(new Answer<Integer>() {
 			@Override
 			public Integer answer(InvocationOnMock invocation) throws Throwable {
-				HttpClient.HttpURLConnectionHandler handler = (HttpClient.HttpURLConnectionHandler) invocation.getArguments()[3];
+				HttpClient.OutputStreamHandler handler = (HttpClient.OutputStreamHandler) invocation.getArguments()[3];
 				final HttpURLConnection connection = mock(HttpURLConnection.class);
 				when(connection.getOutputStream()).thenReturn(out);
-				handler.withHttpURLConnection(connection);
+				handler.withHttpURLConnection(connection.getOutputStream());
 				return 200;
 			}
 		});
