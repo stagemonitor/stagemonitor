@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import org.stagemonitor.core.util.StringUtils;
  */
 public class GrafanaClient {
 
+	private static final String ES_STAGEMONITOR_DS_NAME = "ES stagemonitor";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final ThreadPoolExecutor asyncRestPool;
@@ -42,9 +44,9 @@ public class GrafanaClient {
 				.createSingleThreadDeamonPool("async-grafana", corePlugin.getThreadPoolQueueCapacityLimit());
 	}
 
-	public void createElasticsearchDatasource(final String name, final String url, int reportingInterval) {
+	public void createElasticsearchDatasource(final String url) {
 		Map<String, Object> dataSource = new HashMap<String, Object>();
-		dataSource.put("name", name);
+		dataSource.put("name", ES_STAGEMONITOR_DS_NAME);
 		dataSource.put("url", url);
 		dataSource.put("access", "proxy");
 		dataSource.put("database", "[stagemonitor-metrics-]YYYY.MM.DD");
@@ -54,7 +56,7 @@ public class GrafanaClient {
 		Map<String, Object> jsonData = new HashMap<String, Object>();
 		jsonData.put("timeField", "@timestamp");
 		jsonData.put("interval", "Daily");
-		jsonData.put("timeInterval", ">" + reportingInterval + "s");
+		jsonData.put("timeInterval", ">" + corePlugin.getElasticsearchReportingInterval() + "s");
 		dataSource.put("jsonData", jsonData);
 		asyncGrafanaRequest("POST", "/api/datasources", dataSource);
 	}
@@ -70,10 +72,21 @@ public class GrafanaClient {
 		try {
 			final ObjectNode dashboard = (ObjectNode) JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(classPathLocation));
 			dashboard.put("editable", false);
+			addMinIntervalToPanels(dashboard, ">" + corePlugin.getElasticsearchReportingInterval() + "s");
 			final String requestBody = "{\"dashboard\":" + dashboard + ",\"overwrite\": true}";
 			asyncGrafanaRequest("POST", "/api/dashboards/db", requestBody);
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
+		}
+	}
+
+	private void addMinIntervalToPanels(ObjectNode dashboard, String interval) {
+		for (JsonNode row : dashboard.get("rows")) {
+			for (JsonNode panel : row.get("panels")) {
+				if (panel.has("datasource") && panel.get("datasource").asText().equals(ES_STAGEMONITOR_DS_NAME)) {
+					((ObjectNode) panel).put("interval", interval);
+				}
+			}
 		}
 	}
 
