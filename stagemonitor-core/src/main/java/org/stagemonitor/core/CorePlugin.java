@@ -431,15 +431,15 @@ public class CorePlugin extends StagemonitorPlugin {
 		if (isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("Custom Metrics.json");
 		}
-		elasticsearchClient.sendAsJsonAsync("PUT", "/stagemonitor", IOUtils.getResourceAsStream("stagemonitor-elasticsearch-mapping.json"));
+		elasticsearchClient.createIndex("stagemonitor", IOUtils.getResourceAsStream("stagemonitor-elasticsearch-mapping.json"));
 		if (isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = getGrafanaClient();
-			grafanaClient.createElasticsearchDatasource("ES stagemonitor", getElasticsearchUrl(), reportingIntervalElasticsearch.getValue());
+			grafanaClient.createElasticsearchDatasource(getElasticsearchUrl());
 		}
-		registerReporters(this.elasticsearchClient, metricRegistry);
+		registerReporters(metricRegistry);
 	}
 
-	private void registerReporters(ElasticsearchClient elasticsearchClient, Metric2Registry metric2Registry) {
+	private void registerReporters(Metric2Registry metric2Registry) {
 		RegexMetricFilter regexFilter = new RegexMetricFilter(getExcludedMetricsPatterns());
 		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
 		MetricRegistry metricRegistry = metric2Registry.getMetricRegistry();
@@ -453,7 +453,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
-		onShutdownReporters.add(new SimpleElasticsearchReporter(elasticsearchClient, metricRegistry, "simple-es-reporter", allFilters));
+		onShutdownReporters.add(new SimpleElasticsearchReporter(getElasticsearchClient(), metricRegistry, "simple-es-reporter", allFilters));
 
 		reportToConsole(metricRegistry, getConsoleReportingInterval(), allFilters, onShutdownReporters);
 		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, getAggregationReportingInterval());
@@ -506,7 +506,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
-									   MeasurementSession measurementSession) {
+									   final MeasurementSession measurementSession) {
 		if (isReportToElasticsearch()) {
 			elasticsearchClient.sendBulkAsync("KibanaConfig.bulk");
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrl(), reportingInterval);
@@ -517,7 +517,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
-			elasticsearchClient.scheduleOptimizeAndDeleteOfOldIndices("stagemonitor-metrics-", 1, deleteElasticsearchMetricsAfterDays.getValue());
+			elasticsearchClient.scheduleOptimizeAndDeleteOfOldIndices(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX, 1, deleteElasticsearchMetricsAfterDays.getValue());
 		} else {
 			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrl(), reportingInterval);
 		}
@@ -712,5 +712,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public IndexSelector getIndexSelector() {
 		return indexSelector;
+	}
+
+	public int getElasticsearchReportingInterval() {
+		return reportingIntervalElasticsearch.getValue();
 	}
 }

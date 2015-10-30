@@ -20,6 +20,7 @@
       "_source":         { "enabled": false },
       "properties": {
         "@timestamp":    { "type": "date",    "doc_values": true },
+        "measurement_start": { "type": "date","doc_values": true },
         "count":         { "type": "integer", "doc_values": true, "index": "no" },
         "m1_rate":       { "type": "float",   "doc_values": true, "index": "no" },
         "m5_rate":       { "type": "float",   "doc_values": true, "index": "no" },

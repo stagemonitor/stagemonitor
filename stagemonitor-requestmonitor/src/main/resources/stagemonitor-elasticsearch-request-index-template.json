@@ -33,6 +33,7 @@
       "_source" :              { "excludes" : ["callStackJson"] },
       "properties": {
         "@timestamp":          {"type": "date",    "doc_values": true},
+        "measurement_start":   {"type": "date",    "doc_values": true},
         "id":                  {"type": "string",  "index": "not_analyzed", "doc_values": true},
         "application":         {"type": "string",  "index": "not_analyzed", "doc_values": true},
         "host":                {"type": "string",  "index": "not_analyzed", "doc_values": true},

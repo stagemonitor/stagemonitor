@@ -27,6 +27,8 @@ import org.stagemonitor.core.util.StringUtils;
 
 public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
+	public static final String STAGEMONITOR_METRICS_INDEX_PREFIX = "stagemonitor-metrics-";
+	public static final String METRICS_TYPE = "metrics";
 	private final Map<String, String> globalTags;
 	private HttpClient httpClient;
 	private final Clock clock;
@@ -71,8 +73,8 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			@Override
 			public void withHttpURLConnection(OutputStream os) throws IOException {
 				String bulkAction = "{ \"index\" : " +
-						"{ \"_index\" : \"stagemonitor-metrics-" + StringUtils.getLogstashStyleDate() + "\", " +
-						"\"_type\" : \"metrics\" } " +
+						"{ \"_index\" : \"" + STAGEMONITOR_METRICS_INDEX_PREFIX + StringUtils.getLogstashStyleDate() + "\", " +
+						"\"_type\" : \"" + METRICS_TYPE + "\" } " +
 						"}\n";
 				byte[] bulkActionBytes = bulkAction.getBytes("UTF-8");
 				reportMetrics(gauges, counters, histograms, meters, timers, os, bulkActionBytes);
@@ -82,7 +84,9 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		time.stop();
 	}
 
-	public void reportMetrics(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters, Map<MetricName, Histogram> histograms, final Map<MetricName, Meter> meters, Map<MetricName, Timer> timers, OutputStream os, byte[] bulkActionBytes) throws IOException {
+	public void reportMetrics(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters,
+							  Map<MetricName, Histogram> histograms, final Map<MetricName, Meter> meters,
+							  Map<MetricName, Timer> timers, OutputStream os, byte[] bulkActionBytes) throws IOException {
 		long timestamp = clock.getTime();
 
 		reportMetric(gauges, timestamp, new ValueWriter<Gauge>() {
@@ -147,7 +151,9 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		jg.writeNumberField("mean_rate", convertRate(metered.getMeanRate()));
 	}
 
-	private <T extends Metric> void reportMetric(Map<MetricName, T> metrics, long timestamp, ValueWriter<T> valueWriter, OutputStream os, byte[] bulkActionBytes) throws IOException {
+	private <T extends Metric> void reportMetric(Map<MetricName, T> metrics, long timestamp, ValueWriter<T> valueWriter,
+												 OutputStream os, byte[] bulkActionBytes) throws IOException {
+
 		for (Map.Entry<MetricName, T> entry : metrics.entrySet()) {
 			os.write(bulkActionBytes);
 			final JsonGenerator jg = jfactory.createGenerator(os);

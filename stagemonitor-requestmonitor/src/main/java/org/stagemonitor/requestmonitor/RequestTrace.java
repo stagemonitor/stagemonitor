@@ -39,6 +39,8 @@ public class RequestTrace {
 	@JsonIgnore
 	private long timestampEnd;
 	private String parameter;
+	@JsonProperty("measurement_start")
+	private final long measurementStart;
 	private final String application;
 	private final String host;
 	private final String instance;
@@ -51,6 +53,7 @@ public class RequestTrace {
 	public RequestTrace(String requestId, GetNameCallback getNameCallback) {
 		this.id = requestId != null ? requestId : UUID.randomUUID().toString();
 		MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
+		measurementStart = measurementSession.getStartTimestamp();
 		application = measurementSession.getApplicationName();
 		host = measurementSession.getHostName();
 		instance = measurementSession.getInstanceName();
@@ -259,6 +262,10 @@ public class RequestTrace {
 		if (getCallStack() != null) {
 			sb.append(getCallStack().toString(asciiArt));
 		}
+	}
+
+	public long getMeasurementStart() {
+		return measurementStart;
 	}
 
 	/**

@@ -26,8 +26,7 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	@Override
 	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) {
-		String path = String.format("/stagemonitor-requests-%s/requests", StringUtils.getLogstashStyleDate());
-		elasticsearchClient.sendAsJsonAsync("POST", path, requestTrace);
+		elasticsearchClient.index("stagemonitor-requests-" + StringUtils.getLogstashStyleDate(), "requests", requestTrace);
 	}
 
 	@Override

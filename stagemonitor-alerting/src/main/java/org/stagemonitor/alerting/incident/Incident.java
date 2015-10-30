@@ -32,7 +32,7 @@ public class Incident {
 	private String checkName;
 	private int consecutiveFailures;
 	@JsonIgnore
-	private Map<MeasurementSession, CheckResults> checkResultsByMeasurementSession = new HashMap<MeasurementSession, CheckResults>();
+	private Map<String, CheckResults> checkResultsByMeasurementSessionId = new HashMap<String, CheckResults>();
 
 
 	public static CheckResult.Status getMostSevereStatus(Collection<Incident> incidents) {
@@ -51,7 +51,7 @@ public class Incident {
 	@JsonCreator
 	public Incident(@JsonProperty("checkResults") Collection<CheckResults> checkResults) {
 		for (CheckResults checkResult : checkResults) {
-			checkResultsByMeasurementSession.put(checkResult.getMeasurementSession(), checkResult);
+			checkResultsByMeasurementSessionId.put(checkResult.getMeasurementSession().getId(), checkResult);
 		}
 	}
 
@@ -69,19 +69,19 @@ public class Incident {
 		oldStatus = previousIncident.newStatus;
 		checkId = previousIncident.checkId;
 		checkName = previousIncident.checkName;
-		checkResultsByMeasurementSession = previousIncident.checkResultsByMeasurementSession;
+		checkResultsByMeasurementSessionId = previousIncident.checkResultsByMeasurementSessionId;
 		firstFailureAt = previousIncident.getFirstFailureAt();
 		setCheckResults(measurementSession, checkResults, previousIncident.consecutiveFailures);
 	}
 
 	private void setCheckResults(MeasurementSession measurementSession, List<CheckResult> checkResults, int previousConsecutiveFailures) {
 		if (checkResults.isEmpty()) {
-			checkResultsByMeasurementSession.remove(measurementSession);
-		} else if (checkResultsByMeasurementSession.containsKey(measurementSession)) {
-			checkResultsByMeasurementSession.put(measurementSession,
-					new CheckResults(checkResultsByMeasurementSession.get(measurementSession), checkResults));
+			checkResultsByMeasurementSessionId.remove(measurementSession.getId());
+		} else if (checkResultsByMeasurementSessionId.containsKey(measurementSession.getId())) {
+			checkResultsByMeasurementSessionId.put(measurementSession.getId(),
+					new CheckResults(checkResultsByMeasurementSessionId.get(measurementSession.getId()), checkResults));
 		} else {
-			checkResultsByMeasurementSession.put(measurementSession, new CheckResults(measurementSession, checkResults));
+			checkResultsByMeasurementSessionId.put(measurementSession.getId(), new CheckResults(measurementSession, checkResults));
 		}
 		newStatus = getMostSevereStatus();
 		if (newStatus == CheckResult.Status.OK) {
@@ -91,28 +91,28 @@ public class Incident {
 	}
 
 	public Collection<CheckResults> getCheckResults() {
-		return checkResultsByMeasurementSession.values();
+		return checkResultsByMeasurementSessionId.values();
 	}
 
 	public Collection<String> getHosts() {
 		Set<String> hosts = new TreeSet<String>();
-		for (MeasurementSession measurementSession : checkResultsByMeasurementSession.keySet()) {
-			hosts.add(measurementSession.getHostName());
+		for (CheckResults checkResult : checkResultsByMeasurementSessionId.values()) {
+			hosts.add(checkResult.getMeasurementSession().getHostName());
 		}
 		return hosts;
 	}
 
 	public Collection<String> getInstances() {
 		Set<String> instances = new TreeSet<String>();
-		for (MeasurementSession measurementSession : checkResultsByMeasurementSession.keySet()) {
-			instances.add(measurementSession.getInstanceName());
+		for (CheckResults checkResult : checkResultsByMeasurementSessionId.values()) {
+			instances.add(checkResult.getMeasurementSession().getInstanceName());
 		}
 		return instances;
 	}
 
 	private CheckResult.Status getMostSevereStatus() {
 		LinkedList<CheckResult> results = new LinkedList<CheckResult>();
-		for (CheckResults checkResults : checkResultsByMeasurementSession.values()) {
+		for (CheckResults checkResults : checkResultsByMeasurementSessionId.values()) {
 			results.addAll(checkResults.getResults());
 		}
 		return CheckResult.getMostSevereStatus(results);
@@ -121,7 +121,7 @@ public class Incident {
 	@JsonIgnore
 	private int getConsecutiveFailuresFromCheckResults() {
 		int consecutiveFailures = 0;
-		for (CheckResults checkResultByInstance : checkResultsByMeasurementSession.values()) {
+		for (CheckResults checkResultByInstance : checkResultsByMeasurementSessionId.values()) {
 			consecutiveFailures = Math.max(consecutiveFailures, checkResultByInstance.getConsecutiveFailures());
 		}
 		return consecutiveFailures;
@@ -218,10 +218,8 @@ public class Incident {
 		Incident incident = (Incident) o;
 
 		if (version != incident.version) return false;
-		if (checkId != null ? !checkId.equals(incident.checkId) : incident.checkId != null)
-			return false;
+		return !(checkId != null ? !checkId.equals(incident.checkId) : incident.checkId != null);
 
-		return true;
 	}
 
 	@Override
@@ -246,10 +244,7 @@ public class Incident {
 		if (hasStageChange() && hasEnoughConsecutiveFailures(check)) {
 			return true;
 		}
-		if (getConsecutiveFailures() == check.getAlertAfterXFailures()) {
-			return true;
-		}
-		return false;
+		return getConsecutiveFailures() == check.getAlertAfterXFailures();
 	}
 
 	private boolean hasEnoughConsecutiveFailures(Check check) {
@@ -270,12 +265,12 @@ public class Incident {
 		}
 		sb.append("oldStatus=").append(oldStatus).append("\n")
 				.append("newStatus=").append(newStatus).append("\n");
-		if (!checkResultsByMeasurementSession.isEmpty()) {
+		if (!checkResultsByMeasurementSessionId.isEmpty()) {
 			sb.append("host|instance|status|description|current value\n")
 					.append("----|--------|------|-----------|-------------\n");
-			for (Map.Entry<MeasurementSession, CheckResults> entry : checkResultsByMeasurementSession.entrySet()) {
-				MeasurementSession measurement = entry.getKey();
-				for (CheckResult result : entry.getValue().getResults()) {
+			for (CheckResults checkResult : checkResultsByMeasurementSessionId.values()) {
+				MeasurementSession measurement = checkResult.getMeasurementSession();
+				for (CheckResult result : checkResult.getResults()) {
 					sb.append(measurement.getHostName()).append('|')
 							.append(measurement.getInstanceName()).append('|')
 							.append(result.getStatus()).append('|')

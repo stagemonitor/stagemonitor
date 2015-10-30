@@ -99,7 +99,19 @@ public class ElasticsearchClient {
 		return httpClient.sendAsJson(method, corePlugin.getElasticsearchUrl() + path, requestBody);
 	}
 
-	public Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
+	public void index(final String index, final String type, final Object document) {
+		sendAsJsonAsync("POST", "/" + index + "/" + type, document);
+	}
+
+	public void index(final String index, final String type, String id, final Object document) {
+		sendAsJsonAsync("PUT", "/" + index + "/" + type + "/" + id, document);
+	}
+
+	public void createIndex(final String index, final InputStream mapping) {
+		sendAsJsonAsync("PUT", "/" + index, mapping);
+	}
+
+	private Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
 		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
 			try {
 				return asyncRestPool.submit(new Runnable() {
@@ -128,7 +140,7 @@ public class ElasticsearchClient {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
 				final String titleSlug = slugify(dashboard.get(TITLE).asText());
-				return sendAsJsonAsync("PUT", path + titleSlug + "/_create", dashboard);
+				return sendAsJsonAsync("PUT", path + titleSlug, dashboard);
 			} catch (IOException e) {
 				logger.warn(e.getMessage(), e);
 			}
