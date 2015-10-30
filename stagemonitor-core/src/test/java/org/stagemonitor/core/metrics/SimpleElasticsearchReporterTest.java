@@ -65,10 +65,10 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 				"\"applicationName\":null," +
 				"\"hostName\":\"%s\"," +
 				"\"instanceName\":null," +
-				"\"startTimestamp\":%d," +
 				"\"endTimestamp\":null," +
 				"\"start\":\"%s\"," +
 				"\"end\":null," +
+				"\"@timestamp\":%d," +
 				"\"gauges\":{\"gauge\":{\"value\":1.1},\"stringGauge\":{\"value\":\"test\"}}," +
 				"\"counters\":{\"counter\":{\"count\":1}}," +
 				"\"histograms\":{\"histogram\":{\"count\":1,\"max\":2,\"mean\":4.0,\"min\":4,\"p50\":6.0,\"p75\":7.0,\"p95\":8.0,\"p98\":9.0,\"p99\":10.0,\"p999\":11.0,\"stddev\":5.0}}," +
@@ -76,8 +76,8 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 				"\"timers\":{\"timer\":{\"count\":1000000,\"max\":2.0,\"mean\":4.0,\"min\":4.0,\"p50\":6.0,\"p75\":7.0,\"p95\":8.0,\"p98\":9.0,\"p99\":10.0,\"p999\":11.0,\"stddev\":5.0,\"m15_rate\":5000000.0,\"m1_rate\":3000000.0,\"m5_rate\":4000000.0,\"mean_rate\":2000000.0,\"duration_units\":\"milliseconds\",\"rate_units\":\"calls/second\"}}}",
 				Stagemonitor.getMeasurementSession().getId(),
 				Stagemonitor.getMeasurementSession().getHostName(),
-				Stagemonitor.getMeasurementSession().getStartTimestamp(),
-				Stagemonitor.getMeasurementSession().getStart())),
+				Stagemonitor.getMeasurementSession().getStart(),
+				Stagemonitor.getMeasurementSession().getStartTimestamp())),
 				JsonUtils.getMapper().readTree(searchResponse.getHits().getAt(0).getSourceAsString()));
 	}
 

@@ -13,6 +13,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO create HttpRequest POJO
+// method, url, headers, outputStreamHandler, responseHandler
+// builder methods logErrors(int... excludedStatusCodes)
 public class HttpClient {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
