@@ -478,13 +478,13 @@
 					},
 					"targets": [
 						{
-							"target": "alias(averageSeries(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cpu_load,3,'avg')),'now')"
+							"target": "alias(averageSeries(groupByNode(stagemonitor.[[application]].[[instance]].[[host]].cpu_load.1m,3,'avg')),'now')"
 						},
 						{
-							"target": "alias(averageSeries(groupByNode(timeShift(stagemonitor.[[application]].[[instance]].[[host]].cpu_load,'7d'),3,'avg')),'-7d')"
+							"target": "alias(averageSeries(groupByNode(timeShift(stagemonitor.[[application]].[[instance]].[[host]].cpu_load.1m,'7d'),3,'avg')),'-7d')"
 						},
 						{
-							"target": "alias(averageSeries(groupByNode(timeShift(stagemonitor.[[application]].[[instance]].[[host]].cpu_load,'28d'),3,'avg')),'-28d')"
+							"target": "alias(averageSeries(groupByNode(timeShift(stagemonitor.[[application]].[[instance]].[[host]].cpu_load.1m,'28d'),3,'avg')),'-28d')"
 						}
 					],
 					"aliasColors": {
@@ -549,13 +549,13 @@
 					},
 					"targets": [
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.total.used),'now')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_total.used),'now')"
 						},
 						{
-							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.total.used),'7d'),'-7d')"
+							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_total.used),'7d'),'-7d')"
 						},
 						{
-							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.total.used),'28d'),'-28d')"
+							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_total.used),'28d'),'-28d')"
 						}
 					],
 					"aliasColors": {

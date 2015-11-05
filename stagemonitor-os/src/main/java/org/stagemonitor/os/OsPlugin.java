@@ -43,11 +43,11 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		if (corePlugin.isReportToGraphite()) {
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/CPU.json");
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Filesystem.json");
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Memory.json");
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Network.json");
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/OS Overview.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteCPU.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteFilesystem.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteMemory.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteNetwork.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteOSOverview.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();

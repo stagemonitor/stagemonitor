@@ -125,7 +125,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-request-index-template.json", "stagemonitor-requests");
-		elasticsearchClient.sendKibanaDashboardAsync("kibana/Recent Requests.json");
+		elasticsearchClient.sendKibanaDashboardAsync("kibana/Kibana3RecentRequests.json");
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}

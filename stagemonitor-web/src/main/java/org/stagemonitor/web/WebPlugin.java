@@ -220,8 +220,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		if (corePlugin.isReportToGraphite()) {
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Server.json");
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/KPIs over Time.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteServer.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteKPIsOverTime.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();

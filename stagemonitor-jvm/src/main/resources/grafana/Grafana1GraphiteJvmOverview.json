@@ -194,7 +194,7 @@
 					},
 					"targets": [
 						{
-							"target": "alias(divideSeries(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.total.used),sumSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm.memory.total.max)),'memory')",
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].jvm_memory_heap.usage), 'memory')",
 							"hide": false
 						}
 					],
