@@ -12,12 +12,15 @@ import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
+@RunWith(ConditionalTravisTestRunner.class)
 public class MeterLoggingInstrumenterTest {
 
 	private Logger logger;
