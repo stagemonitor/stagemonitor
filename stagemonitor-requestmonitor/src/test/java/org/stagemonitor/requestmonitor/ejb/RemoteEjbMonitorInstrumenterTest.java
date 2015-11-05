@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.ejb.Remote;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,6 +27,7 @@ public class RemoteEjbMonitorInstrumenterTest {
 	@AfterClass
 	public static void reset() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test
@@ -54,7 +56,7 @@ public class RemoteEjbMonitorInstrumenterTest {
 	}
 
 	private interface RemoteInterface {
-		public void foo();
+		void foo();
 	}
 
 	@Remote(RemoteInterface.class)

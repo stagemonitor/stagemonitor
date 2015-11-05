@@ -1,5 +1,13 @@
 package org.stagemonitor.core.metrics;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -10,12 +18,6 @@ import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The MetricsAggregationReporter computes aggregated values of all the metrics and hands them over to a list of other
@@ -40,7 +42,7 @@ public class MetricsAggregationReporter extends ScheduledReporter {
 	 */
 	public MetricsAggregationReporter(MetricRegistry registry, MetricFilter filter, List<ScheduledReporter> onShutdownReporters) {
 		super(registry, "aggregation-reporter", filter, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-		this.onShutdownReporters = onShutdownReporters;
+		this.onShutdownReporters = Collections.unmodifiableList(new ArrayList<ScheduledReporter>(onShutdownReporters));
 	}
 
 	@Override

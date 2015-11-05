@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -46,6 +47,7 @@ public class MonitorRequestsInstrumenterTest {
 	@AfterClass
 	public static void resetStagemonitor() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test

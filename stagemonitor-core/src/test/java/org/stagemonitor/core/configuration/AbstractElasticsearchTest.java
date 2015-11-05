@@ -56,6 +56,8 @@ public class AbstractElasticsearchTest {
 
 			client = node.client();
 			adminClient = client.admin();
+			adminClient.cluster().prepareHealth()
+					.setWaitForYellowStatus().execute().actionGet();
 		}
 	}
 

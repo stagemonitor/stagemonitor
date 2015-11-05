@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,7 @@ public class MonitoredHttpRequestTest {
 	@After
 	public void tearDown() throws Exception {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test

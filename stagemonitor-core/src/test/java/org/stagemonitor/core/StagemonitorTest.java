@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,7 @@ public class StagemonitorTest {
 	public void before() {
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 		Stagemonitor.setConfiguration(configuration);
 		Stagemonitor.setLogger(logger);
 		assertFalse(Stagemonitor.isStarted());
@@ -35,6 +37,7 @@ public class StagemonitorTest {
 	@After
 	public void after() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test

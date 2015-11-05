@@ -3,12 +3,12 @@ package org.stagemonitor.jdbc.p6spy;
 import com.p6spy.engine.logging.Category;
 import com.p6spy.engine.spy.appender.P6Logger;
 
-import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class P6SpyMultiLogger implements P6Logger {
 
-	private static List<P6Logger> loggers = new LinkedList<P6Logger>();
+	private static List<P6Logger> loggers = new CopyOnWriteArrayList<P6Logger>();
 
 	public static void addLogger(P6Logger logger) {
 		if (logger != null) {

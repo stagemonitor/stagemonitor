@@ -7,13 +7,14 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.codahale.metrics.Timer;
 import javassist.ClassPool;
@@ -37,14 +38,14 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	private static Metric2Registry metricRegistry;
 	private static CorePlugin corePlugin;
 	private static boolean runtimeAttached = false;
-	private static Map<Integer, ClassPool> classPoolsByClassLoaderHash = new HashMap<Integer, ClassPool>();
+	private static final Map<Integer, ClassPool> classPoolsByClassLoaderHash = new ConcurrentHashMap<Integer, ClassPool>();
 	private static Set<Integer> hashCodesOfClassLoadersToIgnore = new HashSet<Integer>();
 
 	public MainStagemonitorClassFileTransformer() {
 		metricRegistry = Stagemonitor.getMetric2Registry();
 		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 		if (!System.getProperties().containsKey(IGNORED_CLASSLOADERS_KEY)) {
-			System.getProperties().put(IGNORED_CLASSLOADERS_KEY, new HashSet<Integer>());
+			System.getProperties().put(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
 		}
 		hashCodesOfClassLoadersToIgnore = (Set<Integer>) System.getProperties().get(IGNORED_CLASSLOADERS_KEY);
 		try {

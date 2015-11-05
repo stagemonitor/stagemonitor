@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import org.junit.After;
 import org.junit.Before;
@@ -35,6 +36,7 @@ public class RequestMonitorTest {
 	@Before
 	public void before() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
@@ -47,6 +49,7 @@ public class RequestMonitorTest {
 	@After
 	public void after() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test

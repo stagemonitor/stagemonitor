@@ -5,14 +5,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
 
-import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
@@ -23,21 +21,18 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 
 	private ElasticsearchConfigurationSource configurationSource;
 
-	@BeforeClass
-	public static void setup() throws Exception {
-		new CorePlugin().initializePlugin(new MetricRegistry(), Stagemonitor.getConfiguration());
-		// give the async tasks time to complete
-		Thread.sleep(500);
-		refresh();
-	}
 
 	@AfterClass
 	public static void reset() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Before
 	public void setUp() throws Exception {
+		InputStream resourceAsStream = ElasticsearchConfigurationSourceTest.class.getClassLoader()
+				.getResourceAsStream("stagemonitor-elasticsearch-mapping.json");
+		elasticsearchClient.sendAsJson("PUT", "/stagemonitor", resourceAsStream);
 		configurationSource = new ElasticsearchConfigurationSource(elasticsearchClient, "test");
 	}
 
@@ -67,10 +62,6 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 	@Test
 	@ExcludeOnTravis
 	public void testMapping() throws Exception {
-		InputStream resourceAsStream = getClass().getClassLoader()
-				.getResourceAsStream("stagemonitor-elasticsearch-mapping.json");
-		elasticsearchClient.sendAsJson("PUT", "/stagemonitor", resourceAsStream);
-		refresh();
 		configurationSource.save("foo", "bar");
 		refresh();
 

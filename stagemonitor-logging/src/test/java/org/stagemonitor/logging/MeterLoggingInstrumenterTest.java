@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.codahale.metrics.Meter;
 import org.junit.AfterClass;
+import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,6 +28,8 @@ public class MeterLoggingInstrumenterTest {
 
 	@Before
 	public void reinit() throws Exception {
+		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 		logger = LoggerFactory.getLogger(getClass());
 	}
 

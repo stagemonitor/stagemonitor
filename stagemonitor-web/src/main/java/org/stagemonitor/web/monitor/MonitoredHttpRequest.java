@@ -31,6 +31,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
+	private final Configuration configuration;
 	protected final WebPlugin webPlugin;
 	private final Metric2Registry metricRegistry;
 
@@ -40,6 +41,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
 		this.responseWrapper = responseWrapper;
+		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		metricRegistry = Stagemonitor.getMetric2Registry();
 	}
@@ -77,7 +79,9 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 			};
 		}
 		final String requestId = (String) httpServletRequest.getAttribute(MDCListener.STAGEMONITOR_REQUEST_ID_ATTR);
-		HttpRequestTrace request = new HttpRequestTrace(httpServletRequest, requestId, nameCallback, url, headers, method, sessionId, connectionId);
+		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
+		HttpRequestTrace request = new HttpRequestTrace(requestId, nameCallback, url, headers, method, sessionId,
+				connectionId, isShowWidgetAllowed);
 
 		request.setClientIp(getClientIp(httpServletRequest));
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();

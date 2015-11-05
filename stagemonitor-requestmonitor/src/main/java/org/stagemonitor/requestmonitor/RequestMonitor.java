@@ -48,9 +48,9 @@ public class RequestMonitor {
 		add(new ElasticsearchRequestTraceReporter());
 	}};
 
-	private final List<Runnable> onBeforeRequestCallbacks = new LinkedList<Runnable>();
+	private final List<Runnable> onBeforeRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
 
-	private final List<Runnable> onAfterRequestCallbacks = new LinkedList<Runnable>();
+	private final List<Runnable> onAfterRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
 
 	private ExecutorService asyncRequestTraceReporterPool;
 

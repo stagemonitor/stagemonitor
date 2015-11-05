@@ -7,7 +7,7 @@
 				{
 					bindto: '#os-cpu',
 					min: 0,
-					max: 100,
+					max: 101,
 					format: 'percent',
 					stack: true,
 					fill: 0.1,

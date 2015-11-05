@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -74,6 +75,7 @@ public class ConnectionMonitoringInstrumenterTest {
 	@AfterClass
 	public static void cleanUp() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test

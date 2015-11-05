@@ -6,12 +6,12 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -407,7 +407,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	private static MetricsAggregationReporter aggregationReporter;
 
-	private List<Closeable> reporters = new ArrayList<Closeable>();
+	private List<Closeable> reporters = new CopyOnWriteArrayList<Closeable>();
 
 	private ElasticsearchClient elasticsearchClient;
 	private GrafanaClient grafanaClient;

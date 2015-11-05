@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -22,7 +22,7 @@ public class Configuration {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final String updateConfigPasswordKey;
-	private final List<ConfigurationSource> configurationSources = new LinkedList<ConfigurationSource>();
+	private final List<ConfigurationSource> configurationSources = new CopyOnWriteArrayList<ConfigurationSource>();
 
 	private Map<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider> optionProvidersByClass = new HashMap<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider>();
 	private Map<String, ConfigurationOption<?>> configurationOptionsByKey = new LinkedHashMap<String, ConfigurationOption<?>>();
