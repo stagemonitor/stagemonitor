@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.junit.ExcludeOnTravis;
 
 public class MeterLoggingInstrumenterTest {
 
@@ -39,6 +40,7 @@ public class MeterLoggingInstrumenterTest {
 	}
 
 	@Test
+	@ExcludeOnTravis
 	public void testLogging() throws Exception {
 		logger.error("test");
 		final Map<MetricName, Meter> meters = Stagemonitor.getMetric2Registry().getMeters();
