@@ -270,13 +270,13 @@ public class RequestMonitor {
 		metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
 
 		if (requestMonitorPlugin.isCollectCpuTime()) {
-			metricRegistry.timer(name("response_time_cpu").tag("request_name", requestName).layer("total").build()).update(cpuTime, NANOSECONDS);
-			metricRegistry.timer(name("response_time_cpu").tag("request_name", "All").layer("total").build()).update(cpuTime, NANOSECONDS);
+			metricRegistry.timer(name("response_time_cpu").tag("request_name", requestName).layer("All").build()).update(cpuTime, NANOSECONDS);
+			metricRegistry.timer(name("response_time_cpu").tag("request_name", "All").layer("All").build()).update(cpuTime, NANOSECONDS);
 		}
 
 		if (requestTrace.isError()) {
-			metricRegistry.meter(name("error_rate").tag("request_name", requestName).layer("total").build()).mark();
-			metricRegistry.meter(name("error_rate").tag("request_name", "All").layer("total").build()).mark();
+			metricRegistry.meter(name("error_rate_server").tag("request_name", requestName).layer("All").build()).mark();
+			metricRegistry.meter(name("error_rate_server").tag("request_name", "All").layer("All").build()).mark();
 		}
 		trackDbMetrics(requestName, requestTrace);
 	}
@@ -285,16 +285,15 @@ public class RequestMonitor {
 		if (requestTrace.getExecutionCountDb() > 0) {
 			if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
 				metricRegistry.timer(name("response_time_server").tag("request_name", requestName).layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
-				metricRegistry.timer(name("response_time_server").tag("request_name", "All").layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
-			} else {
-				metricRegistry.meter(name("response_time_server").tag("request_name", requestName).layer("jdbc").build()).mark(requestTrace.getExecutionCountDb());
-				metricRegistry.meter(name("response_time_server").tag("request_name", "All").layer("jdbc").build()).mark(requestTrace.getExecutionCountDb());
+				metricRegistry.meter(name("jdbc_query_rate").tag("request_name", requestName).build()).mark(requestTrace.getExecutionCountDb());
 			}
+			metricRegistry.timer(name("response_time_server").tag("request_name", "All").layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
+			metricRegistry.meter(name("jdbc_query_rate").tag("request_name", "All").build()).mark(requestTrace.getExecutionCountDb());
 		}
 	}
 
 	private <T extends RequestTrace> MetricName getTimerMetricName(String requestName) {
-		return name("response_time_server").tag("request_name", requestName).layer("total").build();
+		return name("response_time_server").tag("request_name", requestName).layer("All").build();
 	}
 
 	private <T extends RequestTrace> void reportRequestTrace(final T requestTrace) {

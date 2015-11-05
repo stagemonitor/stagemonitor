@@ -297,7 +297,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND signature: $Signature"
+              "query": "name: jdbc_statement AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -392,7 +392,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: response_time_server AND layer: jdbc AND !request_name: All"
+              "query": "name: jdbc_query_rate AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -578,7 +578,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: jdbc_statement AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,

@@ -161,7 +161,7 @@ public class RequestMonitorTest {
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(callStackEveryXRequestsToGroup);
 		final Timer timer = mock(Timer.class);
 		when(timer.getCount()).thenReturn(timerCount);
-		when(registry.timer(name("response_time_server").tag("request_name", "test").layer("total").build())).thenReturn(timer);
+		when(registry.timer(name("response_time_server").tag("request_name", "test").layer("All").build())).thenReturn(timer);
 
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		if (callStackExpected) {

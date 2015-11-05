@@ -152,7 +152,7 @@ public class ResteasyRequestMonitorTest {
         assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
         assertEquals("GET", requestInformation.getRequestTrace().getMethod());
         Assert.assertNull(requestInformation.getExecutionResult());
-        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("total").build()));
+        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
@@ -174,7 +174,7 @@ public class ResteasyRequestMonitorTest {
         assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
         assertEquals("GET", requestInformation.getRequestTrace().getMethod());
         Assert.assertNull(requestInformation.getExecutionResult());
-        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "TestResource#testGetRequestName").layer("total").build()));
+        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "TestResource#testGetRequestName").layer("All").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
@@ -216,7 +216,7 @@ public class ResteasyRequestMonitorTest {
         assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
         assertEquals("GET", requestInformation.getRequestTrace().getMethod());
         Assert.assertNull(requestInformation.getExecutionResult());
-        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET /not-found").layer("total").build()));
+        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET /not-found").layer("All").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(1)).getRequestName();
     }
@@ -238,7 +238,7 @@ public class ResteasyRequestMonitorTest {
         assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
         assertEquals("GET", requestInformation.getRequestTrace().getMethod());
         Assert.assertNull(requestInformation.getExecutionResult());
-        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "TestResource.testGetRequestName").layer("total").build()));
+        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "TestResource.testGetRequestName").layer("All").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
@@ -255,7 +255,7 @@ public class ResteasyRequestMonitorTest {
         assertEquals(1, requestInformation.getRequestTimer().getCount());
         assertEquals("GET *.js", requestInformation.getRequestName());
         assertEquals("GET *.js", requestInformation.getRequestTrace().getName());
-        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("total").build()));
+        assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(1)).getRequestName();
     }
@@ -270,7 +270,7 @@ public class ResteasyRequestMonitorTest {
         RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
         assertEquals("", requestInformation.getRequestTrace().getName());
-        assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("total").build()));
+        assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
         verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
         verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }

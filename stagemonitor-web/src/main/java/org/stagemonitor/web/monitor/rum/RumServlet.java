@@ -58,7 +58,7 @@ public class RumServlet extends HttpServlet {
 		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Page Rendering").build()).update(pageRendering, MILLISECONDS);
 		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Network").build()).update(networkTime, MILLISECONDS);
 		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("Server").build()).update(serverTime, MILLISECONDS);
-		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("All").build()).update(serverTime+ networkTime + pageRendering + domProcessing, MILLISECONDS);
+		metricRegistry.timer(name("response_time_rum").tag("request_name", requestName).layer("All").build()).update(serverTime + networkTime + pageRendering + domProcessing, MILLISECONDS);
 	}
 
 	private String getRequiredParam(HttpServletRequest req, String parameterName) {

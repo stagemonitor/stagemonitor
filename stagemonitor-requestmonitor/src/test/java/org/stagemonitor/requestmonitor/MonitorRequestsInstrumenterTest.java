@@ -62,7 +62,7 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals("void org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClass.getRequestInformation()", requestTrace.getCallStack().getChildren().get(0).getChildren().get(0).getSignature());
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").layer("total").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").layer("All").build()));
 	}
 
 	@Test
@@ -79,7 +79,7 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals(NullPointerException.class.getName(), requestTrace.getExceptionClass());
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorThrowException").layer("total").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorThrowException").layer("All").build()));
 	}
 
 	private static class TestClass {
@@ -120,7 +120,7 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals("void org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass.getRequestInformation()", requestTrace.getCallStack().getChildren().get(0).getChildren().get(0).getSignature());
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe").layer("total").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe").layer("All").build()));
 	}
 
 

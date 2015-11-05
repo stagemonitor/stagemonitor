@@ -435,7 +435,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].response_time.*.server.jdbc.m1_rate,'All'),5,'avg'),5)"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].jdbc_query_rate.*.m1_rate,'All'),5,'avg'),5)"
 						}
 					],
 					"aliasColors": {},

@@ -25,7 +25,7 @@
           "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
-          "fill": 0,
+          "fill": 1,
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
@@ -109,7 +109,7 @@
                   "type": "avg"
                 }
               ],
-              "query": "name: response_time_server AND layer: total AND !request_name: All",
+              "query": "name: response_time_$Time AND layer: All AND request_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "B",
               "timeField": "@timestamp",
               "alias": "{{field}}"
@@ -209,7 +209,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: request_throughput AND !request_name: All"
+              "query": "name: request_throughput AND request_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -311,7 +311,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: response_time_server AND layer: total AND !request_name: All"
+              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -405,7 +405,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: response_time_server AND layer: total AND !request_name: All"
+              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -507,7 +507,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: response_time_server AND layer: total AND !request_name: All"
+              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -601,7 +601,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: error_rate AND !request_name: All"
+              "query": "name: error_rate_server AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -708,7 +708,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: response_time_rum AND request_name: All AND !layer: All"
+              "query": "name: response_time_rum AND request_name: All AND !layer: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -803,6 +803,51 @@
         "multiFormat": "lucene",
         "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
         "refresh": true
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Request",
+        "includeAll": false,
+        "allFormat": "lucene",
+        "multi": false,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"request_name\"}",
+        "current": {
+          "text": "All",
+          "value": "All"
+        },
+        "useTags": false,
+        "refresh": true
+      },
+      {
+        "type": "custom",
+        "datasource": null,
+        "refresh_on_load": false,
+        "name": "Time",
+        "options": [
+          {
+            "text": "Server",
+            "value": "server",
+            "selected": false
+          },
+          {
+            "text": "Real User Monitoring",
+            "value": "rum",
+            "selected": true
+          }
+        ],
+        "includeAll": false,
+        "allFormat": "glob",
+        "multi": false,
+        "multiFormat": "glob",
+        "query": "server, rum",
+        "current": {
+          "text": "Server",
+          "value": "server",
+          "tags": []
+        }
       }
     ]
   },
