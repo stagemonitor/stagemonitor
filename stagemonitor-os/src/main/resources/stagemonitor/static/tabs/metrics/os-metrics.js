@@ -7,7 +7,11 @@
 				{
 					bindto: '#os-cpu',
 					min: 0,
+<<<<<<< Updated upstream
 					max: 1,
+=======
+					max: 101,
+>>>>>>> Stashed changes
 					format: 'percent',
 					stack: true,
 					fill: 0.1,

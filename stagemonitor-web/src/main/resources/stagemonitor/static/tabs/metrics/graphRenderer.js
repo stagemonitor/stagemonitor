@@ -184,7 +184,7 @@ var graphRenderer = (function () {
 				var value = +metric[metricPath.metric] || 0; // convert "NaN" to 0
 				metrics[graphName] = metrics[graphName] || 0;
 				if (metricPath.aggregate === 'mean' && metrics) {
-					metrics[graphName] = (metrics[graphName] * matches + value) / ++matches;
+					metrics[graphName] = (metrics[graphName] * matches + value) / matches++;
 				} else {
 					// sum by default
 					// deprecated behaviour, use metricPath.aggregate to explicitly set aggregation type
