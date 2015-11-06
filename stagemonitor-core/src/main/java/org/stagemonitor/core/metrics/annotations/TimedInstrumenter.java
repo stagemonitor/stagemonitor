@@ -1,5 +1,7 @@
 package org.stagemonitor.core.metrics.annotations;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,8 +11,10 @@ import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 import org.stagemonitor.core.metrics.aspects.SignatureUtils;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 
 /**
@@ -19,6 +23,16 @@ import org.stagemonitor.core.util.ClassUtils;
 public class TimedInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	private final Set<Class<?>> asyncCallAnnotations = new HashSet<Class<?>>();
+
+	private static Metric2Registry metricRegistry;
+
+	static {
+		init();
+	}
+
+	public static void init() {
+		metricRegistry = Stagemonitor.getMetric2Registry();
+	}
 
 	public TimedInstrumenter() {
 		asyncCallAnnotations.add(ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Async"));
@@ -55,9 +69,13 @@ public class TimedInstrumenter extends StagemonitorJavassistInstrumenter {
 
 	private void timeMethod(CtClass ctClass, CtMethod ctMethod, String signature) throws CannotCompileException, NotFoundException {
 		ctMethod.addLocalVariable("$_stm_time", ctClass.getClassPool().get(Timer.Context.class.getName()));
-		ctMethod.insertBefore("$_stm_time = org.stagemonitor.core.Stagemonitor.getMetricRegistry()" +
-				".timer(\"timer." + signature + "\").time();");
+		ctMethod.insertBefore("$_stm_time = org.stagemonitor.core.metrics.annotations.TimedInstrumenter" +
+				".time(\"" + signature + "\");");
 		ctMethod.insertAfter("$_stm_time.stop();");
+	}
+
+	public static Timer.Context time(String signature) {
+		return metricRegistry.timer(name("timer").tag("signature", signature).build()).time();
 	}
 
 }

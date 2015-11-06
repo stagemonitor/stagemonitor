@@ -1,15 +1,15 @@
 package org.stagemonitor.requestmonitor;
 
-import java.io.InputStream;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
@@ -86,14 +86,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<String> requestTraceTtl = ConfigurationOption.stringOption()
-			.key("stagemonitor.requestmonitor.requestTraceTTL")
+	private final ConfigurationOption<Integer> deleteRequestTracesAfterDays = ConfigurationOption.integerOption()
+			.key("stagemonitor.requestmonitor.deleteRequestTracesAfterDays")
 			.dynamic(true)
-			.label("Request trace ttl")
-			.description("When set, call stacks will be deleted automatically after the specified interval\n" +
-					"In case you do not specify a time unit like d (days), m (minutes), h (hours), " +
-					"ms (milliseconds) or w (weeks), milliseconds is used as default unit.")
-			.defaultValue("1w")
+			.label("Delete request traces after (days)")
+			.description("When set, call stacks will be deleted automatically after the specified days. " +
+					"Set to a negative value to never delete request traces.")
+			.defaultValue(7)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
@@ -121,23 +120,26 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	private static RequestMonitor requestMonitor;
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration config) {
-		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
-		addElasticsearchMapping(elasticsearchClient);
-		elasticsearchClient.sendGrafanaDashboardAsync("Request.json");
-		elasticsearchClient.sendKibanaDashboardAsync("Recent Requests.json");
-	}
-
-	private void addElasticsearchMapping(ElasticsearchClient elasticsearchClient) {
-		InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("stagemonitor-elasticsearch-index-template.json");
-		// async, because it is not possible, that request traces are reaching elasticsearch before the mapping is set
-		// that is, because a single thread executor is used that executes the request in a linear queue (LinkedBlockingQueue)
-		elasticsearchClient.sendAsJsonAsync("PUT", "/_template/stagemonitor", resourceAsStream);
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
+		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
+		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
+		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-request-index-template.json", "stagemonitor-requests");
+		elasticsearchClient.sendKibanaDashboardAsync("kibana/Kibana3RecentRequests.json");
+		if (corePlugin.isReportToGraphite()) {
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
+		}
+		if (corePlugin.isReportToElasticsearch()) {
+			elasticsearchClient.sendBulkAsync("kibana/RequestDashboard.bulk");
+			elasticsearchClient.sendBulkAsync("kibana/RequestAnalysis.bulk");
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
+			elasticsearchClient.scheduleOptimizeAndDeleteOfOldIndices("stagemonitor-requests-", 1, deleteRequestTracesAfterDays.getValue());
+		}
 	}
 
 	@Override
 	public List<String> getPathsOfWidgetMetricTabPlugins() {
-		return Arrays.asList("/stagemonitor/static/tabs/metrics/request-metrics");
+		return Collections.singletonList("/stagemonitor/static/tabs/metrics/request-metrics");
 	}
 
 	public RequestMonitor getRequestMonitor() {
@@ -173,10 +175,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isLogCallStacks() {
 		return logCallStacks.getValue();
-	}
-
-	public String getRequestTraceTtl() {
-		return requestTraceTtl.getValue();
 	}
 
 	public boolean isCollectDbTimePerRequest() {

@@ -1,24 +1,25 @@
 package org.stagemonitor.web.rum;
 
-import com.codahale.metrics.MetricRegistry;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.rum.RumServlet;
-
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
+import java.util.concurrent.TimeUnit;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.rum.RumServlet;
 
 public class RumServletTest {
 
-	private final MetricRegistry registry = new MetricRegistry();
+	private final Metric2Registry registry = new Metric2Registry();
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private RumServlet rumServlet = new RumServlet(registry, webPlugin);
 
@@ -31,7 +32,8 @@ public class RumServletTest {
 	public void testBeaconPerRequest() throws Exception {
 		when(webPlugin.isCollectPageLoadTimesPerRequest()).thenReturn(true);
 		final MockHttpServletRequest req = new MockHttpServletRequest();
-		req.addParameter("requestName", "GET /test.html");
+		final String requestName = "GET /test.html";
+		req.addParameter("requestName", requestName);
 		req.addParameter("serverTime", "100");
 		req.addParameter("domProcessing", "10");
 		req.addParameter("pageRendering", "30");
@@ -43,38 +45,39 @@ public class RumServletTest {
 		assertEquals(200, resp.getStatus());
 		assertEquals("image/png", resp.getContentType());
 
-		assertNotNull(registry.getTimers().get("request.GET-|test:html.browser.time.dom-processing"));
-		assertNotNull(registry.getTimers().get("request.GET-|test:html.browser.time.page-rendering"));
-		assertNotNull(registry.getTimers().get("request.All.browser.time.dom-processing"));
-		assertNotNull(registry.getTimers().get("request.All.browser.time.page-rendering"));
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get("request.GET-|test:html.browser.time.dom-processing").getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get("request.GET-|test:html.browser.time.page-rendering").getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get("request.All.browser.time.dom-processing").getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get("request.All.browser.time.page-rendering").getSnapshot().getMax());
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Dom Processing").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Page Rendering").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Dom Processing").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Page Rendering").build()));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Dom Processing").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Page Rendering").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Dom Processing").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Page Rendering").build()).getSnapshot().getMax());
 
-		assertNotNull(registry.getTimers().get("request.GET-|test:html.network.time.total"));
-		assertNotNull(registry.getTimers().get("request.All.network.time.total"));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Network").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Network").build()));
 		// t_resp-serverTime
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get("request.GET-|test:html.network.time.total").getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get("request.All.network.time.total").getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Network").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Network").build()).getSnapshot().getMax());
 
-		assertNotNull(registry.getTimers().get("request.GET-|test:html.total.time.total"));
-		assertNotNull(registry.getTimers().get("request.All.total.time.total"));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("All").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("All").build()));
 		// t_page + t_resp
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get("request.GET-|test:html.total.time.total").getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get("request.All.total.time.total").getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("All").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("All").build()).getSnapshot().getMax());
 
-		assertNotNull(registry.getTimers().get("request.GET-|test:html.server-rum.time.total"));
-		assertNotNull(registry.getTimers().get("request.All.server-rum.time.total"));
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get("request.GET-|test:html.server-rum.time.total").getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get("request.All.server-rum.time.total").getSnapshot().getMax());
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Server").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Server").build()));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Server").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Server").build()).getSnapshot().getMax());
 	}
 
 	@Test
 	public void testBeaconAggregate() throws Exception {
 		when(webPlugin.isCollectPageLoadTimesPerRequest()).thenReturn(false);
 		final MockHttpServletRequest req = new MockHttpServletRequest();
-		req.addParameter("requestName", "GET /test.html");
+		final String requestName = "GET /test.html";
+		req.addParameter("requestName", requestName);
 		req.addParameter("serverTime", "100");
 		req.addParameter("domProcessing", "10");
 		req.addParameter("pageRendering", "30");
@@ -85,26 +88,26 @@ public class RumServletTest {
 
 		assertEquals(200, resp.getStatus());
 
-		assertNull(registry.getTimers().get("request.GET-|test:html.browser.time.dom-processing"));
-		assertNull(registry.getTimers().get("request.GET-|test:html.browser.time.page-rendering"));
-		assertNotNull(registry.getTimers().get("request.All.browser.time.dom-processing"));
-		assertNotNull(registry.getTimers().get("request.All.browser.time.page-rendering"));
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get("request.All.browser.time.dom-processing").getSnapshot().getMax());
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get("request.All.browser.time.page-rendering").getSnapshot().getMax());
+		assertNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Dom Processing").build()));
+		assertNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Page Rendering").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Dom Processing").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Page Rendering").build()));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(10), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Dom Processing").build()).getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(30), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Page Rendering").build()).getSnapshot().getMax());
 
-		assertNull(registry.getTimers().get("request.GET-|test:html.network.time.total"));
-		assertNotNull(registry.getTimers().get("request.All.network.time.total"));
+		assertNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Network").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Network").build()));
 		// t_resp-serverTime
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get("request.All.network.time.total").getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(60), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Network").build()).getSnapshot().getMax());
 
-		assertNull(registry.getTimers().get("request.GET-|test:html.total.time.total"));
-		assertNotNull(registry.getTimers().get("request.All.total.time.total"));
+		assertNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("All").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("All").build()));
 		// t_page + t_resp
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get("request.All.total.time.total").getSnapshot().getMax());
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(200), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("All").build()).getSnapshot().getMax());
 
-		assertNull(registry.getTimers().get("request.GET-|test:html.server-rum.time.total"));
-		assertNotNull(registry.getTimers().get("request.All.server-rum.time.total"));
-		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get("request.All.server-rum.time.total").getSnapshot().getMax());
+		assertNull(registry.getTimers().get(name("response_time_rum").tag("request_name", requestName).layer("Server").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Server").build()));
+		assertEquals(TimeUnit.MILLISECONDS.toNanos(100), registry.getTimers().get(name("response_time_rum").tag("request_name", "All").layer("Server").build()).getSnapshot().getMax());
 	}
 
 	@Test(expected = IllegalArgumentException.class)

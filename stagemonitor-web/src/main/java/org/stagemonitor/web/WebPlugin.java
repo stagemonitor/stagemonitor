@@ -21,7 +21,6 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration;
 import javax.servlet.http.HttpServletRequest;
 
-import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -31,6 +30,8 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
@@ -214,11 +215,19 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.build();
 
 	@Override
-	public void initializePlugin(MetricRegistry registry, Configuration config) {
+	public void initializePlugin(Metric2Registry registry, Configuration config) {
 		registerPooledResources(registry, tomcatThreadPools());
-		ElasticsearchClient elasticsearchClient = config.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendGrafanaDashboardAsync("Server.json");
-		elasticsearchClient.sendGrafanaDashboardAsync("KPIs over Time.json");
+		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
+		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		if (corePlugin.isReportToGraphite()) {
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteServer.json");
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteKPIsOverTime.json");
+		}
+		if (corePlugin.isReportToElasticsearch()) {
+			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
+			elasticsearchClient.sendBulkAsync("kibana/ApplicationServer.bulk");
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
+		}
 	}
 
 	@Override

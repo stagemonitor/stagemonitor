@@ -3,8 +3,13 @@ package org.stagemonitor.core;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+import static org.stagemonitor.core.util.StringUtils.replaceWhitespacesWithDash;
 
 import java.net.InetAddress;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -15,6 +20,7 @@ import org.stagemonitor.core.util.StringUtils;
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = ANY, setterVisibility = NONE)
 public class MeasurementSession {
 
+	private final String id;
 	private final String applicationName;
 	private final String hostName;
 	private final String instanceName;
@@ -23,16 +29,29 @@ public class MeasurementSession {
 	@JsonIgnore
 	private final String stringRepresentation;
 
+	public MeasurementSession(
+			String applicationName,
+			String hostName,
+			String instanceName) {
+		this(UUID.randomUUID().toString(), applicationName, hostName, instanceName);
+	}
+
 	@JsonCreator
-	public MeasurementSession(@JsonProperty("applicationName") String applicationName,
+	public MeasurementSession(@JsonProperty("id") String id,
+							  @JsonProperty("applicationName") String applicationName,
 							  @JsonProperty("hostName") String hostName,
 							  @JsonProperty("instanceName") String instanceName) {
 
-		this.applicationName = applicationName;
-		this.hostName = hostName;
-		this.instanceName = instanceName;
+		this.applicationName = replaceWhitespacesWithDash(applicationName);
+		this.hostName = replaceWhitespacesWithDash(hostName);
+		this.instanceName = replaceWhitespacesWithDash(instanceName);
+		this.id = id;
 		stringRepresentation = "[application=" + applicationName + "] [instance=" + instanceName + "] [host=" + hostName + "]";
 		startTimestamp = System.currentTimeMillis();
+	}
+
+	public String getId() {
+		return id;
 	}
 
 	public String getApplicationName() {
@@ -56,6 +75,7 @@ public class MeasurementSession {
 		return StringUtils.timestampAsIsoString(startTimestamp);
 	}
 
+	@JsonProperty("@timestamp")
 	public long getStartTimestamp() {
 		return startTimestamp;
 	}
@@ -83,6 +103,16 @@ public class MeasurementSession {
 		return applicationName == null && instanceName == null && hostName == null;
 	}
 
+	@JsonIgnore
+	public Map<String, String> asMap() {
+		final TreeMap<String, String> result = new TreeMap<String, String>();
+		result.put("measurement_start", Long.toString(startTimestamp));
+		result.put("application", applicationName);
+		result.put("host", hostName);
+		result.put("instance", instanceName);
+		return Collections.unmodifiableMap(result);
+	}
+
 	@Override
 	public String toString() {
 		return stringRepresentation;
@@ -107,28 +137,5 @@ public class MeasurementSession {
 			return host;
 		}
 		return null;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof MeasurementSession)) return false;
-
-		MeasurementSession that = (MeasurementSession) o;
-
-		if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null)
-			return false;
-		if (hostName != null ? !hostName.equals(that.hostName) : that.hostName != null) return false;
-		if (instanceName != null ? !instanceName.equals(that.instanceName) : that.instanceName != null) return false;
-
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int result = applicationName != null ? applicationName.hashCode() : 0;
-		result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
-		result = 31 * result + (instanceName != null ? instanceName.hashCode() : 0);
-		return result;
 	}
 }

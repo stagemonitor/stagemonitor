@@ -1,16 +1,16 @@
 package org.stagemonitor.os;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.util.Map;
 import java.util.Set;
 
-import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Gauge;
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
@@ -22,14 +22,15 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.util.GraphiteSanitizer;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
 @RunWith(ConditionalTravisTestRunner.class)
 public class OsPluginTest {
 
-	private MetricRegistry metricRegistry;
+	private Metric2Registry metricRegistry;
 	private Sigar sigar;
 	private static OsPlugin osPlugin;
 
@@ -40,7 +41,7 @@ public class OsPluginTest {
 
 	@Before
 	public void setUp() throws Exception {
-		metricRegistry = new MetricRegistry();
+		metricRegistry = new Metric2Registry();
 		final Configuration configuration = mock(Configuration.class);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
@@ -54,48 +55,48 @@ public class OsPluginTest {
 		double cpu = Double.NaN;
 		for (int i = 0; i < 5 && Double.isNaN(cpu); i++) {
 			setUp();
-			cpu = getDoubleGauge("os.cpu.usage.sys") +
-					getDoubleGauge("os.cpu.usage.user") +
-					getDoubleGauge("os.cpu.usage.idle") +
-					getDoubleGauge("os.cpu.usage.nice") +
-					getDoubleGauge("os.cpu.usage.wait") +
-					getDoubleGauge("os.cpu.usage.interrupt") +
-					getDoubleGauge("os.cpu.usage.soft-interrupt") +
-					getDoubleGauge("os.cpu.usage.stolen");
+			cpu = getDoubleGauge(name("cpu_usage").type("sys").build()) +
+					getDoubleGauge(name("cpu_usage").type("user").build()) +
+					getDoubleGauge(name("cpu_usage").type("idle").build()) +
+					getDoubleGauge(name("cpu_usage").type("nice").build()) +
+					getDoubleGauge(name("cpu_usage").type("wait").build()) +
+					getDoubleGauge(name("cpu_usage").type("interrupt").build()) +
+					getDoubleGauge(name("cpu_usage").type("soft-interrupt").build()) +
+					getDoubleGauge(name("cpu_usage").type("stolen").build());
 		}
 
-		assertEquals(1.0, cpu, 0.000001);
+		assertEquals(100.0, cpu, 0.000001);
 
-		assertTrue(getDoubleGauge("os.cpu.usage-percent") >= 0);
-		assertTrue(getDoubleGauge("os.cpu.usage-percent") <= 1);
+		assertTrue(getDoubleGauge(name("cpu_usage_percent").build()) >= 0);
+		assertTrue(getDoubleGauge(name("cpu_usage_percent").build()) <= 100);
 	}
 
 	@Test
 	public void testCpuInfo() throws Exception {
-		assertTrue(getIntGauge("os.cpu.info.mhz") > 0);
-		assertTrue(getIntGauge("os.cpu.info.cores") > 0);
+		assertTrue(getIntGauge(name("cpu_info_mhz").build()) > 0);
+		assertTrue(getIntGauge(name("cpu_info_cores").build()) > 0);
 	}
 
 	@Test
 	public void testMemoryUsage() throws Exception {
-		assertEquals(getLongGauge("os.mem.usage.total"),
-				getLongGauge("os.mem.usage.used") + getLongGauge("os.mem.usage.free"));
+		assertEquals(getLongGauge(name("mem_usage").type("total").build()),
+				getLongGauge(name("mem_usage").type("used").build()) + getLongGauge(name("mem_usage").type("free").build()));
 
-		final double usage = getDoubleGauge("os.mem.usage-percent");
+		final double usage = getDoubleGauge(name("mem_usage_percent").build());
 		assertTrue(Double.toString(usage), usage >= 0);
-		assertTrue(Double.toString(usage), usage <= 1);
+		assertTrue(Double.toString(usage), usage <= 100);
 	}
 
 	@Test
 	public void testSwapUsage() throws Exception {
-		assertEquals(getLongGauge("os.swap.usage.total"),
-				getLongGauge("os.swap.usage.used") + getLongGauge("os.swap.usage.free"));
+		assertEquals(getLongGauge(name("swap_usage").type("total").build()),
+				getLongGauge(name("swap_usage").type("used").build()) + getLongGauge(name("swap_usage").type("free").build()));
 
-		double swapPercent = getDoubleGauge("os.swap.usage-percent");
+		double swapPercent = getDoubleGauge(name("swap_usage_percent").build());
 		assertTrue(swapPercent >= 0 || Double.isNaN(swapPercent));
-		assertTrue(swapPercent <= 1 || Double.isNaN(swapPercent));
-		assertTrue(getLongGauge("os.swap.page.in") >= 0);
-		assertTrue(getLongGauge("os.swap.page.out") >= 0);
+		assertTrue(swapPercent <= 100 || Double.isNaN(swapPercent));
+		assertTrue(getLongGauge(name("swap_pages").type("in").build()) >= 0);
+		assertTrue(getLongGauge(name("swap_pages").type("out").build()) >= 0);
 	}
 
 	@Test
@@ -119,63 +120,65 @@ public class OsPluginTest {
 	@Test
 	@ExcludeOnTravis
 	public void testNetworkMetrics() throws Exception {
-		String baseName = name("os.net", GraphiteSanitizer.sanitizeGraphiteMetricSegment(sigar.getNetRouteList()[0].getIfname()));
+		final String ifname = sigar.getNetRouteList()[0].getIfname();
 
-		assertTrue(getLongGauge(name(baseName, "read.bytes")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "read.packets")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "read.errors")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "read.dropped")) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("read").unit("bytes").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("read").unit("packets").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("read").unit("errors").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("read").unit("dropped").tag("ifname", ifname).build()) >= 0);
 
-		assertTrue(getLongGauge(name(baseName, "write.bytes")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "write.packets")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "write.errors")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "write.dropped")) >= -1);
+		assertTrue(getLongGauge(name("network_io").type("write").unit("bytes").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("write").unit("packets").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("write").unit("errors").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").type("write").unit("dropped").tag("ifname", ifname).build()) >= -1);
 	}
 
 	@Test
 	@ExcludeOnTravis
 	public void testFileSystemUsage() throws Exception {
-		String baseName = getFsBaseName();
-		assertEquals(getLongGauge(name(baseName, "usage.total")),
-				getLongGauge(name(baseName, "usage.free")) + getLongGauge(name(baseName, "usage.used")));
+		String mountPoint = getFirstMountPoint();
+		assertEquals(getLongGauge(name("disk_usage").type("total").tag("mountpoint", mountPoint).build()),
+				getLongGauge(name("disk_usage").type("free").tag("mountpoint", mountPoint).build()) +
+						getLongGauge(name("disk_usage").type("used").tag("mountpoint", mountPoint).build()));
 	}
 
-	private String getFsBaseName() throws SigarException {
-		String fsName = "";
+	private String getFirstMountPoint() throws SigarException {
 		@SuppressWarnings("unchecked")
 		final Set<Map.Entry<String, FileSystem>> entries = (Set<Map.Entry<String, FileSystem>>) sigar.getFileSystemMap().entrySet();
 		for (Map.Entry<String, FileSystem> e : entries) {
 			if (e.getValue().getType() == FileSystem.TYPE_LOCAL_DISK) {
-				fsName = e.getKey();
+				return e.getKey();
 			}
 		}
-		return name("os.fs", GraphiteSanitizer.sanitizeGraphiteMetricSegment(fsName.replace("\\", "")));
+		throw new IllegalStateException("No mount point found");
 	}
 
 	@Test
 	@ExcludeOnTravis
 	public void testFileSystemMetrics() throws Exception {
-		String baseName = getFsBaseName();
-		assertTrue(metricRegistry.getGauges().keySet().toString(), getDoubleGauge(name(baseName, "usage-percent")) >= 0);
-		assertTrue(getDoubleGauge(name(baseName, "usage-percent")) <= 1);
-		assertTrue(getLongGauge(name(baseName, "reads.bytes")) >= 0);
-		assertTrue(getLongGauge(name(baseName, "writes.bytes")) >= 0);
-		assertTrue(getDoubleGauge(name(baseName, "disk.queue")) >= -1);
+		String mountPoint = getFirstMountPoint();
+		assertTrue(metricRegistry.getGauges().keySet().toString(), getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) >= 0);
+		assertTrue(getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) <= 100);
+		assertTrue(getLongGauge(name("disk_io").type("read").tag("mountpoint", mountPoint).build()) >= 0);
+		assertTrue(getLongGauge(name("disk_io").type("write").tag("mountpoint", mountPoint).build()) >= 0);
+		assertTrue(getDoubleGauge(name("disk_queue").tag("mountpoint", mountPoint).build()) >= -1);
 	}
 
-	private double getDoubleGauge(String gaugeName) {
+	private double getDoubleGauge(MetricName gaugeName) {
 		return (Double) getGauge(gaugeName);
 	}
 
-	private int getIntGauge(String gaugeName) {
+	private int getIntGauge(MetricName gaugeName) {
 		return (Integer) getGauge(gaugeName);
 	}
 
-	private long getLongGauge(String gaugeName) {
+	private long getLongGauge(MetricName gaugeName) {
 		return (Long) getGauge(gaugeName);
 	}
 
-	private Object getGauge(String gaugeName) {
-		return metricRegistry.getGauges().get(gaugeName).getValue();
+	private Object getGauge(MetricName gaugeName) {
+		final Gauge gauge = metricRegistry.getGauges().get(gaugeName);
+		assertNotNull(gaugeName + " not found", gauge);
+		return gauge.getValue();
 	}
 }

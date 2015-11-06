@@ -10,10 +10,11 @@ import javax.management.ObjectName;
 import javax.management.QueryExp;
 
 import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class MBeanUtils {
 
@@ -21,7 +22,7 @@ public class MBeanUtils {
 
 	private static final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
-	private static final MetricRegistry metricRegistry = Stagemonitor.getMetricRegistry();
+	private static final Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
 
 	private MBeanUtils() {
 	}
@@ -83,7 +84,7 @@ public class MBeanUtils {
 	 * @param mBeanAttributeName The attribute name of the MBean that should be collected
 	 * @param metricName         The name of the metric in the MetricRegistry
 	 */
-	public static void registerMBean(final ObjectInstance objectInstance, final String mBeanAttributeName, String metricName) {
+	public static void registerMBean(final ObjectInstance objectInstance, final String mBeanAttributeName, MetricName metricName) {
 		metricRegistry.register(metricName, new Gauge<Object>() {
 			@Override
 			public Object getValue() {

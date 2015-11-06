@@ -130,7 +130,7 @@ var graphRenderer = (function () {
 		function extractNewValues(graph) {
 			$.each(getAllMetricsForGraphWithValues(graph, metrics), function (graphName, value) {
 				var value2 = value;
-				var datapoints = graph.metadata[graphName].data
+				var datapoints = graph.metadata[graphName].data;
 				while (datapoints[0][0] < (metrics.timestamp - 60 * storedMinutes * 1000)) {
 					datapoints.splice(0, 1);
 				}
@@ -208,7 +208,7 @@ var graphRenderer = (function () {
 				return round(bytes / Math.pow(k, i)) + ' ' + sizes[i];
 			},
 			percent: function (percent) {
-				return round(percent * 100) + ' %';
+				return round(percent) + ' %';
 			},
 			ms: function (size) {
 				if (size === null) {

@@ -5,21 +5,74 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO create HttpRequest POJO
+// method, url, headers, outputStreamHandler, responseHandler
+// builder methods logErrors(int... excludedStatusCodes)
 public class HttpClient {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	public int sendAsJson(final String method, final String url, final Object requestBody) {
-		return sendAsJson(method, url, requestBody, null);
+	public int send(final String method, final String url) {
+		return send(method, url, null, null);
 	}
 
-	public int sendAsJson(final String method, final String url, final Object requestBody, final Map<String, String> headerFields) {
+	public JsonNode getJson(String url, Map<String, String> headers) {
+		headers = new HashMap<String, String>(headers);
+		headers.put("Accept", "application/json");
+		return send("GET", url, headers, null, new ResponseHandler<JsonNode>() {
+			@Override
+			public JsonNode handleResponse(InputStream is, Integer statusCode) throws IOException {
+				return JsonUtils.getMapper().readTree(is);
+			}
+		});
+	}
+
+	public int sendAsJson(final String method, final String url, final Object requestBody) {
+		return sendAsJson(method, url, requestBody, new HashMap<String, String>());
+	}
+
+	public int sendAsJson(final String method, final String url, final Object requestBody, Map<String, String> headerFields) {
+		headerFields = new HashMap<String, String>(headerFields);
+		headerFields.put("Content-Type", "application/json");
+		return send(method, url, headerFields, new OutputStreamHandler() {
+			@Override
+			public void withHttpURLConnection(OutputStream os) throws IOException {
+				writeRequestBody(requestBody, os);
+			}
+		});
+	}
+
+	public int send(String method, String url, final List<String> requestBodyLines) {
+
+		return send(method, url, null, new OutputStreamHandler() {
+			@Override
+			public void withHttpURLConnection(OutputStream os) throws IOException {
+				for (String line : requestBodyLines) {
+					os.write(line.getBytes("UTF-8"));
+					os.write('\n');
+				}
+				os.flush();
+			}
+		});
+	}
+
+	public int send(final String method, final String url, final Map<String, String> headerFields, OutputStreamHandler outputStreamHandler) {
+		return send(method, url, headerFields, outputStreamHandler, new ErrorLoggingResponseHandler(url));
+	}
+
+	public <T> T send(final String method, final String url, final Map<String, String> headerFields,
+					  OutputStreamHandler outputStreamHandler, ResponseHandler<T> responseHandler) {
+
 		HttpURLConnection connection = null;
+		InputStream inputStream = null;
 		try {
 			connection = (HttpURLConnection) new URL(url).openConnection();
 			connection.setDoOutput(true);
@@ -30,57 +83,83 @@ public class HttpClient {
 				}
 			}
 
-			writeRequestBody(requestBody, connection);
+			if (outputStreamHandler != null) {
+				outputStreamHandler.withHttpURLConnection(connection.getOutputStream());
+			}
 
-			IOUtils.consumeAndClose(connection.getInputStream());
+			inputStream = connection.getInputStream();
 
-			return connection.getResponseCode();
+			return responseHandler.handleResponse(inputStream, connection.getResponseCode());
 		} catch (IOException e) {
 			if (connection != null) {
-				logger.warn(e.getMessage() + ": " + getErrorMessage(connection));
-				return getResponseCode(connection, e);
-			} else {
-				return -1;
+				inputStream = connection.getErrorStream();
+				try {
+					return responseHandler.handleResponse(inputStream, getResponseCode(connection));
+				} catch (IOException e1) {
+					logger.warn(e1.getMessage(), e1);
+				}
 			}
+			return null;
+		} finally {
+			IOUtils.closeQuietly(inputStream);
 		}
 	}
 
-	private int getResponseCode(HttpURLConnection connection, IOException e) {
+	private Integer getResponseCode(HttpURLConnection connection) {
 		try {
 			return connection.getResponseCode();
-		} catch (IOException e1) {
-			logger.warn(e.getMessage());
-			return -1;
-		}
-	}
-
-	private String getErrorMessage(HttpURLConnection connection) {
-		InputStream errorStream = null;
-		try {
-			errorStream = connection.getErrorStream();
-			return IOUtils.toString(errorStream);
 		} catch (IOException e) {
-			return e.getMessage();
-		} finally {
-			IOUtils.closeQuietly(errorStream);
+			logger.warn(e.getMessage());
+			return null;
 		}
 	}
 
-	private void writeRequestBody(Object requestBody, HttpURLConnection connection) throws IOException {
+	private void writeRequestBody(Object requestBody, OutputStream os) throws IOException {
 		if (requestBody != null) {
-			connection.setRequestProperty("Content-Type", "application/json");
-			OutputStream os = connection.getOutputStream();
-
 			if (requestBody instanceof InputStream) {
 				byte[] buf = new byte[8192];
 				int n;
 				while ((n = ((InputStream) requestBody).read(buf)) > 0) {
 					os.write(buf, 0, n);
 				}
+			} else if (requestBody instanceof String) {
+				os.write(((String)requestBody).getBytes("UTF-8"));
 			} else {
 				JsonUtils.writeJsonToOutputStream(requestBody, os);
 			}
 			os.flush();
+		}
+	}
+
+	public interface OutputStreamHandler {
+		void withHttpURLConnection(OutputStream os) throws IOException;
+	}
+
+	public interface ResponseHandler<T> {
+		T handleResponse(InputStream is, Integer statusCode) throws IOException;
+	}
+
+	private static class ErrorLoggingResponseHandler implements ResponseHandler<Integer> {
+
+		private final Logger logger = LoggerFactory.getLogger(getClass());
+
+		private final String url;
+
+		public ErrorLoggingResponseHandler(String url) {
+			this.url = url;
+		}
+
+		@Override
+		public Integer handleResponse(InputStream is, Integer statusCode) throws IOException {
+			if (statusCode == null) {
+				return -1;
+			}
+			if (statusCode >= 400) {
+				logger.warn(url + ": " + statusCode + " " + IOUtils.toString(is));
+			} else {
+				IOUtils.consumeAndClose(is);
+			}
+			return statusCode;
 		}
 	}
 }

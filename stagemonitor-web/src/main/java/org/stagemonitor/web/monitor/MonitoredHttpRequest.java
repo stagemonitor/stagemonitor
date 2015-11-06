@@ -1,6 +1,6 @@
 package org.stagemonitor.web.monitor;
 
-import static com.codahale.metrics.MetricRegistry.name;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.security.Principal;
 import java.util.Collection;
@@ -14,9 +14,9 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.http.HttpServletRequest;
 
-import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
@@ -33,7 +33,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
 	private final Configuration configuration;
 	protected final WebPlugin webPlugin;
-	private final MetricRegistry metricRegistry;
+	private final Metric2Registry metricRegistry;
 
 	public MonitoredHttpRequest(HttpServletRequest httpServletRequest,
 								StatusExposingByteCountingServletResponse responseWrapper,
@@ -43,7 +43,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		this.responseWrapper = responseWrapper;
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
-		metricRegistry = Stagemonitor.getMetricRegistry();
+		metricRegistry = Stagemonitor.getMetric2Registry();
 	}
 
 	@Override
@@ -204,8 +204,8 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		int status = responseWrapper.getStatus();
 		HttpRequestTrace request = info.getRequestTrace();
 		request.setStatusCode(status);
-		metricRegistry.meter(name("request", info.getTimerName(), "server.meter.statuscode", Integer.toString(status))).mark();
-		metricRegistry.meter(name("request.All.server.meter.statuscode", Integer.toString(status))).mark();
+		metricRegistry.meter(name("request_throughput").tag("request_name", info.getRequestName()).tag("http_code", status).build()).mark();
+		metricRegistry.meter(name("request_throughput").tag("request_name", "All").tag("http_code", status).build()).mark();
 		if (status >= 400) {
 			request.setError(true);
 		}

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public final class Stagemonitor {
 
@@ -30,6 +31,7 @@ public final class Stagemonitor {
 	private static List<String> pathsOfWidgetTabPlugins = Collections.emptyList();
 	private static Iterable<StagemonitorPlugin> plugins;
 	private static List<Runnable> onShutdownActions = new CopyOnWriteArrayList<Runnable>();
+	private static Metric2Registry metric2Registry;
 
 	static {
 		try {
@@ -126,6 +128,7 @@ public final class Stagemonitor {
 		logger.info("Initializing plugin {}", pluginName);
 		try {
 			stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
+			stagemonitorPlugin.initializePlugin(metric2Registry, getConfiguration());
 			pathsOfWidgetMetricTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetMetricTabPlugins());
 			pathsOfWidgetTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetTabPlugins());
 			onShutdownActions.add(new Runnable() {
@@ -158,8 +161,16 @@ public final class Stagemonitor {
 		configuration.close();
 	}
 
+	/**
+	 * @deprecated use {@link #getMetric2Registry()}
+	 */
+	@Deprecated
 	public static MetricRegistry getMetricRegistry() {
-		return SharedMetricRegistries.getOrCreate("stagemonitor");
+		return metric2Registry.getMetricRegistry();
+	}
+
+	public static Metric2Registry getMetric2Registry() {
+		return metric2Registry;
 	}
 
 	public static Configuration getConfiguration() {
@@ -210,6 +221,7 @@ public final class Stagemonitor {
 		started = false;
 		disabled = false;
 		measurementSession = new MeasurementSession(null, null, null);
+		metric2Registry = new Metric2Registry();
 		reloadConfiguration();
 		tryStartMonitoring();
 		onShutdownActions.add(MainStagemonitorClassFileTransformer.performRuntimeAttachment());

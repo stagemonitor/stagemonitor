@@ -20,38 +20,38 @@
 						// A regex of metric paths. A table row is created for each distinct regex group. That's
 						// why the wildcard [^\.]+ is put in parentesis. That way a row is created for each individual
 						// cache name
-						metricPathRegex: /cache.([^\.]+).access.hit.total.ratio/,
+						metricPathRegex: /cache_hit_ratio.([^\.]+).All/,
 						metric: "value",
 						// the column label
 						title: "Hit Rate (%)"
 					},
 					{
 						metricCategory: "gauges",
-						metricPathRegex: /cache.([^\.]+).bytes.used/,
+						metricPathRegex: /cache_size_bytes.([^\.]+).All/,
 						metric: "value",
 						title: "Bytes used"
 					},
 					{
 						metricCategory: "gauges",
-						metricPathRegex: /cache.([^\.]+).size.count/,
+						metricPathRegex: /cache_size_count.([^\.]+).All/,
 						metric: "value",
 						title: "Elements in cache"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /cache.([^\.]+).get/,
+						metricPathRegex: /cache_get.([^\.]+).All/,
 						metric: "m1_rate",
 						title: "Gets/sec"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /cache.([^\.]+).get/,
+						metricPathRegex: /cache_get.([^\.]+).All/,
 						metric: "mean",
 						title: "Avg get time"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /cache.([^\.]+).get/,
+						metricPathRegex: /cache_get.([^\.]+).All/,
 						metric: "p95",
 						title: "p95 get time"
 					}
@@ -71,7 +71,7 @@
 								// the minimal value of the y-axis in the graph
 								min: 0,
 								// the maximum value of the y-axis in the graph
-								max: 1,
+								max: 100,
 								// the format of the values
 								// one of percent|bytes|ms
 								// or some arbitrary string that is appended to the values e.g. 'requests/sec'
@@ -84,7 +84,7 @@
 										// A regex of metric paths. A line is created for each distinct regex group.
 										// That's why the placeholder ${rowName} is put in parentesis.
 										// That way a line is created and named after the selected cache name
-										metricPathRegex: "cache.${rowName}.access.hit.total.(ratio)",
+										metricPathRegex: "cache_hit_(ratio).${rowName}.All",
 										metric: "value",
 										aggregate: 'mean'
 									}
@@ -100,7 +100,7 @@
 								columns: [
 									{
 										metricCategory: "gauges",
-										metricPathRegex: "cache.${rowName}.bytes.(used)",
+										metricPathRegex: "cache_size_(bytes).${rowName}.All",
 										metric: "value",
 										aggregate: 'sum'
 									}

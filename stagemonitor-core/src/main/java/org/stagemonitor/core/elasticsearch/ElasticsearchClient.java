@@ -5,17 +5,17 @@ import static org.stagemonitor.core.util.StringUtils.slugify;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,15 +27,17 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
+import org.stagemonitor.core.util.CompletedFuture;
+import org.stagemonitor.core.util.DateUtils;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 
 public class ElasticsearchClient {
 
 	private final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
-	private final String STAGEMONITOR_MAJOR_MINOR_VERSION = getStagemonitorMajorMinorVersion();
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
 	private final CorePlugin corePlugin;
@@ -52,7 +54,7 @@ public class ElasticsearchClient {
 				.createSingleThreadDeamonPool("async-elasticsearch", corePlugin.getThreadPoolQueueCapacityLimit());
 		if (corePlugin.isInternalMonitoringActive()) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
-			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetricRegistry());
+			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetric2Registry());
 		}
 		this.httpClient = new HttpClient();
 	}
@@ -97,7 +99,19 @@ public class ElasticsearchClient {
 		return httpClient.sendAsJson(method, corePlugin.getElasticsearchUrl() + path, requestBody);
 	}
 
-	public Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
+	public void index(final String index, final String type, final Object document) {
+		sendAsJsonAsync("POST", "/" + index + "/" + type, document);
+	}
+
+	public void index(final String index, final String type, String id, final Object document) {
+		sendAsJsonAsync("PUT", "/" + index + "/" + type + "/" + id, document);
+	}
+
+	public void createIndex(final String index, final InputStream mapping) {
+		sendAsJsonAsync("PUT", "/" + index, mapping);
+	}
+
+	private Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
 		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
 			try {
 				return asyncRestPool.submit(new Runnable() {
@@ -113,7 +127,7 @@ public class ElasticsearchClient {
 		return new CompletedFuture<Object>(null);
 	}
 
-	public Future<?> sendGrafanaDashboardAsync(String dashboardPath) {
+	public Future<?> sendGrafana1DashboardAsync(String dashboardPath) {
 		return sendDashboardAsync("/grafana-dash/dashboard/", dashboardPath);
 	}
 
@@ -126,7 +140,7 @@ public class ElasticsearchClient {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
 				final String titleSlug = slugify(dashboard.get(TITLE).asText());
-				return sendAsJsonAsync("PUT", path + titleSlug + "/_create", dashboard);
+				return sendAsJsonAsync("PUT", path + titleSlug, dashboard);
 			} catch (IOException e) {
 				logger.warn(e.getMessage(), e);
 			}
@@ -134,11 +148,92 @@ public class ElasticsearchClient {
 		return new CompletedFuture<Object>(null);
 	}
 
+	public Future<?> sendMappingTemplateAsync(String templatePath, String templateName) {
+		return sendAsJsonAsync("PUT", "/_template/" + templateName, IOUtils.getResourceAsStream(templatePath));
+	}
+
+	public void sendBulkAsync(String resource) {
+		sendBulkAsync(IOUtils.getResourceAsStream(resource));
+	}
+
+	public void sendBulkAsync(final InputStream is) {
+		try {
+			asyncRestPool.submit(new Runnable() {
+				@Override
+				public void run() {
+					sendBulk(is);
+				}
+			});
+		} catch (RejectedExecutionException e) {
+			ExecutorUtils.logRejectionWarning(e);
+		}
+	}
+
+	public void sendBulk(final InputStream is) {
+		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
+			return;
+		}
+		httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null, new HttpClient.OutputStreamHandler() {
+			@Override
+			public void withHttpURLConnection(OutputStream os) throws IOException {
+				IOUtils.copy(is, os);
+				os.close();
+			}
+		}, new HttpClient.ResponseHandler<Void>() {
+			@Override
+			public Void handleResponse(InputStream is, Integer statusCode) throws IOException {
+				final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
+				if (bulkResponse.get("errors").booleanValue()) {
+					reportBulkErrors(bulkResponse.get("items"));
+				}
+				return null;
+			}
+		});
+	}
+
+	private void reportBulkErrors(JsonNode items) {
+		final StringBuilder sb = new StringBuilder("Error(s) while sending a _bulk request to elasticsearch:");
+		for (JsonNode item : items) {
+			final JsonNode error = item.get("index").get("error");
+			if (error != null) {
+				sb.append("\n - ");
+				sb.append(error.get("reason").asText());
+				if (error.get("type").asText().equals("version_conflict_engine_exception")) {
+					sb.append(": Probably you updated a dashboard in Kibana. ")
+							.append("Please don't override the stagemonitor dashboards. ")
+							.append("If you want to customize a dashboard, save it under a different name. ")
+							.append("Stagemonitor will not override your changes, but that also means that you won't ")
+							.append("be able to use the latest dashboard enhancements :(. ")
+							.append("To resolve this issue, save the updated one under a different name, delete it ")
+							.append("and restart stagemonitor so that the dashboard can be recreated.");
+				}
+			}
+		}
+		logger.warn(sb.toString());
+	}
+
+	public int deleteIndices(String indexPattern) {
+		return execute("DELETE", indexPattern + "?timeout=20m", "Deleting indices: {}");
+	}
+
+	public int optimizeIndices(String indexPattern) {
+		return execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h", "Optimizing indices: {}");
+	}
+
+	private int execute(String method, String path, String logMessage) {
+		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
+		if (StringUtils.isEmpty(elasticsearchUrl)) {
+			return -1;
+		}
+		final String url = elasticsearchUrl + "/" + path;
+		logger.info(logMessage, url);
+		return httpClient.send(method, url);
+	}
+
 	ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
 		final ObjectMapper mapper = JsonUtils.getMapper();
-		final InputStream dashboardStram = ElasticsearchClient.class.getClassLoader().getResourceAsStream(dashboardPath);
-		final ObjectNode dashboard = (ObjectNode) mapper.readTree(dashboardStram);
-		dashboard.put(TITLE, dashboard.get(TITLE).asText() + STAGEMONITOR_MAJOR_MINOR_VERSION);
+		final ObjectNode dashboard = (ObjectNode) mapper.readTree(IOUtils.getResourceAsStream(dashboardPath));
+		dashboard.put("editable", false);
 		ObjectNode dashboardElasticsearchFormat = mapper.createObjectNode();
 		dashboardElasticsearchFormat.put("user", "guest");
 		dashboardElasticsearchFormat.put("group", "guest");
@@ -148,64 +243,32 @@ public class ElasticsearchClient {
 		return dashboardElasticsearchFormat;
 	}
 
-	private String getStagemonitorMajorMinorVersion() {
-		Class clazz = ElasticsearchClient.class;
-		String className = clazz.getSimpleName() + ".class";
-		String classPath = clazz.getResource(className).toString();
-		if (!classPath.startsWith("jar")) {
-			logger.warn("Failed to read stagemonitor version from manifest (class is not in jar)");
-			return "";
-		}
-		String manifestPath = classPath.substring(0, classPath.lastIndexOf('!') + 1) + "/META-INF/MANIFEST.MF";
-		try {
-			Manifest manifest = new Manifest(new URL(manifestPath).openStream());
-			Attributes attr = manifest.getMainAttributes();
-			final String value = attr.getValue("Implementation-Version");
-			return " " + getMajorMinorVersionFromFullVersionString(value);
-		} catch (Exception e) {
-			logger.warn("Failed to read stagemonitor version from manifest {}", e.getMessage());
-			return "";
-		}
-	}
-
-	String getMajorMinorVersionFromFullVersionString(String value) {
-		return value.substring(0, value.lastIndexOf('.'));
-	}
-
 	public boolean isPoolQueueEmpty() {
 		return asyncRestPool.getQueue().isEmpty();
 	}
 
-	private class CompletedFuture<T> implements Future<T> {
-		private final T result;
+	public void close() {
+		asyncRestPool.shutdown();
+	}
 
-		public CompletedFuture(final T result) {
-			this.result = result;
+	/**
+	 * Performs an optimize and delete on logstash-style index patterns [prefix]YYYY.MM.DD
+	 *
+	 * @param indexPrefix the prefix of the logstash-style index pattern
+	 * @param optimizeIndicesOlderThanDays
+	 * @param deleteIndicesOlderThanDays
+	 */
+	public void scheduleOptimizeAndDeleteOfOldIndices(String indexPrefix, int optimizeIndicesOlderThanDays, int deleteIndicesOlderThanDays) {
+		Timer timer = new Timer(indexPrefix + "elasticsearch-tasks", true);
+
+		if (optimizeIndicesOlderThanDays > 0) {
+			final TimerTask optimizeIndicesTask = new OptimizeIndicesTask(corePlugin.getIndexSelector(), indexPrefix, optimizeIndicesOlderThanDays, this);
+			timer.schedule(optimizeIndicesTask, DateUtils.getNextDateAtHour(2), DateUtils.getDayInMillis());
 		}
 
-		@Override
-		public boolean cancel(final boolean b) {
-			return false;
-		}
-
-		@Override
-		public boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public boolean isDone() {
-			return true;
-		}
-
-		@Override
-		public T get() {
-			return this.result;
-		}
-
-		@Override
-		public T get(final long l, final TimeUnit timeUnit) {
-			return get();
+		if (deleteIndicesOlderThanDays > 0) {
+			final TimerTask deleteIndicesTask = new DeleteIndicesTask(corePlugin.getIndexSelector(), indexPrefix, deleteIndicesOlderThanDays, this);
+			timer.schedule(deleteIndicesTask, DateUtils.getNextDateAtHour(1), DateUtils.getDayInMillis());
 		}
 	}
 

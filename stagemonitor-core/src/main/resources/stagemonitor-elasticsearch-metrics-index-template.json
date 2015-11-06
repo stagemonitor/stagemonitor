@@ -1,0 +1,46 @@
+{
+  "template": "stagemonitor-metrics-*",
+  "settings": {
+    "index": {
+      "refresh_interval": "5s"
+    }
+  },
+  "mappings": {
+    "_default_": {
+      "dynamic_templates": [
+        {
+          "strings": {
+            "match": "*",
+            "match_mapping_type": "string",
+            "mapping":   { "type": "string",  "doc_values": true, "index": "not_analyzed" }
+          }
+        }
+      ],
+      "_all":            { "enabled": false },
+      "_source":         { "enabled": false },
+      "properties": {
+        "@timestamp":    { "type": "date",    "doc_values": true },
+        "measurement_start": { "type": "date","doc_values": true },
+        "count":         { "type": "integer", "doc_values": true, "index": "no" },
+        "m1_rate":       { "type": "float",   "doc_values": true, "index": "no" },
+        "m5_rate":       { "type": "float",   "doc_values": true, "index": "no" },
+        "m15_rate":      { "type": "float",   "doc_values": true, "index": "no" },
+        "max":           { "type": "integer", "doc_values": true, "index": "no" },
+        "mean":          { "type": "integer", "doc_values": true, "index": "no" },
+        "mean_rate":     { "type": "float",   "doc_values": true, "index": "no" },
+        "median":        { "type": "float",   "doc_values": true, "index": "no" },
+        "min":           { "type": "float",   "doc_values": true, "index": "no" },
+        "p25":           { "type": "float",   "doc_values": true, "index": "no" },
+        "p75":           { "type": "float",   "doc_values": true, "index": "no" },
+        "p95":           { "type": "float",   "doc_values": true, "index": "no" },
+        "p98":           { "type": "float",   "doc_values": true, "index": "no" },
+        "p99":           { "type": "float",   "doc_values": true, "index": "no" },
+        "p999":          { "type": "float",   "doc_values": true, "index": "no" },
+        "std":           { "type": "float",   "doc_values": true, "index": "no" },
+        "value":         { "type": "float",   "doc_values": true, "index": "no" },
+        "value_boolean": { "type": "boolean", "doc_values": true, "index": "no" },
+        "value_string":  { "type": "string",  "doc_values": true, "index": "no" }
+      }
+    }
+  }
+}

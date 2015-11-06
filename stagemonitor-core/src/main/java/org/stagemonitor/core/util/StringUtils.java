@@ -41,7 +41,7 @@ public class StringUtils {
 	}
 
 	public static String slugify(String s) {
-		return s.toLowerCase().replaceAll("[^\\w ]+", "").replaceAll("\\s+", "-");
+		return replaceWhitespacesWithDash(s.toLowerCase().replaceAll("[^\\w ]+", ""));
 	}
 
 	public static boolean isNotEmpty(String s) {
@@ -54,5 +54,22 @@ public class StringUtils {
 
 	public static String asCsv(String[] strings) {
 		return SetValueConverter.STRINGS_VALUE_CONVERTER.toString(Arrays.asList(strings));
+	}
+
+	public static String getLogstashStyleDate() {
+		return getLogstashStyleDate(System.currentTimeMillis());
+	}
+
+	public static String getLogstashStyleDate(long time) {
+		final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		return dateFormat.format(new Date(time));
+	}
+
+	public static String replaceWhitespacesWithDash(String s) {
+		if (s == null) {
+			return null;
+		}
+		return s.replaceAll("\\s", "-");
 	}
 }

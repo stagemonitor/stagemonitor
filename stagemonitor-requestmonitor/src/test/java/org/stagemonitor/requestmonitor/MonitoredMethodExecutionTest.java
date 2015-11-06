@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -8,12 +7,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class MonitoredMethodExecutionTest {
 
@@ -22,7 +21,7 @@ public class MonitoredMethodExecutionTest {
 	private RequestMonitor.RequestInformation<RequestTrace> requestInformation3;
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-	private final MetricRegistry registry = new MetricRegistry();
+	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
 
 	@Before
@@ -45,10 +44,10 @@ public class MonitoredMethodExecutionTest {
 		assertTrue(requestInformation2.isForwarded());
 		assertTrue(requestInformation3.isForwarded());
 
-		assertNotNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored1()"), "server", "time", "total" )));
-		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored2()"), "server", "time", "total" )));
-		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored3()"), "server", "time", "total" )));
-		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("notMonitored()"), "server", "time", "total" )));
+		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
+		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
+		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored3()").layer("All").build()));
+		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "notMonitored()").layer("All").build()));
 	}
 
 	@Test
@@ -56,10 +55,10 @@ public class MonitoredMethodExecutionTest {
 		testObject.monitored3();
 		assertEquals(1, requestInformation3.getExecutionResult());
 
-		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored1()"), "server", "time", "total" )));
-		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored2()"), "server", "time", "total" )));
-		assertNotNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("monitored3()"), "server", "time", "total" )));
-		assertNull(registry.getTimers().get(name("request", sanitizeGraphiteMetricSegment("notMonitored()"), "server", "time", "total" )));
+		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
+		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored3()").layer("All").build()));
+		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "notMonitored()").layer("All").build()));
 	}
 
 	private class TestObject {

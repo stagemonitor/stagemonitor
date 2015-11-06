@@ -19,7 +19,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.codahale.metrics.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -43,22 +42,20 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	protected final CorePlugin corePlugin;
 	protected final WebPlugin webPlugin;
 	protected final RequestMonitor requestMonitor;
-	protected final MetricRegistry metricRegistry;
 	private final List<HtmlInjector> htmlInjectors = new ArrayList<HtmlInjector>();
 	private boolean atLeastServletApi3 = false;
 	private final MonitoredHttpRequestFactory monitoredHttpRequestFactory;
 
 	public HttpRequestMonitorFilter() {
-		this(Stagemonitor.getConfiguration(), Stagemonitor.getMetricRegistry());
+		this(Stagemonitor.getConfiguration());
 	}
 
-	public HttpRequestMonitorFilter(Configuration configuration, MetricRegistry metricRegistry) {
+	public HttpRequestMonitorFilter(Configuration configuration) {
 		super(configuration.getConfig(WebPlugin.class).getExcludedRequestPaths());
 		logger.debug("Instantiating HttpRequestMonitorFilter");
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
-		this.metricRegistry = metricRegistry;
 		this.requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
 
 		final Iterator<MonitoredHttpRequestFactory> requestFactoryIterator = ServiceLoader.load(MonitoredHttpRequestFactory.class).iterator();

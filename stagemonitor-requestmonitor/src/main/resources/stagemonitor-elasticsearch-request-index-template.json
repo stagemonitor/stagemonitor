@@ -1,0 +1,66 @@
+{
+  "template": "stagemonitor-requests-*",
+  "settings" : {
+    "index" : {
+      "refresh_interval" : "5s"
+    }
+  },
+  "mappings": {
+    "_default_": {
+      "dynamic_templates" : [
+        {
+          "http_headers": {
+            "path_match": "headers.*",
+            "mapping": { "type": "string", "index": "not_analyzed", "doc_values": true }
+          }
+        },
+        {
+          "user_agent": {
+            "path_match": "userAgent.*",
+            "mapping": { "type": "string", "index": "not_analyzed", "doc_values": true }
+          }
+        },
+        {
+          "string_fields" : {
+            "match" : "*",
+            "match_mapping_type" : "string",
+            "mapping" : {
+              "type": "string", "index" : "not_analyzed", "ignore_above" : 256, "doc_values": true}
+            }
+        }
+      ],
+      "_all":                  { "enabled": false },
+      "_source" :              { "excludes" : ["callStackJson"] },
+      "properties": {
+        "@timestamp":          {"type": "date",    "doc_values": true},
+        "measurement_start":   {"type": "date",    "doc_values": true},
+        "id":                  {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "application":         {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "host":                {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "instance":            {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "bytesWritten":        {"type": "integer", "doc_values": true},
+        "callStack":           {"type": "string",  "index": "no", "doc_values": true},
+        "callStackJson":       {"type": "string",  "index": "no","store": "yes", "doc_values": true},
+        "clientIp":            {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "error":               {"type": "boolean", "doc_values": true},
+        "exceptionClass":      {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "exceptionMessage":    {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "exceptionStackTrace": {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "executionCountDb":    {"type": "integer", "doc_values": true},
+        "executionTime":       {"type": "integer", "doc_values": true},
+        "executionTimeCpu":    {"type": "integer", "doc_values": true},
+        "executionTimeDb":     {"type": "integer", "doc_values": true},
+        "method":              {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "name":                {"type": "string",  "analyzer": "standard",
+                                 "fields": { "raw": {"type": "string", "index": "not_analyzed", "doc_values": true}}},
+        "parameter":           {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "sessionId":           {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "status":              {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "statusCode":          {"type": "integer", "doc_values": true},
+        "url":                 {"type": "string",  "analyzer": "standard",
+                                 "fields": { "raw": {"type": "string", "index": "not_analyzed", "doc_values": true}}},
+        "username":            {"type": "string",  "index": "not_analyzed", "doc_values": true}
+      }
+    }
+  }
+}

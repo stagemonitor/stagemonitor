@@ -1,5 +1,7 @@
 package org.stagemonitor;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
@@ -24,7 +26,7 @@ public class InstrumentationPerformanceTest  {
 	private static Node node;
 
 	public static void main(String[] args) throws Exception {
-		final Timer.Context timer = Stagemonitor.getMetricRegistry().timer("startElasticsearch").time();
+		final Timer.Context timer = Stagemonitor.getMetric2Registry().timer(name("startElasticsearch").build()).time();
 		startElasticsearch();
 		Stagemonitor.init();
 		timer.stop();
@@ -58,7 +60,7 @@ public class InstrumentationPerformanceTest  {
 
 	public static void printResults() throws Exception {
 		SortedTableLogReporter reporter = SortedTableLogReporter
-				.forRegistry(Stagemonitor.getMetricRegistry())
+				.forRegistry(Stagemonitor.getMetric2Registry().getMetricRegistry())
 				.log(LoggerFactory.getLogger(InstrumentationPerformanceTest.class))
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.MILLISECONDS)
@@ -67,7 +69,7 @@ public class InstrumentationPerformanceTest  {
 				.build();
 		reporter.report(new TreeMap<String, Gauge>(), new TreeMap<String, Counter>(),
 				new TreeMap<String, Histogram>(), new TreeMap<String, Meter>(),
-				Stagemonitor.getMetricRegistry().getTimers());
+				Stagemonitor.getMetric2Registry().getMetricRegistry().getTimers());
 
 		Stagemonitor.reset();
 	}

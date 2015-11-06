@@ -1,13 +1,16 @@
 package org.stagemonitor.os.metrics;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class MemoryMetricSet extends AbstractSigarMetricSet<Mem> {
 
@@ -21,30 +24,30 @@ public class MemoryMetricSet extends AbstractSigarMetricSet<Mem> {
 	}
 
 	@Override
-	public Map<String, Metric> getMetrics() {
-		Map<String, Metric> metrics = new HashMap<String, Metric>();
-		metrics.put("os.mem.usage.free", new Gauge<Long>() {
+	public Map<MetricName, Metric> getMetrics() {
+		Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
+		metrics.put(name("mem_usage").type("free").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getFree();
 			}
 		});
-		metrics.put("os.mem.usage.used", new Gauge<Long>() {
+		metrics.put(name("mem_usage").type("used").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getUsed();
 			}
 		});
-		metrics.put("os.mem.usage.total", new Gauge<Long>() {
+		metrics.put(name("mem_usage").type("total").build(), new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return getSnapshot().getTotal();
 			}
 		});
-		metrics.put("os.mem.usage-percent", new Gauge<Double>() {
+		metrics.put(name("mem_usage_percent").build(), new Gauge<Double>() {
 			@Override
 			public Double getValue() {
-				return getSnapshot().getUsedPercent() / 100;
+				return getSnapshot().getUsedPercent();
 			}
 		});
 		return metrics;

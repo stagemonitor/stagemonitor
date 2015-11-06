@@ -1,6 +1,6 @@
 package org.stagemonitor.jdbc;
 
-import static com.codahale.metrics.MetricRegistry.name;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -11,9 +11,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+
 import javax.sql.DataSource;
 
-import com.codahale.metrics.MetricRegistry;
 import com.p6spy.engine.spy.P6Core;
 import com.p6spy.engine.spy.P6SpyLoadableOptions;
 import com.p6spy.engine.spy.P6SpyOptions;
@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.jdbc.p6spy.P6SpyMultiLogger;
@@ -37,17 +38,17 @@ public class ConnectionMonitor {
 
 	private ConcurrentMap<DataSource, String> dataSourceUrlMap = new ConcurrentHashMap<DataSource, String>();
 
-	private MetricRegistry metricRegistry;
+	private Metric2Registry metricRegistry;
 
 	private final boolean active;
 
-	public ConnectionMonitor(Configuration configuration, MetricRegistry metricRegistry) {
+	public ConnectionMonitor(Configuration configuration, Metric2Registry metricRegistry) {
 		this.metricRegistry = metricRegistry;
 		collectSql = configuration.getConfig(JdbcPlugin.class).isCollectSql();
 		final Map<String, String> p6SpyOptions = getP6SpyOptions();
 		final boolean p6SpyAlreadyConfigured = !StringUtils.isEmpty(p6SpyOptions.get(P6SpyOptions.DRIVER_NAMES));
 		if (p6SpyAlreadyConfigured) {
-			logger.warn("It seem like you already have p6spy configured. Using p6spy and stagemonitor is not supported. " +
+			logger.warn("It seems like you already have p6spy configured. Using p6spy and stagemonitor is not supported. " +
 					"You won't be able to see SQL queries in the call tree.");
 		}
 		if (!p6SpyAlreadyConfigured && ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class))) {
@@ -97,7 +98,7 @@ public class ConnectionMonitor {
 		}
 		ensureUrlExistsForDataSource(dataSource, connection);
 		String url = dataSourceUrlMap.get(dataSource);
-		metricRegistry.timer(name("getConnection", url)).update(duration, TimeUnit.NANOSECONDS);
+		metricRegistry.timer(name("get_jdbc_connection").tag("url", url).build()).update(duration, TimeUnit.NANOSECONDS);
 		return collectSql ? P6Core.wrapConnection(connection) : connection;
 	}
 

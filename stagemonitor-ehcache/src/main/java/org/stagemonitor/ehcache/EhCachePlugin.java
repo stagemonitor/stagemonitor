@@ -1,12 +1,8 @@
 package org.stagemonitor.ehcache;
 
-import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
-
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import com.codahale.metrics.MetricRegistry;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import org.stagemonitor.core.CorePlugin;
@@ -14,6 +10,8 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class EhCachePlugin extends StagemonitorPlugin {
 
@@ -38,26 +36,33 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			.build();
 
 	@Override
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) {
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
 		final EhCachePlugin chCacheConfig = configuration.getConfig(EhCachePlugin.class);
 		final CacheManager cacheManager = CacheManager.getCacheManager(chCacheConfig.ehCacheNameOption.getValue());
 		for (String cacheName : cacheManager.getCacheNames()) {
 			final Cache cache = cacheManager.getCache(cacheName);
 			cache.setStatisticsEnabled(true);
 
-			final String metricPrefix = name("cache", sanitizeGraphiteMetricSegment(cache.getName()));
-			final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(metricPrefix,
+			final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(cache.getName(),
 					metricRegistry, chCacheConfig.timeGet.getValue());
 			cache.registerCacheUsageListener(cacheUsageListener);
-			metricRegistry.registerAll(new EhCacheMetricSet(metricPrefix, cache, cacheUsageListener));
+			metricRegistry.registerAll(new EhCacheMetricSet(cache.getName(), cache, cacheUsageListener));
 		}
 
-		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
-		elasticsearchClient.sendGrafanaDashboardAsync("EhCache.json");
+		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
+		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
+		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
+		if (corePlugin.isReportToGraphite()) {
+			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteEhCache.json");
+		}
+		if (corePlugin.isReportToElasticsearch()) {
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchEhCache.json");
+			elasticsearchClient.sendBulkAsync("kibana/EhCache.bulk");
+		}
 	}
 
 	@Override
 	public List<String> getPathsOfWidgetMetricTabPlugins() {
-		return Arrays.asList("/stagemonitor/static/tabs/metrics/ehcache-metrics");
+		return Collections.singletonList("/stagemonitor/static/tabs/metrics/ehcache-metrics");
 	}
 }

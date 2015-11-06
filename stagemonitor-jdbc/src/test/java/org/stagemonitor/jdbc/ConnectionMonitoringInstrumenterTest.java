@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -14,7 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
-import java.util.SortedMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.sql.DataSource;
@@ -28,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -56,7 +58,7 @@ public class ConnectionMonitoringInstrumenterTest {
 		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
 
-		Stagemonitor.getMetricRegistry().removeMatching(MetricFilter.ALL);
+		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 
 		dataSource = new TestDataSource();
 		connection = mock(Connection.class);
@@ -67,7 +69,7 @@ public class ConnectionMonitoringInstrumenterTest {
 
 		when(connection.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
 		when(connection.createStatement()).thenReturn(mock(Statement.class));
-		requestMonitor = new RequestMonitor(corePlugin, Stagemonitor.getMetricRegistry(), requestMonitorPlugin);
+		requestMonitor = new RequestMonitor(corePlugin, Stagemonitor.getMetric2Registry(), requestMonitorPlugin);
 	}
 
 	@AfterClass
@@ -79,15 +81,15 @@ public class ConnectionMonitoringInstrumenterTest {
 	@Test
 	public void monitorGetConnection() throws Exception {
 		dataSource.getConnection();
-		final SortedMap<String,Timer> timers = Stagemonitor.getMetricRegistry().getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get("getConnection.jdbc:test-testUser"));
+		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
+		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:test-testUser").build()));
 	}
 
 	@Test
 	public void monitorGetConnectionUsernamePassword() throws Exception {
 		dataSource.getConnection("user", "pw");
-		final SortedMap<String,Timer> timers = Stagemonitor.getMetricRegistry().getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get("getConnection.jdbc:test-testUser"));
+		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
+		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:test-testUser").build()));
 	}
 
 	@Test
@@ -102,10 +104,10 @@ public class ConnectionMonitoringInstrumenterTest {
 						return null;
 					}
 				}));
-		final SortedMap<String,Timer> timers = Stagemonitor.getMetricRegistry().getTimers();
+		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
-		assertNotNull(timers.keySet().toString(), timers.get("db.All.time.statement"));
-		assertNotNull(timers.keySet().toString(), timers.get("db.ConnectionMonitoringInstrumenterTest#testRecordSql.time.statement"));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringInstrumenterTest#testRecordSql").build()));
 		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
 		assertEquals("testRecordSql()", callStack.getSignature());
 		assertEquals("public void org.stagemonitor.jdbc.ConnectionMonitoringInstrumenterTest.testRecordSql()",
@@ -125,10 +127,10 @@ public class ConnectionMonitoringInstrumenterTest {
 						return null;
 					}
 				}));
-		final SortedMap<String,Timer> timers = Stagemonitor.getMetricRegistry().getTimers();
+		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
-		assertNotNull(timers.keySet().toString(), timers.get("db.All.time.statement"));
-		assertNotNull(timers.keySet().toString(), timers.get("db.ConnectionMonitoringInstrumenterTest#testRecordSql.time.statement"));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringInstrumenterTest#testRecordSql").build()));
 		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
 		assertEquals("testRecordSql()", callStack.getSignature());
 		assertEquals("public void org.stagemonitor.jdbc.ConnectionMonitoringInstrumenterTest.testRecordSql()",

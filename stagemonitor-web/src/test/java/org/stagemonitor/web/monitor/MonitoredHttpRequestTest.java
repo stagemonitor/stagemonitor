@@ -90,6 +90,7 @@ public class MonitoredHttpRequestTest {
 
 		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
 		when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
+		when(requestInformation.getRequestName()).thenReturn(requestTrace.getName());
 		monitoredHttpRequest.onPostExecute(requestInformation);
 		assertEquals("?foo=bar&bla=blubb&pwd=XXXX&creditCard=XXXX", requestTrace.getParameter());
 

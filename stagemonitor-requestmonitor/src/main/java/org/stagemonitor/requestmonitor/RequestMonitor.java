@@ -1,8 +1,8 @@
 package org.stagemonitor.requestmonitor;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,8 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.GraphiteSanitizer;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
@@ -33,7 +33,6 @@ import org.stagemonitor.requestmonitor.profiler.Profiler;
 public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
-	private static final String REQUEST = "request";
 
 	/**
 	 * Helps to detect, if this request is the 'real' one or just the forwarding one.
@@ -58,7 +57,7 @@ public class RequestMonitor {
 	private int warmupRequests = 0;
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
 	private AtomicInteger noOfRequests = new AtomicInteger(0);
-	private MetricRegistry metricRegistry;
+	private Metric2Registry metricRegistry;
 	private CorePlugin corePlugin;
 	private RequestMonitorPlugin requestMonitorPlugin;
 	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
@@ -71,14 +70,14 @@ public class RequestMonitor {
 	}
 
 	public RequestMonitor(Configuration configuration) {
-		this(configuration, Stagemonitor.getMetricRegistry());
+		this(configuration, Stagemonitor.getMetric2Registry());
 	}
 
-	public RequestMonitor(Configuration configuration, MetricRegistry registry) {
+	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
 		this(configuration.getConfig(CorePlugin.class), registry, configuration.getConfig(RequestMonitorPlugin.class));
 	}
 
-	public RequestMonitor(CorePlugin corePlugin, MetricRegistry registry, RequestMonitorPlugin requestMonitorPlugin) {
+	public RequestMonitor(CorePlugin corePlugin, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin) {
 		this.metricRegistry = registry;
 		this.corePlugin = corePlugin;
 		this.requestMonitorPlugin = requestMonitorPlugin;
@@ -181,7 +180,7 @@ public class RequestMonitor {
 	private void trackOverhead(long overhead1, long overhead2) {
 		if (corePlugin.isInternalMonitoringActive()) {
 			overhead2 = System.nanoTime() - overhead2;
-			metricRegistry.timer("internal.overhead.RequestMonitor").update(overhead2 + overhead1, NANOSECONDS);
+			metricRegistry.timer(name("internal_overhead_request_monitor").build()).update(overhead2 + overhead1, NANOSECONDS);
 		}
 	}
 
@@ -256,7 +255,7 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void removeTimerIfCountIsZero(RequestInformation<T> info) {
 		if (info.timerCreated) {
-			String timerMetricName = getTimerMetricName(info.getTimerName());
+			MetricName timerMetricName = getTimerMetricName(info.getRequestName());
 			if (info.getRequestTimer().getCount() == 0 && metricRegistry.getMetrics().get(timerMetricName) != null) {
 				metricRegistry.remove(timerMetricName);
 			}
@@ -265,37 +264,36 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void trackMetrics(RequestInformation<T> info, long executionTime, long cpuTime) {
 		T requestTrace = info.requestTrace;
-		String timerName = info.getTimerName();
+		String requestName = info.getRequestName();
 
 		info.getRequestTimer().update(executionTime, NANOSECONDS);
 		metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
 
 		if (requestMonitorPlugin.isCollectCpuTime()) {
-			metricRegistry.timer(name(REQUEST, timerName, "server.cpu-time.total")).update(cpuTime, NANOSECONDS);
-			metricRegistry.timer("request.All.server.cpu-time.total").update(cpuTime, NANOSECONDS);
+			metricRegistry.timer(name("response_time_cpu").tag("request_name", requestName).layer("All").build()).update(cpuTime, NANOSECONDS);
+			metricRegistry.timer(name("response_time_cpu").tag("request_name", "All").layer("All").build()).update(cpuTime, NANOSECONDS);
 		}
 
 		if (requestTrace.isError()) {
-			metricRegistry.meter(name(REQUEST, timerName, "server.meter.error")).mark();
-			metricRegistry.meter("request.All.server.meter.error").mark();
+			metricRegistry.meter(name("error_rate_server").tag("request_name", requestName).layer("All").build()).mark();
+			metricRegistry.meter(name("error_rate_server").tag("request_name", "All").layer("All").build()).mark();
 		}
-		trackDbMetrics(timerName, requestTrace);
+		trackDbMetrics(requestName, requestTrace);
 	}
 
-	private <T extends RequestTrace> void trackDbMetrics(String timerName, T requestTrace) {
+	private <T extends RequestTrace> void trackDbMetrics(String requestName, T requestTrace) {
 		if (requestTrace.getExecutionCountDb() > 0) {
 			if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
-				metricRegistry.timer(name(REQUEST, timerName, "server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
-				metricRegistry.timer(name("request.All.server.time.db")).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
+				metricRegistry.timer(name("response_time_server").tag("request_name", requestName).layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
+				metricRegistry.meter(name("jdbc_query_rate").tag("request_name", requestName).build()).mark(requestTrace.getExecutionCountDb());
 			}
-
-			metricRegistry.meter(name(REQUEST, timerName, "server.meter.db")).mark(requestTrace.getExecutionCountDb());
-			metricRegistry.meter("request.All.server.meter.db").mark(requestTrace.getExecutionCountDb());
+			metricRegistry.timer(name("response_time_server").tag("request_name", "All").layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
+			metricRegistry.meter(name("jdbc_query_rate").tag("request_name", "All").build()).mark(requestTrace.getExecutionCountDb());
 		}
 	}
 
-	private <T extends RequestTrace> String getTimerMetricName(String timerName) {
-		return name(REQUEST, timerName, "server.time.total");
+	private <T extends RequestTrace> MetricName getTimerMetricName(String requestName) {
+		return name("response_time_server").tag("request_name", requestName).layer("All").build();
 	}
 
 	private <T extends RequestTrace> void reportRequestTrace(final T requestTrace) {
@@ -371,8 +369,8 @@ public class RequestMonitor {
 			return true;
 		}
 
-		public String getTimerName() {
-			return name(GraphiteSanitizer.sanitizeGraphiteMetricSegment(requestTrace.getName()));
+		public String getRequestName() {
+			return requestTrace.getName();
 		}
 
 		/**
@@ -388,7 +386,7 @@ public class RequestMonitor {
 
 		public Timer getRequestTimer() {
 			timerCreated = true;
-			return metricRegistry.timer(getTimerMetricName(getTimerName()));
+			return metricRegistry.timer(getTimerMetricName(getRequestName()));
 		}
 
 		private boolean profileThisRequest() {

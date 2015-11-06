@@ -7,23 +7,19 @@
 				{
 					bindto: '#os-cpu',
 					min: 0,
-<<<<<<< Updated upstream
-					max: 1,
-=======
 					max: 101,
->>>>>>> Stashed changes
 					format: 'percent',
 					stack: true,
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(soft-interrupt)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(interrupt)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(stolen)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(nice)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(wait)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(sys)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(user)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.cpu.usage.(idle)", metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(soft-interrupt)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(interrupt)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(stolen)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(nice)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(wait)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(sys)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(user)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(idle)", metric: "value" }
 					]
 				},
 				{
@@ -32,8 +28,8 @@
 					format: 'bytes',
 					derivative: true,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /os.net.[^\.]+.write/, metric: "value", title: "send" },
-						{ metricCategory: "gauges", metricPathRegex: /os.net.[^\.]+.read/, metric: "value", title: "receive" }
+						{ metricCategory: "gauges", metricPathRegex: /network_io.[^\.]+.write.bytes/, metric: "value", title: "send" },
+						{ metricCategory: "gauges", metricPathRegex: /network_io.[^\.]+.read.bytes/, metric: "value", title: "receive" }
 					]
 				},
 				{
@@ -43,16 +39,16 @@
 					format: 'bytes',
 					derivative: true,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /os.fs.[^\.]+.([^\.]+).bytes/, metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: /disk_io.[^\.]+.([^\.]+)/, metric: "value" }
 					]
 				},
 				{
 					bindto: '#fs-usage',
 					min: 0,
-					max: 1,
+					max: 100,
 					format: 'percent',
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /os.fs.([^\.]+).usage-percent/, metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: /disk_usage_percent.([^\.]+)/, metric: "value" }
 					]
 				},
 				{
@@ -61,7 +57,7 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /os\.mem\.usage\.([^\.]+)/, metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: /mem_usage\.([^\.]+)/, metric: "value" }
 					]
 				},
 				{
@@ -70,8 +66,8 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "os.swap.usage.(total)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "os.swap.usage.(used)", metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: "swap_usage.(total)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "swap_usage.(used)", metric: "value" }
 					]
 				}
 			]

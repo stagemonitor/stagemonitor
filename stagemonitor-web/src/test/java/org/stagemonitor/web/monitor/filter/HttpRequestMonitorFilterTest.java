@@ -11,6 +11,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.Servlet;
@@ -22,7 +23,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.codahale.metrics.MetricRegistry;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,7 +89,7 @@ public class HttpRequestMonitorFilterTest {
 		final FilterConfig filterConfig = spy(new MockFilterConfig());
 		when(filterConfig.getServletContext()).thenReturn(servlet3Context);
 
-		httpRequestMonitorFilter = new HttpRequestMonitorFilter(configuration, mock(MetricRegistry.class));
+		httpRequestMonitorFilter = new HttpRequestMonitorFilter(configuration);
 		httpRequestMonitorFilter.initInternal(filterConfig);
 	}
 

@@ -1,15 +1,15 @@
 package org.stagemonitor.requestmonitor;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.core.Stagemonitor.getMetricRegistry;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+import static org.stagemonitor.core.Stagemonitor.getMetric2Registry;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.io.IOException;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -34,7 +34,7 @@ public class MonitoredHttpExecutionForwardingTest {
 
 	@Before
 	public void clearState() {
-		getMetricRegistry().removeMatching(new MetricFilter() {
+		getMetric2Registry().removeMatching(new MetricFilter() {
 			@Override
 			public boolean matches(String name, Metric metric) {
 				return true;
@@ -54,9 +54,9 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
 		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
 
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored1"), "server", "time", "total" )));
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored2"), "server", "time", "total" )));
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored3"), "server", "time", "total" )));
+		assertNull(getMetric2Registry().getTimers().get(name("response_time_server").tag("request_name", "GET /monitored1").layer("All").build()));
+		assertNull(getMetric2Registry().getTimers().get(name("response_time_server").tag("request_name", "GET /monitored2").layer("All").build()));
+		assertNotNull(getMetric2Registry().getTimers().get(name("response_time_server").tag("request_name", "GET /monitored3").layer("All").build()));
 	}
 
 	@Test
@@ -70,9 +70,9 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
 		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
 
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored1"), "server", "time", "total" )));
-		assertNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored2"), "server", "time", "total" )));
-		assertNotNull(getMetricRegistry().getTimers().get(name("request", sanitizeGraphiteMetricSegment("GET /monitored3"), "server", "time", "total" )));
+		assertNull(getMetric2Registry().getTimers().get(name("response_time_server").tag("request_name", "GET /monitored1").layer("All").build()));
+		assertNull(getMetric2Registry().getTimers().get(name("response_time_server").tag("request_name", "GET /monitored2").layer("All").build()));
+		assertNotNull(getMetric2Registry().getTimers().get(name("response_time_server").tag("request_name", "GET /monitored3").layer("All").build()));
 	}
 
 

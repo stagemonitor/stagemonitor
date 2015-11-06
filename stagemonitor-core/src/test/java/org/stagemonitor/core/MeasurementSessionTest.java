@@ -28,6 +28,12 @@ public class MeasurementSessionTest {
 	@Test
 	public void testToJson() throws Exception {
 		MeasurementSession measurementSession = new MeasurementSession("app", "host", "instance");
-		assertEquals(measurementSession, JsonUtils.getMapper().readValue(JsonUtils.toJson(measurementSession), MeasurementSession.class));
+		final MeasurementSession jsonSession = JsonUtils.getMapper().readValue(JsonUtils.toJson(measurementSession), MeasurementSession.class);
+		assertEquals(measurementSession.getApplicationName(), jsonSession.getApplicationName());
+		assertEquals(measurementSession.getHostName(), jsonSession.getHostName());
+		assertEquals(measurementSession.getInstanceName(), jsonSession.getInstanceName());
+		assertEquals(measurementSession.getInstanceName(), jsonSession.getInstanceName());
+		assertEquals(measurementSession.getId(), jsonSession.getId());
+		assertEquals(measurementSession.getStart(), jsonSession.getStart());
 	}
 }

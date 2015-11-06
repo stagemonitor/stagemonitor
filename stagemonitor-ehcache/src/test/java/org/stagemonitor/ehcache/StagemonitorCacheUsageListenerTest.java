@@ -1,37 +1,44 @@
 package org.stagemonitor.ehcache;
 
-import com.codahale.metrics.MetricRegistry;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
+import org.junit.Test;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class StagemonitorCacheUsageListenerTest {
 
-	private final MetricRegistry registry = new MetricRegistry();
+	private final Metric2Registry registry = new Metric2Registry();
 	private StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener("cache", registry, true);
 
 	@Test
 	public void testEvicted() throws Exception {
 		cacheUsageListener.notifyCacheElementEvicted();
-		assertNotNull(registry.getMeters().get("cache.delete.eviction"));
-		assertEquals(1, registry.getMeters().get("cache.delete.eviction").getCount());
+
+		final MetricName name = name("cache_delete").tag("cache_name", "cache").tag("reason", "eviction").tier("All").build();
+		assertNotNull(registry.getMeters().get(name));
+		assertEquals(1, registry.getMeters().get(name).getCount());
 	}
 
 	@Test
 	public void testExpired() throws Exception {
 		cacheUsageListener.notifyCacheElementExpired();
-		assertNotNull(registry.getMeters().get("cache.delete.expire"));
-		assertEquals(1, registry.getMeters().get("cache.delete.expire").getCount());
+
+		final MetricName name = name("cache_delete").tag("cache_name", "cache").tag("reason", "expire").tier("All").build();
+		assertNotNull(registry.getMeters().get(name));
+		assertEquals(1, registry.getMeters().get(name).getCount());
 	}
 
 	@Test
 	public void testRemoved() throws Exception {
 		cacheUsageListener.notifyCacheElementRemoved();
 
-		assertNotNull(registry.getMeters().get("cache.delete.remove"));
-		assertEquals(1, registry.getMeters().get("cache.delete.remove").getCount());
+		final MetricName name = name("cache_delete").tag("cache_name", "cache").tag("reason", "remove").tier("All").build();
+		assertNotNull(registry.getMeters().get(name));
+		assertEquals(1, registry.getMeters().get(name).getCount());
 	}
 
 	@Test
@@ -40,8 +47,9 @@ public class StagemonitorCacheUsageListenerTest {
 		cacheUsageListener.notifyCacheHitOffHeap();
 		cacheUsageListener.notifyCacheHitOnDisk();
 
-		assertNotNull(registry.getMeters().get("cache.access.hit.total"));
-		assertEquals(3, registry.getMeters().get("cache.access.hit.total").getCount());
+		final MetricName name = name("cache_hits").tag("cache_name", "cache").tier("All").build();
+		assertNotNull(registry.getMeters().get(name));
+		assertEquals(3, registry.getMeters().get(name).getCount());
 	}
 
 	@Test
@@ -52,8 +60,9 @@ public class StagemonitorCacheUsageListenerTest {
 		cacheUsageListener.notifyCacheMissOffHeap();
 		cacheUsageListener.notifyCacheMissOnDisk();
 
-		assertNotNull(registry.getMeters().get("cache.access.miss.total"));
-		assertEquals(5, registry.getMeters().get("cache.access.miss.total").getCount());
+		final MetricName name = name("cache_misses").tag("cache_name", "cache").tier("All").build();
+		assertNotNull(registry.getMeters().get(name));
+		assertEquals(5, registry.getMeters().get(name).getCount());
 	}
 
 	@Test
@@ -66,15 +75,17 @@ public class StagemonitorCacheUsageListenerTest {
 	@Test
 	public void testGet() {
 		cacheUsageListener.notifyGetTimeNanos(1);
-		assertNotNull(registry.getTimers().get("cache.get"));
+		assertNotNull(registry.getTimers().get(name("cache_get").tag("cache_name", "cache").tier("All").build()));
 	}
 
 	@Test
 	public void testGetMeter() {
 		cacheUsageListener = new StagemonitorCacheUsageListener("cache", registry, false);
 		cacheUsageListener.notifyGetTimeNanos(1);
-		assertNull(registry.getTimers().get("cache.get"));
-		assertNotNull(registry.getMeters().get("cache.get"));
+
+		final MetricName name = name("cache_get").tag("cache_name", "cache").tier("All").build();
+		assertNull(registry.getTimers().get(name));
+		assertNotNull(registry.getMeters().get(name));
 	}
 
 	@Test

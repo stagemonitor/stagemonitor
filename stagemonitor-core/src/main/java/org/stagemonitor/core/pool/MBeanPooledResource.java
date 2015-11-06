@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class MBeanPooledResource implements PooledResource {
 
@@ -18,16 +20,18 @@ public class MBeanPooledResource implements PooledResource {
 
 	private static final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 	private final String name;
+	private final String poolTypeName;
 	private ObjectName objectName;
 	private final String mbeanActiveAttribute;
 	private final String mbeanCountAttribute;
 	private final String mbeanMaxAttribute;
 	private final String mbeanQueueAttribute;
 
-	public MBeanPooledResource(String prefix, ObjectName objectName, String mbeanKeyPropertyName,
+	public MBeanPooledResource(String poolTypeName, ObjectName objectName, String mbeanKeyPropertyName,
 							   String mbeanActiveAttribute, String mbeanCountAttribute,
 							   String mbeanMaxAttribute, String mbeanQueueAttribute) {
-		this.name = prefix + "." + objectName.getKeyProperty(mbeanKeyPropertyName);
+		this.poolTypeName = poolTypeName;
+		this.name = objectName.getKeyProperty(mbeanKeyPropertyName);
 		this.objectName = objectName;
 		this.mbeanActiveAttribute = mbeanActiveAttribute;
 		this.mbeanCountAttribute = mbeanCountAttribute;
@@ -35,21 +39,21 @@ public class MBeanPooledResource implements PooledResource {
 		this.mbeanQueueAttribute = mbeanQueueAttribute;
 	}
 
-	public static List<MBeanPooledResource> of(String objectName, String metricPrefix, String mbeanKeyPropertyName,
+	public static List<MBeanPooledResource> of(String objectName, String poolTypeName, String mbeanKeyPropertyName,
 												   String mbeanActiveAttribute, String mbeanCountAttribute,
 												   String mbeanMaxAttribute) {
-		return of(objectName, metricPrefix, mbeanKeyPropertyName, mbeanActiveAttribute, mbeanCountAttribute,
+		return of(objectName, poolTypeName, mbeanKeyPropertyName, mbeanActiveAttribute, mbeanCountAttribute,
 				mbeanMaxAttribute, null);
 	}
 
-	public static List<MBeanPooledResource> of(String objectName, String metricPrefix, String mbeanKeyPropertyName,
+	public static List<MBeanPooledResource> of(String objectName, String poolTypeName, String mbeanKeyPropertyName,
 												   String mbeanActiveAttribute, String mbeanCountAttribute,
 												   String mbeanMaxAttribute, String mbeanQueueAttribute) {
 		try {
 			final Set<ObjectInstance> objectInstances = server.queryMBeans(new ObjectName(objectName), null);
 			List<MBeanPooledResource> pools = new ArrayList<MBeanPooledResource>(objectInstances.size());
 			for (final ObjectInstance objectInstance : objectInstances) {
-				pools.add(new MBeanPooledResource(metricPrefix, objectInstance.getObjectName(),
+				pools.add(new MBeanPooledResource(poolTypeName, objectInstance.getObjectName(),
 						mbeanKeyPropertyName, mbeanActiveAttribute, mbeanCountAttribute, mbeanMaxAttribute,
 						mbeanQueueAttribute));
 			}
@@ -61,12 +65,12 @@ public class MBeanPooledResource implements PooledResource {
 	}
 
 	public static List<MBeanPooledResource> tomcatThreadPools() {
-		return of("Catalina:type=ThreadPool,*", "server.threadpool", "name", "currentThreadsBusy", "currentThreadCount", "maxThreads");
+		return of("Catalina:type=ThreadPool,*", "server_thread_pool", "name", "currentThreadsBusy", "currentThreadCount", "maxThreads");
 	}
 
 	@Override
-	public String getName() {
-		return name;
+	public MetricName getName() {
+		return MetricName.name(poolTypeName).tag("pool_name", name).build();
 	}
 
 	@Override

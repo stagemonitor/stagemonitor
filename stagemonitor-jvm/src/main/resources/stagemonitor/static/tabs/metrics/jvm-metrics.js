@@ -15,28 +15,28 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(max)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(committed)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "jvm.memory.heap.(used)", metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: "jvm_memory_heap.(max)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "jvm_memory_heap.(committed)", metric: "value" },
+						{ metricCategory: "gauges", metricPathRegex: "jvm_memory_heap.(used)", metric: "value" }
 					]
 				},
 				{
 					bindto: '#memory-pools',
 					min: 0,
-					max: 1,
+					max: 100,
 					format: 'percent',
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /jvm.memory.pools.([^\.]+).usage/, metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: /jvm_memory_pools.([^\.]+).usage/, metric: "value" }
 					]
 				},
 				{
 					bindto: '#cpu',
 					min: 0,
-					max: 1,
+					max: 100,
 					fill: 0.1,
 					format: 'percent',
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "jvm.cpu.process.(usage)", metric: "value" }
+						{ metricCategory: "gauges", metricPathRegex: "jvm_process_cpu_(usage)", metric: "value" }
 					]
 				},
 				{
@@ -59,7 +59,7 @@
 							// A regex of metric paths. A line is created for each distinct regex group.
 							// That's why the wildcard [^\.]+ is put in parentesis.
 							// That way a line is created and named after each GC-Algorithm
-							metricPathRegex: /jvm.gc.([^\.]+).time/,
+							metricPathRegex: /jvm_gc_time.([^\.]+)/,
 							metric: "value"
 						}
 					]

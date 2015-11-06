@@ -3,6 +3,8 @@ package org.stagemonitor.core.pool;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+
 public class JavaThreadPoolMetricsCollectorImpl implements PooledResource {
 
 	private final ThreadPoolExecutor threadPool;
@@ -14,8 +16,8 @@ public class JavaThreadPoolMetricsCollectorImpl implements PooledResource {
 	}
 
 	@Override
-	public String getName() {
-		return name;
+	public MetricName getName() {
+		return MetricName.name("thread_pool").tag("pool_name", name).build();
 	}
 
 	@Override
