@@ -7,43 +7,31 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import java.util.Map;
 
 import com.codahale.metrics.Meter;
-import org.junit.AfterClass;
 import com.codahale.metrics.SharedMetricRegistries;
-import org.junit.Before;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.junit.ConditionalTravisTestRunner;
-import org.stagemonitor.junit.ExcludeOnTravis;
 
-@RunWith(ConditionalTravisTestRunner.class)
 public class MeterLoggingInstrumenterTest {
 
-	private Logger logger;
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@BeforeClass
 	public static void attachProfiler() {
 		Stagemonitor.init();
 	}
 
-	@Before
-	public void reinit() throws Exception {
-		Stagemonitor.reset();
-		SharedMetricRegistries.clear();
-		logger = LoggerFactory.getLogger(getClass());
-	}
-
 	@AfterClass
 	public static void clear() {
 		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
 	}
 
 	@Test
-	@ExcludeOnTravis
 	public void testLogging() throws Exception {
 		logger.error("test");
 		final Map<MetricName, Meter> meters = Stagemonitor.getMetric2Registry().getMeters();
