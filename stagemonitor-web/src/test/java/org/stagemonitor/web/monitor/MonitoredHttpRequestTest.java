@@ -83,6 +83,8 @@ public class MonitoredHttpRequestTest {
 		assertEquals("MonitoredHttpRequestTest", requestTrace.getApplication());
 		assertEquals("testHost", requestTrace.getHost());
 		assertEquals("testInstance", requestTrace.getInstance());
+		// anonymized
+		assertEquals("127.0.0.0", requestTrace.getClientIp());
 
 		assertEquals(new HashSet<String>(asList("accept")), requestTrace.getHeaders().keySet());
 		assertFalse(requestTrace.getHeaders().containsKey("cookie"));
