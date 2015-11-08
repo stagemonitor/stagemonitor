@@ -3,11 +3,14 @@ package org.stagemonitor.requestmonitor;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.MeasurementSession;
@@ -49,6 +52,8 @@ public class RequestTrace {
 	private String exceptionStackTrace;
 	private String username;
 	private String clientIp;
+	@JsonUnwrapped
+	private Map<String, Object> customProperties = new HashMap<String, Object>();
 
 	public RequestTrace(String requestId, GetNameCallback getNameCallback) {
 		this.id = requestId != null ? requestId : UUID.randomUUID().toString();
@@ -266,6 +271,26 @@ public class RequestTrace {
 
 	public long getMeasurementStart() {
 		return measurementStart;
+	}
+
+	public Map<String, Object> getCustomProperties() {
+		return customProperties;
+	}
+
+	public void setCustomProperties(Map<String, Object> customProperties) {
+		this.customProperties = customProperties;
+	}
+
+	/**
+	 * Use this method to add a custom property to this request trace.
+	 * <p/>
+	 * You can use these properties in the Kibana dashboard.
+	 *
+	 * @param key   The key, which must not contain dots (.).
+	 * @param value The value, which has to be serializable by jackson.
+	 */
+	public void addCustomProperty(String key, Object value) {
+		customProperties.put(key, value);
 	}
 
 	/**
