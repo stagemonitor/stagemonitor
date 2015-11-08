@@ -19,11 +19,13 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
+import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
@@ -83,7 +85,11 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		HttpRequestTrace request = new HttpRequestTrace(requestId, nameCallback, url, headers, method, sessionId,
 				connectionId, isShowWidgetAllowed);
 
-		request.setClientIp(getClientIp(httpServletRequest));
+		String clientIp = getClientIp(httpServletRequest);
+		if (configuration.getConfig(RequestMonitorPlugin.class).isAnonymizeIPs()) {
+			clientIp = IPAnonymizationUtils.anonymize(clientIp);
+		}
+		request.setClientIp(clientIp);
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		request.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
 
@@ -219,7 +225,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		// get the parameters after the execution and not on creation, because that could lead to wrong decoded
 		// parameters inside the application
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
-		final Map<String, String[]> parameterMap = (Map<String, String[]>) httpServletRequest.getParameterMap();
+		final Map<String, String[]> parameterMap = httpServletRequest.getParameterMap();
 		request.setParameter(getSafeQueryString(parameterMap));
 	}
 

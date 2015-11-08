@@ -116,6 +116,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Boolean> anonymizeIPs = ConfigurationOption.booleanOption()
+			.key("stagemonitor.anonymizeIPs")
+			.dynamic(true)
+			.label("Anonymize IP Addresses")
+			.description("For IPv4 addresses, the last octet is set to zero. " +
+					"If the address is a IPv6 address, the last 80 bits (10 bytes) are set to zero. " +
+					"This is just like Google Analytics handles IP anonymization.")
+			.defaultValue(true)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 
 	private static RequestMonitor requestMonitor;
 
@@ -196,5 +206,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public double getMinExecutionTimePercent() {
 		return minExecutionTimePercent.getValue();
+	}
+
+	public boolean isAnonymizeIPs() {
+		return anonymizeIPs.getValue();
 	}
 }
