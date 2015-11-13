@@ -5,7 +5,6 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Clock;
