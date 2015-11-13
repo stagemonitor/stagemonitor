@@ -72,4 +72,13 @@ public class StringUtils {
 		}
 		return s.replaceAll("\\s", "-");
 	}
+
+	public static String toCommaSeparatedString(String... strings) {
+		StringBuilder sb = new StringBuilder();
+		for (String value : strings) {
+			sb.append(value).append(",");
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
+	}
 }

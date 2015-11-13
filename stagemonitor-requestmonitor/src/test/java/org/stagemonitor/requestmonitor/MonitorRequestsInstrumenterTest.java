@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.Map;
 
 import com.codahale.metrics.MetricFilter;
@@ -56,7 +57,7 @@ public class MonitorRequestsInstrumenterTest {
 		testClass.monitorMe(1);
 		assertNotNull(requestInformation);
 		final RequestTrace requestTrace = requestInformation.getRequestTrace();
-		assertEquals("1", requestTrace.getParameter());
+		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
 		assertEquals("MonitorRequestsInstrumenterTest$TestClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		assertEquals("int org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClass.monitorMe(int)", requestTrace.getCallStack().getChildren().get(0).getSignature());
@@ -114,7 +115,7 @@ public class MonitorRequestsInstrumenterTest {
 		testClassLevelAnnotationClass.dontMonitorMe();
 		assertNotNull(requestInformation);
 		final RequestTrace requestTrace = requestInformation.getRequestTrace();
-		assertEquals("1", requestTrace.getParameter());
+		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
 		assertEquals("MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		assertEquals("int org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass.monitorMe(int)", requestTrace.getCallStack().getChildren().get(0).getSignature());

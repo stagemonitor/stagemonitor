@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -154,28 +155,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		return requestUri;
 	}
 
-	private String getSafeQueryString(Map<String, String[]> parameterMap) {
-		StringBuilder queryStringBuilder = new StringBuilder();
-		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
-			final boolean paramExcluded = isParamExcluded(entry.getKey());
-			for (String value : entry.getValue()) {
-				if (queryStringBuilder.length() == 0) {
-					queryStringBuilder.append('?');
-				} else {
-					queryStringBuilder.append('&');
-				}
-
-				queryStringBuilder.append(entry.getKey());
-				if (paramExcluded) {
-					queryStringBuilder.append('=').append("XXXX");
-				} else {
-					queryStringBuilder.append('=').append(value);
-				}
-			}
-		}
-		return queryStringBuilder.toString();
-	}
-
 	private boolean isParamExcluded(String queryParameter) {
 		final Collection<Pattern> confidentialQueryParams = webPlugin.getRequestParamsConfidential();
 		for (Pattern excludedParam : confidentialQueryParams) {
@@ -226,7 +205,20 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		// parameters inside the application
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
 		final Map<String, String[]> parameterMap = httpServletRequest.getParameterMap();
-		request.setParameter(getSafeQueryString(parameterMap));
+		request.setParameters(getSafeQueryStringMap(parameterMap));
+	}
+
+	private Map<String, String> getSafeQueryStringMap(Map<String, String[]> parameterMap) {
+		Map<String, String> params = new HashMap<String, String>();
+		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+			final boolean paramExcluded = isParamExcluded(entry.getKey());
+			if (paramExcluded) {
+				params.put(entry.getKey(), "XXXX");
+			} else {
+				params.put(entry.getKey(), StringUtils.toCommaSeparatedString(entry.getValue()));
+			}
+		}
+		return params;
 	}
 
 	/**

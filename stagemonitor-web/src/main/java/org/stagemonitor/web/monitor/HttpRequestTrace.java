@@ -171,8 +171,8 @@ public class HttpRequestTrace extends RequestTrace {
 	public String toString(boolean asciiArt, boolean callStack) {
 		StringBuilder sb = new StringBuilder(3000);
 		sb.append(method).append(' ').append(url);
-		if (getParameter() != null) {
-			sb.append(getParameter());
+		if (getParameters() != null) {
+			sb.append(getParameters());
 		}
 		sb.append(" (").append(statusCode).append(")\n");
 		sb.append("id:     ").append(getId()).append('\n');

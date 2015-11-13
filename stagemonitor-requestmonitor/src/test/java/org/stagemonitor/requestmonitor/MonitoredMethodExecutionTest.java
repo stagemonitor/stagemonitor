@@ -9,6 +9,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
@@ -40,7 +42,9 @@ public class MonitoredMethodExecutionTest {
 		assertEquals(1, requestInformation1.getExecutionResult());
 		assertFalse(requestInformation1.isForwarded());
 		assertEquals("monitored1()", requestInformation1.requestTrace.getName());
-		assertEquals("1, test", requestInformation1.requestTrace.getParameter());
+		final Map<String, String> parameters = requestInformation1.requestTrace.getParameters();
+		assertEquals("1", parameters.get("0"));
+		assertEquals("test", parameters.get("1"));
 		assertTrue(requestInformation2.isForwarded());
 		assertTrue(requestInformation3.isForwarded());
 

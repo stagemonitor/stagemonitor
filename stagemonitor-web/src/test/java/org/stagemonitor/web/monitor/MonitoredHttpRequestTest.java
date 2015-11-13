@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
+import java.util.Map;
 
 import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.After;
@@ -65,13 +66,12 @@ public class MonitoredHttpRequestTest {
 	@Test
 	public void testIsMonitorForwardedExecutions() throws Exception {
 		assertEquals(true, monitoredHttpRequest.isMonitorForwardedExecutions());
-
 	}
 
 	@Test
 	public void testCreateRequestTrace() throws Exception {
 		final HttpRequestTrace requestTrace = monitoredHttpRequest.createRequestTrace();
-		assertNull(requestTrace.getParameter());
+		assertNull(requestTrace.getParameters());
 		assertEquals("/test.js", requestTrace.getUrl());
 		assertEquals("GET *.js", requestTrace.getName());
 		assertEquals("GET", requestTrace.getMethod());
@@ -94,7 +94,10 @@ public class MonitoredHttpRequestTest {
 		when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
 		when(requestInformation.getRequestName()).thenReturn(requestTrace.getName());
 		monitoredHttpRequest.onPostExecute(requestInformation);
-		assertEquals("?foo=bar&bla=blubb&pwd=XXXX&creditCard=XXXX", requestTrace.getParameter());
-
+		final Map<String, String> parameters = requestTrace.getParameters();
+		assertEquals("bar", parameters.get("foo"));
+		assertEquals("blubb", parameters.get("bla"));
+		assertEquals("XXXX", parameters.get("pwd"));
+		assertEquals("XXXX", parameters.get("creditCard"));
 	}
 }

@@ -41,7 +41,7 @@ public class RequestTrace {
 	private final String timestamp;
 	@JsonIgnore
 	private long timestampEnd;
-	private String parameter;
+	private Map<String, String> parameters;
 	@JsonProperty("measurement_start")
 	private final long measurementStart;
 	private final String application;
@@ -147,12 +147,12 @@ public class RequestTrace {
 		return timestamp;
 	}
 
-	public String getParameter() {
-		return parameter;
+	public Map<String, String> getParameters() {
+		return parameters;
 	}
 
-	public void setParameter(String parameter) {
-		this.parameter = parameter;
+	public void setParameters(Map<String, String> parameters) {
+		this.parameters = parameters;
 	}
 
 	public String getApplication() {
@@ -254,8 +254,8 @@ public class RequestTrace {
 		StringBuilder sb = new StringBuilder(3000);
 		sb.append("id:     ").append(id).append('\n');
 		sb.append("name:   ").append(getName()).append('\n');
-		if (getParameter() != null) {
-			sb.append("params: ").append(getParameter()).append('\n');
+		if (getParameters() != null) {
+			sb.append("params: ").append(getParameters()).append('\n');
 		}
 		if (callStack) {
 			appendCallStack(sb, asciiArt);
