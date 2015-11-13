@@ -40,6 +40,7 @@ import org.stagemonitor.web.metrics.StagemonitorMetricsServlet;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
+import org.stagemonitor.web.monitor.filter.UserNameFilter;
 import org.stagemonitor.web.monitor.rum.RumServlet;
 import org.stagemonitor.web.monitor.servlet.FileServlet;
 import org.stagemonitor.web.monitor.spring.SpringMonitoredHttpRequest;
@@ -359,6 +360,11 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		final FilterRegistration.Dynamic monitorFilter = ctx.addFilter(HttpRequestMonitorFilter.class.getSimpleName(), new HttpRequestMonitorFilter());
 		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), false, "/*");
 		monitorFilter.setAsyncSupported(true);
+		
+		final FilterRegistration.Dynamic userFilter = ctx.addFilter(UserNameFilter.class.getSimpleName(), new UserNameFilter());
+		// Have this filter run last because user information may be populated by other filters e.g. Spring Security
+		userFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), true, "/*");
+		userFilter.setAsyncSupported(true);
 
 
 		ctx.addListener(MDCListener.class);
