@@ -164,7 +164,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		} else if (value instanceof Boolean) {
 			return "value_boolean=" + value.toString();
 		} else {
-			return "value_string=" + getStringValue(Objects.toString(value));
+			return "value_string=" + getStringValue(String.valueOf(value));
 		}
 	}
 

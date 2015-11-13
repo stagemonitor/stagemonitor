@@ -2,7 +2,6 @@ package org.stagemonitor.requestmonitor;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
@@ -33,7 +32,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 		if (parameters != null && parameters.length > 0) {
 			Map<String, String> params = new HashMap<String, String>();
 			for (int i = 0; i < parameters.length; i++) {
-				params.put(Integer.toString(i), Objects.toString(parameters[i]));
+				params.put(Integer.toString(i), String.valueOf(parameters[i]));
 			}
 			requestTrace.setParameters(params);
 		}
