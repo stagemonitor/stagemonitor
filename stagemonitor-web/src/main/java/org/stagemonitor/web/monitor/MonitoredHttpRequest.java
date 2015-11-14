@@ -195,10 +195,16 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 			request.setError(true);
 		}
 
-		Object exception = httpServletRequest.getAttribute("exception");
-		if (exception != null && exception instanceof Exception) {
-			request.setException((Exception) exception);
+		// Search the configured exception attributes that may have been set
+		// by the servlet container/framework. Use the first exception found (if any)
+		for (String requestExceptionAttribute : webPlugin.getRequestExceptionAttributes()) {
+			Object exception = httpServletRequest.getAttribute(requestExceptionAttribute);
+			if (exception != null && exception instanceof Exception) {
+				request.setException((Exception) exception);
+				break;
+			}
 		}
+		
 		request.setBytesWritten(responseWrapper.getContentLength());
 
 		// get the parameters after the execution and not on creation, because that could lead to wrong decoded
