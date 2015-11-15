@@ -214,6 +214,22 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.defaultValue(false)
 			.configurationCategory("Resteasy Plugin")
 			.build();
+	private ConfigurationOption<Collection<String>> requestExceptionAttributes = ConfigurationOption.stringsOption()
+			.key("stagemonitor.requestmonitor.requestExceptionAttributes")
+			.dynamic(true)
+			.label("Request Exception Attributes")
+			.description("Defines the list of attribute names to check on the HttpServletRequest when searching for an exception. \n\n" +
+			             "Stagemonitor searches this list in order to see if any of these attributes are set on the request with " +
+					     "an Exception object and then records that information on the request trace. If your web framework " +
+			             "sets a different attribute outside of the defaults, you can add that attribute to this list to properly " +
+					     "record the exception on the trace.")
+			.defaultValue(new LinkedHashSet<String>() {{
+				add("javax.servlet.error.exception");
+				add("exception");
+				add("org.springframework.web.servlet.DispatcherServlet.EXCEPTION");
+			}})
+			.configurationCategory(WEB_PLUGIN)
+			.build();
 
 	@Override
 	public void initializePlugin(Metric2Registry registry, Configuration config) {
@@ -330,6 +346,10 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 
 	public boolean isMonitorOnlyResteasyRequests() {
 		return monitorOnlyResteasyOption.getValue();
+	}
+	
+	public Collection<String> getRequestExceptionAttributes() {
+		return requestExceptionAttributes.getValue();
 	}
 
 	@Override
