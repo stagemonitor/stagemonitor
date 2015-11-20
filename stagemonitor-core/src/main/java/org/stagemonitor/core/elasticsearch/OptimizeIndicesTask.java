@@ -2,6 +2,9 @@ package org.stagemonitor.core.elasticsearch;
 
 import java.util.TimerTask;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A task that runs periodically and calls _optimize on old Elasticsearch logstash-style indices.
  * <p/>
@@ -9,6 +12,8 @@ import java.util.TimerTask;
  * But an optimisation process is I/O heavy.
  */
 public class OptimizeIndicesTask extends TimerTask {
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final String indexPrefix;
 	private final int optimizeIndicesOlderThanDays;
@@ -24,6 +29,8 @@ public class OptimizeIndicesTask extends TimerTask {
 
 	@Override
 	public void run() {
-		elasticsearchClient.optimizeIndices(indexSelector.getIndexPatternOlderThanDays(indexPrefix, optimizeIndicesOlderThanDays));
+		final String indexPatternOlderThanDays = indexSelector.getIndexPatternOlderThanDays(indexPrefix, optimizeIndicesOlderThanDays);
+		logger.info("Optimizing indices: {}", indexPatternOlderThanDays);
+		elasticsearchClient.optimizeIndices(indexPatternOlderThanDays);
 	}
 }
