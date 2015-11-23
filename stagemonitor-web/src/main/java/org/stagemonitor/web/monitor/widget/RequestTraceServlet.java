@@ -45,15 +45,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	/**
 	 * see {@link OldRequestTraceRemover}
 	 */
-	private ScheduledExecutorService oldRequestTracesRemoverPool = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r);
-			thread.setDaemon(true);
-			thread.setName("request-trace-remover");
-			return thread;
-		}
-	});
+	private ScheduledExecutorService oldRequestTracesRemoverPool;
 
 
 	public RequestTraceServlet() {
@@ -61,10 +53,24 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	}
 
 	public RequestTraceServlet(Configuration configuration, long requestTimeout) {
-		RequestMonitor.addRequestTraceReporter(this);
 		this.requestTimeout = requestTimeout;
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
+	}
+	
+	@Override
+	public void init() {
+		RequestMonitor.addRequestTraceReporter(this);
+		oldRequestTracesRemoverPool = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread thread = new Thread(r);
+				thread.setDaemon(true);
+				thread.setName("request-trace-remover");
+				return thread;
+			}
+		});
+		
 		oldRequestTracesRemoverPool.scheduleAtFixedRate(new OldRequestTraceRemover(), 
 				MAX_REQUEST_TRACE_BUFFERING_TIME, MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
 	}
