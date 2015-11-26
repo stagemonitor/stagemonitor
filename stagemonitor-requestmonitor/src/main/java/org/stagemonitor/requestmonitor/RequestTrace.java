@@ -98,10 +98,6 @@ public class RequestTrace {
 		return callStack.toString(true);
 	}
 
-	public String getCallStackJson() {
-		return JsonUtils.toJson(callStack);
-	}
-
 	public String getName() {
 		if (name == null) {
 			name = getNameCallback.getName();
