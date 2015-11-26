@@ -227,7 +227,11 @@ public class ElasticsearchClient {
 		}
 		final String url = elasticsearchUrl + "/" + path;
 		logger.info(logMessage, url);
-		return httpClient.send(method, url);
+		try {
+			return httpClient.send(method, url);
+		} finally {
+			logger.info(logMessage, "Done " + url);
+		}
 	}
 
 	ObjectNode getDashboardForElasticsearch(String dashboardPath) throws IOException {
