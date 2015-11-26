@@ -27,7 +27,7 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
+            "leftLogBase": 10,
             "leftMax": null,
             "leftMin": 0,
             "rightLogBase": 1,
