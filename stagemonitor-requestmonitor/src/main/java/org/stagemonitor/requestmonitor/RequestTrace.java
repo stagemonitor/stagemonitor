@@ -7,10 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.MeasurementSession;
@@ -52,7 +53,6 @@ public class RequestTrace {
 	private String exceptionStackTrace;
 	private String username;
 	private String clientIp;
-	@JsonUnwrapped
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
 
 	public RequestTrace(String requestId, GetNameCallback getNameCallback) {
@@ -273,6 +273,7 @@ public class RequestTrace {
 		return measurementStart;
 	}
 
+	@JsonAnyGetter
 	public Map<String, Object> getCustomProperties() {
 		return customProperties;
 	}
@@ -289,6 +290,7 @@ public class RequestTrace {
 	 * @param key   The key, which must not contain dots (.).
 	 * @param value The value, which has to be serializable by jackson.
 	 */
+	@JsonAnySetter
 	public void addCustomProperty(String key, Object value) {
 		customProperties.put(key, value);
 	}
