@@ -285,10 +285,9 @@ public class RequestMonitor {
 		if (requestTrace.getExecutionCountDb() > 0) {
 			if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
 				metricRegistry.timer(name("response_time_server").tag("request_name", requestName).layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
-				metricRegistry.meter(name("jdbc_query_rate").tag("request_name", requestName).build()).mark(requestTrace.getExecutionCountDb());
 			}
 			metricRegistry.timer(name("response_time_server").tag("request_name", "All").layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
-			metricRegistry.meter(name("jdbc_query_rate").tag("request_name", "All").build()).mark(requestTrace.getExecutionCountDb());
+			metricRegistry.meter(name("jdbc_query_rate").tag("request_name", requestName).build()).mark(requestTrace.getExecutionCountDb());
 		}
 	}
 
