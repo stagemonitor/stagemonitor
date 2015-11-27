@@ -1,5 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -126,6 +127,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(true)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Collection<String>> onlyReportRequestsWithNameToElasticsearch = ConfigurationOption.stringsOption()
+			.key("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
+			.dynamic(true)
+			.label("Only report request traces with name to ES")
+			.description("Limits the reporting of request traces to Elasticsearch to requests with a certain name.")
+			.defaultValue(Collections.<String>emptySet())
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 
 	private static RequestMonitor requestMonitor;
 
@@ -210,5 +219,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isAnonymizeIPs() {
 		return anonymizeIPs.getValue();
+	}
+
+	public Collection<String> getOnlyReportRequestsWithNameToElasticsearch() {
+		return onlyReportRequestsWithNameToElasticsearch.getValue();
 	}
 }

@@ -1,5 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
+import java.util.Collection;
+
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -11,6 +13,7 @@ import org.stagemonitor.core.util.StringUtils;
 public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	private final CorePlugin corePlugin;
+	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final ElasticsearchClient elasticsearchClient;
 
 	public ElasticsearchRequestTraceReporter() {
@@ -21,12 +24,16 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin,
 											 ElasticsearchClient elasticsearchClient) {
 		this.corePlugin = corePlugin;
+		this.requestMonitorPlugin = requestMonitorPlugin;
 		this.elasticsearchClient = elasticsearchClient;
 	}
 
 	@Override
 	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) {
-		elasticsearchClient.index("stagemonitor-requests-" + StringUtils.getLogstashStyleDate(), "requests", requestTrace);
+		final Collection<String> onlyReportRequestsWithName = requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch();
+		if (onlyReportRequestsWithName.isEmpty() || onlyReportRequestsWithName.contains(requestTrace.getName())) {
+			elasticsearchClient.index("stagemonitor-requests-" + StringUtils.getLogstashStyleDate(), "requests", requestTrace);
+		}
 	}
 
 	@Override
