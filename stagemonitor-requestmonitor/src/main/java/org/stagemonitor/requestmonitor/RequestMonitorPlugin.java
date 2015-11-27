@@ -143,7 +143,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendBulkAsync("kibana/RequestDashboard.bulk");
 			elasticsearchClient.sendBulkAsync("kibana/RequestAnalysis.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
-			elasticsearchClient.scheduleOptimizeAndDeleteOfOldIndices("stagemonitor-requests-", 1, deleteRequestTracesAfterDays.getValue());
+			elasticsearchClient.scheduleIndexManagement("stagemonitor-requests-", 2, deleteRequestTracesAfterDays.getValue());
 		}
 	}
 

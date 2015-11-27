@@ -517,7 +517,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
-			elasticsearchClient.scheduleOptimizeAndDeleteOfOldIndices(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX, 1, deleteElasticsearchMetricsAfterDays.getValue());
+			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX, 2, deleteElasticsearchMetricsAfterDays.getValue());
 		} else {
 			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrl(), reportingInterval);
 		}

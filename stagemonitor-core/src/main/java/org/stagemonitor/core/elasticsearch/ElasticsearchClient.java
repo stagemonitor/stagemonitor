@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Future;
@@ -212,23 +213,33 @@ public class ElasticsearchClient {
 		logger.warn(sb.toString());
 	}
 
-	public int deleteIndices(String indexPattern) {
-		return execute("DELETE", indexPattern + "?timeout=20m", "Deleting indices: {}");
+	public void deleteIndices(String indexPattern) {
+		execute("DELETE", indexPattern + "?timeout=20m", "Deleting indices: {}");
 	}
 
-	public int optimizeIndices(String indexPattern) {
-		return execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h", "Optimizing indices: {}");
+	public void optimizeIndices(String indexPattern) {
+		execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h", "Optimizing indices: {}");
 	}
 
-	private int execute(String method, String path, String logMessage) {
+	public void updateIndexSettings(String indexPattern, Map<String, ?> settings) {
 		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
 		if (StringUtils.isEmpty(elasticsearchUrl)) {
-			return -1;
+			return;
+		}
+		final String url = elasticsearchUrl + "/" + indexPattern + "/_settings";
+		logger.info("Updating index settings {}\n{}", url, settings);
+		httpClient.sendAsJson("PUT", url, settings);
+	}
+
+	private void execute(String method, String path, String logMessage) {
+		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
+		if (StringUtils.isEmpty(elasticsearchUrl)) {
+			return;
 		}
 		final String url = elasticsearchUrl + "/" + path;
 		logger.info(logMessage, url);
 		try {
-			return httpClient.send(method, url);
+			httpClient.send(method, url);
 		} finally {
 			logger.info(logMessage, "Done " + url);
 		}
@@ -259,21 +270,28 @@ public class ElasticsearchClient {
 	 * Performs an optimize and delete on logstash-style index patterns [prefix]YYYY.MM.DD
 	 *
 	 * @param indexPrefix the prefix of the logstash-style index pattern
-	 * @param optimizeIndicesOlderThanDays
-	 * @param deleteIndicesOlderThanDays
 	 */
-	public void scheduleOptimizeAndDeleteOfOldIndices(String indexPrefix, int optimizeIndicesOlderThanDays, int deleteIndicesOlderThanDays) {
+	public void scheduleIndexManagement(String indexPrefix, int optimizeAndMoveIndicesToColdNodesOlderThanDays, int deleteIndicesOlderThanDays) {
 		Timer timer = new Timer(indexPrefix + "elasticsearch-tasks", true);
 
-		if (optimizeIndicesOlderThanDays > 0) {
-			final TimerTask optimizeIndicesTask = new OptimizeIndicesTask(corePlugin.getIndexSelector(), indexPrefix, optimizeIndicesOlderThanDays, this);
-			timer.schedule(optimizeIndicesTask, DateUtils.getNextDateAtHour(2), DateUtils.getDayInMillis());
+		if (deleteIndicesOlderThanDays > 0) {
+			final TimerTask deleteIndicesTask = new DeleteIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
+					deleteIndicesOlderThanDays, this);
+			timer.schedule(deleteIndicesTask, DateUtils.getNextDateAtHour(0), DateUtils.getDayInMillis());
 		}
 
-		if (deleteIndicesOlderThanDays > 0) {
-			final TimerTask deleteIndicesTask = new DeleteIndicesTask(corePlugin.getIndexSelector(), indexPrefix, deleteIndicesOlderThanDays, this);
-			timer.schedule(deleteIndicesTask, DateUtils.getNextDateAtHour(1), DateUtils.getDayInMillis());
+		if (optimizeAndMoveIndicesToColdNodesOlderThanDays > 0) {
+			final TimerTask shardAllocationTask = new ShardAllocationTask(corePlugin.getIndexSelector(), indexPrefix,
+					optimizeAndMoveIndicesToColdNodesOlderThanDays, this, "cold");
+			timer.schedule(shardAllocationTask, DateUtils.getNextDateAtHour(9), DateUtils.getDayInMillis());
 		}
+
+		if (optimizeAndMoveIndicesToColdNodesOlderThanDays > 0) {
+			final TimerTask optimizeIndicesTask = new OptimizeIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
+					optimizeAndMoveIndicesToColdNodesOlderThanDays, this);
+			timer.schedule(optimizeIndicesTask, DateUtils.getNextDateAtHour(10), DateUtils.getDayInMillis());
+		}
+
 	}
 
 }
