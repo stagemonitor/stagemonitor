@@ -173,18 +173,20 @@ var graphRenderer = (function () {
 
 	function findPropertyValuesByRegex(obj, metricPath) {
 		var metrics = {};
-		var matches = 1;
+		var matches = 0;
 		$.each(obj, function(key, metric) {
 			if (!(metricPath.metricPathRegex instanceof RegExp)) {
 				metricPath.metricPathRegex = new RegExp(metricPath.metricPathRegex);
 			}
 			var match = metricPath.metricPathRegex.exec(key);
 			if (match != null) {
+				matches++;
 				var graphName = metricPath.title || match[1] || match[0];
 				var value = +metric[metricPath.metric] || 0; // convert "NaN" to 0
 				metrics[graphName] = metrics[graphName] || 0;
 				if (metricPath.aggregate === 'mean' && metrics) {
-					metrics[graphName] = (metrics[graphName] * matches + value) / matches++;
+					var sumOfPreviousValues = metrics[graphName] * (matches - 1);
+					metrics[graphName] = (sumOfPreviousValues + value) / matches;
 				} else {
 					// sum by default
 					// deprecated behaviour, use metricPath.aggregate to explicitly set aggregation type
