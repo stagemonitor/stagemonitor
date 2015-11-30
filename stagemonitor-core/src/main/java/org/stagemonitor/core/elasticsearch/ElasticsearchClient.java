@@ -277,19 +277,21 @@ public class ElasticsearchClient {
 		if (deleteIndicesOlderThanDays > 0) {
 			final TimerTask deleteIndicesTask = new DeleteIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
 					deleteIndicesOlderThanDays, this);
+			deleteIndicesTask.run();
 			timer.schedule(deleteIndicesTask, DateUtils.getNextDateAtHour(0), DateUtils.getDayInMillis());
 		}
 
 		if (optimizeAndMoveIndicesToColdNodesOlderThanDays > 0) {
 			final TimerTask shardAllocationTask = new ShardAllocationTask(corePlugin.getIndexSelector(), indexPrefix,
 					optimizeAndMoveIndicesToColdNodesOlderThanDays, this, "cold");
-			timer.schedule(shardAllocationTask, DateUtils.getNextDateAtHour(9), DateUtils.getDayInMillis());
+			shardAllocationTask.run();
+			timer.schedule(shardAllocationTask, DateUtils.getNextDateAtHour(0), DateUtils.getDayInMillis());
 		}
 
 		if (optimizeAndMoveIndicesToColdNodesOlderThanDays > 0) {
 			final TimerTask optimizeIndicesTask = new OptimizeIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
 					optimizeAndMoveIndicesToColdNodesOlderThanDays, this);
-			timer.schedule(optimizeIndicesTask, DateUtils.getNextDateAtHour(10), DateUtils.getDayInMillis());
+			timer.schedule(optimizeIndicesTask, DateUtils.getNextDateAtHour(3), DateUtils.getDayInMillis());
 		}
 
 	}
