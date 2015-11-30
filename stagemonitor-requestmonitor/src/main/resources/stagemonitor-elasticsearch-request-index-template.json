@@ -3,7 +3,7 @@
   "settings" : {
     "index" : {
       "refresh_interval" : "5s",
-      "index.routing.allocation.require.box_type" : "hot"
+      "routing.allocation.require.box_type" : "hot"
     }
   },
   "mappings": {
