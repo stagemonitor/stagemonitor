@@ -96,7 +96,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 					return;
 				}
 				if (value instanceof Number) {
-					jg.writeNumberField("value", ((Number)value).doubleValue());
+					writeDoubleUnlessNaN(jg, "value", ((Number)value).doubleValue());
 				} else if (value instanceof Boolean) {
 					jg.writeBooleanField("value_boolean", (Boolean) value);
 				} else {
@@ -130,25 +130,25 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	}
 
 	private void writeSnapshot(Snapshot snapshot, JsonGenerator jg) throws IOException {
-		jg.writeNumberField("min", convertDuration(snapshot.getMin()));
-		jg.writeNumberField("max", convertDuration(snapshot.getMax()));
-		jg.writeNumberField("mean", convertDuration(snapshot.getMean()));
-		jg.writeNumberField("median", convertDuration(snapshot.getMedian()));
-		jg.writeNumberField("std", convertDuration(snapshot.getStdDev()));
-		jg.writeNumberField("p25", convertDuration(snapshot.getValue(0.25)));
-		jg.writeNumberField("p75", convertDuration(snapshot.get75thPercentile()));
-		jg.writeNumberField("p95", convertDuration(snapshot.get95thPercentile()));
-		jg.writeNumberField("p98", convertDuration(snapshot.get98thPercentile()));
-		jg.writeNumberField("p99", convertDuration(snapshot.get99thPercentile()));
-		jg.writeNumberField("p999", convertDuration(snapshot.get999thPercentile()));
+		writeDoubleUnlessNaN(jg, "min", convertDuration(snapshot.getMin()));
+		writeDoubleUnlessNaN(jg, "max", convertDuration(snapshot.getMax()));
+		writeDoubleUnlessNaN(jg, "mean", convertDuration(snapshot.getMean()));
+		writeDoubleUnlessNaN(jg, "median", convertDuration(snapshot.getMedian()));
+		writeDoubleUnlessNaN(jg, "std", convertDuration(snapshot.getStdDev()));
+		writeDoubleUnlessNaN(jg, "p25", convertDuration(snapshot.getValue(0.25)));
+		writeDoubleUnlessNaN(jg, "p75", convertDuration(snapshot.get75thPercentile()));
+		writeDoubleUnlessNaN(jg, "p95", convertDuration(snapshot.get95thPercentile()));
+		writeDoubleUnlessNaN(jg, "p98", convertDuration(snapshot.get98thPercentile()));
+		writeDoubleUnlessNaN(jg, "p99", convertDuration(snapshot.get99thPercentile()));
+		writeDoubleUnlessNaN(jg, "p999", convertDuration(snapshot.get999thPercentile()));
 	}
 
 	private void writeMetered(Metered metered, JsonGenerator jg) throws IOException {
 		jg.writeNumberField("count", metered.getCount());
-		jg.writeNumberField("m1_rate", convertRate(metered.getOneMinuteRate()));
-		jg.writeNumberField("m5_rate", convertRate(metered.getFiveMinuteRate()));
-		jg.writeNumberField("m15_rate", convertRate(metered.getFifteenMinuteRate()));
-		jg.writeNumberField("mean_rate", convertRate(metered.getMeanRate()));
+		writeDoubleUnlessNaN(jg, "m1_rate", convertRate(metered.getOneMinuteRate()));
+		writeDoubleUnlessNaN(jg, "m5_rate", convertRate(metered.getFiveMinuteRate()));
+		writeDoubleUnlessNaN(jg, "m15_rate", convertRate(metered.getFifteenMinuteRate()));
+		writeDoubleUnlessNaN(jg, "mean_rate", convertRate(metered.getMeanRate()));
 	}
 
 	private <T extends Metric> void reportMetric(Map<MetricName, T> metrics, long timestamp, ValueWriter<T> valueWriter,
@@ -167,6 +167,12 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			jg.writeEndObject();
 			jg.flush();
 			os.write('\n');
+		}
+	}
+
+	private static void writeDoubleUnlessNaN(JsonGenerator jg, String key, double value) throws IOException {
+		if (!Double.isNaN(value)) {
+			jg.writeNumberField(key, value);
 		}
 	}
 
