@@ -31,7 +31,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			.description("If set to true, a timer for each cache will be created which measures the time to get a " +
 					"element from the cache. If you have a lot of caches, that could lead to a increased network and " +
 					"disk utilisation. If set to false, only a meter (which measures the rate) will be created")
-			.defaultValue(true)
+			.defaultValue(false)
 			.configurationCategory("EhCache Plugin")
 			.build();
 
