@@ -3,7 +3,7 @@ dependencies {
 	provided 'javax.servlet:javax.servlet-api:3.0.1'
 
 	compile 'javax.mail:mail:1.4.1'
-	compile 'org.freemarker:freemarker:2.3.22'
+	compile 'org.freemarker:freemarker:2.3.23'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"

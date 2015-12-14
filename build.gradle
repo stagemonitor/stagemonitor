@@ -23,15 +23,16 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'net.saliman:gradle-cobertura-plugin:2.2.4'
-		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.0.0'
-		classpath 'com.bmuschko:gradle-nexus-plugin:2.0'
-		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+		classpath 'net.saliman:gradle-cobertura-plugin:2.2.8'
+		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.4.0'
+		classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
+		classpath 'com.github.ben-manes:gradle-versions-plugin:0.11.3'
 	}
 }
 
 plugins {
-	id 'net.researchgate.release' version '2.1.2'
+	id 'net.researchgate.release' version '2.3.4'
 }
 
 repositories {
@@ -42,11 +43,12 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'cobertura'
 apply plugin: 'com.github.kt3k.coveralls'
+apply plugin: 'com.github.ben-manes.versions'
 
 ext {
 	metricsVersion = '3.1.2'
-	slf4jVersion = '1.7.12'
-	jacksonVersion = '2.5.4'
+	slf4jVersion = '1.7.13'
+	jacksonVersion = '2.6.4'
 	esVersion = '1.6.0'
 	javassistVersion = '3.20.0-GA'
 }
