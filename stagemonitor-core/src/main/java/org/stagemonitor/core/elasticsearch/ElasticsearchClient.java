@@ -149,8 +149,22 @@ public class ElasticsearchClient {
 		return new CompletedFuture<Object>(null);
 	}
 
-	public Future<?> sendMappingTemplateAsync(String templatePath, String templateName) {
-		return sendAsJsonAsync("PUT", "/_template/" + templateName, IOUtils.getResourceAsStream(templatePath));
+	public Future<?> sendMappingTemplateAsync(String mappingJson, String templateName) {
+		return sendAsJsonAsync("PUT", "/_template/" + templateName, mappingJson);
+	}
+
+	public static String requireBoxTypeHotIfHotColdAritectureActive(String templatePath, int moveToColdNodesAfterDays) {
+		final JsonNode json;
+		try {
+			json = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(templatePath));
+			if (moveToColdNodesAfterDays > 0) {
+				ObjectNode indexSettings = (ObjectNode) json.get("settings").get("index");
+				indexSettings.put("routing.allocation.require.box_type", "hot");
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		return json.toString();
 	}
 
 	public void sendBulkAsync(String resource) {

@@ -175,6 +175,19 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags("metrics-store", "elasticsearch")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Integer> moveToColdNodesAfterDays = ConfigurationOption.integerOption()
+			.key("stagemonitor.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays")
+			.dynamic(false)
+			.label("Activate Hot-Cold Architecture")
+			.description("Setting this to a value > 1 activates the hot-cold architecture described in https://www.elastic.co/blog/hot-warm-architecture " +
+					"where new data that is more frequently queried and updated is stored on beefy nodes (SSDs, more RAM and CPU). " +
+					"When the indexes reach a certain age, they are allocated on cold nodes. For this to work, you have to tag your " +
+					"beefy nodes with node.box_type: hot (either in elasticsearch.yml or start the node using ./bin/elasticsearch --node.box_type hot)" +
+					"and your historical nodes with node.box_type: cold.")
+			.defaultValue(-1)
+			.tags("metrics-store", "elasticsearch")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
 	private final ConfigurationOption<String> applicationName = ConfigurationOption.stringOption()
 			.key("stagemonitor.applicationName")
 			.dynamic(false)
@@ -436,10 +449,10 @@ public class CorePlugin extends StagemonitorPlugin {
 			final GrafanaClient grafanaClient = getGrafanaClient();
 			grafanaClient.createElasticsearchDatasource(getElasticsearchUrl());
 		}
-		registerReporters(metricRegistry);
+		registerReporters(metricRegistry, configuration);
 	}
 
-	private void registerReporters(Metric2Registry metric2Registry) {
+	private void registerReporters(Metric2Registry metric2Registry, Configuration configuration) {
 		RegexMetricFilter regexFilter = new RegexMetricFilter(getExcludedMetricsPatterns());
 		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
 		MetricRegistry metricRegistry = metric2Registry.getMetricRegistry();
@@ -449,7 +462,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(),
 				Stagemonitor.getMeasurementSession());
 		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
-				Stagemonitor.getMeasurementSession());
+				Stagemonitor.getMeasurementSession(), configuration.getConfig(CorePlugin.class));
 
 
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
@@ -506,18 +519,21 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
-									   final MeasurementSession measurementSession) {
+									   final MeasurementSession measurementSession, CorePlugin corePlugin) {
 		if (isReportToElasticsearch()) {
 			elasticsearchClient.sendBulkAsync("KibanaConfig.bulk");
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrl(), reportingInterval);
-			elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-metrics-index-template.json", "stagemonitor-metrics");
+			final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
+					"stagemonitor-elasticsearch-metrics-index-template.json", corePlugin.moveToColdNodesAfterDays.getValue());
+			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
 			final ElasticsearchReporter reporter = new ElasticsearchReporter(metricRegistry, Metric2Filter.ALL,
 					TimeUnit.SECONDS,
 					TimeUnit.MILLISECONDS, measurementSession.asMap(), new HttpClient(), this);
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
-			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX, 2, deleteElasticsearchMetricsAfterDays.getValue());
+			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
+					moveToColdNodesAfterDays.getValue(), deleteElasticsearchMetricsAfterDays.getValue());
 		} else {
 			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrl(), reportingInterval);
 		}
@@ -716,5 +732,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public int getElasticsearchReportingInterval() {
 		return reportingIntervalElasticsearch.getValue();
+	}
+
+	public Integer getMoveToColdNodesAfterDays() {
+		return moveToColdNodesAfterDays.getValue();
 	}
 }

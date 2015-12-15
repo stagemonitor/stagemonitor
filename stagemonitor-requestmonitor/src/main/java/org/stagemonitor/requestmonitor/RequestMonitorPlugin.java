@@ -143,7 +143,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-		elasticsearchClient.sendMappingTemplateAsync("stagemonitor-elasticsearch-request-index-template.json", "stagemonitor-requests");
+		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
+				"stagemonitor-elasticsearch-request-index-template.json", corePlugin.getMoveToColdNodesAfterDays());
+		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-requests");
 		elasticsearchClient.sendKibanaDashboardAsync("kibana/Kibana3RecentRequests.json");
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
@@ -152,7 +154,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendBulkAsync("kibana/RequestDashboard.bulk");
 			elasticsearchClient.sendBulkAsync("kibana/RequestAnalysis.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
-			elasticsearchClient.scheduleIndexManagement("stagemonitor-requests-", 2, deleteRequestTracesAfterDays.getValue());
+			elasticsearchClient.scheduleIndexManagement("stagemonitor-requests-",
+					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
 	}
 
