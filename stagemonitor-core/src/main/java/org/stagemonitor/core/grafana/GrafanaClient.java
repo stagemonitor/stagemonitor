@@ -57,6 +57,7 @@ public class GrafanaClient {
 		jsonData.put("timeField", "@timestamp");
 		jsonData.put("interval", "Daily");
 		jsonData.put("timeInterval", ">" + corePlugin.getElasticsearchReportingInterval() + "s");
+		jsonData.put("esVersion", 2);
 		dataSource.put("jsonData", jsonData);
 		asyncGrafanaRequest("POST", "/api/datasources", dataSource);
 	}

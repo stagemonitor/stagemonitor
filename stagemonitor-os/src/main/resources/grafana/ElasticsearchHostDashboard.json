@@ -40,7 +40,11 @@
             "min": false,
             "show": true,
             "total": false,
-            "values": false
+            "values": false,
+            "hideZero": true,
+            "hideEmpty": false,
+            "alignAsTable": false,
+            "rightSide": false
           },
           "lines": true,
           "linewidth": 2,
@@ -72,11 +76,13 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -161,6 +167,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -186,6 +193,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -237,7 +245,6 @@
           "error": false,
           "format": "none",
           "id": 2,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "nullPointMode": "connected",
@@ -265,6 +272,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -306,7 +314,6 @@
           "error": false,
           "format": "none",
           "id": 5,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "nullPointMode": "connected",
@@ -334,6 +341,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -375,7 +383,6 @@
           "error": false,
           "format": "none",
           "id": 3,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "nullPointMode": "connected",
@@ -403,6 +410,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -444,7 +452,6 @@
           "error": false,
           "format": "none",
           "id": 4,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "nullPointMode": "connected",
@@ -472,6 +479,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -566,11 +574,13 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -580,7 +590,7 @@
                   "type": "max"
                 }
               ],
-              "query": "name: mem_usage AND application: $Application AND host: $Host AND instance: $Instance",
+              "query": "name: mem_usage AND type: (total used) AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp"
             }
@@ -623,6 +633,7 @@
           "legend": {
             "avg": false,
             "current": false,
+            "hideZero": false,
             "max": false,
             "min": false,
             "show": true,
@@ -659,11 +670,13 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -673,7 +686,7 @@
                   "type": "max"
                 }
               ],
-              "query": "name: swap_usage AND application: $Application AND host: $Host AND instance: $Instance",
+              "query": "name: swap_usage AND type: (total used) AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp"
             }
@@ -703,7 +716,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": 0,
+            "leftMin": null,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -716,6 +729,7 @@
           "legend": {
             "avg": false,
             "current": false,
+            "hideEmpty": false,
             "max": false,
             "min": false,
             "show": true,
@@ -730,7 +744,12 @@
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "out",
+              "transform": "negative-Y"
+            }
+          ],
           "span": 4,
           "stack": false,
           "steppedLine": false,
@@ -752,18 +771,29 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
+                  "hide": true,
                   "id": "1",
                   "meta": {},
                   "settings": {},
                   "type": "max"
+                },
+                {
+                  "field": "1",
+                  "id": "4",
+                  "meta": {},
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
                 }
               ],
               "query": "name: swap_pages AND application: $Application AND host: $Host AND instance: $Instance",
@@ -773,7 +803,7 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Swap Pages",
+          "title": "Swap Pages (Delta)",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -804,7 +834,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": 0,
+            "leftMin": null,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -831,7 +861,12 @@
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "write",
+              "transform": "negative-Y"
+            }
+          ],
           "span": 4,
           "stack": false,
           "steppedLine": false,
@@ -853,18 +888,29 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
+                  "hide": true,
                   "id": "1",
                   "meta": {},
                   "settings": {},
                   "type": "max"
+                },
+                {
+                  "field": "1",
+                  "id": "4",
+                  "meta": {},
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
                 }
               ],
               "query": "name: disk_io AND application: $Application AND host: $Host AND instance: $Instance",
@@ -874,7 +920,7 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Disk I/O",
+          "title": "Disk I/O (Delta)",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -951,6 +997,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -1001,6 +1048,7 @@
           },
           "id": 11,
           "legend": {
+            "alignAsTable": false,
             "avg": false,
             "current": false,
             "max": false,
@@ -1039,11 +1087,13 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -1091,7 +1141,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": 0,
+            "leftMin": null,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -1104,6 +1154,8 @@
           "legend": {
             "avg": false,
             "current": false,
+            "hideEmpty": false,
+            "hideZero": true,
             "max": false,
             "min": false,
             "show": true,
@@ -1112,68 +1164,145 @@
           },
           "lines": true,
           "linewidth": 2,
+          "links": [],
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "/write.*/",
+              "transform": "negative-Y"
+            }
+          ],
           "span": 4,
-          "stack": true,
+          "stack": false,
           "steppedLine": false,
           "targets": [
             {
+              "alias": "read {{term ifname}}",
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "ifname",
                   "id": "4",
-                  "fake": true,
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "1"
-                  }
+                    "orderBy": "1",
+                    "size": "0"
+                  },
+                  "type": "terms"
                 },
                 {
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
-              "fields": [
-                {
-                  "func": "mean",
-                  "name": "value"
-                }
-              ],
+              "dsType": "elasticsearch",
               "groupBy": [
                 {
-                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
                   "type": "time"
                 }
               ],
+              "hide": false,
               "metrics": [
                 {
                   "field": "value",
+                  "hide": true,
                   "id": "1",
-                  "type": "avg",
+                  "meta": {},
                   "settings": {},
-                  "meta": {}
+                  "type": "avg"
+                },
+                {
+                  "field": "1",
+                  "id": "5",
+                  "meta": {},
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
                 }
               ],
+              "query": "name: network_io AND type: read AND unit: bytes AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
               "tags": [],
-              "timeField": "@timestamp",
-              "query": "name: network_io AND type: read AND unit: bytes AND application: $Application AND host: $Host AND instance: $Instance"
+              "timeField": "@timestamp"
+            },
+            {
+              "alias": "write {{term ifname}}",
+              "bucketAggs": [
+                {
+                  "fake": true,
+                  "field": "ifname",
+                  "id": "4",
+                  "settings": {
+                    "order": "asc",
+                    "orderBy": "_term",
+                    "size": "0"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto",
+                    "min_doc_count": 0
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "hide": false,
+              "metrics": [
+                {
+                  "field": "value",
+                  "hide": true,
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                },
+                {
+                  "field": "1",
+                  "id": "3",
+                  "meta": {},
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
+                }
+              ],
+              "query": "name: network_io AND type: write AND unit: bytes AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "B",
+              "timeField": "@timestamp"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Network Read",
+          "title": "Network I/O (Delta)",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -1184,8 +1313,7 @@
           "y_formats": [
             "bytes",
             "short"
-          ],
-          "links": []
+          ]
         },
         {
           "aliasColors": {},
@@ -1197,7 +1325,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": 0,
+            "leftMin": null,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -1218,68 +1346,166 @@
           },
           "lines": true,
           "linewidth": 2,
+          "links": [],
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "/write.*/",
+              "transform": "negative-Y"
+            }
+          ],
           "span": 4,
-          "stack": true,
+          "stack": false,
           "steppedLine": false,
           "targets": [
             {
+              "alias": "read {{term ifname}}",
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "ifname",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "1"
-                  }
+                    "orderBy": "1",
+                    "size": "0"
+                  },
+                  "type": "terms"
                 },
                 {
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
-              "fields": [
-                {
-                  "func": "mean",
-                  "name": "value"
-                }
-              ],
+              "dsType": "elasticsearch",
               "groupBy": [
                 {
-                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
                   "type": "time"
                 }
               ],
               "metrics": [
                 {
                   "field": "value",
+                  "hide": true,
                   "id": "1",
-                  "type": "avg",
+                  "meta": {},
                   "settings": {},
-                  "meta": {}
+                  "type": "avg"
+                },
+                {
+                  "field": "1",
+                  "id": "4",
+                  "meta": {},
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
                 }
               ],
+              "query": "name: network_io AND type: read AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
               "tags": [],
-              "timeField": "@timestamp",
-              "query": "name: network_io AND type: read AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance"
+              "timeField": "@timestamp"
+            },
+            {
+              "alias": "write {{term ifname}}",
+              "bucketAggs": [
+                {
+                  "fake": true,
+                  "field": "ifname",
+                  "id": "3",
+                  "settings": {
+                    "order": "asc",
+                    "orderBy": "1",
+                    "size": "0"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto",
+                    "min_doc_count": 0
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "groupBy": [
+                {
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "metrics": [
+                {
+                  "field": "value",
+                  "hide": true,
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                },
+                {
+                  "field": "1",
+                  "id": "4",
+                  "meta": {},
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
+                }
+              ],
+              "query": "name: network_io AND type: write AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "B",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [],
+              "timeField": "@timestamp"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Network Read Packet Errors",
+          "title": "Network Packet Errors (Delta)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -1290,8 +1516,7 @@
           "y_formats": [
             "none",
             "short"
-          ],
-          "links": []
+          ]
         },
         {
           "aliasColors": {},
@@ -1303,7 +1528,7 @@
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": 0,
+            "leftMin": null,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -1313,6 +1538,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 15,
+          "interval": ">10s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1324,68 +1550,166 @@
           },
           "lines": true,
           "linewidth": 2,
+          "links": [],
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "/write.*/",
+              "transform": "negative-Y"
+            }
+          ],
           "span": 4,
-          "stack": true,
+          "stack": false,
           "steppedLine": false,
           "targets": [
             {
+              "alias": "read {{term ifname}}",
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "ifname",
                   "id": "4",
-                  "fake": true,
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "1"
-                  }
+                    "orderBy": "1",
+                    "size": "0"
+                  },
+                  "type": "terms"
                 },
                 {
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "type": "date_histogram"
                 }
               ],
-              "fields": [
-                {
-                  "func": "mean",
-                  "name": "value"
-                }
-              ],
+              "dsType": "elasticsearch",
               "groupBy": [
                 {
-                  "interval": "auto",
+                  "params": [
+                    "auto"
+                  ],
                   "type": "time"
                 }
               ],
               "metrics": [
                 {
                   "field": "value",
+                  "hide": true,
                   "id": "1",
-                  "type": "avg",
+                  "meta": {},
                   "settings": {},
-                  "meta": {}
+                  "type": "avg"
+                },
+                {
+                  "field": "1",
+                  "id": "5",
+                  "meta": {},
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
                 }
               ],
+              "query": "name: network_io AND type: read AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
               "tags": [],
-              "timeField": "@timestamp",
-              "query": "name: network_io AND type: read AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance"
+              "timeField": "@timestamp"
+            },
+            {
+              "alias": "write {{term ifname}}",
+              "bucketAggs": [
+                {
+                  "fake": true,
+                  "field": "ifname",
+                  "id": "4",
+                  "settings": {
+                    "order": "asc",
+                    "orderBy": "1",
+                    "size": "0"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto",
+                    "min_doc_count": 0
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "groupBy": [
+                {
+                  "params": [
+                    "auto"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "metrics": [
+                {
+                  "field": "value",
+                  "hide": true,
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                },
+                {
+                  "field": "1",
+                  "id": "5",
+                  "meta": {},
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
+                }
+              ],
+              "query": "name: network_io AND type: write AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "B",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [],
+              "timeField": "@timestamp"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Network Read Packets Dropped",
+          "title": "Network Packets Dropped (Delta)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -1396,337 +1720,10 @@
           "y_formats": [
             "none",
             "short"
-          ],
-          "links": []
+          ]
         }
       ],
       "title": "New row"
-    },
-    {
-      "title": "New row",
-      "height": "250px",
-      "editable": true,
-      "collapse": false,
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 16,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 4,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "type": "terms",
-                  "field": "ifname",
-                  "id": "4",
-                  "fake": true,
-                  "settings": {
-                    "order": "asc",
-                    "size": "0",
-                    "orderBy": "1"
-                  }
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "fields": [
-                {
-                  "func": "mean",
-                  "name": "value"
-                }
-              ],
-              "groupBy": [
-                {
-                  "interval": "auto",
-                  "type": "time"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "value",
-                  "id": "1",
-                  "type": "avg",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
-              "refId": "A",
-              "tags": [],
-              "timeField": "@timestamp",
-              "query": "name: network_io AND type: write AND unit: bytes AND application: $Application AND host: $Host AND instance: $Instance"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Network Write",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "bytes",
-            "short"
-          ],
-          "links": []
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 17,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 4,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "type": "terms",
-                  "field": "ifname",
-                  "id": "3",
-                  "fake": true,
-                  "settings": {
-                    "order": "asc",
-                    "size": "0",
-                    "orderBy": "1"
-                  }
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "fields": [
-                {
-                  "func": "mean",
-                  "name": "value"
-                }
-              ],
-              "groupBy": [
-                {
-                  "interval": "auto",
-                  "type": "time"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "value",
-                  "id": "1",
-                  "type": "avg",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
-              "refId": "A",
-              "tags": [],
-              "timeField": "@timestamp",
-              "query": "name: network_io AND type: write AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Network Write Packet Errors",
-          "tooltip": {
-            "shared": true,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "none",
-            "short"
-          ],
-          "links": []
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 18,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 4,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "type": "terms",
-                  "field": "ifname",
-                  "id": "4",
-                  "fake": true,
-                  "settings": {
-                    "order": "asc",
-                    "size": "0",
-                    "orderBy": "1"
-                  }
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "fields": [
-                {
-                  "func": "mean",
-                  "name": "value"
-                }
-              ],
-              "groupBy": [
-                {
-                  "interval": "auto",
-                  "type": "time"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "value",
-                  "id": "1",
-                  "type": "avg",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
-              "refId": "A",
-              "tags": [],
-              "timeField": "@timestamp",
-              "query": "name: network_io AND type: write AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Network Write Packets Dropped",
-          "tooltip": {
-            "shared": true,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "none",
-            "short"
-          ],
-          "links": []
-        }
-      ]
     }
   ],
   "time": {
@@ -1809,7 +1806,7 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 7,
-  "version": 5,
+  "schemaVersion": 8,
+  "version": 1,
   "links": []
 }

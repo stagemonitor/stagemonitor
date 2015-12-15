@@ -60,39 +60,40 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "max",
-                  "id": "1",
-                  "field": "value",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "type",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "_term"
-                  }
+                    "orderBy": "_term",
+                    "size": "0"
+                },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
                     "interval": "auto"
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
-              "timeField": "@timestamp",
-              "query": "name: jvm_memory_heap AND !type: usage AND !type: init AND application: $Application AND host: $Host AND instance: $Instance"
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "value",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "max"
+            }
+          ],
+              "query": "name: jvm_memory_heap AND !type: usage AND !type: init AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "A",
+              "timeField": "@timestamp"
             }
           ],
           "timeFrom": null,
@@ -157,39 +158,40 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "max",
-                  "id": "1",
-                  "field": "value",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "type",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "_term"
-                  }
+                    "orderBy": "_term",
+                    "size": "0"
+                },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
                     "interval": "auto"
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
-              "timeField": "@timestamp",
-              "query": "name: jvm_memory_non_heap AND !type: usage AND !type: init AND application: $Application AND host: $Host AND instance: $Instance"
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "value",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "max"
+            }
+          ],
+              "query": "name: jvm_memory_non_heap AND !type: usage AND !type: init AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "A",
+              "timeField": "@timestamp"
             }
           ],
           "timeFrom": null,
@@ -278,19 +280,30 @@
                   "order": "asc",
                   "orderBy": "_term",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "auto",
+                    "min_doc_count": 0
                   },
                   "size": "0",
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
                   "id": "1",
                   "meta": {},
                   "settings": {},
-                  "type": "max"
+                  "type": "max",
+                  "hide": true
+                },
+                {
+                  "type": "derivative",
+                  "field": "1",
+                  "id": "4",
+                  "settings": {},
+                  "meta": {},
+                  "pipelineAgg": "1"
                 }
               ],
               "query": "name: jvm_gc_time AND application: $Application AND host: $Host AND instance: $Instance",
@@ -379,6 +392,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -419,6 +433,7 @@
           "aliasColors": {},
           "bars": false,
           "datasource": "ES stagemonitor",
+          "decimals": null,
           "editable": true,
           "error": false,
           "fill": 1,
@@ -469,6 +484,7 @@
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -496,8 +512,7 @@
           "y_formats": [
             "percent",
             "short"
-          ],
-          "decimals": null
+          ]
         }
       ],
       "title": "New row"
@@ -583,7 +598,7 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 7,
-  "version": 1,
+  "schemaVersion": 8,
+  "version": 0,
   "links": []
 }
