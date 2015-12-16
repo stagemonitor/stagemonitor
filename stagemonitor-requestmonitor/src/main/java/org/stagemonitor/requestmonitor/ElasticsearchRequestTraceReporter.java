@@ -30,14 +30,19 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	@Override
 	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) {
-		final Collection<String> onlyReportRequestsWithName = requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch();
-		if (onlyReportRequestsWithName.isEmpty() || onlyReportRequestsWithName.contains(requestTrace.getName())) {
+		final String requestTraceName = requestTrace.getName();
+		if (isActive(requestTrace) && isReportReuqestTrace(requestTraceName)) {
 			elasticsearchClient.index("stagemonitor-requests-" + StringUtils.getLogstashStyleDate(), "requests", requestTrace);
 		}
 	}
 
+	private boolean isReportReuqestTrace(String requestTraceName) {
+		final Collection<String> onlyReportRequestsWithName = requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch();
+		return onlyReportRequestsWithName.isEmpty() || onlyReportRequestsWithName.contains(requestTraceName);
+	}
+
 	@Override
 	public <T extends RequestTrace> boolean isActive(T requestTrace) {
-		return StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl());
+		return StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl()) && requestMonitorPlugin.isReportRequestTracesToElasticsearch();
 	}
 }

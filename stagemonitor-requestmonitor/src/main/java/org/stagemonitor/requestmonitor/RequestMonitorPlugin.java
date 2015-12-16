@@ -127,6 +127,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(true)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Boolean> reportRequestTracesToElasticsearch = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.reportRequestTracesToElasticsearch")
+			.dynamic(true)
+			.label("Report request traces to Elasticsearch")
+			.description("Whether request traces should be persisted to Elasticsearch. If you want to enable this, make sure to also set the Elasticsearch url.")
+			.defaultValue(true)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 	private final ConfigurationOption<Collection<String>> onlyReportRequestsWithNameToElasticsearch = ConfigurationOption.stringsOption()
 			.key("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
 			.dynamic(true)
@@ -226,5 +234,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public Collection<String> getOnlyReportRequestsWithNameToElasticsearch() {
 		return onlyReportRequestsWithNameToElasticsearch.getValue();
+	}
+
+	public boolean isReportRequestTracesToElasticsearch() {
+		return reportRequestTracesToElasticsearch.getValue();
 	}
 }
