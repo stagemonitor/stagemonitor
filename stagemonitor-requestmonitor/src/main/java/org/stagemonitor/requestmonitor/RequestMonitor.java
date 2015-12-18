@@ -7,7 +7,6 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -248,8 +247,8 @@ public class RequestMonitor {
 			if (minExecutionTimeMultiplier > 0d) {
 				callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
 			}
-			reportRequestTrace(requestTrace);
 		}
+		reportRequestTrace(requestTrace);
 		trackMetrics(info, executionTime, cpuTime);
 	}
 
@@ -392,18 +391,11 @@ public class RequestMonitor {
 			if (!requestMonitorPlugin.isProfilerActive()) {
 				return false;
 			}
-			int callStackEveryXRequestsToGroup = requestMonitorPlugin.getCallStackEveryXRequestsToGroup();
-			if (callStackEveryXRequestsToGroup == 1) {
-				return true;
-			}
-			if (callStackEveryXRequestsToGroup < 1) {
-				return false;
-			}
 			Timer requestTimer = getRequestTimer();
 			if (requestTimer.getCount() == 0) {
 				return false;
 			}
-			final boolean profilingActive = requestTimer.getCount() % callStackEveryXRequestsToGroup == 0;
+			final boolean profilingActive = isNthRequest(requestTimer.getCount(), requestMonitorPlugin.getCallStackEveryXRequestsToGroup());
 			return profilingActive && isAnyRequestTraceReporterActive(getRequestTrace());
 		}
 
@@ -444,6 +436,10 @@ public class RequestMonitor {
 		public boolean isForwarded() {
 			return parent != null;
 		}
+	}
+
+	public static boolean isNthRequest(long requestCount, int n) {
+		return n < 1 && requestCount % n == 0;
 	}
 
 	private boolean isAnyRequestTraceReporterActive(RequestTrace requestTrace) {

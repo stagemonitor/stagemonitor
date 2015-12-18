@@ -24,8 +24,8 @@ public class ElasticsearchRequestTraceReporterTest {
 	@Before
 	public void setUp() throws Exception {
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		when(requestMonitorPlugin.isReportRequestTracesToElasticsearch()).thenReturn(true);
-		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.singleton("Only Report Me"));
+		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(Integer.MAX_VALUE);
+		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.singleton("Report Me"));
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		elasticsearchClient = mock(ElasticsearchClient.class);
@@ -35,7 +35,7 @@ public class ElasticsearchRequestTraceReporterTest {
 	@Test
 	public void testReportRequestTrace() throws Exception {
 		final RequestTrace requestTrace = mock(RequestTrace.class);
-		when(requestTrace.getName()).thenReturn("Only Report Me");
+		when(requestTrace.getName()).thenReturn("Report Me");
 
 		reporter.reportRequestTrace(requestTrace);
 
@@ -56,13 +56,25 @@ public class ElasticsearchRequestTraceReporterTest {
 
 	@Test
 	public void testElasticsearchReportingDeactive() throws Exception {
-		when(requestMonitorPlugin.isReportRequestTracesToElasticsearch()).thenReturn(false);
+		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(0);
 		final RequestTrace requestTrace = mock(RequestTrace.class);
-		when(requestTrace.getName()).thenReturn("Only Report Me");
+		when(requestTrace.getName()).thenReturn("Report Me");
 
 		reporter.reportRequestTrace(requestTrace);
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
-		Assert.assertFalse(reporter.isActive(requestTrace));
+	}
+
+	@Test
+	public void testElasticsearchReportingRateLimited() throws Exception {
+		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1);
+		final RequestTrace requestTrace = mock(RequestTrace.class);
+		when(requestTrace.getName()).thenReturn("Report Me");
+
+		reporter.reportRequestTrace(requestTrace);
+		Thread.sleep(5010); // the meter only updates every 5 seconds
+		reporter.reportRequestTrace(requestTrace);
+
+		verify(elasticsearchClient, times(1)).index(anyString(), anyString(), anyObject());
 	}
 }

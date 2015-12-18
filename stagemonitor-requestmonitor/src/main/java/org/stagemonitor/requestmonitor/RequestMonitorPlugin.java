@@ -127,20 +127,21 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(true)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Boolean> reportRequestTracesToElasticsearch = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.reportRequestTracesToElasticsearch")
-			.dynamic(true)
-			.label("Report request traces to Elasticsearch")
-			.description("Whether request traces should be persisted to Elasticsearch. If you want to enable this, make sure to also set the Elasticsearch url.")
-			.defaultValue(true)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
 	private final ConfigurationOption<Collection<String>> onlyReportRequestsWithNameToElasticsearch = ConfigurationOption.stringsOption()
 			.key("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
 			.dynamic(true)
 			.label("Only report request traces with name to ES")
 			.description("Limits the reporting of request traces to Elasticsearch to requests with a certain name.")
 			.defaultValue(Collections.<String>emptySet())
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Integer> onlyReportNRequestsPerMinuteToElasticsearch = ConfigurationOption.integerOption()
+			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
+			.dynamic(true)
+			.label("Only report N requests per minute to ES")
+			.description("Limits you limit the rate at which request traces are reported to Elasticsearch. " +
+					"Set to a value below 1 to deactivate ES reporting and to Integer.MAX_VALUE to always report.")
+			.defaultValue(Integer.MAX_VALUE)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 
@@ -236,7 +237,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return onlyReportRequestsWithNameToElasticsearch.getValue();
 	}
 
-	public boolean isReportRequestTracesToElasticsearch() {
-		return reportRequestTracesToElasticsearch.getValue();
+	public int getOnlyReportNRequestsPerMinuteToElasticsearch() {
+		return onlyReportNRequestsPerMinuteToElasticsearch.getValue();
 	}
 }
