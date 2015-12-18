@@ -139,7 +139,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
 			.label("Only report N requests per minute to ES")
-			.description("Limits you limit the rate at which request traces are reported to Elasticsearch. " +
+			.description("Limits the rate at which request traces are reported to Elasticsearch. " +
 					"Set to a value below 1 to deactivate ES reporting and to Integer.MAX_VALUE to always report.")
 			.defaultValue(Integer.MAX_VALUE)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
