@@ -26,7 +26,7 @@ public class Metric2RegistryTest {
 		});
 		
 		// Verify the underlying Dropwizard listener was called
-		Mockito.verify(listener).onGaugeAdded(Mockito.eq("test"), Mockito.any());
+		Mockito.verify(listener).onGaugeAdded(Mockito.eq("test"), Mockito.<Gauge>any());
 
 		// Should be able to read the gauge from either registry
 		Map.Entry<MetricName, Gauge> stagemonitorEntry = registry.getGauges().entrySet().iterator().next();
