@@ -30,9 +30,9 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.metrics.AndMetricFilter;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
-import org.stagemonitor.core.metrics.OrMetricFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SimpleElasticsearchReporter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
@@ -453,8 +453,13 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	private void registerReporters(Metric2Registry metric2Registry, Configuration configuration) {
-		RegexMetricFilter regexFilter = new RegexMetricFilter(getExcludedMetricsPatterns());
-		MetricFilter allFilters = new OrMetricFilter(regexFilter, new MetricsWithCountFilter());
+		Collection<Pattern> excludedMetricsPatterns = getExcludedMetricsPatterns();
+		MetricFilter regexFilter = MetricFilter.ALL;
+		if (!excludedMetricsPatterns.isEmpty()) {
+			regexFilter = RegexMetricFilter.excludePatterns(excludedMetricsPatterns);
+		}
+		
+		MetricFilter allFilters = new AndMetricFilter(regexFilter, new MetricsWithCountFilter());
 		MetricRegistry metricRegistry = metric2Registry.getMetricRegistry();
 
 		reportToGraphite(metricRegistry, getGraphiteReportingInterval(),
@@ -471,7 +476,9 @@ public class CorePlugin extends StagemonitorPlugin {
 		reportToConsole(metricRegistry, getConsoleReportingInterval(), allFilters, onShutdownReporters);
 		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, getAggregationReportingInterval());
 		if (reportToJMX()) {
-			reportToJMX(metricRegistry, allFilters);
+			// Because JMX reporter is on registration and not periodic only the
+			// regex filter is applicable here (not filtering metrics by count)
+			reportToJMX(metricRegistry, regexFilter);
 		}
 	}
 

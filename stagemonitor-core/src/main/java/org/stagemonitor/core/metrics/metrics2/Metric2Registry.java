@@ -25,7 +25,12 @@ import com.codahale.metrics.Timer;
 public class Metric2Registry implements Metric2Set {
 
 	private final ConcurrentMap<MetricName, Metric> metrics;
-	private final MetricRegistryAdapter metricRegistryAdapter;
+	
+	// An internal reference to a legacy Dropwizard Metric Registry
+	// that we echo registration/removal of Metrics to so that it
+	// matches the state of our registry and supports the Dropwizard
+	// Metrics listener and reporting patterns.
+	private final MetricRegistry metricRegistry;
 
 	public Metric2Registry() {
 		this(new ConcurrentHashMap<MetricName, Metric>());
@@ -33,7 +38,7 @@ public class Metric2Registry implements Metric2Set {
 
 	public Metric2Registry(ConcurrentMap<MetricName, Metric> metrics) {
 		this.metrics = metrics;
-		metricRegistryAdapter = new MetricRegistryAdapter(this);
+		this.metricRegistry = new MetricRegistry();
 	}
 
 	/**
@@ -53,6 +58,12 @@ public class Metric2Registry implements Metric2Set {
 			final Metric existing = metrics.putIfAbsent(name, metric);
 			if (existing != null) {
 				throw new IllegalArgumentException("A metric named " + name + " already exists");
+			}
+			else {
+				// This is a new metric - we have to register the Metric with
+				// the legacy Dropwizard Metric registry as
+				// well to support existing reports and listeners
+				metricRegistry.register(name.toGraphiteName(), metric);
 			}
 		}
 		return metric;
@@ -123,6 +134,9 @@ public class Metric2Registry implements Metric2Set {
 	public boolean remove(MetricName name) {
 		final Metric metric = metrics.remove(name);
 		if (metric != null) {
+			// We have to unregister the Metric with the legacy Dropwizard Metric registry as
+			// well to support existing reports and listeners
+			metricRegistry.remove(name.toGraphiteName());
 			return true;
 		}
 		return false;
@@ -363,12 +377,12 @@ public class Metric2Registry implements Metric2Set {
 	}
 
 	/**
-	 * Returns a adapter for the legacy {@link MetricRegistry}
+	 * Returns the wrapped legacy {@link MetricRegistry}
 	 *
-	 * @return a adapter for the legacy {@link MetricRegistry}
+	 * @return the wrapped legacy {@link MetricRegistry}
 	 */
 	public MetricRegistry getMetricRegistry() {
-		return metricRegistryAdapter;
+		return metricRegistry;
 	}
 
 }
