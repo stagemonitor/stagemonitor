@@ -311,4 +311,10 @@ public class ElasticsearchClient {
 
 	}
 
+	public static String getBulkHeader(String action, String index, String type) {
+		return "{\""+action+"\":" +
+				"{\"_index\":\"" + index + "\"," +
+				"\"_type\":\"" + type + "\"}" +
+				"}\n";
+	}
 }

@@ -2,6 +2,7 @@ package org.stagemonitor.core.metrics.metrics2;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
@@ -20,7 +21,10 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -29,6 +33,11 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
 	public static final String STAGEMONITOR_METRICS_INDEX_PREFIX = "stagemonitor-metrics-";
 	public static final String METRICS_TYPE = "metrics";
+	public static final String ES_METRICS_LOGGER = "ElasticsearchMetrics";
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private final Logger elasticsearchMetricsLogger;
+
 	private final Map<String, String> globalTags;
 	private HttpClient httpClient;
 	private final Clock clock;
@@ -43,7 +52,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 								 HttpClient httpClient,
 								 CorePlugin corePlugin) {
 
-		this(registry, filter, rateUnit, durationUnit, globalTags, httpClient, Clock.defaultClock(), corePlugin);
+		this(registry, filter, rateUnit, durationUnit, globalTags, httpClient, Clock.defaultClock(), corePlugin, LoggerFactory.getLogger(ES_METRICS_LOGGER));
 	}
 
 	public ElasticsearchReporter(Metric2Registry registry,
@@ -52,10 +61,11 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 								 TimeUnit durationUnit,
 								 Map<String, String> globalTags,
 								 HttpClient httpClient,
-								 Clock clock, CorePlugin corePlugin) {
+								 Clock clock, CorePlugin corePlugin, Logger elasticsearchMetricsLogger) {
 
 		super(registry, filter, rateUnit, durationUnit);
 		this.corePlugin = corePlugin;
+		this.elasticsearchMetricsLogger = elasticsearchMetricsLogger;
 		this.globalTags = Collections.unmodifiableMap(new HashMap<String, String>(globalTags));
 		this.httpClient = httpClient;
 		this.clock = clock;
@@ -69,18 +79,19 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Meter> meters,
 							  final Map<MetricName, Timer> timers) {
 		final Timer.Context time = registry.timer(name("reporting_time").tag("reporter", "elasticsearch").build()).time();
-		httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null, new HttpClient.OutputStreamHandler() {
-			@Override
-			public void withHttpURLConnection(OutputStream os) throws IOException {
-				String bulkAction = "{ \"index\" : " +
-						"{ \"_index\" : \"" + STAGEMONITOR_METRICS_INDEX_PREFIX + StringUtils.getLogstashStyleDate() + "\", " +
-						"\"_type\" : \"" + METRICS_TYPE + "\" } " +
-						"}\n";
-				byte[] bulkActionBytes = bulkAction.getBytes("UTF-8");
-				reportMetrics(gauges, counters, histograms, meters, timers, os, bulkActionBytes);
-				os.close();
+		final MetricsOutputStreamHandler metricsOutputStreamHandler = new MetricsOutputStreamHandler(gauges, counters, histograms, meters, timers);
+		if (!corePlugin.isOnlyLogElasticsearchMetricReports()) {
+			httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null,
+					metricsOutputStreamHandler);
+		} else {
+			try {
+				final ByteArrayOutputStream os = new ByteArrayOutputStream();
+				metricsOutputStreamHandler.withHttpURLConnection(os);
+				elasticsearchMetricsLogger.info(os.toString("UTF-8"));
+			} catch (IOException e) {
+				logger.warn(e.getMessage(), e);
 			}
-		});
+		}
 		time.stop();
 	}
 
@@ -186,4 +197,27 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		void writeValues(T value, JsonGenerator jg) throws IOException;
 	}
 
+	private class MetricsOutputStreamHandler implements HttpClient.OutputStreamHandler {
+		private final Map<MetricName, Gauge> gauges;
+		private final Map<MetricName, Counter> counters;
+		private final Map<MetricName, Histogram> histograms;
+		private final Map<MetricName, Meter> meters;
+		private final Map<MetricName, Timer> timers;
+
+		public MetricsOutputStreamHandler(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters, Map<MetricName, Histogram> histograms, Map<MetricName, Meter> meters, Map<MetricName, Timer> timers) {
+			this.gauges = gauges;
+			this.counters = counters;
+			this.histograms = histograms;
+			this.meters = meters;
+			this.timers = timers;
+		}
+
+		@Override
+		public void withHttpURLConnection(OutputStream os) throws IOException {
+			String bulkAction = ElasticsearchClient.getBulkHeader("index", STAGEMONITOR_METRICS_INDEX_PREFIX + StringUtils.getLogstashStyleDate(), METRICS_TYPE);
+			byte[] bulkActionBytes = bulkAction.getBytes("UTF-8");
+			reportMetrics(gauges, counters, histograms, meters, timers, os, bulkActionBytes);
+			os.close();
+		}
+	}
 }

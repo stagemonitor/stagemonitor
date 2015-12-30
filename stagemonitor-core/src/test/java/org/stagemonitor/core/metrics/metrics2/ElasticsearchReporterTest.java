@@ -5,7 +5,9 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.counter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.gauge;
@@ -33,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
@@ -43,6 +46,8 @@ public class ElasticsearchReporterTest {
 	private ElasticsearchReporter elasticsearchReporter;
 	private long timestamp;
 	private ByteArrayOutputStream out;
+	private Logger metricsLogger;
+	private CorePlugin corePlugin;
 
 	@Before
 	public void setUp() throws Exception {
@@ -60,9 +65,11 @@ public class ElasticsearchReporterTest {
 				return 200;
 			}
 		});
+		metricsLogger = mock(Logger.class);
+		corePlugin = mock(CorePlugin.class);
 		elasticsearchReporter = new ElasticsearchReporter(new Metric2Registry(),
 				Metric2Filter.ALL, TimeUnit.SECONDS, TimeUnit.NANOSECONDS, singletonMap("app", "test"),
-				httpClient, clock, mock(CorePlugin.class));
+				httpClient, clock, corePlugin, metricsLogger);
 		out = new ByteArrayOutputStream();
 	}
 
@@ -109,6 +116,21 @@ public class ElasticsearchReporterTest {
 						.add("name", "gauge")
 						.add("app", "test"),
 				asMap(out));
+	}
+
+	@Test
+	public void testReportToLog() throws Exception {
+		when(corePlugin.isOnlyLogElasticsearchMetricReports()).thenReturn(true);
+
+		elasticsearchReporter.reportMetrics(
+				metricNameMap(name("gauge").build(), gauge(1)),
+				metricNameMap(Counter.class),
+				metricNameMap(Histogram.class),
+				metricNameMap(Meter.class),
+				metricNameMap(Timer.class));
+
+		verify(metricsLogger).info(eq(String.format("{\"index\":{\"_index\":\"stagemonitor-metrics-%s\",\"_type\":\"metrics\"}}\n" +
+				"{\"@timestamp\":%d,\"name\":\"gauge\",\"app\":\"test\",\"value\":1.0}\n", StringUtils.getLogstashStyleDate(), timestamp)));
 	}
 
 	@Test

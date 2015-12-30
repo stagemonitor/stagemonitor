@@ -166,6 +166,17 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags("metrics-store", "elasticsearch")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Boolean> onlyLogElasticsearchMetricReports = ConfigurationOption.booleanOption()
+			.key("stagemonitor.reporting.elasticsearch.onlyLogElasticsearchMetricReports")
+			.dynamic(false)
+			.label("Only log Elasticsearch metric reports")
+			.description(String.format("If set to true, the metrics won't be reported to elasticsearch but instead logged in bulk format. " +
+					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
+					"different external process to send the metrics to elasticsearch.", ElasticsearchReporter.ES_METRICS_LOGGER))
+			.defaultValue(false)
+			.tags("metrics-store", "elasticsearch")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
 	private final ConfigurationOption<Integer> deleteElasticsearchMetricsAfterDays = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.elasticsearch.deleteMetricsAfterDays")
 			.dynamic(false)
@@ -750,5 +761,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public Integer getMoveToColdNodesAfterDays() {
 		return moveToColdNodesAfterDays.getValue();
+	}
+
+	public boolean isOnlyLogElasticsearchMetricReports() {
+		return onlyLogElasticsearchMetricReports.getValue();
 	}
 }

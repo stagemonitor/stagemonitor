@@ -3,9 +3,12 @@ package org.stagemonitor.requestmonitor;
 import java.util.Collection;
 
 import com.codahale.metrics.Meter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 
 /**
@@ -13,21 +16,25 @@ import org.stagemonitor.core.util.StringUtils;
  */
 public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
+	public static final String ES_REQUEST_TRACE_LOGGER = "ElasticsearchRequestTraces";
+
 	private final CorePlugin corePlugin;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final ElasticsearchClient elasticsearchClient;
 	private final Meter reportingRate = new Meter();
+	private final Logger requestTraceLogger;
 
 	public ElasticsearchRequestTraceReporter() {
 		this(Stagemonitor.getConfiguration(CorePlugin.class), Stagemonitor.getConfiguration(RequestMonitorPlugin.class),
-				Stagemonitor.getConfiguration().getConfig(CorePlugin.class).getElasticsearchClient());
+				Stagemonitor.getConfiguration().getConfig(CorePlugin.class).getElasticsearchClient(), LoggerFactory.getLogger(ES_REQUEST_TRACE_LOGGER));
 	}
 
 	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin,
-											 ElasticsearchClient elasticsearchClient) {
+											 ElasticsearchClient elasticsearchClient, Logger requestTraceLogger) {
 		this.corePlugin = corePlugin;
 		this.requestMonitorPlugin = requestMonitorPlugin;
 		this.elasticsearchClient = elasticsearchClient;
+		this.requestTraceLogger = requestTraceLogger;
 	}
 
 	@Override
@@ -35,7 +42,13 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 		final String requestTraceName = requestTrace.getName();
 		if (isReportRequestTraceName(requestTraceName) && !isReportingRateExceeded()) {
 			reportingRate.mark();
-			elasticsearchClient.index("stagemonitor-requests-" + StringUtils.getLogstashStyleDate(), "requests", requestTrace);
+			final String index = "stagemonitor-requests-" + StringUtils.getLogstashStyleDate();
+			final String type = "requests";
+			if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
+				elasticsearchClient.index(index, type, requestTrace);
+			} else {
+				requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", index, type) + JsonUtils.toJson(requestTrace));
+			}
 		}
 	}
 

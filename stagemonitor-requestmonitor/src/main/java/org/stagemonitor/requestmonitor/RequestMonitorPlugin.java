@@ -78,6 +78,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.description("Defines after how many requests to a URL group a call tree should be collected.")
 			.defaultValue(1)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.label("deprecated")
 			.build();
 	private final ConfigurationOption<Boolean> logCallStacks = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.logCallStacks")
@@ -142,6 +143,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.description("Limits the rate at which request traces are reported to Elasticsearch. " +
 					"Set to a value below 1 to deactivate ES reporting and to Integer.MAX_VALUE to always report.")
 			.defaultValue(Integer.MAX_VALUE)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Boolean> onlyLogElasticsearchRequestTraceReports = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.elasticsearch.onlyLogElasticsearchRequestTraceReports")
+			.dynamic(false)
+			.label("Only log Elasticsearch request trace reports")
+			.description(String.format("If set to true, the request traces won't be reported to elasticsearch but instead logged in bulk format. " +
+					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
+					"different external process to send the request traces to elasticsearch.", ElasticsearchRequestTraceReporter.ES_REQUEST_TRACE_LOGGER))
+			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 
@@ -239,5 +250,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public int getOnlyReportNRequestsPerMinuteToElasticsearch() {
 		return onlyReportNRequestsPerMinuteToElasticsearch.getValue();
+	}
+
+	public boolean isOnlyLogElasticsearchRequestTraceReports() {
+		return onlyLogElasticsearchRequestTraceReports.getValue();
 	}
 }

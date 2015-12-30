@@ -56,8 +56,11 @@ public class RequestTrace {
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
 
 	public RequestTrace(String requestId, GetNameCallback getNameCallback) {
+		this(requestId, getNameCallback, Stagemonitor.getMeasurementSession());
+	}
+
+	public RequestTrace(String requestId, GetNameCallback getNameCallback, MeasurementSession measurementSession) {
 		this.id = requestId != null ? requestId : UUID.randomUUID().toString();
-		MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
 		measurementStart = measurementSession.getStartTimestamp();
 		application = measurementSession.getApplicationName();
 		host = measurementSession.getHostName();

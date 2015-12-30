@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,14 +13,18 @@ import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.util.StringUtils;
 
 public class ElasticsearchRequestTraceReporterTest {
 
 	private ElasticsearchRequestTraceReporter reporter;
 	private ElasticsearchClient elasticsearchClient;
 	private RequestMonitorPlugin requestMonitorPlugin;
+	private Logger requestTraceLogger;
 
 	@Before
 	public void setUp() throws Exception {
@@ -29,7 +34,8 @@ public class ElasticsearchRequestTraceReporterTest {
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		elasticsearchClient = mock(ElasticsearchClient.class);
-		reporter = new ElasticsearchRequestTraceReporter(corePlugin, requestMonitorPlugin, elasticsearchClient);
+		requestTraceLogger = mock(Logger.class);
+		reporter = new ElasticsearchRequestTraceReporter(corePlugin, requestMonitorPlugin, elasticsearchClient, requestTraceLogger);
 	}
 
 	@Test
@@ -40,6 +46,23 @@ public class ElasticsearchRequestTraceReporterTest {
 		reporter.reportRequestTrace(requestTrace);
 
 		verify(elasticsearchClient).index(anyString(), anyString(), anyObject());
+		Assert.assertTrue(reporter.isActive(requestTrace));
+	}
+
+	@Test
+	public void testLogReportRequestTrace() throws Exception {
+		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
+		final RequestTrace requestTrace = new RequestTrace("abc", new RequestTrace.GetNameCallback() {
+			@Override
+			public String getName() {
+				return "Report Me";
+			}
+		}, new MeasurementSession(getClass().getName(), "test", "test"));
+
+		reporter.reportRequestTrace(requestTrace);
+
+		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
+		verify(requestTraceLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-requests-" + StringUtils.getLogstashStyleDate() + "\",\"_type\":\"requests\"}}\n{"));
 		Assert.assertTrue(reporter.isActive(requestTrace));
 	}
 
