@@ -44,6 +44,7 @@ public class ElasticsearchClient {
 	private final CorePlugin corePlugin;
 
 	private final ThreadPoolExecutor asyncRestPool;
+	private Timer timer;
 
 	public ElasticsearchClient() {
 		this(Stagemonitor.getConfiguration().getConfig(CorePlugin.class));
@@ -53,6 +54,7 @@ public class ElasticsearchClient {
 		this.corePlugin = corePlugin;
 		asyncRestPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-elasticsearch", corePlugin.getThreadPoolQueueCapacityLimit());
+		timer = new Timer("elasticsearch-tasks", true);
 		if (corePlugin.isInternalMonitoringActive()) {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetric2Registry());
@@ -278,6 +280,7 @@ public class ElasticsearchClient {
 
 	public void close() {
 		asyncRestPool.shutdown();
+		timer.cancel();
 	}
 
 	/**
@@ -286,8 +289,6 @@ public class ElasticsearchClient {
 	 * @param indexPrefix the prefix of the logstash-style index pattern
 	 */
 	public void scheduleIndexManagement(String indexPrefix, int optimizeAndMoveIndicesToColdNodesOlderThanDays, int deleteIndicesOlderThanDays) {
-		Timer timer = new Timer(indexPrefix + "elasticsearch-tasks", true);
-
 		if (deleteIndicesOlderThanDays > 0) {
 			final TimerTask deleteIndicesTask = new DeleteIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
 					deleteIndicesOlderThanDays, this);
