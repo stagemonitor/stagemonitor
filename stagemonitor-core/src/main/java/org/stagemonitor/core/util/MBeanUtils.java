@@ -12,7 +12,6 @@ import javax.management.QueryExp;
 import com.codahale.metrics.Gauge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
@@ -21,8 +20,6 @@ public class MBeanUtils {
 	private static final Logger logger = LoggerFactory.getLogger(MBeanUtils.class);
 
 	private static final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-
-	private static final Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
 
 	private MBeanUtils() {
 	}
@@ -83,18 +80,23 @@ public class MBeanUtils {
 	 * @param objectInstance     The ObjectInstance
 	 * @param mBeanAttributeName The attribute name of the MBean that should be collected
 	 * @param metricName         The name of the metric in the MetricRegistry
+	 * @param metricRegistry     The metric registry the values of the mbean should be registered at
 	 */
-	public static void registerMBean(final ObjectInstance objectInstance, final String mBeanAttributeName, MetricName metricName) {
+	public static void registerMBean(final ObjectInstance objectInstance, final String mBeanAttributeName, MetricName metricName, Metric2Registry metricRegistry) {
 		metricRegistry.register(metricName, new Gauge<Object>() {
 			@Override
 			public Object getValue() {
-				try {
-					return mbeanServer.getAttribute(objectInstance.getObjectName(), mBeanAttributeName);
-				} catch (Exception e) {
-					logger.warn(e.getMessage(), e);
-					return null;
-				}
+				return getValueFromMBean(objectInstance, mBeanAttributeName);
 			}
 		});
+	}
+
+	public static Object getValueFromMBean(ObjectInstance objectInstance, String mBeanAttributeName) {
+		try {
+			return mbeanServer.getAttribute(objectInstance.getObjectName(), mBeanAttributeName);
+		} catch (Exception e) {
+			logger.warn(e.getMessage(), e);
+			return null;
+		}
 	}
 }

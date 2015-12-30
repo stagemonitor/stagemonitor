@@ -426,6 +426,13 @@ public class CorePlugin extends StagemonitorPlugin {
 	private GrafanaClient grafanaClient;
 	private IndexSelector indexSelector = new IndexSelector(new Clock.UserTimeClock());
 
+	public CorePlugin() {
+	}
+
+	public CorePlugin(ElasticsearchClient elasticsearchClient) {
+		this.elasticsearchClient = elasticsearchClient;
+	}
+
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
 		final Integer reloadInterval = getReloadConfigurationInterval();
@@ -449,10 +456,10 @@ public class CorePlugin extends StagemonitorPlugin {
 			final GrafanaClient grafanaClient = getGrafanaClient();
 			grafanaClient.createElasticsearchDatasource(getElasticsearchUrl());
 		}
-		registerReporters(metricRegistry, configuration);
+		registerReporters(metricRegistry, configuration, Stagemonitor.getMeasurementSession());
 	}
 
-	private void registerReporters(Metric2Registry metric2Registry, Configuration configuration) {
+	void registerReporters(Metric2Registry metric2Registry, Configuration configuration, MeasurementSession measurementSession) {
 		Collection<Pattern> excludedMetricsPatterns = getExcludedMetricsPatterns();
 		MetricFilter regexFilter = MetricFilter.ALL;
 		if (!excludedMetricsPatterns.isEmpty()) {
@@ -463,11 +470,11 @@ public class CorePlugin extends StagemonitorPlugin {
 		MetricRegistry metricRegistry = metric2Registry.getMetricRegistry();
 
 		reportToGraphite(metricRegistry, getGraphiteReportingInterval(),
-				Stagemonitor.getMeasurementSession(), allFilters);
+				measurementSession, allFilters);
 		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(),
-				Stagemonitor.getMeasurementSession());
+				measurementSession);
 		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
-				Stagemonitor.getMeasurementSession(), configuration.getConfig(CorePlugin.class));
+				measurementSession, configuration.getConfig(CorePlugin.class));
 
 
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
