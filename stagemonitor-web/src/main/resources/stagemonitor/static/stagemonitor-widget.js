@@ -83,8 +83,19 @@ $(document).ready(function () {
 	}
 
 	$("#stagemonitor-modal-close").on("click", function () {
-		window.stagemonitor.closeOverlay();
+		closeOverlay();
 	});
+
+	$("body").on("keyup", function (event) {
+		if (event.keyCode == 27) {  // escape key
+			closeOverlay();
+			event.preventDefault();
+		}
+	});
+
+	function closeOverlay() {
+		window.stagemonitor.closeOverlay();
+	}
 
 	$(".nav-tabs a").on("click", function (e) {
 		$(this).tab('show');
@@ -97,7 +108,7 @@ $(document).ready(function () {
 		serializeArray: function () {
 			var brokenSerialization = originalSerializeArray.apply(this);
 			var checkboxValues = $(this).find('input[type=checkbox]').map(function () {
-				return { 'name': this.name, 'value': this.checked };
+				return {'name': this.name, 'value': this.checked};
 			}).get();
 			var checkboxKeys = $.map(checkboxValues, function (element) {
 				return element.name;
@@ -116,11 +127,14 @@ $(document).ready(function () {
 		console.log(e);
 	}
 
-	$("#tab-content").on("click", ".branch", function (e) {
-		if (!$(e.target).hasClass("expander")) {
-			var treeTableNodeId = $(this).data("tt-id");
+	$("#tab-content").on("click", ".branch", function (event) {
+		var $branch = $(this);
+		if (!$(event.target).hasClass("expander")) {
+			var treeTableNodeId = $branch.data("tt-id");
 			$("#stagemonitor-calltree").treetable("node", treeTableNodeId).toggle();
 		}
+		var $queryCount = $branch.find(".query-count");
+		$branch.hasClass("collapsed") ? $queryCount.show() : $queryCount.hide();
 	});
 
 });

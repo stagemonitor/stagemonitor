@@ -26,11 +26,10 @@ Handlebars.registerHelper('csv', function (items, options) {
 Handlebars.registerHelper('capitalize', function (string, options) {
 	return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 });
-Handlebars.registerHelper('createPreIfHasLineBreak', function(signature) {
-	if (signature.indexOf("\n") != -1) {
+Handlebars.registerHelper('wrapWithinPreIfIoQuery', function(ioQuery, shortSignature, signature) {
+	if (ioQuery) {
 		return new Handlebars.SafeString("<pre>" + Handlebars.escapeExpression(signature) + "</pre>");
 	} else {
-		return new Handlebars.SafeString(Handlebars.escapeExpression(signature));
+		return new Handlebars.SafeString(Handlebars.escapeExpression(shortSignature ? shortSignature : signature));
 	}
-
 });

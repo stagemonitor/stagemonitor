@@ -138,6 +138,10 @@ pre {
 	padding: 0;
 }
 
+.treetable pre {
+	margin-top: 10px;
+}
+
 /*
  * Metrics tab
  */

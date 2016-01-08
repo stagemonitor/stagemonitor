@@ -58,7 +58,7 @@ public class CallStackElement {
 		}
 	}
 
-	private boolean isIOQuery() {
+	public boolean isIOQuery() {
 		// that might be a bit ugly, but it saves reference to a boolean and thus memory
 		return signature.charAt(signature.length() - 1) == ' ';
 	}
@@ -109,7 +109,6 @@ public class CallStackElement {
 	 * @return <code>null</code>, if the signature is no method signature (such as 'total') ClassName#methodName
 	 * otherwise
 	 */
-	@JsonIgnore
 	public String getShortSignature() {
 		if (signature.indexOf('(') == -1) {
 			return null;
