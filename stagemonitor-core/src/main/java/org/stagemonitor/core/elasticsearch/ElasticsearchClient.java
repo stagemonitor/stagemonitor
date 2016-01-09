@@ -43,7 +43,7 @@ public class ElasticsearchClient {
 	private final HttpClient httpClient;
 	private final CorePlugin corePlugin;
 
-	private final ThreadPoolExecutor asyncRestPool;
+	private final ThreadPoolExecutor asyncESPool;
 	private Timer timer;
 
 	public ElasticsearchClient() {
@@ -52,11 +52,11 @@ public class ElasticsearchClient {
 
 	public ElasticsearchClient(CorePlugin corePlugin) {
 		this.corePlugin = corePlugin;
-		asyncRestPool = ExecutorUtils
+		asyncESPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-elasticsearch", corePlugin.getThreadPoolQueueCapacityLimit());
 		timer = new Timer("elasticsearch-tasks", true);
 		if (corePlugin.isInternalMonitoringActive()) {
-			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncRestPool, "internal.asyncRestPool");
+			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncESPool, "internal.asyncESPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetric2Registry());
 		}
 		this.httpClient = new HttpClient();
@@ -117,7 +117,7 @@ public class ElasticsearchClient {
 	private Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
 		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
 			try {
-				return asyncRestPool.submit(new Runnable() {
+				return asyncESPool.submit(new Runnable() {
 					@Override
 					public void run() {
 						sendAsJson(method, path, requestBody);
@@ -175,7 +175,7 @@ public class ElasticsearchClient {
 
 	public void sendBulkAsync(final InputStream is) {
 		try {
-			asyncRestPool.submit(new Runnable() {
+			asyncESPool.submit(new Runnable() {
 				@Override
 				public void run() {
 					sendBulk(is);
@@ -275,11 +275,11 @@ public class ElasticsearchClient {
 	}
 
 	public boolean isPoolQueueEmpty() {
-		return asyncRestPool.getQueue().isEmpty();
+		return asyncESPool.getQueue().isEmpty();
 	}
 
 	public void close() {
-		asyncRestPool.shutdown();
+		asyncESPool.shutdown();
 		timer.cancel();
 	}
 
@@ -292,15 +292,13 @@ public class ElasticsearchClient {
 		if (deleteIndicesOlderThanDays > 0) {
 			final TimerTask deleteIndicesTask = new DeleteIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
 					deleteIndicesOlderThanDays, this);
-			deleteIndicesTask.run();
-			timer.schedule(deleteIndicesTask, DateUtils.getNextDateAtHour(0), DateUtils.getDayInMillis());
+			timer.schedule(deleteIndicesTask, 0, DateUtils.getDayInMillis());
 		}
 
 		if (optimizeAndMoveIndicesToColdNodesOlderThanDays > 0) {
 			final TimerTask shardAllocationTask = new ShardAllocationTask(corePlugin.getIndexSelector(), indexPrefix,
 					optimizeAndMoveIndicesToColdNodesOlderThanDays, this, "cold");
-			shardAllocationTask.run();
-			timer.schedule(shardAllocationTask, DateUtils.getNextDateAtHour(0), DateUtils.getDayInMillis());
+			timer.schedule(shardAllocationTask, 0, DateUtils.getDayInMillis());
 		}
 
 		if (optimizeAndMoveIndicesToColdNodesOlderThanDays > 0) {
