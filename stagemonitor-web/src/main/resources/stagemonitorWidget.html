@@ -64,6 +64,7 @@
 				stagemonitorWindow.stagemonitor.openOverlay = function () {
 					stagemonitorOverlay.style.display = "block";
 					stagemonitorWindow.stagemonitor.onOpen();
+					stagemonitorWindow.focus();
 				};
 
 				stagemonitorWindow.stagemonitor.closeOverlay = function () {
@@ -137,6 +138,10 @@
 		border-radius: 1em;
 		padding: 0.5em;
 		cursor: pointer;
+	}
+
+	#stagemonitor-overlay-show:hover {
+		background-color: rgba(0, 0, 0, 0.6);
 	}
 
 	.stagemonitor-threshold-ok {

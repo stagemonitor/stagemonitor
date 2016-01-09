@@ -19,6 +19,7 @@ function renderCallTree(callTree) {
 			var callTree = JSON.parse(stagemonitor.callTree.callStackJson);
 			var callTreeRows = [];
 			processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);
+			assignQueryCountForEachCallTreeRow(callTreeRows);
 			$stagemonitorHome.html("");
 			$stagemonitorHome.html(callTreeTemplate({callTreeRows: callTreeRows}));
 			$(".tip").tooltip();
@@ -57,15 +58,14 @@ function renderCallTree(callTree) {
 					return (e.executionTime / totalExecutionTimeInNs * 100) > thresholdPercent;
 				}).length > 0;
 
-				var shortSignature = getShortSignature(callData.signature);
 				callTreeRows.push({
 					executionTimeExceededThreshold: executionTimePercent > thresholdPercent,
 					anyChildExceedsThreshold: anyChildExceedsThreshold,
 					parentId: parentId,
 					myId: myId,
-					shortSignature: shortSignature,
+					shortSignature: callData.shortSignature,
 					signature: callData.signature,
-					isShortened: shortSignature != callData.signature,
+					ioQuery: callData.ioquery,
 					executionTimePercent: executionTimePercent,
 					executionTimeInNs: callData.executionTime,
 					executionTimeInMs: executionTimeInMs,
@@ -78,13 +78,26 @@ function renderCallTree(callTree) {
 			return myId;
 		}
 
-		function getShortSignature(signature) {
-			if (!/^\S+ \S+\.\S+\(.*\)$/.test(signature)) {
-				// this is no method signature, its probably a SQL statement
-				return signature;
+		/**
+		 * For each callTreeRow count all queries of the underlying child rows.
+		 *
+		 * @param callTreeRows The "processed" callTree from function processCallTree
+		 */
+		function assignQueryCountForEachCallTreeRow(callTreeRows) {
+			for (var i = 0; i < callTreeRows.length; i++) {
+				var queryCount = 0;
+				for (var q = i + 1; q < callTreeRows.length; q++) {
+					if (callTreeRows[q].parentId >= callTreeRows[i].myId) {
+						if (callTreeRows[q].ioQuery) {
+							queryCount++;
+						}
+					} else {
+						break;
+					}
+				}
+				callTreeRows[i].queryCount = queryCount;
 			}
-			var split = signature.substring(0, signature.indexOf('(')).split(".");
-			return split[split.length - 2] + '.' + split[split.length - 1];
 		}
+
 	});
 }
