@@ -23,7 +23,7 @@ public class LoggingPlugin extends StagemonitorPlugin {
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchLogging.json");
-			elasticsearchClient.sendBulk(IOUtils.getResourceAsStream("kibana/Logging.bulk"));
+			elasticsearchClient.sendBulkAsync(IOUtils.getResourceAsStream("kibana/Logging.bulk"));
 		}
 	}
 
