@@ -1,6 +1,6 @@
 {
-  "title": "Host",
-  "originalTitle": "Host",
+	"title": "Host",
+	"originalTitle": "Host Copy",
 	"tags": [],
 	"style": "dark",
 	"timezone": "browser",
@@ -33,7 +33,7 @@
 						"threshold2Color": "rgba(234, 112, 112, 0.22)"
 					},
 					"id": 1,
-					"interval": ">10s",
+					"interval": ">60s",
 					"legend": {
 						"alignAsTable": false,
 						"avg": false,
@@ -134,7 +134,7 @@
 						"threshold2Color": "rgba(234, 112, 112, 0.22)"
 					},
 					"id": 6,
-					"interval": ">10s",
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
@@ -247,7 +247,7 @@
 					"error": false,
 					"format": "none",
 					"id": 2,
-					"interval": ">10s",
+					"interval": ">60s",
 					"links": [],
 					"maxDataPoints": 100,
 					"nullPointMode": "connected",
@@ -317,7 +317,7 @@
 					"error": false,
 					"format": "none",
 					"id": 5,
- 					"interval": ">10s",
+					"interval": ">60s",
 					"links": [],
 					"maxDataPoints": 100,
 					"nullPointMode": "connected",
@@ -387,7 +387,7 @@
 					"error": false,
 					"format": "none",
 					"id": 3,
-					"interval": ">10s",
+					"interval": ">60s",
 					"links": [],
 					"maxDataPoints": 100,
 					"nullPointMode": "connected",
@@ -457,7 +457,7 @@
 					"error": false,
 					"format": "none",
 					"id": 4,
-					"interval": ">10s",
+					"interval": ">60s",
 					"links": [],
 					"maxDataPoints": 100,
 					"nullPointMode": "connected",
@@ -495,13 +495,13 @@
 									"type": "max"
 								}
 							],
-							"query": "name: cpu_queueLength AND application: $Application AND host: $Host AND instance: $Instance",
+							"query": "name: cpu_load AND timeframe: 1m AND application: $Application AND host: $Host AND instance: $Instance",
 							"refId": "A",
 							"timeField": "@timestamp"
 						}
 					],
 					"thresholds": "",
-					"title": "Max Task Queue Length",
+					"title": "Max Load",
 					"type": "singlestat",
 					"valueFontSize": "80%",
 					"valueMaps": [
@@ -511,7 +511,7 @@
 							"value": "null"
 						}
 					],
-					"valueName": "avg"
+					"valueName": "max"
 				}
 			],
 			"title": "New row"
@@ -541,7 +541,7 @@
 						"threshold2Color": "rgba(234, 112, 112, 0.22)"
 					},
 					"id": 7,
-					"interval": ">10s",
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
@@ -568,11 +568,11 @@
 							"bucketAggs": [
 								{
 									"fake": true,
-									"field": "type",
+									"field": "host",
 									"id": "3",
 									"settings": {
 										"order": "desc",
-										"orderBy": "_term",
+										"orderBy": "1",
 										"size": "0"
 									},
 									"type": "terms"
@@ -597,7 +597,7 @@
 									"type": "max"
 								}
 							],
-							"query": "name: mem_usage AND type: (total used) AND application: $Application AND host: $Host AND instance: $Instance",
+							"query": "name: mem_usage_percent AND application: $Application AND host: $Host AND instance: $Instance",
 							"refId": "A",
 							"timeField": "@timestamp"
 						}
@@ -613,7 +613,7 @@
 					"x-axis": true,
 					"y-axis": true,
 					"y_formats": [
-						"bytes",
+						"percent",
 						"short"
 					]
 				},
@@ -637,7 +637,7 @@
 						"threshold2Color": "rgba(234, 112, 112, 0.22)"
 					},
 					"id": 8,
-					"interval": ">10s",
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
@@ -665,11 +665,11 @@
 							"bucketAggs": [
 								{
 									"fake": true,
-									"field": "type",
+									"field": "host",
 									"id": "3",
 									"settings": {
 										"order": "desc",
-										"orderBy": "_term",
+										"orderBy": "1",
 										"size": "0"
 									},
 									"type": "terms"
@@ -694,7 +694,7 @@
 									"type": "max"
 								}
 							],
-							"query": "name: swap_usage AND type: (total used) AND application: $Application AND host: $Host AND instance: $Instance",
+							"query": "name: swap_usage AND type: used AND application: $Application AND host: $Host AND instance: $Instance",
 							"refId": "A",
 							"timeField": "@timestamp"
 						}
@@ -734,7 +734,7 @@
 						"threshold2Color": "rgba(234, 112, 112, 0.22)"
 					},
 					"id": 9,
-					"interval": ">10s",
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
@@ -814,7 +814,7 @@
 					],
 					"timeFrom": null,
 					"timeShift": null,
-					"title": "Swap Pages per second",
+					"title": "Swap Pages per second (max)",
 					"tooltip": {
 						"shared": true,
 						"value_type": "cumulative"
@@ -852,13 +852,15 @@
 						"threshold1": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
 						"threshold2": null,
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"thresholdLine": false
 					},
 					"id": 12,
-					"interval": ">10s",
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
+						"hideZero": true,
 						"max": false,
 						"min": false,
 						"show": true,
@@ -875,8 +877,13 @@
 					"renderer": "flot",
 					"seriesOverrides": [
 						{
-							"alias": "write",
-							"transform": "negative-Y"
+							"alias": "/write/",
+							"transform": "negative-Y",
+							"stack": "A"
+						},
+						{
+							"alias": "/read/",
+							"stack": "B"
 						}
 					],
 					"span": 4,
@@ -890,11 +897,33 @@
 									"field": "type",
 									"id": "3",
 									"settings": {
-										"order": "desc",
+										"order": "asc",
 										"orderBy": "_term",
 										"size": "0"
 									},
 									"type": "terms"
+								},
+								{
+									"fake": true,
+									"field": "host",
+									"id": "5",
+									"settings": {
+										"order": "asc",
+										"orderBy": "1",
+										"size": "0"
+									},
+									"type": "terms"
+								},
+								{
+									"type": "terms",
+									"field": "mountpoint",
+									"id": "6",
+									"fake": true,
+									"settings": {
+										"order": "asc",
+										"size": "0",
+										"orderBy": "_term"
+									}
 								},
 								{
 									"field": "@timestamp",
@@ -927,7 +956,7 @@
 									"type": "derivative"
 								}
 							],
-							"query": "name: disk_io AND application: $Application AND host: $Host AND instance: $Instance",
+							"query": "name: disk_io AND application: $Application AND host: $Host AND instance: $Instance AND mountpoint: $Mountpoint",
 							"refId": "A",
 							"timeField": "@timestamp"
 						}
@@ -937,7 +966,7 @@
 					"title": "Disk I/O per second",
 					"tooltip": {
 						"shared": true,
-						"value_type": "cumulative"
+						"value_type": "individual"
 					},
 					"type": "graph",
 					"x-axis": true,
@@ -967,7 +996,7 @@
 						"threshold2Color": "rgba(234, 112, 112, 0.22)"
 					},
 					"id": 10,
-					"interval": ">10s",
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
@@ -1007,7 +1036,8 @@
 									"field": "@timestamp",
 									"id": "2",
 									"settings": {
-										"interval": "auto"
+										"interval": "auto",
+										"min_doc_count": 0
 									},
 									"type": "date_histogram"
 								}
@@ -1029,7 +1059,7 @@
 					],
 					"timeFrom": null,
 					"timeShift": null,
-					"title": "Disk Usage",
+					"title": "Disk Usage (max)",
 					"tooltip": {
 						"shared": true,
 						"value_type": "cumulative"
@@ -1062,7 +1092,7 @@
 						"threshold2Color": "rgba(234, 112, 112, 0.22)"
 					},
 					"id": 11,
-					"interval": ">10s",
+					"interval": ">60s",
 					"legend": {
 						"alignAsTable": false,
 						"avg": false,
@@ -1126,7 +1156,7 @@
 					],
 					"timeFrom": null,
 					"timeShift": null,
-					"title": "Disk Queue",
+					"title": "Disk Queue (max)",
 					"tooltip": {
 						"shared": true,
 						"value_type": "cumulative"
@@ -1164,14 +1194,14 @@
 						"threshold1": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
 						"threshold2": null,
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"thresholdLine": false
 					},
-					"id": 13,
-					"interval": ">10s",
+					"id": 16,
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
-						"hideEmpty": false,
 						"hideZero": true,
 						"max": false,
 						"min": false,
@@ -1189,8 +1219,13 @@
 					"renderer": "flot",
 					"seriesOverrides": [
 						{
-							"alias": "/write.*/",
-							"transform": "negative-Y"
+							"alias": "/write/",
+							"transform": "negative-Y",
+							"stack": "A"
+						},
+						{
+							"alias": "/read/",
+							"stack": "B"
 						}
 					],
 					"span": 4,
@@ -1198,85 +1233,11 @@
 					"steppedLine": false,
 					"targets": [
 						{
-							"alias": "read {{term ifname}}",
 							"bucketAggs": [
 								{
 									"fake": true,
-									"field": "ifname",
-									"id": "4",
-									"settings": {
-										"order": "asc",
-										"orderBy": "1",
-										"size": "0"
-									},
-									"type": "terms"
-								},
-								{
-									"field": "@timestamp",
-									"id": "2",
-									"settings": {
-										"interval": "auto",
-										"min_doc_count": 0
-									},
-									"type": "date_histogram"
-								}
-							],
-							"dsType": "elasticsearch",
-							"groupBy": [
-								{
-									"params": [
-										"auto"
-									],
-									"type": "time"
-								}
-							],
-							"hide": false,
-							"metrics": [
-								{
-									"field": "value",
-									"hide": true,
-									"id": "1",
-									"meta": {},
-									"settings": {},
-									"type": "avg"
-								},
-								{
-									"field": "1",
-									"id": "5",
-									"meta": {},
-									"pipelineAgg": "1",
-									"settings": {
-										"unit": "second"
-									},
-									"type": "derivative"
-								}
-							],
-							"query": "name: network_io AND type: read AND unit: bytes AND application: $Application AND host: $Host AND instance: $Instance",
-							"refId": "A",
-							"select": [
-								[
-									{
-										"params": [
-											"value"
-										],
-										"type": "field"
-									},
-									{
-										"params": [],
-										"type": "mean"
-									}
-								]
-							],
-							"tags": [],
-							"timeField": "@timestamp"
-						},
-						{
-							"alias": "write {{term ifname}}",
-							"bucketAggs": [
-								{
-									"fake": true,
-									"field": "ifname",
-									"id": "4",
+									"field": "type",
+									"id": "3",
 									"settings": {
 										"order": "asc",
 										"orderBy": "_term",
@@ -1285,6 +1246,28 @@
 									"type": "terms"
 								},
 								{
+									"fake": true,
+									"field": "host",
+									"id": "5",
+									"settings": {
+										"order": "asc",
+										"orderBy": "1",
+										"size": "0"
+									},
+									"type": "terms"
+								},
+								{
+									"type": "terms",
+									"field": "ifname",
+									"id": "6",
+									"fake": true,
+									"settings": {
+										"order": "asc",
+										"size": "0",
+										"orderBy": "_term"
+									}
+								},
+								{
 									"field": "@timestamp",
 									"id": "2",
 									"settings": {
@@ -1295,7 +1278,6 @@
 								}
 							],
 							"dsType": "elasticsearch",
-							"hide": false,
 							"metrics": [
 								{
 									"field": "value",
@@ -1303,11 +1285,11 @@
 									"id": "1",
 									"meta": {},
 									"settings": {},
-									"type": "avg"
+									"type": "max"
 								},
 								{
 									"field": "1",
-									"id": "3",
+									"id": "4",
 									"meta": {},
 									"pipelineAgg": "1",
 									"settings": {
@@ -1316,8 +1298,8 @@
 									"type": "derivative"
 								}
 							],
-							"query": "name: network_io AND type: write AND unit: bytes AND application: $Application AND host: $Host AND instance: $Instance",
-							"refId": "B",
+							"query": "name: network_io AND unit: bytes AND application: $Application AND host: $Host AND instance: $Instance AND ifname: $Ifname",
+							"refId": "A",
 							"timeField": "@timestamp"
 						}
 					],
@@ -1326,7 +1308,7 @@
 					"title": "Network I/O per second",
 					"tooltip": {
 						"shared": true,
-						"value_type": "cumulative"
+						"value_type": "individual"
 					},
 					"type": "graph",
 					"x-axis": true,
@@ -1353,13 +1335,15 @@
 						"threshold1": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
 						"threshold2": null,
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"thresholdLine": false
 					},
-					"id": 14,
-					"interval": ">10s",
+					"id": 17,
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
+						"hideZero": true,
 						"max": false,
 						"min": false,
 						"show": true,
@@ -1376,8 +1360,13 @@
 					"renderer": "flot",
 					"seriesOverrides": [
 						{
-							"alias": "/write.*/",
-							"transform": "negative-Y"
+							"alias": "/write/",
+							"transform": "negative-Y",
+							"stack": "A"
+						},
+						{
+							"alias": "/read/",
+							"stack": "B"
 						}
 					],
 					"span": 4,
@@ -1385,18 +1374,39 @@
 					"steppedLine": false,
 					"targets": [
 						{
-							"alias": "read {{term ifname}}",
 							"bucketAggs": [
 								{
 									"fake": true,
-									"field": "ifname",
+									"field": "type",
 									"id": "3",
+									"settings": {
+										"order": "asc",
+										"orderBy": "_term",
+										"size": "0"
+									},
+									"type": "terms"
+								},
+								{
+									"fake": true,
+									"field": "host",
+									"id": "5",
 									"settings": {
 										"order": "asc",
 										"orderBy": "1",
 										"size": "0"
 									},
 									"type": "terms"
+								},
+								{
+									"type": "terms",
+									"field": "ifname",
+									"id": "6",
+									"fake": true,
+									"settings": {
+										"order": "asc",
+										"size": "0",
+										"orderBy": "_term"
+									}
 								},
 								{
 									"field": "@timestamp",
@@ -1409,14 +1419,6 @@
 								}
 							],
 							"dsType": "elasticsearch",
-							"groupBy": [
-								{
-									"params": [
-										"auto"
-									],
-									"type": "time"
-								}
-							],
 							"metrics": [
 								{
 									"field": "value",
@@ -1424,7 +1426,7 @@
 									"id": "1",
 									"meta": {},
 									"settings": {},
-									"type": "avg"
+									"type": "max"
 								},
 								{
 									"field": "1",
@@ -1437,95 +1439,8 @@
 									"type": "derivative"
 								}
 							],
-							"query": "name: network_io AND type: read AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance",
+							"query": "name: network_io AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance AND ifname: $Ifname",
 							"refId": "A",
-							"select": [
-								[
-									{
-										"params": [
-											"value"
-										],
-										"type": "field"
-									},
-									{
-										"params": [],
-										"type": "mean"
-									}
-								]
-							],
-							"tags": [],
-							"timeField": "@timestamp"
-						},
-						{
-							"alias": "write {{term ifname}}",
-							"bucketAggs": [
-								{
-									"fake": true,
-									"field": "ifname",
-									"id": "3",
-									"settings": {
-										"order": "asc",
-										"orderBy": "1",
-										"size": "0"
-									},
-									"type": "terms"
-								},
-								{
-									"field": "@timestamp",
-									"id": "2",
-									"settings": {
-										"interval": "auto",
-										"min_doc_count": 0
-									},
-									"type": "date_histogram"
-								}
-							],
-							"dsType": "elasticsearch",
-							"groupBy": [
-								{
-									"params": [
-										"auto"
-									],
-									"type": "time"
-								}
-							],
-							"metrics": [
-								{
-									"field": "value",
-									"hide": true,
-									"id": "1",
-									"meta": {},
-									"settings": {},
-									"type": "avg"
-								},
-								{
-									"field": "1",
-									"id": "4",
-									"meta": {},
-									"pipelineAgg": "1",
-									"settings": {
-										"unit": "second"
-									},
-									"type": "derivative"
-								}
-							],
-							"query": "name: network_io AND type: write AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance",
-							"refId": "B",
-							"select": [
-								[
-									{
-										"params": [
-											"value"
-										],
-										"type": "field"
-									},
-									{
-										"params": [],
-										"type": "mean"
-									}
-								]
-							],
-							"tags": [],
 							"timeField": "@timestamp"
 						}
 					],
@@ -1540,7 +1455,7 @@
 					"x-axis": true,
 					"y-axis": true,
 					"y_formats": [
-						"none",
+						"bytes",
 						"short"
 					]
 				},
@@ -1561,13 +1476,15 @@
 						"threshold1": null,
 						"threshold1Color": "rgba(216, 200, 27, 0.27)",
 						"threshold2": null,
-						"threshold2Color": "rgba(234, 112, 112, 0.22)"
+						"threshold2Color": "rgba(234, 112, 112, 0.22)",
+						"thresholdLine": false
 					},
-					"id": 15,
-					"interval": ">10s",
+					"id": 18,
+					"interval": ">60s",
 					"legend": {
 						"avg": false,
 						"current": false,
+						"hideZero": true,
 						"max": false,
 						"min": false,
 						"show": true,
@@ -1584,8 +1501,13 @@
 					"renderer": "flot",
 					"seriesOverrides": [
 						{
-							"alias": "/write.*/",
-							"transform": "negative-Y"
+							"alias": "/write/",
+							"transform": "negative-Y",
+							"stack": "A"
+						},
+						{
+							"alias": "/read/",
+							"stack": "B"
 						}
 					],
 					"span": 4,
@@ -1593,18 +1515,39 @@
 					"steppedLine": false,
 					"targets": [
 						{
-							"alias": "read {{term ifname}}",
 							"bucketAggs": [
 								{
 									"fake": true,
-									"field": "ifname",
-									"id": "4",
+									"field": "type",
+									"id": "3",
+									"settings": {
+										"order": "asc",
+										"orderBy": "_term",
+										"size": "0"
+									},
+									"type": "terms"
+								},
+								{
+									"fake": true,
+									"field": "host",
+									"id": "5",
 									"settings": {
 										"order": "asc",
 										"orderBy": "1",
 										"size": "0"
 									},
 									"type": "terms"
+								},
+								{
+									"type": "terms",
+									"field": "ifname",
+									"id": "6",
+									"fake": true,
+									"settings": {
+										"order": "asc",
+										"size": "0",
+										"orderBy": "_term"
+									}
 								},
 								{
 									"field": "@timestamp",
@@ -1617,14 +1560,6 @@
 								}
 							],
 							"dsType": "elasticsearch",
-							"groupBy": [
-								{
-									"params": [
-										"auto"
-									],
-									"type": "time"
-								}
-							],
 							"metrics": [
 								{
 									"field": "value",
@@ -1632,11 +1567,11 @@
 									"id": "1",
 									"meta": {},
 									"settings": {},
-									"type": "avg"
+									"type": "max"
 								},
 								{
 									"field": "1",
-									"id": "5",
+									"id": "4",
 									"meta": {},
 									"pipelineAgg": "1",
 									"settings": {
@@ -1645,101 +1580,14 @@
 									"type": "derivative"
 								}
 							],
-							"query": "name: network_io AND type: read AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance",
+							"query": "name: network_io AND unit: dropped AND application: $Application AND host: $Host AND instance: $Instance AND ifname: $Ifname",
 							"refId": "A",
-							"select": [
-								[
-									{
-										"params": [
-											"value"
-										],
-										"type": "field"
-									},
-									{
-										"params": [],
-										"type": "mean"
-									}
-								]
-							],
-							"tags": [],
-							"timeField": "@timestamp"
-						},
-						{
-							"alias": "write {{term ifname}}",
-							"bucketAggs": [
-								{
-									"fake": true,
-									"field": "ifname",
-									"id": "4",
-									"settings": {
-										"order": "asc",
-										"orderBy": "1",
-										"size": "0"
-									},
-									"type": "terms"
-								},
-								{
-									"field": "@timestamp",
-									"id": "2",
-									"settings": {
-										"interval": "auto",
-										"min_doc_count": 0
-									},
-									"type": "date_histogram"
-								}
-							],
-							"dsType": "elasticsearch",
-							"groupBy": [
-								{
-									"params": [
-										"auto"
-									],
-									"type": "time"
-								}
-							],
-							"metrics": [
-								{
-									"field": "value",
-									"hide": true,
-									"id": "1",
-									"meta": {},
-									"settings": {},
-									"type": "avg"
-								},
-								{
-									"field": "1",
-									"id": "5",
-									"meta": {},
-									"pipelineAgg": "1",
-									"settings": {
-										"unit": "second"
-									},
-									"type": "derivative"
-								}
-							],
-							"query": "name: network_io AND type: write AND unit: errors AND application: $Application AND host: $Host AND instance: $Instance",
-							"refId": "B",
-							"select": [
-								[
-									{
-										"params": [
-											"value"
-										],
-										"type": "field"
-									},
-									{
-										"params": [],
-										"type": "mean"
-									}
-								]
-							],
-							"tags": [],
 							"timeField": "@timestamp"
 						}
 					],
 					"timeFrom": null,
 					"timeShift": null,
-					"title": "Network Packets Dropped per second",
+					"title": "Network Packet Dropped per second",
 					"tooltip": {
 						"shared": true,
 						"value_type": "individual"
@@ -1748,7 +1596,7 @@
 					"x-axis": true,
 					"y-axis": true,
 					"y_formats": [
-						"none",
+						"bytes",
 						"short"
 					]
 				}
@@ -1829,6 +1677,29 @@
 				"refresh": true,
 				"refresh_on_load": false,
 				"type": "query"
+			},
+			{
+				"type": "query",
+				"datasource": "ES stagemonitor",
+				"refresh": true,
+				"name": "Mountpoint",
+				"includeAll": true,
+				"allFormat": "lucene",
+				"multi": false,
+				"multiFormat": "lucene",
+				"query": "{\"find\": \"terms\", \"field\": \"mountpoint\"}"
+			},
+			{
+				"type": "query",
+				"datasource": "ES stagemonitor",
+				"refresh": true,
+				"name": "Ifname",
+				"includeAll": true,
+				"allFormat": "lucene",
+				"multi": false,
+				"multiFormat": "lucene",
+				"query": "{\"find\": \"terms\", \"field\": \"ifname\"}",
+				"label": "Interface Name"
 			}
 		]
 	},
