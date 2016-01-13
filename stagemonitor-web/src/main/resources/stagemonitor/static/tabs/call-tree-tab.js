@@ -17,9 +17,9 @@ function renderCallTree(callTree) {
 		if (stagemonitor.callTree && stagemonitor.callTree.callStackJson !== undefined) {
 			$callStackTab.show();
 			var callTree = JSON.parse(stagemonitor.callTree.callStackJson);
+			calculateQueryCount(callTree);
 			var callTreeRows = [];
 			processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);
-			assignQueryCountForEachCallTreeRow(callTreeRows);
 			$stagemonitorHome.html("");
 			$stagemonitorHome.html(callTreeTemplate({callTreeRows: callTreeRows}));
 			$(".tip").tooltip();
@@ -66,6 +66,7 @@ function renderCallTree(callTree) {
 					shortSignature: callData.shortSignature,
 					signature: callData.signature,
 					ioQuery: callData.ioquery,
+					queryCount: callData.queryCount,
 					executionTimePercent: executionTimePercent,
 					executionTimeInNs: callData.executionTime,
 					executionTimeInMs: executionTimeInMs,
@@ -78,24 +79,23 @@ function renderCallTree(callTree) {
 			return myId;
 		}
 
-		/**
-		 * For each callTreeRow count all queries of the underlying child rows.
-		 *
-		 * @param callTreeRows The "processed" callTree from function processCallTree
-		 */
-		function assignQueryCountForEachCallTreeRow(callTreeRows) {
-			for (var i = 0; i < callTreeRows.length; i++) {
-				var queryCount = 0;
-				for (var q = i + 1; q < callTreeRows.length; q++) {
-					if (callTreeRows[q].parentId >= callTreeRows[i].myId) {
-						if (callTreeRows[q].ioQuery) {
-							queryCount++;
-						}
-					} else {
-						break;
-					}
-				}
-				callTreeRows[i].queryCount = queryCount;
+		function calculateQueryCount(node) {
+			node.queryCount = 0;
+			var childrenQueryCount = 0;
+			for (var i = 0; i < node.children.length; i++) {
+				var child = node.children[i];
+				child.parent = node;
+				calculateQueryCount(child);
+				if (child.ioquery) childrenQueryCount++;
+			}
+			incrementQueryCountForParents(node, childrenQueryCount)
+		}
+
+		function incrementQueryCountForParents(node, count) {
+			if (count == 0) return;
+			node.queryCount += count;
+			if (node.parent) {
+				incrementQueryCountForParents(node.parent, count);
 			}
 		}
 
