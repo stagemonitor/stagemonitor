@@ -56,7 +56,13 @@ function renderRequestTab(requestTrace) {
 			"exceptionMessage": {name: "Exception message", description: "The message of the thrown exception. (Only present, if there was a exception)"},
 			"exceptionStackTrace": {name: "Exception stack trace", description: ""},
 			"stackTrace": {name: "Stacktrace", descrption: "The full stack trace of the thrown exception. (Only present, if there was a exception)"},
-			"parameter": {name: "Parameters", description: "The query sting of the request. You can obfuscate sensitive parameters."},
+			"parameters": {name: "Parameters", description: "The query sting of the request. You can obfuscate sensitive parameters.", formatter: function(params) {
+				var value = "";
+				for (var key in params) {
+					value += ", " + key + ": " + params[key];
+				}
+				return value.substring(2);
+			}},
 			"clientIp": {name: "Client IP", description: "The IP of the client who initiated the HTTP request."},
 			"url": {name: "URL", description: "The requested URL."},
 			"statusCode": {name: "Status code", description: "The HTTP status code of a request."},
@@ -66,13 +72,14 @@ function renderRequestTab(requestTrace) {
 			"host": {name: "Host accessing", description: "The name of the host of the server that handled the request."},
 			"instance": {name: "Instance", description: "The name of the instance of the application that handled the request. The instance name is useful, if you have different environments for the same application (maybe even on the same host). However, it leads to errors if you have a application with the same instance name on the same host. By default, the instance name is the domain name of the server and it is obtained from the first incoming request. You can also choose to set a fixed instance name."}
 		};
-		var excludedProperties = ["callStackJson", "headers", "userAgent"];
+		var excludedProperties = ["callStackJson", "headers", "userAgent", "pageLoadTime"];
 		var metrics = [];
 		for (var key in requestData) {
 			var isKeyIncluded = excludedProperties.indexOf(key) === -1;
 			if (isKeyIncluded) {
 				var nameAndDescription = commonNames[key] || {name: key, description: ""};
-				var thresholdExceeded = exceededThreshold(key, requestData[key])
+				var valueFormatter = nameAndDescription.formatter || function(val) { return val.toString(); };
+				var thresholdExceeded = exceededThreshold(key, requestData[key]);
 				if (thresholdExceeded) {
 					thresholdExceededGlobal = true;
 				}
@@ -81,7 +88,7 @@ function renderRequestTab(requestTrace) {
 					key: key,
 					name: nameAndDescription.name,
 					description: nameAndDescription.description,
-					value: requestData[key].toString(),
+					value: valueFormatter(requestData[key]),
 					exceededThreshold: thresholdExceeded
 				});
 			}
