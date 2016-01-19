@@ -78,7 +78,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.description("Defines after how many requests to a URL group a call tree should be collected.")
 			.defaultValue(1)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.label("deprecated")
+			.tags("deprecated")
 			.build();
 	private final ConfigurationOption<Boolean> logCallStacks = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.logCallStacks")

@@ -50,7 +50,8 @@
 														The password that is required to dynamically update the configuration via the configuration endpoint.
 														If not set (default) updating the configuration is disabled (reloading is always enabled, though).
 														If set, you have to include the password here in order to update the configuration.
-														If the password is set to an empty string, the password is not required."></span>
+														If the password is set to an empty string, the password is not required.
+														Beware that you can't disable the widget if the password is set to an empty string."></span>
 				{{#unless passwordSet}}
 									<span class="tip glyphicon glyphicon-flash" data-toggle="tooltip"
 										  data-placement="left"

@@ -105,8 +105,10 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.key("stagemonitor.web.widget.enabled")
 			.dynamic(true)
 			.label("In browser widget enabled")
-			.description("If active, stagemonitor will inject a widget in the web site containing the calltrace " +
-					"metrics.\n" +
+			.description("If active, stagemonitor will inject a widget in the web site containing the call tree. " +
+					"If disabled, you can still enable it for authorized users by sending the HTTP header " +
+					"`X-Stagemonitor-Show-Widget: <stagemonitor.password>`. You can use browser plugins like Modify " +
+					"Headers for this. Note: if `stagemonitor.password` is set to an empty string, you can't disable the widget.\n" +
 					"Requires Servlet-Api >= 3.0")
 			.defaultValue(true)
 			.configurationCategory(WEB_PLUGIN)
