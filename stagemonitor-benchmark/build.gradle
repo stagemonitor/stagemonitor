@@ -32,6 +32,11 @@ dependencies {
 
 task exportConfigurationOptions(dependsOn: 'classes', type: JavaExec) {
 	main = 'org.stagemonitor.ConfigurationSourceExporter'
-	classpath = sourceSets.main.runtimeClasspath
+	classpath = sourceSets.test.runtimeClasspath
 	args "$buildDir/configuration-options.json"
+}
+
+task exportMarkdownConfigurationOptions(dependsOn: 'classes', type: JavaExec) {
+	main = 'org.stagemonitor.ConfigurationOptionsMarkdownExporter'
+	classpath = sourceSets.test.runtimeClasspath
 }

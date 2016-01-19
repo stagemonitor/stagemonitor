@@ -14,6 +14,10 @@ public class ConfigurationOptionsMarkdownExporter {
 		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new Configuration(StagemonitorPlugin.class).getConfigurationOptionsByCategory();
 
 		StringBuilder markdown = new StringBuilder();
+		for (String pluginName : configurationOptionsByPlugin.keySet()) {
+			markdown.append("* [").append(pluginName).append("](#").append(pluginName.toLowerCase().replace(' ', '-')).append(")\n");
+		}
+		markdown.append("\n");
 		for (Map.Entry<String, List<ConfigurationOption<?>>> entry : configurationOptionsByPlugin.entrySet()) {
 			markdown.append("# ").append(entry.getKey()).append("\n\n");
 			for (ConfigurationOption<?> configurationOption : entry.getValue()) {
