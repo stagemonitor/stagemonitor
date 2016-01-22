@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
 import javax.servlet.http.HttpServletRequest;
 
 import org.stagemonitor.core.Stagemonitor;
@@ -21,16 +19,14 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
-import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
-	private static boolean determineRequestNameImmediately = false;
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
@@ -64,28 +60,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		final String method = httpServletRequest.getMethod();
 		final String sessionId = httpServletRequest.getRequestedSessionId();
 		final String connectionId = httpServletRequest.getHeader(RequestTraceServlet.CONNECTION_ID);
-		final RequestTrace.GetNameCallback nameCallback;
-		if (determineRequestNameImmediately()) {
-			final String requestName = getRequestName();
-			nameCallback = new RequestTrace.GetNameCallback() {
-				@Override
-				public String getName() {
-					return requestName;
-				}
-			};
-		} else {
-			nameCallback = new RequestTrace.GetNameCallback() {
-				@Override
-				public String getName() {
-					return getRequestName();
-				}
-			};
-		}
 		final String requestId = (String) httpServletRequest.getAttribute(MDCListener.STAGEMONITOR_REQUEST_ID_ATTR);
 		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
-		HttpRequestTrace request = new HttpRequestTrace(requestId, nameCallback, url, headers, method, sessionId,
+		HttpRequestTrace request = new HttpRequestTrace(requestId, url, headers, method, sessionId,
 				connectionId, isShowWidgetAllowed);
 
+		request.setName(getRequestName());
 		String clientIp = getClientIp(httpServletRequest);
 		if (configuration.getConfig(RequestMonitorPlugin.class).isAnonymizeIPs()) {
 			clientIp = IPAnonymizationUtils.anonymize(clientIp);
@@ -95,21 +75,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		request.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
 
 		return request;
-	}
-
-	/**
-	 * In some servers, like WildFly, it is not possible to determine the request name later, because the
-	 * {@link HttpServletRequest} is in a different state.
-	 * <p/>
-	 * For example: {@link javax.servlet.http.HttpServletRequest#getRequestURI()} initially returns '/owners/find.html',
-	 * but after the execution, the request has a {@link javax.servlet.http.HttpServletRequest#getDispatcherType()} of
-	 * {@link javax.servlet.DispatcherType#FORWARD} and {@link javax.servlet.http.HttpServletRequest#getRequestURI()}
-	 * returns '/WEB-INF/jsp/owners/findOwners.jsp'
-	 *
-	 * @return <code>true</code>, if the request name has to be determined immediately, <code>false</code> otherwise
-	 */
-	private boolean determineRequestNameImmediately() {
-		return determineRequestNameImmediately;
 	}
 
 	public static String getClientIp(HttpServletRequest request) {
@@ -133,7 +98,11 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	public String getRequestName() {
-		return getRequestNameByRequest(httpServletRequest, webPlugin);
+		if (webPlugin.isMonitorOnlySpringMvcRequests() || webPlugin.isMonitorOnlyResteasyRequests()) {
+			return null;
+		} else {
+			return getRequestNameByRequest(httpServletRequest, webPlugin);
+		}
 	}
 
 	public static String getRequestNameByRequest(HttpServletRequest request, WebPlugin webPlugin) {
@@ -238,17 +207,5 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	@Override
 	public boolean isMonitorForwardedExecutions() {
 		return true;
-	}
-
-	public static class StagemonitorServletContextListener implements ServletContextListener {
-
-		@Override
-		public void contextInitialized(ServletContextEvent sce) {
-			determineRequestNameImmediately = sce.getServletContext().getServerInfo().contains("WildFly");
-		}
-
-		@Override
-		public void contextDestroyed(ServletContextEvent sce) {
-		}
 	}
 }

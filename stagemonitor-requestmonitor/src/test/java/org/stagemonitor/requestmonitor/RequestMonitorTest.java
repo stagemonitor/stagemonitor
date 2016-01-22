@@ -118,25 +118,23 @@ public class RequestMonitorTest {
 		@SuppressWarnings("unchecked")
 		final MonitoredRequest<RequestTrace> monitoredRequest = mock(MonitoredRequest.class);
 		when(monitoredRequest.execute()).thenReturn("test");
-		when(monitoredRequest.createRequestTrace()).thenReturn(new RequestTrace(null, new RequestTrace.GetNameCallback() {
-			@Override
-			public String getName() {
-				return "test";
-			}
-		}));
+		final RequestTrace requestTrace = new RequestTrace("1");
+		requestTrace.setName("test");
+		when(monitoredRequest.createRequestTrace()).thenReturn(requestTrace);
+
 		return monitoredRequest;
 	}
 
 	@Test
 	public void testProfileThisExecutionDeactive() throws Exception {
-		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(0);
+		when(requestMonitorPlugin.getCollectCallTreeEveryNRequests()).thenReturn(0);
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getRequestTrace().getCallStack());
 	}
 
 	@Test
 	public void testProfileThisExecutionAlwaysActive() throws Exception {
-		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(1);
+		when(requestMonitorPlugin.getCollectCallTreeEveryNRequests()).thenReturn(1);
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNotNull(monitor.getRequestTrace().getCallStack());
 	}
@@ -161,10 +159,10 @@ public class RequestMonitorTest {
 	}
 
 	private void testProfileThisExecutionHelper(int callStackEveryXRequestsToGroup, long timerCount, boolean callStackExpected) throws Exception {
-		when(requestMonitorPlugin.getCallStackEveryXRequestsToGroup()).thenReturn(callStackEveryXRequestsToGroup);
+		when(requestMonitorPlugin.getCollectCallTreeEveryNRequests()).thenReturn(callStackEveryXRequestsToGroup);
 		final Timer timer = mock(Timer.class);
 		when(timer.getCount()).thenReturn(timerCount);
-		when(registry.timer(name("response_time_server").tag("request_name", "test").layer("All").build())).thenReturn(timer);
+		when(registry.timer(name("response_time_server").tag("request_name", "All").layer("All").build())).thenReturn(timer);
 
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		if (callStackExpected) {

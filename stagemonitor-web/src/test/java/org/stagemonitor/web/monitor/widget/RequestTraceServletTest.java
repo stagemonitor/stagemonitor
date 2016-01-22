@@ -22,7 +22,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
@@ -42,12 +41,8 @@ public class RequestTraceServletTest {
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		requestTraceServlet = new RequestTraceServlet(configuration, 1500);
 		connectionId = UUID.randomUUID().toString();
-		httpRequestTrace = new HttpRequestTrace(null, new RequestTrace.GetNameCallback() {
-			@Override
-			public String getName() {
-				return "test";
-			}
-		}, "/test", Collections.<String, String>emptyMap(), "GET", null, connectionId, true);
+		httpRequestTrace = new HttpRequestTrace(null, "/test", Collections.<String, String>emptyMap(), "GET", null, connectionId, true);
+		httpRequestTrace.setName("test");
 	}
 
 	@Test

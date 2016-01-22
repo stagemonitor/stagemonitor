@@ -1,18 +1,20 @@
 package org.stagemonitor.web.monitor.resteasy;
 
+import java.lang.reflect.Method;
+
 import javassist.CtClass;
 import org.jboss.resteasy.core.ResourceInvoker;
+import org.jboss.resteasy.core.ResourceMethodInvoker;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
+import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.web.WebPlugin;
 
 /**
  * A {@link StagemonitorJavassistInstrumenter} implementation for naming Resteasy requests.
  */
 public class ResteasyRequestNameDeterminerInstrumenter extends StagemonitorJavassistInstrumenter {
-	private static WebPlugin webPlugin = Stagemonitor.getConfiguration(WebPlugin.class);
 	private static RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getConfiguration(RequestMonitorPlugin.class);
 
 	@Override
@@ -24,7 +26,7 @@ public class ResteasyRequestNameDeterminerInstrumenter extends StagemonitorJavas
 	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
 		ctClass.getDeclaredMethod("getResourceInvoker")
 				.insertAfter(
-						"com.cerner.beadledom.stagemonitor.request.ResteasyRequestNameDeterminerInstrumenter"
+						"org.stagemonitor.web.monitor.resteasy.ResteasyRequestNameDeterminerInstrumenter"
 								+ "setRequestNameByInvoker($_);");
 	}
 
@@ -33,21 +35,28 @@ public class ResteasyRequestNameDeterminerInstrumenter extends StagemonitorJavas
 	 */
 	public static void setRequestNameByInvoker(ResourceInvoker invoker) {
 		if (RequestMonitor.getRequest() != null) {
-			String requestName = "";
-			if (invoker != null) {
-				requestName = ResteasyMonitoredHttpRequest.getRequestNameFromInvoker(invoker,
+			String requestName = getRequestNameFromInvoker(invoker,
 						requestMonitorPlugin.getBusinessTransactionNamingStrategy());
-			}
-			// requests with empty names don't get monitored
-			// requestNames with non null values don't get overwritten and avoid GetNameCallback#getName to be called
-			if (!requestName.isEmpty() || webPlugin.isMonitorOnlyResteasyRequests()) {
+			if (requestName != null) {
 				RequestMonitor.getRequest().setName(requestName);
 			}
 		}
 	}
 
-	static void setWebPlugin(WebPlugin webPlugin) {
-		ResteasyRequestNameDeterminerInstrumenter.webPlugin = webPlugin;
+	/**
+	 * Gets the Resteasy request name using the given {@link org.jboss.resteasy.core.ResourceInvoker} to lookup the Resteasy resource class and
+	 * method.
+	 *
+	 * <p>The naming strategy can be specified by the {@code businessTransactionNamingStrategy} parameter. Acceptable
+	 * values can be found in {@link org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy}.
+	 */
+	private static String getRequestNameFromInvoker(ResourceInvoker invoker, BusinessTransactionNamingStrategy businessTransactionNamingStrategy) {
+		if (invoker != null && invoker instanceof ResourceMethodInvoker) {
+			Method resourceMethod = invoker.getMethod();
+			return businessTransactionNamingStrategy.getBusinessTransationName(
+					resourceMethod.getDeclaringClass().getSimpleName(), resourceMethod.getName());
+		}
+		return null;
 	}
 
 	static void setRequestMonitorPlugin(RequestMonitorPlugin requestMonitorPlugin) {

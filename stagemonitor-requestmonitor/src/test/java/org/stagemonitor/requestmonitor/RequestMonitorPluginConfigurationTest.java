@@ -41,7 +41,7 @@ public class RequestMonitorPluginConfigurationTest {
 		assertEquals(true, config.isCollectRequestStats());
 		assertEquals(false, config.isCollectCpuTime());
 
-		assertEquals(1, config.getCallStackEveryXRequestsToGroup());
+		assertEquals(1, config.getCollectCallTreeEveryNRequests());
 		assertEquals(false, config.isLogCallStacks());
 	}
 }

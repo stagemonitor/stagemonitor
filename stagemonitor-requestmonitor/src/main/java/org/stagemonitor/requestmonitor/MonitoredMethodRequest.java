@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
@@ -22,13 +23,8 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
 	@Override
 	public RequestTrace createRequestTrace() {
-		RequestTrace requestTrace = new RequestTrace(null, new RequestTrace.GetNameCallback() {
-			@Override
-			public String getName() {
-				return methodSignature;
-			}
-		});
-
+		RequestTrace requestTrace = new RequestTrace(UUID.randomUUID().toString());
+		requestTrace.setName(methodSignature);
 		if (parameters != null && parameters.length > 0) {
 			Map<String, String> params = new HashMap<String, String>();
 			for (int i = 0; i < parameters.length; i++) {

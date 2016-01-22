@@ -71,14 +71,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(0.5)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Integer> callStackEveryXRequestsToGroup = ConfigurationOption.integerOption()
-			.key("stagemonitor.profiler.callStackEveryXRequestsToGroup")
+	private final ConfigurationOption<Integer> collectCallTreeEveryNRequests = ConfigurationOption.integerOption()
+			.key("stagemonitor.profiler.collectCallTreeEveryNRequests")
 			.dynamic(true)
-			.label("Gather call tree every x requests to URL group")
-			.description("Defines after how many requests to a URL group a call tree should be collected.")
+			.label("Collect call tree every n requests")
+			.description("Defines how often a call tree should be collected.")
 			.defaultValue(1)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.tags("deprecated")
 			.build();
 	private final ConfigurationOption<Boolean> logCallStacks = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.logCallStacks")
@@ -211,8 +210,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return minExecutionTimeNanos.getValue();
 	}
 
-	public int getCallStackEveryXRequestsToGroup() {
-		return callStackEveryXRequestsToGroup.getValue();
+	public int getCollectCallTreeEveryNRequests() {
+		return collectCallTreeEveryNRequests.getValue();
 	}
 
 	public boolean isLogCallStacks() {

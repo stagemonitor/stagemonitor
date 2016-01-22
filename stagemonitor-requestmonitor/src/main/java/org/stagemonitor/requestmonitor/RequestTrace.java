@@ -29,7 +29,6 @@ public class RequestTrace {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final String id;
-	private final GetNameCallback getNameCallback;
 	private String name;
 	@JsonIgnore
 	private CallStackElement callStack;
@@ -55,17 +54,16 @@ public class RequestTrace {
 	private String clientIp;
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
 
-	public RequestTrace(String requestId, GetNameCallback getNameCallback) {
-		this(requestId, getNameCallback, Stagemonitor.getMeasurementSession());
+	public RequestTrace(String requestId) {
+		this(requestId, Stagemonitor.getMeasurementSession());
 	}
 
-	public RequestTrace(String requestId, GetNameCallback getNameCallback, MeasurementSession measurementSession) {
+	public RequestTrace(String requestId, MeasurementSession measurementSession) {
 		this.id = requestId != null ? requestId : UUID.randomUUID().toString();
-		measurementStart = measurementSession.getStartTimestamp();
-		application = measurementSession.getApplicationName();
-		host = measurementSession.getHostName();
-		instance = measurementSession.getInstanceName();
-		this.getNameCallback = getNameCallback;
+		this.measurementStart = measurementSession.getStartTimestamp();
+		this.application = measurementSession.getApplicationName();
+		this.host = measurementSession.getHostName();
+		this.instance = measurementSession.getInstanceName();
 		this.timestamp = StringUtils.dateAsIsoString(new Date());
 	}
 
@@ -105,28 +103,23 @@ public class RequestTrace {
 		return JsonUtils.toJson(callStack);
 	}
 
+	/**
+	 * The name of the request (e.g. 'Show Item Detail').
+	 * <p/>
+	 * If the name is not set when the requests ends, it won't be considered for the measurements and reportings.
+	 * @return The name of the request
+	 */
 	public String getName() {
-		if (name == null) {
-			name = getNameCallback.getName();
-		}
 		return name;
 	}
 
 	/**
-	 * Sets the name of the request (e.g. 'Show Item Detail'). It is only possible to set the name, if it has not
-	 * already been set.
+	 * Sets the name of the request (e.g. 'Show Item Detail'). The name can be overridden and set any time.
 	 *
 	 * @param name the name of the request
-	 * @return <code>true</code>, if the name was successfully set, <code>false</code> if the name could not be set,
-	 * because it has already been set.
 	 */
-	public boolean setName(String name) {
-		if (this.name != null) {
-			logger.warn("Name is already set ({}), can't overwrite it with '{}'.", this.name, name);
-			return false;
-		}
+	public void setName(String name) {
 		this.name = name;
-		return true;
 	}
 
 	public long getExecutionTime() {
@@ -298,22 +291,4 @@ public class RequestTrace {
 		customProperties.put(key, value);
 	}
 
-	/**
-	 * Determining the request name before the execution starts can be slow. For example
-	 * org.springframework.web.servlet.HandlerMapping#getHandler takes a few milliseconds to return the MVC controller
-	 * method that will handle the request.
-	 * <p/>
-	 * So the request name should be lazily initialized. If there is no lazy initialisation before the execution, the
-	 * request name can may be determined in a more efficient way, for example by weaving an Aspect around
-	 * HandlerMapping#getHandler that is called by Spring as a part of Spring's dispatching mechanism.
-	 */
-	public interface GetNameCallback {
-
-		/**
-		 * Gets the name of the request.
-		 *
-		 * @return the name of the request. For Example 'Show Item Details'.
-		 */
-		String getName();
-	}
 }

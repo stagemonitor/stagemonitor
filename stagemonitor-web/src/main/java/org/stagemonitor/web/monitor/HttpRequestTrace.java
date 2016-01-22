@@ -38,9 +38,9 @@ public class HttpRequestTrace extends RequestTrace {
 	@JsonIgnore
 	private final boolean showWidgetAllowed;
 
-	public HttpRequestTrace(String requestId, GetNameCallback getNameCallback, String url, Map<String, String> headers, String method,
+	public HttpRequestTrace(String requestId, String url, Map<String, String> headers, String method,
 							String sessionId, String connectionId, boolean showWidgetAllowed) {
-		super(requestId, getNameCallback);
+		super(requestId);
 		this.url = url;
 		this.headers = headers;
 		this.sessionId = sessionId;

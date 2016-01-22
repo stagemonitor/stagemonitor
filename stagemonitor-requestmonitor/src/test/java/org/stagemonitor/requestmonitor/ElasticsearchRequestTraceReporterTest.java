@@ -52,12 +52,8 @@ public class ElasticsearchRequestTraceReporterTest {
 	@Test
 	public void testLogReportRequestTrace() throws Exception {
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
-		final RequestTrace requestTrace = new RequestTrace("abc", new RequestTrace.GetNameCallback() {
-			@Override
-			public String getName() {
-				return "Report Me";
-			}
-		}, new MeasurementSession(getClass().getName(), "test", "test"));
+		final RequestTrace requestTrace = new RequestTrace("abc", new MeasurementSession(getClass().getName(), "test", "test"));
+		requestTrace.setName("Report Me");
 
 		reporter.reportRequestTrace(requestTrace);
 

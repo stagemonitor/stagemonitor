@@ -1,16 +1,16 @@
 package org.stagemonitor.web.monitor.spring;
 
 import javassist.CtClass;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
+import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.web.WebPlugin;
 
 public class SpringMvcRequestNameDeterminerInstrumenter extends StagemonitorJavassistInstrumenter {
 
-	private static WebPlugin webPlugin = Stagemonitor.getConfiguration(WebPlugin.class);
 	private static RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getConfiguration(RequestMonitorPlugin.class);
 
 	@Override
@@ -27,20 +27,20 @@ public class SpringMvcRequestNameDeterminerInstrumenter extends StagemonitorJava
 
 	public static void setRequestNameByHandler(HandlerExecutionChain handler) {
 		if (RequestMonitor.getRequest() != null) {
-			String requestName = "";
-			if (handler != null) {
-				requestName = SpringMonitoredHttpRequest.getRequestNameFromHandler(handler,
-						requestMonitorPlugin.getBusinessTransactionNamingStrategy());
-			}
-			// requests with empty names don't get monitored
-			// requestNames with non null values don't get overwritten and avoid GetNameCallback#getName to be called
-			if (!requestName.isEmpty() || webPlugin.isMonitorOnlySpringMvcRequests()) {
-				RequestMonitor.getRequest().setName(requestName);
+			final String requestNameFromHandler = getRequestNameFromHandler(handler, requestMonitorPlugin.getBusinessTransactionNamingStrategy());
+			if (requestNameFromHandler != null) {
+				RequestMonitor.getRequest().setName(requestNameFromHandler);
 			}
 		}
 	}
 
-	public static void setWebPlugin(WebPlugin webPlugin) {
-		SpringMvcRequestNameDeterminerInstrumenter.webPlugin = webPlugin;
+	private static String getRequestNameFromHandler(HandlerExecutionChain handler, BusinessTransactionNamingStrategy businessTransactionNamingStrategy) {
+		if (handler != null && handler.getHandler() instanceof HandlerMethod) {
+			HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
+			return businessTransactionNamingStrategy.getBusinessTransationName(handlerMethod.getBeanType().getSimpleName(),
+					handlerMethod.getMethod().getName());
+		}
+		return null;
 	}
+
 }

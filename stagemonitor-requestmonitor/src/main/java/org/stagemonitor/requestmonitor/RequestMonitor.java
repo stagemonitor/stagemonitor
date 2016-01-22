@@ -391,18 +391,18 @@ public class RequestMonitor {
 			if (!requestMonitorPlugin.isProfilerActive()) {
 				return false;
 			}
-			int callStackEveryXRequestsToGroup = requestMonitorPlugin.getCallStackEveryXRequestsToGroup();
+			int callStackEveryXRequestsToGroup = requestMonitorPlugin.getCollectCallTreeEveryNRequests();
 			if (callStackEveryXRequestsToGroup == 1) {
 				return true;
 			}
 			if (callStackEveryXRequestsToGroup < 1) {
 				return false;
 			}
-			Timer requestTimer = getRequestTimer();
-			if (requestTimer.getCount() == 0) {
+			Timer allRequestTimer = metricRegistry.timer(getTimerMetricName("All"));
+			if (allRequestTimer.getCount() == 0) {
 				return false;
 			}
-			final boolean profilingActive = requestTimer.getCount() % callStackEveryXRequestsToGroup == 0;
+			final boolean profilingActive = allRequestTimer.getCount() % callStackEveryXRequestsToGroup == 0;
 			return profilingActive && isAnyRequestTraceReporterActive(getRequestTrace());
 		}
 

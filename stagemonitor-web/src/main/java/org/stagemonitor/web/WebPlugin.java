@@ -43,7 +43,6 @@ import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
 import org.stagemonitor.web.monitor.filter.UserNameFilter;
 import org.stagemonitor.web.monitor.rum.RumServlet;
 import org.stagemonitor.web.monitor.servlet.FileServlet;
-import org.stagemonitor.web.monitor.spring.SpringMonitoredHttpRequest;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
 import org.stagemonitor.web.monitor.widget.WidgetServlet;
 import org.stagemonitor.web.session.SessionCounter;
@@ -388,10 +387,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		userFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), true, "/*");
 		userFilter.setAsyncSupported(true);
 
-
 		ctx.addListener(MDCListener.class);
-		ctx.addListener(MonitoredHttpRequest.StagemonitorServletContextListener.class);
-		ctx.addListener(SpringMonitoredHttpRequest.HandlerMappingServletContextListener.class);
 		ctx.addListener(SessionCounter.class);
 	}
 }

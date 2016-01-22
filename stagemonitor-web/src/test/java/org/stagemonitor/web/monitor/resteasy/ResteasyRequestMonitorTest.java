@@ -17,8 +17,6 @@ import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Pattern;
 
@@ -35,8 +33,6 @@ import org.jboss.resteasy.spi.Registry;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -51,9 +47,9 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
-@RunWith(value = Parameterized.class)
 public class ResteasyRequestMonitorTest {
     private MockHttpServletRequest resteasyServletRequest = new MockHttpServletRequest("GET", "/test/requestName");
     private MockHttpServletRequest resteasyServletNotFoundRequest = new MockHttpServletRequest("GET", "/not-found");
@@ -66,22 +62,11 @@ public class ResteasyRequestMonitorTest {
     private CorePlugin corePlugin = mock(CorePlugin.class);
     private RequestMonitor requestMonitor;
     private Metric2Registry registry = new Metric2Registry();
-    private final boolean useNameDeterminerAspect;
     private Registry getRequestNameRegistry;
-
-    public ResteasyRequestMonitorTest(boolean useNameDeterminerAspect) {
-        this.useNameDeterminerAspect = useNameDeterminerAspect;
-    }
 
     // the purpose of this class is to obtain a instance to a Method,
     // because Method objects can't be mocked as they are final
     private static class TestResource { public void testGetRequestName() {} }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        Object[][] data = new Object[][] { { true }, { false } };
-        return Arrays.asList(data);
-    }
 
     @Before
     public void before() throws Exception {
@@ -106,7 +91,6 @@ public class ResteasyRequestMonitorTest {
         when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
         when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
         requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
-        ResteasyRequestNameDeterminerInstrumenter.setWebPlugin(webPlugin);
         ResteasyRequestNameDeterminerInstrumenter.setRequestMonitorPlugin(requestMonitorPlugin);
     }
 
@@ -138,10 +122,9 @@ public class ResteasyRequestMonitorTest {
 
     @Test
     public void testRequestMonitorResteasyRequest() throws Exception {
-        System.out.println("useNameDeterminerAspect="+useNameDeterminerAspect);
         when(webPlugin.isMonitorOnlyResteasyRequests()).thenReturn(false);
 
-        ResteasyMonitoredHttpRequest monitoredRequest = createResteasyMonitoredHttpRequest(resteasyServletRequest);
+        MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(resteasyServletRequest);
         registerAspect(monitoredRequest, getRequestNameRegistry.getResourceInvoker(resteasyRequest));
         final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
@@ -154,16 +137,14 @@ public class ResteasyRequestMonitorTest {
         Assert.assertNull(requestInformation.getExecutionResult());
         assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
-        verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
 
     @Test
     public void testRequestMonitorResteasyRequestWithClassHashMethodNaming() throws Exception {
-        System.out.println("useNameDeterminerAspect="+useNameDeterminerAspect);
         when(webPlugin.isMonitorOnlyResteasyRequests()).thenReturn(false);
         when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(CLASS_NAME_HASH_METHOD_NAME);
 
-        ResteasyMonitoredHttpRequest monitoredRequest = createResteasyMonitoredHttpRequest(resteasyServletRequest);
+        MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(resteasyServletRequest);
         registerAspect(monitoredRequest, getRequestNameRegistry.getResourceInvoker(resteasyRequest));
         final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
@@ -176,13 +157,11 @@ public class ResteasyRequestMonitorTest {
         Assert.assertNull(requestInformation.getExecutionResult());
         assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "TestResource#testGetRequestName").layer("All").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
-        verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
 
 
     @Test
     public void testRequestMonitorResteasyNotFoundException() throws Exception {
-        System.out.println("useNameDeterminerAspect=" + useNameDeterminerAspect);
         when(webPlugin.isMonitorOnlyResteasyRequests()).thenReturn(false);
         when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(CLASS_NAME_HASH_METHOD_NAME);
 
@@ -206,7 +185,7 @@ public class ResteasyRequestMonitorTest {
         when(getRequestNameRegistry.getResourceInvoker(argThat(notFoundRequestMatcher))).thenThrow(new NotFoundException());
 
 
-        ResteasyMonitoredHttpRequest monitoredRequest = createResteasyMonitoredHttpRequest(resteasyServletNotFoundRequest);
+        MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(resteasyServletNotFoundRequest);
         final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
         assertEquals(1, requestInformation.getRequestTimer().getCount());
@@ -223,11 +202,10 @@ public class ResteasyRequestMonitorTest {
 
     @Test
     public void testRequestMonitorResteasyRequestWithClassDotMethodNaming() throws Exception {
-        System.out.println("useNameDeterminerAspect="+useNameDeterminerAspect);
         when(webPlugin.isMonitorOnlyResteasyRequests()).thenReturn(false);
         when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(CLASS_NAME_DOT_METHOD_NAME);
 
-        ResteasyMonitoredHttpRequest monitoredRequest = createResteasyMonitoredHttpRequest(resteasyServletRequest);
+        MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(resteasyServletRequest);
         registerAspect(monitoredRequest, getRequestNameRegistry.getResourceInvoker(resteasyRequest));
         final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
@@ -240,14 +218,13 @@ public class ResteasyRequestMonitorTest {
         Assert.assertNull(requestInformation.getExecutionResult());
         assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "TestResource.testGetRequestName").layer("All").build()));
         verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
-        verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
 
     @Test
     public void testRequestMonitorNonResteasyRequestDoMonitor() throws Exception {
         when(webPlugin.isMonitorOnlyResteasyRequests()).thenReturn(false);
 
-        ResteasyMonitoredHttpRequest monitoredRequest = createResteasyMonitoredHttpRequest(nonResteasyServletRequest);
+        MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonResteasyServletRequest);
         registerAspect(monitoredRequest, getRequestNameRegistry.getResourceInvoker(resteasyRequest));
         registerAspect(monitoredRequest, null);
         RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
@@ -264,35 +241,32 @@ public class ResteasyRequestMonitorTest {
     public void testRequestMonitorNonResteasyRequestDontMonitor() throws Exception {
         when(webPlugin.isMonitorOnlyResteasyRequests()).thenReturn(true);
 
-        ResteasyMonitoredHttpRequest monitoredRequest = createResteasyMonitoredHttpRequest(nonResteasyServletRequest);
+        MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonResteasyServletRequest);
         registerAspect(monitoredRequest, getRequestNameRegistry.getResourceInvoker(resteasyRequest));
         registerAspect(monitoredRequest, null);
         RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
-        assertEquals("", requestInformation.getRequestTrace().getName());
+        assertNull(requestInformation.getRequestTrace().getName());
         assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
         verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
-        verify(monitoredRequest, times(useNameDeterminerAspect ? 0 : 1)).getRequestName();
     }
 
-    private void registerAspect(ResteasyMonitoredHttpRequest monitoredRequest, final ResourceInvoker invoker) throws Exception {
-        if (useNameDeterminerAspect) {
-            when(monitoredRequest.execute()).thenAnswer(new Answer<Object>() {
-                @Override
-                public Object answer(InvocationOnMock invocation) throws Throwable {
-                    ResteasyRequestNameDeterminerInstrumenter.setRequestNameByInvoker(invoker);
-                    return null;
-                }
-            });
-        }
+    private void registerAspect(MonitoredHttpRequest monitoredRequest, final ResourceInvoker invoker) throws Exception {
+		when(monitoredRequest.execute()).thenAnswer(new Answer<Object>() {
+			@Override
+			public Object answer(InvocationOnMock invocation) throws Throwable {
+				ResteasyRequestNameDeterminerInstrumenter.setRequestNameByInvoker(invoker);
+				return null;
+			}
+		});
     }
 
     private RequestMonitor.RequestInformation<HttpRequestTrace> anyRequestInformation() {
         return any();
     }
 
-    private ResteasyMonitoredHttpRequest createResteasyMonitoredHttpRequest(HttpServletRequest request) throws IOException {
+    private MonitoredHttpRequest createMonitoredHttpRequest(HttpServletRequest request) throws IOException {
         final StatusExposingByteCountingServletResponse response = new StatusExposingByteCountingServletResponse(new MockHttpServletResponse());
-        return Mockito.spy(new ResteasyMonitoredHttpRequest(request, response, new MockFilterChain(), configuration));
+        return Mockito.spy(new MonitoredHttpRequest(request, response, new MockFilterChain(), configuration));
     }
 }
