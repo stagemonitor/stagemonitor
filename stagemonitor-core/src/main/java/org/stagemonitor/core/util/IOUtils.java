@@ -15,7 +15,7 @@ public class IOUtils {
 	private static final Logger logger = LoggerFactory.getLogger(IOUtils.class);
 
 	public static void copy(InputStream input, OutputStream output) throws IOException {
-		int n = 0;
+		int n;
 		final byte[] buffer = new byte[BUFFER_SIZE];
 		while (EOF != (n = input.read(buffer))) {
 			output.write(buffer, 0, n);

@@ -117,11 +117,7 @@ public class HttpClient {
 	private void writeRequestBody(Object requestBody, OutputStream os) throws IOException {
 		if (requestBody != null) {
 			if (requestBody instanceof InputStream) {
-				byte[] buf = new byte[8192];
-				int n;
-				while ((n = ((InputStream) requestBody).read(buf)) > 0) {
-					os.write(buf, 0, n);
-				}
+				IOUtils.copy((InputStream) requestBody, os);
 			} else if (requestBody instanceof String) {
 				os.write(((String)requestBody).getBytes("UTF-8"));
 			} else {
