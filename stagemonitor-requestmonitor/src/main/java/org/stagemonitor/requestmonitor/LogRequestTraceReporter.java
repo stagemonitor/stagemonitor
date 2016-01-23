@@ -2,7 +2,6 @@ package org.stagemonitor.requestmonitor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
 
 /**
  * An implementation of {@link RequestTraceReporter} that logs the {@link RequestTrace}
@@ -12,10 +11,6 @@ public class LogRequestTraceReporter implements RequestTraceReporter {
 	private static final Logger logger = LoggerFactory.getLogger(LogRequestTraceReporter.class);
 
 	private final RequestMonitorPlugin requestMonitorPlugin;
-
-	public LogRequestTraceReporter() {
-		this(Stagemonitor.getConfiguration(RequestMonitorPlugin.class));
-	}
 
 	public LogRequestTraceReporter(RequestMonitorPlugin requestMonitorPlugin) {
 		this.requestMonitorPlugin = requestMonitorPlugin;

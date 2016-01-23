@@ -6,7 +6,6 @@ import com.codahale.metrics.Meter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -24,16 +23,14 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 	private final Meter reportingRate = new Meter();
 	private final Logger requestTraceLogger;
 
-	public ElasticsearchRequestTraceReporter() {
-		this(Stagemonitor.getConfiguration(CorePlugin.class), Stagemonitor.getConfiguration(RequestMonitorPlugin.class),
-				Stagemonitor.getConfiguration().getConfig(CorePlugin.class).getElasticsearchClient(), LoggerFactory.getLogger(ES_REQUEST_TRACE_LOGGER));
+	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin) {
+		this(corePlugin, requestMonitorPlugin, LoggerFactory.getLogger(ES_REQUEST_TRACE_LOGGER));
 	}
 
-	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin,
-											 ElasticsearchClient elasticsearchClient, Logger requestTraceLogger) {
+	public ElasticsearchRequestTraceReporter(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin, Logger requestTraceLogger) {
 		this.corePlugin = corePlugin;
 		this.requestMonitorPlugin = requestMonitorPlugin;
-		this.elasticsearchClient = elasticsearchClient;
+		this.elasticsearchClient = corePlugin.getElasticsearchClient();
 		this.requestTraceLogger = requestTraceLogger;
 	}
 

@@ -42,7 +42,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		this.responseWrapper = responseWrapper;
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
-		metricRegistry = Stagemonitor.getMetric2Registry();
+		this.metricRegistry = Stagemonitor.getMetric2Registry();
 	}
 
 	@Override

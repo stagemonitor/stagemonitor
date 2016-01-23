@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.RequestTraceReporter;
 import org.stagemonitor.web.WebPlugin;
@@ -39,6 +40,7 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 	private final WebPlugin webPlugin;
 	private final Configuration configuration;
 	private final long requestTimeout;
+	private final RequestMonitor requestMonitor;
 	private ConcurrentMap<String, ConcurrentLinkedQueue<HttpRequestTrace>> connectionIdToRequestTracesMap = new ConcurrentHashMap<String, ConcurrentLinkedQueue<HttpRequestTrace>>();
 	private ConcurrentMap<String, Object> connectionIdToLockMap = new ConcurrentHashMap<String, Object>();
 
@@ -56,11 +58,12 @@ public class RequestTraceServlet extends HttpServlet implements RequestTraceRepo
 		this.requestTimeout = requestTimeout;
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
+		this.requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
 	}
 	
 	@Override
 	public void init() {
-		RequestMonitor.addRequestTraceReporter(this);
+		requestMonitor.addReporter(this);
 		oldRequestTracesRemoverPool = Executors.newScheduledThreadPool(1, new ThreadFactory() {
 			@Override
 			public Thread newThread(Runnable r) {

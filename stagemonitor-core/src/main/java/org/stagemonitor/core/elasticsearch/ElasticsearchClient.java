@@ -46,10 +46,6 @@ public class ElasticsearchClient {
 	private final ThreadPoolExecutor asyncESPool;
 	private Timer timer;
 
-	public ElasticsearchClient() {
-		this(Stagemonitor.getConfiguration().getConfig(CorePlugin.class));
-	}
-
 	public ElasticsearchClient(CorePlugin corePlugin) {
 		this.corePlugin = corePlugin;
 		asyncESPool = ExecutorUtils

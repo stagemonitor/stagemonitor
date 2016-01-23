@@ -19,7 +19,9 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.agent.StagemonitorAgent;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -42,17 +44,19 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 	private final boolean active;
 
 	public ConnectionMonitoringInstrumenter() throws NoSuchMethodException {
-		this.active = ConnectionMonitor.isActive(Stagemonitor.getConfiguration(CorePlugin.class));
-		RequestMonitor requestMonitor = Stagemonitor.getConfiguration().getConfig(RequestMonitorPlugin.class).getRequestMonitor();
+		final Configuration configuration = Stagemonitor.getConfiguration();
+		final Metric2Registry metric2Registry = Stagemonitor.getMetric2Registry();
+		this.active = ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class));
+		RequestMonitor requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
 		if (active) {
-			connectionMonitor = new ConnectionMonitor(Stagemonitor.getConfiguration(), Stagemonitor.getMetric2Registry());
+			connectionMonitor = new ConnectionMonitor(configuration, metric2Registry);
 			final Method monitorGetConnectionMethod = connectionMonitor.getClass()
 					.getMethod("monitorGetConnection", Connection.class, DataSource.class, long.class);
 			makeReflectionInvocationFaster(monitorGetConnectionMethod);
 
 			addConnectionMonitorToThreadLocalOnEachRequest(requestMonitor, monitorGetConnectionMethod);
 
-			final Collection<String> impls = Stagemonitor.getConfiguration(JdbcPlugin.class).getDataSourceImplementations();
+			final Collection<String> impls = configuration.getConfig(JdbcPlugin.class).getDataSourceImplementations();
 			for (String impl : impls) {
 				dataSourceImplementations.add(impl.replace('.', '/'));
 			}

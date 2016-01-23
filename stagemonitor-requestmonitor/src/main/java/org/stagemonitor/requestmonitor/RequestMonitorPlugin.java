@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
@@ -185,7 +186,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public RequestMonitor getRequestMonitor() {
 		if (requestMonitor == null) {
-			requestMonitor = new RequestMonitor();
+			requestMonitor = new RequestMonitor(Stagemonitor.getConfiguration(), Stagemonitor.getMetric2Registry());
 		}
 		return requestMonitor;
 	}

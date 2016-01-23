@@ -381,7 +381,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		final FilterRegistration.Dynamic monitorFilter = ctx.addFilter(HttpRequestMonitorFilter.class.getSimpleName(), new HttpRequestMonitorFilter());
 		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), false, "/*");
 		monitorFilter.setAsyncSupported(true);
-		
+
 		final FilterRegistration.Dynamic userFilter = ctx.addFilter(UserNameFilter.class.getSimpleName(), new UserNameFilter());
 		// Have this filter run last because user information may be populated by other filters e.g. Spring Security
 		userFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), true, "/*");

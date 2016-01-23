@@ -33,9 +33,9 @@ public class ElasticsearchRequestTraceReporterTest {
 		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.singleton("Report Me"));
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
-		elasticsearchClient = mock(ElasticsearchClient.class);
+		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
 		requestTraceLogger = mock(Logger.class);
-		reporter = new ElasticsearchRequestTraceReporter(corePlugin, requestMonitorPlugin, elasticsearchClient, requestTraceLogger);
+		reporter = new ElasticsearchRequestTraceReporter(corePlugin, requestMonitorPlugin, requestTraceLogger);
 	}
 
 	@Test

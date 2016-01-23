@@ -436,6 +436,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private ElasticsearchClient elasticsearchClient;
 	private GrafanaClient grafanaClient;
 	private IndexSelector indexSelector = new IndexSelector(new Clock.UserTimeClock());
+	private Metric2Registry metricRegistry;
 
 	public CorePlugin() {
 	}
@@ -446,6 +447,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
+		this.metricRegistry = metricRegistry;
 		final Integer reloadInterval = getReloadConfigurationInterval();
 		if (reloadInterval > 0) {
 			configuration.scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
@@ -614,9 +616,13 @@ public class CorePlugin extends StagemonitorPlugin {
 		getGrafanaClient().close();
 	}
 
+	public Metric2Registry getMetricRegistry() {
+		return metricRegistry;
+	}
+
 	public ElasticsearchClient getElasticsearchClient() {
 		if (elasticsearchClient == null) {
-			elasticsearchClient = new ElasticsearchClient();
+			elasticsearchClient = new ElasticsearchClient(this);
 		}
 		return elasticsearchClient;
 	}

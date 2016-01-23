@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -41,8 +42,6 @@ public class ConnectionMonitoringInstrumenterTest {
 
 	private static Connection connection;
 	private TestDataSource dataSource;
-	private CorePlugin corePlugin = mock(CorePlugin.class);
-	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 	private RequestMonitor requestMonitor;
 
 	@BeforeClass
@@ -52,6 +51,12 @@ public class ConnectionMonitoringInstrumenterTest {
 
 	@Before
 	public void setUp() throws Exception {
+		CorePlugin corePlugin = mock(CorePlugin.class);
+		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		Configuration configuration = mock(Configuration.class);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
@@ -69,7 +74,7 @@ public class ConnectionMonitoringInstrumenterTest {
 
 		when(connection.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
 		when(connection.createStatement()).thenReturn(mock(Statement.class));
-		requestMonitor = new RequestMonitor(corePlugin, Stagemonitor.getMetric2Registry(), requestMonitorPlugin);
+		requestMonitor = new RequestMonitor(configuration, Stagemonitor.getMetric2Registry());
 	}
 
 	@AfterClass

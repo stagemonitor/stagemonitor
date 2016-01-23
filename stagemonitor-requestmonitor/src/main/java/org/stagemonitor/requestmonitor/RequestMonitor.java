@@ -6,6 +6,8 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -42,10 +44,7 @@ public class RequestMonitor {
 	 */
 	private static ThreadLocal<RequestInformation<? extends RequestTrace>> request = new ThreadLocal<RequestInformation<? extends RequestTrace>>();
 
-	private static final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>() {{
-		add(new LogRequestTraceReporter());
-		add(new ElasticsearchRequestTraceReporter());
-	}};
+	private final List<RequestTraceReporter> requestTraceReporters;
 
 	private final List<Runnable> onBeforeRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
 
@@ -64,26 +63,27 @@ public class RequestMonitor {
 
 	private Date endOfWarmup;
 
-	public RequestMonitor() {
-		this(Stagemonitor.getConfiguration());
-	}
-
-	public RequestMonitor(Configuration configuration) {
-		this(configuration, Stagemonitor.getMetric2Registry());
-	}
-
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
-		this(configuration.getConfig(CorePlugin.class), registry, configuration.getConfig(RequestMonitorPlugin.class));
+		this(configuration, registry, Arrays.asList(
+				new LogRequestTraceReporter(configuration.getConfig(RequestMonitorPlugin.class)),
+				new ElasticsearchRequestTraceReporter(configuration.getConfig(CorePlugin.class),
+						configuration.getConfig(RequestMonitorPlugin.class))));
 	}
 
-	public RequestMonitor(CorePlugin corePlugin, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin) {
+	public RequestMonitor(Configuration configuration, Metric2Registry registry, Collection<RequestTraceReporter> requestTraceReporters) {
+		this(configuration.getConfig(CorePlugin.class), registry, configuration.getConfig(RequestMonitorPlugin.class), requestTraceReporters);
+	}
+
+	private RequestMonitor(CorePlugin corePlugin, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin,
+						   Collection<RequestTraceReporter> requestTraceReporters) {
 		this.metricRegistry = registry;
 		this.corePlugin = corePlugin;
 		this.requestMonitorPlugin = requestMonitorPlugin;
-		warmupRequests = requestMonitorPlugin.getNoOfWarmupRequests();
-		endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
-		asyncRequestTraceReporterPool = ExecutorUtils
+		this.warmupRequests = requestMonitorPlugin.getNoOfWarmupRequests();
+		this.endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
+		this.asyncRequestTraceReporterPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit());
+		this.requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>(requestTraceReporters);
 	}
 
 	public <T extends RequestTrace> void monitorStart(MonitoredRequest<T> monitoredRequest) {
@@ -468,6 +468,15 @@ public class RequestMonitor {
 	 * @param requestTraceReporter the {@link RequestTraceReporter} to add
 	 */
 	public static void addRequestTraceReporter(RequestTraceReporter requestTraceReporter) {
+		Stagemonitor.getConfiguration(RequestMonitorPlugin.class).getRequestMonitor().addReporter(requestTraceReporter);
+	}
+
+	/**
+	 * Adds a {@link RequestTraceReporter}
+	 *
+	 * @param requestTraceReporter the {@link RequestTraceReporter} to add
+	 */
+	public void addReporter(RequestTraceReporter requestTraceReporter) {
 		requestTraceReporters.add(0, requestTraceReporter);
 	}
 

@@ -14,6 +14,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class MonitoredMethodExecutionTest {
@@ -21,19 +22,23 @@ public class MonitoredMethodExecutionTest {
 	private RequestMonitor.RequestInformation<RequestTrace> requestInformation1;
 	private RequestMonitor.RequestInformation<RequestTrace> requestInformation2;
 	private RequestMonitor.RequestInformation<RequestTrace> requestInformation3;
-	private CorePlugin corePlugin = mock(CorePlugin.class);
-	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
 
 	@Before
 	public void clearState() {
+		CorePlugin corePlugin = mock(CorePlugin.class);
+		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		Configuration configuration = mock(Configuration.class);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+
 		when(requestMonitorPlugin.getNoOfWarmupRequests()).thenReturn(0);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		requestInformation1 = requestInformation2 = requestInformation3 = null;
-		testObject = new TestObject(new RequestMonitor(corePlugin, registry, requestMonitorPlugin));
+		testObject = new TestObject(new RequestMonitor(configuration, registry));
 	}
 
 	@Test

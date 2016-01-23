@@ -90,7 +90,7 @@ public class ResteasyRequestMonitorTest {
         when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
         when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
         when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
-        requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
+        requestMonitor = new RequestMonitor(configuration, registry);
         ResteasyRequestNameDeterminerInstrumenter.setRequestMonitorPlugin(requestMonitorPlugin);
     }
 

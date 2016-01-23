@@ -22,6 +22,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
@@ -35,9 +37,13 @@ public class RequestTraceServletTest {
 
 	@Before
 	public void setUp() throws Exception {
-		webPlugin = mock(WebPlugin.class);
-		Mockito.when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
 		Configuration configuration = mock(Configuration.class);
+		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		webPlugin = mock(WebPlugin.class);
+
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		requestTraceServlet = new RequestTraceServlet(configuration, 1500);
 		connectionId = UUID.randomUUID().toString();

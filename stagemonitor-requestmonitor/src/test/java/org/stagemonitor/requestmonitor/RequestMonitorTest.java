@@ -22,6 +22,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
@@ -32,18 +33,24 @@ public class RequestMonitorTest {
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 	private Metric2Registry registry = mock(Metric2Registry.class);
 	private RequestMonitor requestMonitor;
+	private Configuration configuration;
 
 	@Before
 	public void before() {
 		Stagemonitor.reset();
 		SharedMetricRegistries.clear();
+
+		configuration = mock(Configuration.class);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
 		when(registry.timer(any(MetricName.class))).thenReturn(mock(Timer.class));
 		when(registry.meter(any(MetricName.class))).thenReturn(mock(Meter.class));
-		requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
+		requestMonitor = new RequestMonitor(configuration, registry);
 	}
 
 	@After
@@ -65,7 +72,7 @@ public class RequestMonitorTest {
 	@Test
 	public void testNotWarmedUp() throws Exception {
 		when(requestMonitorPlugin.getNoOfWarmupRequests()).thenReturn(2);
-		requestMonitor = new RequestMonitor(corePlugin, registry, requestMonitorPlugin);
+		requestMonitor = new RequestMonitor(configuration, registry);
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(requestInformation.getRequestTrace());
 	}
@@ -141,7 +148,7 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testProfileThisExecutionActiveEvery2Requests() throws Exception {
-		RequestMonitor.addRequestTraceReporter(new RequestTraceReporter() {
+		requestMonitor.addReporter(new RequestTraceReporter() {
 			@Override
 			public <T extends RequestTrace> void reportRequestTrace(T requestTrace) throws Exception {
 			}
