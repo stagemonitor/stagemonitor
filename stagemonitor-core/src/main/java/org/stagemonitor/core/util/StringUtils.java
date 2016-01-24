@@ -2,12 +2,12 @@ package org.stagemonitor.core.util;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
-
-import org.stagemonitor.core.configuration.converter.SetValueConverter;
 
 public class StringUtils {
 
@@ -53,7 +53,16 @@ public class StringUtils {
 	}
 
 	public static String asCsv(String[] strings) {
-		return SetValueConverter.STRINGS_VALUE_CONVERTER.toString(Arrays.asList(strings));
+		return asCsv(Arrays.asList(strings));
+	}
+
+	public static String asCsv(Collection<?> values) {
+		if (values == null) {
+			return null;
+		}
+		final String s = new ArrayList<Object>(values).toString();
+		// removes []
+		return s.substring(1, s.length() - 1);
 	}
 
 	public static String getLogstashStyleDate() {
@@ -80,5 +89,12 @@ public class StringUtils {
 		}
 		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
+	}
+
+	public static String removeTrailingSlash(String url) {
+		if (url != null && url.endsWith("/")) {
+			return url.substring(0, url.length() - 1);
+		}
+		return url;
 	}
 }

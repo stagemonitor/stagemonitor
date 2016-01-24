@@ -2,12 +2,13 @@ package org.stagemonitor.core.configuration.converter;
 
 import static java.util.Collections.emptySet;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import org.stagemonitor.core.util.StringUtils;
 
 public class SetValueConverter<T> implements ValueConverter<Collection<T>> {
 
@@ -40,12 +41,7 @@ public class SetValueConverter<T> implements ValueConverter<Collection<T>> {
 
 	@Override
 	public String toString(Collection<T> value) {
-		if (value == null) {
-			return null;
-		}
-		final String s = new ArrayList<T>(value).toString();
-		// removes []
-		return s.substring(1, s.length() - 1);
+		return StringUtils.asCsv(value);
 	}
 
 	public static <T> Set<T> immutableSet(T... values) {

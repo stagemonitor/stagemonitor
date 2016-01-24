@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import com.codahale.metrics.Clock;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.configuration.converter.ListValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
@@ -221,13 +223,12 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
 			.build();
-	private final ConfigurationOption<String> elasticsearchUrl = ConfigurationOption.stringOption()
+	private final ConfigurationOption<List<String>> elasticsearchUrls = ConfigurationOption.builder(ListValueConverter.STRINGS_VALUE_CONVERTER, List.class)
 			.key("stagemonitor.elasticsearch.url")
 			.dynamic(true)
 			.label("Elasticsearch URL")
-			.description("The URL of the elasticsearch server that stores the call stacks. If the URL is not " +
-					"provided, the call stacks won't get stored.")
-			.defaultValue(null)
+			.description("A comma separated list of the Elasticsearch URLs that store the request traces and metrics.")
+			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceProfiles = ConfigurationOption.stringsOption()
@@ -437,6 +438,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private GrafanaClient grafanaClient;
 	private IndexSelector indexSelector = new IndexSelector(new Clock.UserTimeClock());
 	private Metric2Registry metricRegistry;
+	private AtomicInteger accessesToElasticsearchUrl = new AtomicInteger();
 
 	public CorePlugin() {
 	}
@@ -549,7 +551,7 @@ public class CorePlugin extends StagemonitorPlugin {
 									   final MeasurementSession measurementSession, CorePlugin corePlugin) {
 		if (isReportToElasticsearch()) {
 			elasticsearchClient.sendBulkAsync("KibanaConfig.bulk");
-			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrl(), reportingInterval);
+			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrls(), reportingInterval);
 			final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
 					"stagemonitor-elasticsearch-metrics-index-template.json", corePlugin.moveToColdNodesAfterDays.getValue());
 			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
@@ -562,7 +564,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
 					moveToColdNodesAfterDays.getValue(), deleteElasticsearchMetricsAfterDays.getValue());
 		} else {
-			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrl(), reportingInterval);
+			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrls(), reportingInterval);
 		}
 	}
 
@@ -678,15 +680,19 @@ public class CorePlugin extends StagemonitorPlugin {
 		return instanceName.getValue();
 	}
 
+	/**
+	 * Cycles through all provided Elasticsearch URLs and returns one
+	 *
+	 * @return One of the provided Elasticsearch URLs
+	 */
 	public String getElasticsearchUrl() {
-		return removeTrailingSlash(elasticsearchUrl.getValue());
+		final List<String> urls = elasticsearchUrls.getValue();
+		final int index = accessesToElasticsearchUrl.getAndIncrement() % urls.size();
+		return StringUtils.removeTrailingSlash(urls.get(index));
 	}
 
-	private String removeTrailingSlash(String url) {
-		if (url != null && url.endsWith("/")) {
-			return url.substring(0, url.length() - 1);
-		}
-		return url;
+	public Collection<String> getElasticsearchUrls() {
+		return elasticsearchUrls.getValue();
 	}
 
 	public Collection<String> getElasticsearchConfigurationSourceProfiles() {
@@ -730,7 +736,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	public String getInfluxDbUrl() {
-		return removeTrailingSlash(influxDbUrl.getValue());
+		return StringUtils.removeTrailingSlash(influxDbUrl.getValue());
 	}
 
 	public String getInfluxDbDb() {
@@ -738,7 +744,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	public boolean isReportToElasticsearch() {
-		return StringUtils.isNotEmpty(getElasticsearchUrl()) && reportingIntervalElasticsearch.getValue() > 0;
+		return !getElasticsearchUrls().isEmpty() && reportingIntervalElasticsearch.getValue() > 0;
 	}
 
 	public boolean isReportToGraphite() {
@@ -746,7 +752,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	public String getGrafanaUrl() {
-		return removeTrailingSlash(grafanaUrl.getValue());
+		return StringUtils.removeTrailingSlash(grafanaUrl.getValue());
 	}
 
 	public String getGrafanaApiKey() {
