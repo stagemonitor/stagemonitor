@@ -687,6 +687,9 @@ public class CorePlugin extends StagemonitorPlugin {
 	 */
 	public String getElasticsearchUrl() {
 		final List<String> urls = elasticsearchUrls.getValue();
+		if (urls.isEmpty()) {
+			return null;
+		}
 		final int index = accessesToElasticsearchUrl.getAndIncrement() % urls.size();
 		return StringUtils.removeTrailingSlash(urls.get(index));
 	}
