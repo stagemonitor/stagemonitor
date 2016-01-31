@@ -12,6 +12,7 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 

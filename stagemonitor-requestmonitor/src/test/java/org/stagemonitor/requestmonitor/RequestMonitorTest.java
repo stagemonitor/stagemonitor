@@ -25,6 +25,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 
 
 public class RequestMonitorTest {

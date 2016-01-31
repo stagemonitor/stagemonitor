@@ -30,6 +30,9 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.LogRequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 
 public class RequestMonitor {
 
@@ -66,8 +69,7 @@ public class RequestMonitor {
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
 		this(configuration, registry, Arrays.asList(
 				new LogRequestTraceReporter(configuration.getConfig(RequestMonitorPlugin.class)),
-				new ElasticsearchRequestTraceReporter(configuration.getConfig(CorePlugin.class),
-						configuration.getConfig(RequestMonitorPlugin.class))));
+				new ElasticsearchRequestTraceReporter(configuration)));
 	}
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry, Collection<RequestTraceReporter> requestTraceReporters) {

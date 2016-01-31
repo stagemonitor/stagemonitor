@@ -1,4 +1,6 @@
-package org.stagemonitor.requestmonitor;
+package org.stagemonitor.requestmonitor.reporter;
+
+import org.stagemonitor.requestmonitor.RequestTrace;
 
 public interface RequestTraceReporter {
 

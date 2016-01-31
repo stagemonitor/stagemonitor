@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor;
+package org.stagemonitor.requestmonitor.reporter;
 
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
@@ -16,8 +16,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.RequestTrace;
 
 public class ElasticsearchRequestTraceReporterTest {
 
@@ -28,14 +31,18 @@ public class ElasticsearchRequestTraceReporterTest {
 
 	@Before
 	public void setUp() throws Exception {
+		Configuration configuration = mock(Configuration.class);
+		CorePlugin corePlugin = mock(CorePlugin.class);
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(Integer.MAX_VALUE);
 		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.singleton("Report Me"));
-		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
 		requestTraceLogger = mock(Logger.class);
-		reporter = new ElasticsearchRequestTraceReporter(corePlugin, requestMonitorPlugin, requestTraceLogger);
+		reporter = new ElasticsearchRequestTraceReporter(configuration, requestTraceLogger);
 	}
 
 	@Test

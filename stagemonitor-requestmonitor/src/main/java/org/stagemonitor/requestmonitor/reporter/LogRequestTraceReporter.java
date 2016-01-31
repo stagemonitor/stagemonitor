@@ -1,7 +1,9 @@
-package org.stagemonitor.requestmonitor;
+package org.stagemonitor.requestmonitor.reporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.RequestTrace;
 
 /**
  * An implementation of {@link RequestTraceReporter} that logs the {@link RequestTrace}
