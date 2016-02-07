@@ -292,7 +292,7 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> MetricName getTimerMetricName(String requestName) {
+	public static <T extends RequestTrace> MetricName getTimerMetricName(String requestName) {
 		return name("response_time_server").tag("request_name", requestName).layer("All").build();
 	}
 
@@ -480,6 +480,15 @@ public class RequestMonitor {
 	 */
 	public void addReporter(RequestTraceReporter requestTraceReporter) {
 		requestTraceReporters.add(0, requestTraceReporter);
+	}
+
+	public <T extends RequestTraceReporter> T getReporter(Class<T> reporterClass) {
+		for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
+			if (requestTraceReporter.getClass() == reporterClass) {
+				return (T) requestTraceReporter;
+			}
+		}
+		return null;
 	}
 
 	/**

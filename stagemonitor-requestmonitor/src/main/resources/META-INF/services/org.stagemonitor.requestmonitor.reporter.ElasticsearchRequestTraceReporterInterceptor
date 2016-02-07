@@ -1,2 +1,0 @@
-org.stagemonitor.requestmonitor.reporter.NameFilteringInterceptor
-org.stagemonitor.requestmonitor.reporter.RateLimitingInterceptor

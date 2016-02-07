@@ -1,27 +1,20 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import java.util.Collection;
-
-import com.codahale.metrics.Meter;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.requestmonitor.RequestTrace;
-
 /**
  * Allows implementers to customize or omit reporting a request trace to Elasticsearch
+ * <p/>
+ * To add an interceptor, call {@link ElasticsearchRequestTraceReporter#registerInterceptor(ElasticsearchRequestTraceReporterInterceptor)}
+ * or place a file under <code>META-INF/services/org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporterInterceptor</code>
+ * and insert the canonical class name of your implementation.
  */
 public interface ElasticsearchRequestTraceReporterInterceptor {
-
-	void init(Configuration configuration);
 
 	/**
 	 * This method is called before a request trace gets reported to Elasticsearch.
 	 * <p/>
 	 * The implementer of this method can decide whether or not to report the request trace or to exclude certain properties.
 	 *
-	 * @param requestTrace       The request trace that is about to be reported
-	 * @param reportingRate      The rate at which request traces got reported
-	 * @param excludedProperties Add the names of properties you want to exclude from a report
-	 * @return <code>true</code> if the request trace should be reported, <code>false</code> if reporting should be omitted
+	 * @param context contextual information about the current report that is about to happen
 	 */
-	boolean interceptReport(RequestTrace requestTrace, Meter reportingRate, Collection<String> excludedProperties);
+	void interceptReport(InterceptContext context);
 }
