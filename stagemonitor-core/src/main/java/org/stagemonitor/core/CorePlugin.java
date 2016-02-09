@@ -99,7 +99,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Expose MBeans")
 			.description("Whether or not to expose all metrics as MBeans.")
-			.defaultValue(true)
+			.defaultValue(false)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> reportingIntervalGraphite = ConfigurationOption.integerOption()
@@ -497,7 +497,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 		reportToConsole(metricRegistry, getConsoleReportingInterval(), allFilters, onShutdownReporters);
 		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, getAggregationReportingInterval());
-		if (reportToJMX()) {
+		if (configuration.getConfig(CorePlugin.class).isReportToJMX()) {
 			// Because JMX reporter is on registration and not periodic only the
 			// regex filter is applicable here (not filtering metrics by count)
 			reportToJMX(metricRegistry, regexFilter);
@@ -656,7 +656,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		return reportingIntervalAggregation.getValue();
 	}
 
-	public boolean reportToJMX() {
+	public boolean isReportToJMX() {
 		return reportingJmx.getValue();
 	}
 

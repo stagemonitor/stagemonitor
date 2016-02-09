@@ -73,12 +73,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(0.5)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Integer> collectCallTreeEveryNRequests = ConfigurationOption.integerOption()
-			.key("stagemonitor.profiler.collectCallTreeEveryNRequests")
+	private final ConfigurationOption<Double> onlyCollectNCallTreesPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
-			.label("Collect call tree every n requests")
-			.description("Defines how often a call tree should be collected.")
-			.defaultValue(1)
+			.label("Only report N requests per minute to ES")
+			.description("Limits the rate at which call trees are collected. " +
+					"Set to a value below 1 to deactivate call tree recording and to 1,000,000 or higher to always collect.")
+			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> logCallStacks = ConfigurationOption.booleanOption()
@@ -224,8 +225,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return minExecutionTimeNanos.getValue();
 	}
 
-	public int getCollectCallTreeEveryNRequests() {
-		return collectCallTreeEveryNRequests.getValue();
+	public double getOnlyCollectNCallTreesPerMinute() {
+		return onlyCollectNCallTreesPerMinute.getValue();
 	}
 
 	public boolean isLogCallStacks() {

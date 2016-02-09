@@ -9,13 +9,16 @@ public interface RequestTraceReporter {
 	 *
 	 * @param requestTrace the {@link RequestTrace} of the current request
 	 */
-	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) throws Exception;
+	<T extends RequestTrace> void reportRequestTrace(T requestTrace) throws Exception;
 
 	/**
 	 * Whether this {@link RequestTraceReporter} is active
+	 * <p/>
+	 * This method is called at most once from {@link org.stagemonitor.requestmonitor.RequestMonitor} for one request.
+	 * That means that the result from the first evaluation is final.
 	 *
 	 * @return <code>true</code>, if this {@link RequestTraceReporter} is active, <code>false</code> otherwise
 	 */
-	public <T extends RequestTrace> boolean isActive(T requestTrace);
+	<T extends RequestTrace> boolean isActive(T requestTrace);
 
 }

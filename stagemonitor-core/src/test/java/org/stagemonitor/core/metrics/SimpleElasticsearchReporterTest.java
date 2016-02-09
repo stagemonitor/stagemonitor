@@ -3,6 +3,7 @@ package org.stagemonitor.core.metrics;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.counter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.gauge;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.histogram;
@@ -31,6 +32,7 @@ public class SimpleElasticsearchReporterTest extends AbstractElasticsearchTest {
 	@BeforeClass
 	public static void setup() throws Exception {
 		Configuration configuration = mock(Configuration.class);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(mock(CorePlugin.class));
 		final CorePlugin corePlugin = new CorePlugin();
 		corePlugin.setElasticsearchClient(elasticsearchClient);
 		corePlugin.initializePlugin(new Metric2Registry(), configuration);

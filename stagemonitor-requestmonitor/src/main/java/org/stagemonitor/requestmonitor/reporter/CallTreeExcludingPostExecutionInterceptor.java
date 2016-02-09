@@ -3,10 +3,10 @@ package org.stagemonitor.requestmonitor.reporter;
 import com.codahale.metrics.Timer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
-class CallTreeExcludingInterceptor implements ElasticsearchRequestTraceReporterInterceptor {
+class CallTreeExcludingPostExecutionInterceptor implements PostExecutionRequestTraceReporterInterceptor {
 
 	@Override
-	public void interceptReport(InterceptContext context) {
+	public void interceptReport(PostExecutionInterceptorContext context) {
 		if (context.getRequestTrace().getCallStack() == null) {
 			context.addProperty("containsCallTree", false);
 			return;
@@ -34,7 +34,7 @@ class CallTreeExcludingInterceptor implements ElasticsearchRequestTraceReporterI
 		}
 	}
 
-	private void exclude(InterceptContext context) {
+	private void exclude(PostExecutionInterceptorContext context) {
 		context.addExcludedProperties("callStack", "callStackJson").addProperty("containsCallTree", false);
 	}
 }

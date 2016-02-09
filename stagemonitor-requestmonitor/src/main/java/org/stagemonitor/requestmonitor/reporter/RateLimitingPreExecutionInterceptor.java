@@ -2,10 +2,10 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
-class RateLimitingInterceptor implements ElasticsearchRequestTraceReporterInterceptor {
+class RateLimitingPreExecutionInterceptor implements PreExecutionRequestTraceReporterInterceptor {
 
 	@Override
-	public void interceptReport(InterceptContext context) {
+	public void interceptReport(PreExecutionInterceptorContext context) {
 		final double maxReportingRate = context.getConfig(RequestMonitorPlugin.class)
 				.getOnlyReportNRequestsPerMinuteToElasticsearch();
 
