@@ -226,11 +226,11 @@ public class ElasticsearchClient {
 	}
 
 	public void deleteIndices(String indexPattern) {
-		execute("DELETE", indexPattern + "?timeout=20m", "Deleting indices: {}");
+		execute("DELETE", indexPattern + "?timeout=20m&ignore_unavailable=true", "Deleting indices: {}");
 	}
 
 	public void optimizeIndices(String indexPattern) {
-		execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h", "Optimizing indices: {}");
+		execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h&ignore_unavailable=true", "Optimizing indices: {}");
 	}
 
 	public void updateIndexSettings(String indexPattern, Map<String, ?> settings) {
@@ -238,7 +238,7 @@ public class ElasticsearchClient {
 		if (StringUtils.isEmpty(elasticsearchUrl)) {
 			return;
 		}
-		final String url = elasticsearchUrl + "/" + indexPattern + "/_settings";
+		final String url = elasticsearchUrl + "/" + indexPattern + "/_settings?ignore_unavailable=true";
 		logger.info("Updating index settings {}\n{}", url, settings);
 		httpClient.sendAsJson("PUT", url, settings);
 	}
