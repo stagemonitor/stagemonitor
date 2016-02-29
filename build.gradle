@@ -54,7 +54,7 @@ ext {
 }
 
 subprojects {
-	group = "org.stagemonitor"
+	group = "nl.eleven.stagemonitor"
 
 	apply plugin: 'idea'
 	apply plugin: 'eclipse'
