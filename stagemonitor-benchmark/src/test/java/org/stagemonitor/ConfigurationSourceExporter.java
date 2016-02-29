@@ -10,6 +10,9 @@ import org.stagemonitor.core.util.JsonUtils;
 
 public class ConfigurationSourceExporter {
 
+	private ConfigurationSourceExporter() {
+	}
+
 	public static void main(String[] args) throws IOException {
 		final String json = JsonUtils.toJson(new Configuration(StagemonitorPlugin.class).getConfigurationOptionsByCategory());
 		System.out.println(json);
