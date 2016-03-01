@@ -1,3 +1,5 @@
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Copy
+
 /*
  * RELEASING A NEW VERSION
  *  - set the following properties in ~/.gradle/gradle.properties
@@ -124,8 +126,8 @@ subprojects {
 
     nexus {
         sign = false
-        repositoryUrl = 'http://nexus.eleven.nl/content/repositories/releases/'
-        snapshotRepositoryUrl = 'http://nexus.eleven.nl/content/repositories/snapshots/'
+        repositoryUrl = nexusBaseUrl + '/content/repositories/releases/'
+        snapshotRepositoryUrl = nexusBaseUrl + '/content/repositories/snapshots/'
     }
 
 }
@@ -167,8 +169,8 @@ release {
 
 nexus {
     sign = false
-    repositoryUrl = 'http://nexus.eleven.nl/content/repositories/releases/nl/eleven/'
-    snapshotRepositoryUrl = 'http://nexus.eleven.nl/content/repositories/snapshots/nl/eleven/'
+    repositoryUrl = nexusBaseUrl + '/content/repositories/releases/nl/eleven/'
+    snapshotRepositoryUrl = nexusBaseUrl + '/content/repositories/snapshots/nl/eleven/'
 }
 
 def getProjectsToTest() {
