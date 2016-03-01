@@ -18,8 +18,9 @@
 
 buildscript {
 	repositories {
-		mavenCentral()
-		jcenter()
+		jcenter{
+			url "http://jcenter.bintray.com/"
+		}
 	}
 
 	dependencies {
@@ -35,15 +36,12 @@ plugins {
 	id 'net.researchgate.release' version '2.3.4'
 }
 
-repositories {
-	mavenCentral()
-}
-
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'cobertura'
 apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'com.github.ben-manes.versions'
+apply plugin: 'com.bmuschko.nexus'
 
 ext {
 	metricsVersion = '3.1.2'
@@ -61,6 +59,7 @@ subprojects {
 	apply plugin: 'java'
 	apply plugin: 'cobertura'
 	apply plugin: 'com.github.johnrengelman.shadow'
+	apply plugin: 'com.bmuschko.nexus'
 
 	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
 		apply from: "$rootDir/gradle/publish-maven.gradle"
@@ -122,6 +121,21 @@ subprojects {
 			attributes("Implementation-Version": version)
 		}
 	}
+
+	nexus {
+         sign = false
+         repositoryUrl = 'http://nexus.eleven.nl/content/repositories/releases/'
+         snapshotRepositoryUrl = 'http://nexus.eleven.nl/content/repositories/snapshots/'
+    }
+
+    uploadArchives {
+    	  repositories {
+    		mavenDeployer {
+    			uniqueVersion = false
+    		}
+    	}
+    }
+
 }
 
 release {
@@ -130,6 +144,20 @@ release {
 	newVersionCommitMessage = 'next development version '
 	git {
 		requireBranch = null
+	}
+}
+
+nexus {
+     sign = false
+     repositoryUrl = 'http://nexus.eleven.nl/content/repositories/releases/nl/eleven/'
+     snapshotRepositoryUrl = 'http://nexus.eleven.nl/content/repositories/snapshots/nl/eleven/'
+}
+
+uploadArchives {
+	  repositories {
+		mavenDeployer {
+			uniqueVersion = false
+		}
 	}
 }
 
