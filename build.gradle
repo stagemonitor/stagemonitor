@@ -17,23 +17,23 @@
  */
 
 buildscript {
-	repositories {
-		jcenter{
-			url "http://jcenter.bintray.com/"
-		}
-	}
+    repositories {
+        jcenter {
+            url "http://jcenter.bintray.com/"
+        }
+    }
 
-	dependencies {
-		classpath 'net.saliman:gradle-cobertura-plugin:2.2.8'
-		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.0.0'
-		classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
-		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
-		classpath 'com.github.ben-manes:gradle-versions-plugin:0.11.3'
-	}
+    dependencies {
+        classpath 'net.saliman:gradle-cobertura-plugin:2.2.8'
+        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.0.0'
+        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.11.3'
+    }
 }
 
 plugins {
-	id 'net.researchgate.release' version '2.3.4'
+    id 'net.researchgate.release' version '2.3.4'
 }
 
 apply plugin: 'idea'
@@ -44,136 +44,146 @@ apply plugin: 'com.github.ben-manes.versions'
 apply plugin: 'com.bmuschko.nexus'
 
 ext {
-	metricsVersion = '3.1.2'
-	slf4jVersion = '1.7.13'
-	jacksonVersion = '2.6.4'
-	esVersion = '1.6.0'
-	javassistVersion = '3.20.0-GA'
+    metricsVersion = '3.1.2'
+    slf4jVersion = '1.7.13'
+    jacksonVersion = '2.6.4'
+    esVersion = '1.6.0'
+    javassistVersion = '3.20.0-GA'
 }
 
 subprojects {
-	group = "nl.eleven.stagemonitor"
+    group = "nl.eleven.stagemonitor"
 
-	apply plugin: 'idea'
-	apply plugin: 'eclipse'
-	apply plugin: 'java'
-	apply plugin: 'cobertura'
-	apply plugin: 'com.github.johnrengelman.shadow'
-	apply plugin: 'com.bmuschko.nexus'
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'java'
+    apply plugin: 'cobertura'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'com.bmuschko.nexus'
 
-	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
-		apply from: "$rootDir/gradle/publish-maven.gradle"
-	}
-
-	configurations {
-		provided
-		compile.extendsFrom provided
-
-		optional
-		compile.extendsFrom optional
-
-		shade
-		compile.extendsFrom shade
-	}
-
-	repositories {
-		mavenCentral()
-	}
-
-	dependencies {
-		testCompile 'junit:junit:4.12'
-		testCompile 'org.mockito:mockito-all:1.10.19'
-		testCompile 'ch.qos.logback:logback-classic:1.1.3'
-	}
-
-	test.testLogging.exceptionFormat = 'full'
-
-	compileJava {
-		sourceCompatibility = 1.6
-		targetCompatibility = 1.6
-		options.debug = true
-		options.debugOptions.debugLevel = "source,lines,vars"
-	}
-
-	tasks.withType(JavaCompile) {
-		options.encoding = 'UTF-8'
-		options.incremental = true
-	}
-
-	cobertura {
-		coverageFormats = []
-		coverageIgnoreTrivial = true
-	}
-
-	javadoc {
-		if (JavaVersion.current().isJava8Compatible()) {
-			options.addStringOption('Xdoclint:none', '-quiet')
-		}
-	}
-
-	task copyToLib( type: Copy ) {
-		into "$buildDir/libs/lib"
-		from configurations.runtime - configurations.provided
-	}
-
-	jar {
-		manifest {
-			attributes("Implementation-Version": version)
-		}
-	}
-
-	nexus {
-         sign = false
-         repositoryUrl = 'http://nexus.eleven.nl/content/repositories/releases/'
-         snapshotRepositoryUrl = 'http://nexus.eleven.nl/content/repositories/snapshots/'
+    if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
+        apply from: "$rootDir/gradle/publish-maven.gradle"
     }
 
+    configurations {
+        provided
+        compile.extendsFrom provided
+
+        optional
+        compile.extendsFrom optional
+
+        shade
+        compile.extendsFrom shade
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        testCompile 'junit:junit:4.12'
+        testCompile 'org.mockito:mockito-all:1.10.19'
+        testCompile 'ch.qos.logback:logback-classic:1.1.3'
+    }
+
+    test.testLogging.exceptionFormat = 'full'
+
+    compileJava {
+        sourceCompatibility = 1.6
+        targetCompatibility = 1.6
+        options.debug = true
+        options.debugOptions.debugLevel = "source,lines,vars"
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        options.incremental = true
+    }
+
+    cobertura {
+        coverageFormats = []
+        coverageIgnoreTrivial = true
+    }
+
+    javadoc {
+        if (JavaVersion.current().isJava8Compatible()) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+
+    task copyToLib(type: Copy) {
+        into "$buildDir/libs/lib"
+        from configurations.runtime - configurations.provided
+    }
+
+    jar {
+        manifest {
+            attributes("Implementation-Version": version)
+        }
+    }
+
+    nexus {
+        sign = false
+        repositoryUrl = 'http://nexus.eleven.nl/content/repositories/releases/'
+        snapshotRepositoryUrl = 'http://nexus.eleven.nl/content/repositories/snapshots/'
+    }
+
+}
+
+// Needed to prevent adding 'timestamp' to the versions
+// added to nexus.
+project.afterEvaluate {
     uploadArchives {
-    	  repositories {
-    		mavenDeployer {
-    			uniqueVersion = false
-    		}
-    	}
+        repositories {
+            mavenDeployer {
+                uniqueVersion = false
+            }
+        }
     }
+}
 
+// Needed to prevent adding 'timestamp' to the versions
+// added to nexus for all the subprojects.
+subprojects {subProject ->
+    afterEvaluate{
+        uploadArchives {
+            repositories {
+                mavenDeployer {
+                    uniqueVersion = false
+                }
+            }
+        }
+    }
 }
 
 release {
-	preTagCommitMessage = 'release '
-	tagCommitMessage = 'release '
-	newVersionCommitMessage = 'next development version '
-	git {
-		requireBranch = null
-	}
+    preTagCommitMessage = 'release '
+    tagCommitMessage = 'release '
+    newVersionCommitMessage = 'next development version '
+    git {
+        requireBranch = null
+    }
 }
 
 nexus {
-     sign = false
-     repositoryUrl = 'http://nexus.eleven.nl/content/repositories/releases/nl/eleven/'
-     snapshotRepositoryUrl = 'http://nexus.eleven.nl/content/repositories/snapshots/nl/eleven/'
-}
-
-uploadArchives {
-	  repositories {
-		mavenDeployer {
-			uniqueVersion = false
-		}
-	}
+    sign = false
+    repositoryUrl = 'http://nexus.eleven.nl/content/repositories/releases/nl/eleven/'
+    snapshotRepositoryUrl = 'http://nexus.eleven.nl/content/repositories/snapshots/nl/eleven/'
 }
 
 def getProjectsToTest() {
-	subprojects.findAll { !(it.toString() =~ "benchmark|buddy") }
+    subprojects.findAll { !(it.toString() =~ "benchmark|buddy") }
 }
 
 test.dependsOn << projectsToTest*.tasks*.withType(Test).flatten()
 
 cobertura {
-	coverageMergeDatafiles =  projectsToTest.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
-	coverageFormats = ['html', 'xml']
-	coverageIgnoreTrivial = true
-	coverageSourceDirs = [ projectsToTest.sourceSets.main.java.srcDirs.flatten() ]
+    coverageMergeDatafiles = projectsToTest.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
+    coverageFormats = ['html', 'xml']
+    coverageIgnoreTrivial = true
+    coverageSourceDirs = [projectsToTest.sourceSets.main.java.srcDirs.flatten()]
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "2.5"
+    gradleVersion = "2.5"
 }
