@@ -1,5 +1,3 @@
-import com.sun.org.apache.xalan.internal.xsltc.compiler.Copy
-
 /*
  * RELEASING A NEW VERSION
  *  - set the following properties in ~/.gradle/gradle.properties
