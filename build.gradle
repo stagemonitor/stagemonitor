@@ -132,29 +132,29 @@ subprojects {
 
 // Needed to prevent adding 'timestamp' to the versions
 // added to nexus.
-project.afterEvaluate {
-    uploadArchives {
-        repositories {
-            mavenDeployer {
-                uniqueVersion = false
-            }
-        }
-    }
-}
-
-// Needed to prevent adding 'timestamp' to the versions
-// added to nexus for all the subprojects.
-subprojects {subProject ->
-    afterEvaluate{
-        uploadArchives {
-            repositories {
-                mavenDeployer {
-                    uniqueVersion = false
-                }
-            }
-        }
-    }
-}
+//project.afterEvaluate {
+//    uploadArchives {
+//        repositories {
+//            mavenDeployer {
+//                uniqueVersion = false
+//            }
+//        }
+//    }
+//}
+//
+//// Needed to prevent adding 'timestamp' to the versions
+//// added to nexus for all the subprojects.
+//subprojects {subProject ->
+//    afterEvaluate{
+//        uploadArchives {
+//            repositories {
+//                mavenDeployer {
+//                    uniqueVersion = false
+//                }
+//            }
+//        }
+//    }
+//}
 
 release {
     preTagCommitMessage = 'release '
