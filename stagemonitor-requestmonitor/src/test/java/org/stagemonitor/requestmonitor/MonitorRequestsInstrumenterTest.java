@@ -16,6 +16,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -23,6 +24,7 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
+@Ignore
 @RunWith(ConditionalTravisTestRunner.class)
 public class MonitorRequestsInstrumenterTest {
 
