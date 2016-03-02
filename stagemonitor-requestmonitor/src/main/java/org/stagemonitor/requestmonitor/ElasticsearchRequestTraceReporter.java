@@ -67,6 +67,6 @@ public class ElasticsearchRequestTraceReporter implements RequestTraceReporter {
 
 	@Override
 	public <T extends RequestTrace> boolean isActive(T requestTrace) {
-		return StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl());
+		return !corePlugin.getElasticsearchUrls().isEmpty();
 	}
 }

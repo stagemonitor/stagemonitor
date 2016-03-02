@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor.profiler.elasticsearch;
 
 import javassist.CtClass;
 import javassist.CtMethod;
+import javassist.NotFoundException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchType;
@@ -20,7 +21,14 @@ public class ElasticsearchSearchQueryInstrumenter extends StagemonitorJavassistI
 
 	@Override
 	public void transformClass(CtClass actionRequestBuilder, ClassLoader loader) throws Exception {
-		final CtMethod doExecuteMethod = actionRequestBuilder.getDeclaredMethod("doExecute");
+		CtMethod doExecuteMethod;
+		try {
+			// ES 2.x
+			doExecuteMethod = actionRequestBuilder.getDeclaredMethod("beforeExecute");
+		} catch (NotFoundException e) {
+			// ES 1.x
+			doExecuteMethod = actionRequestBuilder.getDeclaredMethod("doExecute");
+		}
 		actionRequestBuilder.getClassPool().importPackage("org.stagemonitor.requestmonitor.profiler.elasticsearch");
 		actionRequestBuilder.getClassPool().importPackage("org.stagemonitor.requestmonitor.profiler");
 		doExecuteMethod.insertBefore("Profiler.addIOCall(ElasticsearchSearchQueryInstrumenter.getSearchRequestAsString(this), 0L);");

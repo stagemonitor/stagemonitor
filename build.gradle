@@ -49,7 +49,7 @@ ext {
 	metricsVersion = '3.1.2'
 	slf4jVersion = '1.7.13'
 	jacksonVersion = '2.6.4'
-	esVersion = '1.6.0'
+	esVersion = '2.2.0'
 	javassistVersion = '3.20.0-GA'
 }
 

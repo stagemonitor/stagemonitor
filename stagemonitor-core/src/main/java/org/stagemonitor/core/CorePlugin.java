@@ -36,7 +36,6 @@ import org.stagemonitor.core.metrics.AndMetricFilter;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
-import org.stagemonitor.core.metrics.SimpleElasticsearchReporter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
 import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
@@ -491,10 +490,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
 				measurementSession, configuration.getConfig(CorePlugin.class));
 
-
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
-		onShutdownReporters.add(new SimpleElasticsearchReporter(getElasticsearchClient(), metricRegistry, "simple-es-reporter", allFilters));
-
 		reportToConsole(metricRegistry, getConsoleReportingInterval(), allFilters, onShutdownReporters);
 		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, getAggregationReportingInterval());
 		if (reportToJMX()) {

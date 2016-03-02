@@ -14,6 +14,21 @@
 				}
 			]
 		},
+		"configuration-v2": {
+			"_all" : { "enabled" : false },
+			"properties": {
+				"configuration": {
+					"properties": {
+						"key": {
+							"type": "string", "index": "not_analyzed"
+						},
+						"value": {
+							"type": "string", "index": "not_analyzed"
+						}
+					}
+				}
+			}
+		},
 		"measurementSessions": {
 			"_all" : { "enabled" : false },
 			"dynamic_templates": [
@@ -29,8 +44,8 @@
 				}
 			],
 			"properties" : {
-				"startTimestamp": { "type": "date"},
-				"endTimestamp": { "type": "date"}
+				"startTimestamp": { "type": "date", "format": "date_time" },
+				"endTimestamp": { "type": "date", "format": "date_time" }
 			}
 		}
 	}

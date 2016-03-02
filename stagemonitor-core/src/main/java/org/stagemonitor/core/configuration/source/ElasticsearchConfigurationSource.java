@@ -1,15 +1,26 @@
 package org.stagemonitor.core.configuration.source;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.util.JsonUtils;
 
 public class ElasticsearchConfigurationSource extends AbstractConfigurationSource {
 
@@ -17,13 +28,17 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 	private final String path;
 	private final ElasticsearchClient elasticsearchClient;
 	private final String configurationId;
-	private Map<String, String> configuration = new ConcurrentHashMap<String, String>();
+	private ConcurrentMap<String, String> configuration = new ConcurrentHashMap<String, String>();
 
 	public ElasticsearchConfigurationSource(ElasticsearchClient elasticsearchClient, String configurationId) {
 		this.elasticsearchClient = elasticsearchClient;
 		this.configurationId = configurationId;
-		this.path = "/stagemonitor/configuration/" + this.configurationId;
-		reload();
+		this.path = "/stagemonitor/configuration-v2/" + this.configurationId;
+		try {
+			reload();
+		} catch (IOException e) {
+			logger.warn(e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -48,25 +63,44 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 
 	@Override
 	public void save(String key, String value) throws IOException {
-		final HashMap<String, String> configToSend = new HashMap<String, String>(configuration);
+		final Map<String, String> configToSend = new HashMap<String, String>(configuration);
 		configToSend.put(key, value);
-		elasticsearchClient.sendAsJson("PUT", path, configToSend);
+		elasticsearchClient.sendAsJson("PUT", path, Collections.singletonMap("configuration", EsConfigurationDto.of(configToSend)));
 		configuration.put(key, value);
 	}
 
 	@Override
-	public void reload() {
-		try {
-			final JsonNode source = elasticsearchClient.getJson(path).get("_source");
-			Map<String, String> conf = new HashMap<String, String>((int) Math.ceil(source.size() / 0.75));
-			final Iterator<Map.Entry<String, JsonNode>> it = source.fields();
-			while (it.hasNext()) {
-				Map.Entry<String, JsonNode> next = it.next();
-				conf.put(next.getKey(), next.getValue().asText());
+	public void reload() throws IOException {
+		final JsonNode source = elasticsearchClient.getJson(path).get("_source").get("configuration");
+		List<EsConfigurationDto> configAsList = JsonUtils.getMapper().readValue(source.traverse(), new TypeReference<List<EsConfigurationDto>>() {});
+		configuration = EsConfigurationDto.toMap(configAsList);
+	}
+
+	@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE)
+	private static class EsConfigurationDto {
+		final String key;
+		final String value;
+
+		@JsonCreator
+		private EsConfigurationDto(@JsonProperty("key") String key, @JsonProperty("value") String value) {
+			this.key = key;
+			this.value = value;
+		}
+
+		private static List<EsConfigurationDto> of(Map<String, String> configMap) {
+			List<EsConfigurationDto> config = new ArrayList<EsConfigurationDto>(configMap.size());
+			for (Map.Entry<String, String> entry : configMap.entrySet()) {
+				config.add(new EsConfigurationDto(entry.getKey(), entry.getValue()));
 			}
-			configuration = conf;
-		} catch (IOException e) {
-			logger.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
+			return config;
+		}
+
+		private static ConcurrentMap<String, String> toMap(List<EsConfigurationDto> configAsList) {
+			ConcurrentMap<String, String> configAsMap = new ConcurrentHashMap<String, String>();
+			for (EsConfigurationDto dto : configAsList) {
+				configAsMap.put(dto.key, dto.value);
+			}
+			return configAsMap;
 		}
 	}
 }

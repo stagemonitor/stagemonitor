@@ -15,7 +15,7 @@ public interface ConfigurationSource {
 	/**
 	 * Reloads the configuration to pick up the latest changes
 	 */
-	void reload();
+	void reload() throws IOException;
 
 	/**
 	 * Returns the name of the configuration source.
@@ -26,9 +26,9 @@ public interface ConfigurationSource {
 	String getName();
 
 	/**
-	 * Returns whether or not it is possible to save values with the {@link #save(String, String, String)} method.
+	 * Returns whether or not it is possible to save values with the {@link #save(String, String)} method.
 	 * <p/>
-	 * If this method returns false, {@link #save(String, String, String)} must throw a {@link UnsupportedOperationException}
+	 * If this method returns false, {@link #save(String, String)} must throw a {@link UnsupportedOperationException}
 	 *
 	 * @return <code>true</code>, if saving is possible, <code>false</code> otherwise
 	 */

@@ -38,10 +38,10 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 
 	@Test
 	public void testSaveAndGet() throws Exception {
-		configurationSource.save("foo", "bar");
+		configurationSource.save("foo.bar", "baz");
 		refresh();
 		configurationSource.reload();
-		assertEquals("bar", configurationSource.getValue("foo"));
+		assertEquals("baz", configurationSource.getValue("foo.bar"));
 	}
 
 	@Test
@@ -67,10 +67,10 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 
 		final GetMappingsResponse mappings = client.admin().indices().prepareGetMappings("stagemonitor").setTypes("configuration").get();
 		assertEquals(1, mappings.getMappings().size());
-		assertEquals("{\"configuration\":" +
-				"{\"dynamic_templates\":[{\"fields\":{\"mapping\":{\"index\":\"not_analyzed\",\"type\":\"string\"},\"match\":\"*\"}}]," +
-				"\"_all\":{\"enabled\":false}," +
-				"\"properties\":{\"foo\":{\"type\":\"string\",\"index\":\"not_analyzed\"}}}}",
+		assertEquals("{\"configuration\":{" +
+						"\"_all\":{\"enabled\":false}," +
+						"\"dynamic_templates\":[{\"fields\":{\"mapping\":{\"index\":\"not_analyzed\",\"type\":\"string\"},\"match\":\"*\"}}]" +
+						"}}",
 				mappings.getMappings().get("stagemonitor").get("configuration").source().toString());
 	}
 }
