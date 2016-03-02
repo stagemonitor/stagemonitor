@@ -37,6 +37,9 @@ public class JsonUtils {
 		MAPPER.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 	}
 
+	private JsonUtils() {
+	}
+
 	public static boolean versionsMatch(Version v1, Version v2) {
 		return v1.getMajorVersion() == v2.getMajorVersion() &&
 				v1.getMinorVersion() == v2.getMinorVersion() &&

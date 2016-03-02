@@ -10,6 +10,9 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 
 public class ConfigurationOptionsMarkdownExporter {
 
+	private ConfigurationOptionsMarkdownExporter() {
+	}
+
 	public static void main(String[] args) throws IOException {
 		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new Configuration(StagemonitorPlugin.class).getConfigurationOptionsByCategory();
 

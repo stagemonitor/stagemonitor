@@ -2,6 +2,9 @@ package org.stagemonitor.core.util;
 
 public class ClassUtils {
 
+	private ClassUtils() {
+	}
+
 	public static Class<?> forNameOrNull(String className) {
 		try {
 			return Class.forName(className);

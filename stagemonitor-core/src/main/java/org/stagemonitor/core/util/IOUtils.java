@@ -14,6 +14,9 @@ public class IOUtils {
 	private static final int BUFFER_SIZE = 4096;
 	private static final Logger logger = LoggerFactory.getLogger(IOUtils.class);
 
+	private IOUtils() {
+	}
+
 	public static void copy(InputStream input, OutputStream output) throws IOException {
 		int n;
 		final byte[] buffer = new byte[BUFFER_SIZE];

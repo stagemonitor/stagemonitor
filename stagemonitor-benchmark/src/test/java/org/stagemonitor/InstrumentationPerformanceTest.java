@@ -25,6 +25,9 @@ public class InstrumentationPerformanceTest  {
 
 	private static Node node;
 
+	private InstrumentationPerformanceTest() {
+	}
+
 	public static void main(String[] args) throws Exception {
 		final Timer.Context timer = Stagemonitor.getMetric2Registry().timer(name("startElasticsearch").build()).time();
 		startElasticsearch();

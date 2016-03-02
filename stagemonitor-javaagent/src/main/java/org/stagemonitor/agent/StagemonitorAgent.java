@@ -12,6 +12,9 @@ public class StagemonitorAgent {
 
 	private static boolean initialized = false;
 
+	private StagemonitorAgent() {
+	}
+
 	/**
 	 * Allows the installation of the agent via the -javaagent command line argument
 	 *

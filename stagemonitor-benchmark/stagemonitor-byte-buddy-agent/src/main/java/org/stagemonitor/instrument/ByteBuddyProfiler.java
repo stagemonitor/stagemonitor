@@ -16,6 +16,9 @@ import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 public class ByteBuddyProfiler {
 
+	private ByteBuddyProfiler() {
+	}
+
 	public static void premain(String agentArgs, Instrumentation inst) {
 		new AgentBuilder.Default()
 				.rebase(new ElementMatcher<TypeDescription>() {
@@ -39,6 +42,9 @@ public class ByteBuddyProfiler {
 	}
 
 	public static class ProfilingInterceptor {
+		private ProfilingInterceptor() {
+		}
+
 		@RuntimeType
 		public static Object profile(@Origin String signature, @SuperCall Callable<?> zuper) throws Exception {
 			Profiler.start(signature);
