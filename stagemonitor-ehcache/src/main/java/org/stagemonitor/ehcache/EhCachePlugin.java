@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
@@ -84,7 +85,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	 *
 	 * @param cache The Cache to monitor
 	 */
-	public void monitorCache(Cache cache) {
+	public void monitorCache(Ehcache cache) {
 		cache.setStatisticsEnabled(true);
 		final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(cache.getName(),
 				metricRegistry, timeGet.getValue());

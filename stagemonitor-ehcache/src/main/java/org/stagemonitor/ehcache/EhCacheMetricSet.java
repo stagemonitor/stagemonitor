@@ -8,10 +8,9 @@ import java.util.Map;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.RatioGauge;
-import net.sf.ehcache.Cache;
 import net.sf.ehcache.Ehcache;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.metrics.metrics2.Metric2Set;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 /**
  * An instrumented {@link net.sf.ehcache.Ehcache} instance.
@@ -22,7 +21,7 @@ public class EhCacheMetricSet implements Metric2Set {
 	private final Ehcache cache;
 	private final StagemonitorCacheUsageListener cacheUsageListener;
 
-	public EhCacheMetricSet(String cacheName, Cache cache, StagemonitorCacheUsageListener cacheUsageListener) {
+	public EhCacheMetricSet(String cacheName, Ehcache cache, StagemonitorCacheUsageListener cacheUsageListener) {
 		this.cacheName = cacheName;
 		this.cache = cache;
 		this.cacheUsageListener = cacheUsageListener;
