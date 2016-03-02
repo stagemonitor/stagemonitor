@@ -1,20 +1,8 @@
 package org.stagemonitor.core.configuration.source;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.InputStream;
-
-import com.codahale.metrics.SharedMetricRegistries;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
-import org.stagemonitor.junit.ExcludeOnTravis;
 
 @RunWith(ConditionalTravisTestRunner.class)
 public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchTest {
