@@ -127,7 +127,7 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		final CorePlugin corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
 		String applicationName = corePlugin.getApplicationName() != null ? corePlugin.getApplicationName() : "os";
 		String instanceName = corePlugin.getInstanceName() != null ? corePlugin.getInstanceName() : "host";
-		return new MeasurementSession(applicationName, MeasurementSession.getNameOfLocalHost(), instanceName);
+		return new MeasurementSession(applicationName, corePlugin.getHostName(), instanceName);
 	}
 
 	static ConfigurationSource getConfiguration(String[] args) {

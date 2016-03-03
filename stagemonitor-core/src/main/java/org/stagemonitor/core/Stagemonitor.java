@@ -230,7 +230,7 @@ public final class Stagemonitor {
 	private static void tryStartMonitoring() {
 		CorePlugin corePlugin = getConfiguration(CorePlugin.class);
 		MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(),
-				MeasurementSession.getNameOfLocalHost(), corePlugin.getInstanceName());
+				corePlugin.getHostName(), corePlugin.getInstanceName());
 		startMonitoring(session);
 	}
 
