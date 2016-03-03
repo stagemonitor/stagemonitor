@@ -69,7 +69,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	@Override
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
 		final MeasurementSession measurementSession = new MeasurementSession(getApplicationName(filterConfig),
-				MeasurementSession.getNameOfLocalHost(), corePlugin.getInstanceName());
+				corePlugin.getHostName(), corePlugin.getInstanceName());
 		Stagemonitor.setMeasurementSession(measurementSession);
 		final ServletContext servletContext = filterConfig.getServletContext();
 		atLeastServletApi3 = servletContext.getMajorVersion() >= 3;

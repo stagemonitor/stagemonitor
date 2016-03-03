@@ -5,6 +5,7 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -221,6 +222,16 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
+			.build();
+	private final ConfigurationOption<String> hostName = ConfigurationOption.stringOption()
+			.key("stagemonitor.hostName")
+			.dynamic(false)
+			.label("Host name")
+			.description("The host name.\n" +
+					"If this property is not set, the host name will default to resolving the host name for localhost, " +
+					"if this fails it will be loaded from the environment, either from COMPUTERNAME or HOSTNAME.")
+			.defaultValue(getNameOfLocalHost())
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<List<String>> elasticsearchUrls = ConfigurationOption.builder(ListValueConverter.STRINGS_VALUE_CONVERTER, List.class)
 			.key("stagemonitor.elasticsearch.url")
@@ -636,6 +647,27 @@ public class CorePlugin extends StagemonitorPlugin {
 		this.elasticsearchClient = elasticsearchClient;
 	}
 
+	public static String getNameOfLocalHost() {
+		try {
+			return InetAddress.getLocalHost().getHostName();
+		} catch (Exception e) {
+			return getHostNameFromEnv();
+		}
+	}
+
+	static String getHostNameFromEnv() {
+		// try environment properties.
+		String host = System.getenv("COMPUTERNAME");
+		if (host != null) {
+			return host;
+		}
+		host = System.getenv("HOSTNAME");
+		if (host != null) {
+			return host;
+		}
+		return null;
+	}
+
 	public boolean isStagemonitorActive() {
 		return Stagemonitor.isDisabled() ? false : stagemonitorActive.getValue();
 	}
@@ -674,6 +706,10 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public String getInstanceName() {
 		return instanceName.getValue();
+	}
+
+	public String getHostName() {
+		return hostName.getValue();
 	}
 
 	/**

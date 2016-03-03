@@ -198,7 +198,7 @@ public class RequestMonitor {
 
 	private synchronized void createMeasurementSession() {
 		if (Stagemonitor.getMeasurementSession().isNull()) {
-			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), MeasurementSession.getNameOfLocalHost(),
+			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), corePlugin.getHostName(),
 					corePlugin.getInstanceName());
 			Stagemonitor.setMeasurementSession(session);
 		}
