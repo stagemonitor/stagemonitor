@@ -1,13 +1,5 @@
 package org.stagemonitor.core.metrics.metrics2;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Gauge;
@@ -18,6 +10,13 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricSet;
 import com.codahale.metrics.Timer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A metrics registry that does not use a simple dotted metric name but a key-value pair for the metric identity
@@ -78,6 +77,22 @@ public class Metric2Registry implements Metric2Set {
 	public void registerAll(Metric2Set metrics) throws IllegalArgumentException {
 		for (Map.Entry<MetricName, Metric> entry : metrics.getMetrics().entrySet()) {
 			register(entry.getKey(), entry.getValue());
+		}
+	}
+	
+	/**
+	 * Given a metric set, registers the ones not already registered.
+	 * This method prevents IllegalArgumentException
+	 * @param metrics a set of metrics
+	 */
+	public void registerAny(Metric2Set metrics) {
+		final Set<MetricName> registeredNames = getNames();
+		for (Map.Entry<MetricName, Metric> entry : metrics.getMetrics().entrySet()) {
+			if (!registeredNames.contains(entry.getKey())) {
+				try {
+					register(entry.getKey(), entry.getValue());
+				} catch (IllegalArgumentException e){/* exception due to race condition*/}
+			}
 		}
 	}
 

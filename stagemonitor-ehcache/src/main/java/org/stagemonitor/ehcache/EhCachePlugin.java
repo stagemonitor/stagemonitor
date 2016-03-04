@@ -2,7 +2,6 @@ package org.stagemonitor.ehcache;
 
 import java.util.Collections;
 import java.util.List;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
@@ -90,7 +89,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 		final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(cache.getName(),
 				metricRegistry, timeGet.getValue());
 		cache.registerCacheUsageListener(cacheUsageListener);
-		metricRegistry.registerAll(new EhCacheMetricSet(cache.getName(), cache, cacheUsageListener));
+		metricRegistry.registerAny(new EhCacheMetricSet(cache.getName(), cache, cacheUsageListener));
 	}
 
 	@Override
