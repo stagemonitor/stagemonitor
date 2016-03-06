@@ -158,3 +158,6 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 task wrapper(type: Wrapper) {
 	gradleVersion = "2.5"
 }
+
+task install
+install.dependsOn subprojects.compileJava
