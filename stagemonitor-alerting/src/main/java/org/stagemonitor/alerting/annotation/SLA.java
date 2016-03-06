@@ -21,7 +21,7 @@ import org.stagemonitor.alerting.check.Threshold;
 public @interface SLA {
 
 	/**
-	 * If set, a check for the error rate will be created
+	 * If set, a check for the error rate (errors/second) will be created
 	 */
 	double errorRateThreshold() default -1;
 
@@ -35,7 +35,8 @@ public @interface SLA {
 	/**
 	 * The thresholds for the metrics
 	 * <p/>
-	 * Make sure the number of metrics and thresholds match
+	 * Make sure the number of metrics and thresholds match.
+	 * Rates are per second and durations are in milliseconds.
 	 */
 	double[] threshold() default {};
 
