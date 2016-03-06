@@ -41,9 +41,11 @@ repositories {
 
 apply plugin: 'idea'
 apply plugin: 'eclipse'
-apply plugin: 'cobertura'
-apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'com.github.ben-manes.versions'
+if (!System.getProperty("java.version").startsWith("1.6.")) {
+	apply plugin: 'cobertura'
+	apply plugin: 'com.github.kt3k.coveralls'
+}
 
 ext {
 	metricsVersion = '3.1.2'
@@ -59,8 +61,10 @@ subprojects {
 	apply plugin: 'idea'
 	apply plugin: 'eclipse'
 	apply plugin: 'java'
-	apply plugin: 'cobertura'
 	apply plugin: 'com.github.johnrengelman.shadow'
+	if (!System.getProperty("java.version").startsWith("1.6.")) {
+		apply plugin: 'cobertura'
+	}
 
 	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
 		apply from: "$rootDir/gradle/publish-maven.gradle"
@@ -101,9 +105,11 @@ subprojects {
 		options.incremental = true
 	}
 
-	cobertura {
-		coverageFormats = []
-		coverageIgnoreTrivial = true
+	if (!System.getProperty("java.version").startsWith("1.6.")) {
+		cobertura {
+			coverageFormats = []
+			coverageIgnoreTrivial = true
+		}
 	}
 
 	javadoc {
@@ -139,11 +145,13 @@ def getProjectsToTest() {
 
 test.dependsOn << projectsToTest*.tasks*.withType(Test).flatten()
 
-cobertura {
-	coverageMergeDatafiles =  projectsToTest.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
-	coverageFormats = ['html', 'xml']
-	coverageIgnoreTrivial = true
-	coverageSourceDirs = [ projectsToTest.sourceSets.main.java.srcDirs.flatten() ]
+if (!System.getProperty("java.version").startsWith("1.6.")) {
+	cobertura {
+		coverageMergeDatafiles =  projectsToTest.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
+		coverageFormats = ['html', 'xml']
+		coverageIgnoreTrivial = true
+		coverageSourceDirs = [ projectsToTest.sourceSets.main.java.srcDirs.flatten() ]
+	}
 }
 
 task wrapper(type: Wrapper) {
