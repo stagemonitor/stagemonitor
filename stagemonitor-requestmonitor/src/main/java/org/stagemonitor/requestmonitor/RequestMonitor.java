@@ -290,7 +290,7 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> MetricName getTimerMetricName(String requestName) {
+	public static MetricName getTimerMetricName(String requestName) {
 		return name("response_time_server").tag("request_name", requestName).layer("All").build();
 	}
 

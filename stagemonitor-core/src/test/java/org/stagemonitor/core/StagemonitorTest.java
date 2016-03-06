@@ -11,24 +11,36 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 
-import com.codahale.metrics.SharedMetricRegistries;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.stagemonitor.core.configuration.Configuration;
 
 public class StagemonitorTest {
 
+	private static Configuration originalConfiguration;
 	private Configuration configuration = mock(Configuration.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private Logger logger = mock(Logger.class);
+
+	@BeforeClass
+	public static void beforeClass() {
+		originalConfiguration = Stagemonitor.getConfiguration();
+	}
+
+	@AfterClass
+	public static void afterClass() {
+		Stagemonitor.setConfiguration(originalConfiguration);
+		Stagemonitor.reset();
+	}
 
 	@Before
 	public void before() {
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		Stagemonitor.reset();
-		SharedMetricRegistries.clear();
 		Stagemonitor.setConfiguration(configuration);
 		Stagemonitor.setLogger(logger);
 		assertFalse(Stagemonitor.isStarted());
@@ -37,12 +49,13 @@ public class StagemonitorTest {
 	@After
 	public void after() {
 		Stagemonitor.reset();
-		SharedMetricRegistries.clear();
 	}
 
 	@Test
 	public void testStartMonitoring() throws Exception {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+		Stagemonitor.setConfiguration(configuration);
+		Stagemonitor.reset();
 
 		final MeasurementSession measurementSession = new MeasurementSession("StagemonitorTest", "testHost", "testInstance");
 		Stagemonitor.startMonitoring(measurementSession).get();
@@ -58,7 +71,6 @@ public class StagemonitorTest {
 	@Test
 	public void testStartMonitoringNotActive() throws Exception {
 		when(corePlugin.isStagemonitorActive()).thenReturn(false);
-		Stagemonitor.setConfiguration(configuration);
 
 		final MeasurementSession measurementSession = new MeasurementSession("StagemonitorTest", "testHost", "testInstance");
 		Stagemonitor.startMonitoring(measurementSession).get();

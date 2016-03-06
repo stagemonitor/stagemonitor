@@ -11,12 +11,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public final class Stagemonitor {
@@ -31,7 +31,7 @@ public final class Stagemonitor {
 	private static List<String> pathsOfWidgetTabPlugins = Collections.emptyList();
 	private static Iterable<StagemonitorPlugin> plugins;
 	private static List<Runnable> onShutdownActions = new CopyOnWriteArrayList<Runnable>();
-	private static Metric2Registry metric2Registry;
+	private static Metric2Registry metric2Registry = new Metric2Registry();
 
 	static {
 		try {
@@ -221,8 +221,10 @@ public final class Stagemonitor {
 		started = false;
 		disabled = false;
 		measurementSession = new MeasurementSession(null, null, null);
-		metric2Registry = new Metric2Registry();
-		reloadConfiguration();
+		metric2Registry.removeMatching(Metric2Filter.ALL);
+		if (configuration == null) {
+			reloadPluginsAndConfiguration();
+		}
 		tryStartMonitoring();
 		onShutdownActions.add(MainStagemonitorClassFileTransformer.performRuntimeAttachment());
 	}
@@ -234,10 +236,7 @@ public final class Stagemonitor {
 		startMonitoring(session);
 	}
 
-	private static void reloadConfiguration() {
-		if (configuration != null) {
-			configuration.close();
-		}
+	private static void reloadPluginsAndConfiguration() {
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
 		for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {
 			initializer.modifyConfigurationSources(configurationSources);

@@ -625,6 +625,10 @@ public class CorePlugin extends StagemonitorPlugin {
 		getGrafanaClient().close();
 	}
 
+	public MeasurementSession getMeasurementSession() {
+		return Stagemonitor.getMeasurementSession();
+	}
+
 	public Metric2Registry getMetricRegistry() {
 		return metricRegistry;
 	}
