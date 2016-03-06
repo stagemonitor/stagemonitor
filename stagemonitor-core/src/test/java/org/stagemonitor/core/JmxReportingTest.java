@@ -25,7 +25,7 @@ public class JmxReportingTest {
 		registry = new Metric2Registry();
 		final Configuration configuration = Mockito.mock(Configuration.class);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
-		when(corePlugin.reportToJMX()).thenReturn(true);
+		when(corePlugin.isReportToJMX()).thenReturn(true);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 
 		new CorePlugin(mock(ElasticsearchClient.class)).registerReporters(registry, configuration, new MeasurementSession("JmxReportingTest", "test", "test"));

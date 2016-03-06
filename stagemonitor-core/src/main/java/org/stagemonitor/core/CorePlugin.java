@@ -504,7 +504,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
 		reportToConsole(metricRegistry, getConsoleReportingInterval(), allFilters, onShutdownReporters);
 		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, getAggregationReportingInterval());
-		if (reportToJMX()) {
+		if (configuration.getConfig(CorePlugin.class).isReportToJMX()) {
 			// Because JMX reporter is on registration and not periodic only the
 			// regex filter is applicable here (not filtering metrics by count)
 			reportToJMX(metricRegistry, regexFilter);
@@ -688,7 +688,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		return reportingIntervalAggregation.getValue();
 	}
 
-	public boolean reportToJMX() {
+	public boolean isReportToJMX() {
 		return reportingJmx.getValue();
 	}
 
