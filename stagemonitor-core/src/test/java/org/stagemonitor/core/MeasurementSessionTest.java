@@ -16,13 +16,13 @@ public class MeasurementSessionTest {
 	@Test
 	@ExcludeOnTravis
 	public void testGetHostname() {
-		assertNotNull(MeasurementSession.getNameOfLocalHost());
+		assertNotNull(CorePlugin.getNameOfLocalHost());
 	}
 
 	@Test
 	@Ignore
 	public void testGetHostnameFromEnv() {
-		assertNotNull(MeasurementSession.getHostNameFromEnv());
+		assertNotNull(CorePlugin.getHostNameFromEnv());
 	}
 
 	@Test

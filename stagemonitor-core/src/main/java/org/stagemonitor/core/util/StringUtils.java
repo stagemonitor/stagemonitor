@@ -13,6 +13,9 @@ public class StringUtils {
 
 	public static final Pattern CAMEL_CASE = Pattern.compile("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
 
+	private StringUtils() {
+	}
+
 	public static String removeStart(final String str, final String remove) {
 		if (remove != null && str.startsWith(remove)) {
 			return str.substring(remove.length());

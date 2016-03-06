@@ -19,12 +19,20 @@ public class MDCListener implements ServletRequestListener {
 
 	public static final String STAGEMONITOR_REQUEST_ID_ATTR = "stagemonitor-request-id";
 
-	public static final CorePlugin corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
+	private final CorePlugin corePlugin;
+
+	public MDCListener() {
+		this(Stagemonitor.getConfiguration(CorePlugin.class));
+	}
+
+	public MDCListener(CorePlugin corePlugin) {
+		this.corePlugin = corePlugin;
+	}
 
 	@Override
 	public void requestInitialized(ServletRequestEvent sre) {
 		if (corePlugin.isStagemonitorActive()) {
-			final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
+			final MeasurementSession measurementSession = corePlugin.getMeasurementSession();
 			if (measurementSession.getApplicationName() != null) {
 				MDC.put("application", measurementSession.getApplicationName());
 			}

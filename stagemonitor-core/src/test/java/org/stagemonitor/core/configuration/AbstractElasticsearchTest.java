@@ -29,19 +29,18 @@ public class AbstractElasticsearchTest {
 	@BeforeClass
 	public static void beforeClass() throws IOException {
 		if (node == null) {
-			FileUtils.deleteQuietly(new File("build/elasticsearch"));
+			final File esHome = new File("build/elasticsearch");
+			FileUtils.deleteQuietly(esHome);
 			final NodeBuilder nodeBuilder = NodeBuilder.nodeBuilder().local(true);
 			elasticsearchPort = getAvailablePort();
 			nodeBuilder.settings()
+					.put("path.home", esHome.getAbsolutePath())
 					.put("name", "junit-es-node")
 					.put("node.http.enabled", "false")
 					.put("http.port", elasticsearchPort)
 					.put("path.logs", "build/elasticsearch/logs")
 					.put("path.data", "build/elasticsearch/data")
 					.put("index.store.fs.memory.enabled", "true")
-					.put("index.gateway.type", "none")
-					.put("gateway.type", "none")
-					.put("index.store.type", "memory")
 					.put("index.number_of_shards", "1")
 					.put("index.number_of_replicas", "0")
 					.put("discovery.zen.ping.multicast.enabled", "false");

@@ -6,6 +6,7 @@ import java.util.Collection;
 import javassist.CtClass;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.ClassUtils;
 
 public abstract class StagemonitorJavassistInstrumenter {
@@ -15,6 +16,8 @@ public abstract class StagemonitorJavassistInstrumenter {
 	public static Collection<String> excludes;
 
 	public static Collection<String> excludeContaining;
+
+	protected static Configuration configuration = Stagemonitor.getConfiguration();
 
 	static {
 		initIncludesAndExcludes();
@@ -102,5 +105,9 @@ public abstract class StagemonitorJavassistInstrumenter {
 			}
 		}
 		return false;
+	}
+
+	public static void setConfiguration(Configuration configuration) {
+		StagemonitorJavassistInstrumenter.configuration = configuration;
 	}
 }

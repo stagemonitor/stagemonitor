@@ -15,32 +15,35 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.MDC;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.SimpleSource;
 
 public class MDCListenerTest {
 
-	private MDCListener mdcListener = new MDCListener();
-
+	private MDCListener mdcListener;
+	private CorePlugin corePlugin;
 
 	@Before
 	public void setUp() throws Exception {
 		Stagemonitor.reset();
 		SharedMetricRegistries.clear();
+		this.corePlugin = mock(CorePlugin.class);
+		when(corePlugin.isStagemonitorActive()).thenReturn(true);
+
+		mdcListener = new MDCListener(corePlugin);
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		Stagemonitor.reset();
-		SharedMetricRegistries.clear();
 		MDC.clear();
 	}
 
 	@Test
 	public void testMDCInstanceAlreadySet() throws Exception {
 		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", "testInstance")).get();
+		when(corePlugin.getMeasurementSession()).thenReturn(new MeasurementSession("MDCListenerTest", "testHost", "testInstance"));
 		final ServletRequestEvent requestEvent = mock(ServletRequestEvent.class);
 		final ServletRequest request = mock(ServletRequest.class);
 		when(requestEvent.getServletRequest()).thenReturn(request);
@@ -58,7 +61,7 @@ public class MDCListenerTest {
 
 	@Test
 	public void testMDCInstanceNotAlreadySet() throws Exception {
-		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", null)).get();
+		when(corePlugin.getMeasurementSession()).thenReturn(new MeasurementSession("MDCListenerTest", "testHost", null));
 
 		final ServletRequestEvent requestEvent = mock(ServletRequestEvent.class);
 		final ServletRequest request = mock(ServletRequest.class);
@@ -74,11 +77,9 @@ public class MDCListenerTest {
 	}
 
 	@Test
-	public void testMDCStagemonitorDeactivated() throws Exception{
-		Configuration configuration = Stagemonitor.getConfiguration();
-		configuration.addConfigurationSource(SimpleSource.forTest("stagemonitor.active", "false"));
-		configuration.reloadAllConfigurationOptions();
-		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", null)).get();
+	public void testMDCStagemonitorDeactivated() throws Exception {
+		when(corePlugin.isStagemonitorActive()).thenReturn(false);
+		when(corePlugin.getMeasurementSession()).thenReturn(new MeasurementSession("MDCListenerTest", "testHost", null));
 
 		mdcListener.requestInitialized(mock(ServletRequestEvent.class));
 

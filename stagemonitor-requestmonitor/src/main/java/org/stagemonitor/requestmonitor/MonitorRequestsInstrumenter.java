@@ -33,9 +33,8 @@ public class MonitorRequestsInstrumenter extends StagemonitorJavassistInstrument
 			return;
 		}
 		try {
-			String signature = configuration.getBusinessTransactionNamingStrategy().getBusinessTransationName(ctMethod.getDeclaringClass().getSimpleName(), ctMethod.getName());
 			ctMethod.insertBefore("org.stagemonitor.requestmonitor.MonitorRequestsInstrumenter.getRequestMonitor()" +
-					".monitorStart(new org.stagemonitor.requestmonitor.MonitoredMethodRequest(\"" + signature + "\", null, $args));");
+					".monitorStart(new org.stagemonitor.requestmonitor.MonitoredMethodRequest(\"" + getRequestName(ctMethod) + "\", null, $args));");
 
 			ctMethod.addCatch("{" +
 					"	org.stagemonitor.requestmonitor.MonitorRequestsInstrumenter.getRequestMonitor().recordException($e);" +
@@ -49,6 +48,10 @@ public class MonitorRequestsInstrumenter extends StagemonitorJavassistInstrument
 		} catch (NotFoundException e) {
 			logger.debug(e.getMessage(), e);
 		}
+	}
+
+	public static String getRequestName(CtMethod ctMethod) {
+		return configuration.getBusinessTransactionNamingStrategy().getBusinessTransationName(ctMethod.getDeclaringClass().getSimpleName(), ctMethod.getName());
 	}
 
 	public static RequestMonitor getRequestMonitor() {

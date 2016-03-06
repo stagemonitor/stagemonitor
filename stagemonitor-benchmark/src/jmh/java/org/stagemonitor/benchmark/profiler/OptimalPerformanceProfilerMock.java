@@ -9,6 +9,9 @@ public class OptimalPerformanceProfilerMock {
 	static List<String> signatures = new ArrayList<String>();
 	private static long dummy = 0;
 
+	private OptimalPerformanceProfilerMock() {
+	}
+
 	public static void start() {
 		dummy = System.nanoTime();
 	}

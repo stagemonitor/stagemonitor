@@ -10,10 +10,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -64,7 +66,7 @@ public class ElasticsearchClient {
 
 	public <T> T getObject(final String path, Class<T> type) {
 		try {
-			return JsonUtils.getMapper().reader(type).readValue(getJson(path).get("_source"));
+			return JsonUtils.getMapper().readerFor(type).readValue(getJson(path).get("_source"));
 		} catch (FileNotFoundException e) {
 			return null;
 		} catch (IOException e) {
@@ -76,7 +78,7 @@ public class ElasticsearchClient {
 		try {
 			JsonNode hits = getJson(path + "/_search?size=" + limit).get("hits").get("hits");
 			List<T> all = new ArrayList<T>(hits.size());
-			ObjectReader reader = JsonUtils.getMapper().reader(clazz);
+			ObjectReader reader = JsonUtils.getMapper().readerFor(clazz);
 			for (JsonNode hit : hits) {
 				all.add(reader.<T>readValue(hit.get("_source")));
 			}
@@ -99,11 +101,25 @@ public class ElasticsearchClient {
 	}
 
 	public void index(final String index, final String type, final Object document) {
-		sendAsJsonAsync("POST", "/" + index + "/" + type, document);
+		final ObjectNode json = JsonUtils.toObjectNode(document);
+		removeDisallowedCharsFromPropertyNames(json);
+
+		sendAsJsonAsync("POST", "/" + index + "/" + type, json);
 	}
 
-	public void index(final String index, final String type, String id, final Object document) {
-		sendAsJsonAsync("PUT", "/" + index + "/" + type + "/" + id, document);
+	private void removeDisallowedCharsFromPropertyNames(ObjectNode json) {
+		final Iterator<String> fieldNames = json.fieldNames();
+		while (fieldNames.hasNext()) {
+			String fieldName = fieldNames.next();
+			final JsonNode value = json.get(fieldName);
+			if (fieldName.indexOf('.') != -1) {
+				json.set(fieldName.replace(".", "_(dot)_"), value);
+				json.remove(fieldName);
+			}
+			if (value.isObject()) {
+				removeDisallowedCharsFromPropertyNames((ObjectNode) value);
+			}
+		}
 	}
 
 	public void createIndex(final String index, final InputStream mapping) {
@@ -226,11 +242,11 @@ public class ElasticsearchClient {
 	}
 
 	public void deleteIndices(String indexPattern) {
-		execute("DELETE", indexPattern + "?timeout=20m", "Deleting indices: {}");
+		execute("DELETE", indexPattern + "?timeout=20m&ignore_unavailable=true", "Deleting indices: {}");
 	}
 
 	public void optimizeIndices(String indexPattern) {
-		execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h", "Optimizing indices: {}");
+		execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h&ignore_unavailable=true", "Optimizing indices: {}");
 	}
 
 	public void updateIndexSettings(String indexPattern, Map<String, ?> settings) {
@@ -238,7 +254,7 @@ public class ElasticsearchClient {
 		if (StringUtils.isEmpty(elasticsearchUrl)) {
 			return;
 		}
-		final String url = elasticsearchUrl + "/" + indexPattern + "/_settings";
+		final String url = elasticsearchUrl + "/" + indexPattern + "/_settings?ignore_unavailable=true";
 		logger.info("Updating index settings {}\n{}", url, settings);
 		httpClient.sendAsJson("PUT", url, settings);
 	}
@@ -272,6 +288,15 @@ public class ElasticsearchClient {
 
 	public boolean isPoolQueueEmpty() {
 		return asyncESPool.getQueue().isEmpty();
+	}
+
+	public void waitForCompletion() throws ExecutionException, InterruptedException {
+		// because the pool is single threaded,
+		// all previously submitted tasks are completed when this task finishes
+		asyncESPool.submit(new Runnable() {
+			public void run() {
+			}
+		}).get();
 	}
 
 	public void close() {

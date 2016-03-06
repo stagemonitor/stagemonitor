@@ -5,6 +5,7 @@ import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetri
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,7 +37,6 @@ import org.stagemonitor.core.metrics.AndMetricFilter;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.RegexMetricFilter;
-import org.stagemonitor.core.metrics.SimpleElasticsearchReporter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
 import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
@@ -222,6 +222,16 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
+			.build();
+	private final ConfigurationOption<String> hostName = ConfigurationOption.stringOption()
+			.key("stagemonitor.hostName")
+			.dynamic(false)
+			.label("Host name")
+			.description("The host name.\n" +
+					"If this property is not set, the host name will default to resolving the host name for localhost, " +
+					"if this fails it will be loaded from the environment, either from COMPUTERNAME or HOSTNAME.")
+			.defaultValue(getNameOfLocalHost())
+			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<List<String>> elasticsearchUrls = ConfigurationOption.builder(ListValueConverter.STRINGS_VALUE_CONVERTER, List.class)
 			.key("stagemonitor.elasticsearch.url")
@@ -491,10 +501,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
 				measurementSession, configuration.getConfig(CorePlugin.class));
 
-
 		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
-		onShutdownReporters.add(new SimpleElasticsearchReporter(getElasticsearchClient(), metricRegistry, "simple-es-reporter", allFilters));
-
 		reportToConsole(metricRegistry, getConsoleReportingInterval(), allFilters, onShutdownReporters);
 		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, getAggregationReportingInterval());
 		if (configuration.getConfig(CorePlugin.class).isReportToJMX()) {
@@ -618,6 +625,10 @@ public class CorePlugin extends StagemonitorPlugin {
 		getGrafanaClient().close();
 	}
 
+	public MeasurementSession getMeasurementSession() {
+		return Stagemonitor.getMeasurementSession();
+	}
+
 	public Metric2Registry getMetricRegistry() {
 		return metricRegistry;
 	}
@@ -638,6 +649,27 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public void setElasticsearchClient(ElasticsearchClient elasticsearchClient) {
 		this.elasticsearchClient = elasticsearchClient;
+	}
+
+	public static String getNameOfLocalHost() {
+		try {
+			return InetAddress.getLocalHost().getHostName();
+		} catch (Exception e) {
+			return getHostNameFromEnv();
+		}
+	}
+
+	static String getHostNameFromEnv() {
+		// try environment properties.
+		String host = System.getenv("COMPUTERNAME");
+		if (host != null) {
+			return host;
+		}
+		host = System.getenv("HOSTNAME");
+		if (host != null) {
+			return host;
+		}
+		return null;
 	}
 
 	public boolean isStagemonitorActive() {
@@ -678,6 +710,10 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public String getInstanceName() {
 		return instanceName.getValue();
+	}
+
+	public String getHostName() {
+		return hostName.getValue();
 	}
 
 	/**

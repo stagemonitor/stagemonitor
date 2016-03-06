@@ -201,7 +201,7 @@ public class RequestMonitor {
 
 	private synchronized void createMeasurementSession() {
 		if (Stagemonitor.getMeasurementSession().isNull()) {
-			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), MeasurementSession.getNameOfLocalHost(),
+			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), corePlugin.getHostName(),
 					corePlugin.getInstanceName());
 			Stagemonitor.setMeasurementSession(session);
 		}
@@ -278,10 +278,14 @@ public class RequestMonitor {
 		}
 
 		if (requestTrace.isError()) {
-			metricRegistry.meter(name("error_rate_server").tag("request_name", requestName).layer("All").build()).mark();
-			metricRegistry.meter(name("error_rate_server").tag("request_name", "All").layer("All").build()).mark();
+			metricRegistry.meter(getErrorMetricName(requestName)).mark();
+			metricRegistry.meter(getErrorMetricName("All")).mark();
 		}
 		trackDbMetrics(requestName, requestTrace);
+	}
+
+	public static MetricName getErrorMetricName(String requestName) {
+		return name("error_rate_server").tag("request_name", requestName).layer("All").build();
 	}
 
 	private <T extends RequestTrace> void trackDbMetrics(String requestName, T requestTrace) {
@@ -294,7 +298,7 @@ public class RequestMonitor {
 		}
 	}
 
-	public static <T extends RequestTrace> MetricName getTimerMetricName(String requestName) {
+	public static MetricName getTimerMetricName(String requestName) {
 		return name("response_time_server").tag("request_name", requestName).layer("All").build();
 	}
 

@@ -1,5 +1,6 @@
 package org.stagemonitor.core.configuration;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,6 +51,7 @@ public class ConfigurationOption<T> {
 	private List<ConfigurationSource> configurationSources;
 	private String nameOfCurrentConfigurationSource;
 	private String errorMessage;
+	private Configuration configuration;
 
 	public static <T> ConfigurationOptionBuilder<T> builder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 		return new ConfigurationOptionBuilder<T>(valueConverter, valueType);
@@ -269,6 +271,10 @@ public class ConfigurationOption<T> {
 		loadValue();
 	}
 
+	void setConfiguration(Configuration configuration) {
+		this.configuration = configuration;
+	}
+
 	/**
 	 * Returns the name of the configuration source that provided the current value
 	 *
@@ -372,6 +378,22 @@ public class ConfigurationOption<T> {
 	 */
 	public void assertValid(String value) throws IllegalArgumentException {
 		valueConverter.convert(value);
+	}
+
+	/**
+	 * Updates the existing value with a new one
+	 *
+	 * @param newValue                the new value
+	 * @param configurationSourceName the name of the configuration source that the value should be saved to
+	 * @throws IOException                   if there was an error saving the key to the source
+	 * @throws IllegalArgumentException      if there was a error processing the configuration key or value or the
+	 *                                       configurationSourceName did not match any of the available configuration
+	 *                                       sources
+	 * @throws UnsupportedOperationException if saving values is not possible with this configuration source
+	 */
+	public void update(T newValue, String configurationSourceName) throws IOException {
+		final String newValueAsString = valueConverter.toString(newValue);
+		configuration.save(key, newValueAsString, configurationSourceName);
 	}
 
 	public static class ConfigurationOptionBuilder<T> {

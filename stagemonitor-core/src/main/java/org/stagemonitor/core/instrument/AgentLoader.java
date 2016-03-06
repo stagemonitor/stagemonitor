@@ -95,6 +95,9 @@ final class AgentLoader {
 		}
 	}
 
+	private AgentLoader() {
+	}
+
 	private static Class<?> getVirtualMachineClass() throws ClassNotFoundException {
 		try {
 			return AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {

@@ -31,7 +31,7 @@ public final class Stagemonitor {
 	private static List<String> pathsOfWidgetTabPlugins = Collections.emptyList();
 	private static Iterable<StagemonitorPlugin> plugins;
 	private static List<Runnable> onShutdownActions = new CopyOnWriteArrayList<Runnable>();
-	private static final Metric2Registry metric2Registry = new Metric2Registry();
+	private static Metric2Registry metric2Registry = new Metric2Registry();
 
 	static {
 		try {
@@ -222,7 +222,9 @@ public final class Stagemonitor {
 		disabled = false;
 		measurementSession = new MeasurementSession(null, null, null);
 		metric2Registry.removeMatching(Metric2Filter.ALL);
-		reloadConfiguration();
+		if (configuration == null) {
+			reloadPluginsAndConfiguration();
+		}
 		tryStartMonitoring();
 		onShutdownActions.add(MainStagemonitorClassFileTransformer.performRuntimeAttachment());
 	}
@@ -230,14 +232,11 @@ public final class Stagemonitor {
 	private static void tryStartMonitoring() {
 		CorePlugin corePlugin = getConfiguration(CorePlugin.class);
 		MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(),
-				MeasurementSession.getNameOfLocalHost(), corePlugin.getInstanceName());
+				corePlugin.getHostName(), corePlugin.getInstanceName());
 		startMonitoring(session);
 	}
 
-	private static void reloadConfiguration() {
-		if (configuration != null) {
-			configuration.close();
-		}
+	private static void reloadPluginsAndConfiguration() {
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
 		for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {
 			initializer.modifyConfigurationSources(configurationSources);
