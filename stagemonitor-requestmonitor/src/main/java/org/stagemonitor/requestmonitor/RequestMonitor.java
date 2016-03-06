@@ -274,10 +274,14 @@ public class RequestMonitor {
 		}
 
 		if (requestTrace.isError()) {
-			metricRegistry.meter(name("error_rate_server").tag("request_name", requestName).layer("All").build()).mark();
-			metricRegistry.meter(name("error_rate_server").tag("request_name", "All").layer("All").build()).mark();
+			metricRegistry.meter(getErrorMetricName(requestName)).mark();
+			metricRegistry.meter(getErrorMetricName("All")).mark();
 		}
 		trackDbMetrics(requestName, requestTrace);
+	}
+
+	public static MetricName getErrorMetricName(String requestName) {
+		return name("error_rate_server").tag("request_name", requestName).layer("All").build();
 	}
 
 	private <T extends RequestTrace> void trackDbMetrics(String requestName, T requestTrace) {

@@ -134,4 +134,8 @@ public class Check {
 		return thresholds.get(CheckResult.Status.CRITICAL);
 	}
 
+	public List<Threshold> getThresholds(CheckResult.Status severity) {
+		return thresholds.get(severity);
+	}
+
 }
