@@ -26,7 +26,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
-import org.stagemonitor.requestmonitor.RequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 

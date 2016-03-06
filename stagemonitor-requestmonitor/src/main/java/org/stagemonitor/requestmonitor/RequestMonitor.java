@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,9 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.LogRequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 
 public class RequestMonitor {
 
@@ -60,14 +64,13 @@ public class RequestMonitor {
 	private RequestMonitorPlugin requestMonitorPlugin;
 	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 	private final boolean isCurrentThreadCpuTimeSupported = threadMXBean.isCurrentThreadCpuTimeSupported();
-
 	private Date endOfWarmup;
+	private Meter callTreeMeter = new Meter();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
 		this(configuration, registry, Arrays.asList(
 				new LogRequestTraceReporter(configuration.getConfig(RequestMonitorPlugin.class)),
-				new ElasticsearchRequestTraceReporter(configuration.getConfig(CorePlugin.class),
-						configuration.getConfig(RequestMonitorPlugin.class))));
+				new ElasticsearchRequestTraceReporter(configuration)));
 	}
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry, Collection<RequestTraceReporter> requestTraceReporters) {
@@ -208,6 +211,7 @@ public class RequestMonitor {
 		info.requestTrace = monitoredRequest.createRequestTrace();
 		try {
 			if (info.profileThisRequest()) {
+				callTreeMeter.mark();
 				final CallStackElement root = Profiler.activateProfiling("total");
 				info.requestTrace.setCallStack(root);
 			}
@@ -304,7 +308,7 @@ public class RequestMonitor {
 				@Override
 				public void run() {
 					for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
-						if (requestTraceReporter.isActive(requestTrace)) {
+						if (isActive(requestTrace, requestTraceReporter)) {
 							try {
 								requestTraceReporter.reportRequestTrace(requestTrace);
 							} catch (Exception e) {
@@ -392,22 +396,13 @@ public class RequestMonitor {
 		}
 
 		private boolean profileThisRequest() {
-			if (!requestMonitorPlugin.isProfilerActive()) {
+			double callTreeRateLimit = requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute();
+			if (!requestMonitorPlugin.isProfilerActive() || callTreeRateLimit <= 0 ||
+					!isAnyRequestTraceReporterActive(getRequestTrace())) {
 				return false;
+			} else {
+				return callTreeRateLimit >= 1000000d || callTreeMeter.getOneMinuteRate() < callTreeRateLimit;
 			}
-			int callStackEveryXRequestsToGroup = requestMonitorPlugin.getCollectCallTreeEveryNRequests();
-			if (callStackEveryXRequestsToGroup == 1) {
-				return true;
-			}
-			if (callStackEveryXRequestsToGroup < 1) {
-				return false;
-			}
-			Timer allRequestTimer = metricRegistry.timer(getTimerMetricName("All"));
-			if (allRequestTimer.getCount() == 0) {
-				return false;
-			}
-			final boolean profilingActive = allRequestTimer.getCount() % callStackEveryXRequestsToGroup == 0;
-			return profilingActive && isAnyRequestTraceReporterActive(getRequestTrace());
 		}
 
 		/**
@@ -451,11 +446,28 @@ public class RequestMonitor {
 
 	private boolean isAnyRequestTraceReporterActive(RequestTrace requestTrace) {
 		for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
-			if (requestTraceReporter.isActive(requestTrace)) {
+			if (isActive(requestTrace, requestTraceReporter)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Checks whether the given {@link RequestTraceReporter} is active for the current {@link RequestTrace}.
+	 * If this method was already called for a {@link RequestTraceReporter} in the context of the current request
+	 * it returns the previous result. In other words this method makes sure that {@link RequestTraceReporter#isActive(RequestTrace)}
+	 * is called at most once.
+	 */
+	private boolean isActive(RequestTrace requestTrace, RequestTraceReporter requestTraceReporter) {
+		final String requestAttributeActive = System.identityHashCode(requestTraceReporter) + ".active";
+		final Boolean activeFromAttribute = (Boolean) requestTrace.getRequestAttribute(requestAttributeActive);
+		if (activeFromAttribute != null) {
+			return activeFromAttribute;
+		}
+		final boolean active = requestTraceReporter.isActive(requestTrace);
+		requestTrace.addRequestAttribute(requestAttributeActive, active);
+		return active;
 	}
 
 	/**
@@ -482,6 +494,15 @@ public class RequestMonitor {
 	 */
 	public void addReporter(RequestTraceReporter requestTraceReporter) {
 		requestTraceReporters.add(0, requestTraceReporter);
+	}
+
+	public <T extends RequestTraceReporter> T getReporter(Class<T> reporterClass) {
+		for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
+			if (requestTraceReporter.getClass() == reporterClass) {
+				return (T) requestTraceReporter;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -512,6 +533,10 @@ public class RequestMonitor {
 	 */
 	public void addOnAfterRequestCallback(Runnable onAfterRequestCallback) {
 		onAfterRequestCallbacks.add(onAfterRequestCallback);
+	}
+
+	void setCallTreeMeter(Meter callTreeMeter) {
+		this.callTreeMeter = callTreeMeter;
 	}
 
 }

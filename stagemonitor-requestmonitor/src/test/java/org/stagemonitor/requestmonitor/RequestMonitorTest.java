@@ -11,6 +11,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
+import java.util.Collections;
+
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
@@ -23,31 +25,36 @@ import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 
 public class RequestMonitorTest {
 
-	private CorePlugin corePlugin = mock(CorePlugin.class);
-	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-	private Metric2Registry registry = mock(Metric2Registry.class);
+	private CorePlugin corePlugin;
+	private RequestMonitorPlugin requestMonitorPlugin;
+	private Metric2Registry registry;
 	private RequestMonitor requestMonitor;
 	private Configuration configuration;
 
 	@Before
 	public void before() {
-		Stagemonitor.reset();
-		SharedMetricRegistries.clear();
-
+		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		configuration = mock(Configuration.class);
+		corePlugin = mock(CorePlugin.class);
+
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
+		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://mockhost:9200"));
+		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
+		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
+		registry = mock(Metric2Registry.class);
 		when(registry.timer(any(MetricName.class))).thenReturn(mock(Timer.class));
 		when(registry.meter(any(MetricName.class))).thenReturn(mock(Meter.class));
 		requestMonitor = new RequestMonitor(configuration, registry);
@@ -134,42 +141,40 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testProfileThisExecutionDeactive() throws Exception {
-		when(requestMonitorPlugin.getCollectCallTreeEveryNRequests()).thenReturn(0);
+		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(0d);
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getRequestTrace().getCallStack());
 	}
 
 	@Test
 	public void testProfileThisExecutionAlwaysActive() throws Exception {
-		when(requestMonitorPlugin.getCollectCallTreeEveryNRequests()).thenReturn(1);
+		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(1000000d);
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNotNull(monitor.getRequestTrace().getCallStack());
 	}
 
 	@Test
-	public void testProfileThisExecutionActiveEvery2Requests() throws Exception {
-		requestMonitor.addReporter(new RequestTraceReporter() {
-			@Override
-			public <T extends RequestTrace> void reportRequestTrace(T requestTrace) throws Exception {
-			}
-
-			@Override
-			public <T extends RequestTrace> boolean isActive(T requestTrace) {
-				return true;
-			}
-		});
-		testProfileThisExecutionHelper(2, 0, false);
-		testProfileThisExecutionHelper(2, 1, false);
-		testProfileThisExecutionHelper(2, 2, true);
-		testProfileThisExecutionHelper(2, 3, false);
-		testProfileThisExecutionHelper(2, 4, true);
+	public void testProfileThisExecutionNotActiveWhenNoRequestTraceReporterIsActive() throws Exception {
+		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(0d);
+		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(1000000d);
+		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
+		assertNull(monitor.getRequestTrace().getCallStack());
 	}
 
-	private void testProfileThisExecutionHelper(int callStackEveryXRequestsToGroup, long timerCount, boolean callStackExpected) throws Exception {
-		when(requestMonitorPlugin.getCollectCallTreeEveryNRequests()).thenReturn(callStackEveryXRequestsToGroup);
-		final Timer timer = mock(Timer.class);
-		when(timer.getCount()).thenReturn(timerCount);
-		when(registry.timer(name("response_time_server").tag("request_name", "All").layer("All").build())).thenReturn(timer);
+	@Test
+	public void testProfileThisExecutionActiveEvery2Requests() throws Exception {
+		testProfileThisExecutionHelper(2, 0, true);
+		testProfileThisExecutionHelper(2, 1.99, true);
+		testProfileThisExecutionHelper(2, 2, false);
+		testProfileThisExecutionHelper(2, 3, false);
+		testProfileThisExecutionHelper(2, 1, true);
+	}
+
+	private void testProfileThisExecutionHelper(double onlyCollectNCallTreesPerMinute, double callTreeRate, boolean callStackExpected) throws Exception {
+		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(onlyCollectNCallTreesPerMinute);
+		final Meter callTreeMeter = mock(Meter.class);
+		when(callTreeMeter.getOneMinuteRate()).thenReturn(callTreeRate);
+		requestMonitor.setCallTreeMeter(callTreeMeter);
 
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		if (callStackExpected) {

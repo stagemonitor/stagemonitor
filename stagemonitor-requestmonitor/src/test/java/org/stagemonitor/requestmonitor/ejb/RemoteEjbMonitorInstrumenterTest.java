@@ -17,7 +17,7 @@ import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
-import org.stagemonitor.requestmonitor.RequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 
 public class RemoteEjbMonitorInstrumenterTest {
 

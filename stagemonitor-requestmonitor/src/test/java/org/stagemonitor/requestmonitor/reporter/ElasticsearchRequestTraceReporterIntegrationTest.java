@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor;
+package org.stagemonitor.requestmonitor.reporter;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -12,6 +12,8 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.*;
 
 public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractElasticsearchTest {
 
@@ -19,11 +21,14 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 
 	@Before
 	public void setUp() throws Exception {
+		Configuration configuration = mock(Configuration.class);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
-		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		final RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(Integer.MAX_VALUE);
-		reporter =  new ElasticsearchRequestTraceReporter(corePlugin, requestMonitorPlugin);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
+		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
+		reporter =  new ElasticsearchRequestTraceReporter(configuration);
 	}
 
 	@Test

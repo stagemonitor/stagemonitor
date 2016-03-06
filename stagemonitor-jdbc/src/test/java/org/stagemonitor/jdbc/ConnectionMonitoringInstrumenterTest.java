@@ -15,6 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -59,8 +60,10 @@ public class ConnectionMonitoringInstrumenterTest {
 
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
+		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://mockhost"));
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
-		when(requestMonitorPlugin.getCollectCallTreeEveryNRequests()).thenReturn(1);
+		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
 
 		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);

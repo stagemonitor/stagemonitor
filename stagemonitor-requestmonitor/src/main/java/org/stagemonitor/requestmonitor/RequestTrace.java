@@ -12,8 +12,6 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
@@ -25,8 +23,6 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestTrace {
-
-	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final String id;
 	private String name;
@@ -53,6 +49,8 @@ public class RequestTrace {
 	private String username;
 	private String clientIp;
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
+	@JsonIgnore
+	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 
 	public RequestTrace(String requestId) {
 		this(requestId, Stagemonitor.getMeasurementSession());
@@ -289,6 +287,21 @@ public class RequestTrace {
 	@JsonAnySetter
 	public void addCustomProperty(String key, Object value) {
 		customProperties.put(key, value);
+	}
+
+	/**
+	 * Adds an attribute to the request which can later be retrieved by {@link #getRequestAttribute(String)}
+	 * <p/>
+	 * The attributes won't be reported
+	 * @param key
+	 * @param value
+	 */
+	public void addRequestAttribute(String key, Object value) {
+		requestAttributes.put(key, value);
+	}
+
+	public Object getRequestAttribute(String key) {
+		return requestAttributes.get(key);
 	}
 
 }

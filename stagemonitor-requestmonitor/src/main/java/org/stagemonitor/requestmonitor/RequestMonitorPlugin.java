@@ -12,6 +12,7 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
@@ -72,12 +73,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(0.5)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Integer> collectCallTreeEveryNRequests = ConfigurationOption.integerOption()
-			.key("stagemonitor.profiler.collectCallTreeEveryNRequests")
+	private final ConfigurationOption<Double> onlyCollectNCallTreesPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
-			.label("Collect call tree every n requests")
-			.description("Defines how often a call tree should be collected.")
-			.defaultValue(1)
+			.label("Only report N requests per minute to ES")
+			.description("Limits the rate at which call trees are collected. " +
+					"Set to a value below 1 to deactivate call tree recording and to 1,000,000 or higher to always collect.")
+			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> logCallStacks = ConfigurationOption.booleanOption()
@@ -136,13 +138,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Integer> onlyReportNRequestsPerMinuteToElasticsearch = ConfigurationOption.integerOption()
+	private final ConfigurationOption<Double> onlyReportNRequestsPerMinuteToElasticsearch = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
 			.label("Only report N requests per minute to ES")
 			.description("Limits the rate at which request traces are reported to Elasticsearch. " +
-					"Set to a value below 1 to deactivate ES reporting and to Integer.MAX_VALUE to always report.")
-			.defaultValue(Integer.MAX_VALUE)
+					"Set to a value below 1 to deactivate ES reporting and to 1,000,000 or higher to always report.")
+			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchRequestTraceReports = ConfigurationOption.booleanOption()
@@ -153,6 +155,18 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
 					"different external process to send the request traces to elasticsearch.", ElasticsearchRequestTraceReporter.ES_REQUEST_TRACE_LOGGER))
 			.defaultValue(false)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
+			.dynamic(true)
+			.label("Exclude the Call Tree from Elasticsearch reports on x% of the fastest requests")
+			.description("Exclude the Call Tree from Elasticsearch report when the request was faster faster than x " +
+					"percent of requests with the same request name. This helps to reduce the network and disk overhead " +
+					"as uninteresting Call Trees (those which are comparatively fast) are excluded." +
+					"Example: set to 1 to always exclude the Call Tree and to 0 to always include it. " +
+					"With a setting of 0.85, the Call Tree will only be reported for the slowest 25% of the requests.")
+			.defaultValue(0d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 
@@ -211,8 +225,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return minExecutionTimeNanos.getValue();
 	}
 
-	public int getCollectCallTreeEveryNRequests() {
-		return collectCallTreeEveryNRequests.getValue();
+	public double getOnlyCollectNCallTreesPerMinute() {
+		return onlyCollectNCallTreesPerMinute.getValue();
 	}
 
 	public boolean isLogCallStacks() {
@@ -248,11 +262,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return onlyReportRequestsWithNameToElasticsearch.getValue();
 	}
 
-	public int getOnlyReportNRequestsPerMinuteToElasticsearch() {
+	public double getOnlyReportNRequestsPerMinuteToElasticsearch() {
 		return onlyReportNRequestsPerMinuteToElasticsearch.getValue();
 	}
 
 	public boolean isOnlyLogElasticsearchRequestTraceReports() {
 		return onlyLogElasticsearchRequestTraceReports.getValue();
+	}
+
+	public double getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests() {
+		return excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests.getValue();
 	}
 }
