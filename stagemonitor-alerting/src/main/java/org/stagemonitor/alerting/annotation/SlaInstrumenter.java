@@ -57,17 +57,15 @@ public class SlaInstrumenter extends StagemonitorJavassistInstrumenter {
 		if (Modifier.isAbstract(modifiers) || Modifier.isNative(modifiers) || Modifier.isInterface(modifiers) || ctClass != ctMethod.getDeclaringClass()) {
 			return;
 		}
-		final String requestName = MonitorRequestsInstrumenter.getRequestName(ctMethod);
-
 		if (slaAnnotation.metric().length > 0) {
-			addResponseTimeCheck(slaAnnotation, ctClass, ctMethod, requestName);
+			addResponseTimeCheck(slaAnnotation, ctClass, ctMethod);
 		}
 		if (slaAnnotation.errorRateThreshold() >= 0) {
-			addErrorRateCheck(slaAnnotation, requestName);
+			addErrorRateCheck(slaAnnotation, ctMethod);
 		}
 	}
 
-	private void addResponseTimeCheck(SLA slaAnnotation, CtClass ctClass, CtMethod ctMethod, String requestName) {
+	private void addResponseTimeCheck(SLA slaAnnotation, CtClass ctClass, CtMethod ctMethod) {
 		SLA.Metric[] metrics = slaAnnotation.metric();
 		double[] thresholdValues = slaAnnotation.threshold();
 		if (metrics.length != thresholdValues.length) {
@@ -76,8 +74,9 @@ public class SlaInstrumenter extends StagemonitorJavassistInstrumenter {
 			return;
 		}
 
-		Check check = createCheck(slaAnnotation, MetricCategory.TIMER, RequestMonitor.getTimerMetricName(requestName),
-				requestName + " (response time)");
+		final MetricName timerMetricName = RequestMonitor.getTimerMetricName(MonitorRequestsInstrumenter.getRequestName(ctMethod));
+		Check check = createCheck(slaAnnotation, ctMethod, MetricCategory.TIMER, timerMetricName,
+				" (response time)", "responseTime");
 
 		final List<Threshold> thresholds = check.getThresholds(slaAnnotation.severity());
 		for (int i = 0; i < metrics.length; i++) {
@@ -87,17 +86,19 @@ public class SlaInstrumenter extends StagemonitorJavassistInstrumenter {
 		addCheckIfStarted(check);
 	}
 
-	private void addErrorRateCheck(SLA slaAnnotation, String requestName) {
-		final Check check = createCheck(slaAnnotation, MetricCategory.METER, RequestMonitor.getErrorMetricName(requestName), requestName + " (errors)");
+	private void addErrorRateCheck(SLA slaAnnotation, CtMethod ctMethod) {
+		final MetricName errorMetricName = RequestMonitor.getErrorMetricName(MonitorRequestsInstrumenter.getRequestName(ctMethod));
+		final Check check = createCheck(slaAnnotation, ctMethod, MetricCategory.METER, errorMetricName, " (errors)", "errors");
 		final Threshold t = new Threshold(SLA.Metric.M1_RATE.getValue(), Threshold.Operator.GREATER_EQUAL, slaAnnotation.errorRateThreshold());
 		check.getThresholds(slaAnnotation.severity()).add(t);
 		addCheckIfStarted(check);
 	}
 
-	private Check createCheck(SLA slaAnnotation, MetricCategory metricCategory, MetricName metricName, String id) {
+	private Check createCheck(SLA slaAnnotation, CtMethod ctMethod, MetricCategory metricCategory,
+							  MetricName metricName, String checkNameSuffix, String checkIdSuffix) {
 		Check check = new Check();
-		check.setId(id);
-		check.setName(check.getId());
+		check.setId(ctMethod.getLongName() + "." + checkIdSuffix);
+		check.setName(MonitorRequestsInstrumenter.getRequestName(ctMethod) + checkNameSuffix);
 		check.setMetricCategory(metricCategory);
 		check.setTarget(Pattern.compile(Pattern.quote(metricName.toGraphiteName())));
 		check.setAlertAfterXFailures(slaAnnotation.alertAfterXFailures());

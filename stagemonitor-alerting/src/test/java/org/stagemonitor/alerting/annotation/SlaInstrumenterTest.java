@@ -61,13 +61,15 @@ public class SlaInstrumenterTest {
 	public void testSlaCreatesChecks() throws Exception {
 		final Map<String, Check> checks = alertingPlugin.getChecks();
 
-		final Check errorRateCheck = checks.get("Monitor Sla (errors)");
+		final Check errorRateCheck = checks
+				.get("org.stagemonitor.alerting.annotation.SlaInstrumenterTest$SlaTestClass.monitorSla().errors");
 		assertNotNull(checks.keySet().toString(), errorRateCheck);
 		assertEquals("Alerting-Test", errorRateCheck.getApplication());
 		assertEquals(MetricCategory.METER, errorRateCheck.getMetricCategory());
 		assertEquals("\\Qerror_rate_server.Monitor-Sla.All\\E", errorRateCheck.getTarget().toString());
 
-		final Check responseTimeChek = checks.get("Monitor Sla (response time)");
+		final Check responseTimeChek = checks
+				.get("org.stagemonitor.alerting.annotation.SlaInstrumenterTest$SlaTestClass.monitorSla().responseTime");
 		assertNotNull(checks.keySet().toString(), responseTimeChek);
 		assertEquals("Alerting-Test", responseTimeChek.getApplication());
 		assertEquals(MetricCategory.TIMER, responseTimeChek.getMetricCategory());
@@ -91,7 +93,8 @@ public class SlaInstrumenterTest {
 			// ignore
 		}
 		alertingPlugin.getThresholdMonitoringReporter().report();
-		final Incident incident = alertingPlugin.getIncidentRepository().getIncidentByCheckId("Monitor Sla (response time)");
+		final Incident incident = alertingPlugin.getIncidentRepository()
+				.getIncidentByCheckId("org.stagemonitor.alerting.annotation.SlaInstrumenterTest$SlaTestClass.monitorSla().responseTime");
 		assertNotNull(incident);
 	}
 
@@ -104,7 +107,8 @@ public class SlaInstrumenterTest {
 		}
 
 		alertingPlugin.getThresholdMonitoringReporter().report();
-		final Incident incident = alertingPlugin.getIncidentRepository().getIncidentByCheckId("Monitor Sla (errors)");
+		final Incident incident = alertingPlugin.getIncidentRepository()
+				.getIncidentByCheckId("org.stagemonitor.alerting.annotation.SlaInstrumenterTest$SlaTestClass.monitorSla().errors");
 		assertNotNull(incident);
 	}
 }
