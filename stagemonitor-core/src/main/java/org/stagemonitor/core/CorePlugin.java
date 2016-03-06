@@ -99,7 +99,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Expose MBeans")
 			.description("Whether or not to expose all metrics as MBeans.")
-			.defaultValue(true)
+			.defaultValue(false)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> reportingIntervalGraphite = ConfigurationOption.integerOption()
