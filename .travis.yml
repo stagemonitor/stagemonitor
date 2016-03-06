@@ -1,7 +1,7 @@
 language: java
 sudo: false
 jdk:
-  - oraclejdk7
+  - oraclejdk8
 env:
   matrix:
   - TERM=dumb
@@ -27,5 +27,5 @@ addons:
       description: "Build submitted via Travis CI"
     notification_email: felix.barnsteiner@gmail.com
     build_command_prepend: "./gradlew clean"
-    build_command:   "./gradlew compileJava"
+    build_command: "./gradlew compileJava"
     branch_pattern: coverity
