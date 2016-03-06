@@ -119,6 +119,7 @@ public class Configuration {
 
 	private void add(final ConfigurationOption<?> configurationOption) {
 		configurationOption.setConfigurationSources(configurationSources);
+		configurationOption.setConfiguration(this);
 
 		configurationOptionsByKey.put(configurationOption.getKey(), configurationOption);
 		addConfigurationOptionByCategory(configurationOption.getConfigurationCategory(), configurationOption);
