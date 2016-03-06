@@ -10,7 +10,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -109,17 +111,21 @@ public class ElasticsearchClient {
 
 	private void removeDisallowedCharsFromPropertyNames(ObjectNode json) {
 		final Iterator<String> fieldNames = json.fieldNames();
+		List<String> toRemove = new LinkedList<String>();
+		Map<String, JsonNode> newProperties = new HashMap<String, JsonNode>();
 		while (fieldNames.hasNext()) {
 			String fieldName = fieldNames.next();
 			final JsonNode value = json.get(fieldName);
 			if (fieldName.indexOf('.') != -1) {
-				json.set(fieldName.replace(".", "_(dot)_"), value);
-				json.remove(fieldName);
+				newProperties.put(fieldName.replace(".", "_(dot)_"), value);
+				toRemove.add(fieldName);
 			}
 			if (value.isObject()) {
 				removeDisallowedCharsFromPropertyNames((ObjectNode) value);
 			}
 		}
+		json.remove(toRemove);
+		json.setAll(newProperties);
 	}
 
 	public void createIndex(final String index, final InputStream mapping) {
