@@ -87,7 +87,7 @@ public class MonitoredHttpRequestTest {
 		// anonymized
 		assertEquals("127.0.0.0", requestTrace.getClientIp());
 
-		assertEquals(new HashSet<String>(asList("accept")), requestTrace.getHeaders().keySet());
+		assertEquals(new HashSet<String>(asList("referer", "accept")), requestTrace.getHeaders().keySet());
 		assertFalse(requestTrace.getHeaders().containsKey("cookie"));
 		assertFalse(requestTrace.getHeaders().containsKey("Cookie"));
 

@@ -75,8 +75,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	private String getReferringSite() {
+		final String refererHeader = httpServletRequest.getHeader("Referer");
+		if (StringUtils.isEmpty(refererHeader)) {
+			return null;
+		}
 		try {
-			final String host = new URI(httpServletRequest.getHeader("Referer")).getHost();
+			final String host = new URI(refererHeader).getHost();
 			return host.startsWith("www.") ? host.substring(4) : host;
 		} catch (URISyntaxException e) {
 			return null;
