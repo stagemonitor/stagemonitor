@@ -18,8 +18,6 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -67,12 +65,8 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 		request.setName(getRequestName());
 		String clientIp = getClientIp(httpServletRequest);
-		if (configuration.getConfig(RequestMonitorPlugin.class).isAnonymizeIPs()) {
-			clientIp = IPAnonymizationUtils.anonymize(clientIp);
-		}
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
-		request.setAndAnonymizeUserName(userPrincipal != null ? userPrincipal.getName() : null);
-		request.setAndAnonymizeClientIp(clientIp);
+		request.setAndAnonymizeUserNameAndIp(userPrincipal != null ? userPrincipal.getName() : null, clientIp);
 
 		return request;
 	}

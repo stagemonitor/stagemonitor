@@ -50,7 +50,7 @@ public class RequestTrace {
 	private String exceptionMessage;
 	private String exceptionClass;
 	private String exceptionStackTrace;
-	private String username = "unknown";
+	private String username;
 	private String disclosedUserName;
 	private String clientIp;
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
@@ -208,26 +208,23 @@ public class RequestTrace {
 		return username;
 	}
 
-	public void setAndAnonymizeUserName(String username) {
-		if (requestMonitorPlugin.isAnonymizeUserNames()) {
+	public void setAndAnonymizeUserNameAndIp(String username, String clientIp) {
+		if (requestMonitorPlugin.isPseudonymizeUserNames()) {
 			this.username = StringUtils.sha1Hash(username);
 		} else {
 			this.username = username;
 		}
-		if (requestMonitorPlugin.getDiscloseUsers().contains(this.username)) {
+		final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(this.username);
+		if (disclose) {
 			this.disclosedUserName = username;
+		}
+		if (clientIp != null) {
+			setAndAnonymizeClientIp(clientIp, disclose);
 		}
 	}
 
-	/**
-	 * NOTE: Call this after {@link #setAndAnonymizeUserName(String)}
-	 * <p/>
-	 * Otherwise disclosing ({@link RequestMonitorPlugin#discolseUsers}) the ip does not work correctly.
-	 *
-	 * @param clientIp the client's IP address
-	 */
-	public void setAndAnonymizeClientIp(String clientIp) {
-		if (requestMonitorPlugin.isAnonymizeIPs() && !requestMonitorPlugin.getDiscloseUsers().contains(username)) {
+	private void setAndAnonymizeClientIp(String clientIp, boolean disclose) {
+		if (requestMonitorPlugin.isAnonymizeIPs() && !disclose) {
 			this.clientIp = IPAnonymizationUtils.anonymize(clientIp);
 		} else {
 			this.clientIp = clientIp;

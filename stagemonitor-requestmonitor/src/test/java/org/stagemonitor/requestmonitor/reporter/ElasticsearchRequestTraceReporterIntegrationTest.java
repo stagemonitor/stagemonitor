@@ -30,7 +30,7 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
-		when(requestMonitorPlugin.isAnonymizeUserNames()).thenReturn(true);
+		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		reporter =  new ElasticsearchRequestTraceReporter(configuration);
 	}
 
@@ -39,7 +39,7 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 		final RequestTrace requestTrace = new RequestTrace("1", new MeasurementSession("ERTRIT", "test", "test"), requestMonitorPlugin);
 		requestTrace.setParameters(Collections.singletonMap("attr.Color", "Blue"));
 		requestTrace.addCustomProperty("foo.bar", "baz");
-		requestTrace.setAndAnonymizeUserName("test");
+		requestTrace.setAndAnonymizeUserNameAndIp("test", "123.123.123.123");
 		reporter.reportRequestTrace(requestTrace);
 		elasticsearchClient.waitForCompletion();
 		refresh();

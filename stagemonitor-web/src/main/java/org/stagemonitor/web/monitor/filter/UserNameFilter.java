@@ -13,6 +13,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 
 /**
  * Populates user name on the request trace. Dedicated to its own filter
@@ -35,7 +36,7 @@ public class UserNameFilter extends AbstractExclusionFilter {
 			FilterChain filterChain) throws IOException, ServletException {
 		RequestTrace requestTrace = RequestMonitor.getRequest();
 		if (requestTrace != null && requestTrace.getUsername() == null) {
-			requestTrace.setAndAnonymizeUserName(getUserName(servletRequest));
+			requestTrace.setAndAnonymizeUserNameAndIp(getUserName(servletRequest), MonitoredHttpRequest.getClientIp(servletRequest));
 		}
 		
 		filterChain.doFilter(servletRequest, servletResponse);
