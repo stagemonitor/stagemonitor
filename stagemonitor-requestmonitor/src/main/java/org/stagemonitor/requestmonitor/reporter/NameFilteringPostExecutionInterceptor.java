@@ -11,7 +11,7 @@ class NameFilteringPostExecutionInterceptor extends PostExecutionRequestTraceRep
 		final Collection<String> onlyReportRequestsWithName = context.getConfig(RequestMonitorPlugin.class)
 				.getOnlyReportRequestsWithNameToElasticsearch();
 		if (!onlyReportRequestsWithName.isEmpty() && !onlyReportRequestsWithName.contains(context.getRequestTrace().getName())) {
-			context.shouldNotReport();
+			context.shouldNotReport(getClass());
 		}
 	}
 

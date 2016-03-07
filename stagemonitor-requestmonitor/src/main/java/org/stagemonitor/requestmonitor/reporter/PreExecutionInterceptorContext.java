@@ -1,12 +1,17 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import com.codahale.metrics.Meter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
 public class PreExecutionInterceptorContext {
+
+	private static final Logger logger = LoggerFactory.getLogger(PreExecutionInterceptorContext.class);
+
 	private final Configuration configuration;
 	private final RequestTrace requestTrace;
 	private final Meter reportingRate;
@@ -21,13 +26,15 @@ public class PreExecutionInterceptorContext {
 		this.metricRegistry = metricRegistry;
 	}
 
-	public PreExecutionInterceptorContext mustReport() {
+	public PreExecutionInterceptorContext mustReport(Class<?> interceptorClass) {
+		logger.debug("Must report current request trace (requested by {})", interceptorClass);
 		mustReport = true;
 		report = true;
 		return this;
 	}
 
-	public PreExecutionInterceptorContext shouldNotReport() {
+	public PreExecutionInterceptorContext shouldNotReport(Class<?> interceptorClass) {
+		logger.debug("Should not report current request trace (requested by {})", interceptorClass);
 		if (!mustReport) {
 			report = false;
 		}

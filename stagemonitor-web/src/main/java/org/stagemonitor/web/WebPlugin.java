@@ -231,6 +231,17 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			}})
 			.configurationCategory(WEB_PLUGIN)
 			.build();
+	private ConfigurationOption<Boolean> honorDoNotTrackHeader = ConfigurationOption.booleanOption()
+			.key("stagemonitor.web.honorDoNotTrackHeader")
+			.dynamic(true)
+			.label("Honor do not track header")
+			.description("When set to true, requests that include the dnt header won't be reported. " +
+					"Depending on your use case you might not be required to stop reporting request traces even " +
+					"if dnt is set. See https://tools.ietf.org/html/draft-mayer-do-not-track-00#section-9.3")
+			.defaultValue(false)
+			.tags("privacy")
+			.configurationCategory(WEB_PLUGIN)
+			.build();
 
 	@Override
 	public void initializePlugin(Metric2Registry registry, Configuration config) {
@@ -351,6 +362,10 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	
 	public Collection<String> getRequestExceptionAttributes() {
 		return requestExceptionAttributes.getValue();
+	}
+
+	public boolean isHonorDoNotTrackHeader() {
+		return honorDoNotTrackHeader.getValue();
 	}
 
 	@Override

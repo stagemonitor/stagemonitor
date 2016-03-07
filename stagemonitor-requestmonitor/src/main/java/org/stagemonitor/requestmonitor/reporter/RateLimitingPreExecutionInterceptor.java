@@ -10,9 +10,9 @@ class RateLimitingPreExecutionInterceptor extends PreExecutionRequestTraceReport
 				.getOnlyReportNRequestsPerMinuteToElasticsearch();
 
 		if (maxReportingRate <= 0) {
-			context.shouldNotReport();
+			context.shouldNotReport(getClass());
 		} else if (60 * context.getReportingRate().getOneMinuteRate() > maxReportingRate) {
-			context.shouldNotReport();
+			context.shouldNotReport(getClass());
 		}
 	}
 

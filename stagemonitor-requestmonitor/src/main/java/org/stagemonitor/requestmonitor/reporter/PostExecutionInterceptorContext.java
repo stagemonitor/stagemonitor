@@ -35,13 +35,13 @@ public class PostExecutionInterceptorContext extends PreExecutionInterceptorCont
 		return this;
 	}
 
-	public PreExecutionInterceptorContext mustReport() {
-		super.mustReport();
+	public PreExecutionInterceptorContext mustReport(Class<?> interceptorClass) {
+		super.mustReport(interceptorClass);
 		return this;
 	}
 
-	public PreExecutionInterceptorContext shouldNotReport() {
-		super.shouldNotReport();
+	public PreExecutionInterceptorContext shouldNotReport(Class<?> interceptorClass) {
+		super.shouldNotReport(interceptorClass);
 		return this;
 	}
 
