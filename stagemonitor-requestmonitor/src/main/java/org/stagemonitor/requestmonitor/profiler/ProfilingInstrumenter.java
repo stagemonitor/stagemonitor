@@ -13,7 +13,7 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class ProfilingInstrumenter extends StagemonitorJavassistInstrumenter {
 
-	private RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getConfiguration(RequestMonitorPlugin.class);
+	private RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
 
 	private String profilerPackage = Profiler.class.getPackage().getName();
 

@@ -11,7 +11,7 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class SpringMvcRequestNameDeterminerInstrumenter extends StagemonitorJavassistInstrumenter {
 
-	private static RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getConfiguration(RequestMonitorPlugin.class);
+	private static RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
 
 	@Override
 	public boolean isIncluded(String className) {

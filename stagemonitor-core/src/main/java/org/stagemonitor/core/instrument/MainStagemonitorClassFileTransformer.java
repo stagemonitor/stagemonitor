@@ -43,7 +43,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 
 	public MainStagemonitorClassFileTransformer() {
 		metricRegistry = Stagemonitor.getMetric2Registry();
-		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
+		corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
 		if (!System.getProperties().containsKey(IGNORED_CLASSLOADERS_KEY)) {
 			System.getProperties().put(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
 		}
@@ -76,7 +76,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		}
 		runtimeAttached = true;
 		metricRegistry = Stagemonitor.getMetric2Registry();
-		corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
+		corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
 		if (!corePlugin.isStagemonitorActive() || !corePlugin.isAttachAgentAtRuntime()) {
 			return NOOP_ON_SHUTDOWN_ACTION;
 		}

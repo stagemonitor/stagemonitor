@@ -12,7 +12,7 @@ import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 
 public class MonitorRequestsInstrumenter extends StagemonitorJavassistInstrumenter {
 
-	private static final RequestMonitorPlugin configuration = Stagemonitor.getConfiguration(RequestMonitorPlugin.class);
+	private static final RequestMonitorPlugin configuration = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
 	private static final RequestMonitor requestMonitor = configuration.getRequestMonitor();
 	private static final Logger logger = LoggerFactory.getLogger(MonitorRequestsInstrumenter.class);
 

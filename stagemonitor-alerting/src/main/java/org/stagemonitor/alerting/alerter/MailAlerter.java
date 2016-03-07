@@ -18,7 +18,7 @@ public class MailAlerter implements Alerter {
 	private final AlertTemplateProcessor alertTemplateProcessor;
 
 	public MailAlerter() {
-		this(Stagemonitor.getConfiguration(AlertingPlugin.class));
+		this(Stagemonitor.getPlugin(AlertingPlugin.class));
 	}
 
 	public MailAlerter(AlertingPlugin alertingPlugin) {

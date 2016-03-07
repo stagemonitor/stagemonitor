@@ -23,7 +23,7 @@ public class RumServlet extends HttpServlet {
 	private final WebPlugin webPlugin;
 
 	public RumServlet() {
-		this(Stagemonitor.getMetric2Registry(), Stagemonitor.getConfiguration(WebPlugin.class));
+		this(Stagemonitor.getMetric2Registry(), Stagemonitor.getPlugin(WebPlugin.class));
 	}
 
 	public RumServlet(Metric2Registry metricRegistry, WebPlugin webPlugin) {

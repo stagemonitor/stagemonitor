@@ -74,7 +74,7 @@ public class ElasticsearchRequestTraceReporter extends AbstractInterceptedReques
 
 	private static ElasticsearchRequestTraceReporter getElasticsearchRequestTraceReporter() {
 		return Stagemonitor
-					.getConfiguration(RequestMonitorPlugin.class)
+					.getPlugin(RequestMonitorPlugin.class)
 					.getRequestMonitor()
 					.getReporter(ElasticsearchRequestTraceReporter.class);
 	}

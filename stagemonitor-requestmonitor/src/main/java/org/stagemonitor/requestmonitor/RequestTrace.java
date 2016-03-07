@@ -58,7 +58,7 @@ public class RequestTrace {
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 
 	public RequestTrace(String requestId) {
-		this(requestId, Stagemonitor.getMeasurementSession(), Stagemonitor.getConfiguration(RequestMonitorPlugin.class));
+		this(requestId, Stagemonitor.getMeasurementSession(), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
 	}
 
 	public RequestTrace(String requestId, MeasurementSession measurementSession, RequestMonitorPlugin requestMonitorPlugin) {

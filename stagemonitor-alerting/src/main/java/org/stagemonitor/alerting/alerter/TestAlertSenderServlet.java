@@ -17,7 +17,7 @@ public class TestAlertSenderServlet extends HttpServlet {
 	private final AlertingPlugin alertingPlugin;
 
 	public TestAlertSenderServlet() {
-		this(Stagemonitor.getConfiguration(AlertingPlugin.class));
+		this(Stagemonitor.getPlugin(AlertingPlugin.class));
 	}
 
 	public TestAlertSenderServlet(AlertingPlugin alertingPlugin) {

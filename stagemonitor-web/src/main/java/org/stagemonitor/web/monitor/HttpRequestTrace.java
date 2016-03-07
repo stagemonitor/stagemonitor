@@ -126,7 +126,7 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	public UserAgentInformation getUserAgent() {
-		if (userAgent == null && headers != null && Stagemonitor.getConfiguration(WebPlugin.class).isParseUserAgent()) {
+		if (userAgent == null && headers != null && Stagemonitor.getPlugin(WebPlugin.class).isParseUserAgent()) {
 			final String userAgentHeader = headers.get("user-agent");
 			if (userAgentHeader != null) {
 				ReadableUserAgent readableUserAgent = userAgentCache.get(userAgentHeader);

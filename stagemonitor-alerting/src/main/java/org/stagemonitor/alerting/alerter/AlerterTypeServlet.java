@@ -19,7 +19,7 @@ public class AlerterTypeServlet extends HttpServlet {
 	private final MeasurementSession measurementSession;
 
 	public AlerterTypeServlet() {
-		this(Stagemonitor.getConfiguration(AlertingPlugin.class), Stagemonitor.getMeasurementSession());
+		this(Stagemonitor.getPlugin(AlertingPlugin.class), Stagemonitor.getMeasurementSession());
 	}
 
 	public AlerterTypeServlet(AlertingPlugin alertingPlugin, MeasurementSession measurementSession) {

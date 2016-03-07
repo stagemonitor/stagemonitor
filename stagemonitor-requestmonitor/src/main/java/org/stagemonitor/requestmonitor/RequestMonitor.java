@@ -484,7 +484,7 @@ public class RequestMonitor {
 	 * @param requestTraceReporter the {@link RequestTraceReporter} to add
 	 */
 	public static void addRequestTraceReporter(RequestTraceReporter requestTraceReporter) {
-		Stagemonitor.getConfiguration(RequestMonitorPlugin.class).getRequestMonitor().addReporter(requestTraceReporter);
+		Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor().addReporter(requestTraceReporter);
 	}
 
 	/**

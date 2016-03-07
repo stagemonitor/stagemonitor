@@ -15,7 +15,7 @@ public class LogAlerter implements Alerter {
 	private final AlertTemplateProcessor alertTemplateProcessor;
 
 	public LogAlerter() {
-		this(Stagemonitor.getConfiguration(AlertingPlugin.class), LoggerFactory.getLogger(LogAlerter.class));
+		this(Stagemonitor.getPlugin(AlertingPlugin.class), LoggerFactory.getLogger(LogAlerter.class));
 	}
 
 	public LogAlerter(AlertingPlugin alertingPlugin, Logger logger) {

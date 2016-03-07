@@ -21,7 +21,7 @@ public class IncidentServlet extends HttpServlet {
 	private final AlertingPlugin alertingPlugin;
 
 	public IncidentServlet() {
-		this(Stagemonitor.getConfiguration(AlertingPlugin.class));
+		this(Stagemonitor.getPlugin(AlertingPlugin.class));
 	}
 
 	public IncidentServlet(AlertingPlugin alertingPlugin) {

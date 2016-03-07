@@ -15,7 +15,7 @@ public class PushbulletAlerter implements Alerter {
 	private final AlertingPlugin alertingPlugin;
 
 	public PushbulletAlerter() {
-		this(Stagemonitor.getConfiguration(AlertingPlugin.class));
+		this(Stagemonitor.getPlugin(AlertingPlugin.class));
 	}
 
 	public PushbulletAlerter(AlertingPlugin alertingPlugin) {

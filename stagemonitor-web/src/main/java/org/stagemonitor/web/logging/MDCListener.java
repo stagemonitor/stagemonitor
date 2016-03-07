@@ -22,7 +22,7 @@ public class MDCListener implements ServletRequestListener {
 	private final CorePlugin corePlugin;
 
 	public MDCListener() {
-		this(Stagemonitor.getConfiguration(CorePlugin.class));
+		this(Stagemonitor.getPlugin(CorePlugin.class));
 	}
 
 	public MDCListener(CorePlugin corePlugin) {

@@ -24,7 +24,7 @@ public abstract class StagemonitorJavassistInstrumenter {
 	}
 
 	private static void initIncludesAndExcludes() {
-		CorePlugin corePlugin = Stagemonitor.getConfiguration(CorePlugin.class);
+		CorePlugin corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
 
 		excludeContaining = new ArrayList<String>(corePlugin.getExcludeContaining().size());
 		for (String exclude : corePlugin.getExcludeContaining()) {

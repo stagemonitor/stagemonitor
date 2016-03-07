@@ -21,7 +21,7 @@ import org.stagemonitor.requestmonitor.MonitorRequests;
 
 public class SlaInstrumenterTest {
 
-	private final AlertingPlugin alertingPlugin = Stagemonitor.getConfiguration(AlertingPlugin.class);
+	private final AlertingPlugin alertingPlugin = Stagemonitor.getPlugin(AlertingPlugin.class);
 
 	private static class SlaTestClass {
 		@SLAs({

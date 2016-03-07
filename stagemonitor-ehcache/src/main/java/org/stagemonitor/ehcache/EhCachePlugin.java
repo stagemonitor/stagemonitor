@@ -63,7 +63,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	 * <p>
 	 * Example:
 	 * <pre>
-	 * Stagemonitor.getConfiguration(EhCachePlugin.class).monitorCaches(yourCacheManager);
+	 * Stagemonitor.getPlugin(EhCachePlugin.class).monitorCaches(yourCacheManager);
 	 * </pre>
 	 *
 	 * @param cacheManager The CacheManager to monitor
@@ -79,7 +79,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	 * <p>
 	 * Example:
 	 * <pre>
-	 * Stagemonitor.getConfiguration(EhCachePlugin.class).monitorCache(yourCache);
+	 * Stagemonitor.getPlugin(EhCachePlugin.class).monitorCache(yourCache);
 	 * </pre>
 	 *
 	 * @param cache The Cache to monitor

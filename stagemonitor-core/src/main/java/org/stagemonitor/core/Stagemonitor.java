@@ -53,7 +53,7 @@ public final class Stagemonitor {
 	}
 
 	public synchronized static void setMeasurementSession(MeasurementSession measurementSession) {
-		if (!getConfiguration(CorePlugin.class).isStagemonitorActive()) {
+		if (!getPlugin(CorePlugin.class).isStagemonitorActive()) {
 			logger.info("stagemonitor is deactivated");
 			disabled = true;
 		}
@@ -112,7 +112,7 @@ public final class Stagemonitor {
 	}
 
 	private static void initializePlugins() {
-		final CorePlugin corePlugin = getConfiguration(CorePlugin.class);
+		final CorePlugin corePlugin = getPlugin(CorePlugin.class);
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
 		pathsOfWidgetMetricTabPlugins = new CopyOnWriteArrayList<String>();
 		pathsOfWidgetTabPlugins = new CopyOnWriteArrayList<String>();
@@ -180,8 +180,16 @@ public final class Stagemonitor {
 		return configuration;
 	}
 
-	public static <T extends StagemonitorPlugin> T getConfiguration(Class<T> plugin) {
+	public static <T extends StagemonitorPlugin> T getPlugin(Class<T> plugin) {
 		return configuration.getConfig(plugin);
+	}
+
+	/**
+	 * @deprecated use {@link #getPlugin(Class)}
+	 */
+	@Deprecated
+	public static <T extends StagemonitorPlugin> T getConfiguration(Class<T> plugin) {
+		return getPlugin(plugin);
 	}
 
 	static void setConfiguration(Configuration configuration) {
@@ -233,7 +241,7 @@ public final class Stagemonitor {
 	}
 
 	private static void tryStartMonitoring() {
-		CorePlugin corePlugin = getConfiguration(CorePlugin.class);
+		CorePlugin corePlugin = getPlugin(CorePlugin.class);
 		MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(),
 				corePlugin.getHostName(), corePlugin.getInstanceName());
 		startMonitoring(session);

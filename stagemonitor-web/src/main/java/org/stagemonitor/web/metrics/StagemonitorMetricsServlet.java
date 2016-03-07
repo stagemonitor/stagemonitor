@@ -28,7 +28,7 @@ public class StagemonitorMetricsServlet extends HttpServlet {
 	private final ObjectMapper mapper;
 
 	public StagemonitorMetricsServlet() {
-		this(Stagemonitor.getMetric2Registry(), Stagemonitor.getConfiguration(WebPlugin.class), JsonUtils.getMapper());
+		this(Stagemonitor.getMetric2Registry(), Stagemonitor.getPlugin(WebPlugin.class), JsonUtils.getMapper());
 	}
 
 	public StagemonitorMetricsServlet(Metric2Registry registry, WebPlugin webPlugin, ObjectMapper mapper) {

@@ -15,7 +15,7 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
  * A {@link StagemonitorJavassistInstrumenter} implementation for naming Resteasy requests.
  */
 public class ResteasyRequestNameDeterminerInstrumenter extends StagemonitorJavassistInstrumenter {
-	private static RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getConfiguration(RequestMonitorPlugin.class);
+	private static RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
 
 	@Override
 	public boolean isIncluded(String className) {
