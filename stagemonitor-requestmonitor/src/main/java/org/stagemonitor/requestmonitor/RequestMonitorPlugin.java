@@ -193,6 +193,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(0d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Collection<String>> unnestExceptions = ConfigurationOption.stringsOption()
+			.key("stagemonitor.requestmonitor.unnestExeptions")
+			.dynamic(true)
+			.label("Unnest Exceptions")
+			.description("Some Exceptions are so called 'nested exceptions' which wrap the actual cause of the exception. " +
+					"A prominent example is Spring's NestedServletException. " +
+					"In those cases it makes sense to unnest the exception to see the actual cause in the request analysis dashboard.")
+			.defaultValue(Collections.singleton("org.springframework.web.util.NestedServletException"))
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 
 	private static RequestMonitor requestMonitor;
 
@@ -304,5 +314,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public double getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests() {
 		return excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests.getValue();
+	}
+
+	public Collection<String> getUnnestExceptions() {
+		return unnestExceptions.getValue();
 	}
 }

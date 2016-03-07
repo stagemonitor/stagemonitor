@@ -193,13 +193,20 @@ public class RequestTrace {
 
 	public void setException(Exception e) {
 		error = e != null;
-		if (e != null) {
-			exceptionMessage = e.getMessage();
-			exceptionClass = e.getClass().getCanonicalName();
+		Throwable throwable = e;
+		if (throwable != null) {
+			if (requestMonitorPlugin.getUnnestExceptions().contains(throwable.getClass().getName())) {
+				Throwable cause = throwable.getCause();
+				if (cause != null) {
+					throwable = cause;
+				}
+			}
+			exceptionMessage = throwable.getMessage();
+			exceptionClass = throwable.getClass().getCanonicalName();
 
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw, true);
-			e.printStackTrace(pw);
+			throwable.printStackTrace(pw);
 			exceptionStackTrace = sw.getBuffer().toString();
 		}
 	}

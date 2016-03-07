@@ -7,7 +7,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
+import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 
@@ -41,7 +43,14 @@ public class HttpRequestTrace extends RequestTrace {
 
 	public HttpRequestTrace(String requestId, String url, Map<String, String> headers, String method,
 							String sessionId, String connectionId, boolean showWidgetAllowed) {
-		super(requestId);
+		this(requestId, url, headers, method, sessionId, connectionId, showWidgetAllowed,
+				Stagemonitor.getMeasurementSession(), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
+	}
+
+	public HttpRequestTrace(String requestId, String url, Map<String, String> headers, String method,
+							String sessionId, String connectionId, boolean showWidgetAllowed,
+							MeasurementSession measurementSession, RequestMonitorPlugin requestMonitorPlugin) {
+		super(requestId, measurementSession, requestMonitorPlugin);
 		this.url = url;
 		this.headers = headers;
 		this.sessionId = sessionId;
