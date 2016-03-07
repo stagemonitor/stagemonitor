@@ -11,7 +11,7 @@ package org.stagemonitor.requestmonitor.reporter;
  * or place a file under <code>META-INF/services/org.stagemonitor.requestmonitor.reporter.PreExecutionRequestTraceReporterInterceptor</code>
  * and insert the canonical class name of your implementation.
  */
-public interface PreExecutionRequestTraceReporterInterceptor {
+public abstract class PreExecutionRequestTraceReporterInterceptor {
 
 	/**
 	 * This method is called before a request trace gets reported to Elasticsearch.
@@ -20,5 +20,5 @@ public interface PreExecutionRequestTraceReporterInterceptor {
 	 *
 	 * @param context contextual information about the current report that is about to happen
 	 */
-	void interceptReport(PreExecutionInterceptorContext context);
+	public abstract void interceptReport(PreExecutionInterceptorContext context);
 }

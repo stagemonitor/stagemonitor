@@ -3,7 +3,7 @@ package org.stagemonitor.requestmonitor.reporter;
 import com.codahale.metrics.Timer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
-class CallTreeExcludingPostExecutionInterceptor implements PostExecutionRequestTraceReporterInterceptor {
+class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTraceReporterInterceptor {
 
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {

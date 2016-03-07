@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
-class RateLimitingPreExecutionInterceptor implements PreExecutionRequestTraceReporterInterceptor {
+class RateLimitingPreExecutionInterceptor extends PreExecutionRequestTraceReporterInterceptor {
 
 	@Override
 	public void interceptReport(PreExecutionInterceptorContext context) {

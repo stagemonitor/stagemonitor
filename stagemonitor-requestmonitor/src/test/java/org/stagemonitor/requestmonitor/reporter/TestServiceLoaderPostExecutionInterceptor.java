@@ -1,6 +1,6 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-public class TestServiceLoaderPostExecutionInterceptor implements PostExecutionRequestTraceReporterInterceptor {
+public class TestServiceLoaderPostExecutionInterceptor extends PostExecutionRequestTraceReporterInterceptor {
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
 		context.addProperty("serviceLoaderWorks", true);
