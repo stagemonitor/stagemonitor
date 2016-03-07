@@ -35,7 +35,7 @@ public class UserNameFilter extends AbstractExclusionFilter {
 			FilterChain filterChain) throws IOException, ServletException {
 		RequestTrace requestTrace = RequestMonitor.getRequest();
 		if (requestTrace != null && requestTrace.getUsername() == null) {
-			requestTrace.setUsername(getUserName(servletRequest));
+			requestTrace.setAndAnonymizeUserName(getUserName(servletRequest));
 		}
 		
 		filterChain.doFilter(servletRequest, servletResponse);

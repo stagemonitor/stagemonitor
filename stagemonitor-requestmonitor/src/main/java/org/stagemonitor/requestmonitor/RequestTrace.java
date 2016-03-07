@@ -17,12 +17,16 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 
 /**
  * A request trace is a data structure containing all the important information about a request.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestTrace {
+
+	@JsonIgnore
+	private final RequestMonitorPlugin requestMonitorPlugin;
 
 	private final String id;
 	private String name;
@@ -46,17 +50,19 @@ public class RequestTrace {
 	private String exceptionMessage;
 	private String exceptionClass;
 	private String exceptionStackTrace;
-	private String username;
+	private String username = "unknown";
+	private String disclosedUserName;
 	private String clientIp;
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
 	@JsonIgnore
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 
 	public RequestTrace(String requestId) {
-		this(requestId, Stagemonitor.getMeasurementSession());
+		this(requestId, Stagemonitor.getMeasurementSession(), Stagemonitor.getConfiguration(RequestMonitorPlugin.class));
 	}
 
-	public RequestTrace(String requestId, MeasurementSession measurementSession) {
+	public RequestTrace(String requestId, MeasurementSession measurementSession, RequestMonitorPlugin requestMonitorPlugin) {
+		this.requestMonitorPlugin = requestMonitorPlugin;
 		this.id = requestId != null ? requestId : UUID.randomUUID().toString();
 		this.measurementStart = measurementSession.getStartTimestamp();
 		this.application = measurementSession.getApplicationName();
@@ -202,12 +208,34 @@ public class RequestTrace {
 		return username;
 	}
 
-	public void setUsername(String username) {
-		this.username = username;
+	public void setAndAnonymizeUserName(String username) {
+		if (requestMonitorPlugin.isAnonymizeUserNames()) {
+			this.username = StringUtils.sha1Hash(username);
+		} else {
+			this.username = username;
+		}
+		if (requestMonitorPlugin.getDiscloseUsers().contains(this.username)) {
+			this.disclosedUserName = username;
+		}
 	}
 
-	public void setClientIp(String clientIp) {
-		this.clientIp = clientIp;
+	/**
+	 * NOTE: Call this after {@link #setAndAnonymizeUserName(String)}
+	 * <p/>
+	 * Otherwise disclosing ({@link RequestMonitorPlugin#discolseUsers}) the ip does not work correctly.
+	 *
+	 * @param clientIp the client's IP address
+	 */
+	public void setAndAnonymizeClientIp(String clientIp) {
+		if (requestMonitorPlugin.isAnonymizeIPs() && !requestMonitorPlugin.getDiscloseUsers().contains(username)) {
+			this.clientIp = IPAnonymizationUtils.anonymize(clientIp);
+		} else {
+			this.clientIp = clientIp;
+		}
+	}
+
+	public String getDisclosedUserName() {
+		return disclosedUserName;
 	}
 
 	public String getClientIp() {

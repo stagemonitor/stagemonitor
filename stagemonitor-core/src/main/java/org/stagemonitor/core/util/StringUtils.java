@@ -1,11 +1,15 @@
 package org.stagemonitor.core.util;
 
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Formatter;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
@@ -99,5 +103,30 @@ public class StringUtils {
 			return url.substring(0, url.length() - 1);
 		}
 		return url;
+	}
+
+	public static String sha1Hash(String s) {
+		if (s == null) {
+			return null;
+		}
+		final MessageDigest messageDigest;
+		try {
+			messageDigest = MessageDigest.getInstance("SHA-1");
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException(e);
+		}
+		final byte[] digest = messageDigest.digest(s.getBytes(Charset.forName("UTF-8")));
+		return byteToHex(digest);
+	}
+
+	private static String byteToHex(final byte[] hash) {
+		Formatter formatter = new Formatter();
+		for (byte b : hash)
+		{
+			formatter.format("%02x", b);
+		}
+		String result = formatter.toString();
+		formatter.close();
+		return result;
 	}
 }

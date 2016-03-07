@@ -1,15 +1,21 @@
 package org.stagemonitor.core.util;
 
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 
 public class StringUtilsTest {
 
 	@Test
 	public void testRemoveStart() {
-		Assert.assertEquals(StringUtils.removeStart("teststring", "test"), "string");
-		Assert.assertEquals(StringUtils.removeStart("string", "test"), "string");
-		Assert.assertEquals(StringUtils.removeStart("stringtest", "test"), "stringtest");
+		assertEquals(StringUtils.removeStart("teststring", "test"), "string");
+		assertEquals(StringUtils.removeStart("string", "test"), "string");
+		assertEquals(StringUtils.removeStart("stringtest", "test"), "stringtest");
 	}
 
+	@Test
+	public void testSha1Hash() throws Exception {
+		// result from org.apache.commons.codec.digest.DigestUtils.sha1Hex
+		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", StringUtils.sha1Hash("test"));
+	}
 }

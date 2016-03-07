@@ -32,7 +32,7 @@ public final class IPAnonymizationUtils {
 	 */
 	public static String anonymize(String clientIp) {
 		// prevents DNS lookups
-		if (!InetAddressUtils.isIPv4Address(clientIp) && !InetAddressUtils.isIPv6Address(clientIp)) {
+		if (clientIp == null || (!InetAddressUtils.isIPv4Address(clientIp) && !InetAddressUtils.isIPv6Address(clientIp))) {
 			return null;
 		}
 		try {

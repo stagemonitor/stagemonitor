@@ -70,9 +70,9 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		if (configuration.getConfig(RequestMonitorPlugin.class).isAnonymizeIPs()) {
 			clientIp = IPAnonymizationUtils.anonymize(clientIp);
 		}
-		request.setClientIp(clientIp);
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
-		request.setUsername(userPrincipal != null ? userPrincipal.getName() : null);
+		request.setAndAnonymizeUserName(userPrincipal != null ? userPrincipal.getName() : null);
+		request.setAndAnonymizeClientIp(clientIp);
 
 		return request;
 	}

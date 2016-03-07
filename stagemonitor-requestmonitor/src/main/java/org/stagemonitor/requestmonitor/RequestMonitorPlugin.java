@@ -128,6 +128,28 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"If the address is a IPv6 address, the last 80 bits (10 bytes) are set to zero. " +
 					"This is just like Google Analytics handles IP anonymization.")
 			.defaultValue(true)
+			.tags("privacy")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Boolean> anonymizeUserName = ConfigurationOption.booleanOption()
+			.key("stagemonitor.anonymize.username")
+			.dynamic(true)
+			.label("Anonymize Usernames")
+			.description("Stagemonitor collects the user names which could be a privacy issue. " +
+					"If set to true, the user name will be hashed.")
+			.defaultValue(false)
+			.tags("privacy")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Collection<String>> discolseUsers = ConfigurationOption.stringsOption()
+			.key("stagemonitor.disclose.users")
+			.dynamic(true)
+			.label("Disclose users")
+			.description("When you anonymize user names and detect that a specific user seems malicious, " +
+					"you can disclose their real user name to make further investigations. Also the IP won't be anonymized anymore. " +
+					"If anonymizing user names is active you can specify a list of user name hashes to disclose. If not, just use the plain user names.")
+			.defaultValue(Collections.<String>emptySet())
+			.tags("privacy")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Collection<String>> onlyReportRequestsWithNameToElasticsearch = ConfigurationOption.stringsOption()
@@ -256,6 +278,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isAnonymizeIPs() {
 		return anonymizeIPs.getValue();
+	}
+
+	public boolean isAnonymizeUserNames() {
+		return anonymizeUserName.getValue();
+	}
+
+	public Collection<String> getDiscloseUsers() {
+		return discolseUsers.getValue();
 	}
 
 	public Collection<String> getOnlyReportRequestsWithNameToElasticsearch() {
