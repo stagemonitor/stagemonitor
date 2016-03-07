@@ -2,6 +2,8 @@ package org.stagemonitor.web.monitor;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -63,12 +65,22 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		HttpRequestTrace request = new HttpRequestTrace(requestId, url, headers, method, sessionId,
 				connectionId, isShowWidgetAllowed);
 
+		request.setReferringSite(getReferringSite());
 		request.setName(getRequestName());
 		String clientIp = getClientIp(httpServletRequest);
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		request.setAndAnonymizeUserNameAndIp(userPrincipal != null ? userPrincipal.getName() : null, clientIp);
 
 		return request;
+	}
+
+	private String getReferringSite() {
+		try {
+			final String host = new URI(httpServletRequest.getHeader("Referer")).getHost();
+			return host.startsWith("www.") ? host.substring(4) : host;
+		} catch (URISyntaxException e) {
+			return null;
+		}
 	}
 
 	public static String getClientIp(HttpServletRequest request) {

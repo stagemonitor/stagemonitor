@@ -37,6 +37,7 @@ public class HttpRequestTrace extends RequestTrace {
 	private final String connectionId;
 	@JsonIgnore
 	private final boolean showWidgetAllowed;
+	private String referringSite;
 
 	public HttpRequestTrace(String requestId, String url, Map<String, String> headers, String method,
 							String sessionId, String connectionId, boolean showWidgetAllowed) {
@@ -161,6 +162,14 @@ public class HttpRequestTrace extends RequestTrace {
 
 	public boolean isShowWidgetAllowed() {
 		return showWidgetAllowed;
+	}
+
+	public void setReferringSite(String referringSite) {
+		this.referringSite = referringSite;
+	}
+
+	public String getReferringSite() {
+		return referringSite;
 	}
 
 	@Override

@@ -38,6 +38,7 @@ public class MonitoredHttpRequestTest {
 		request.addParameter("creditCard", "123456789");
 		request.addHeader("Cookie", "foobar");
 		request.addHeader("accept", "application/json");
+		request.addHeader("Referer", "https://www.github.com/stagemonitor/stagemonitor");
 
 		monitoredHttpRequest = new MonitoredHttpRequest(
 				request,
@@ -99,5 +100,11 @@ public class MonitoredHttpRequestTest {
 		assertEquals("blubb", parameters.get("bla"));
 		assertEquals("XXXX", parameters.get("pwd"));
 		assertEquals("XXXX", parameters.get("creditCard"));
+	}
+
+	@Test
+	public void testReferringSite() throws Exception {
+		final HttpRequestTrace requestTrace = monitoredHttpRequest.createRequestTrace();
+		assertEquals("github.com", requestTrace.getReferringSite());
 	}
 }
