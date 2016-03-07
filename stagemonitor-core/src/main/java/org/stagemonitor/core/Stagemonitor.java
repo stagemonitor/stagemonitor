@@ -83,7 +83,10 @@ public final class Stagemonitor {
 	}
 
 	private synchronized static void doStartMonitoring() {
-		if (measurementSession.isInitialized() && !started) {
+		if (started) {
+			return;
+		}
+		if (measurementSession.isInitialized()) {
 			logger.info("Measurement Session is initialized: " + measurementSession);
 			try {
 				start();
