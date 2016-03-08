@@ -30,7 +30,7 @@ public class JsonUtils {
 		 *
 		 * Another reason could be that a application server bundled version of jackson databind is used
 		 */
-		if (versionsMatch(MAPPER.version(), new AfterburnerModule().version())) {
+		if (!System.getProperty("java.version").startsWith("1.6.") && versionsMatch(MAPPER.version(), new AfterburnerModule().version())) {
 			MAPPER.registerModule(new AfterburnerModule());
 		}
 		MAPPER.registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, false));
