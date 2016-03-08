@@ -39,6 +39,8 @@ function renderCallTree(callTree) {
 		} else {
 			$callStackTab.hide();
 			if ($callStackTab.hasClass('active')) {
+				$stagemonitorHome.removeClass('active');
+				$callStackTab.removeClass('active');
 				$("#request-tab").addClass('active');
 				$("#stagemonitor-request").addClass('active')
 			}
