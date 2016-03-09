@@ -36,10 +36,6 @@ public class RequestTraceServlet extends HttpServlet {
 		this.widgetAjaxRequestTraceReporter = reporter;
 		this.requestTimeout = requestTimeout;
 		this.requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
-	}
-
-	@Override
-	public void init() {
 		requestMonitor.addReporter(widgetAjaxRequestTraceReporter);
 	}
 

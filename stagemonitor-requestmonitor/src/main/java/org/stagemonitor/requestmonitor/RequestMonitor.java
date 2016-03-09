@@ -209,7 +209,7 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		info.requestTrace = monitoredRequest.createRequestTrace();
 		try {
-			if (info.profileThisRequest()) {
+			if (info.isProfileThisRequest()) {
 				callTreeMeter.mark();
 				final CallStackElement root = Profiler.activateProfiling("total");
 				info.requestTrace.setCallStack(root);
@@ -394,14 +394,22 @@ public class RequestMonitor {
 			return metricRegistry.timer(getTimerMetricName(getRequestName()));
 		}
 
-		private boolean profileThisRequest() {
+		private boolean isProfileThisRequest() {
 			double callTreeRateLimit = requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute();
-			if (!requestMonitorPlugin.isProfilerActive() || callTreeRateLimit <= 0 ||
-					!isAnyRequestTraceReporterActive(getRequestTrace())) {
+			if (!requestMonitorPlugin.isProfilerActive()) {
+				logger.debug("Not profiling this request because stagemonitor.profiler.active=false");
 				return false;
-			} else {
-				return callTreeRateLimit >= 1000000d || callTreeMeter.getOneMinuteRate() < callTreeRateLimit;
+			} else if (callTreeRateLimit <= 0) {
+				logger.debug("Not profiling this request because stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch <= 0");
+				return false;
+			} else if (!isAnyRequestTraceReporterActive(getRequestTrace())) {
+				logger.debug("Not profiling this request because no RequestTraceReporter is active {}", requestTraceReporters);
+				return false;
+			} else if (callTreeRateLimit < 1000000d && callTreeMeter.getOneMinuteRate() >= callTreeRateLimit) {
+				logger.debug("Not profiling this request because more than {} call trees per minute where created", callTreeRateLimit);
+				return false;
 			}
+			return true;
 		}
 
 		/**
