@@ -47,7 +47,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 							   HttpClient httpClient,
 							   Clock clock, CorePlugin corePlugin) {
 
-		super(registry, filter, rateUnit, durationUnit);
+		super(registry, filter, rateUnit, durationUnit, "stagemonitor-influxdb-reporter");
 		this.corePlugin = corePlugin;
 		this.globalTags = MetricName.getInfluxDbTags(globalTags);
 		this.httpClient = httpClient;

@@ -19,15 +19,7 @@ public final class ExecutorUtils {
 	}
 
 	public static ThreadPoolExecutor createSingleThreadDeamonPool(final String threadName, int queueCapacity) {
-		final ThreadFactory daemonThreadFactory = new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread thread = new Thread(r);
-				thread.setDaemon(true);
-				thread.setName(threadName);
-				return thread;
-			}
-		};
+		final ThreadFactory daemonThreadFactory = new NamedThreadFactory(threadName);
 		return new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(queueCapacity), daemonThreadFactory) {
 			@Override
 			public String toString() {
@@ -43,4 +35,19 @@ public final class ExecutorUtils {
 				+ e.getMessage());
 	}
 
+	public static class NamedThreadFactory implements ThreadFactory {
+		private final String threadName;
+
+		public NamedThreadFactory(String threadName) {
+			this.threadName = threadName;
+		}
+
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r);
+			thread.setDaemon(true);
+			thread.setName(threadName);
+			return thread;
+		}
+	}
 }

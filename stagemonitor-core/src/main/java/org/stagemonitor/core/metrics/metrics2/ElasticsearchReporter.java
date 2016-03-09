@@ -63,7 +63,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 								 HttpClient httpClient,
 								 Clock clock, CorePlugin corePlugin, Logger elasticsearchMetricsLogger) {
 
-		super(registry, filter, rateUnit, durationUnit);
+		super(registry, filter, rateUnit, durationUnit, "stagemonitor-elasticsearch-reporter");
 		this.corePlugin = corePlugin;
 		this.elasticsearchMetricsLogger = elasticsearchMetricsLogger;
 		this.globalTags = Collections.unmodifiableMap(new HashMap<String, String>(globalTags));
