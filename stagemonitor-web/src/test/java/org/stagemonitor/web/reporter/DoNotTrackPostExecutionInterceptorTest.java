@@ -18,6 +18,7 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 
@@ -44,7 +45,8 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
-		reporter = new ElasticsearchRequestTraceReporter(configuration);
+		reporter = new ElasticsearchRequestTraceReporter();
+		reporter.init(new RequestTraceReporter.InitArguments(configuration));
 	}
 
 	@Test
@@ -53,10 +55,10 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
 		when(requestTrace.getHeaders()).thenReturn(Collections.singletonMap("dnt", "1"));
 
-		reporter.reportRequestTrace(requestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
-		Assert.assertTrue(reporter.isActive(requestTrace));
+		Assert.assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 	@Test
@@ -65,10 +67,10 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
 		when(requestTrace.getHeaders()).thenReturn(Collections.singletonMap("dnt", "0"));
 
-		reporter.reportRequestTrace(requestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), anyObject());
-		Assert.assertTrue(reporter.isActive(requestTrace));
+		Assert.assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 	@Test
@@ -77,10 +79,10 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
 		when(requestTrace.getHeaders()).thenReturn(Collections.emptyMap());
 
-		reporter.reportRequestTrace(requestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), anyObject());
-		Assert.assertTrue(reporter.isActive(requestTrace));
+		Assert.assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 	@Test
@@ -89,10 +91,10 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
 		when(requestTrace.getHeaders()).thenReturn(Collections.singletonMap("dnt", "1"));
 
-		reporter.reportRequestTrace(requestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), anyObject());
-		Assert.assertTrue(reporter.isActive(requestTrace));
+		Assert.assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 }

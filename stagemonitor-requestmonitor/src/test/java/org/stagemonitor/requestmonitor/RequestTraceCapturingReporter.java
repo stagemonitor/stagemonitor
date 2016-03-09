@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 
-public class RequestTraceCapturingReporter implements RequestTraceReporter {
+public class RequestTraceCapturingReporter extends RequestTraceReporter {
 	private final BlockingQueue<RequestTrace> requestTraces = new ArrayBlockingQueue<RequestTrace>(1);
 
 	public RequestTraceCapturingReporter() {
@@ -18,12 +18,12 @@ public class RequestTraceCapturingReporter implements RequestTraceReporter {
 	}
 
 	@Override
-	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) throws Exception {
-		requestTraces.add(requestTrace);
+	public void reportRequestTrace(ReportArguments reportArguments) throws Exception {
+		requestTraces.add(reportArguments.getRequestTrace());
 	}
 
 	@Override
-	public <T extends RequestTrace> boolean isActive(T requestTrace) {
+	public boolean isActive(IsActiveArguments isActiveArguments) {
 		return true;
 	}
 

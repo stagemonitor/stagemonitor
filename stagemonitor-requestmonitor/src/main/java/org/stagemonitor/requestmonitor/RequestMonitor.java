@@ -6,10 +6,9 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -31,8 +30,6 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
-import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
-import org.stagemonitor.requestmonitor.reporter.LogRequestTraceReporter;
 import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 
 public class RequestMonitor {
@@ -48,7 +45,7 @@ public class RequestMonitor {
 	 */
 	private static ThreadLocal<RequestInformation<? extends RequestTrace>> request = new ThreadLocal<RequestInformation<? extends RequestTrace>>();
 
-	private final List<RequestTraceReporter> requestTraceReporters;
+	private final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>();
 
 	private final List<Runnable> onBeforeRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
 
@@ -59,6 +56,7 @@ public class RequestMonitor {
 	private int warmupRequests = 0;
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
 	private AtomicInteger noOfRequests = new AtomicInteger(0);
+	private final Configuration configuration;
 	private Metric2Registry metricRegistry;
 	private CorePlugin corePlugin;
 	private RequestMonitorPlugin requestMonitorPlugin;
@@ -68,25 +66,26 @@ public class RequestMonitor {
 	private Meter callTreeMeter = new Meter();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
-		this(configuration, registry, Arrays.asList(
-				new LogRequestTraceReporter(configuration.getConfig(RequestMonitorPlugin.class)),
-				new ElasticsearchRequestTraceReporter(configuration)));
+		this(configuration, registry, ServiceLoader.load(RequestTraceReporter.class, RequestMonitor.class.getClassLoader()));
 	}
 
-	public RequestMonitor(Configuration configuration, Metric2Registry registry, Collection<RequestTraceReporter> requestTraceReporters) {
-		this(configuration.getConfig(CorePlugin.class), registry, configuration.getConfig(RequestMonitorPlugin.class), requestTraceReporters);
+	public RequestMonitor(Configuration configuration, Metric2Registry registry, Iterable<RequestTraceReporter> requestTraceReporters) {
+		this(configuration, registry, configuration.getConfig(RequestMonitorPlugin.class), requestTraceReporters);
 	}
 
-	private RequestMonitor(CorePlugin corePlugin, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin,
-						   Collection<RequestTraceReporter> requestTraceReporters) {
+	private RequestMonitor(Configuration configuration, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin,
+						   Iterable<RequestTraceReporter> requestTraceReporters) {
+		this.configuration = configuration;
 		this.metricRegistry = registry;
-		this.corePlugin = corePlugin;
+		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		this.requestMonitorPlugin = requestMonitorPlugin;
 		this.warmupRequests = requestMonitorPlugin.getNoOfWarmupRequests();
 		this.endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
 		this.asyncRequestTraceReporterPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit());
-		this.requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>(requestTraceReporters);
+		for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
+			addReporter(requestTraceReporter);
+		}
 	}
 
 	public <T extends RequestTrace> void monitorStart(MonitoredRequest<T> monitoredRequest) {
@@ -310,7 +309,7 @@ public class RequestMonitor {
 					for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
 						if (isActive(requestTrace, requestTraceReporter)) {
 							try {
-								requestTraceReporter.reportRequestTrace(requestTrace);
+								requestTraceReporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 							} catch (Exception e) {
 								logger.warn(e.getMessage() + " (this exception is ignored)", e);
 							}
@@ -456,7 +455,7 @@ public class RequestMonitor {
 	/**
 	 * Checks whether the given {@link RequestTraceReporter} is active for the current {@link RequestTrace}.
 	 * If this method was already called for a {@link RequestTraceReporter} in the context of the current request
-	 * it returns the previous result. In other words this method makes sure that {@link RequestTraceReporter#isActive(RequestTrace)}
+	 * it returns the previous result. In other words this method makes sure that {@link RequestTraceReporter#isActive(RequestTraceReporter.IsActiveArguments)}
 	 * is called at most once.
 	 */
 	private boolean isActive(RequestTrace requestTrace, RequestTraceReporter requestTraceReporter) {
@@ -465,7 +464,7 @@ public class RequestMonitor {
 		if (activeFromAttribute != null) {
 			return activeFromAttribute;
 		}
-		final boolean active = requestTraceReporter.isActive(requestTrace);
+		final boolean active = requestTraceReporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace));
 		requestTrace.addRequestAttribute(requestAttributeActive, active);
 		return active;
 	}
@@ -494,6 +493,7 @@ public class RequestMonitor {
 	 */
 	public void addReporter(RequestTraceReporter requestTraceReporter) {
 		requestTraceReporters.add(0, requestTraceReporter);
+		requestTraceReporter.init(new RequestTraceReporter.InitArguments(configuration));
 	}
 
 	public <T extends RequestTraceReporter> T getReporter(Class<T> reporterClass) {

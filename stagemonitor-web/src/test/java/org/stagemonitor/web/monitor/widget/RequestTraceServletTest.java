@@ -24,12 +24,14 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
 
 public class RequestTraceServletTest {
 
+	private WidgetAjaxRequestTraceReporter reporter;
 	private RequestTraceServlet requestTraceServlet;
 	private HttpRequestTrace httpRequestTrace;
 	private String connectionId;
@@ -45,15 +47,17 @@ public class RequestTraceServletTest {
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
 		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		requestTraceServlet = new RequestTraceServlet(configuration, 1500);
+		reporter = new WidgetAjaxRequestTraceReporter();
+		requestTraceServlet = new RequestTraceServlet(configuration, reporter, 1500);
+		requestTraceServlet.init();
 		connectionId = UUID.randomUUID().toString();
-		httpRequestTrace = new HttpRequestTrace(null, "/test", Collections.<String, String>emptyMap(), "GET", null, connectionId, true);
+		httpRequestTrace = new HttpRequestTrace(null, "/test", Collections.emptyMap(), "GET", null, connectionId, true);
 		httpRequestTrace.setName("test");
 	}
 
 	@Test
 	public void testRequestTraceBeforeRequest() throws Exception {
-		requestTraceServlet.reportRequestTrace(httpRequestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -67,8 +71,8 @@ public class RequestTraceServletTest {
 
 	@Test
 	public void testTwoRequestTraceBeforeRequest() throws Exception {
-		requestTraceServlet.reportRequestTrace(httpRequestTrace);
-		requestTraceServlet.reportRequestTrace(httpRequestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -115,7 +119,7 @@ public class RequestTraceServletTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		requestTraceServlet.reportRequestTrace(httpRequestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
 		waitForResponse(response);
 
 		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
@@ -130,7 +134,7 @@ public class RequestTraceServletTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		requestTraceServlet.reportRequestTrace(httpRequestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
 		waitForResponse(response);
 
 		Assert.assertEquals("[]", response.getContentAsString());
@@ -170,6 +174,6 @@ public class RequestTraceServletTest {
 
 		Assert.assertEquals(404, response.getStatus());
 		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
-		Assert.assertFalse(requestTraceServlet.isActive(requestTrace));
+		Assert.assertFalse(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 }

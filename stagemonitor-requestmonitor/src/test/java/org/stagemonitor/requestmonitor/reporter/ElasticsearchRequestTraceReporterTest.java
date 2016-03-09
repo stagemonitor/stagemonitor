@@ -57,7 +57,8 @@ public class ElasticsearchRequestTraceReporterTest {
 		registry = new Metric2Registry();
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		requestTraceLogger = mock(Logger.class);
-		reporter = new ElasticsearchRequestTraceReporter(configuration, requestTraceLogger);
+		reporter = new ElasticsearchRequestTraceReporter(requestTraceLogger);
+		reporter.init(new RequestTraceReporter.InitArguments(configuration));
 	}
 
 	@Test
@@ -65,10 +66,10 @@ public class ElasticsearchRequestTraceReporterTest {
 		final RequestTrace requestTrace = mock(RequestTrace.class);
 		when(requestTrace.getName()).thenReturn("Report Me");
 
-		reporter.reportRequestTrace(requestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), anyObject());
-		Assert.assertTrue(reporter.isActive(requestTrace));
+		Assert.assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 	@Test
@@ -77,11 +78,11 @@ public class ElasticsearchRequestTraceReporterTest {
 		final RequestTrace requestTrace = new RequestTrace("abc", new MeasurementSession(getClass().getName(), "test", "test"), requestMonitorPlugin);
 		requestTrace.setName("Report Me");
 
-		reporter.reportRequestTrace(requestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
 		verify(requestTraceLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-requests-" + StringUtils.getLogstashStyleDate() + "\",\"_type\":\"requests\"}}\n{"));
-		Assert.assertTrue(reporter.isActive(requestTrace));
+		Assert.assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 	@Test
@@ -89,10 +90,10 @@ public class ElasticsearchRequestTraceReporterTest {
 		final RequestTrace requestTrace = mock(RequestTrace.class);
 		when(requestTrace.getName()).thenReturn("Regular Foo");
 
-		reporter.reportRequestTrace(requestTrace);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
-		Assert.assertTrue(reporter.isActive(requestTrace));
+		Assert.assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 	@Test
@@ -101,7 +102,7 @@ public class ElasticsearchRequestTraceReporterTest {
 		final RequestTrace requestTrace = mock(RequestTrace.class);
 		when(requestTrace.getName()).thenReturn("Report Me");
 
-		assertFalse(reporter.isActive(requestTrace));
+		assertFalse(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 	@Test
@@ -111,19 +112,19 @@ public class ElasticsearchRequestTraceReporterTest {
 		final RequestTrace requestTrace = mock(RequestTrace.class);
 		when(requestTrace.getName()).thenReturn("Report Me");
 
-		assertTrue(reporter.isActive(requestTrace));
-		reporter.reportRequestTrace(requestTrace);
+		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 		Thread.sleep(5010); // the meter only updates every 5 seconds
-		assertFalse(reporter.isActive(requestTrace));
+		assertFalse(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
 	}
 
 	@Test
 	public void testElasticsearchExcludeCallTree() throws Exception {
 		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(1d);
 
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(1000));
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(500));
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(250));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(1000)));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(500)));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(250)));
 
 		ArgumentCaptor<JsonNode> requestTraceCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), requestTraceCaptor.capture());
@@ -137,9 +138,9 @@ public class ElasticsearchRequestTraceReporterTest {
 	public void testElasticsearchDontExcludeCallTree() throws Exception {
 		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
 
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(250));
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(500));
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(1000));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(250)));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(500)));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(1000)));
 
 		ArgumentCaptor<RequestTrace> requestTraceCaptor = ArgumentCaptor.forClass(RequestTrace.class);
 		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), requestTraceCaptor.capture());
@@ -151,8 +152,8 @@ public class ElasticsearchRequestTraceReporterTest {
 	public void testElasticsearchExcludeFastCallTree() throws Exception {
 		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(1000));
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(250));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(1000)));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(250)));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), isA(RequestTrace.class));
 		verify(elasticsearchClient).index(anyString(), anyString(), isA(JsonNode.class));
@@ -162,8 +163,8 @@ public class ElasticsearchRequestTraceReporterTest {
 	public void testElasticsearchDontExcludeSlowCallTree() throws Exception {
 		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(250));
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(1000));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(250)));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(1000)));
 
 		verify(elasticsearchClient, times(2)).index(anyString(), anyString(), isA(RequestTrace.class));
 	}
@@ -172,7 +173,7 @@ public class ElasticsearchRequestTraceReporterTest {
 	public void testInterceptorServiceLoader() throws Exception {
 		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
 
-		reporter.reportRequestTrace(createTestRequestTraceWithCallTree(250));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(createTestRequestTraceWithCallTree(250)));
 
 		ArgumentCaptor<RequestTrace> requestTraceCaptor = ArgumentCaptor.forClass(RequestTrace.class);
 		verify(elasticsearchClient).index(anyString(), anyString(), requestTraceCaptor.capture());

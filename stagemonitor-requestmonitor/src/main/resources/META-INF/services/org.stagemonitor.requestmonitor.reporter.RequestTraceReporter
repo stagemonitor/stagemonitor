@@ -1,0 +1,2 @@
+org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter
+org.stagemonitor.requestmonitor.reporter.LogRequestTraceReporter

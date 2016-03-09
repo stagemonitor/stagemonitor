@@ -3,7 +3,6 @@ package org.stagemonitor.requestmonitor.reporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -19,12 +18,11 @@ public class ElasticsearchRequestTraceReporter extends AbstractInterceptedReques
 
 	private final Logger requestTraceLogger;
 
-	public ElasticsearchRequestTraceReporter(Configuration configuration) {
-		this(configuration, LoggerFactory.getLogger(ES_REQUEST_TRACE_LOGGER));
+	public ElasticsearchRequestTraceReporter() {
+		this(LoggerFactory.getLogger(ES_REQUEST_TRACE_LOGGER));
 	}
 
-	ElasticsearchRequestTraceReporter(Configuration configuration, Logger requestTraceLogger) {
-		super(configuration);
+	ElasticsearchRequestTraceReporter(Logger requestTraceLogger) {
 		this.requestTraceLogger = requestTraceLogger;
 	}
 
@@ -45,8 +43,8 @@ public class ElasticsearchRequestTraceReporter extends AbstractInterceptedReques
 	}
 
 	@Override
-	public <T extends RequestTrace> boolean isActive(T requestTrace) {
-		return !corePlugin.getElasticsearchUrls().isEmpty() && super.isActive(requestTrace);
+	public boolean isActive(IsActiveArguments isActiveArguments) {
+		return !corePlugin.getElasticsearchUrls().isEmpty() && super.isActive(isActiveArguments);
 	}
 
 	/**

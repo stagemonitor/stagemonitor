@@ -13,23 +13,24 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
-public abstract class AbstractInterceptedRequestTraceReporter implements RequestTraceReporter {
-	protected final CorePlugin corePlugin;
-	protected final RequestMonitorPlugin requestMonitorPlugin;
-	protected final ElasticsearchClient elasticsearchClient;
-	protected final Collection<PreExecutionRequestTraceReporterInterceptor> preInterceptors =
+public abstract class AbstractInterceptedRequestTraceReporter extends RequestTraceReporter {
+	protected CorePlugin corePlugin;
+	protected RequestMonitorPlugin requestMonitorPlugin;
+	protected ElasticsearchClient elasticsearchClient;
+	protected Collection<PreExecutionRequestTraceReporterInterceptor> preInterceptors =
 			new CopyOnWriteArrayList<PreExecutionRequestTraceReporterInterceptor>();
-	protected final Collection<PostExecutionRequestTraceReporterInterceptor> postInterceptors =
+	protected Collection<PostExecutionRequestTraceReporterInterceptor> postInterceptors =
 			new CopyOnWriteArrayList<PostExecutionRequestTraceReporterInterceptor>();
-	protected final Configuration configuration;
-	private final Meter reportingRate = new Meter();
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	protected Configuration configuration;
+	private Meter reportingRate = new Meter();
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
-	public AbstractInterceptedRequestTraceReporter(Configuration configuration) {
+	@Override
+	public void init(InitArguments initArguments) {
+		this.configuration = initArguments.getConfiguration();
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		this.elasticsearchClient = corePlugin.getElasticsearchClient();
 		this.requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
-		this.configuration = configuration;
 		registerPreInterceptors();
 		registerPostInterceptors();
 	}
@@ -56,8 +57,8 @@ public abstract class AbstractInterceptedRequestTraceReporter implements Request
 	}
 
 	@Override
-	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) {
-		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, requestTrace,
+	public void reportRequestTrace(ReportArguments reportArguments) {
+		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, reportArguments.getRequestTrace(),
 				reportingRate, corePlugin.getMetricRegistry());
 		for (PostExecutionRequestTraceReporterInterceptor interceptor : postInterceptors) {
 			try {
@@ -68,15 +69,15 @@ public abstract class AbstractInterceptedRequestTraceReporter implements Request
 		}
 		if (context.isReport()) {
 			reportingRate.mark();
-			doReport(requestTrace, context);
+			doReport(reportArguments.getRequestTrace(), context);
 		}
 	}
 
 	protected abstract <T extends RequestTrace> void doReport(T requestTrace, PostExecutionInterceptorContext context);
 
 	@Override
-	public <T extends RequestTrace> boolean isActive(T requestTrace) {
-		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration, requestTrace,
+	public boolean isActive(IsActiveArguments isActiveArguments) {
+		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration, isActiveArguments.getRequestTrace(),
 				reportingRate, corePlugin.getMetricRegistry());
 		for (PreExecutionRequestTraceReporterInterceptor interceptor : preInterceptors) {
 			try {

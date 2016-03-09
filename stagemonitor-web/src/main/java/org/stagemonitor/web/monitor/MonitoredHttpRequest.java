@@ -23,7 +23,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
+import org.stagemonitor.web.monitor.widget.WidgetAjaxRequestTraceReporter;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
@@ -59,7 +59,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		final String url = httpServletRequest.getRequestURI();
 		final String method = httpServletRequest.getMethod();
 		final String sessionId = httpServletRequest.getRequestedSessionId();
-		final String connectionId = httpServletRequest.getHeader(RequestTraceServlet.CONNECTION_ID);
+		final String connectionId = httpServletRequest.getHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID);
 		final String requestId = (String) httpServletRequest.getAttribute(MDCListener.STAGEMONITOR_REQUEST_ID_ATTR);
 		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
 		HttpRequestTrace request = new HttpRequestTrace(requestId, url, headers, method, sessionId,

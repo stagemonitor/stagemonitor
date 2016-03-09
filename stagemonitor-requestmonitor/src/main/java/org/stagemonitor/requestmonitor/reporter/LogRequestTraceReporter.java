@@ -8,23 +8,24 @@ import org.stagemonitor.requestmonitor.RequestTrace;
 /**
  * An implementation of {@link RequestTraceReporter} that logs the {@link RequestTrace}
  */
-public class LogRequestTraceReporter implements RequestTraceReporter {
+public class LogRequestTraceReporter extends RequestTraceReporter {
 
 	private static final Logger logger = LoggerFactory.getLogger(LogRequestTraceReporter.class);
 
-	private final RequestMonitorPlugin requestMonitorPlugin;
+	private RequestMonitorPlugin requestMonitorPlugin;
 
-	public LogRequestTraceReporter(RequestMonitorPlugin requestMonitorPlugin) {
-		this.requestMonitorPlugin = requestMonitorPlugin;
+	@Override
+	public void init(InitArguments initArguments) {
+		this.requestMonitorPlugin = initArguments.getConfiguration().getConfig(RequestMonitorPlugin.class);
 	}
 
 	@Override
-	public <T extends RequestTrace> void reportRequestTrace(T requestTrace) {
+	public void reportRequestTrace(ReportArguments reportArguments) {
 		if (logger.isInfoEnabled()) {
 			long start = System.currentTimeMillis();
 			StringBuilder log = new StringBuilder(10000);
 			log.append("\n########## PerformanceStats ##########\n");
-			log.append(requestTrace.toString());
+			log.append(reportArguments.getRequestTrace().toString());
 
 			log.append("Printing stats took ").append(System.currentTimeMillis() - start).append(" ms\n");
 			log.append("######################################\n\n\n");
@@ -34,7 +35,7 @@ public class LogRequestTraceReporter implements RequestTraceReporter {
 	}
 
 	@Override
-	public <T extends RequestTrace> boolean isActive(T requestTrace) {
+	public boolean isActive(IsActiveArguments isActiveArguments) {
 		return requestMonitorPlugin.isLogCallStacks();
 	}
 }
