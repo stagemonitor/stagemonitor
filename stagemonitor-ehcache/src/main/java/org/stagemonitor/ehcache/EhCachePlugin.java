@@ -38,10 +38,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
 		this.metricRegistry = initArguments.getMetricRegistry();
 		final EhCachePlugin ehCacheConfig = initArguments.getPlugin(EhCachePlugin.class);
-		if (ehCacheConfig.ehCacheNameOption.getValue() != null) {
-			final CacheManager cacheManager = CacheManager.getCacheManager(ehCacheConfig.ehCacheNameOption.getValue());
-			monitorCaches(cacheManager);
-		}
+		monitorCaches(CacheManager.getCacheManager(ehCacheConfig.ehCacheNameOption.getValue()));
 
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
