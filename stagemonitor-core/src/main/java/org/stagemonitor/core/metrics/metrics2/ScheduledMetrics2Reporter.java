@@ -97,7 +97,7 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 					logger.error("RuntimeException thrown from {}#report. Exception was suppressed.", getClass().getSimpleName(), ex);
 				}
 			}
-		}, periodInMS + getMillisUntilNextTimestampThatIsDivisableByPeriod(System.currentTimeMillis(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
+		}, getNextTimestampThatIsDivisableByPeriod(System.currentTimeMillis(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
 	}
 
 	/*
@@ -106,13 +106,16 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 	 * See https://blog.raintank.io/how-to-effectively-use-the-elasticsearch-data-source-and-solutions-to-common-pitfalls/#incomplete
 	 * and also https://blog.raintank.io/25-graphite-grafana-and-statsd-gotchas/#graphite.quantization
 	 */
-	public static long getMillisUntilNextTimestampThatIsDivisableByPeriod(long currentTimestamp, long periodInMS) {
-		final long offset = currentTimestamp % periodInMS;
-		if (offset == 0) {
-			return 0;
-		} else {
-			return periodInMS - offset;
-		}
+	public static long getNextTimestampThatIsDivisableByPeriod(long currentTimestamp, long periodInMS) {
+		final long offset = periodInMS - (currentTimestamp % periodInMS);
+		return currentTimestamp + offset;
+	}
+
+	public static void main(String[] args) {
+		final long currentTimeMillis = 1457530360001L; //System.currentTimeMillis();
+		final long nextTimestampThatIsDivisableByPeriod = getNextTimestampThatIsDivisableByPeriod(currentTimeMillis, 10000);
+		System.out.println(currentTimeMillis);
+		System.out.println(nextTimestampThatIsDivisableByPeriod);
 	}
 
 }
