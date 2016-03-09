@@ -75,7 +75,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		atLeastServletApi3 = servletContext.getMajorVersion() >= 3;
 
 		for (HtmlInjector htmlInjector : ServiceLoader.load(HtmlInjector.class)) {
-			htmlInjector.init(configuration, servletContext);
+			htmlInjector.init(new HtmlInjector.InitArguments(configuration, servletContext));
 			htmlInjectors.add(htmlInjector);
 		}
 	}
@@ -145,7 +145,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	private boolean isAtLeastOneHtmlInjectorActive(HttpServletRequest httpServletRequest) {
 		for (HtmlInjector htmlInjector : htmlInjectors) {
-			if (htmlInjector.isActive(httpServletRequest)) {
+			if (htmlInjector.isActive(new HtmlInjector.IsActiveArguments(httpServletRequest))) {
 				return true;
 			}
 		}
@@ -212,8 +212,10 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	private String getContetToInject(HttpServletRequest httpServletRequest, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation, String content) {
 		for (HtmlInjector htmlInjector : htmlInjectors) {
-			if (htmlInjector.isActive(httpServletRequest)) {
-				content = injectBeforeClosingBody(content, htmlInjector.getContentToInjectBeforeClosingBody(requestInformation));
+			if (htmlInjector.isActive(new HtmlInjector.IsActiveArguments(httpServletRequest))) {
+				final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(requestInformation);
+				htmlInjector.injectHtml(injectArguments);
+				content = injectBeforeClosingBody(content, injectArguments);
 			}
 		}
 		return content;
@@ -231,13 +233,13 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 	}
 
-	private String injectBeforeClosingBody(String unmodifiedContent, String contentToInject) {
+	private String injectBeforeClosingBody(String unmodifiedContent, HtmlInjector.InjectArguments injectArguments) {
 		final int lastClosingBodyIndex = unmodifiedContent.lastIndexOf("</body>");
 		final String modifiedContent;
 		if (lastClosingBodyIndex > -1) {
-			final StringBuilder modifiedContentStringBuilder = new StringBuilder(unmodifiedContent.length() + contentToInject.length());
+			final StringBuilder modifiedContentStringBuilder = new StringBuilder(unmodifiedContent.length() + injectArguments.getContentToInjectBeforeClosingBody().length());
 			modifiedContentStringBuilder.append(unmodifiedContent.substring(0, lastClosingBodyIndex));
-			modifiedContentStringBuilder.append(contentToInject);
+			modifiedContentStringBuilder.append(injectArguments.getContentToInjectBeforeClosingBody());
 			modifiedContentStringBuilder.append(unmodifiedContent.substring(lastClosingBodyIndex));
 			modifiedContent = modifiedContentStringBuilder.toString();
 		} else {

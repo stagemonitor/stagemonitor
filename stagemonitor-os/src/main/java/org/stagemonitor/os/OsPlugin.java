@@ -1,8 +1,6 @@
 package org.stagemonitor.os;
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,14 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.StagemonitorConfigurationSourceInitializer;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.os.metrics.AbstractSigarMetricSet;
 import org.stagemonitor.os.metrics.CpuMetricSet;
 import org.stagemonitor.os.metrics.EmptySigarMetricSet;
@@ -30,16 +23,15 @@ import org.stagemonitor.os.metrics.MemoryMetricSet;
 import org.stagemonitor.os.metrics.NetworkMetricSet;
 import org.stagemonitor.os.metrics.SwapMetricSet;
 
-public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigurationSourceInitializer {
+public class OsPlugin extends StagemonitorPlugin  {
 
 	private final static Logger logger = LoggerFactory.getLogger(OsPlugin.class);
-	private static ConfigurationSource argsConfigurationSource;
 
 	private Sigar sigar;
 
 	@Override
-	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
-		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
+	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) throws Exception {
+		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		if (corePlugin.isReportToGraphite()) {
@@ -64,23 +56,23 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 			}
 			sigar = newSigar();
 		}
-		metricRegistry.registerAll(init(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0])));
-		metricRegistry.registerAll(init(new MemoryMetricSet(sigar)));
-		metricRegistry.registerAll(init(new SwapMetricSet(sigar)));
+		initArguments.getMetricRegistry().registerAll(init(new CpuMetricSet(sigar, sigar.getCpuInfoList()[0])));
+		initArguments.getMetricRegistry().registerAll(init(new MemoryMetricSet(sigar)));
+		initArguments.getMetricRegistry().registerAll(init(new SwapMetricSet(sigar)));
 
 		Set<String> routedNetworkInterfaces = new HashSet<String>();
 		for (NetRoute netRoute : sigar.getNetRouteList()) {
 			routedNetworkInterfaces.add(netRoute.getIfname());
 		}
 		for (String ifname : routedNetworkInterfaces) {
-			metricRegistry.registerAll(init(new NetworkMetricSet(ifname, sigar)));
+			initArguments.getMetricRegistry().registerAll(init(new NetworkMetricSet(ifname, sigar)));
 		}
 		@SuppressWarnings("unchecked")
 		final Set<Map.Entry<String, FileSystem>> entries = (Set<Map.Entry<String, FileSystem>>) sigar.getFileSystemMap().entrySet();
 		for (Map.Entry<String, FileSystem> e : entries) {
 			final FileSystem fs = e.getValue();
 			if (fs.getType() == FileSystem.TYPE_LOCAL_DISK || fs.getType() == FileSystem.TYPE_NETWORK) {
-				metricRegistry.registerAll(init(new FileSystemMetricSet(e.getKey(), sigar)));
+				initArguments.getMetricRegistry().registerAll(init(new FileSystemMetricSet(e.getKey(), sigar)));
 			}
 		}
 	}
@@ -117,7 +109,7 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-		argsConfigurationSource = getConfiguration(args);
+		OsConfigurationSourceInitializer.addConfigurationSource(args);
 		Stagemonitor.startMonitoring(getMeasurementSession());
 		System.out.println("Interrupt (Ctrl + C) to exit");
 		Thread.currentThread().join();
@@ -130,33 +122,9 @@ public class OsPlugin extends StagemonitorPlugin implements StagemonitorConfigur
 		return new MeasurementSession(applicationName, corePlugin.getHostName(), instanceName);
 	}
 
-	static ConfigurationSource getConfiguration(String[] args) {
-		final SimpleSource source = new SimpleSource("Process Arguments");
-		for (String arg : args) {
-			if (!arg.matches("(.+)=(.+)")) {
-				throw new IllegalArgumentException("Illegal argument '" + arg +
-						"'. Arguments must be in form '<config-key>=<config-value>'");
-			}
-			final String[] split = arg.split("=");
-			source.add(split[0], split[1]);
-		}
-		return source;
-	}
-
 	@Override
-	public void modifyConfigurationSources(List<ConfigurationSource> configurationSources) {
-		if (argsConfigurationSource != null) {
-			configurationSources.add(0, argsConfigurationSource);
-		}
-	}
-
-	@Override
-	public void onConfigurationInitialized(Configuration configuration) throws Exception {
-	}
-
-	@Override
-	public List<String> getPathsOfWidgetMetricTabPlugins() {
-		return Arrays.asList("/stagemonitor/static/tabs/metrics/os-metrics");
+	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {
+		widgetMetricTabPluginsRegistry.addWidgetMetricTabPlugin("/stagemonitor/static/tabs/metrics/os-metrics");
 	}
 
 	public Sigar getSigar() {

@@ -1,8 +1,9 @@
 package org.stagemonitor.requestmonitor.reporter;
 
+import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
-public interface RequestTraceReporter {
+public interface RequestTraceReporter extends StagemonitorSPI {
 
 	/**
 	 * Callback method that is called when a {@link RequestTrace} was created and is ready to be reported

@@ -1,5 +1,7 @@
 package org.stagemonitor.requestmonitor.reporter;
 
+import org.stagemonitor.core.StagemonitorSPI;
+
 /**
  * Allows implementers to customize or omit reporting a request trace to Elasticsearch
  * <p/>
@@ -10,7 +12,7 @@ package org.stagemonitor.requestmonitor.reporter;
  * or place a file under <code>META-INF/services/org.stagemonitor.requestmonitor.reporter.PostExecutionRequestTraceReporterInterceptor</code>
  * and insert the canonical class name of your implementation.
  */
-public abstract class PostExecutionRequestTraceReporterInterceptor {
+public abstract class PostExecutionRequestTraceReporterInterceptor implements StagemonitorSPI {
 
 	/**
 	 * This method is called before a request trace gets reported to Elasticsearch.

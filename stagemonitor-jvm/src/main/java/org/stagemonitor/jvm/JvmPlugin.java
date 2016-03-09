@@ -3,9 +3,6 @@ package org.stagemonitor.jvm;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
@@ -13,10 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Set;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.metrics.metrics2.MetricNameConverter;
@@ -25,15 +20,15 @@ public class JvmPlugin extends StagemonitorPlugin {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
-	public void initializePlugin(Metric2Registry registry, Configuration configuration) {
-		registry.registerAll(Metric2Set.Converter.convert(new GarbageCollectorMetricSet(), new MetricNameConverter() {
+	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
+		initArguments.getMetricRegistry().registerAll(Metric2Set.Converter.convert(new GarbageCollectorMetricSet(), new MetricNameConverter() {
 			@Override
 			public MetricName convert(String name) {
 				final String[] split = name.split("\\.");
 				return name("jvm_gc_" + split[1]).tag("collector", split[0]).build();
 			}
 		}));
-		registry.registerAll(Metric2Set.Converter.convert(new MemoryUsageGaugeSet(), new MetricNameConverter() {
+		initArguments.getMetricRegistry().registerAll(Metric2Set.Converter.convert(new MemoryUsageGaugeSet(), new MetricNameConverter() {
 			@Override
 			public MetricName convert(String name) {
 				final String[] split = name.split("\\.");
@@ -48,7 +43,7 @@ public class JvmPlugin extends StagemonitorPlugin {
 		try {
 			cpuWatch = new CpuUtilisationWatch();
 			cpuWatch.start();
-			registry.register(name("jvm_process_cpu_usage").build(), new Gauge<Float>() {
+			initArguments.getMetricRegistry().register(name("jvm_process_cpu_usage").build(), new Gauge<Float>() {
 				@Override
 				public Float getValue() {
 					try {
@@ -62,7 +57,7 @@ public class JvmPlugin extends StagemonitorPlugin {
 			logger.warn("Could not register cpu usage. ({})", e.getMessage());
 		}
 
-		final CorePlugin config = configuration.getConfig(CorePlugin.class);
+		final CorePlugin config = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = config.getElasticsearchClient();
 		final GrafanaClient grafanaClient = config.getGrafanaClient();
 		if (config.isReportToGraphite()) {
@@ -76,8 +71,8 @@ public class JvmPlugin extends StagemonitorPlugin {
 	}
 
 	@Override
-	public List<String> getPathsOfWidgetMetricTabPlugins() {
-		return Collections.singletonList("/stagemonitor/static/tabs/metrics/jvm-metrics");
+	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {
+		widgetMetricTabPluginsRegistry.addWidgetMetricTabPlugin("/stagemonitor/static/tabs/metrics/jvm-metrics");
 	}
 
 }

@@ -3,7 +3,6 @@ package org.stagemonitor.core;
 import java.util.Collections;
 import java.util.List;
 
-import com.codahale.metrics.MetricRegistry;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -11,26 +10,26 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 /**
  * Base class for stagemonitor Plugins.
  *
- * The {@link #initializePlugin(Metric2Registry, Configuration)} )} method serves as a initialisation callback
+ * The {@link #initializePlugin(InitArguments)} )} method serves as a initialisation callback
  * for plugins.
  */
-public abstract class StagemonitorPlugin extends ConfigurationOptionProvider {
+public abstract class StagemonitorPlugin extends ConfigurationOptionProvider implements StagemonitorSPI {
 
 	/**
 	 * Implementing classes have to initialize the plugin by registering their metrics the
 	 * {@link Metric2Registry}
+	 * @param initArguments
 	 */
-	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
+	public void initializePlugin(InitArguments initArguments) throws Exception {
 	}
 
 	/**
 	 * Implementing classes have to initialize the plugin by registering their metrics the
-	 * {@link com.codahale.metrics.MetricRegistry}
-	 *
-	 * @deprecated Use {@link #initializePlugin(Metric2Registry, Configuration)}
+	 * {@link Metric2Registry}
+	 * @deprecated use {@link #initializePlugin(InitArguments)}
 	 */
 	@Deprecated
-	public void initializePlugin(MetricRegistry metricRegistry, Configuration configuration) throws Exception {
+	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
 	}
 
 	public void onShutDown() {
@@ -46,9 +45,11 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider {
 	 * <p/>
 	 * The FileServlet serves all files under /src/main/resources/stagemonitor/static and
 	 * src/main/resources/stagemonitor/public/static
-	 *
-	 * @return the paths of the tab plugins
 	 */
+	public void registerWidgetTabPlugins(WidgetTabPluginsRegistry widgetTabPluginsRegistry) {
+	}
+
+	@Deprecated
 	public List<String> getPathsOfWidgetTabPlugins() {
 		return Collections.emptyList();
 	}
@@ -66,11 +67,64 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider {
 	 * For documentation and a example of how a plugin should look like, see
 	 * <code>stagemonitor-ehcache/src/main/resources/stagemonitor/static/tabs/metrics</code> and
 	 * <code>stagemonitor-jvm/src/main/resources/stagemonitor/static/tabs/metrics</code>
-	 *
-	 * @return the paths of the widget metric tab plugins
 	 */
+	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {
+	}
+
+	@Deprecated
 	public List<String> getPathsOfWidgetMetricTabPlugins() {
 		return Collections.emptyList();
 	}
 
+	public static class InitArguments {
+		private final Metric2Registry metricRegistry;
+		private final Configuration configuration;
+		private final MeasurementSession measurementSession;
+
+		public InitArguments(Metric2Registry metricRegistry, Configuration configuration, MeasurementSession measurementSession) {
+			this.metricRegistry = metricRegistry;
+			this.configuration = configuration;
+			this.measurementSession = measurementSession;
+		}
+
+		public Metric2Registry getMetricRegistry() {
+			return metricRegistry;
+		}
+
+		public Configuration getConfiguration() {
+			return configuration;
+		}
+
+		public <T extends StagemonitorPlugin> T getPlugin(Class<T> plugin) {
+			return configuration.getConfig(plugin);
+		}
+
+		public MeasurementSession getMeasurementSession() {
+			return measurementSession;
+		}
+	}
+
+	public static class WidgetTabPluginsRegistry {
+		private final List<String> pathsOfWidgetTabPlugins;
+
+		WidgetTabPluginsRegistry(List<String> pathsOfWidgetTabPlugins) {
+			this.pathsOfWidgetTabPlugins = pathsOfWidgetTabPlugins;
+		}
+
+		public void addWidgetTabPlugin(String pathOfWidgetTabPlugin) {
+			pathsOfWidgetTabPlugins.add(pathOfWidgetTabPlugin);
+		}
+	}
+
+	public static class WidgetMetricTabPluginsRegistry {
+		private final List<String> pathsOfWidgetMetricTabPlugins;
+
+		WidgetMetricTabPluginsRegistry(List<String> pathsOfWidgetMetricTabPlugins) {
+			this.pathsOfWidgetMetricTabPlugins = pathsOfWidgetMetricTabPlugins;
+		}
+
+		public void addWidgetMetricTabPlugin(String pathOfWidgetMetricTabPlugin) {
+			pathsOfWidgetMetricTabPlugins.add(pathOfWidgetMetricTabPlugin);
+		}
+	}
 }

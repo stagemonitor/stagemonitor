@@ -31,7 +31,6 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
@@ -244,9 +243,9 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.build();
 
 	@Override
-	public void initializePlugin(Metric2Registry registry, Configuration config) {
-		registerPooledResources(registry, tomcatThreadPools());
-		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
+	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
+		registerPooledResources(initArguments.getMetricRegistry(), tomcatThreadPools());
+		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteServer.json");

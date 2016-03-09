@@ -130,10 +130,12 @@ public final class Stagemonitor {
 	private static void initializePlugin(final StagemonitorPlugin stagemonitorPlugin, String pluginName) {
 		logger.info("Initializing plugin {}", pluginName);
 		try {
-			stagemonitorPlugin.initializePlugin(getMetricRegistry(), getConfiguration());
+			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession));
 			stagemonitorPlugin.initializePlugin(metric2Registry, getConfiguration());
 			pathsOfWidgetMetricTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetMetricTabPlugins());
 			pathsOfWidgetTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetTabPlugins());
+			stagemonitorPlugin.registerWidgetTabPlugins(new StagemonitorPlugin.WidgetTabPluginsRegistry(pathsOfWidgetTabPlugins));
+			stagemonitorPlugin.registerWidgetMetricTabPlugins(new StagemonitorPlugin.WidgetMetricTabPluginsRegistry(pathsOfWidgetTabPlugins));
 			onShutdownActions.add(new Runnable() {
 				public void run() {
 					stagemonitorPlugin.onShutDown();
@@ -250,7 +252,7 @@ public final class Stagemonitor {
 	private static void reloadPluginsAndConfiguration() {
 		List<ConfigurationSource> configurationSources = new ArrayList<ConfigurationSource>();
 		for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {
-			initializer.modifyConfigurationSources(configurationSources);
+			initializer.modifyConfigurationSources(new StagemonitorConfigurationSourceInitializer.ModifyArguments(configurationSources));
 		}
 		configurationSources.remove(null);
 
@@ -259,7 +261,7 @@ public final class Stagemonitor {
 
 		try {
 			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {
-				initializer.onConfigurationInitialized(configuration);
+				initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);

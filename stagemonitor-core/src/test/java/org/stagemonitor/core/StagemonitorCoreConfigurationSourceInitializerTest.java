@@ -33,14 +33,14 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 	public void testEsDownDeactivate() throws Exception {
 		when(corePlugin.isDeactivateStagemonitorIfEsConfigSourceIsDown()).thenReturn(true);
 
-		initializer.onConfigurationInitialized(configuration);
+		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 	}
 
 	@Test
 	public void testEsDown() throws Exception {
 		when(corePlugin.isDeactivateStagemonitorIfEsConfigSourceIsDown()).thenReturn(false);
 
-		initializer.onConfigurationInitialized(configuration);
+		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
 		verify(configuration).addConfigurationSource(any(ConfigurationSource.class), eq(false));
 	}

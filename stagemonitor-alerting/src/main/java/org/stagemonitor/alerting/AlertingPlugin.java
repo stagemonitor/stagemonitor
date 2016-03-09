@@ -1,10 +1,8 @@
 package org.stagemonitor.alerting;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -30,10 +28,8 @@ import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.source.SimpleSource;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class AlertingPlugin extends StagemonitorPlugin {
 
@@ -221,10 +217,10 @@ public class AlertingPlugin extends StagemonitorPlugin {
 	private ThresholdMonitoringReporter thresholdMonitoringReporter;
 
 	@Override
-	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
-		final AlertingPlugin alertingPlugin = configuration.getConfig(AlertingPlugin.class);
-		alertSender = new AlertSender(configuration);
-		CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
+	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) throws Exception {
+		final AlertingPlugin alertingPlugin = initArguments.getPlugin(AlertingPlugin.class);
+		alertSender = new AlertSender(initArguments.getConfiguration());
+		CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		if (corePlugin.getElasticsearchUrl() != null) {
 			incidentRepository = new ElasticsearchIncidentRepository(corePlugin.getElasticsearchClient());
 		} else {
@@ -232,7 +228,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		}
 		logger.info("Using {} for storing incidents.", incidentRepository.getClass().getSimpleName());
 
-		thresholdMonitoringReporter = new ThresholdMonitoringReporter(metricRegistry, alertingPlugin, alertSender, incidentRepository, Stagemonitor.getMeasurementSession());
+		thresholdMonitoringReporter = new ThresholdMonitoringReporter(initArguments.getMetricRegistry(), alertingPlugin, alertSender, incidentRepository, initArguments.getMeasurementSession());
 		thresholdMonitoringReporter.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
 		SlaInstrumenter.onStart();
 	}
@@ -243,8 +239,8 @@ public class AlertingPlugin extends StagemonitorPlugin {
 	}
 
 	@Override
-	public List<String> getPathsOfWidgetTabPlugins() {
-		return Arrays.asList("/stagemonitor/static/tabs/alert/alerting-tab");
+	public void registerWidgetTabPlugins(WidgetTabPluginsRegistry widgetTabPluginsRegistry) {
+		widgetTabPluginsRegistry.addWidgetTabPlugin("/stagemonitor/static/tabs/alert/alerting-tab");
 	}
 
 	public boolean isMuteAlerts() {

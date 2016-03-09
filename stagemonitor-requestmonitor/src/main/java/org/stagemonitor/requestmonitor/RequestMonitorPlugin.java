@@ -2,16 +2,13 @@ package org.stagemonitor.requestmonitor;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
@@ -207,8 +204,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	private static RequestMonitor requestMonitor;
 
 	@Override
-	public void initializePlugin(Metric2Registry metricRegistry, Configuration config) {
-		final CorePlugin corePlugin = config.getConfig(CorePlugin.class);
+	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
+		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
@@ -228,8 +225,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	}
 
 	@Override
-	public List<String> getPathsOfWidgetMetricTabPlugins() {
-		return Collections.singletonList("/stagemonitor/static/tabs/metrics/request-metrics");
+	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {
+		widgetMetricTabPluginsRegistry.addWidgetMetricTabPlugin("/stagemonitor/static/tabs/metrics/request-metrics");
 	}
 
 	public RequestMonitor getRequestMonitor() {

@@ -9,10 +9,9 @@ import javax.mail.Transport;
 import javax.mail.internet.MimeMessage;
 
 import org.stagemonitor.alerting.AlertingPlugin;
-import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
 
-public class MailAlerter implements Alerter {
+public class MailAlerter extends Alerter {
 
 	private final AlertingPlugin alertingPlugin;
 	private final AlertTemplateProcessor alertTemplateProcessor;
@@ -27,11 +26,11 @@ public class MailAlerter implements Alerter {
 	}
 
 	@Override
-	public void alert(Incident incident, Subscription subscription) {
-		MailRequest mailRequest = new MailRequest(alertTemplateProcessor.processShortDescriptionTemplate(incident),
-				alertingPlugin.getSmtpFrom(), subscription.getTarget())
-				.textPart(alertTemplateProcessor.processPlainTextTemplate(incident))
-				.htmlPart(alertTemplateProcessor.processHtmlTemplate(incident));
+	public void alert(AlertArguments alertArguments) {
+		MailRequest mailRequest = new MailRequest(alertTemplateProcessor.processShortDescriptionTemplate(alertArguments.getIncident()),
+				alertingPlugin.getSmtpFrom(), alertArguments.getSubscription().getTarget())
+				.textPart(alertTemplateProcessor.processPlainTextTemplate(alertArguments.getIncident()))
+				.htmlPart(alertTemplateProcessor.processHtmlTemplate(alertArguments.getIncident()));
 		sendMail(mailRequest);
 	}
 

@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -46,7 +47,7 @@ public class OsPluginTest {
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		osPlugin.initializePlugin(metricRegistry, configuration);
+		osPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metricRegistry, configuration, mock(MeasurementSession.class)));
 		this.sigar = osPlugin.getSigar();
 	}
 
@@ -101,12 +102,12 @@ public class OsPluginTest {
 
 	@Test
 	public void testGetConfigurationValid() throws Exception {
-		assertEquals("bar", OsPlugin.getConfiguration(new String[]{"foo=bar"}).getValue("foo"));
+		assertEquals("bar", OsConfigurationSourceInitializer.getConfiguration(new String[]{"foo=bar"}).getValue("foo"));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testGetConfigurationInvalid() throws Exception {
-		OsPlugin.getConfiguration(new String[]{"foo"});
+		OsConfigurationSourceInitializer.getConfiguration(new String[]{"foo"});
 	}
 
 	@Test

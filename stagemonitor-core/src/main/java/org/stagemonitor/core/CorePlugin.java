@@ -458,14 +458,14 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	@Override
-	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
-		this.metricRegistry = metricRegistry;
+	public void initializePlugin(InitArguments initArguments) {
+		this.metricRegistry = initArguments.getMetricRegistry();
 		final Integer reloadInterval = getReloadConfigurationInterval();
 		if (reloadInterval > 0) {
-			configuration.scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
+			initArguments.getConfiguration().scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
 		}
 
-		metricRegistry.register(MetricName.name("online").build(), new Gauge<Integer>() {
+		initArguments.getMetricRegistry().register(MetricName.name("online").build(), new Gauge<Integer>() {
 			@Override
 			public Integer getValue() {
 				return 1;
@@ -481,7 +481,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			final GrafanaClient grafanaClient = getGrafanaClient();
 			grafanaClient.createElasticsearchDatasource(getElasticsearchUrl());
 		}
-		registerReporters(metricRegistry, configuration, Stagemonitor.getMeasurementSession());
+		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
 	}
 
 	void registerReporters(Metric2Registry metric2Registry, Configuration configuration, MeasurementSession measurementSession) {

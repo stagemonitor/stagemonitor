@@ -1,13 +1,10 @@
 package org.stagemonitor.ehcache;
 
-import java.util.Collections;
-import java.util.List;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
@@ -38,15 +35,15 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	private Metric2Registry metricRegistry;
 
 	@Override
-	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) {
-		this.metricRegistry = metricRegistry;
-		final EhCachePlugin ehCacheConfig = configuration.getConfig(EhCachePlugin.class);
+	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
+		this.metricRegistry = initArguments.getMetricRegistry();
+		final EhCachePlugin ehCacheConfig = initArguments.getPlugin(EhCachePlugin.class);
 		if (ehCacheConfig.ehCacheNameOption.getValue() != null) {
 			final CacheManager cacheManager = CacheManager.getCacheManager(ehCacheConfig.ehCacheNameOption.getValue());
 			monitorCaches(cacheManager);
 		}
 
-		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
+		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 		if (corePlugin.isReportToGraphite()) {
@@ -93,7 +90,8 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	}
 
 	@Override
-	public List<String> getPathsOfWidgetMetricTabPlugins() {
-		return Collections.singletonList("/stagemonitor/static/tabs/metrics/ehcache-metrics");
+	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {
+		widgetMetricTabPluginsRegistry.addWidgetMetricTabPlugin("/stagemonitor/static/tabs/metrics/ehcache-metrics");
 	}
+
 }

@@ -37,6 +37,7 @@ public class AlertSender {
 		this.alertingPlugin = configuration.getConfig(AlertingPlugin.class);
 		Map<String, Alerter> alerters = new HashMap<String, Alerter>();
 		for (Alerter alerter : alerterIterable) {
+			alerter.init(new Alerter.InitArguments(configuration));
 			alerters.put(alerter.getAlerterType(), alerter);
 		}
 		alerterByType = Collections.unmodifiableMap(alerters);
@@ -90,7 +91,7 @@ public class AlertSender {
 	private void tryAlert(Incident incident, Subscription subscription, Alerter alerter) {
 		if (alerter != null && alerter.isAvailable()) {
 			try {
-				alerter.alert(incident, subscription);
+				alerter.alert(new Alerter.AlertArguments(incident, subscription));
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}

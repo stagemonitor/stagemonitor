@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
 public class WidgetServlet extends HttpServlet {
 
@@ -29,17 +30,19 @@ public class WidgetServlet extends HttpServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		widgetHtmlInjector.init(configuration, config.getServletContext());
+		widgetHtmlInjector.init(new HtmlInjector.InitArguments(configuration, config.getServletContext()));
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		resp.setContentType("text/html");
+		final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(null);
+		widgetHtmlInjector.injectHtml(injectArguments);
 		final PrintWriter w = resp.getWriter();
 		w.println("<!DOCTYPE html>");
 		w.println("<html>");
 		w.println("<body>");
-		w.println(widgetHtmlInjector.getContentToInjectBeforeClosingBody(null));
+		w.println(injectArguments.getContentToInjectBeforeClosingBody());
 		w.println("</body>");
 		w.println("</html>");
 	}

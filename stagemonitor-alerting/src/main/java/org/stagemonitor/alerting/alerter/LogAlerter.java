@@ -3,13 +3,12 @@ package org.stagemonitor.alerting.alerter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.AlertingPlugin;
-import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
 
 /**
  * An alerter that writes incidents to the log
  */
-public class LogAlerter implements Alerter {
+public class LogAlerter extends Alerter {
 
 	private final Logger logger;
 	private final AlertTemplateProcessor alertTemplateProcessor;
@@ -24,9 +23,9 @@ public class LogAlerter implements Alerter {
 	}
 
 	@Override
-	public void alert(Incident incident, Subscription subscription) {
-		String message = alertTemplateProcessor.processPlainTextTemplate(incident);
-		switch (incident.getNewStatus()) {
+	public void alert(AlertArguments alertArguments) {
+		String message = alertTemplateProcessor.processPlainTextTemplate(alertArguments.getIncident());
+		switch (alertArguments.getIncident().getNewStatus()) {
 			case CRITICAL:
 			case ERROR:
 				logger.error(message);
@@ -39,11 +38,6 @@ public class LogAlerter implements Alerter {
 	@Override
 	public String getAlerterType() {
 		return "Log Alerts";
-	}
-
-	@Override
-	public boolean isAvailable() {
-		return true;
 	}
 
 	@Override

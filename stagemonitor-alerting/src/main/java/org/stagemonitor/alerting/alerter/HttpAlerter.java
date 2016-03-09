@@ -1,9 +1,8 @@
 package org.stagemonitor.alerting.alerter;
 
-import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.util.HttpClient;
 
-public class HttpAlerter implements Alerter {
+public class HttpAlerter extends Alerter {
 
 	protected final HttpClient httpClient;
 
@@ -12,18 +11,13 @@ public class HttpAlerter implements Alerter {
 	}
 
 	@Override
-	public void alert(Incident incident, Subscription subscription) {
-		httpClient.sendAsJson("POST", subscription.getTarget(), incident);
+	public void alert(AlertArguments alertArguments) {
+		httpClient.sendAsJson("POST", alertArguments.getSubscription().getTarget(), alertArguments.getIncident());
 	}
 
 	@Override
 	public String getAlerterType() {
 		return "HTTP";
-	}
-
-	@Override
-	public boolean isAvailable() {
-		return true;
 	}
 
 	@Override

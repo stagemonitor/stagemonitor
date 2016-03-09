@@ -1,37 +1,43 @@
 package org.stagemonitor.alerting.alerter;
 
 import org.stagemonitor.alerting.incident.Incident;
+import org.stagemonitor.core.StagemonitorSPI;
+import org.stagemonitor.core.configuration.Configuration;
 
 /**
  * An alerter reports incidents to some channel like email.
  * <p/>
- * To add a custom {@link Alerter}, just implement the interface and add the full qualified class name to
+ * To add a custom {@link Alerter}, just implement the abstract class and add the full qualified class name to
  * src/main/resources/META-INF/services/org.stagemonitor.alerting.alerter.Alerter.
  * The content of the file has to be the canonical class name of the alerter.
  */
-public interface Alerter {
+public abstract class Alerter implements StagemonitorSPI {
+
+	public void init(InitArguments initArguments) {
+	}
 
 	/**
 	 * Triggers an alert
 	 *
-	 * @param incident the incident to report
-	 * @param subscription the corresponding subscription
+	 * @param alertArguments
 	 */
-	void alert(Incident incident, Subscription subscription);
+	public abstract void alert(AlertArguments alertArguments);
 
 	/**
 	 * A unique name for this alerter e.g. email or irc.
 	 *
 	 * @return the unique alerter name
 	 */
-	String getAlerterType();
+	public abstract String getAlerterType();
 
 	/**
-	 * An alerter is available, if all required configuration options for the particular Alerter are set.
+	 * An alerter is available if all required configuration options for the particular Alerter are set.
 	 *
 	 * @return <code>true</code>, if the alerter is available, <code>false</code> otherwise
 	 */
-	boolean isAvailable();
+	public boolean isAvailable() {
+		return true;
+	}
 
 	/**
 	 * The label of the target parameter that is used in {@link Subscription#target}
@@ -41,6 +47,39 @@ public interface Alerter {
 	 *
 	 * @return The label of the target parameter that is used in {@link Subscription#target}
 	 */
-	String getTargetLabel();
+	public abstract String getTargetLabel();
 
+	public static class InitArguments {
+		private final Configuration configuration;
+
+		InitArguments(Configuration configuration) {
+			this.configuration = configuration;
+		}
+
+		public Configuration getConfiguration() {
+			return configuration;
+		}
+	}
+
+	public static class AlertArguments {
+		private final Incident incident;
+		private final Subscription subscription;
+
+		/**
+		 * @param incident     the incident to report
+		 * @param subscription the corresponding subscription
+		 */
+		public AlertArguments(Incident incident, Subscription subscription) {
+			this.incident = incident;
+			this.subscription = subscription;
+		}
+
+		public Incident getIncident() {
+			return incident;
+		}
+
+		public Subscription getSubscription() {
+			return subscription;
+		}
+	}
 }

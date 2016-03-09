@@ -1,12 +1,11 @@
 package org.stagemonitor.alerting.alerter;
 
-import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.StringUtils;
 
-public class ElasticsearchAlerter implements Alerter {
+public class ElasticsearchAlerter extends Alerter {
 
 	private CorePlugin corePlugin;
 	private HttpClient httpClient;
@@ -17,12 +16,12 @@ public class ElasticsearchAlerter implements Alerter {
 	}
 
 	@Override
-	public void alert(Incident incident, Subscription subscription) {
-		String target = subscription.getTarget();
+	public void alert(AlertArguments alertArguments) {
+		String target = alertArguments.getSubscription().getTarget();
 		if (StringUtils.isEmpty(target)) {
 			target = "/stagemonitor/alerts";
 		}
-		httpClient.sendAsJson("POST", corePlugin.getElasticsearchUrl() + target, incident);
+		httpClient.sendAsJson("POST", corePlugin.getElasticsearchUrl() + target, alertArguments.getIncident());
 	}
 
 	@Override
