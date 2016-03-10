@@ -9,13 +9,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Formatter;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 public class StringUtils {
 
-	public static final Pattern CAMEL_CASE = Pattern.compile("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
+	private static final Pattern CAMEL_CASE = Pattern.compile("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
+	private static final char[] hexArray = "0123456789abcdef".toCharArray();
 
 	private StringUtils() {
 	}
@@ -116,17 +116,17 @@ public class StringUtils {
 			throw new IllegalStateException(e);
 		}
 		final byte[] digest = messageDigest.digest(s.getBytes(Charset.forName("UTF-8")));
-		return byteToHex(digest);
+		return bytesToHex(digest);
 	}
 
-	private static String byteToHex(final byte[] hash) {
-		Formatter formatter = new Formatter();
-		for (byte b : hash)
-		{
-			formatter.format("%02x", b);
+	// kudos to maybeWeCouldStealAVan (http://stackoverflow.com/a/9855338/1125055)
+	public static String bytesToHex(byte[] bytes) {
+		char[] hexChars = new char[bytes.length * 2];
+		for ( int j = 0; j < bytes.length; j++ ) {
+			int v = bytes[j] & 0xFF;
+			hexChars[j * 2] = hexArray[v >>> 4];
+			hexChars[j * 2 + 1] = hexArray[v & 0x0F];
 		}
-		String result = formatter.toString();
-		formatter.close();
-		return result;
+		return new String(hexChars);
 	}
 }
