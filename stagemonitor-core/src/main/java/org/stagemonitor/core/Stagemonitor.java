@@ -105,7 +105,7 @@ public final class Stagemonitor {
 		initializePlugins();
 		started = true;
 		// don't register a shutdown hook for web applications as this causes a memory leak
-		if (ClassUtils.isNotPresent("org.stagemonitor.web.WebPlugin")) {
+		if (ClassUtils.isNotPresent("javax.servlet.Servlet")) {
 			// in case the application does not directly call shutDown
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 				public void run() {
