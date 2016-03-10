@@ -65,8 +65,8 @@ public class RequestTraceServlet extends HttpServlet {
 			logger.debug("writeRequestTracesToResponse {} ({})", requestTrace.getName(), requestTrace.getTimestamp());
 			jsonResponse.add(requestTrace.toJson());
 		}
-		response.getOutputStream().print(jsonResponse.toString());
-		response.getOutputStream().close();
+		response.getWriter().print(jsonResponse.toString());
+		response.getWriter().close();
 	}
 
 	@Override
