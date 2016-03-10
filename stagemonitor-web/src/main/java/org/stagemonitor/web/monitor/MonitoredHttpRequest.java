@@ -174,7 +174,11 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		final String sessionId = getSessionId();
 		request.setUsername(userName);
 		request.setSessionId(sessionId);
-		request.setUniqueVisitorId(StringUtils.sha1Hash(clientIp + userName + sessionId + userAgent));
+		if (userName != null) {
+			request.setUniqueVisitorId(StringUtils.sha1Hash(userName));
+		} else {
+			request.setUniqueVisitorId(StringUtils.sha1Hash(clientIp + sessionId + userAgent));
+		}
 
 		int status = responseWrapper.getStatus();
 		request.setStatusCode(status);
