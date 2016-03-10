@@ -21,17 +21,8 @@ public class JsonUtils {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	static {
-		/*
-		 * Avoiding java.lang.NoSuchMethodError: com.fasterxml.jackson.databind.ser.BeanPropertyWriter.isUnwrapping()
-		 * This happens, if the version of jackson databind less that the Afterburner version.
-		 *
-		 * One reason can be maven, because it resolves a version conflict with the nearest-wins strategy it is possible that
-		 * jackson-module-afterburner is in a higher version that jackson-databind and jackson-core
-		 *
-		 * Another reason could be that a application server bundled version of jackson databind is used
-		 */
-		if (!System.getProperty("java.version").startsWith("1.6.") && versionsMatch(MAPPER.version(), new AfterburnerModule().version())) {
-			MAPPER.registerModule(new AfterburnerModule());
+		if (Double.parseDouble(System.getProperty("java.specification.version")) > 1.6) {
+			AfterburnerModuleRegisterer.registerAfterburnerModule();
 		}
 		MAPPER.registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, false));
 		MAPPER.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -74,5 +65,23 @@ public class JsonUtils {
 
 	public static ObjectNode toObjectNode(Object o) {
 		return MAPPER.valueToTree(o);
+	}
+
+	private static class AfterburnerModuleRegisterer {
+		private static void registerAfterburnerModule() {
+			/*
+			 * Avoiding java.lang.NoSuchMethodError: com.fasterxml.jackson.databind.ser.BeanPropertyWriter.isUnwrapping()
+			 * This happens, if the version of jackson databind less that the Afterburner version.
+			 *
+			 * One reason can be maven, because it resolves a version conflict with the nearest-wins strategy it is possible that
+			 * jackson-module-afterburner is in a higher version that jackson-databind and jackson-core
+			 *
+			 * Another reason could be that a application server bundled version of jackson databind is used
+			 */
+			final AfterburnerModule afterburnerModule = new AfterburnerModule();
+			if (versionsMatch(MAPPER.version(), afterburnerModule.version())) {
+				MAPPER.registerModule(afterburnerModule);
+			}
+		}
 	}
 }
