@@ -53,6 +53,7 @@ public class RequestTrace {
 	private String username;
 	private String disclosedUserName;
 	private String clientIp;
+	private String uniqueVisitorId;
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
 	@JsonIgnore
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
@@ -336,4 +337,11 @@ public class RequestTrace {
 		return requestAttributes.get(key);
 	}
 
+	public String getUniqueVisitorId() {
+		return uniqueVisitorId;
+	}
+
+	public void setUniqueVisitorId(String uniqueVisitorId) {
+		this.uniqueVisitorId = uniqueVisitorId;
+	}
 }

@@ -69,7 +69,10 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		request.setName(getRequestName());
 		String clientIp = getClientIp(httpServletRequest);
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
-		request.setAndAnonymizeUserNameAndIp(userPrincipal != null ? userPrincipal.getName() : null, clientIp);
+		final String userName = userPrincipal != null ? userPrincipal.getName() : null;
+		request.setUniqueVisitorId(StringUtils.sha1Hash(clientIp + userName + httpServletRequest.getHeader("cookie") +
+				httpServletRequest.getHeader("user-agent")));
+		request.setAndAnonymizeUserNameAndIp(userName, clientIp);
 
 		return request;
 	}
