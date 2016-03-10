@@ -28,9 +28,11 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ExecutorUtils;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
+import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 
 public class RequestMonitor {
 
@@ -241,6 +243,7 @@ public class RequestMonitor {
 		requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
 		requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
 		monitoredRequest.onPostExecute(info);
+		anonymizeUserNameAndIp(requestTrace);
 
 		if (requestTrace.getCallStack() != null) {
 			Profiler.stop();
@@ -253,6 +256,20 @@ public class RequestMonitor {
 		}
 		reportRequestTrace(requestTrace);
 		trackMetrics(info, executionTime, cpuTime);
+	}
+
+	void anonymizeUserNameAndIp(RequestTrace requestTrace) {
+		final String username = requestTrace.getUsername();
+		if (requestMonitorPlugin.isPseudonymizeUserNames()) {
+			requestTrace.setUsername(StringUtils.sha1Hash(username));
+		}
+		final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(requestTrace.getUsername());
+		if (disclose) {
+			requestTrace.setDisclosedUserName(username);
+		}
+		if (requestTrace.getClientIp() != null && requestMonitorPlugin.isAnonymizeIPs() && !disclose) {
+			requestTrace.setClientIp(IPAnonymizationUtils.anonymize(requestTrace.getClientIp()));
+		}
 	}
 
 	private <T extends RequestTrace> void removeTimerIfCountIsZero(RequestInformation<T> info) {

@@ -51,7 +51,7 @@ public class RequestTraceServletTest {
 		requestTraceServlet = new RequestTraceServlet(configuration, reporter, 1500);
 		requestTraceServlet.init();
 		connectionId = UUID.randomUUID().toString();
-		httpRequestTrace = new HttpRequestTrace(null, "/test", Collections.emptyMap(), "GET", null, connectionId, true);
+		httpRequestTrace = new HttpRequestTrace(null, "/test", Collections.emptyMap(), "GET", connectionId, true);
 		httpRequestTrace.setName("test");
 	}
 

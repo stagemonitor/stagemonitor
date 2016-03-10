@@ -14,7 +14,7 @@ public class TestUnnestException {
 	@Test
 	public void testUnnestNestedServletException() throws Exception {
 		final MeasurementSession measurementSession = new MeasurementSession("TestUnnestException", "test", "test");
-		final HttpRequestTrace requestTrace = new HttpRequestTrace("1", "/test", Collections.emptyMap(), "PROST", null,
+		final HttpRequestTrace requestTrace = new HttpRequestTrace("1", "/test", Collections.emptyMap(), "PROST",
 				null, false, measurementSession, new RequestMonitorPlugin());
 
 		requestTrace.setException(new NestedServletException("Eat this!", new RuntimeException("bazinga!")));

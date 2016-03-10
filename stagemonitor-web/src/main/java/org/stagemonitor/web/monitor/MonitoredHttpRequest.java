@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
@@ -58,21 +59,13 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		}
 		final String url = httpServletRequest.getRequestURI();
 		final String method = httpServletRequest.getMethod();
-		final String sessionId = httpServletRequest.getRequestedSessionId();
 		final String connectionId = httpServletRequest.getHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID);
 		final String requestId = (String) httpServletRequest.getAttribute(MDCListener.STAGEMONITOR_REQUEST_ID_ATTR);
 		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
-		HttpRequestTrace request = new HttpRequestTrace(requestId, url, headers, method, sessionId,
-				connectionId, isShowWidgetAllowed);
+		HttpRequestTrace request = new HttpRequestTrace(requestId, url, headers, method, connectionId, isShowWidgetAllowed);
 
 		request.setReferringSite(getReferringSite());
 		request.setName(getRequestName());
-		String clientIp = getClientIp(httpServletRequest);
-		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
-		final String userName = userPrincipal != null ? userPrincipal.getName() : null;
-		final String userAgent = httpServletRequest.getHeader("user-agent");
-		request.setUniqueVisitorId(StringUtils.sha1Hash(clientIp + userName + sessionId + userAgent));
-		request.setAndAnonymizeUserNameAndIp(userName, clientIp);
 
 		return request;
 	}
@@ -173,8 +166,17 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 	@Override
 	public void onPostExecute(RequestMonitor.RequestInformation<HttpRequestTrace> info) {
-		int status = responseWrapper.getStatus();
 		HttpRequestTrace request = info.getRequestTrace();
+
+		final String clientIp = getClientIp(httpServletRequest);
+		final String userName = getUserName(request);
+		final String userAgent = httpServletRequest.getHeader("user-agent");
+		final String sessionId = getSessionId();
+		request.setUsername(userName);
+		request.setSessionId(sessionId);
+		request.setUniqueVisitorId(StringUtils.sha1Hash(clientIp + userName + sessionId + userAgent));
+
+		int status = responseWrapper.getStatus();
 		request.setStatusCode(status);
 		metricRegistry.meter(name("request_throughput").tag("request_name", info.getRequestName()).tag("http_code", status).build()).mark();
 		metricRegistry.meter(name("request_throughput").tag("request_name", "All").tag("http_code", status).build()).mark();
@@ -199,6 +201,19 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
 		final Map<String, String[]> parameterMap = httpServletRequest.getParameterMap();
 		request.setParameters(getSafeQueryStringMap(parameterMap));
+	}
+
+	private String getSessionId() {
+		final HttpSession session = httpServletRequest.getSession(false);
+		return session != null ? session.getId() : null;
+	}
+
+	private String getUserName(HttpRequestTrace request) {
+		if (request.getUsername() != null) {
+			return request.getUsername();
+		}
+		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
+		return userPrincipal != null ? userPrincipal.getName() : null;
 	}
 
 	private Map<String, String> getSafeQueryStringMap(Map<String, String[]> parameterMap) {

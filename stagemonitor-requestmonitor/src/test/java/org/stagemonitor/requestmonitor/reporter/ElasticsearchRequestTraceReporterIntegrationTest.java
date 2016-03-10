@@ -40,7 +40,6 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 		final RequestTrace requestTrace = new RequestTrace("1", new MeasurementSession("ERTRIT", "test", "test"), requestMonitorPlugin);
 		requestTrace.setParameters(Collections.singletonMap("attr.Color", "Blue"));
 		requestTrace.addCustomProperty("foo.bar", "baz");
-		requestTrace.setAndAnonymizeUserNameAndIp("test", "123.123.123.123");
 		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
 		elasticsearchClient.waitForCompletion();
 		refresh();
@@ -49,6 +48,5 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 		final JsonNode requestTraceJson = hits.get("hits").elements().next().get("_source");
 		assertEquals("Blue", requestTraceJson.get("parameters").get("attr_(dot)_Color").asText());
 		assertEquals("baz", requestTraceJson.get("foo_(dot)_bar").asText());
-		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", requestTraceJson.get("username").asText());
 	}
 }

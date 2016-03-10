@@ -34,7 +34,7 @@ public class HttpRequestTrace extends RequestTrace {
 	private final String method;
 	private Integer bytesWritten;
 	private UserAgentInformation userAgent;
-	private final String sessionId;
+	private String sessionId;
 	@JsonIgnore
 	private final String connectionId;
 	@JsonIgnore
@@ -42,18 +42,17 @@ public class HttpRequestTrace extends RequestTrace {
 	private String referringSite;
 
 	public HttpRequestTrace(String requestId, String url, Map<String, String> headers, String method,
-							String sessionId, String connectionId, boolean showWidgetAllowed) {
-		this(requestId, url, headers, method, sessionId, connectionId, showWidgetAllowed,
+							String connectionId, boolean showWidgetAllowed) {
+		this(requestId, url, headers, method, connectionId, showWidgetAllowed,
 				Stagemonitor.getMeasurementSession(), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
 	}
 
 	public HttpRequestTrace(String requestId, String url, Map<String, String> headers, String method,
-							String sessionId, String connectionId, boolean showWidgetAllowed,
+							String connectionId, boolean showWidgetAllowed,
 							MeasurementSession measurementSession, RequestMonitorPlugin requestMonitorPlugin) {
 		super(requestId, measurementSession, requestMonitorPlugin);
 		this.url = url;
 		this.headers = headers;
-		this.sessionId = sessionId;
 		this.connectionId = connectionId;
 		this.method = method;
 		this.showWidgetAllowed = showWidgetAllowed;
@@ -155,6 +154,10 @@ public class HttpRequestTrace extends RequestTrace {
 	 */
 	public String getSessionId() {
 		return sessionId;
+	}
+
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
 	}
 
 	/**

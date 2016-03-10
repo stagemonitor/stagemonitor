@@ -17,7 +17,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 
 /**
  * A request trace is a data structure containing all the important information about a request.
@@ -212,31 +211,20 @@ public class RequestTrace {
 		}
 	}
 
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	void setDisclosedUserName(String disclosedUserName) {
+		this.disclosedUserName = disclosedUserName;
+	}
+
+	public void setClientIp(String clientIp) {
+		this.clientIp = clientIp;
+	}
+
 	public String getUsername() {
 		return username;
-	}
-
-	public void setAndAnonymizeUserNameAndIp(String username, String clientIp) {
-		if (requestMonitorPlugin.isPseudonymizeUserNames()) {
-			this.username = StringUtils.sha1Hash(username);
-		} else {
-			this.username = username;
-		}
-		final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(this.username);
-		if (disclose) {
-			this.disclosedUserName = username;
-		}
-		if (clientIp != null) {
-			setAndAnonymizeClientIp(clientIp, disclose);
-		}
-	}
-
-	private void setAndAnonymizeClientIp(String clientIp, boolean disclose) {
-		if (requestMonitorPlugin.isAnonymizeIPs() && !disclose) {
-			this.clientIp = IPAnonymizationUtils.anonymize(clientIp);
-		} else {
-			this.clientIp = clientIp;
-		}
 	}
 
 	public String getDisclosedUserName() {
