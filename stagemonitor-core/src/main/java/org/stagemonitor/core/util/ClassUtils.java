@@ -13,6 +13,10 @@ public class ClassUtils {
 		}
 	}
 
+	public static boolean isNotPresent(String className) {
+		return !isPresent(className);
+	}
+
 	public static boolean isPresent(String className) {
 		return forNameOrNull(className) != null;
 	}

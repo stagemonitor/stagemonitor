@@ -18,6 +18,7 @@ import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.util.ClassUtils;
 
 public final class Stagemonitor {
 
@@ -103,12 +104,15 @@ public final class Stagemonitor {
 	private static void start() {
 		initializePlugins();
 		started = true;
-		// in case the application does not directly call shutDown
-		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-			public void run() {
-				shutDown();
-			}
-		}));
+		// don't register a shutdown hook for web applications as this causes a memory leak
+		if (ClassUtils.isNotPresent("org.stagemonitor.web.WebPlugin")) {
+			// in case the application does not directly call shutDown
+			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+				public void run() {
+					shutDown();
+				}
+			}));
+		}
 	}
 
 	private static void initializePlugins() {
