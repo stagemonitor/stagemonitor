@@ -111,11 +111,4 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 		return currentTimestamp + offset;
 	}
 
-	public static void main(String[] args) {
-		final long currentTimeMillis = 1457530360001L; //System.currentTimeMillis();
-		final long nextTimestampThatIsDivisableByPeriod = getNextTimestampThatIsDivisableByPeriod(currentTimeMillis, 10000);
-		System.out.println(currentTimeMillis);
-		System.out.println(nextTimestampThatIsDivisableByPeriod);
-	}
-
 }
