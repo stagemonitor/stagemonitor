@@ -1,12 +1,16 @@
 package org.stagemonitor;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.util.StringUtils;
 
 public class ConfigurationOptionsMarkdownExporter {
 
@@ -14,13 +18,49 @@ public class ConfigurationOptionsMarkdownExporter {
 	}
 
 	public static void main(String[] args) throws IOException {
+		StringBuilder markdown = new StringBuilder();
 		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new Configuration(StagemonitorPlugin.class).getConfigurationOptionsByCategory();
 
-		StringBuilder markdown = new StringBuilder();
-		for (String pluginName : configurationOptionsByPlugin.keySet()) {
-			markdown.append("* [").append(pluginName).append("](#").append(pluginName.toLowerCase().replace(' ', '-')).append(")\n");
+		MultiValueMap<String, ConfigurationOption<?>> configurationOptionsByTags = new LinkedMultiValueMap<>();
+		configurationOptionsByPlugin.values()
+				.stream()
+				.flatMap(Collection::stream)
+				.filter(opt -> !opt.getTags().isEmpty())
+				.forEach(opt -> opt.getTags()
+						.forEach(tag -> configurationOptionsByTags.add(tag, opt)));
+
+
+		markdown.append("# Overview\n");
+		markdown.append("## All Plugins\n");
+		for (String plugin : configurationOptionsByPlugin.keySet()) {
+			markdown.append("* ").append(linkToHeadline(plugin)).append('\n');
 		}
 		markdown.append("\n");
+		markdown.append("## Available Tags\n");
+		for (String tag : configurationOptionsByTags.keySet()) {
+			markdown.append("`").append(tag).append("` ");
+		}
+		markdown.append("\n");
+
+		markdown.append("# Options by Plugin\n");
+		for (Map.Entry<String, List<ConfigurationOption<?>>> entry : configurationOptionsByPlugin.entrySet()) {
+			final String pluginName = entry.getKey();
+			markdown.append("* ").append(linkToHeadline(pluginName)).append('\n');
+			for (ConfigurationOption<?> option : entry.getValue()) {
+				markdown.append(" * ").append(linkToHeadline(option.getLabel())).append('\n');
+			}
+		}
+		markdown.append("\n");
+
+		markdown.append("# Options by Tag\n");
+		markdown.append("\n");
+		for (Map.Entry<String, List<ConfigurationOption<?>>> entry : configurationOptionsByTags.entrySet()) {
+			markdown.append("* `").append(entry.getKey()).append("` \n");
+			for (ConfigurationOption<?> option : entry.getValue()) {
+				markdown.append(" * ").append(linkToHeadline(option.getLabel())).append('\n');
+			}}
+		markdown.append("\n");
+
 		for (Map.Entry<String, List<ConfigurationOption<?>>> entry : configurationOptionsByPlugin.entrySet()) {
 			markdown.append("# ").append(entry.getKey()).append("\n\n");
 			for (ConfigurationOption<?> configurationOption : entry.getValue()) {
@@ -40,5 +80,9 @@ public class ConfigurationOptionsMarkdownExporter {
 			markdown.append("***\n\n");
 		}
 		System.out.println(markdown);
+	}
+
+	private static String linkToHeadline(String headline) {
+		return "[" + headline + "](#" + StringUtils.slugify(headline) + ')';
 	}
 }
