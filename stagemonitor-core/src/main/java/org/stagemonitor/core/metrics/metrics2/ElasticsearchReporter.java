@@ -5,12 +5,8 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -32,44 +28,28 @@ import org.stagemonitor.core.util.StringUtils;
 public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
 	public static final String STAGEMONITOR_METRICS_INDEX_PREFIX = "stagemonitor-metrics-";
-	public static final String METRICS_TYPE = "metrics";
 	public static final String ES_METRICS_LOGGER = "ElasticsearchMetrics";
+	private static final String METRICS_TYPE = "metrics";
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final Logger elasticsearchMetricsLogger;
 
 	private final Map<String, String> globalTags;
-	private HttpClient httpClient;
-	private final Clock clock;
 	private final CorePlugin corePlugin;
-	private JsonFactory jfactory = new JsonFactory();
+	private final HttpClient httpClient;
+	private final JsonFactory jfactory = new JsonFactory();
 
-	public ElasticsearchReporter(Metric2Registry registry,
-								 Metric2Filter filter,
-								 TimeUnit rateUnit,
-								 TimeUnit durationUnit,
-								 Map<String, String> globalTags,
-								 HttpClient httpClient,
-								 CorePlugin corePlugin) {
-
-		this(registry, filter, rateUnit, durationUnit, globalTags, httpClient, Clock.defaultClock(), corePlugin, LoggerFactory.getLogger(ES_METRICS_LOGGER));
+	public static ElasticsearchReporter.Builder forRegistry(Metric2Registry registry, CorePlugin corePlugin) {
+		return new Builder(registry, corePlugin);
 	}
 
-	public ElasticsearchReporter(Metric2Registry registry,
-								 Metric2Filter filter,
-								 TimeUnit rateUnit,
-								 TimeUnit durationUnit,
-								 Map<String, String> globalTags,
-								 HttpClient httpClient,
-								 Clock clock, CorePlugin corePlugin, Logger elasticsearchMetricsLogger) {
-
-		super(registry, filter, rateUnit, durationUnit, "stagemonitor-elasticsearch-reporter");
-		this.corePlugin = corePlugin;
-		this.elasticsearchMetricsLogger = elasticsearchMetricsLogger;
-		this.globalTags = Collections.unmodifiableMap(new HashMap<String, String>(globalTags));
-		this.httpClient = httpClient;
-		this.clock = clock;
-		jfactory.setCodec(JsonUtils.getMapper());
+	private ElasticsearchReporter(Builder builder) {
+		super(builder);
+		this.elasticsearchMetricsLogger = builder.getElasticsearchMetricsLogger();
+		this.globalTags = builder.getGlobalTags();
+		this.httpClient = builder.getHttpClient();
+		this.jfactory.setCodec(JsonUtils.getMapper());
+		this.corePlugin = builder.getCorePlugin();
 	}
 
 	@Override
@@ -219,5 +199,45 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			reportMetrics(gauges, counters, histograms, meters, timers, os, bulkActionBytes);
 			os.close();
 		}
+	}
+
+	public static class Builder extends ScheduledMetrics2Reporter.Builder<ElasticsearchReporter, Builder> {
+		private HttpClient httpClient = new HttpClient();
+		private Logger elasticsearchMetricsLogger = LoggerFactory.getLogger(ES_METRICS_LOGGER);
+		private final CorePlugin corePlugin;
+
+		private Builder(Metric2Registry registry, CorePlugin corePlugin) {
+			super(registry, "stagemonitor-elasticsearch-reporter");
+			this.corePlugin = corePlugin;
+		}
+
+		@Override
+		public ElasticsearchReporter build() {
+			return new ElasticsearchReporter(this);
+		}
+
+		public HttpClient getHttpClient() {
+			return httpClient;
+		}
+
+
+		public Logger getElasticsearchMetricsLogger() {
+			return elasticsearchMetricsLogger;
+		}
+
+		public Builder httpClient(HttpClient httpClient) {
+			this.httpClient = httpClient;
+			return this;
+		}
+
+		public Builder elasticsearchMetricsLogger(Logger elasticsearchMetricsLogger) {
+			this.elasticsearchMetricsLogger = elasticsearchMetricsLogger;
+			return this;
+		}
+
+		public CorePlugin getCorePlugin() {
+			return corePlugin;
+		}
+
 	}
 }

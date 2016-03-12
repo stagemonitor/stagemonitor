@@ -40,7 +40,6 @@ import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
 import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
-import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.HttpClient;
@@ -543,9 +542,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 		if (StringUtils.isNotEmpty(getInfluxDbUrl()) && reportingInterval > 0) {
 			logger.info("Sending metrics to InfluxDB ({}) every {}s", getInfluxDbUrl(), reportingInterval);
-			final InfluxDbReporter reporter = new InfluxDbReporter(metricRegistry, Metric2Filter.ALL,
-					TimeUnit.SECONDS,
-					TimeUnit.MILLISECONDS, measurementSession.asMap(), new HttpClient(), this);
+			final InfluxDbReporter reporter = InfluxDbReporter.forRegistry(metricRegistry, this)
+					.globalTags(measurementSession.asMap())
+					.build();
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
@@ -562,9 +561,9 @@ public class CorePlugin extends StagemonitorPlugin {
 			final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
 					"stagemonitor-elasticsearch-metrics-index-template.json", corePlugin.moveToColdNodesAfterDays.getValue());
 			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
-			final ElasticsearchReporter reporter = new ElasticsearchReporter(metricRegistry, Metric2Filter.ALL,
-					TimeUnit.SECONDS,
-					TimeUnit.MILLISECONDS, measurementSession.asMap(), new HttpClient(), this);
+			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, this)
+					.globalTags(measurementSession.asMap())
+					.build();
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
