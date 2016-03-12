@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import javassist.CtClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.ClassUtils;
 
 public abstract class StagemonitorJavassistInstrumenter {
+
+	private static final Logger logger = LoggerFactory.getLogger(StagemonitorJavassistInstrumenter.class);
 
 	public static Collection<String> includes;
 
@@ -39,6 +43,9 @@ public abstract class StagemonitorJavassistInstrumenter {
 		includes = new ArrayList<String>(corePlugin.getIncludePackages().size());
 		for (String include : corePlugin.getIncludePackages()) {
 			includes.add(include.replace('.', '/'));
+		}
+		if (includes.isEmpty()) {
+			logger.warn("No includes for instrumentation configured. Please set the stagemonitor.instrument.include property.");
 		}
 	}
 
