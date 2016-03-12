@@ -44,7 +44,13 @@ public class InfluxDbReporterTest {
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getInfluxDbUrl()).thenReturn("http://localhost:8086");
 		when(corePlugin.getInfluxDbDb()).thenReturn("stm");
-		influxDbReporter = new InfluxDbReporter(new Metric2Registry(), null, TimeUnit.SECONDS, TimeUnit.NANOSECONDS, singletonMap("app", "test"), httpClient, clock, corePlugin);
+		influxDbReporter = InfluxDbReporter.forRegistry(new Metric2Registry(), corePlugin)
+				.rateUnit(TimeUnit.SECONDS)
+				.durationUnit(TimeUnit.NANOSECONDS)
+				.globalTags(singletonMap("app", "test"))
+				.httpClient(httpClient)
+				.clock(clock)
+				.build();
 	}
 
 	@Test
@@ -70,7 +76,7 @@ public class InfluxDbReporterTest {
 				metricNameMap(Timer.class));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(Collections.<String>emptyList()));
+				eq(Collections.emptyList()));
 	}
 
 	@Test

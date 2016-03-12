@@ -5,9 +5,7 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -25,33 +23,17 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 	private List<String> batchLines = new ArrayList<String>(MAX_BATCH_SIZE);
 	private final String globalTags;
 	private HttpClient httpClient;
-	private final Clock clock;
 	private final CorePlugin corePlugin;
 
-	public InfluxDbReporter(Metric2Registry registry,
-							   Metric2Filter filter,
-							   TimeUnit rateUnit,
-							   TimeUnit durationUnit,
-							   Map<String, String> globalTags,
-							   HttpClient httpClient,
-							   CorePlugin corePlugin) {
-
-		this(registry, filter, rateUnit, durationUnit, globalTags, httpClient, Clock.defaultClock(), corePlugin);
+	public static Builder forRegistry(Metric2Registry registry, CorePlugin corePlugin) {
+		return new Builder(registry, corePlugin);
 	}
 
-	public InfluxDbReporter(Metric2Registry registry,
-							   Metric2Filter filter,
-							   TimeUnit rateUnit,
-							   TimeUnit durationUnit,
-							   Map<String, String> globalTags,
-							   HttpClient httpClient,
-							   Clock clock, CorePlugin corePlugin) {
-
-		super(registry, filter, rateUnit, durationUnit, "stagemonitor-influxdb-reporter");
-		this.corePlugin = corePlugin;
-		this.globalTags = MetricName.getInfluxDbTags(globalTags);
-		this.httpClient = httpClient;
-		this.clock = clock;
+	private InfluxDbReporter(Builder builder) {
+		super(builder);
+		this.globalTags = MetricName.getInfluxDbTags(builder.getGlobalTags());
+		this.httpClient = builder.getHttpClient();
+		this.corePlugin = builder.getCorePlugin();
 	}
 
 	@Override
@@ -195,6 +177,34 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 			return new StringBuilder(s.length() + 2).append('"').append(s).append('"').toString();
 		} else {
 			return new StringBuilder(s.length() + 6).append('"').append(s.replace("\"", "\\\"")).append('"').toString();
+		}
+	}
+
+	public static class Builder extends ScheduledMetrics2Reporter.Builder<InfluxDbReporter, Builder> {
+		private HttpClient httpClient = new HttpClient();
+		private final CorePlugin corePlugin;
+
+		private Builder(Metric2Registry registry, CorePlugin corePlugin) {
+			super(registry, "stagemonitor-elasticsearch-reporter");
+			this.corePlugin = corePlugin;
+		}
+
+		public HttpClient getHttpClient() {
+			return httpClient;
+		}
+
+		@Override
+		public InfluxDbReporter build() {
+			return new InfluxDbReporter(this);
+		}
+
+		public Builder httpClient(HttpClient httpClient) {
+			this.httpClient = httpClient;
+			return this;
+		}
+
+		public CorePlugin getCorePlugin() {
+			return corePlugin;
 		}
 	}
 }

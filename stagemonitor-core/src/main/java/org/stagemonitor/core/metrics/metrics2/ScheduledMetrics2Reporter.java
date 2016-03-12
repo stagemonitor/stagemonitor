@@ -1,11 +1,14 @@
 package org.stagemonitor.core.metrics.metrics2;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -26,16 +29,15 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 	protected final Metric2Registry registry;
 	private final Metric2Filter filter;
 	private final ScheduledExecutorService executor;
+	protected Clock clock;
+	private boolean started;
 
-	protected ScheduledMetrics2Reporter(Metric2Registry registry, Metric2Filter filter, TimeUnit rateUnit, TimeUnit durationUnit, String name) {
-		this(registry, filter, rateUnit, durationUnit, Executors.newSingleThreadScheduledExecutor(new ExecutorUtils.NamedThreadFactory(name)));
-	}
-
-	protected ScheduledMetrics2Reporter(Metric2Registry registry, Metric2Filter filter, TimeUnit rateUnit, TimeUnit durationUnit, ScheduledExecutorService executor) {
-		super(null, null, null, rateUnit, durationUnit, executor);
-		this.registry = registry;
-		this.filter = filter;
-		this.executor = executor;
+	protected ScheduledMetrics2Reporter(Builder builder) {
+		super(null, null, null, builder.getRateUnit(), builder.getDurationUnit(), builder.getExecutor());
+		this.registry = builder.getRegistry();
+		this.filter = builder.getFilter();
+		this.executor = builder.getExecutor();
+		this.clock = builder.getClock();
 	}
 
 	@Override
@@ -87,17 +89,24 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 	 * @param unit   the unit for {@code period}
 	 */
 	public void start(long period, TimeUnit unit) {
-		final long periodInMS = unit.toMillis(period);
-		executor.scheduleAtFixedRate(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					report();
-				} catch (RuntimeException ex) {
-					logger.error("RuntimeException thrown from {}#report. Exception was suppressed.", getClass().getSimpleName(), ex);
-				}
+		synchronized (this) {
+			if (started) {
+				throw new IllegalStateException("This reporter has already been started");
 			}
-		}, getNextTimestampThatIsDivisableByPeriod(System.currentTimeMillis(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
+			final long periodInMS = unit.toMillis(period);
+			this.clock = new QuantizedClock(clock, periodInMS);
+			executor.scheduleAtFixedRate(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						report();
+					} catch (RuntimeException ex) {
+						logger.error("RuntimeException thrown from {}#report. Exception was suppressed.", getClass().getSimpleName(), ex);
+					}
+				}
+			}, getNextTimestampThatIsDivisableByPeriod(System.currentTimeMillis(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
+			this.started = true;
+		}
 	}
 
 	/*
@@ -111,4 +120,78 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 		return currentTimestamp + offset;
 	}
 
+	public abstract static class Builder<R extends ScheduledMetrics2Reporter, B extends Builder> {
+		private final Metric2Registry registry;
+		private final ScheduledExecutorService executor;
+		private Metric2Filter filter = Metric2Filter.ALL;
+		private TimeUnit rateUnit = TimeUnit.SECONDS;
+		private TimeUnit durationUnit = TimeUnit.MILLISECONDS;
+		private Clock clock = Clock.defaultClock();
+		private Map<String, String> globalTags = Collections.emptyMap();
+
+		protected Builder(Metric2Registry registry, String reporterName) {
+			this.executor = Executors.newSingleThreadScheduledExecutor(new ExecutorUtils.NamedThreadFactory(reporterName));
+			this.registry = registry;
+		}
+
+		protected Builder(Metric2Registry registry, ScheduledExecutorService executor) {
+			this.executor = executor;
+			this.registry = registry;
+		}
+
+		public Metric2Registry getRegistry() {
+			return registry;
+		}
+
+		public Metric2Filter getFilter() {
+			return filter;
+		}
+
+		public TimeUnit getRateUnit() {
+			return rateUnit;
+		}
+
+		public TimeUnit getDurationUnit() {
+			return durationUnit;
+		}
+
+		public ScheduledExecutorService getExecutor() {
+			return executor;
+		}
+
+		public B filter(Metric2Filter filter) {
+			this.filter = filter;
+			return (B) this;
+		}
+
+		public B rateUnit(TimeUnit rateUnit) {
+			this.rateUnit = rateUnit;
+			return (B) this;
+		}
+
+		public B durationUnit(TimeUnit durationUnit) {
+			this.durationUnit = durationUnit;
+			return (B) this;
+		}
+
+		public Clock getClock() {
+			return clock;
+		}
+
+		public B clock(Clock clock) {
+			this.clock = clock;
+			return (B) this;
+		}
+
+		public Map<String, String> getGlobalTags() {
+			return globalTags;
+		}
+
+		public B globalTags(Map<String, String> globalTags) {
+			this.globalTags = Collections.unmodifiableMap(new LinkedHashMap<String, String>(globalTags));
+			return (B) this;
+		}
+
+		public abstract R build();
+	}
 }
