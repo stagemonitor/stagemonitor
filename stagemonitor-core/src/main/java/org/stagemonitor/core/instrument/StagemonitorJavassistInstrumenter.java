@@ -65,22 +65,12 @@ public abstract class StagemonitorJavassistInstrumenter {
 			}
 		}
 
-		// no includes -> include all
-		boolean instrument = includes.isEmpty();
 		for (String include : includes) {
 			if (className.startsWith(include)) {
 				return !hasMoreSpecificExclude(className, include);
 			}
 		}
-		if (!instrument) {
-			return false;
-		}
-		for (String exclude : excludes) {
-			if (className.startsWith(exclude)) {
-				return false;
-			}
-		}
-		return instrument;
+		return false;
 	}
 
 	/**

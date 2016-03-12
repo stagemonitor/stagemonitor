@@ -294,75 +294,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Excluded packages")
 			.description("Exclude packages and their sub-packages from the instrumentation (for example the profiler).")
-			.defaultValue(new LinkedHashSet<String>() {{
-				add("antlr");
-				add("aopalliance");
-				add("asm");
-				add("c3p0");
-				add("ch.qos");
-				add("com.amazon");
-				add("com.codahale");
-				add("com.fasterxml");
-				add("com.github");
-				add("com.google");
-				add("com.maxmind");
-				add("com.oracle");
-				add("com.p6spy");
-				add("com.rome");
-				add("com.spartial");
-				add("com.sun");
-				add("com.thoughtworks");
-				add("com.vaadin");
-				add("commons-");
-				add("dom4j");
-				add("eclipse");
-				add("java.");
-				add("javax.");
-				add("junit");
-				add("net.java");
-				add("net.sf");
-				add("net.sourceforge");
-				add("nz.net");
-				add("ognl");
-				add("oracle");
-				add("org.antlr");
-				add("org.apache");
-				add("org.aspectj");
-				add("org.codehaus");
-				add("org.eclipse");
-				add("org.freemarker");
-				add("org.glassfish");
-				add("org.groovy");
-				add("org.hibernate");
-				add("org.hsqldb");
-				add("org.jadira");
-				add("org.javassist");
-				add("org.jboss");
-				add("org.jdom");
-				add("org.joda");
-				add("org.jsoup");
-				add("org.json");
-				add("org.unbescape");
-				add("org.elasticsearch");
-				add("org.slf4j");
-				add("org.springframework");
-				add("org.stagemonitor");
-				add("org.thymeleaf");
-				add("org.yaml");
-				add("org.wildfly");
-				add("org.zeroturnaround");
-				add("org.xml");
-				add("io.dropwizard");
-				add("freemarker");
-				add("javassist");
-				add("uadetector");
-				add("p6spy");
-				add("rome");
-				add("sun");
-				add("xerces");
-				add("xml");
-				add("xmpp");
-			}})
+			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Collection<String>> excludeContaining = ConfigurationOption.stringsOption()
