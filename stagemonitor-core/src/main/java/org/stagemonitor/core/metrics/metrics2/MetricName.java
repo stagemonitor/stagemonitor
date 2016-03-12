@@ -78,6 +78,23 @@ public class MetricName {
 		return result;
 	}
 
+	public boolean matches(MetricName other) {
+		if (name.equals(other.name)) {
+			return containsAllTags(other.tags);
+		} else {
+			return false;
+		}
+	}
+
+	private boolean containsAllTags(Map<String, String> tags) {
+		for (Map.Entry<String, String> entry : tags.entrySet()) {
+			if (!entry.getValue().equals(this.tags.get(entry.getKey()))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public static class Builder {
 
 		private final String name;

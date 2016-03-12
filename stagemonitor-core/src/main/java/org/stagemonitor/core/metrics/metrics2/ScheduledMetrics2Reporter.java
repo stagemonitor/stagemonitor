@@ -159,17 +159,36 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 			return executor;
 		}
 
+		/**
+		 * Only report metrics which match the given filter.
+		 *
+		 * @param filter a {@link com.codahale.metrics.MetricFilter}
+		 * @return {@code this}
+		 */
 		public B filter(Metric2Filter filter) {
 			this.filter = filter;
 			return (B) this;
 		}
 
-		public B rateUnit(TimeUnit rateUnit) {
+		/**
+		 * Convert rates to the given time unit.
+		 *
+		 * @param rateUnit a unit of time
+		 * @return {@code this}
+		 */
+		public B convertRatesTo(TimeUnit rateUnit) {
 			this.rateUnit = rateUnit;
 			return (B) this;
 		}
 
-		public B durationUnit(TimeUnit durationUnit) {
+
+		/**
+		 * Convert durations to the given time unit.
+		 *
+		 * @param durationUnit a unit of time
+		 * @return {@code this}
+		 */
+		public B convertDurationsTo(TimeUnit durationUnit) {
 			this.durationUnit = durationUnit;
 			return (B) this;
 		}
@@ -192,6 +211,11 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 			return (B) this;
 		}
 
+		/**
+		 * Builds a reporter with the given properties.
+		 *
+		 * @return a reporter
+		 */
 		public abstract R build();
 	}
 }

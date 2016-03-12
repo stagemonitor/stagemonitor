@@ -15,14 +15,11 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
@@ -30,18 +27,22 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.ListValueConverter;
+import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.metrics.AndMetricFilter;
+import org.stagemonitor.core.metrics.MetricNameFilter;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
-import org.stagemonitor.core.metrics.RegexMetricFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
+import org.stagemonitor.core.metrics.metrics2.AndMetric2Filter;
 import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
 import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.metrics.metrics2.MetricNameValueConverter;
+import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -262,12 +263,13 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
-	private final ConfigurationOption<Collection<Pattern>> excludedMetrics = ConfigurationOption.regexListOption()
+	private final ConfigurationOption<Collection<MetricName>> excludedMetrics = ConfigurationOption
+			.builder(new SetValueConverter<MetricName>(new MetricNameValueConverter()), Collection.class)
 			.key("stagemonitor.metrics.excluded.pattern")
 			.dynamic(false)
-			.label("Excluded metrics (regex)")
+			.label("Excluded metric names")
 			.description("A comma separated list of metric names that should not be collected.")
-			.defaultValue(Collections.<Pattern>emptyList())
+			.defaultValue(Collections.<MetricName>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Collection<String>> disabledPlugins = ConfigurationOption.stringsOption()
@@ -484,52 +486,48 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	void registerReporters(Metric2Registry metric2Registry, Configuration configuration, MeasurementSession measurementSession) {
-		Collection<Pattern> excludedMetricsPatterns = getExcludedMetricsPatterns();
-		MetricFilter regexFilter = MetricFilter.ALL;
+		Metric2Filter regexFilter = Metric2Filter.ALL;
+		Collection<MetricName> excludedMetricsPatterns = getExcludedMetricsPatterns();
 		if (!excludedMetricsPatterns.isEmpty()) {
-			regexFilter = RegexMetricFilter.excludePatterns(excludedMetricsPatterns);
+			regexFilter = MetricNameFilter.excludePatterns(excludedMetricsPatterns);
 		}
 		
-		MetricFilter allFilters = new AndMetricFilter(regexFilter, new MetricsWithCountFilter());
+		Metric2Filter allFilters = new AndMetric2Filter(regexFilter, new MetricsWithCountFilter());
 		MetricRegistry metricRegistry = metric2Registry.getMetricRegistry();
 
-		reportToGraphite(metricRegistry, getGraphiteReportingInterval(),
-				measurementSession, allFilters);
+		reportToGraphite(metricRegistry, getGraphiteReportingInterval(), measurementSession);
 		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(),
 				measurementSession);
 		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
 				measurementSession, configuration.getConfig(CorePlugin.class));
 
-		List<ScheduledReporter> onShutdownReporters = new LinkedList<ScheduledReporter>();
-		reportToConsole(metricRegistry, getConsoleReportingInterval(), allFilters, onShutdownReporters);
-		registerAggregationReporter(metricRegistry, allFilters, onShutdownReporters, getAggregationReportingInterval());
+		List<ScheduledMetrics2Reporter> onShutdownReporters = new LinkedList<ScheduledMetrics2Reporter>();
+		onShutdownReporters.add(reportToConsole(metric2Registry, getConsoleReportingInterval(), allFilters));
+		registerAggregationReporter(metric2Registry, onShutdownReporters, getAggregationReportingInterval());
 		if (configuration.getConfig(CorePlugin.class).isReportToJMX()) {
 			// Because JMX reporter is on registration and not periodic only the
 			// regex filter is applicable here (not filtering metrics by count)
-			reportToJMX(metricRegistry, regexFilter);
+			reportToJMX(metricRegistry);
 		}
 	}
 
-	private void registerAggregationReporter(MetricRegistry metricRegistry, MetricFilter allFilters,
-											 List<ScheduledReporter> onShutdownReporters, long reportingInterval) {
+	private void registerAggregationReporter(Metric2Registry metricRegistry,
+											 List<ScheduledMetrics2Reporter> onShutdownReporters, long reportingInterval) {
 		if (reportingInterval > 0) {
-			aggregationReporter = new MetricsAggregationReporter(metricRegistry, allFilters, onShutdownReporters);
+			aggregationReporter = MetricsAggregationReporter.forRegistry(metricRegistry).onShutdownReporters(onShutdownReporters).build();
 			aggregationReporter.start(reportingInterval, TimeUnit.SECONDS);
 			aggregationReporter.report();
 			reporters.add(aggregationReporter);
 		}
 	}
 
-	private void reportToGraphite(MetricRegistry metricRegistry, long reportingInterval,
-										 MeasurementSession measurementSession,
-										 MetricFilter filter) {
+	private void reportToGraphite(MetricRegistry metricRegistry, long reportingInterval, MeasurementSession measurementSession) {
 		String graphiteHostName = getGraphiteHostName();
 		if (isReportToGraphite()) {
 			final GraphiteReporter graphiteReporter = GraphiteReporter.forRegistry(metricRegistry)
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
-					.filter(filter)
 					.build(new Graphite(new InetSocketAddress(graphiteHostName, getGraphitePort())));
 
 			graphiteReporter.start(reportingInterval, TimeUnit.SECONDS);
@@ -581,24 +579,21 @@ public class CorePlugin extends StagemonitorPlugin {
 				sanitizeGraphiteMetricSegment(measurementSession.getHostName()));
 	}
 
-	private void reportToConsole(MetricRegistry metricRegistry, long reportingInterval, MetricFilter filter,
-										List<ScheduledReporter> onShutdownReporters) {
-		final SortedTableLogReporter reporter = SortedTableLogReporter.forRegistry(metricRegistry)
+	private SortedTableLogReporter reportToConsole(Metric2Registry metric2Registry, long reportingInterval, Metric2Filter filter) {
+		final SortedTableLogReporter reporter = SortedTableLogReporter.forRegistry(metric2Registry)
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.MILLISECONDS)
 				.filter(filter)
 				.build();
-		onShutdownReporters.add(reporter);
 		if (reportingInterval > 0) {
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
 		}
+		return reporter;
 	}
 
-	private void reportToJMX(MetricRegistry metricRegistry, MetricFilter filter) {
-		final JmxReporter reporter = JmxReporter.forRegistry(metricRegistry)
-				.filter(filter)
-				.build();
+	private void reportToJMX(MetricRegistry metricRegistry) {
+		final JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).build();
 		reporter.start();
 		reporters.add(reporter);
 	}
@@ -741,7 +736,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		return deactivateStagemonitorIfEsConfigSourceIsDown.getValue();
 	}
 
-	public Collection<Pattern> getExcludedMetricsPatterns() {
+	public Collection<MetricName> getExcludedMetricsPatterns() {
 		return excludedMetrics.getValue();
 	}
 

@@ -10,12 +10,13 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.map;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -24,6 +25,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -41,7 +43,6 @@ import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 
@@ -227,15 +228,17 @@ public class ThresholdMonitoringReporterTest {
 	}
 
 	private void checkMetrics(long timer1Mean, long timer2Mean, long timer3Mean) {
+		final SortedMap<String, Timer> timers = new TreeMap<String, Timer>();
+		timers.put("test.timer1", timer(TimeUnit.MILLISECONDS.toNanos(timer1Mean)));
+		timers.put("test.timer2", timer(TimeUnit.MILLISECONDS.toNanos(timer2Mean)));
+		timers.put("test.timer3", timer(TimeUnit.MILLISECONDS.toNanos(timer3Mean)));
+		timers.put("test.some.other.timer", timer(TimeUnit.MILLISECONDS.toNanos(999)));
 		thresholdMonitoringReporter.report(
-				MetricsReporterTestHelper.map(),
-				MetricsReporterTestHelper.map(),
-				MetricsReporterTestHelper.map(),
-				MetricsReporterTestHelper.map(),
-				map("test.timer1", timer(TimeUnit.MILLISECONDS.toNanos(timer1Mean)))
-						.add("test.timer2", timer(TimeUnit.MILLISECONDS.toNanos(timer2Mean)))
-						.add("test.timer3", timer(TimeUnit.MILLISECONDS.toNanos(timer3Mean)))
-						.add("test.some.other.timer", timer(TimeUnit.MILLISECONDS.toNanos(999)))
+				new TreeMap<String, Gauge>(),
+				new TreeMap<String, Counter>(),
+				new TreeMap<String, Histogram>(),
+				new TreeMap<String, Meter>(),
+				timers
 		);
 	}
 }

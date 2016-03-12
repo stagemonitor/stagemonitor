@@ -45,8 +45,8 @@ public class InfluxDbReporterTest {
 		when(corePlugin.getInfluxDbUrl()).thenReturn("http://localhost:8086");
 		when(corePlugin.getInfluxDbDb()).thenReturn("stm");
 		influxDbReporter = InfluxDbReporter.forRegistry(new Metric2Registry(), corePlugin)
-				.rateUnit(TimeUnit.SECONDS)
-				.durationUnit(TimeUnit.NANOSECONDS)
+				.convertRatesTo(TimeUnit.SECONDS)
+				.convertDurationsTo(TimeUnit.NANOSECONDS)
 				.globalTags(singletonMap("app", "test"))
 				.httpClient(httpClient)
 				.clock(clock)

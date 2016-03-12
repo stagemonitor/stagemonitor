@@ -9,31 +9,29 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metered;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 
-public class SortedTableLogReporter extends ScheduledReporter {
+public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 	/**
 	 * Returns a new {@link SortedTableLogReporter.Builder} for {@link SortedTableLogReporter}.
 	 *
 	 * @param registry the registry to report
 	 * @return a {@link SortedTableLogReporter.Builder} instance for a {@link SortedTableLogReporter}
 	 */
-	public static Builder forRegistry(MetricRegistry registry) {
+	public static Builder forRegistry(Metric2Registry registry) {
 		return new Builder(registry);
 	}
 
@@ -43,21 +41,12 @@ public class SortedTableLogReporter extends ScheduledReporter {
 	 * rates to events/second, converting durations to milliseconds, and not
 	 * filtering metrics.
 	 */
-	public static class Builder {
-		private final MetricRegistry registry;
-		private Logger log;
-		private Locale locale;
-		private TimeUnit rateUnit;
-		private TimeUnit durationUnit;
-		private MetricFilter filter;
+	public static class Builder extends ScheduledMetrics2Reporter.Builder<SortedTableLogReporter, Builder> {
+		private Logger log = LoggerFactory.getLogger("metrics");
+		private Locale locale = Locale.getDefault();
 
-		private Builder(MetricRegistry registry) {
-			this.registry = registry;
-			this.log = LoggerFactory.getLogger("metrics");
-			this.locale = Locale.getDefault();
-			this.rateUnit = TimeUnit.SECONDS;
-			this.durationUnit = TimeUnit.MILLISECONDS;
-			this.filter = MetricFilter.ALL;
+		private Builder(Metric2Registry registry) {
+			super(registry, "stagemonitor-log-reporter");
 		}
 
 		/**
@@ -82,46 +71,8 @@ public class SortedTableLogReporter extends ScheduledReporter {
 			return this;
 		}
 
-		/**
-		 * Convert rates to the given time unit.
-		 *
-		 * @param rateUnit a unit of time
-		 * @return {@code this}
-		 */
-		public Builder convertRatesTo(TimeUnit rateUnit) {
-			this.rateUnit = rateUnit;
-			return this;
-		}
-
-		/**
-		 * Convert durations to the given time unit.
-		 *
-		 * @param durationUnit a unit of time
-		 * @return {@code this}
-		 */
-		public Builder convertDurationsTo(TimeUnit durationUnit) {
-			this.durationUnit = durationUnit;
-			return this;
-		}
-
-		/**
-		 * Only report metrics which match the given filter.
-		 *
-		 * @param filter a {@link com.codahale.metrics.MetricFilter}
-		 * @return {@code this}
-		 */
-		public Builder filter(MetricFilter filter) {
-			this.filter = filter;
-			return this;
-		}
-
-		/**
-		 * Builds a {@link SortedTableLogReporter} with the given properties.
-		 *
-		 * @return a {@link SortedTableLogReporter}
-		 */
 		public SortedTableLogReporter build() {
-			return new SortedTableLogReporter(registry, log, locale, rateUnit, durationUnit, filter);
+			return new SortedTableLogReporter(this);
 		}
 	}
 
@@ -130,16 +81,18 @@ public class SortedTableLogReporter extends ScheduledReporter {
 	private final Locale locale;
 	private final Logger log;
 
-	private SortedTableLogReporter(MetricRegistry registry, Logger log, Locale locale, TimeUnit rateUnit,
-								   TimeUnit durationUnit, MetricFilter filter) {
-		super(registry, "console-reporter", filter, rateUnit, durationUnit);
-		this.log = log;
-		this.locale = locale;
+	private SortedTableLogReporter(Builder builder) {
+		super(builder);
+		this.log = builder.log;
+		this.locale = builder.locale;
 	}
 
 	@Override
-	public void report(SortedMap<String, Gauge> gauges, SortedMap<String, Counter> counters, SortedMap<String, Histogram> histograms,
-					   SortedMap<String, Meter> meters, SortedMap<String, Timer> timers) {
+	public void reportMetrics(Map<MetricName, Gauge> gauges,
+							  Map<MetricName, Counter> counters,
+							  Map<MetricName, Histogram> histograms,
+							  Map<MetricName, Meter> meters,
+							  Map<MetricName, Timer> timers) {
 
 		final Timer.Context time = Stagemonitor.getMetric2Registry().timer(name("reporting_time").tag("reporter", "log").build()).time();
 
@@ -162,12 +115,12 @@ public class SortedTableLogReporter extends ScheduledReporter {
 		}
 	}
 
-	private void logGauges(SortedMap<String, Gauge> gauges, StringBuilder sb) {
+	private void logGauges(Map<MetricName, Gauge> gauges, StringBuilder sb) {
 		if (!gauges.isEmpty()) {
 			printWithBanner("-- Gauges", '-', sb);
 			int maxLength = getMaxLengthOfKeys(gauges);
 			sb.append(String.format("%-" + maxLength + "s | value\n", "name"));
-			final Map<String, Gauge> sortedGauges = sortByValue(gauges, new Comparator<Gauge>() {
+			final Map<MetricName, Gauge> sortedGauges = sortByValue(gauges, new Comparator<Gauge>() {
 				@Override
 				public int compare(Gauge o1, Gauge o2) {
 					Object value2 = o2.getValue();
@@ -181,79 +134,79 @@ public class SortedTableLogReporter extends ScheduledReporter {
 					return value2.toString().compareTo(value1.toString());
 				}
 			});
-			for (Map.Entry<String, Gauge> entry : sortedGauges.entrySet()) {
-				printGauge(entry.getKey(), entry.getValue(), maxLength, sb);
+			for (Map.Entry<MetricName, Gauge> entry : sortedGauges.entrySet()) {
+				printGauge(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
 	}
 
-	private void logCounters(SortedMap<String, Counter> counters, StringBuilder sb) {
+	private void logCounters(Map<MetricName, Counter> counters, StringBuilder sb) {
 		if (!counters.isEmpty()) {
 			printWithBanner("-- Counters", '-', sb);
 			int maxLength = getMaxLengthOfKeys(counters);
 			sb.append(String.format("%-" + maxLength + "s | count\n", "name"));
-			Map<String, Counter> sortedCounters = sortByValue(counters, new Comparator<Counter>() {
+			Map<MetricName, Counter> sortedCounters = sortByValue(counters, new Comparator<Counter>() {
 				@Override
 				public int compare(Counter o1, Counter o2) {
 					return ((Long) o2.getCount()).compareTo(o1.getCount());
 				}
 			});
-			for (Map.Entry<String, Counter> entry : sortedCounters.entrySet()) {
-				printCounter(entry.getKey(), entry.getValue(), maxLength, sb);
+			for (Map.Entry<MetricName, Counter> entry : sortedCounters.entrySet()) {
+				printCounter(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
 	}
 
-	private void logHistograms(SortedMap<String, Histogram> histograms, StringBuilder sb) {
+	private void logHistograms(Map<MetricName, Histogram> histograms, StringBuilder sb) {
 		if (!histograms.isEmpty()) {
 			printWithBanner("-- Histograms", '-', sb);
 			int maxLength = getMaxLengthOfKeys(histograms);
 			sb.append(String.format("%-" + maxLength + "s | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      |\n", "name"));
-			Map<String, Histogram> sortedHistograms = sortByValue(histograms, new Comparator<Histogram>() {
+			Map<MetricName, Histogram> sortedHistograms = sortByValue(histograms, new Comparator<Histogram>() {
 				@Override
 				public int compare(Histogram o1, Histogram o2) {
 					return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
 				}
 			});
-			for (Map.Entry<String, Histogram> entry : sortedHistograms.entrySet()) {
-				printHistogram(entry.getKey(), entry.getValue(), maxLength, sb);
+			for (Map.Entry<MetricName, Histogram> entry : sortedHistograms.entrySet()) {
+				printHistogram(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
 	}
 
-	private void logMeters(SortedMap<String, Meter> meters, StringBuilder sb) {
+	private void logMeters(Map<MetricName, Meter> meters, StringBuilder sb) {
 		if (!meters.isEmpty()) {
 			printWithBanner("-- Meters", '-', sb);
 			int maxLength = getMaxLengthOfKeys(meters);
 			sb.append(String.format("%-" + maxLength + "s | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name"));
-			Map<String, Meter> sortedMeters = sortByValue(meters, new Comparator<Meter>() {
+			Map<MetricName, Meter> sortedMeters = sortByValue(meters, new Comparator<Meter>() {
 				@Override
 				public int compare(Meter o1, Meter o2) {
 					return ((Long) o2.getCount()).compareTo(o1.getCount());
 				}
 			});
-			for (Map.Entry<String, Meter> entry : sortedMeters.entrySet()) {
-				printMeter(entry.getKey(), entry.getValue(), maxLength, sb);
+			for (Map.Entry<MetricName, Meter> entry : sortedMeters.entrySet()) {
+				printMeter(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
 	}
 
-	private void logTimers(SortedMap<String, Timer> timers, StringBuilder sb) {
+	private void logTimers(Map<MetricName, Timer> timers, StringBuilder sb) {
 		if (!timers.isEmpty()) {
 			printWithBanner("-- Timers", '-', sb);
 			int maxLength = getMaxLengthOfKeys(timers);
 			sb.append(String.format("%-" + maxLength + "s | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n", "name"));
-			Map<String, Timer> sortedTimers = sortByValue(timers, new Comparator<Timer>() {
+			Map<MetricName, Timer> sortedTimers = sortByValue(timers, new Comparator<Timer>() {
 				public int compare(Timer o1, Timer o2) {
 					return Double.compare(o2.getSnapshot().getMean(), o1.getSnapshot().getMean());
 				}
 			});
-			for (Map.Entry<String, Timer> entry : sortedTimers.entrySet()) {
-				printTimer(entry.getKey(), entry.getValue(), maxLength, sb);
+			for (Map.Entry<MetricName, Timer> entry : sortedTimers.entrySet()) {
+				printTimer(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
@@ -274,11 +227,11 @@ public class SortedTableLogReporter extends ScheduledReporter {
 		return result;
 	}
 
-	private static int getMaxLengthOfKeys(Map<String, ?> map) {
+	private static int getMaxLengthOfKeys(Map<MetricName, ?> map) {
 		int maxLength = -1;
-		for (String s : map.keySet()) {
-			if (s.length() > maxLength) {
-				maxLength = s.length();
+		for (MetricName n : map.keySet()) {
+			if (n.getInfluxDbLineProtocolString().length() > maxLength) {
+				maxLength = n.getInfluxDbLineProtocolString().length();
 			}
 		}
 		return maxLength;

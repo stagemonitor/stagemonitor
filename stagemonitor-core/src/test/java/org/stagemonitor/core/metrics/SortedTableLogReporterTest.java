@@ -1,21 +1,22 @@
 package org.stagemonitor.core.metrics;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 
@@ -26,18 +27,17 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 	public void setUp() throws Exception {
 		logger = mock(Logger.class);
 		reporter = SortedTableLogReporter
-				.forRegistry(mock(MetricRegistry.class))
+				.forRegistry(mock(Metric2Registry.class))
 				.log(logger)
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.NANOSECONDS)
-				.filter(MetricFilter.ALL)
 				.formattedFor(Locale.US)
 				.build();
 	}
 
 	@Test
 	public void reportsGaugeValues() throws Exception {
-		reporter.report(testGauges(), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+		reporter.reportMetrics(testGauges(), map(), map(), map(), map());
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +
@@ -50,14 +50,14 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 				"\n");
 	}
 
-	private FluentMap<String, Gauge> testGauges() {
-		return map("gauge3", gauge(3)).add("gaugeWithLongName1", gauge(1)).add("gauge2", gauge(2));
+	private FluentMap<MetricName, Gauge> testGauges() {
+		return map(name("gauge3").build(), gauge(3)).add(name("gaugeWithLongName1").build(), gauge(1)).add(name("gauge2").build(), gauge(2));
 	}
 
 	@Test
 	public void reportsCounterValues() throws Exception {
-		reporter.report(this.<Gauge>map(), map("test.counter", counter(100L)).add("test.counter2", counter(200L)),
-				this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+		reporter.reportMetrics(map(), map(name("test.counter").build(), counter(100L)).add(name("test.counter2").build(), counter(200L)),
+				map(), map(), map());
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +
@@ -72,11 +72,11 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 	@Test
 	public void reportsHistogramValues() throws Exception {
 
-		reporter.report(this.<Gauge>map(),
-				this.<Counter>map(),
+		reporter.reportMetrics(map(),
+				map(),
 				testHistograms(),
-				this.<Meter>map(),
-				this.<Timer>map());
+				map(),
+				map());
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +
@@ -88,25 +88,25 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 				"\n");
 	}
 
-	private FluentMap<String, Histogram> testHistograms() {
-		return map("test.histogram", histogram(3.0)).add("test.histogram2", histogram(4.0));
+	private FluentMap<MetricName, Histogram> testHistograms() {
+		return map(name("test.histogram").build(), histogram(3.0)).add(name("test.histogram2").build(), histogram(4.0));
 	}
 
 	@Test
 	public void reportsMeterValues() throws Exception {
 
-		reporter.report(this.<Gauge>map(),
-				this.<Counter>map(),
-				this.<Histogram>map(),
-				map("test.meter1", meter(1L)).add("test.meter2", meter(2)),
-				this.<Timer>map());
+		reporter.reportMetrics(map(),
+				map(),
+				map(),
+				map(name("test.meter1").tag("foo", "bar").build(), meter(1L)).add(name("test.meter2").build(), meter(2)),
+				map());
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +
 				"-- Meters ----------------------------------------------------------------------\n" +
-				"name        | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n" +
-				"test.meter2 |         2 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
-				"test.meter1 |         1 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
+				"name                | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n" +
+				"        test.meter2 |         2 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
+				"test.meter1,foo=bar |         1 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
 				"\n" +
 				"\n");
 	}
@@ -114,11 +114,11 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 	@Test
 	public void reportsTimerValues() throws Exception {
 
-		reporter.report(this.<Gauge>map(),
-				this.<Counter>map(),
-				this.<Histogram>map(),
-				this.<Meter>map(),
-				map("timer1", timer(4)).add("timer2", timer(2)).add("timer3", timer(3)));
+		reporter.reportMetrics(map(),
+				map(),
+				map(),
+				map(),
+				map(name("timer1").build(), timer(4)).add(name("timer2").build(), timer(2)).add(name("timer3").build(), timer(3)));
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +

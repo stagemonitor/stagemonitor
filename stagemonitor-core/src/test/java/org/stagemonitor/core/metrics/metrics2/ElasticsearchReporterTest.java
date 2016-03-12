@@ -68,7 +68,7 @@ public class ElasticsearchReporterTest {
 		metricsLogger = mock(Logger.class);
 		corePlugin = mock(CorePlugin.class);
 		elasticsearchReporter = ElasticsearchReporter.forRegistry(new Metric2Registry(), corePlugin)
-				.durationUnit(TimeUnit.NANOSECONDS)
+				.convertDurationsTo(TimeUnit.NANOSECONDS)
 				.globalTags(singletonMap("app", "test"))
 				.httpClient(httpClient)
 				.clock(clock)

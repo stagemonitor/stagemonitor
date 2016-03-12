@@ -5,8 +5,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -74,20 +72,20 @@ public class MetricsReporterTestHelper {
 		return timer;
 	}
 
-	public static <T> SortedMap<String, T> map() {
-		return new TreeMap<String, T>();
+	public static <T> Map<MetricName, T> map() {
+		return new HashMap<MetricName, T>();
 	}
 
-	public static SortedTableLogReporterTest.FluentMap<String, Object> objectMap(String name, Object metric) {
-		return map(name, metric);
+	public static <K> SortedTableLogReporterTest.FluentMap<K, Object> objectMap(K key, Object metric) {
+		return map(key, metric);
 	}
 
-	public static <T> SortedTableLogReporterTest.FluentMap<String, T> map(String name, T metric, Class<T> clazz) {
-		return map(name, metric);
+	public static <K, V> SortedTableLogReporterTest.FluentMap<K, V> map(K key, V value, Class<V> clazz) {
+		return map(key, value);
 	}
 
-	public static <T> SortedTableLogReporterTest.FluentMap<String, T> map(String name, T metric) {
-		final SortedTableLogReporterTest.FluentMap<String, T> map = new SortedTableLogReporterTest.FluentMap<String, T>();
+	public static <K, V> SortedTableLogReporterTest.FluentMap<K, V> map(K name, V metric) {
+		final SortedTableLogReporterTest.FluentMap<K, V> map = new SortedTableLogReporterTest.FluentMap<K, V>();
 		map.put(name, metric);
 		return map;
 	}
@@ -120,7 +118,7 @@ public class MetricsReporterTestHelper {
 		return counter;
 	}
 
-	public static class FluentMap<K, V> extends TreeMap<K, V> {
+	public static class FluentMap<K, V> extends HashMap<K, V> {
 		public FluentMap<K, V> add(K key, V value) {
 			this.put(key, value);
 			return this;

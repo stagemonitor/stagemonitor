@@ -61,7 +61,7 @@ public class ConfigurationOptionTest {
 		registerPluginConfiguration.setAccessible(true);
 		registerPluginConfiguration.invoke(configuration, new StagemonitorPlugin() {
 			public List<ConfigurationOption<?>> getConfigurationOptions() {
-				return Arrays.<ConfigurationOption<?>>asList(invalidPatternMap, invalidPatternSyntax, aLong, invalidLong, string,
+				return Arrays.asList(invalidPatternMap, invalidPatternSyntax, aLong, invalidLong, string,
 						lowerStrings, strings, booleanTrue, booleanFalse, booleanInvalid, testCaching, testUpdate);
 			}
 		});
@@ -128,7 +128,6 @@ public class ConfigurationOptionTest {
 		assertEquals(2003, corePlugin.getGraphitePort());
 		assertEquals(null, corePlugin.getApplicationName());
 		assertEquals(null, corePlugin.getInstanceName());
-		assertEquals(Collections.<Pattern>emptyList(), corePlugin.getExcludedMetricsPatterns());
 	}
 
 	@Test

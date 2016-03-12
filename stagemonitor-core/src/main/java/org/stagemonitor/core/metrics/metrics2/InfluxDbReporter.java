@@ -185,7 +185,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		private final CorePlugin corePlugin;
 
 		private Builder(Metric2Registry registry, CorePlugin corePlugin) {
-			super(registry, "stagemonitor-elasticsearch-reporter");
+			super(registry, "stagemonitor-influxdb-reporter");
 			this.corePlugin = corePlugin;
 		}
 

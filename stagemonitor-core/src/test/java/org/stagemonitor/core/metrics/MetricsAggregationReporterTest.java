@@ -1,23 +1,5 @@
 package org.stagemonitor.core.metrics;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
-import com.codahale.metrics.Timer;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-
-import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.counter;
@@ -27,6 +9,22 @@ import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.map;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.meter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.snapshot;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
+import java.math.BigInteger;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class MetricsAggregationReporterTest {
 
@@ -37,16 +35,14 @@ public class MetricsAggregationReporterTest {
 	public void setUp() throws Exception {
 
 		logger = mock(Logger.class);
-		ScheduledReporter onShutdownReporter = SortedTableLogReporter
-				.forRegistry(mock(MetricRegistry.class))
+		SortedTableLogReporter onShutdownReporter = SortedTableLogReporter
+				.forRegistry(mock(Metric2Registry.class))
 				.log(logger)
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.NANOSECONDS)
-				.filter(MetricFilter.ALL)
 				.formattedFor(Locale.US)
 				.build();
-		reporter = new MetricsAggregationReporter(new MetricRegistry(), MetricFilter.ALL,
-				Collections.singletonList(onShutdownReporter));
+		reporter = MetricsAggregationReporter.forRegistry(new Metric2Registry()).addOnShutdownReporter(onShutdownReporter).build();
 	}
 
 	@Test
@@ -71,16 +67,16 @@ public class MetricsAggregationReporterTest {
 
 	@Test
 	public void testReportGauges() throws Exception {
-		reporter.report(map("string", gauge("foo")).add("double", gauge(2.5d)).add("BigInteger", gauge(new BigInteger("2"))),
-				MetricsReporterTestHelper.<Counter>map(),
-				MetricsReporterTestHelper.<Histogram>map(),
-				MetricsReporterTestHelper.<Meter>map(),
-				MetricsReporterTestHelper.<Timer>map());
-		reporter.report(map("string", gauge("bar")).add("double", gauge(2.5d * 3)).add("BigInteger", gauge(new BigInteger("6"))),
-				MetricsReporterTestHelper.<Counter>map(),
-				MetricsReporterTestHelper.<Histogram>map(),
-				MetricsReporterTestHelper.<Meter>map(),
-				MetricsReporterTestHelper.<Timer>map());
+		reporter.reportMetrics(map(name("string").build(), gauge("foo")).add(name("double").build(), gauge(2.5d)).add(name("BigInteger").build(), gauge(new BigInteger("2"))),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map());
+		reporter.reportMetrics(map(name("string").build(), gauge("bar")).add(name("double").build(), gauge(2.5d * 3)).add(name("BigInteger").build(), gauge(new BigInteger("6"))),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map());
 
 		reporter.onShutDown();
 
@@ -97,17 +93,17 @@ public class MetricsAggregationReporterTest {
 
 	@Test
 	public void testReportCounters() throws Exception {
-		reporter.report(MetricsReporterTestHelper.<Gauge>map(),
-				map("c1", counter(2)),
-				MetricsReporterTestHelper.<Histogram>map(),
-				MetricsReporterTestHelper.<Meter>map(),
-				MetricsReporterTestHelper.<Timer>map());
+		reporter.reportMetrics(MetricsReporterTestHelper.map(),
+				map(name("c1").build(), counter(2)),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map());
 
-		reporter.report(MetricsReporterTestHelper.<Gauge>map(),
-				map("counter1", counter(3)).add("counter2", counter(5)),
-				MetricsReporterTestHelper.<Histogram>map(),
-				MetricsReporterTestHelper.<Meter>map(),
-				MetricsReporterTestHelper.<Timer>map());
+		reporter.reportMetrics(MetricsReporterTestHelper.map(),
+				map(name("counter1").build(), counter(3)).add(name("counter2").build(), counter(5)),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map());
 
 		reporter.onShutDown();
 		verify(logger).info("Metrics ========================================================================\n" +
@@ -122,17 +118,17 @@ public class MetricsAggregationReporterTest {
 
 	@Test
 	public void testReportHistograms() throws Exception {
-		reporter.report(MetricsReporterTestHelper.<Gauge>map(),
-				MetricsReporterTestHelper.<Counter>map(),
-				map("histogram", histogram(1, snapshot(4, 11L, 2L, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0))),
-				MetricsReporterTestHelper.<Meter>map(),
-				MetricsReporterTestHelper.<Timer>map());
+		reporter.reportMetrics(MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				map(name("histogram").build(), histogram(1, snapshot(4, 11L, 2L, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0))),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map());
 
-		reporter.report(MetricsReporterTestHelper.<Gauge>map(),
-				MetricsReporterTestHelper.<Counter>map(),
-				map("histogram", histogram(1 * 3, snapshot(4 * 3, 11L * 3, 2L * 3, 5.0 * 3, 6.0 * 3, 7.0 * 3, 8.0 * 3, 9.0 * 3, 10.0 * 3, 11.0 * 3))),
-				MetricsReporterTestHelper.<Meter>map(),
-				MetricsReporterTestHelper.<Timer>map());
+		reporter.reportMetrics(MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				map(name("histogram").build(), histogram(1 * 3, snapshot(4 * 3, 11L * 3, 2L * 3, 5.0 * 3, 6.0 * 3, 7.0 * 3, 8.0 * 3, 9.0 * 3, 10.0 * 3, 11.0 * 3))),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map());
 
 		reporter.onShutDown();
 
@@ -147,11 +143,11 @@ public class MetricsAggregationReporterTest {
 	@Test
 	public void reportsMeterValues() throws Exception {
 
-		reporter.report(MetricsReporterTestHelper.<Gauge>map(),
-				MetricsReporterTestHelper.<Counter>map(),
-				MetricsReporterTestHelper.<Histogram>map(),
-				map("test.meter1", meter(1L)).add("test.meter2", meter(2)),
-				MetricsReporterTestHelper.<Timer>map());
+		reporter.reportMetrics(MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				map(name("test.meter1").build(), meter(1L)).add(name("test.meter2").build(), meter(2)),
+				MetricsReporterTestHelper.map());
 
 		reporter.onShutDown();
 
@@ -167,17 +163,17 @@ public class MetricsAggregationReporterTest {
 
 	@Test
 	public void testReportTimers() throws Exception {
-		reporter.report(MetricsReporterTestHelper.<Gauge>map(),
-				MetricsReporterTestHelper.<Counter>map(),
-				MetricsReporterTestHelper.<Histogram>map(),
-				MetricsReporterTestHelper.<Meter>map(),
-				map("timer1", timer(1L, 2.0, 3.0, 4.0, 5.0, snapshot(4, 11L, 2L, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0))));
+		reporter.reportMetrics(MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				map(name("timer1").build(), timer(1L, 2.0, 3.0, 4.0, 5.0, snapshot(4, 11L, 2L, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0))));
 
-		reporter.report(MetricsReporterTestHelper.<Gauge>map(),
-				MetricsReporterTestHelper.<Counter>map(),
-				MetricsReporterTestHelper.<Histogram>map(),
-				MetricsReporterTestHelper.<Meter>map(),
-				map("timer1", timer(4L, 2.0 * 3, 3.0 * 3, 4.0 * 3, 5.0 * 3, snapshot(4 * 3, 11L * 3, 1, 5.0 * 3, 6.0 * 3, 7.0 * 3, 8.0 * 3, 9.0 * 3, 10.0 * 3, 11.0 * 3))));
+		reporter.reportMetrics(MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				MetricsReporterTestHelper.map(),
+				map(name("timer1").build(), timer(4L, 2.0 * 3, 3.0 * 3, 4.0 * 3, 5.0 * 3, snapshot(4 * 3, 11L * 3, 1, 5.0 * 3, 6.0 * 3, 7.0 * 3, 8.0 * 3, 9.0 * 3, 10.0 * 3, 11.0 * 3))));
 
 		reporter.onShutDown();
 

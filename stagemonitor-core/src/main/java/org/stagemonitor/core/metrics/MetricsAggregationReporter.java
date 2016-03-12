@@ -1,55 +1,50 @@
 package org.stagemonitor.core.metrics;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 
 /**
  * The MetricsAggregationReporter computes aggregated values of all the metrics and hands them over to a list of other
  * reporters on server shutdown.
  */
-public class MetricsAggregationReporter extends ScheduledReporter {
+public class MetricsAggregationReporter extends ScheduledMetrics2Reporter {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final List<ScheduledReporter> onShutdownReporters;
-	private SortedMap<String, Gauge> aggregatedGauges = new TreeMap<String, Gauge>();
-	private SortedMap<String, Counter> counters = new TreeMap<String, Counter>();
-	private SortedMap<String, Histogram> aggregatedHistograms = new TreeMap<String, Histogram>();
-	private SortedMap<String, Meter> meters = new TreeMap<String, Meter>();
-	private SortedMap<String, Timer> aggregatedTimers = new TreeMap<String, Timer>();
+	private final List<ScheduledMetrics2Reporter> onShutdownReporters;
+	private Map<MetricName, Gauge> aggregatedGauges = new HashMap<MetricName, Gauge>();
+	private Map<MetricName, Counter> counters = new HashMap<MetricName, Counter>();
+	private Map<MetricName, Histogram> aggregatedHistograms = new HashMap<MetricName, Histogram>();
+	private Map<MetricName, Meter> meters = new HashMap<MetricName, Meter>();
+	private Map<MetricName, Timer> aggregatedTimers = new HashMap<MetricName, Timer>();
 
-	/**
-	 *
-	 * @param registry the registry to report
-	 * @param filter a {@link com.codahale.metrics.MetricFilter}
-	 * @param onShutdownReporters a list of reporters that are invoked on server shutdown to report the aggregated metrics
-	 */
-	public MetricsAggregationReporter(MetricRegistry registry, MetricFilter filter, List<ScheduledReporter> onShutdownReporters) {
-		super(registry, "aggregation-reporter", filter, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-		this.onShutdownReporters = Collections.unmodifiableList(new ArrayList<ScheduledReporter>(onShutdownReporters));
+	public static Builder forRegistry(Metric2Registry registry) {
+		return new Builder(registry);
+	}
+
+	public MetricsAggregationReporter(Builder builder) {
+		super(builder);
+		this.onShutdownReporters = builder.getOnShutdownReporters();
 	}
 
 	@Override
-	public void report(SortedMap<String, Gauge> gauges, SortedMap<String, Counter> counters, SortedMap<String, Histogram> histograms,
-					   SortedMap<String, Meter> meters, SortedMap<String, Timer> timers) {
+	public void reportMetrics(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters, Map<MetricName, Histogram> histograms,
+							  Map<MetricName, Meter> meters, Map<MetricName, Timer> timers) {
 
-		for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+		for (Map.Entry<MetricName, Gauge> entry : gauges.entrySet()) {
 			if (entry.getValue().getValue() instanceof Number) {
 				final Gauge<Number> gauge = (Gauge<Number>) entry.getValue();
 				if (aggregatedGauges.containsKey(entry.getKey())) {
@@ -62,7 +57,7 @@ public class MetricsAggregationReporter extends ScheduledReporter {
 			}
 		}
 		this.counters = counters;
-		for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
+		for (Map.Entry<MetricName, Histogram> entry : histograms.entrySet()) {
 			if (aggregatedHistograms.containsKey(entry.getKey())) {
 				((AggregatedHistogram) aggregatedHistograms.get(entry.getKey())).add(entry.getValue());
 			} else {
@@ -70,7 +65,7 @@ public class MetricsAggregationReporter extends ScheduledReporter {
 			}
 		}
 		this.meters = meters;
-		for (Map.Entry<String, Timer> entry : timers.entrySet()) {
+		for (Map.Entry<MetricName, Timer> entry : timers.entrySet()) {
 			if (aggregatedTimers.containsKey(entry.getKey())) {
 				((AggregatedTimer) aggregatedTimers.get(entry.getKey())).add(entry.getValue());
 			} else {
@@ -84,9 +79,9 @@ public class MetricsAggregationReporter extends ScheduledReporter {
 	 * The aggregated metrics are then reported by the {@link #onShutdownReporters}
 	 */
 	public void onShutDown() {
-		for (ScheduledReporter onShutdownReporter : onShutdownReporters) {
+		for (ScheduledMetrics2Reporter onShutdownReporter : onShutdownReporters) {
 			try {
-				onShutdownReporter.report(aggregatedGauges, counters, aggregatedHistograms, meters, aggregatedTimers);
+				onShutdownReporter.reportMetrics(aggregatedGauges, counters, aggregatedHistograms, meters, aggregatedTimers);
 			} catch (RuntimeException e) {
 				logger.warn(e.getMessage() + " (this exception was ignored)", e);
 			}
@@ -96,8 +91,8 @@ public class MetricsAggregationReporter extends ScheduledReporter {
 	/**
 	 * Computes the average without storing all measurements
 	 *
-	 * @param average the current average (initially 0)
-	 * @param count the number of measurements (initially 0)
+	 * @param average  the current average (initially 0)
+	 * @param count    the number of measurements (initially 0)
 	 * @param newValue the value of the current measurement
 	 * @return the arithmetic mean
 	 */
@@ -105,4 +100,33 @@ public class MetricsAggregationReporter extends ScheduledReporter {
 		return (average * count + newValue) / (count + 1);
 	}
 
+	public static class Builder extends ScheduledMetrics2Reporter.Builder<MetricsAggregationReporter, Builder> {
+		private final List<ScheduledMetrics2Reporter> onShutdownReporters = new LinkedList<ScheduledMetrics2Reporter>();
+
+		/**
+		 * @param registry the registry to report
+		 */
+		public Builder(Metric2Registry registry) {
+			super(registry, "stagemonitor-aggregation-reporter");
+		}
+
+		public List<ScheduledMetrics2Reporter> getOnShutdownReporters() {
+			return onShutdownReporters;
+		}
+
+		public Builder addOnShutdownReporter(ScheduledMetrics2Reporter reporter) {
+			onShutdownReporters.add(reporter);
+			return this;
+		}
+
+		@Override
+		public MetricsAggregationReporter build() {
+			return new MetricsAggregationReporter(this);
+		}
+
+		public Builder onShutdownReporters(List<ScheduledMetrics2Reporter> onShutdownReporters) {
+			this.onShutdownReporters.addAll(onShutdownReporters);
+			return this;
+		}
+	}
 }
