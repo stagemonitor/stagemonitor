@@ -1,29 +1,40 @@
 package org.stagemonitor.benchmark.profiler;
 
-import java.lang.management.ManagementFactory;
-
 import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
-@Fork(jvmArgs = {"-Xmx6144m", "-Xms6144m", "-XX:NewSize=6000m", "-XX:MaxNewSize=6000m"})
+//@Fork(jvmArgs = {"-Xmx6144m", "-Xms6144m", "-XX:NewSize=6000m", "-XX:MaxNewSize=6000m"})
 @State(Scope.Benchmark)
 public class VariableMethodsBenchmark {
 
 	private ClassManualProfiling classManualProfiling = new ClassManualProfiling();
 
-	@Setup
-	public void setUp() {
-		assertProfilingWorks(testManualProfiling());
+	public static void main(String[] args) {
+		final VariableMethodsBenchmark benchmark = new VariableMethodsBenchmark();
+		long start = System.currentTimeMillis();
+		long dummy = 0;
+		for (int i = 0; i < 10_000; i++) {
+			dummy |= benchmark.testManualProfiling().getExecutionTime();
+		}
+		System.out.println(dummy);
+		System.out.println(System.currentTimeMillis() - start);
+//		System.out.println("Size of objectPool: " + CallStackElement.objectPool.size());
 	}
 
-	@Param({"1", "10", "100", "1000"})
-	private int iterations;
+	@Setup
+	public void init() {
+		System.out.println("object pooling: " + Stagemonitor.getPlugin(RequestMonitorPlugin.class).isProfilerObjectPoolingActive());
+	}
+
+	@Param({"1000"})
+	private int iterations = 1000;
 
 	@Benchmark
 	public CallStackElement testManualProfiling() {
@@ -33,15 +44,8 @@ public class VariableMethodsBenchmark {
 			classManualProfiling.method1();
 		}
 		Profiler.stop();
-		assertProfilingWorks(root);
+		root.recycle();
 		return root;
-	}
-
-	private void assertProfilingWorks(CallStackElement cse) {
-		if (cse == null || cse.getChildren().size() != iterations) {
-			System.out.println(cse);
-			throw new IllegalStateException("profiling did not work! " + ManagementFactory.getRuntimeMXBean().getInputArguments());
-		}
 	}
 
 }

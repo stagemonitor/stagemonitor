@@ -182,7 +182,7 @@ public class ElasticsearchRequestTraceReporterTest {
 
 	private RequestTrace createTestRequestTraceWithCallTree(long executionTime) {
 		final RequestTrace requestTrace = new RequestTrace(UUID.randomUUID().toString(), new MeasurementSession("ERTRT", "test", "test"), requestMonitorPlugin);
-		requestTrace.setCallStack(new CallStackElement("test"));
+		requestTrace.setCallStack(CallStackElement.createRoot("test"));
 		requestTrace.setName("Report Me");
 		requestTrace.setExecutionTime(executionTime);
 		registry.timer(RequestMonitor.getTimerMetricName(requestTrace.getName())).update(executionTime, TimeUnit.NANOSECONDS);

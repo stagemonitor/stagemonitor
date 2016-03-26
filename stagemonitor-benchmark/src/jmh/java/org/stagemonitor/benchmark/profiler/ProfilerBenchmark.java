@@ -2,10 +2,10 @@ package org.stagemonitor.benchmark.profiler;
 
 import java.lang.management.ManagementFactory;
 
-import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
@@ -14,31 +14,36 @@ public class ProfilerBenchmark {
 
 	private ClassNotToProfile classNotToProfile;
 	private ClassJavassistProfiled classJavassistProfiled;
-	private ClassByteBuddyProfiled classByteBuddyProfiled;
+//	private ClassByteBuddyProfiled classByteBuddyProfiled;
 	private ClassManualProfiling classManualProfiling;
 	private ClassOptimalPerformanceProfied classOptimalPerformanceProfied;
 
+	public static void main(String[] args) {
+		new ProfilerBenchmark().init();
+	}
+
 	@Setup
 	public void init() {
+		Stagemonitor.init();
 		classNotToProfile = new ClassNotToProfile();
 		classJavassistProfiled = new ClassJavassistProfiled();
 		classManualProfiling = new ClassManualProfiling();
 		classOptimalPerformanceProfied = new ClassOptimalPerformanceProfied();
-		classByteBuddyProfiled = new ClassByteBuddyProfiled();
+//		classByteBuddyProfiled = new ClassByteBuddyProfiled();
 
 		Profiler.deactivateProfiling();
 		assertProfilingWorks(manual());
-		assertProfilingWorks(byteBuddy());
-		assertProfilingWorks(javassist());
+//		assertProfilingWorks(byteBuddy());
+//		assertProfilingWorks(javassist());
 		Profiler.deactivateProfiling();
 	}
 
-	@Benchmark
+	//@Benchmark
 	public int noProfiling() {
 		return classNotToProfile.method1();
 	}
 
-	@Benchmark
+	//@Benchmark
 	public int theoreticalOptimum() {
 		OptimalPerformanceProfilerMock.clear();
 		OptimalPerformanceProfilerMock.start();
@@ -49,7 +54,7 @@ public class ProfilerBenchmark {
 		}
 	}
 
-	@Benchmark
+	//@Benchmark
 	public CallStackElement manual() {
 		CallStackElement root = Profiler.activateProfiling("root");
 		classManualProfiling.method1();
@@ -57,12 +62,12 @@ public class ProfilerBenchmark {
 		return root;
 	}
 
-	@Benchmark
+//	//@Benchmark
 	public int javassistDeactivated() {
 		return classJavassistProfiled.method1();
 	}
 
-	@Benchmark
+//	//@Benchmark
 	public CallStackElement javassist() {
 		CallStackElement root = Profiler.activateProfiling("root");
 		classJavassistProfiled.method1();
@@ -70,13 +75,13 @@ public class ProfilerBenchmark {
 		return root;
 	}
 	
-	@Benchmark
-	public CallStackElement byteBuddy() {
-		CallStackElement root = Profiler.activateProfiling("root");
-		classByteBuddyProfiled.method1();
-		Profiler.stop();
-		return root;
-	}
+//	//@Benchmark
+//	public CallStackElement byteBuddy() {
+//		CallStackElement root = Profiler.activateProfiling("root");
+//		classByteBuddyProfiled.method1();
+//		Profiler.stop();
+//		return root;
+//	}
 
 	private static void assertProfilingWorks(CallStackElement cse) {
 		if (cse.getChildren().isEmpty() || !cse.getChildren().get(0).getSignature().contains("method1")) {

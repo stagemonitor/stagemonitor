@@ -5,14 +5,25 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class CallStackElement {
 
+	private static final boolean useObjectPooling = Stagemonitor.getPlugin(RequestMonitorPlugin.class).isProfilerObjectPoolingActive();
+	private static Queue<CallStackElement> objectPool;
+	static {
+		if (useObjectPooling) {
+			objectPool = new ArrayBlockingQueue<CallStackElement>(100000);
+		}
+	}
 	private static final String HORIZONTAL;       // '│   '
-	private static final String ANGLE;            // '└── '
 	private static final String HORIZONTAL_ANGLE; // '├── '
+	private static final String ANGLE;            // '└── '
 	static {
 		HORIZONTAL = new String(new char[]{9474, ' ', ' ', ' '});
 		ANGLE = new String(new char[] {9492, 9472, 9472, ' '});
@@ -25,12 +36,12 @@ public class CallStackElement {
 	private long executionTime;
 	private List<CallStackElement> children = new LinkedList<CallStackElement>();
 
-	public CallStackElement(String signature) {
-		this(null, signature);
+	public static CallStackElement createRoot(String signature) {
+		return CallStackElement.create(null, signature, System.nanoTime());
 	}
 
-	public CallStackElement(CallStackElement parent, String signature) {
-		this(parent, signature, System.nanoTime());
+	public static CallStackElement create(CallStackElement parent, String signature) {
+		return CallStackElement.create(parent, signature, System.nanoTime());
 	}
 
 	/**
@@ -38,13 +49,38 @@ public class CallStackElement {
 	 * @param parent the parent
 	 * @param startTimestamp the timestamp at the beginning of the method
 	 */
-	public CallStackElement(CallStackElement parent, String signature, long startTimestamp) {
-		executionTime = startTimestamp;
-		this.signature = signature;
-		if (parent != null) {
-			this.parent = parent;
-			parent.getChildren().add(this);
+	public static CallStackElement create(CallStackElement parent, String signature, long startTimestamp) {
+		CallStackElement cse;
+		if (useObjectPooling) {
+			cse = objectPool.poll();
+			if (cse == null) {
+				cse = new CallStackElement();
+			}
+		} else {
+			cse = new CallStackElement();
 		}
+
+		cse.executionTime = startTimestamp;
+		cse.signature = signature;
+		if (parent != null) {
+			cse.parent = parent;
+			parent.children.add(cse);
+		}
+		return cse;
+	}
+
+	public void recycle() {
+		if (!useObjectPooling) {
+			return;
+		}
+		parent = null;
+		signature = null;
+		executionTime = 0;
+		for (CallStackElement child : children) {
+			child.recycle();
+		}
+		children.clear();
+		objectPool.offer(this);
 	}
 
 	public void removeCallsFasterThan(long thresholdNs) {
@@ -52,6 +88,7 @@ public class CallStackElement {
 			CallStackElement child = iterator.next();
 			if (child.executionTime < thresholdNs && !child.isIOQuery()) {
 				iterator.remove();
+				child.recycle();
 			} else {
 				child.removeCallsFasterThan(thresholdNs);
 			}
@@ -130,7 +167,7 @@ public class CallStackElement {
 	}
 
 	private void removeLastChild() {
-		children.remove(children.size() - 1);
+		children.remove(children.size() - 1).recycle();
 	}
 
 	public void executionStopped(long executionTime) {
@@ -249,4 +286,5 @@ public class CallStackElement {
 	private boolean isRoot() {
 		return parent == null;
 	}
+
 }

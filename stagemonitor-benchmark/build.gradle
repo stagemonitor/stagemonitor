@@ -1,5 +1,5 @@
 plugins {
-	id 'me.champeau.gradle.jmh' version '0.2.0'
+	id 'me.champeau.gradle.jmh' version '0.3.0'
 }
 
 apply plugin: 'me.champeau.gradle.jmh'
@@ -12,13 +12,15 @@ jmh {
 	benchmarkMode = 'AverageTime'
 	humanOutputFile = null
 	timeUnit = 'ns'
-	jvmArgs = "-javaagent:$rootProject.projectDir/stagemonitor-javaagent/build/libs/stagemonitor-javaagent-${version}.jar " +
-			"-javaagent:$rootProject.projectDir/stagemonitor-benchmark/stagemonitor-byte-buddy-agent/build/libs/stagemonitor-byte-buddy-agent-${version}.jar"
-	include = ['.*ProfilerBenchmark.*']
-//	profilers = ['HS_GC']
+	//jvmArgs = "-javaagent:$rootProject.projectDir/stagemonitor-benchmark/stagemonitor-byte-buddy-agent/build/libs/stagemonitor-byte-buddy-agent-${version}.jar"
+//	include = ['.*VariableMethodsBenchmark.*']
 }
 
-jmhJar.dependsOn << ':stagemonitor-javaagent:jar' << ':stagemonitor-benchmark:stagemonitor-byte-buddy-agent:jar'
+//jmhJar.dependsOn << ':stagemonitor-javaagent:jar' << ':stagemonitor-benchmark:stagemonitor-byte-buddy-agent:jar'
+
+jmhJar {
+	mergeServiceFiles()
+}
 
 dependencies {
 	compile project(":stagemonitor-web")

@@ -15,13 +15,13 @@ public class CallStackElementTest {
 
 	@Test
 	public void testGetShortSignature() {
-		CallStackElement callStackElement = new CallStackElement("public void org.stagemonitor.requestmonitor.profiler.CallStackElementTest.testGetShortSignature()");
+		CallStackElement callStackElement = CallStackElement.createRoot("public void org.stagemonitor.requestmonitor.profiler.CallStackElementTest.testGetShortSignature()");
 		Assert.assertEquals("CallStackElementTest#testGetShortSignature", callStackElement.getShortSignature());
 	}
 
 	@Test
 	public void testGetShortSignatureTotal() {
-		CallStackElement callStackElement = new CallStackElement("total");
+		CallStackElement callStackElement = CallStackElement.createRoot("total");
 		Assert.assertNull(callStackElement.getShortSignature());
 	}
 }

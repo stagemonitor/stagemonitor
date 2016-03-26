@@ -70,6 +70,19 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(0.5)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Boolean> profilerObjectPooling = ConfigurationOption.booleanOption()
+			.key("stagemonitor.profiler.objectPooling")
+			.dynamic(false)
+			.label("Activate Profiler Object Pooling")
+			.description("Activates the experimental object pooling feature for the profiler. When enabled, instances of " +
+					"CallStackElement are not garbage collected but put into an object pool when not needed anymore. " +
+					"When we need a new instance of CallStackElement, it is not created with `new CallStackElement()` " +
+					"but taken from the pool instead. This aims to reduce heap usage and garbage collections caused by " +
+					"stagemonitor.")
+			.defaultValue(false)
+			.tags("experimental")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 	private final ConfigurationOption<Double> onlyCollectNCallTreesPerMinute = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
@@ -317,5 +330,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public Collection<String> getUnnestExceptions() {
 		return unnestExceptions.getValue();
+	}
+
+	public boolean isProfilerObjectPoolingActive() {
+		return profilerObjectPooling.getValue();
 	}
 }

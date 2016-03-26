@@ -15,7 +15,7 @@ public final class Profiler {
 	public static void start(String signature) {
 		final CallStackElement parent = methodCallParent.get();
 		if (parent != null) {
-			methodCallParent.set(new CallStackElement(parent, signature));
+			methodCallParent.set(CallStackElement.create(parent, signature));
 		}
 	}
 
@@ -32,7 +32,7 @@ public final class Profiler {
 
 	public static void addCall(String signature, long executionTimeNanos) {
 		final CallStackElement currentCall = methodCallParent.get();
-		new CallStackElement(currentCall, signature, executionTimeNanos);
+		CallStackElement.create(currentCall, signature, executionTimeNanos);
 	}
 
 	public static boolean isProfilingActive() {
@@ -46,7 +46,7 @@ public final class Profiler {
 	 * @return the root of the call stack
 	 */
 	public static CallStackElement activateProfiling(String signature) {
-		CallStackElement root = new CallStackElement(signature);
+		CallStackElement root = CallStackElement.createRoot(signature);
 		methodCallParent.set(root);
 		return root;
 	}

@@ -108,6 +108,7 @@ public class ManualProfilerTest {
 						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user \n" +
 						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address \n" +
 						"000250.00  025% ||:------- 000250.00  025% ||:-------         `-- method1_2_1()\n", callStackElement.toString());
+		callStackElement.recycle();
 	}
 
 	@Test
@@ -129,6 +130,7 @@ public class ManualProfilerTest {
 						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user \n" +
 						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address \n" +
 						"000250.00  025% ||:------- 000250.00  025% ||:-------         `-- method1_2_1()\n", callStackElement.toString());
+		callStackElement.recycle();
 	}
 
 	@Test
@@ -149,6 +151,7 @@ public class ManualProfilerTest {
 						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from user \n" +
 						"000050.00  005% :--------- 000050.00  005% :---------         |-- select * from address \n" +
 						"000250.00  025% ||:------- 000250.00  025% ||:-------         `-- method1_2_1()\n", callStackElement.toString());
+		callStackElement.recycle();
 	}
 
 	@Test

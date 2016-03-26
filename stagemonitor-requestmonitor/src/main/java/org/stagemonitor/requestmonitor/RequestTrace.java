@@ -332,4 +332,9 @@ public class RequestTrace {
 	public void setUniqueVisitorId(String uniqueVisitorId) {
 		this.uniqueVisitorId = uniqueVisitorId;
 	}
+
+	@Override
+	public void finalize() {
+		callStack.recycle();
+	}
 }

@@ -63,6 +63,9 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	 * @param cacheManager The CacheManager to monitor
 	 */
 	public void monitorCaches(CacheManager cacheManager) {
+		if (cacheManager == null) {
+			return;
+		}
 		for (String cacheName : cacheManager.getCacheNames()) {
 			monitorCache(cacheManager.getCache(cacheName));
 		}
