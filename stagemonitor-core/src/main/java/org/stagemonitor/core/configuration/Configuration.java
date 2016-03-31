@@ -308,10 +308,8 @@ public class Configuration {
 	 * @return <code>true</code>, if the password is correct, <code>false</code> otherwise
 	 */
 	public boolean isPasswordCorrect(String password) {
-		if (password == null) {
-			password = "";
-		}
-		return isPasswordSet() && getString(updateConfigPasswordKey).equals(password);
+		final String actualPassword = getString(updateConfigPasswordKey);
+		return "".equals(actualPassword) || isPasswordSet() && actualPassword.equals(password);
 	}
 
 	/**
