@@ -49,7 +49,7 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 		final HttpRequestTrace requestTrace = injectArguments.getRequestInformation().getRequestTrace();
 		injectArguments.setContentToInjectBeforeClosingBody(boomerangTemplate
 				.replace("${requestId}", String.valueOf(requestTrace.getId()))
-				.replace("${requestName}", requestTrace.getName())
+				.replace("${requestName}", String.valueOf(requestTrace.getName()))
 				.replace("${serverTime}", Long.toString(requestTrace.getExecutionTime())));
 	}
 
