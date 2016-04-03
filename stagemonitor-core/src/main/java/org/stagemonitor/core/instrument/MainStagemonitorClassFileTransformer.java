@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.codahale.metrics.Timer;
+import javassist.ByteArrayClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
@@ -201,9 +202,10 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		return classfileBuffer;
 	}
 
-	public CtClass getCtClass(ClassLoader loader, byte[] classfileBuffer, String className) throws Exception {
+	private CtClass getCtClass(ClassLoader loader, byte[] classfileBuffer, String className) throws Exception {
 		final int classLoaderHash = System.identityHashCode(loader);
 		ClassPool classPool;
+		final String classNameDotSeparated = className.replace('/', '.');
 		if (classPoolsByClassLoaderHash.containsKey(classLoaderHash)) {
 			classPool = classPoolsByClassLoaderHash.get(classLoaderHash);
 		} else {
@@ -211,7 +213,18 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			classPool.insertClassPath(new LoaderClassPath(loader));
 			classPoolsByClassLoaderHash.put(classLoaderHash, classPool);
 		}
-		return classPool.get(className.replace('/', '.'));
+		classPool.insertClassPath(new ByteArrayClassPath(classNameDotSeparated, classfileBuffer));
+		return classPool.get(classNameDotSeparated);
+	}
+
+	/**
+	 * This method should be called when the instrumentation of the classes is mostly done.
+	 * <p/>
+	 * This makes sure that the {@link ClassPool} including all it's {@link ByteArrayClassPath} can be garbage collected.
+	 * Instrumentation is still possible afterwards, the {@link ClassPool}s just will be recreated
+	 */
+	public static void clearClassPools() {
+		classPoolsByClassLoaderHash.clear();
 	}
 
 }

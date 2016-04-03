@@ -31,6 +31,7 @@ import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.core.metrics.MetricNameFilter;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
@@ -392,6 +393,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(InitArguments initArguments) {
+		MainStagemonitorClassFileTransformer.clearClassPools();
 		this.metricRegistry = initArguments.getMetricRegistry();
 		final Integer reloadInterval = getReloadConfigurationInterval();
 		if (reloadInterval > 0) {
