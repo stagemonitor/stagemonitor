@@ -56,7 +56,7 @@ public class MailAlerter extends Alerter {
 	}
 
 	private Session getSession() {
-		Properties props = System.getProperties();
+		Properties props = (Properties) System.getProperties().clone();
 		if (isNotEmpty(alertingPlugin.getSmtpUser()) && isNotEmpty(alertingPlugin.getSmtpPassword())) {
 			props.setProperty("mail.smtps.auth", "true");
 		}
