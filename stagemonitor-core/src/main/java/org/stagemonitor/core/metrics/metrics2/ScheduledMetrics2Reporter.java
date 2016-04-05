@@ -104,7 +104,7 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 						logger.error("RuntimeException thrown from {}#report. Exception was suppressed.", getClass().getSimpleName(), ex);
 					}
 				}
-			}, getNextTimestampThatIsDivisableByPeriod(System.currentTimeMillis(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
+			}, getOffsetUntilTimestampIsDivisableByPeriod(System.currentTimeMillis(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
 			this.started = true;
 		}
 	}
@@ -115,9 +115,8 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 	 * See https://blog.raintank.io/how-to-effectively-use-the-elasticsearch-data-source-and-solutions-to-common-pitfalls/#incomplete
 	 * and also https://blog.raintank.io/25-graphite-grafana-and-statsd-gotchas/#graphite.quantization
 	 */
-	public static long getNextTimestampThatIsDivisableByPeriod(long currentTimestamp, long periodInMS) {
-		final long offset = periodInMS - (currentTimestamp % periodInMS);
-		return currentTimestamp + offset;
+	public static long getOffsetUntilTimestampIsDivisableByPeriod(long currentTimestamp, long periodInMS) {
+		return periodInMS - (currentTimestamp % periodInMS);
 	}
 
 	public abstract static class Builder<R extends ScheduledMetrics2Reporter, B extends Builder> {
