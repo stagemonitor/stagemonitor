@@ -94,7 +94,6 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 				throw new IllegalStateException("This reporter has already been started");
 			}
 			final long periodInMS = unit.toMillis(period);
-			this.clock = new QuantizedClock(clock, periodInMS);
 			executor.scheduleAtFixedRate(new Runnable() {
 				@Override
 				public void run() {
@@ -104,7 +103,8 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 						logger.error("RuntimeException thrown from {}#report. Exception was suppressed.", getClass().getSimpleName(), ex);
 					}
 				}
-			}, getOffsetUntilTimestampIsDivisableByPeriod(System.currentTimeMillis(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
+			}, getOffsetUntilTimestampIsDivisableByPeriod(clock.getTime(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
+			this.clock = new QuantizedClock(clock, periodInMS);
 			this.started = true;
 		}
 	}

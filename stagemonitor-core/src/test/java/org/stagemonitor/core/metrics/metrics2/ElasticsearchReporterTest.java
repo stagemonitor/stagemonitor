@@ -1,5 +1,6 @@
 package org.stagemonitor.core.metrics.metrics2;
 
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -8,6 +9,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.counter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.gauge;
@@ -31,12 +33,14 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.metrics.MetricNameFilter;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -48,10 +52,12 @@ public class ElasticsearchReporterTest {
 	private ByteArrayOutputStream out;
 	private Logger metricsLogger;
 	private CorePlugin corePlugin;
+	private Metric2Registry registry;
+	private Clock clock;
 
 	@Before
 	public void setUp() throws Exception {
-		final Clock clock = mock(Clock.class);
+		this.clock = mock(Clock.class);
 		timestamp = System.currentTimeMillis();
 		when(clock.getTime()).thenReturn(timestamp);
 		final HttpClient httpClient = mock(HttpClient.class);
@@ -67,15 +73,63 @@ public class ElasticsearchReporterTest {
 		});
 		metricsLogger = mock(Logger.class);
 		corePlugin = mock(CorePlugin.class);
-		elasticsearchReporter = ElasticsearchReporter.forRegistry(new Metric2Registry(), corePlugin)
+		registry = new Metric2Registry();
+		elasticsearchReporter = ElasticsearchReporter.forRegistry(registry, corePlugin)
 				.convertDurationsTo(TimeUnit.NANOSECONDS)
 				.globalTags(singletonMap("app", "test"))
 				.httpClient(httpClient)
 				.clock(clock)
 				.elasticsearchMetricsLogger(metricsLogger)
+				.filter(MetricNameFilter.excludePatterns(singleton(name("reporting_time").build())))
 				.build();
 
 		out = new ByteArrayOutputStream();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		elasticsearchReporter.close();
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void testScheduleTwice() throws Exception {
+		elasticsearchReporter.start(100, TimeUnit.MILLISECONDS);
+		elasticsearchReporter.start(100, TimeUnit.MILLISECONDS);
+	}
+
+	@Test
+	public void testSchedule() throws Exception {
+		when(corePlugin.isOnlyLogElasticsearchMetricReports()).thenReturn(true);
+		// this clock starts at 0 and then progresses normally
+		when(clock.getTime()).then(new Answer<Long>() {
+			long firstTimestamp;
+
+			@Override
+			public Long answer(InvocationOnMock invocation) throws Throwable {
+				final long time = System.currentTimeMillis();
+				if (firstTimestamp == 0) {
+					firstTimestamp = time;
+				}
+				return (time - firstTimestamp);
+			}
+		});
+
+		registry.register(name("test").build(), new Gauge<Integer>() {
+			@Override
+			public Integer getValue() {
+				return 1;
+			}
+		});
+
+		elasticsearchReporter.start(100, TimeUnit.MILLISECONDS);
+		Thread.sleep(300);
+		verify(metricsLogger).info(eq(String.format("{\"index\":{\"_index\":\"stagemonitor-metrics-%s\",\"_type\":\"metrics\"}}\n" +
+				"{\"@timestamp\":100,\"name\":\"test\",\"app\":\"test\",\"value\":1.0}\n", StringUtils.getLogstashStyleDate())));
+		verify(metricsLogger).info(eq(String.format("{\"index\":{\"_index\":\"stagemonitor-metrics-%s\",\"_type\":\"metrics\"}}\n" +
+				"{\"@timestamp\":200,\"name\":\"test\",\"app\":\"test\",\"value\":1.0}\n", StringUtils.getLogstashStyleDate())));
+		verify(metricsLogger).info(eq(String.format("{\"index\":{\"_index\":\"stagemonitor-metrics-%s\",\"_type\":\"metrics\"}}\n" +
+				"{\"@timestamp\":300,\"name\":\"test\",\"app\":\"test\",\"value\":1.0}\n", StringUtils.getLogstashStyleDate())));
+		verifyNoMoreInteractions(metricsLogger);
 	}
 
 	@Test
