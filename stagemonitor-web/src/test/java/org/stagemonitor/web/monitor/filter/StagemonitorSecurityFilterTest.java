@@ -33,6 +33,7 @@ public class StagemonitorSecurityFilterTest {
 
 		testFilter("/stagemonitor/public",        "",        false,     null,       null,       true);
 		testFilter("/stagemonitor/foo",           "",        false,     null,       null,       true);
+		testFilter("/stagemonitor/foo",           "",        false,     "pw",       null,       true);
 
 		testFilter("/stagemonitor/public",        "pw",      true,      null,       null,       true);
 		testFilter("/stagemonitor/foo",           "pw",      true,      null,       null,       true);

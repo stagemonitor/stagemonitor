@@ -309,7 +309,7 @@ public class Configuration {
 	 */
 	public boolean isPasswordCorrect(String password) {
 		final String actualPassword = getString(updateConfigPasswordKey);
-		return "".equals(actualPassword) || isPasswordSet() && actualPassword.equals(password);
+		return "".equals(actualPassword) || actualPassword != null && actualPassword.equals(password);
 	}
 
 	/**
