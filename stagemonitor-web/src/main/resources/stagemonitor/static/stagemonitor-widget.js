@@ -13,8 +13,11 @@ $(document).ready(function () {
 				stagemonitor.passwordSet = passwordSet;
 				stagemonitor.connectionId = connectionId;
 				stagemonitor.pathsOfWidgetMetricTabPlugins = pathsOfWidgetMetricTabPlugins;
+				if (window.pageLoadTime) {
+					data.pageLoadTime = window.pageLoadTime;
+				}
 				setCallTree(data);
-				setRequestTrace(data);
+				renderRequestTab(data);
 				listenForAjaxRequestTraces(data, connectionId);
 				$("#call-stack-tab").find("a").click(function () {
 					renderCallTree();
@@ -30,16 +33,17 @@ $(document).ready(function () {
 		thresholdExceeded: false,
 		renderPageLoadTime: function (pageLoadTimeData) {
 			stagemonitor.rootRequestTrace.pageLoadTime = pageLoadTimeData;
-			if (stagemonitor.initialized) {
-				renderRequestTab();
-			}
+			renderRequestTab(stagemonitor.rootRequestTrace);
 		},
 		initialized: false,
 		onOpen: function () {
+			try {
+				renderCallTree();
+			} catch (e) {
+				console.log(e);
+			}
 			if (!stagemonitor.initialized) {
 				try {
-					renderCallTree();
-					renderRequestTab();
 					renderConfigTab(stagemonitor.configurationSources, stagemonitor.configurationOptions, stagemonitor.passwordSet);
 					try {
 						renderMetricsTab();

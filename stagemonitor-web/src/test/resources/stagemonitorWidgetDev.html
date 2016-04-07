@@ -32,7 +32,11 @@
 					};
 					if (data.totalPageLoadTime) {
 						var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
-						stagemonitorWindow.stagemonitor.renderPageLoadTime(data);
+						if (stagemonitorWindow.stagemonitor) {
+							stagemonitorWindow.stagemonitor.renderPageLoadTime(data);
+						} else {
+							stagemonitorWindow.pageLoadTime = data;
+						}
 						var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 						var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 						document.getElementById("stagemonitor-overlay-show").className = clazz;

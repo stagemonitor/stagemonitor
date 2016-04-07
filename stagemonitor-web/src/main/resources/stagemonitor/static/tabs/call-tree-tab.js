@@ -2,10 +2,7 @@ function setCallTree(callTree) {
 	stagemonitor.callTree = callTree;
 }
 
-function renderCallTree(callTree) {
-	if (callTree) {
-		setCallTree(callTree);
-	}
+function renderCallTree() {
 	if (stagemonitor.callTree === stagemonitor.renderedCallTree) {
 		return;
 	}

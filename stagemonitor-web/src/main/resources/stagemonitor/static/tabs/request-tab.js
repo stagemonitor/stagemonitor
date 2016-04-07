@@ -1,10 +1,6 @@
-function setRequestTrace(requestTrace) {
-	stagemonitor.requestTrace = requestTrace;
-}
-
 function renderRequestTab(requestTrace) {
 	if (requestTrace) {
-		setRequestTrace(requestTrace)
+		stagemonitor.requestTrace = requestTrace;
 	}
 	var $requestTab = $("#request-tab");
 	if (!stagemonitor.requestTrace) {
@@ -22,14 +18,6 @@ function renderRequestTab(requestTrace) {
 
 	var thresholdExceededGlobal = false;
 	var requestsMetrics = processRequestsMetrics(stagemonitor.requestTrace);
-
-	$.get(stagemonitor.contextPath + "/stagemonitor/static/tabs/request-tab.html", function (template) {
-		var metricsTemplate = Handlebars.compile($(template).html());
-		var renderedMetricsTemplate = metricsTemplate(requestsMetrics);
-		var $stagemonitorRequest = $("#stagemonitor-request");
-		$stagemonitorRequest.html(renderedMetricsTemplate);
-		$(".tip").tooltip({html: true});
-	});
 
 	function processRequestsMetrics(requestData) {
 		var exceededThreshold = function (key, value) {
@@ -101,39 +89,55 @@ function renderRequestTab(requestTrace) {
 	}
 
 	stagemonitor.thresholdExceeded |= thresholdExceededGlobal;
-	if (stagemonitor.requestTrace.pageLoadTime) {
-		doRenderPageLoadTime(stagemonitor.requestTrace.pageLoadTime);
+
+	var pageLoadTimeModel = getPageLoadTimeModel(stagemonitor.requestTrace.pageLoadTime);
+	if (pageLoadTimeModel) {
+		stagemonitor.thresholdExceeded |= pageLoadTimeModel.totalThresholdExceeded;
+		stagemonitor.thresholdExceeded |= pageLoadTimeModel.serverThresholdExceeded;
 	}
+
+	$.get(stagemonitor.contextPath + "/stagemonitor/static/tabs/request-tab.html", function (template) {
+		var metricsTemplate = Handlebars.compile($(template).html());
+		var renderedMetricsTemplate = metricsTemplate(requestsMetrics);
+		var $stagemonitorRequest = $("#stagemonitor-request");
+		$stagemonitorRequest.html(renderedMetricsTemplate);
+		$(".tip").tooltip({html: true});
+		doRenderPageLoadTime(pageLoadTimeModel);
+	});
 }
 
-function doRenderPageLoadTime(data) {
+function getPageLoadTimeModel(data) {
 	if (!data) {
 		return;
 	}
 	var thresholdMs = localStorage.getItem("widget-settings-execution-threshold-milliseconds");
-	var thresholdExceeded = data.totalPageLoadTime > thresholdMs;
+	var model = {
+		networkMs: data.timeToFirstByte - data.serverTime,
+		networkPercent: (((data.timeToFirstByte - data.serverTime) / data.totalPageLoadTime) * 100).toFixed(2),
+		serverMs: data.serverTime,
+		serverPercent: ((data.serverTime / data.totalPageLoadTime) * 100).toFixed(2),
+		serverThresholdExceeded: data.serverTime > thresholdMs,
+		domProcessingMs: data.domProcessing,
+		domProcessingPercent: ((data.domProcessing / data.totalPageLoadTime) * 100).toFixed(2),
+		pageRenderingMs: data.pageRendering,
+		pageRenderingPercent: ((data.pageRendering / data.totalPageLoadTime) * 100).toFixed(2),
+		totalMs: data.totalPageLoadTime,
+		totalThresholdExceeded: data.totalPageLoadTime > thresholdMs
+	};
+	model["pageRenderingPercent"] = (100 - model.networkPercent - model.serverPercent - model.domProcessingPercent).toFixed(2);
+	return model;
+}
+
+function doRenderPageLoadTime(model) {
+	if (!model) {
+		return;
+	}
 
 	$.get(stagemonitor.contextPath + "/stagemonitor/static/tabs/request-tab-page-load-time.html", function (template) {
 		var pageLoadTimeTemplate = Handlebars.compile($(template).html());
-		var model = {
-			networkMs: data.timeToFirstByte - data.serverTime,
-			networkPercent: (((data.timeToFirstByte - data.serverTime) / data.totalPageLoadTime) * 100).toFixed(2),
-			serverMs: data.serverTime,
-			serverPercent: ((data.serverTime / data.totalPageLoadTime) * 100).toFixed(2),
-			serverThresholdExceeded: data.serverTime > thresholdMs,
-			domProcessingMs: data.domProcessing,
-			domProcessingPercent: ((data.domProcessing / data.totalPageLoadTime) * 100).toFixed(2),
-			pageRenderingMs: data.pageRendering,
-			pageRenderingPercent: ((data.pageRendering / data.totalPageLoadTime) * 100).toFixed(2),
-			totalMs: data.totalPageLoadTime,
-			totalThresholdExceeded: thresholdExceeded
-		};
-		model["pageRenderingPercent"] = (100 - model.networkPercent - model.serverPercent - model.domProcessingPercent).toFixed(2);
 		var renderedMetricsTemplate = pageLoadTimeTemplate(model);
 		var $stagemonitorRequest = $("#stagemonitor-request");
 		$stagemonitorRequest.prepend(renderedMetricsTemplate);
 		$(".tip").tooltip({html: true});
 	});
-
-	stagemonitor.thresholdExceeded |= thresholdExceeded;
 }

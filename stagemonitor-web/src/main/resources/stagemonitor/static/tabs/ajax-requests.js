@@ -31,12 +31,12 @@ $(document).ready(function () {
 			$(this).addClass('selected');
 			var data = table.fnGetData(table.fnGetPosition(this));
 			renderRequestTab(data);
-			renderCallTree(data);
+			setCallTree(data);
 		} else {
 			// deselect
 			$(this).removeClass('selected');
 			renderRequestTab(rootRequestTrace);
-			renderCallTree(rootRequestTrace);
+			setCallTree(rootRequestTrace);
 		}
 	});
 	function addToolbar() {
@@ -45,7 +45,7 @@ $(document).ready(function () {
 			'data-placement="right" title="Clear"></span> ');
 		$("#clear-ajax").click(function () {
 			renderRequestTab(rootRequestTrace);
-			renderCallTree(rootRequestTrace);
+			setCallTree(rootRequestTrace);
 			table.fnClearTable();
 			noOfRequestTraces = 0;
 			$("#ajax-badge").html("");
@@ -82,7 +82,7 @@ addAjaxRequestTrace = function (data) {
 	var node = dataTable.row.add(data).draw().node();
 	if (isAutoscrollToLatestAjaxRequest()) {
 		renderRequestTab(data);
-		renderCallTree(data);
+		setCallTree(data);
 		var nodes = dataTable.rows().nodes();
 		for (var i = 0; i < nodes.length; i++) {
 			$(nodes[i]).removeClass('selected');
