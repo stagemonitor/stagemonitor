@@ -54,12 +54,12 @@
 			function init() {
 				var stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
 					stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
-					data = @@JSON_REQUEST_TACE_PLACEHOLDER;@;@,
-					configurationSources = @;@CONFIGURATION_SOURCES;@;@,
-					configurationOptions = @;@CONFIGURATION_OPTIONS;@;@;;
+					data = @@JSON_REQUEST_TACE_PLACEHOLDER@@,
+					configurationSources = @@CONFIGURATION_SOURCES@@,
+					configurationOptions = @@CONFIGURATION_OPTIONS@@;
 
-				stagemonitorWindow.stagemonitor.measurementSession = @@MEASUREMENT_SESSION;@;@;;
-				stagemonitorWindow.stagemonitor.pathsOfTabPlugins = @@PATHS_OF_TAB_PLUGINS;@;@;;
+				stagemonitorWindow.stagemonitor.measurementSession = @@MEASUREMENT_SESSION@@;
+				stagemonitorWindow.stagemonitor.pathsOfTabPlugins = @@PATHS_OF_TAB_PLUGINS@@;
 				var connectionId = generateUUID();
 				addXMLRequestCallback( function( xhr ) {
 					xhr.setRequestHeader("x-stagemonitor-connection-id", connectionId);
@@ -77,21 +77,12 @@
 
 				stagemonitorWindow.stagemonitor.initialize(data, configurationSources, configurationOptions,
 						window.location.origin + "@@CONTEXT_PREFIX_PATH@@", contextPath,
-						@
-				@CONFIGURATION_PWD_SET;
-				@;
-				@, connectionId, @;
-				@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS;
-				@;
-				@, @;
-				@OPEN_IMMEDIATELY;
-				@;
-				@;
-			)
+						@@CONFIGURATION_PWD_SET@@, connectionId, @@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@, @@OPEN_IMMEDIATELY@@);
 				var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
 				stagemonitorOverlayShow.className = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
 				stagemonitorOverlayShow.addEventListener("click", stagemonitorWindow.stagemonitor.openOverlay);
 			};
+
 		};
 
 		function generateUUID(){
