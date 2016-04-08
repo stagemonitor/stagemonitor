@@ -84,9 +84,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Double> onlyCollectNCallTreesPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
+			.key("stagemonitor.requestmonitor.onlyCollectNCallTreesPerMinute")
 			.dynamic(true)
-			.label("Only report N requests per minute to ES")
+			.label("Only report N call trees per minute")
 			.description("Limits the rate at which call trees are collected. " +
 					"Set to a value below 1 to deactivate call tree recording and to 1,000,000 or higher to always collect.")
 			.defaultValue(1000000d)
