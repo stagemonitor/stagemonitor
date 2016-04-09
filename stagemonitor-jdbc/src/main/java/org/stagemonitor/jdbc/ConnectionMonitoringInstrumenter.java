@@ -14,12 +14,13 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
+import net.bytebuddy.agent.ByteBuddyAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.agent.StagemonitorAgent;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.instrument.Dispatcher;
 import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
@@ -60,10 +61,11 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 			for (String impl : impls) {
 				dataSourceImplementations.add(impl.replace('.', '/'));
 			}
-			connectionMonitorThreadLocal = (ThreadLocal<Object[]>) System.getProperties().get(CONNECTION_MONITOR);
+
+			connectionMonitorThreadLocal = Dispatcher.get(CONNECTION_MONITOR);
 			if (connectionMonitorThreadLocal == null) {
 				connectionMonitorThreadLocal = new ThreadLocal<Object[]>();
-				System.getProperties().put(CONNECTION_MONITOR, connectionMonitorThreadLocal);
+				Dispatcher.put(CONNECTION_MONITOR, connectionMonitorThreadLocal);
 			}
 		}
 	}
@@ -155,7 +157,7 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 
 		if (!ctClass.equals(declaringClass)) {
 			final ClassDefinition classDefinition = new ClassDefinition(Class.forName(declaringClass.getName()), declaringClass.toBytecode());
-			StagemonitorAgent.getInstrumentation().redefineClasses(classDefinition);
+			ByteBuddyAgent.getInstrumentation().redefineClasses(classDefinition);
 		}
 	}
 
@@ -168,7 +170,7 @@ public class ConnectionMonitoringInstrumenter extends StagemonitorJavassistInstr
 	private void addReflectiveMonitorMethodCall(CtMethod method) throws CannotCompileException {
 		final String methodParams = "new Object[]{$_, (javax.sql.DataSource) this, Long.valueOf(System.nanoTime() - $_stm_start)}";
 		method.insertAfter("{" +
-				"	Object[] $_stm_connectionMonitor = (Object[])((ThreadLocal) System.getProperties().get(\"" + CONNECTION_MONITOR + "\")).get();" +
+				"	Object[] $_stm_connectionMonitor = (Object[])((ThreadLocal) org.stagemonitor.dispatcher.Dispatcher.getValues().get(\"" + CONNECTION_MONITOR + "\")).get();" +
 				"	if ($_stm_connectionMonitor != null) {" +
 				//		$_ is the return value, which has to be casted to the return type ($r)
 				"		$_ = ($r) ((java.lang.reflect.Method) $_stm_connectionMonitor[1]).invoke($_stm_connectionMonitor[0], " + methodParams + ");" +

@@ -58,8 +58,5 @@ stagemonitor-web/src/main/resources/stagemonitor/static/flot/jquery.flot.tooltip
 This product includes code derived from the Metrics project, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-web/src/main/java/org/stagemonitor/web/metrics/StagemonitorMetricsServlet.java
 
-This product includes code derived from EhCache, which is available under the "Apache 2.0" license. For details, see
-stagemonitor-core/src/main/java/org/stagemonitor/core/instrument/AgentLoader.java
-
 This product includes code derived from Apache httpclient, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-requestmonitor/src/main/java/org/stagemonitor/requestmonitor/utils/InetAddressUtils.java

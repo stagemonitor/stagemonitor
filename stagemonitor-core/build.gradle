@@ -1,5 +1,4 @@
 dependencies {
-	compile project(":stagemonitor-javaagent")
 	compile "org.slf4j:slf4j-api:$slf4jVersion"
 	compile "io.dropwizard.metrics:metrics-core:$metricsVersion"
 	compile "io.dropwizard.metrics:metrics-graphite:$metricsVersion"
@@ -7,11 +6,19 @@ dependencies {
 	compile "io.dropwizard.metrics:metrics-json:$metricsVersion"
 	compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 	compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"
+	compile "net.bytebuddy:byte-buddy-agent:1.3.10"
 	shade "org.javassist:javassist:$javassistVersion"
 
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
 	testCompile 'commons-io:commons-io:2.4'
 	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
+}
+
+processResources {
+	from(project(':stagemonitor-dispatcher').jar) {
+		// gradle tries to be overly smart and extracts all resources which have the extension .jar
+		rename 'stagemonitor-dispatcher.*jar', 'stagemonitor-dispatcher.jar.gradlePleaseDontExtract'
+	}
 }
 
 shadowJar {

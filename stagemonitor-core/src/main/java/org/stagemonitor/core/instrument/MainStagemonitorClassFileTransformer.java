@@ -21,9 +21,9 @@ import javassist.ByteArrayClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
+import net.bytebuddy.agent.ByteBuddyAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.agent.StagemonitorAgent;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -31,7 +31,10 @@ import org.stagemonitor.core.util.StringUtils;
 
 public class MainStagemonitorClassFileTransformer implements ClassFileTransformer {
 
-	private static final Runnable NOOP_ON_SHUTDOWN_ACTION = new Runnable() { public void run() {} };
+	private static final Runnable NOOP_ON_SHUTDOWN_ACTION = new Runnable() {
+		public void run() {
+		}
+	};
 	private static final Logger logger = LoggerFactory.getLogger(MainStagemonitorClassFileTransformer.class);
 	private static final String IGNORED_CLASSLOADERS_KEY = MainStagemonitorClassFileTransformer.class.getName() + "hashCodesOfClassLoadersToIgnore";
 
@@ -41,14 +44,21 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	private static boolean runtimeAttached = false;
 	private static final Map<Integer, ClassPool> classPoolsByClassLoaderHash = new ConcurrentHashMap<Integer, ClassPool>();
 	private static Set<Integer> hashCodesOfClassLoadersToIgnore = new HashSet<Integer>();
+	private static Instrumentation instrumentation;
 
-	public MainStagemonitorClassFileTransformer() {
+	public MainStagemonitorClassFileTransformer() throws Exception {
+		try {
+			instrumentation = ByteBuddyAgent.getInstrumentation();
+		} catch (IllegalStateException e) {
+			instrumentation = ByteBuddyAgent.install();
+		}
+		Dispatcher.init(instrumentation);
 		metricRegistry = Stagemonitor.getMetric2Registry();
 		corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
-		if (!System.getProperties().containsKey(IGNORED_CLASSLOADERS_KEY)) {
-			System.getProperties().put(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
+		if (!Dispatcher.getValues().containsKey(IGNORED_CLASSLOADERS_KEY)) {
+			Dispatcher.put(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
 		}
-		hashCodesOfClassLoadersToIgnore = (Set<Integer>) System.getProperties().get(IGNORED_CLASSLOADERS_KEY);
+		hashCodesOfClassLoadersToIgnore = Dispatcher.get(IGNORED_CLASSLOADERS_KEY);
 		try {
 			final ServiceLoader<StagemonitorJavassistInstrumenter> loader = ServiceLoader
 					.load(StagemonitorJavassistInstrumenter.class, Stagemonitor.class.getClassLoader());
@@ -72,7 +82,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	 * @return A runnable that should be called on shutdown to unregister this class file transformer
 	 */
 	public static synchronized Runnable performRuntimeAttachment() {
-		if (StagemonitorAgent.isInitializedViaJavaagent() || runtimeAttached) {
+		if (runtimeAttached) {
 			return NOOP_ON_SHUTDOWN_ACTION;
 		}
 		runtimeAttached = true;
@@ -85,7 +95,6 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		final Timer.Context time = metricRegistry.timer(name("internal_runtime_attachment_time").build()).time();
 		Runnable onShutdownAction = NOOP_ON_SHUTDOWN_ACTION;
 		try {
-			final Instrumentation instrumentation = AgentLoader.loadAgent();
 			final long start = System.currentTimeMillis();
 			final MainStagemonitorClassFileTransformer transformer = new MainStagemonitorClassFileTransformer();
 			instrumentation.addTransformer(transformer, true);
@@ -100,7 +109,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 
 			List<Class<?>> classesToRetransform = new LinkedList<Class<?>>();
 			for (Class loadedClass : instrumentation.getAllLoadedClasses()) {
-				if (transformer.isRetransformClass(loadedClass, instrumentation)) {
+				if (transformer.isRetransformClass(loadedClass)) {
 					classesToRetransform.add(loadedClass);
 				}
 			}
@@ -157,7 +166,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		return classfileBuffer;
 	}
 
-	private boolean isRetransformClass(Class loadedClass, Instrumentation instrumentation) {
+	private boolean isRetransformClass(Class loadedClass) {
 		final ClassLoader classLoader = loadedClass.getClassLoader();
 		return !loadedClass.isInterface() &&
 				instrumentation.isModifiableClass(loadedClass) &&
@@ -212,6 +221,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			classPool = new ClassPool(true);
 			classPool.insertClassPath(new LoaderClassPath(loader));
 			classPoolsByClassLoaderHash.put(classLoaderHash, classPool);
+			classPool.insertClassPath(new ByteArrayClassPath("org.stagemonitor.dispatcher.Dispatcher", Dispatcher.getDispatcherClassAsByteArray()));
 		}
 		classPool.insertClassPath(new ByteArrayClassPath(classNameDotSeparated, classfileBuffer));
 		return classPool.get(classNameDotSeparated);

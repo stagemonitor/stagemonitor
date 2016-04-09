@@ -1,5 +1,6 @@
 package org.stagemonitor.core.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -76,5 +77,11 @@ public class IOUtils {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static byte[] readToBytes(InputStream inputStream) throws IOException {
+		final ByteArrayOutputStream output = new ByteArrayOutputStream();
+		copy(inputStream, output);
+		return output.toByteArray();
 	}
 }
