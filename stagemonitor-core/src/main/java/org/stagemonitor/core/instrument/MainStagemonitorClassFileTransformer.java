@@ -119,8 +119,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 			logger.info("Registering " + stagemonitorByteBuddyTransformer.getClass().getSimpleName());
 			final ClassFileTransformer transformer = new AgentBuilder.Default()
 					.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-					.with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-					.with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+					.disableClassFormatChanges()
 					.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher())
 					.transform(stagemonitorByteBuddyTransformer.getTransformer())
 					.installOn(instrumentation);
