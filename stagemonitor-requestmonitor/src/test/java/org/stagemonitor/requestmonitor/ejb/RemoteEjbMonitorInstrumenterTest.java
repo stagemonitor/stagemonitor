@@ -3,6 +3,7 @@ package org.stagemonitor.requestmonitor.ejb;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import javax.ejb.Remote;
 
@@ -31,8 +32,8 @@ public class RemoteEjbMonitorInstrumenterTest {
 		RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertNotNull(requestTrace);
 		assertEquals("RemoteEjbMonitorInstrumenterTest$RemoteInterfaceImpl#foo", requestTrace.getName());
-		assertEquals("void org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorInstrumenterTest$RemoteInterfaceImpl.foo()",
-				requestTrace.getCallStack().getChildren().get(0).getSignature());
+		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorInstrumenterTest$RemoteInterfaceImpl"));
 	}
 
 	@Test

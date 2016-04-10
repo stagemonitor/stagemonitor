@@ -11,6 +11,10 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.ClassUtils;
 
+/**
+ * @deprecated Migrate to {@link StagemonitorByteBuddyTransformer}
+ */
+@Deprecated
 public abstract class StagemonitorJavassistInstrumenter {
 
 	private static final Logger logger = LoggerFactory.getLogger(StagemonitorJavassistInstrumenter.class);

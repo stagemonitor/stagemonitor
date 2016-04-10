@@ -1,6 +1,5 @@
 include 'stagemonitor-alerting',
 		'stagemonitor-benchmark',
-		'stagemonitor-benchmark:stagemonitor-byte-buddy-agent',
 		'stagemonitor-core',
 		'stagemonitor-dispatcher',
 		'stagemonitor-ehcache',

@@ -22,6 +22,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.agent.builder.AgentBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -39,22 +40,14 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	private static final String IGNORED_CLASSLOADERS_KEY = MainStagemonitorClassFileTransformer.class.getName() + "hashCodesOfClassLoadersToIgnore";
 
 	private List<StagemonitorJavassistInstrumenter> instrumenters = new ArrayList<StagemonitorJavassistInstrumenter>();
-	private static Metric2Registry metricRegistry;
-	private static CorePlugin corePlugin;
+	private static Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
+	private static CorePlugin corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
 	private static boolean runtimeAttached = false;
 	private static final Map<Integer, ClassPool> classPoolsByClassLoaderHash = new ConcurrentHashMap<Integer, ClassPool>();
 	private static Set<Integer> hashCodesOfClassLoadersToIgnore = new HashSet<Integer>();
 	private static Instrumentation instrumentation;
 
-	public MainStagemonitorClassFileTransformer() throws Exception {
-		try {
-			instrumentation = ByteBuddyAgent.getInstrumentation();
-		} catch (IllegalStateException e) {
-			instrumentation = ByteBuddyAgent.install();
-		}
-		Dispatcher.init(instrumentation);
-		metricRegistry = Stagemonitor.getMetric2Registry();
-		corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
+	public MainStagemonitorClassFileTransformer() {
 		if (!Dispatcher.getValues().containsKey(IGNORED_CLASSLOADERS_KEY)) {
 			Dispatcher.put(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
 		}
@@ -82,49 +75,80 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 	 * @return A runnable that should be called on shutdown to unregister this class file transformer
 	 */
 	public static synchronized Runnable performRuntimeAttachment() {
-		if (runtimeAttached) {
+		if (runtimeAttached || !corePlugin.isStagemonitorActive() || !corePlugin.isAttachAgentAtRuntime()) {
 			return NOOP_ON_SHUTDOWN_ACTION;
 		}
-		runtimeAttached = true;
-		metricRegistry = Stagemonitor.getMetric2Registry();
-		corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
-		if (!corePlugin.isStagemonitorActive() || !corePlugin.isAttachAgentAtRuntime()) {
-			return NOOP_ON_SHUTDOWN_ACTION;
+		initInstrumentation();
+
+		final List<ClassFileTransformer> classFileTransformers = new ArrayList<ClassFileTransformer>();
+		if (instrumentation != null) {
+			initByteBuddyClassFileTransformers(classFileTransformers);
+			retransformWithJavassist(classFileTransformers);
 		}
-
-		final Timer.Context time = metricRegistry.timer(name("internal_runtime_attachment_time").build()).time();
-		Runnable onShutdownAction = NOOP_ON_SHUTDOWN_ACTION;
-		try {
-			final long start = System.currentTimeMillis();
-			final MainStagemonitorClassFileTransformer transformer = new MainStagemonitorClassFileTransformer();
-			instrumentation.addTransformer(transformer, true);
-			onShutdownAction = new Runnable() {
-				public void run() {
-					instrumentation.removeTransformer(transformer);
-					final int classLoaderHash = System.identityHashCode(MainStagemonitorClassFileTransformer.class.getClassLoader());
-					// This ClassLoader is shutting down so don't try to retransform classes of it in the future
-					hashCodesOfClassLoadersToIgnore.add(classLoaderHash);
+		return new Runnable() {
+			public void run() {
+				for (ClassFileTransformer classFileTransformer : classFileTransformers) {
+					instrumentation.removeTransformer(classFileTransformer);
 				}
-			};
-
-			List<Class<?>> classesToRetransform = new LinkedList<Class<?>>();
-			for (Class loadedClass : instrumentation.getAllLoadedClasses()) {
-				if (transformer.isRetransformClass(loadedClass)) {
-					classesToRetransform.add(loadedClass);
-				}
+				final int classLoaderHash = System.identityHashCode(MainStagemonitorClassFileTransformer.class.getClassLoader());
+				// This ClassLoader is shutting down so don't try to retransform classes of it in the future
+				hashCodesOfClassLoadersToIgnore.add(classLoaderHash);
 			}
-			logger.info("Retransforming {} classes...", classesToRetransform.size());
-			logger.debug("Classes to retransform: {}", classesToRetransform);
-			retransformClasses(instrumentation, classesToRetransform);
-			logger.info("Retransformed {} classes in {} ms", classesToRetransform.size(), System.currentTimeMillis() - start);
+		};
+	}
+
+	private static void initInstrumentation() {
+		runtimeAttached = true;
+		try {
+			try {
+				instrumentation = ByteBuddyAgent.getInstrumentation();
+			} catch (IllegalStateException e) {
+				instrumentation = ByteBuddyAgent.install();
+			}
+			Dispatcher.init(instrumentation);
 		} catch (Exception e) {
 			logger.warn("Failed to perform runtime attachment of the stagemonitor agent. " +
-					"You can load the agent with the command line argument -javaagent:/path/to/stagemonitor-javaagent-<version>.jar", e);
+					"You can try loadint the agent with the command line argument -javaagent:/path/to/byte-buddy-agent-<version>.jar", e);
 		}
+	}
+
+	private static void initByteBuddyClassFileTransformers(List<ClassFileTransformer> classFileTransformers) {
+		final ServiceLoader<StagemonitorByteBuddyTransformer> loader = ServiceLoader
+				.load(StagemonitorByteBuddyTransformer.class, Stagemonitor.class.getClassLoader());
+		for (StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer : loader) {
+			logger.info("Registering " + stagemonitorByteBuddyTransformer.getClass().getSimpleName());
+			final ClassFileTransformer transformer = new AgentBuilder.Default()
+					.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+					.with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+					.with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+					.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher())
+					.transform(stagemonitorByteBuddyTransformer.getTransformer())
+					.installOn(instrumentation);
+			classFileTransformers.add(transformer);
+		}
+	}
+
+	private static void retransformWithJavassist(List<ClassFileTransformer> classFileTransformers) {
+		final Timer.Context time = metricRegistry.timer(name("internal_runtime_attachment_time").build()).time();
+		final long start = System.currentTimeMillis();
+		final MainStagemonitorClassFileTransformer transformer = new MainStagemonitorClassFileTransformer();
+		instrumentation.addTransformer(transformer, true);
+		classFileTransformers.add(transformer);
+
+		List<Class<?>> classesToRetransform = new LinkedList<Class<?>>();
+		for (Class loadedClass : instrumentation.getAllLoadedClasses()) {
+			if (transformer.isRetransformClass(loadedClass)) {
+				classesToRetransform.add(loadedClass);
+			}
+		}
+		logger.info("Retransforming {} classes...", classesToRetransform.size());
+		logger.debug("Classes to retransform: {}", classesToRetransform);
+		retransformClasses(instrumentation, classesToRetransform);
+		logger.info("Retransformed {} classes in {} ms", classesToRetransform.size(), System.currentTimeMillis() - start);
+
 		if (corePlugin.isInternalMonitoringActive()) {
 			time.stop();
 		}
-		return onShutdownAction;
 	}
 
 	private static void retransformClasses(Instrumentation instrumentation, List<Class<?>> classesToRetransform) {

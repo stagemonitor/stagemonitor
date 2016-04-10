@@ -1,7 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import com.codahale.metrics.MetricFilter;
@@ -56,7 +56,8 @@ public class MultipleAnnotationsAndProfilerTest {
 		CallStackElement total = Profiler.activateProfiling("total");
 		testObject.testMethod();
 		Profiler.stop();
-		assertEquals("void org.stagemonitor.requestmonitor.MultipleAnnotationsAndProfilerTest$TestObject.testMethod()", total.getChildren().get(0).getSignature());
+		final String signature = total.getChildren().get(0).getSignature();
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MultipleAnnotationsAndProfilerTest$TestObject.testMethod"));
 		assertOneMeterExists(name("rate").tag("signature", "MultipleAnnotationsAndProfilerTest$TestObject#testMethod").build());
 		assertOneTimerExists(name("timer").tag("signature", "MultipleAnnotationsAndProfilerTest$TestObject#testMethod").build());
 	}

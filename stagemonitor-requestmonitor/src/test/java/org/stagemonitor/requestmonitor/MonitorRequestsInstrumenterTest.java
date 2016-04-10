@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
@@ -58,7 +59,8 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
 		assertEquals("MonitorRequestsInstrumenterTest$TestClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
-		assertEquals("int org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClass.monitorMe(int)", requestTrace.getCallStack().getChildren().get(0).getSignature());
+		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClass.monitorMe"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").layer("All").build()));
@@ -101,7 +103,8 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
 		assertEquals("MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
-		assertEquals("int org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass.monitorMe(int)", requestTrace.getCallStack().getChildren().get(0).getSignature());
+		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass.monitorMe"));
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe").layer("All").build()));
