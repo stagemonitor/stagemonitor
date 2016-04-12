@@ -6,8 +6,8 @@ dependencies {
 	compile "io.dropwizard.metrics:metrics-json:$metricsVersion"
 	compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 	compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"
-	compile "net.bytebuddy:byte-buddy:1.3.10"
-	compile "net.bytebuddy:byte-buddy-agent:1.3.10"
+	compile "net.bytebuddy:byte-buddy:1.3.11"
+	compile "net.bytebuddy:byte-buddy-agent:1.3.11"
 	shade "org.javassist:javassist:$javassistVersion"
 
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
