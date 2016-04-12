@@ -1,39 +1,43 @@
 package org.stagemonitor.core.metrics.annotations;
 
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.lang.reflect.Method;
 
 import com.codahale.metrics.annotation.Gauge;
-import javassist.CtClass;
-import javassist.CtConstructor;
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.StagemonitorJavassistInstrumenter;
+import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.metrics.MonitorGauges;
 import org.stagemonitor.core.metrics.aspects.SignatureUtils;
 
 /**
  * Implementation for the {@link Gauge} annotation
  */
-public class GaugeInstrumenter extends StagemonitorJavassistInstrumenter {
+public class GaugeTransformer extends StagemonitorByteBuddyTransformer {
 
-	private static final Logger logger = LoggerFactory.getLogger(GaugeInstrumenter.class);
+	private static final Logger logger = LoggerFactory.getLogger(GaugeTransformer.class);
 
 	@Override
-	public void transformClass(CtClass ctClass, ClassLoader loader) throws Exception {
-		final MonitorGauges gaugeAnnotation = (MonitorGauges) ctClass.getAnnotation(MonitorGauges.class);
-		if (gaugeAnnotation != null) {
-			for (CtConstructor ctConstructor : ctClass.getDeclaredConstructors()) {
-				// a constructor either calls this() super()
-				// if it does not explicitly call super() it is called implicitly
-				// by checking callsSuper(), we make sure that we're not instrumenting the class twice
-				if (ctConstructor.isConstructor() && ctConstructor.callsSuper()) {
-					ctConstructor.insertAfter("org.stagemonitor.core.metrics.annotations.GaugeInstrumenter.monitorGauges(this);");
-				}
-			}
-		}
+	protected ElementMatcher<? super TypeDescription> getExtraTypeMatcher() {
+		return isAnnotatedWith(MonitorGauges.class);
+	}
+
+	@Override
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+		return isConstructor();
+	}
+
+	@Advice.OnMethodExit(onThrowable = false)
+	public static void gauges(@Advice.This Object thiz) {
+		monitorGauges(thiz);
 	}
 
 	public static void monitorGauges(Object object) {
@@ -56,7 +60,7 @@ public class GaugeInstrumenter extends StagemonitorJavassistInstrumenter {
 	}
 
 	private static void registerGauge(final Object object, final Method method, final String signature) {
-		Stagemonitor.getMetric2Registry().register(name("gauge_" + signature).build(), new com.codahale.metrics.Gauge() {
+		Stagemonitor.getMetric2Registry().registerNewMetrics(name("gauge_" + signature).build(), new com.codahale.metrics.Gauge() {
 			@Override
 			public Object getValue() {
 				try {

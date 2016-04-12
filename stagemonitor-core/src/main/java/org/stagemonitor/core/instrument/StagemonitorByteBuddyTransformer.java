@@ -1,6 +1,8 @@
 package org.stagemonitor.core.instrument;
 
+import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isInterface;
+import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -32,11 +34,18 @@ public abstract class StagemonitorByteBuddyTransformer {
 						.and(noInternalJavaClasses())
 						.and(getExtraIncludeTypeMatcher()))
 				.and(not(isInterface()))
-				.and(not(getExtraExcludeTypeMatcher()));
+				.and(not(getExtraExcludeTypeMatcher()))
+				.and(getExtraTypeMatcher())
+				.and(not(isSubTypeOf(StagemonitorByteBuddyTransformer.class)))
+				.and(not(isSubTypeOf(StagemonitorDynamicValue.class)));
 	}
 
 	private ElementMatcher.Junction<NamedElement> noInternalJavaClasses() {
 		return not(nameStartsWith("java").or(nameStartsWith("com.sun")));
+	}
+
+	protected ElementMatcher<? super TypeDescription> getExtraTypeMatcher() {
+		return any();
 	}
 
 	protected ElementMatcher<? super TypeDescription> getExtraIncludeTypeMatcher() {
