@@ -14,8 +14,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.metrics.annotations.MeteredInstrumenter;
-import org.stagemonitor.core.metrics.annotations.TimedInstrumenter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
@@ -40,8 +38,6 @@ public class MultipleAnnotationsAndProfilerTest {
 	@Before
 	@After
 	public void clearMetricRegistry() {
-		MeteredInstrumenter.init();
-		TimedInstrumenter.init();
 		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 	}
 
@@ -58,8 +54,8 @@ public class MultipleAnnotationsAndProfilerTest {
 		Profiler.stop();
 		final String signature = total.getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MultipleAnnotationsAndProfilerTest$TestObject.testMethod"));
-		assertOneMeterExists(name("rate").tag("signature", "MultipleAnnotationsAndProfilerTest$TestObject#testMethod").build());
-		assertOneTimerExists(name("timer").tag("signature", "MultipleAnnotationsAndProfilerTest$TestObject#testMethod").build());
+		assertOneMeterExists(name("rate").tag("signature", "TestObject#testMethod").build());
+		assertOneTimerExists(name("timer").tag("signature", "TestObject#testMethod").build());
 	}
 
 	private void assertOneMeterExists(MetricName name) {
