@@ -1,2 +1,1 @@
-org.stagemonitor.core.metrics.annotations.MeteredInstrumenter
 org.stagemonitor.core.metrics.annotations.GaugeInstrumenter
