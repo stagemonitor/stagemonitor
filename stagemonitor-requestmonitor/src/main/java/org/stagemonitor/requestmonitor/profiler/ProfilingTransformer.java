@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor.profiler;
 
-import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.isFinal;
@@ -10,11 +9,9 @@ import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
-import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
@@ -41,26 +38,18 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	public AgentBuilder.Transformer getTransformer() {
-		return new AgentBuilder.Transformer() {
-			@Override
-			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
-				return builder
-						.visit(Advice.to(ProfilingTransformer.class)
-								.on(not(isConstructor())
-										.and(not(isAbstract()))
-										.and(not(isNative()))
-										.and(not(isFinal()))
-										.and(not(isTypeInitializer()))
-										.and(not(nameContains("access$")))
-										.and(getExtraElementMatchers())
-								));
-			}
-		};
+	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
+		return ProfilingTransformer.class;
 	}
 
-	protected ElementMatcher<? super MethodDescription> getExtraElementMatchers() {
-		return any();
+	@Override
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+		return not(isConstructor())
+				.and(not(isAbstract()))
+				.and(not(isNative()))
+				.and(not(isFinal()))
+				.and(not(isTypeInitializer()))
+				.and(not(nameContains("access$")));
 	}
 
 	@Advice.OnMethodEnter

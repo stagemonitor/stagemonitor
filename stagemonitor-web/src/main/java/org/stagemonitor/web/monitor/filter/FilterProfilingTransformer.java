@@ -19,7 +19,8 @@ public class FilterProfilingTransformer extends ProfilingTransformer {
 	}
 
 	@Override
-	protected ElementMatcher<? super MethodDescription> getExtraElementMatchers() {
-		return named("doFilter");
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+		return super.getMethodElementMatcher().and(named("doFilter"));
 	}
+
 }

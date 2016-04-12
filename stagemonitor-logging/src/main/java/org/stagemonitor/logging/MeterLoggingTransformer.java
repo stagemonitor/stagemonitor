@@ -1,5 +1,6 @@
 package org.stagemonitor.logging;
 
+import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
 import static net.bytebuddy.matcher.ElementMatchers.isFinal;
 import static net.bytebuddy.matcher.ElementMatchers.isPrivate;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -9,13 +10,10 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.ElementMatchers;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -42,25 +40,17 @@ public class MeterLoggingTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	public AgentBuilder.Transformer getTransformer() {
-		return new AgentBuilder.Transformer() {
-			@Override
-			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
-				return builder
-						.visit(Advice.to(MeterLoggingTransformer.class)
-								.on(not(ElementMatchers.<MethodDescription>isAbstract())
-										.and(not(isFinal()))
-										.and(not(isPrivate()))
-										.and(named("trace")
-												.or(named("debug"))
-												.or(named("info"))
-												.or(named("warn"))
-												.or(named("error"))
-												.or(named("fatal"))
-										)
-								));
-			}
-		};
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+		return not(isAbstract())
+				.and(not(isFinal()))
+				.and(not(isPrivate()))
+				.and(named("trace")
+						.or(named("debug"))
+						.or(named("info"))
+						.or(named("warn"))
+						.or(named("error"))
+						.or(named("fatal"))
+				);
 	}
 
 	@Advice.OnMethodEnter
