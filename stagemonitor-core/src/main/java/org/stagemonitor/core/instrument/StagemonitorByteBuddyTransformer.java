@@ -5,14 +5,23 @@ import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import com.codahale.metrics.annotation.ExceptionMetered;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.aspects.SignatureUtils;
 import org.stagemonitor.core.util.ClassUtils;
 
 public abstract class StagemonitorByteBuddyTransformer {
@@ -53,7 +62,11 @@ public abstract class StagemonitorByteBuddyTransformer {
 			@Override
 			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
 				return builder
-						.visit(Advice.to(getAdviceClass()).on(getMethodElementMatcher()));
+						.visit(Advice.withCustomMapping()
+								.bind(MetricsSignature.class, new SignatureDynamicValue())
+								.bind(MeterExceptionsFor.class, new MeterExceptionsForDynamicValue())
+								.to(getAdviceClass())
+								.on(getMethodElementMatcher()));
 			}
 
 		};
@@ -67,4 +80,45 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return getClass();
 	}
 
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	protected @interface ProfilerSignature {
+	}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	protected @interface MetricsSignature {
+	}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	protected @interface MeterExceptionsFor {
+	}
+
+	private static class SignatureDynamicValue implements Advice.DynamicValue<MetricsSignature> {
+		@Override
+		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+							  ParameterDescription.InDefinedShape target,
+							  AnnotationDescription.Loadable<MetricsSignature> annotation,
+							  boolean initialized) {
+
+			String nameFromAnnotation = null;
+			boolean absolute = false;
+			final ExceptionMetered exceptionMetered = instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent();
+			if (exceptionMetered != null) {
+				nameFromAnnotation = exceptionMetered.name();
+				absolute = exceptionMetered.absolute();
+			}
+			return SignatureUtils.getSignature(instrumentedMethod.getDeclaringType().getSimpleName(), instrumentedMethod.getName(), nameFromAnnotation, absolute);
+		}
+	}
+
+	private static class MeterExceptionsForDynamicValue implements Advice.DynamicValue<MeterExceptionsFor> {
+		@Override
+		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+							  ParameterDescription.InDefinedShape target,
+							  AnnotationDescription.Loadable<MeterExceptionsFor> annotation, boolean initialized) {
+			return instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent().cause();
+		}
+	}
 }

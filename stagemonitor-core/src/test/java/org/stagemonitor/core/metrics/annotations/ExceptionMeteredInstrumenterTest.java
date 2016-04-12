@@ -77,7 +77,6 @@ public class ExceptionMeteredInstrumenterTest {
 	@Before
 	@After
 	public void clearMetricRegistry() {
-		ExceptionMeteredInstrumenter.init();
 		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 	}
 
@@ -94,7 +93,7 @@ public class ExceptionMeteredInstrumenterTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneMeterExists(name("exception_rate").tag("signature", "ExceptionMeteredInstrumenterTest$TestObject#exceptionMeteredDefault").build());
+		assertOneMeterExists(name("exception_rate").tag("signature", "TestObject#exceptionMeteredDefault").build());
 	}
 
 	@Test
@@ -124,7 +123,7 @@ public class ExceptionMeteredInstrumenterTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneMeterExists(name("exception_rate").tag("signature", "ExceptionMeteredInstrumenterTest$TestObject#myExceptionMeteredName").build());
+		assertOneMeterExists(name("exception_rate").tag("signature", "TestObject#myExceptionMeteredName").build());
 	}
 
 	@Test
@@ -165,7 +164,7 @@ public class ExceptionMeteredInstrumenterTest {
 			// ignore
 		}
 		final Metric2Registry metricRegistry = Stagemonitor.getMetric2Registry();
-		assertEquals(0, metricRegistry.getMeters().size());
+		assertEquals(metricRegistry.getMeters().toString(), 0, metricRegistry.getMeters().size());
 	}
 
 	@Test
