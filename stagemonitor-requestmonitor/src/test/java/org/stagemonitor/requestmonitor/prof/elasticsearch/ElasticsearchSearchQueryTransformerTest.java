@@ -10,7 +10,7 @@ import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
-public class ElasticsearchSearchQueryInstrumenterTest extends AbstractElasticsearchTest {
+public class ElasticsearchSearchQueryTransformerTest extends AbstractElasticsearchTest {
 
 	@BeforeClass
 	public static void attachProfiler() {
@@ -23,13 +23,13 @@ public class ElasticsearchSearchQueryInstrumenterTest extends AbstractElasticsea
 		client.prepareSearch().setQuery(QueryBuilders.matchAllQuery()).get();
 		client.prepareSearch().setQuery(QueryBuilders.matchAllQuery()).setSearchType(SearchType.COUNT).get();
 		Profiler.stop();
-		Assert.assertEquals("POST /_search\n" +
+		Assert.assertEquals(total.toString(), "POST /_search\n" +
 				"{\n" +
 				"  \"query\" : {\n" +
 				"    \"match_all\" : { }\n" +
 				"  }\n" +
 				"} ", total.getChildren().get(0).getSignature());
-		Assert.assertEquals("POST /_search?search_type=count\n" +
+		Assert.assertEquals(total.toString(), "POST /_search?search_type=count\n" +
 				"{\n" +
 				"  \"query\" : {\n" +
 				"    \"match_all\" : { }\n" +

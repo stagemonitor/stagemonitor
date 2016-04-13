@@ -1,1 +1,2 @@
 org.stagemonitor.requestmonitor.profiler.ProfilingTransformer
+org.stagemonitor.requestmonitor.profiler.elasticsearch.ElasticsearchSearchQueryTransformer

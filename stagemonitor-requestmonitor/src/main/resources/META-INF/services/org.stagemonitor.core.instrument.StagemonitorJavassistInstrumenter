@@ -1,3 +1,2 @@
 org.stagemonitor.requestmonitor.MonitorRequestsInstrumenter
-org.stagemonitor.requestmonitor.profiler.elasticsearch.ElasticsearchSearchQueryInstrumenter
 org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorInstrumenter

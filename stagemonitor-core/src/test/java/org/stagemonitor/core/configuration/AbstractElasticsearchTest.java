@@ -15,6 +15,7 @@ import org.elasticsearch.node.NodeBuilder;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class AbstractElasticsearchTest {
@@ -28,6 +29,7 @@ public class AbstractElasticsearchTest {
 
 	@BeforeClass
 	public static void beforeClass() throws IOException {
+		Stagemonitor.init();
 		if (node == null) {
 			final File esHome = new File("build/elasticsearch");
 			FileUtils.deleteQuietly(esHome);
