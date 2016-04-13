@@ -40,6 +40,10 @@ public abstract class StagemonitorByteBuddyTransformer {
 				.and(not(isSubTypeOf(StagemonitorDynamicValue.class)));
 	}
 
+	public boolean isActive() {
+		return true;
+	}
+
 	private ElementMatcher.Junction<NamedElement> noInternalJavaClasses() {
 		return not(nameStartsWith("java").or(nameStartsWith("com.sun")));
 	}

@@ -116,14 +116,16 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		final ServiceLoader<StagemonitorByteBuddyTransformer> loader = ServiceLoader
 				.load(StagemonitorByteBuddyTransformer.class, Stagemonitor.class.getClassLoader());
 		for (StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer : loader) {
-			logger.info("Registering " + stagemonitorByteBuddyTransformer.getClass().getSimpleName());
-			final ClassFileTransformer transformer = new AgentBuilder.Default()
-					.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-					.disableClassFormatChanges()
-					.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher())
-					.transform(stagemonitorByteBuddyTransformer.getTransformer())
-					.installOn(instrumentation);
-			classFileTransformers.add(transformer);
+			if (stagemonitorByteBuddyTransformer.isActive()) {
+				logger.info("Registering " + stagemonitorByteBuddyTransformer.getClass().getSimpleName());
+				final ClassFileTransformer transformer = new AgentBuilder.Default()
+						.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+						.disableClassFormatChanges()
+						.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher())
+						.transform(stagemonitorByteBuddyTransformer.getTransformer())
+						.installOn(instrumentation);
+				classFileTransformers.add(transformer);
+			}
 		}
 	}
 
