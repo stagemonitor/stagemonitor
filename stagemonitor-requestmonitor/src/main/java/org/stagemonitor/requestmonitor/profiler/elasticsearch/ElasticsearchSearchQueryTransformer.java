@@ -19,7 +19,7 @@ public class ElasticsearchSearchQueryTransformer extends StagemonitorByteBuddyTr
 	private static final String SEARCH_REQUEST_BUILDER_CLASSNAME = "org.elasticsearch.action.search.SearchRequestBuilder";
 
 	@Override
-	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
+	public ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
 		return named(SEARCH_REQUEST_BUILDER_CLASSNAME);
 	}
 

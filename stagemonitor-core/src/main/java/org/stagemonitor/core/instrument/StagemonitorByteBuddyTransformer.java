@@ -9,7 +9,6 @@ import static net.bytebuddy.matcher.ElementMatchers.isNative;
 import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
 import static net.bytebuddy.matcher.ElementMatchers.isSynthetic;
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
-import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -29,20 +28,15 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.ClassUtils;
 
 public abstract class StagemonitorByteBuddyTransformer {
 
-	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
-		return new StagemonitorClassNameMatcher()
+	public final ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
+		return getIncludeTypeMatcher()
 				.and(noInternalJavaClasses())
-				.or(not(nameStartsWith("org.stagemonitor"))
-						.and(noInternalJavaClasses())
-						.and(getExtraIncludeTypeMatcher()))
 				.and(not(isInterface()))
 				.and(not(getExtraExcludeTypeMatcher()))
-				.and(getExtraTypeMatcher())
 				.and(not(isSubTypeOf(StagemonitorByteBuddyTransformer.class)))
 				.and(not(isSubTypeOf(StagemonitorDynamicValue.class)));
 	}
@@ -51,12 +45,15 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return true;
 	}
 
-	private ElementMatcher.Junction<NamedElement> noInternalJavaClasses() {
-		return not(nameStartsWith("java").or(nameStartsWith("com.sun")));
+	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
+		return new StagemonitorClassNameMatcher()
+				.or(not(nameStartsWith("org.stagemonitor"))
+						.and(noInternalJavaClasses())
+						.and(getExtraIncludeTypeMatcher()));
 	}
 
-	protected ElementMatcher<? super TypeDescription> getExtraTypeMatcher() {
-		return any();
+	private ElementMatcher.Junction<NamedElement> noInternalJavaClasses() {
+		return not(nameStartsWith("java").or(nameStartsWith("com.sun")));
 	}
 
 	protected ElementMatcher<? super TypeDescription> getExtraIncludeTypeMatcher() {
@@ -71,7 +68,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return new ElementMatcher<ClassLoader>() {
 			@Override
 			public boolean matches(ClassLoader target) {
-				return ClassUtils.canLoadClass(target, Stagemonitor.class.getName());
+				return ClassUtils.canLoadClass(target, "org.stagemonitor.core.Stagemonitor");
 			}
 		};
 	}
@@ -108,7 +105,6 @@ public abstract class StagemonitorByteBuddyTransformer {
 				.and(not(isFinal()))
 				.and(not(isSynthetic()))
 				.and(not(isTypeInitializer()))
-				.and(not(nameContains("access$")))
 				.and(getExtraMethodElementMatcher());
 	}
 

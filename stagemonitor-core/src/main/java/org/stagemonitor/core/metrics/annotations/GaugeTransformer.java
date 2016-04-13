@@ -26,8 +26,8 @@ public class GaugeTransformer extends StagemonitorByteBuddyTransformer {
 	private static final Logger logger = LoggerFactory.getLogger(GaugeTransformer.class);
 
 	@Override
-	protected ElementMatcher<? super TypeDescription> getExtraTypeMatcher() {
-		return isAnnotatedWith(MonitorGauges.class);
+	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
+		return super.getIncludeTypeMatcher().and(isAnnotatedWith(MonitorGauges.class));
 	}
 
 	@Override
