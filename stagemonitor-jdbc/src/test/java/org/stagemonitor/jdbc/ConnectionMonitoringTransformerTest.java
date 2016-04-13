@@ -39,7 +39,7 @@ import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
-public class ConnectionMonitoringInstrumenterTest {
+public class ConnectionMonitoringTransformerTest {
 
 	private static Connection connection;
 	private TestDataSource dataSource;
@@ -64,6 +64,7 @@ public class ConnectionMonitoringInstrumenterTest {
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
+		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
 
 		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
@@ -106,7 +107,7 @@ public class ConnectionMonitoringInstrumenterTest {
 				.monitor(new MonitoredMethodRequest("testRecordSql()", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
-						Profiler.start("public void org.stagemonitor.jdbc.ConnectionMonitoringInstrumenterTest.testRecordSql()");
+						Profiler.start("public void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest.testRecordSql()");
 						dataSource.getConnection().prepareStatement("SELECT * from STAGEMONITOR").execute();
 						Profiler.stop();
 						return null;
@@ -115,10 +116,10 @@ public class ConnectionMonitoringInstrumenterTest {
 		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
 		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "All").build()));
-		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringInstrumenterTest#testRecordSql").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringTransformerTest#testRecordSql").build()));
 		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
 		assertEquals("testRecordSql()", callStack.getSignature());
-		assertEquals("public void org.stagemonitor.jdbc.ConnectionMonitoringInstrumenterTest.testRecordSql()",
+		assertEquals("public void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest.testRecordSql()",
 				callStack.getChildren().get(0).getSignature());
 		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getSignature());
 	}
@@ -129,7 +130,7 @@ public class ConnectionMonitoringInstrumenterTest {
 				.monitor(new MonitoredMethodRequest("testRecordSql()", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
-						Profiler.start("public void org.stagemonitor.jdbc.ConnectionMonitoringInstrumenterTest.testRecordSql()");
+						Profiler.start("public void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest.testRecordSql()");
 						dataSource.getConnection().createStatement().execute("SELECT * from STAGEMONITOR");
 						Profiler.stop();
 						return null;
@@ -138,10 +139,10 @@ public class ConnectionMonitoringInstrumenterTest {
 		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
 		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "All").build()));
-		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringInstrumenterTest#testRecordSql").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringTransformerTest#testRecordSql").build()));
 		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
 		assertEquals("testRecordSql()", callStack.getSignature());
-		assertEquals("public void org.stagemonitor.jdbc.ConnectionMonitoringInstrumenterTest.testRecordSql()",
+		assertEquals("public void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest.testRecordSql()",
 				callStack.getChildren().get(0).getSignature());
 		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getSignature());
 	}

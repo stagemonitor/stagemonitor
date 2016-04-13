@@ -1,0 +1,2 @@
+org.stagemonitor.jdbc.DefaultConnectionMonitoringTransformer
+org.stagemonitor.jdbc.ReflectiveConnectionMonitoringTransformer
