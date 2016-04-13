@@ -14,7 +14,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.RequestTraceCapturingReporter;
 
-public class RemoteEjbMonitorInstrumenterTest {
+public class RemoteEjbMonitorTransformerTest {
 
 	private RemoteInterface remote = new RemoteInterfaceImpl();
 	private RequestTraceCapturingReporter requestTraceCapturingReporter = new RequestTraceCapturingReporter();
@@ -31,9 +31,9 @@ public class RemoteEjbMonitorInstrumenterTest {
 
 		RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertNotNull(requestTrace);
-		assertEquals("RemoteEjbMonitorInstrumenterTest$RemoteInterfaceImpl#foo", requestTrace.getName());
+		assertEquals("RemoteInterfaceImpl#foo", requestTrace.getName());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorInstrumenterTest$RemoteInterfaceImpl"));
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl"));
 	}
 
 	@Test

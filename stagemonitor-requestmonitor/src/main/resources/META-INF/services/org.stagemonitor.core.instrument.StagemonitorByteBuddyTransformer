@@ -1,2 +1,5 @@
 org.stagemonitor.requestmonitor.profiler.ProfilingTransformer
 org.stagemonitor.requestmonitor.profiler.elasticsearch.ElasticsearchSearchQueryTransformer
+org.stagemonitor.requestmonitor.MethodLevelMonitorRequestsTransformer
+org.stagemonitor.requestmonitor.ClassLevelMonitorRequestsTransformer
+org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformer

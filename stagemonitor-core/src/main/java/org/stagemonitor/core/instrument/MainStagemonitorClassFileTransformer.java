@@ -2,6 +2,7 @@ package org.stagemonitor.core.instrument;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
+import java.io.PrintStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
@@ -23,6 +24,7 @@ import javassist.CtClass;
 import javassist.LoaderClassPath;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.type.TypeDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -78,10 +80,9 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		if (runtimeAttached || !corePlugin.isStagemonitorActive() || !corePlugin.isAttachAgentAtRuntime()) {
 			return NOOP_ON_SHUTDOWN_ACTION;
 		}
-		initInstrumentation();
 
 		final List<ClassFileTransformer> classFileTransformers = new ArrayList<ClassFileTransformer>();
-		if (instrumentation != null) {
+		if (initInstrumentation()) {
 			initByteBuddyClassFileTransformers(classFileTransformers);
 			retransformWithJavassist(classFileTransformers);
 		}
@@ -97,7 +98,7 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 		};
 	}
 
-	private static void initInstrumentation() {
+	private static boolean initInstrumentation() {
 		runtimeAttached = true;
 		try {
 			try {
@@ -106,9 +107,11 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 				instrumentation = ByteBuddyAgent.install();
 			}
 			Dispatcher.init(instrumentation);
+			return true;
 		} catch (Exception e) {
 			logger.warn("Failed to perform runtime attachment of the stagemonitor agent. " +
 					"You can try loadint the agent with the command line argument -javaagent:/path/to/byte-buddy-agent-<version>.jar", e);
+			return false;
 		}
 	}
 
@@ -120,12 +123,32 @@ public class MainStagemonitorClassFileTransformer implements ClassFileTransforme
 				logger.info("Registering " + stagemonitorByteBuddyTransformer.getClass().getSimpleName());
 				final ClassFileTransformer transformer = new AgentBuilder.Default()
 						.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+//						.with(NoIgnoreStreamWriting.toSystemOut())
 						.disableClassFormatChanges()
 						.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher())
 						.transform(stagemonitorByteBuddyTransformer.getTransformer())
 						.installOn(instrumentation);
 				classFileTransformers.add(transformer);
 			}
+		}
+	}
+
+	// TODO remove
+	static class NoIgnoreStreamWriting extends AgentBuilder.Listener.StreamWriting {
+
+		public NoIgnoreStreamWriting(PrintStream printStream) {
+			super(printStream);
+		}
+		public static AgentBuilder.Listener toSystemOut() {
+			return new NoIgnoreStreamWriting(System.out);
+		}
+
+		@Override
+		public void onIgnored(TypeDescription typeDescription) {
+		}
+
+		@Override
+		public void onComplete(String typeName) {
 		}
 	}
 

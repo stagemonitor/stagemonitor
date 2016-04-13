@@ -24,7 +24,7 @@ import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
 @RunWith(ConditionalTravisTestRunner.class)
-public class MonitorRequestsInstrumenterTest {
+public class MonitorRequestsTransformerTest {
 
 	private TestClass testClass;
 	private TestClassLevelAnnotationClass testClassLevelAnnotationClass;
@@ -42,7 +42,7 @@ public class MonitorRequestsInstrumenterTest {
 		metricRegistry = Stagemonitor.getMetric2Registry();
 		testClassLevelAnnotationClass = new TestClassLevelAnnotationClass();
 		metricRegistry.removeMatching(Metric2Filter.ALL);
-		Stagemonitor.setMeasurementSession(new MeasurementSession("MonitorRequestsInstrumenterTest", "test", "test"));
+		Stagemonitor.setMeasurementSession(new MeasurementSession("MonitorRequestsTransformerTest", "test", "test"));
 		Stagemonitor.startMonitoring().get();
 	}
 
@@ -57,13 +57,13 @@ public class MonitorRequestsInstrumenterTest {
 		testClass.monitorMe(1);
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
-		assertEquals("MonitorRequestsInstrumenterTest$TestClass#monitorMe", requestTrace.getName());
+		assertEquals("TestClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClass.monitorMe"));
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass.monitorMe"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorMe").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "TestClass#monitorMe").layer("All").build()));
 	}
 
 	@Test
@@ -79,7 +79,7 @@ public class MonitorRequestsInstrumenterTest {
 		assertEquals(NullPointerException.class.getName(), requestTrace.getExceptionClass());
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClass#monitorThrowException").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "TestClass#monitorThrowException").layer("All").build()));
 	}
 
 	private static class TestClass {
@@ -101,13 +101,13 @@ public class MonitorRequestsInstrumenterTest {
 		testClassLevelAnnotationClass.dontMonitorMe();
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
-		assertEquals("MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe", requestTrace.getName());
+		assertEquals("TestClassLevelAnnotationClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass.monitorMe"));
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe"));
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsInstrumenterTest$TestClassLevelAnnotationClass#monitorMe").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "TestClassLevelAnnotationClass#monitorMe").layer("All").build()));
 	}
 
 
