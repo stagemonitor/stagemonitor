@@ -19,8 +19,8 @@ public class ServletProfilingTransformer extends ProfilingTransformer {
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
-		return super.getMethodElementMatcher().and(named("service").or(named("render")));
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+		return named("service").or(named("render"));
 	}
 
 }

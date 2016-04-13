@@ -1,8 +1,15 @@
 package org.stagemonitor.core.instrument;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isFinal;
 import static net.bytebuddy.matcher.ElementMatchers.isInterface;
+import static net.bytebuddy.matcher.ElementMatchers.isNative;
 import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
+import static net.bytebuddy.matcher.ElementMatchers.isSynthetic;
+import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
+import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -27,7 +34,7 @@ import org.stagemonitor.core.util.ClassUtils;
 
 public abstract class StagemonitorByteBuddyTransformer {
 
-	public final ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
+	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return new StagemonitorClassNameMatcher()
 				.and(noInternalJavaClasses())
 				.or(not(nameStartsWith("org.stagemonitor"))
@@ -95,7 +102,18 @@ public abstract class StagemonitorByteBuddyTransformer {
 
 
 	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
-		return none();
+		return not(isConstructor())
+				.and(not(isAbstract()))
+				.and(not(isNative()))
+				.and(not(isFinal()))
+				.and(not(isSynthetic()))
+				.and(not(isTypeInitializer()))
+				.and(not(nameContains("access$")))
+				.and(getExtraMethodElementMatcher());
+	}
+
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+		return any();
 	}
 
 	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {

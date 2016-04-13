@@ -1,7 +1,5 @@
 package org.stagemonitor.logging;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
-import static net.bytebuddy.matcher.ElementMatchers.isFinal;
 import static net.bytebuddy.matcher.ElementMatchers.isPrivate;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -40,10 +38,8 @@ public class MeterLoggingTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
-		return not(isAbstract())
-				.and(not(isFinal()))
-				.and(not(isPrivate()))
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+		return not(isPrivate())
 				.and(named("trace")
 						.or(named("debug"))
 						.or(named("info"))

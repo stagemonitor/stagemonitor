@@ -40,7 +40,7 @@ public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		ElementMatcher.Junction<? super MethodDescription.InDefinedShape> matcher = isAnnotatedWith(Timed.class);
 		for (Class<?> annotation : asyncCallAnnotations) {
 			matcher = matcher.or(isAnnotatedWith((Class<? extends Annotation>) annotation));

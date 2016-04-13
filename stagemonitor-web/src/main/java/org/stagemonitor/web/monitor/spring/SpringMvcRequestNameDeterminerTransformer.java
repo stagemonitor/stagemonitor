@@ -31,7 +31,7 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return named("getHandler").and(returns(HandlerExecutionChain.class));
 	}
 

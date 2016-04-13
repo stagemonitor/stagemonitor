@@ -26,7 +26,7 @@ import org.stagemonitor.core.metrics.aspects.SignatureUtils;
 public class MeteredTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(Metered.class);
 	}
 
