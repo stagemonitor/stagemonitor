@@ -97,18 +97,25 @@ public class AgentAttacher {
 		for (StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer : loader) {
 			if (stagemonitorByteBuddyTransformer.isActive() && !isExcluded(stagemonitorByteBuddyTransformer)) {
 				logger.info("Registering " + stagemonitorByteBuddyTransformer.getClass().getSimpleName());
-				final ClassFileTransformer transformer = new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
-						.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-						.with(stagemonitorByteBuddyTransformer)
-						.disableClassFormatChanges()
-						.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
-								.and(not(new IsIgnoredClassLoaderElementMatcher())))
-						.transform(stagemonitorByteBuddyTransformer.getTransformer())
-						.installOn(instrumentation);
-				classFileTransformers.add(transformer);
+				try {
+					classFileTransformers.add(installClassFileTransformer(stagemonitorByteBuddyTransformer));
+				} catch (Exception e) {
+					logger.warn(e.getMessage(), e);
+				}
 			}
 		}
 		return classFileTransformers;
+	}
+
+	private static ClassFileTransformer installClassFileTransformer(StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer) {
+		return new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
+							.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+							.with(stagemonitorByteBuddyTransformer)
+							.disableClassFormatChanges()
+							.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
+									.and(not(new IsIgnoredClassLoaderElementMatcher())))
+							.transform(stagemonitorByteBuddyTransformer.getTransformer())
+							.installOn(instrumentation);
 	}
 
 	private static boolean isExcluded(StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer) {
