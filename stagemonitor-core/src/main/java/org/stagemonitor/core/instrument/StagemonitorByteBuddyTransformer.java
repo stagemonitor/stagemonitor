@@ -33,9 +33,11 @@ import org.stagemonitor.core.util.ClassUtils;
 
 public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.Listener {
 
-	private static final Logger logger = LoggerFactory.getLogger(StagemonitorByteBuddyTransformer.class);
-
 	protected final static Configuration configuration = Stagemonitor.getConfiguration();
+
+	private static final boolean DEBUG_INSTRUMENTATION = configuration.getConfig(CorePlugin.class).isDebugInstrumentation();
+
+	private static final Logger logger = LoggerFactory.getLogger(StagemonitorByteBuddyTransformer.class);
 
 	public final ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return getIncludeTypeMatcher()
@@ -127,6 +129,9 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 
 	@Override
 	public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+		if (DEBUG_INSTRUMENTATION) {
+			logger.info("Transformed {} with {}", typeDescription.getName(), getClass().getSimpleName());
+		}
 	}
 
 	@Override
@@ -135,7 +140,7 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 
 	@Override
 	public void onError(String typeName, Throwable throwable) {
-		if (configuration.getConfig(CorePlugin.class).isDebugInstrumentation()) {
+		if (DEBUG_INSTRUMENTATION) {
 			logger.warn(typeName, throwable);
 		}
 	}
