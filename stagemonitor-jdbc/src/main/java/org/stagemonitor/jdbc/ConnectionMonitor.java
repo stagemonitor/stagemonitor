@@ -92,14 +92,15 @@ public class ConnectionMonitor {
 		return p6SpyOptions;
 	}
 
-	public Connection monitorGetConnection(Connection connection, DataSource dataSource, long duration) throws SQLException {
-		if (!active) {
+	public Connection monitorGetConnection(Connection connection, Object dataSource, long duration) throws SQLException {
+		if (active && dataSource instanceof DataSource) {
+			ensureUrlExistsForDataSource((DataSource) dataSource, connection);
+			String url = dataSourceUrlMap.get(dataSource);
+			metricRegistry.timer(name("get_jdbc_connection").tag("url", url).build()).update(duration, TimeUnit.NANOSECONDS);
+			return collectSql ? P6Core.wrapConnection(connection) : connection;
+		} else {
 			return connection;
 		}
-		ensureUrlExistsForDataSource(dataSource, connection);
-		String url = dataSourceUrlMap.get(dataSource);
-		metricRegistry.timer(name("get_jdbc_connection").tag("url", url).build()).update(duration, TimeUnit.NANOSECONDS);
-		return collectSql ? P6Core.wrapConnection(connection) : connection;
 	}
 
 	private DataSource ensureUrlExistsForDataSource(DataSource dataSource, Connection connection) {

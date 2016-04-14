@@ -7,8 +7,6 @@ import javax.sql.DataSource;
 
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.matcher.ElementMatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.instrument.Dispatcher;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -19,8 +17,6 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
  * in application servers like JBoss, the calls to stagemonitor can't be inserted directly but only reflectively.
  */
 public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitoringTransformer {
-
-	private static final Logger logger = LoggerFactory.getLogger(ReflectiveConnectionMonitoringTransformer.class);
 
 	protected static final String CONNECTION_MONITOR = ConnectionMonitor.class.getName();
 
@@ -33,7 +29,7 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 			RequestMonitor requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
 			connectionMonitor = new ConnectionMonitor(configuration, metric2Registry);
 			final Method monitorGetConnectionMethod = ConnectionMonitor.class
-					.getMethod("monitorGetConnection", Connection.class, DataSource.class, long.class);
+					.getMethod("monitorGetConnection", Connection.class, Object.class, long.class);
 			makeReflectionInvocationFaster(monitorGetConnectionMethod);
 
 			addConnectionMonitorToThreadLocalOnEachRequest(requestMonitor, monitorGetConnectionMethod);
@@ -92,24 +88,17 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 	@Advice.OnMethodExit
 	private static void addReflectiveMonitorMethodCall(@Advice.This Object dataSource, @Advice.Return(readOnly = false) Connection connection, @Advice.Enter long startTime) {
-		connection = monitorGetConnection(dataSource, connection, startTime);
-	}
-
-	public static Connection monitorGetConnection(Object dataSource, Connection connection, long startTime) {
-		if (!(dataSource instanceof DataSource)) {
-			return connection;
-		}
 		Object[] connectionMonitor = (Object[])((ThreadLocal) org.stagemonitor.dispatcher.Dispatcher.getValues().get(CONNECTION_MONITOR)).get();
 		if (connectionMonitor != null) {
 			try {
 				final Method connectionMonitorMethod = (Method) connectionMonitor[1];
 				final ConnectionMonitor connectionMonitorInstance = (ConnectionMonitor) connectionMonitor[0];
 				final long duration = System.nanoTime() - startTime;
-				return  (Connection) connectionMonitorMethod.invoke(connectionMonitorInstance, connection, dataSource, duration);
+				connection = (Connection) connectionMonitorMethod.invoke(connectionMonitorInstance, connection, dataSource, duration);
 			} catch (Exception e) {
-				logger.warn(e.getMessage(), e);
+				e.printStackTrace();
 			}
 		}
-		return connection;
 	}
+
 }

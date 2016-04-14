@@ -3,8 +3,6 @@ package org.stagemonitor.jdbc;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import javax.sql.DataSource;
-
 import net.bytebuddy.asm.Advice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,12 +28,9 @@ public class DefaultConnectionMonitoringTransformer extends ConnectionMonitoring
 	}
 
 	public static Connection monitorGetConnection(Object dataSource, Connection connection, long startTime) {
-		if (!(dataSource instanceof DataSource)) {
-			return connection;
-		}
 		try {
 			return ConnectionMonitoringTransformer.connectionMonitor
-					.monitorGetConnection(connection, (DataSource) dataSource, System.nanoTime() - startTime);
+					.monitorGetConnection(connection, dataSource, System.nanoTime() - startTime);
 		} catch (SQLException e) {
 			logger.warn(e.getMessage(), e);
 			return connection;
