@@ -12,8 +12,10 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +97,7 @@ public class AgentAttacher {
 		for (StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer : loader) {
 			if (stagemonitorByteBuddyTransformer.isActive() && !isExcluded(stagemonitorByteBuddyTransformer)) {
 				logger.info("Registering " + stagemonitorByteBuddyTransformer.getClass().getSimpleName());
-				final ClassFileTransformer transformer = new AgentBuilder.Default()
+				final ClassFileTransformer transformer = new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
 						.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 						.with(stagemonitorByteBuddyTransformer)
 						.disableClassFormatChanges()

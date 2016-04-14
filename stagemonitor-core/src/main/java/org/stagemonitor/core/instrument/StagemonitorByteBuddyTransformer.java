@@ -26,6 +26,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.ClassUtils;
@@ -134,7 +135,9 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 
 	@Override
 	public void onError(String typeName, Throwable throwable) {
-		logger.warn(typeName, throwable);
+		if (configuration.getConfig(CorePlugin.class).isDebugInstrumentation()) {
+			logger.warn(typeName, throwable);
+		}
 	}
 
 	@Override

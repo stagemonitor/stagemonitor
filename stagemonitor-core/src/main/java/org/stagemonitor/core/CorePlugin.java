@@ -338,6 +338,14 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Boolean> debugInstrumentation = ConfigurationOption.booleanOption()
+			.key("stagemonitor.instrument.debug")
+			.dynamic(false)
+			.label("Debug instrumentation")
+			.description("Set to true to log additional information and warnings during the instrumentation process.")
+			.defaultValue(false)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
 	private final ConfigurationOption<String> grafanaUrl = ConfigurationOption.stringOption()
 			.key("stagemonitor.grafana.url")
 			.dynamic(true)
@@ -742,5 +750,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public boolean isOnlyLogElasticsearchMetricReports() {
 		return onlyLogElasticsearchMetricReports.getValue();
+	}
+
+	public boolean isDebugInstrumentation() {
+		return debugInstrumentation.getValue();
 	}
 }

@@ -17,6 +17,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
@@ -40,6 +41,11 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 	@Override
 	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
 		return Collections.<StagemonitorDynamicValue<?>>singletonList(new AbstractMonitorRequestsTransformer.RequestNameDynamicValue());
+	}
+
+	@Override
+	public boolean isActive() {
+		return ClassUtils.isPresent("javax.ws.rs.Path");
 	}
 
 	@Advice.OnMethodEnter
