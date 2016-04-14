@@ -57,7 +57,7 @@ public class Dispatcher {
 	}
 
 	private static File createTempDispatcherJar() throws IOException {
-		final InputStream input = MainStagemonitorClassFileTransformer.class.getClassLoader()
+		final InputStream input = AgentAttacher.class.getClassLoader()
 				.getResourceAsStream("stagemonitor-dispatcher.jar.gradlePleaseDontExtract");
 		final File tempDispatcherJar = File.createTempFile("stagemonitor-dispatcher", ".jar");
 		tempDispatcherJar.deleteOnExit();

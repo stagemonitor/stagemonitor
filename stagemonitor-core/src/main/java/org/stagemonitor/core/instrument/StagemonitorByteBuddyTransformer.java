@@ -24,11 +24,15 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.ClassUtils;
 
-public abstract class StagemonitorByteBuddyTransformer {
+public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.Listener {
+
+	private static final Logger logger = LoggerFactory.getLogger(StagemonitorByteBuddyTransformer.class);
 
 	protected final static Configuration configuration = Stagemonitor.getConfiguration();
 
@@ -64,8 +68,8 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return none();
 	}
 
-	public ElementMatcher<ClassLoader> getClassLoaderMatcher() {
-		return new ElementMatcher<ClassLoader>() {
+	public ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
+		return new ElementMatcher.Junction.AbstractBase<ClassLoader>() {
 			@Override
 			public boolean matches(ClassLoader target) {
 				return ClassUtils.canLoadClass(target, "org.stagemonitor.core.Stagemonitor");
@@ -120,4 +124,20 @@ public abstract class StagemonitorByteBuddyTransformer {
 		public abstract Class<T> getAnnotationClass();
 	}
 
+	@Override
+	public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+	}
+
+	@Override
+	public void onIgnored(TypeDescription typeDescription) {
+	}
+
+	@Override
+	public void onError(String typeName, Throwable throwable) {
+		logger.warn(typeName, throwable);
+	}
+
+	@Override
+	public void onComplete(String typeName) {
+	}
 }

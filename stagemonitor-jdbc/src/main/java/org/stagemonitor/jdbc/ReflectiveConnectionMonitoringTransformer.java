@@ -5,7 +5,6 @@ import java.sql.Connection;
 
 import javax.sql.DataSource;
 
-import javassist.CannotCompileException;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
@@ -76,8 +75,8 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	}
 
 	@Override
-	public ElementMatcher<ClassLoader> getClassLoaderMatcher() {
-		return new ElementMatcher<ClassLoader>() {
+	public ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
+		return new ElementMatcher.Junction.AbstractBase<ClassLoader>() {
 			@Override
 			public boolean matches(ClassLoader target) {
 				return !ClassUtils.canLoadClass(target, "org.stagemonitor.core.Stagemonitor") &&
@@ -92,7 +91,7 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	}
 
 	@Advice.OnMethodExit
-	private static void addReflectiveMonitorMethodCall(@Advice.This Object dataSource, @Advice.Return(readOnly = false) Connection connection, @Advice.Enter long startTime) throws CannotCompileException {
+	private static void addReflectiveMonitorMethodCall(@Advice.This Object dataSource, @Advice.Return(readOnly = false) Connection connection, @Advice.Enter long startTime) {
 		connection = monitorGetConnection(dataSource, connection, startTime);
 	}
 
