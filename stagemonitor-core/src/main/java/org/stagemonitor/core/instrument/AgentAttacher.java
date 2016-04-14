@@ -56,7 +56,9 @@ public class AgentAttacher {
 
 		final List<ClassFileTransformer> classFileTransformers = new ArrayList<ClassFileTransformer>();
 		if (initInstrumentation()) {
+			final long start = System.currentTimeMillis();
 			classFileTransformers.addAll(initByteBuddyClassFileTransformers());
+			logger.debug("Attached agents in {} ms", System.currentTimeMillis() - start);
 		}
 		return new Runnable() {
 			public void run() {
@@ -95,12 +97,14 @@ public class AgentAttacher {
 		final ServiceLoader<StagemonitorByteBuddyTransformer> loader = ServiceLoader.load(StagemonitorByteBuddyTransformer.class, Stagemonitor.class.getClassLoader());
 
 		for (StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer : loader) {
-			if (stagemonitorByteBuddyTransformer.isActive() && !isExcluded(stagemonitorByteBuddyTransformer)) {
-				logger.info("Registering " + stagemonitorByteBuddyTransformer.getClass().getSimpleName());
+			final String transformerName = stagemonitorByteBuddyTransformer.getClass().getSimpleName();
+			if (stagemonitorByteBuddyTransformer.isActive() && !isExcluded(transformerName)) {
 				try {
+					final long start = System.currentTimeMillis();
 					classFileTransformers.add(installClassFileTransformer(stagemonitorByteBuddyTransformer));
+					logger.debug("Attached {} in {} ms", transformerName, System.currentTimeMillis() - start);
 				} catch (Exception e) {
-					logger.warn(e.getMessage(), e);
+					logger.warn("Error while installing " + transformerName, e);
 				}
 			}
 		}
@@ -109,17 +113,17 @@ public class AgentAttacher {
 
 	private static ClassFileTransformer installClassFileTransformer(StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer) {
 		return new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
-							.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-							.with(stagemonitorByteBuddyTransformer)
-							.disableClassFormatChanges()
-							.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
-									.and(not(new IsIgnoredClassLoaderElementMatcher())))
-							.transform(stagemonitorByteBuddyTransformer.getTransformer())
-							.installOn(instrumentation);
+				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+				.with(stagemonitorByteBuddyTransformer)
+				.disableClassFormatChanges()
+				.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
+						.and(not(new IsIgnoredClassLoaderElementMatcher())))
+				.transform(stagemonitorByteBuddyTransformer.getTransformer())
+				.installOn(instrumentation);
 	}
 
-	private static boolean isExcluded(StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer) {
-		return corePlugin.getExcludedInstrumenters().contains(stagemonitorByteBuddyTransformer.getClass().getSimpleName());
+	private static boolean isExcluded(String transformerName) {
+		return corePlugin.getExcludedInstrumenters().contains(transformerName);
 	}
 
 	private static class IsIgnoredClassLoaderElementMatcher implements ElementMatcher<ClassLoader> {
