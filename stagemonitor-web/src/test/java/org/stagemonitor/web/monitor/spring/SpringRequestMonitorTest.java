@@ -22,8 +22,6 @@ import java.util.regex.Pattern;
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricFilter;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Assert;
@@ -44,6 +42,7 @@ import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -75,12 +74,7 @@ public class SpringRequestMonitorTest {
 	@Before
 	public void before() throws Exception {
 		getRequestNameHandlerMapping = createHandlerMapping(mvcRequest, TestController.class.getMethod("testGetRequestName"));
-		registry.removeMatching(new MetricFilter() {
-			@Override
-			public boolean matches(String name, Metric metric) {
-				return true;
-			}
-		});
+		registry.removeMatching(Metric2Filter.ALL);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
