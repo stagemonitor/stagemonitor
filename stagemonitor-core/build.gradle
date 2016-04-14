@@ -8,7 +8,6 @@ dependencies {
 	compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"
 	compile "net.bytebuddy:byte-buddy:1.3.12"
 	compile "net.bytebuddy:byte-buddy-agent:1.3.12"
-	shade "org.javassist:javassist:$javassistVersion"
 
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
 	testCompile 'commons-io:commons-io:2.4'
@@ -19,11 +18,5 @@ processResources {
 	from(project(':stagemonitor-dispatcher').jar) {
 		// gradle tries to be overly smart and extracts all resources which have the extension .jar
 		rename 'stagemonitor-dispatcher.*jar', 'stagemonitor-dispatcher.jar.gradlePleaseDontExtract'
-	}
-}
-
-shadowJar {
-	dependencies {
-		include(dependency("org.javassist:javassist:$javassistVersion"))
 	}
 }

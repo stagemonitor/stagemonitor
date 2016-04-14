@@ -21,36 +21,24 @@ import org.stagemonitor.core.util.IOUtils;
 public class Dispatcher {
 
 	private static final String DISPATCHER_CLASS_NAME = "org.stagemonitor.dispatcher.Dispatcher";
-	private static final String DISPATCHER_CLASS_LOCATION = "org/stagemonitor/dispatcher/Dispatcher.class";
 
 	private static ConcurrentMap<String, Object> values;
 
-	/**
-	 * This is the byte[] presentation of the org.stagemonitor.dispatcher.Dispatcher class
-	 * <p/>
-	 * It is needed to insert a {@link javassist.ByteArrayClassPath} to Javassist's {@link javassist.ClassPool}
-	 * because Javassist does not "see" classes which are added via {@link Instrumentation#appendToBootstrapClassLoaderSearch(JarFile)}.
-	 * This is because even though the added classes can be loaded via {@link ClassLoader#loadClass(String)} they can't
-	 * be resolved as a {@link InputStream} via {@link ClassLoader#getResourceAsStream(String)}.
-	 */
-	private static byte[] dispatcherClassAsByteArray;
 
 	public static void init(Instrumentation instrumentation) throws IOException, ClassNotFoundException,
 			NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-		final File tempDispatcherJar = createTempDispatcherJar();
-		final JarFile jarfile = new JarFile(tempDispatcherJar);
-		dispatcherClassAsByteArray = IOUtils.readToBytes(jarfile.getInputStream(jarfile.getJarEntry(DISPATCHER_CLASS_LOCATION)));
-		Class<?> dispatcher = ensureDispatcherIsAppendedToBootstrapClasspath(instrumentation, jarfile);
+		Class<?> dispatcher = ensureDispatcherIsAppendedToBootstrapClasspath(instrumentation);
 		values = reflectivleyGetDispatcherMap(dispatcher);
 	}
 
-	private static Class<?> ensureDispatcherIsAppendedToBootstrapClasspath(Instrumentation instrumentation, JarFile jarfile)
-			throws ClassNotFoundException {
+	private static Class<?> ensureDispatcherIsAppendedToBootstrapClasspath(Instrumentation instrumentation)
+			throws ClassNotFoundException, IOException {
 		final ClassLoader bootstrapClassloader = ClassLoader.getSystemClassLoader().getParent();
 		try {
 			return bootstrapClassloader.loadClass(DISPATCHER_CLASS_NAME);
 			// already injected
 		} catch (ClassNotFoundException e) {
+			final JarFile jarfile = new JarFile(createTempDispatcherJar());
 			instrumentation.appendToBootstrapClassLoaderSearch(jarfile);
 			return bootstrapClassloader.loadClass(DISPATCHER_CLASS_NAME);
 		}
@@ -128,8 +116,5 @@ public class Dispatcher {
 		return values;
 	}
 
-	public static byte[] getDispatcherClassAsByteArray() {
-		return dispatcherClassAsByteArray;
-	}
 }
 
