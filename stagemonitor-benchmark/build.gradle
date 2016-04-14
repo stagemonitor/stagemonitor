@@ -38,3 +38,8 @@ task exportMarkdownConfigurationOptions(dependsOn: 'classes', type: JavaExec) {
 	main = 'org.stagemonitor.ConfigurationOptionsMarkdownExporter'
 	classpath = sourceSets.test.runtimeClasspath
 }
+
+task instrumentationPerformanceTest(dependsOn: 'classes', type: JavaExec) {
+	main = 'org.stagemonitor.InstrumentationPerformanceTest'
+	classpath = sourceSets.test.runtimeClasspath
+}
