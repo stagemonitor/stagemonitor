@@ -3,13 +3,20 @@ package org.stagemonitor.alerting.annotation;
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +28,9 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
 import org.stagemonitor.requestmonitor.MonitorRequests;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class SlaTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -32,23 +39,64 @@ public class SlaTransformer extends StagemonitorByteBuddyTransformer {
 	private static List<Check> checksCreatedBeforeMeasurementStarted = new LinkedList<Check>();
 
 	@Override
-	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return super.getIncludeTypeMatcher()
-				.and(isAnnotatedWith(SLA.class).or(isAnnotatedWith(SLAs.class)));
-	}
-
-	@Override
 	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(SLA.class).or(isAnnotatedWith(SLAs.class));
 	}
 
+	@Override
+	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
+		return Collections.<StagemonitorDynamicValue<?>>singletonList(new MonitorSLAsDynamicValue());
+	}
+
+	/**
+	 * Empty method whose sole purpose is to trigger
+	 * {@link MonitorSLAsDynamicValue#resolve(MethodDescription.InDefinedShape, ParameterDescription.InDefinedShape,
+	 * AnnotationDescription.Loadable, boolean)}
+	 *
+	 * @param dummy just a dummy value
+	 */
 	@Advice.OnMethodEnter
-	private static void enter(@Advice.Origin String fullMethodSignature,
-							  @AbstractMonitorRequestsTransformer.RequestName String requestName,
-							  @InjectAnnotation(SLA.class) SLA slaAnnotation,
-							  @InjectAnnotation(SLAs.class) SLAs slasAnnotation,
-							  @InjectAnnotation(MonitorRequests.class) MonitorRequests monitorRequests) {
-		monitorSla(fullMethodSignature, requestName, slaAnnotation, slasAnnotation, monitorRequests);
+	private static void enter(@MonitorSLAs Object dummy) {
+	}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	protected @interface MonitorSLAs {
+	}
+
+	/**
+	 * A fake {@link net.bytebuddy.asm.Advice.DynamicValue} implementation that does not actually inject a dynamic value
+	 * but instead triggers the {@link #monitorSla(String, String, SLA, SLAs, MonitorRequests)} method to create SLA
+	 * checks for the method.
+	 */
+	public static class MonitorSLAsDynamicValue extends StagemonitorDynamicValue<MonitorSLAs> {
+
+		@Override
+		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+							  ParameterDescription.InDefinedShape target,
+							  AnnotationDescription.Loadable<MonitorSLAs> annotation,
+							  boolean initialized) {
+			final String requestName = configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
+					.getBusinessTransationName(instrumentedMethod.getDeclaringType().getSimpleName(), instrumentedMethod.getName());
+			monitorSla(instrumentedMethod.toString(), requestName,
+					getAnnotationOrNull(instrumentedMethod, SLA.class),
+					getAnnotationOrNull(instrumentedMethod, SLAs.class),
+					getAnnotationOrNull(instrumentedMethod, MonitorRequests.class));
+			return null;
+		}
+
+		private <T extends Annotation> T getAnnotationOrNull(MethodDescription.InDefinedShape instrumentedMethod, Class<T> annotationClass) {
+			final AnnotationDescription.Loadable<T> loadable = instrumentedMethod.getDeclaredAnnotations().ofType(annotationClass);
+			if (loadable == null) {
+				return null;
+			}
+			return loadable.loadSilent();
+		}
+
+		@Override
+		public Class<MonitorSLAs> getAnnotationClass() {
+			return MonitorSLAs.class;
+		}
 	}
 
 	public static void monitorSla(String fullMethodSignature, String requestName, SLA slaAnnotation, SLAs slasAnnotation, MonitorRequests monitorRequests) {

@@ -14,19 +14,13 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
 import java.lang.annotation.Annotation;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.util.Collections;
 import java.util.List;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -125,33 +119,5 @@ public abstract class StagemonitorByteBuddyTransformer {
 	public abstract static class StagemonitorDynamicValue<T extends Annotation> implements Advice.DynamicValue<T> {
 		public abstract Class<T> getAnnotationClass();
 	}
-
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.PARAMETER)
-	protected @interface InjectAnnotation {
-		Class<? extends Annotation> value();
-	}
-
-	public static class InjectAnnotationDynamicValue extends StagemonitorDynamicValue<InjectAnnotation> {
-
-		@Override
-		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
-							  ParameterDescription.InDefinedShape target,
-							  AnnotationDescription.Loadable<InjectAnnotation> annotation,
-							  boolean initialized) {
-			final AnnotationDescription.Loadable<? extends Annotation> loadable = instrumentedMethod
-					.getDeclaredAnnotations().ofType(annotation.loadSilent().value());
-			if (loadable == null) {
-				return null;
-			}
-			return loadable.loadSilent();
-		}
-
-		@Override
-		public Class<InjectAnnotation> getAnnotationClass() {
-			return InjectAnnotation.class;
-		}
-	}
-
 
 }

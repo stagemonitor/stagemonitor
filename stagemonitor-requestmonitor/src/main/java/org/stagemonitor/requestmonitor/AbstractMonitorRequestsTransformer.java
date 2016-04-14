@@ -16,8 +16,6 @@ import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 
 public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTransformer {
 
-	private static final RequestMonitorPlugin configuration = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
-
 	@Override
 	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
 		return AbstractMonitorRequestsTransformer.class;
@@ -44,7 +42,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 
 	@Override
 	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Collections.<StagemonitorDynamicValue<?>>singletonList(new TimedSignatureDynamicValue());
+		return Collections.<StagemonitorDynamicValue<?>>singletonList(new RequestNameDynamicValue());
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -52,7 +50,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 	public @interface RequestName {
 	}
 
-	public static class TimedSignatureDynamicValue extends StagemonitorDynamicValue<RequestName> {
+	public static class RequestNameDynamicValue extends StagemonitorDynamicValue<RequestName> {
 
 		@Override
 		public Class<RequestName> getAnnotationClass() {
@@ -64,7 +62,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 							  ParameterDescription.InDefinedShape target,
 							  AnnotationDescription.Loadable<RequestName> annotation,
 							  boolean initialized) {
-			return configuration.getBusinessTransactionNamingStrategy()
+			return configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
 					.getBusinessTransationName(instrumentedMethod.getDeclaringType().getSimpleName(), instrumentedMethod.getName());
 		}
 	}
