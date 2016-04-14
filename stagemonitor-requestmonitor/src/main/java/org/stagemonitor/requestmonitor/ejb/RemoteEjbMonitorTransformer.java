@@ -2,12 +2,16 @@ package org.stagemonitor.requestmonitor.ejb;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.returns;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 import javax.ejb.Remote;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
@@ -33,33 +37,27 @@ public class RemoteEjbMonitorTransformer extends AbstractMonitorRequestsTransfor
 		@Override
 		public boolean matches(MethodDescription.InDefinedShape targetMethod) {
 			final AnnotationList declaredAnnotationsOfType = targetMethod.getDeclaringType().getDeclaredAnnotations();
-			if (!declaredAnnotationsOfType.isAnnotationPresent(Remote.class)) {
-				return false;
-			}
-			final Remote annotation = declaredAnnotationsOfType.ofType(Remote.class).loadSilent();
-			return isDeclaredInAnyRemoteInterface(targetMethod, annotation.value());
+			return declaredAnnotationsOfType.isAnnotationPresent(Remote.class) &&
+					!new TypeList.ForLoadedTypes(declaredAnnotationsOfType.ofType(Remote.class).loadSilent().value())
+							.filter(new IsDeclaredInElementMatcher(targetMethod)).isEmpty();
 		}
 
-		private boolean isDeclaredInAnyRemoteInterface(MethodDescription.InDefinedShape targetMethod, Class[] remoteInterfaces) {
-			for (Class<?> remoteInterface : remoteInterfaces) {
-				if (isDeclaredIn(targetMethod, remoteInterface)) {
-					return true;
-				}
-			}
-			return false;
+	}
+
+	private static class IsDeclaredInElementMatcher implements ElementMatcher<TypeDescription> {
+		private final MethodDescription.InDefinedShape targetMethod;
+
+		public IsDeclaredInElementMatcher(MethodDescription.InDefinedShape targetMethod) {
+			this.targetMethod = targetMethod;
 		}
 
-		private boolean isDeclaredIn(final MethodDescription.InDefinedShape targetMethod, Class<?> remoteInterface) {
-			final TypeDescription.ForLoadedType remoteInterfaceType = new TypeDescription.ForLoadedType(remoteInterface);
-			return remoteInterfaceType
-					.getDeclaredMethods()
-					.filter(new ElementMatcher<MethodDescription.InDefinedShape>() {
-				@Override
-				public boolean matches(MethodDescription.InDefinedShape target) {
-					return target.getName().equals(targetMethod.getName()) &&
-							target.getDescriptor().equals(targetMethod.getDescriptor());
-				}
-			}).size() > 0;
+		@Override
+		public boolean matches(TypeDescription target) {
+			return !target.getDeclaredMethods()
+					.filter(named(targetMethod.getName())
+							.and(returns(targetMethod.getReturnType().asErasure()))
+							.and(takesArguments(targetMethod.getParameters().asTypeList().asErasures())))
+					.isEmpty();
 		}
 	}
 }
