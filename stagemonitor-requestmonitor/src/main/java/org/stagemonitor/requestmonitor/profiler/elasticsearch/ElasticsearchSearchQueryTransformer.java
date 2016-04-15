@@ -24,7 +24,7 @@ public class ElasticsearchSearchQueryTransformer extends StagemonitorByteBuddyTr
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return named("beforeExecute").or(named("doExecute"));
 	}
 

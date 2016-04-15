@@ -30,8 +30,8 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	 * <p/>
 	 * <b>Note:</b> {@link org.stagemonitor.requestmonitor.RequestMonitor.RequestInformation#getRequestTrace()} may be null
 	 *
-	 *
-	 * @param injectArguments@return the code to inject into html documents just before the closing body tag
+	 * @param injectArguments
+	 * @return the code to inject into html documents just before the closing body tag
 	 */
 	public abstract void injectHtml(InjectArguments injectArguments);
 

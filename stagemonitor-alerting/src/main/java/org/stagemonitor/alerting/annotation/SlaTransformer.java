@@ -39,7 +39,7 @@ public class SlaTransformer extends StagemonitorByteBuddyTransformer {
 	private static List<Check> checksCreatedBeforeMeasurementStarted = new LinkedList<Check>();
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(SLA.class).or(isAnnotatedWith(SLAs.class));
 	}
 

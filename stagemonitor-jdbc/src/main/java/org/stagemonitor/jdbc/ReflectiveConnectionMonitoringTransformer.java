@@ -1,5 +1,7 @@
 package org.stagemonitor.jdbc;
 
+import static net.bytebuddy.matcher.ElementMatchers.not;
+
 import java.lang.reflect.Method;
 import java.sql.Connection;
 
@@ -8,7 +10,6 @@ import javax.sql.DataSource;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.instrument.Dispatcher;
-import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
@@ -18,16 +19,14 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
  */
 public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitoringTransformer {
 
-	protected static final String CONNECTION_MONITOR = ConnectionMonitor.class.getName();
+	private static final String CONNECTION_MONITOR = ConnectionMonitor.class.getName();
 
 	// [0]: ConnectionMonitor [1]: Method
 	private static ThreadLocal<Object[]> connectionMonitorThreadLocal;
 
 	public ReflectiveConnectionMonitoringTransformer() throws NoSuchMethodException {
-		super();
 		if (isActive()) {
 			RequestMonitor requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
-			connectionMonitor = new ConnectionMonitor(configuration, metric2Registry);
 			final Method monitorGetConnectionMethod = ConnectionMonitor.class
 					.getMethod("monitorGetConnection", Connection.class, Object.class, long.class);
 			makeReflectionInvocationFaster(monitorGetConnectionMethod);
@@ -72,13 +71,8 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 	@Override
 	public ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
-		return new ElementMatcher.Junction.AbstractBase<ClassLoader>() {
-			@Override
-			public boolean matches(ClassLoader target) {
-				return !ClassUtils.canLoadClass(target, "org.stagemonitor.core.Stagemonitor") &&
-						ClassUtils.canLoadClass(target, "org.stagemonitor.dispatcher.Dispatcher");
-			}
-		};
+		// TODO don't instrument classes of the same classloader twice
+		return not(super.getClassLoaderMatcher());
 	}
 
 	@Advice.OnMethodEnter
@@ -88,7 +82,7 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 	@Advice.OnMethodExit
 	private static void addReflectiveMonitorMethodCall(@Advice.This Object dataSource, @Advice.Return(readOnly = false) Connection connection, @Advice.Enter long startTime) {
-		Object[] connectionMonitor = (Object[])((ThreadLocal) org.stagemonitor.dispatcher.Dispatcher.getValues().get(CONNECTION_MONITOR)).get();
+		Object[] connectionMonitor = (Object[])((ThreadLocal) org.stagemonitor.dispatcher.Dispatcher.getValues().get("org.stagemonitor.jdbc.ConnectionMonitor")).get();
 		if (connectionMonitor != null) {
 			try {
 				final Method connectionMonitorMethod = (Method) connectionMonitor[1];
@@ -100,5 +94,4 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 			}
 		}
 	}
-
 }

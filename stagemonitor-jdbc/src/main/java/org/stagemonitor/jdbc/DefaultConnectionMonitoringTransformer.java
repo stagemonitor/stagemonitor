@@ -11,10 +11,6 @@ public class DefaultConnectionMonitoringTransformer extends ConnectionMonitoring
 
 	private static final Logger logger = LoggerFactory.getLogger(DefaultConnectionMonitoringTransformer.class);
 
-	public DefaultConnectionMonitoringTransformer() throws NoSuchMethodException {
-		super();
-	}
-
 	@Advice.OnMethodEnter
 	private static long addTimestampLocalVariable() {
 		return System.nanoTime();

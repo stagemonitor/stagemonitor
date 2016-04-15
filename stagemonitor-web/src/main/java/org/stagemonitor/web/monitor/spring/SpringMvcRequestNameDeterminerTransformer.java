@@ -11,7 +11,6 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -21,17 +20,12 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	private static final String DISPATCHER_SERVLET_CLASS = "org.springframework.web.servlet.DispatcherServlet";
 
 	@Override
-	protected ElementMatcher<? super TypeDescription> getExtraIncludeTypeMatcher() {
+	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return named(DISPATCHER_SERVLET_CLASS);
 	}
 
 	@Override
-	public boolean isActive() {
-		return ClassUtils.isPresent(DISPATCHER_SERVLET_CLASS);
-	}
-
-	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return named("getHandler").and(returns(HandlerExecutionChain.class));
 	}
 

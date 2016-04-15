@@ -14,14 +14,14 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	@Override
 	public ElementMatcher.Junction<TypeDescription> getExtraExcludeTypeMatcher() {
 		return nameStartsWith(Profiler.class.getPackage().getName())
-				.or(makeSureClassesAreNotInstrumentedTwice());
+				.or(makeSureClassesAreNotProfiledTwice());
 	}
 
 	/*
 	 * If this is a subclass of ProfilingTransformer, make sure to not instrument classes
 	 * which are matched by ProfilingTransformer
 	 */
-	private ElementMatcher.Junction<TypeDescription> makeSureClassesAreNotInstrumentedTwice() {
+	private ElementMatcher.Junction<TypeDescription> makeSureClassesAreNotProfiledTwice() {
 		return isSubclass() ? new StagemonitorClassNameMatcher() : ElementMatchers.<TypeDescription>none();
 	}
 
@@ -35,7 +35,7 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Advice.OnMethodEnter
-	public static void enter(@Advice.Origin("#t.#m#d") String signature) {
+	public static void enter(@Advice.Origin("#r #t.#m#s") String signature) {
 		Profiler.start(signature);
 	}
 

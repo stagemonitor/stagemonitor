@@ -12,6 +12,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
+import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -19,7 +20,6 @@ import java.util.List;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -29,20 +29,21 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.ClassUtils;
 
 public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.Listener {
 
-	protected final static Configuration configuration = Stagemonitor.getConfiguration();
+	protected static final Configuration configuration = Stagemonitor.getConfiguration();
 
-	private static final boolean DEBUG_INSTRUMENTATION = configuration.getConfig(CorePlugin.class).isDebugInstrumentation();
+	protected static final boolean DEBUG_INSTRUMENTATION = configuration.getConfig(CorePlugin.class).isDebugInstrumentation();
 
 	private static final Logger logger = LoggerFactory.getLogger(StagemonitorByteBuddyTransformer.class);
 
-	public final ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
+	private static final ElementMatcher.Junction<ClassLoader> applicationClassLoaderMatcher = cached(new ApplicationClassLoaderMatcher());
+
+	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return getIncludeTypeMatcher()
-				.and(noInternalJavaClasses())
 				.and(not(isInterface()))
+				.and(not(isSynthetic()))
 				.and(not(getExtraExcludeTypeMatcher()))
 				.and(not(isSubTypeOf(StagemonitorByteBuddyTransformer.class)))
 				.and(not(isSubTypeOf(StagemonitorDynamicValue.class)));
@@ -55,29 +56,19 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
 		return new StagemonitorClassNameMatcher()
 				.or(not(nameStartsWith("org.stagemonitor"))
-						.and(noInternalJavaClasses())
 						.and(getExtraIncludeTypeMatcher()));
 	}
 
-	private ElementMatcher.Junction<NamedElement> noInternalJavaClasses() {
-		return not(nameStartsWith("java").or(nameStartsWith("com.sun")));
-	}
-
-	protected ElementMatcher<? super TypeDescription> getExtraIncludeTypeMatcher() {
+	protected ElementMatcher.Junction<TypeDescription> getExtraIncludeTypeMatcher() {
 		return none();
 	}
 
-	protected ElementMatcher<? super TypeDescription> getExtraExcludeTypeMatcher() {
+	protected ElementMatcher.Junction<TypeDescription> getExtraExcludeTypeMatcher() {
 		return none();
 	}
 
 	public ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
-		return new ElementMatcher.Junction.AbstractBase<ClassLoader>() {
-			@Override
-			public boolean matches(ClassLoader target) {
-				return ClassUtils.canLoadClass(target, "org.stagemonitor.core.Stagemonitor");
-			}
-		};
+		return applicationClassLoaderMatcher;
 	}
 
 	public AgentBuilder.Transformer getTransformer() {
@@ -104,8 +95,7 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 		return Collections.emptyList();
 	}
 
-
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getMethodElementMatcher() {
 		return not(isConstructor())
 				.and(not(isAbstract()))
 				.and(not(isNative()))
@@ -115,7 +105,7 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 				.and(getExtraMethodElementMatcher());
 	}
 
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return any();
 	}
 
@@ -148,4 +138,5 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 	@Override
 	public void onComplete(String typeName) {
 	}
+
 }

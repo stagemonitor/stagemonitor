@@ -23,7 +23,7 @@ import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 public class MeteredTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(Metered.class);
 	}
 

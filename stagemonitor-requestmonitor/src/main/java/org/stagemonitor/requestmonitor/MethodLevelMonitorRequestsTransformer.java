@@ -8,7 +8,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 public class MethodLevelMonitorRequestsTransformer extends AbstractMonitorRequestsTransformer {
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(MonitorRequests.class);
 	}
 

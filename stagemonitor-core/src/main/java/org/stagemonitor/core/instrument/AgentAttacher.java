@@ -1,5 +1,9 @@
 package org.stagemonitor.core.instrument;
 
+import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
+import static net.bytebuddy.matcher.ElementMatchers.nameContains;
+import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -15,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
@@ -38,6 +43,22 @@ public class AgentAttacher {
 	private static boolean runtimeAttached = false;
 	private static Set<Integer> hashCodesOfClassLoadersToIgnore = new HashSet<Integer>();
 	private static Instrumentation instrumentation;
+
+	private static final ElementMatcher.Junction<NamedElement> excludeTypes = nameStartsWith("java")
+			.or(nameStartsWith("com.sun"))
+			.or(nameStartsWith("jdk"))
+			.or(nameStartsWith("org.aspectj"))
+			.or(nameStartsWith("org.groovy"))
+			.or(nameStartsWith("org.hibernate"))
+			.or(nameStartsWith("oracle"))
+			.or(not(nameContains("DataSource"))
+					.and(nameStartsWith("org.apache.catalina")
+							.or(nameStartsWith("org.apache.tomcat"))
+							.or(nameStartsWith("org.jboss"))
+							.or(nameStartsWith("org.wildfly"))
+							.or(nameStartsWith("org.glassfish"))))
+			.or(nameContains("javassist"))
+			.or(nameContains("asm"));
 
 	private AgentAttacher() {
 	}
@@ -101,7 +122,7 @@ public class AgentAttacher {
 			if (stagemonitorByteBuddyTransformer.isActive() && !isExcluded(transformerName)) {
 				try {
 					final long start = System.currentTimeMillis();
-					classFileTransformers.add(installClassFileTransformer(stagemonitorByteBuddyTransformer));
+					classFileTransformers.add(installClassFileTransformer(stagemonitorByteBuddyTransformer, transformerName));
 					logger.debug("Attached {} in {} ms", transformerName, System.currentTimeMillis() - start);
 				} catch (Exception e) {
 					logger.warn("Error while installing " + transformerName, e);
@@ -111,13 +132,15 @@ public class AgentAttacher {
 		return classFileTransformers;
 	}
 
-	private static ClassFileTransformer installClassFileTransformer(StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer) {
+	private static ClassFileTransformer installClassFileTransformer(StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer, String transformerName) {
 		return new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 				.with(stagemonitorByteBuddyTransformer)
+				.ignore(any(), isBootstrapClassLoader()).or(excludeTypes)
 				.disableClassFormatChanges()
-				.type(stagemonitorByteBuddyTransformer.getTypeMatcher(), stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
-						.and(not(new IsIgnoredClassLoaderElementMatcher())))
+				.type(stagemonitorByteBuddyTransformer.getTypeMatcher(),
+						stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
+								.and(not(new IsIgnoredClassLoaderElementMatcher())))
 				.transform(stagemonitorByteBuddyTransformer.getTransformer())
 				.installOn(instrumentation);
 	}
@@ -132,4 +155,5 @@ public class AgentAttacher {
 			return hashCodesOfClassLoadersToIgnore.contains(System.identityHashCode(target));
 		}
 	}
+
 }

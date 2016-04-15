@@ -19,7 +19,7 @@ public class FilterProfilingTransformer extends ProfilingTransformer {
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return named("doFilter");
 	}
 

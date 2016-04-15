@@ -22,7 +22,7 @@ import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(ExceptionMetered.class);
 	}
 

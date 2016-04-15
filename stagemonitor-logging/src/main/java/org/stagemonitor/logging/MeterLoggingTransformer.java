@@ -29,7 +29,7 @@ public class MeterLoggingTransformer extends StagemonitorByteBuddyTransformer {
 	private final static Metric2Registry registry = Stagemonitor.getMetric2Registry();
 
 	@Override
-	protected ElementMatcher<? super TypeDescription> getExtraIncludeTypeMatcher() {
+	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return named("ch.qos.logback.classic.Logger")
 				.or(named("org.slf4j.impl.SimpleLogger"))
 				.or(named("org.apache.logging.log4j.spi.AbstractLogger"))
@@ -38,7 +38,7 @@ public class MeterLoggingTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return not(isPrivate())
 				.and(named("trace")
 						.or(named("debug"))

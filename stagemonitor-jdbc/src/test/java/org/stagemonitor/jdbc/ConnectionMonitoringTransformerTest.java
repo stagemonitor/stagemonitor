@@ -3,34 +3,21 @@ package org.stagemonitor.jdbc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.Statement;
-import java.util.Collections;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
+import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -41,8 +28,7 @@ import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 public class ConnectionMonitoringTransformerTest {
 
-	private static Connection connection;
-	private TestDataSource dataSource;
+	private DataSource dataSource;
 	private RequestMonitor requestMonitor;
 
 	@BeforeClass
@@ -52,33 +38,15 @@ public class ConnectionMonitoringTransformerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		CorePlugin corePlugin = mock(CorePlugin.class);
-		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		Configuration configuration = mock(Configuration.class);
-		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
-
-		when(corePlugin.isStagemonitorActive()).thenReturn(true);
-		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://mockhost"));
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
-		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(1000000d);
-		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
-		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
-		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
-
 		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 
-		dataSource = new TestDataSource();
-		connection = mock(Connection.class);
-		final DatabaseMetaData metaData = mock(DatabaseMetaData.class);
-		when(metaData.getURL()).thenReturn("jdbc:test");
-		when(metaData.getUserName()).thenReturn("testUser");
-		when(connection.getMetaData()).thenReturn(metaData);
+		final PoolProperties poolProperties = new PoolProperties();
+		poolProperties.setDriverClassName("org.hsqldb.jdbcDriver");
+		poolProperties.setUrl("jdbc:hsqldb:mem:test");
+		dataSource = new org.apache.tomcat.jdbc.pool.DataSource(poolProperties);
+		dataSource.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS STAGEMONITOR (FOO INT)").execute();
 
-		when(connection.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
-		when(connection.createStatement()).thenReturn(mock(Statement.class));
-		requestMonitor = new RequestMonitor(configuration, Stagemonitor.getMetric2Registry());
+		requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
 	}
 
 	@AfterClass
@@ -89,16 +57,31 @@ public class ConnectionMonitoringTransformerTest {
 
 	@Test
 	public void monitorGetConnection() throws Exception {
-		dataSource.getConnection();
+		requestMonitor
+				.monitor(new MonitoredMethodRequest("monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
+					@Override
+					public Object execute() throws Exception {
+						dataSource.getConnection();
+						return null;
+					}
+				}));
 		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:test-testUser").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:hsqldb:mem:test-SA").build()));
 	}
 
 	@Test
 	public void monitorGetConnectionUsernamePassword() throws Exception {
 		dataSource.getConnection("user", "pw");
+		requestMonitor
+				.monitor(new MonitoredMethodRequest("monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
+					@Override
+					public Object execute() throws Exception {
+						dataSource.getConnection("user", "pw");
+						return null;
+					}
+				}));
 		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:test-testUser").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:hsqldb:mem:test-SA").build()));
 	}
 
 	@Test
@@ -147,57 +130,4 @@ public class ConnectionMonitoringTransformerTest {
 		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getSignature());
 	}
 
-	private static class AbstractTestDataSource {
-
-		public Connection getConnection() throws SQLException {
-			return doGetConnection();
-		}
-
-		// private method to ensure that the instrumenter does not copy the getConnection method
-		// but rather calls the method from the super class because a direct call to doGetConnection would fail
-		private Connection doGetConnection() throws SQLException {
-			return connection;
-		}
-	}
-
-	private static class TestDataSource extends AbstractTestDataSource implements DataSource {
-
-		@Override
-		public Connection getConnection(String username, String password) throws SQLException {
-			return connection;
-		}
-
-		@Override
-		public PrintWriter getLogWriter() throws SQLException {
-			return null;
-		}
-
-		@Override
-		public void setLogWriter(PrintWriter out) throws SQLException {
-		}
-
-		@Override
-		public void setLoginTimeout(int seconds) throws SQLException {
-		}
-
-		@Override
-		public int getLoginTimeout() throws SQLException {
-			return 0;
-		}
-
-		@Override
-		public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-			return null;
-		}
-
-		@Override
-		public <T> T unwrap(Class<T> iface) throws SQLException {
-			return null;
-		}
-
-		@Override
-		public boolean isWrapperFor(Class<?> iface) throws SQLException {
-			return false;
-		}
-	}
 }

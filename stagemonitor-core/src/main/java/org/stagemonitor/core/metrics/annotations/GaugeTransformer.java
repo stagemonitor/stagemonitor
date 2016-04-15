@@ -31,7 +31,7 @@ public class GaugeTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getMethodElementMatcher() {
 		return isConstructor();
 	}
 

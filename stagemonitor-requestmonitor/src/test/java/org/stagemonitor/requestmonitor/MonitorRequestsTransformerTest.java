@@ -97,7 +97,7 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	@ExcludeOnTravis
 	public void testClassLevelAnnotationClass() throws Exception {
-		testClassLevelAnnotationClass.monitorMe(1);
+		testClassLevelAnnotationClass.monitorMe("1");
 		testClassLevelAnnotationClass.dontMonitorMe();
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
@@ -114,8 +114,8 @@ public class MonitorRequestsTransformerTest {
 	@MonitorRequests
 	private static class TestClassLevelAnnotationClass {
 
-		public int monitorMe(int i) throws Exception {
-			return i;
+		public String monitorMe(String s) throws Exception {
+			return s;
 		}
 
 		private int dontMonitorMe() throws Exception {

@@ -24,7 +24,7 @@ public class RemoteEjbMonitorTransformer extends AbstractMonitorRequestsTransfor
 	}
 
 	@Override
-	protected ElementMatcher.Junction<? super MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		return isPublic().and(new IsDeclaredInRemoteClassElementMatcher());
 	}
 
