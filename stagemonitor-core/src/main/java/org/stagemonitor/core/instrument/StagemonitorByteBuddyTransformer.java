@@ -13,6 +13,7 @@ import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
+import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -72,6 +73,7 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 	}
 
 	public AgentBuilder.Transformer getTransformer() {
+		final String transformerName = getClass().getSimpleName();
 		return new AgentBuilder.Transformer() {
 			@Override
 			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
@@ -85,7 +87,7 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 				return builder
 						.visit(withCustomMapping
 								.to(getAdviceClass())
-								.on(getMethodElementMatcher()));
+								.on(timed(getMethodElementMatcher(), "method", transformerName)));
 			}
 
 		};

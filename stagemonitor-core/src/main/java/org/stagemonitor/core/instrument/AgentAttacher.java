@@ -5,6 +5,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.not;
+import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -80,6 +81,7 @@ public class AgentAttacher {
 			final long start = System.currentTimeMillis();
 			classFileTransformers.addAll(initByteBuddyClassFileTransformers());
 			logger.debug("Attached agents in {} ms", System.currentTimeMillis() - start);
+			TimedElementMatcherDecorator.logMetrics();
 		}
 		return new Runnable() {
 			public void run() {
@@ -136,11 +138,11 @@ public class AgentAttacher {
 		return new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 				.with(stagemonitorByteBuddyTransformer)
-				.ignore(any(), isBootstrapClassLoader()).or(excludeTypes)
+				.ignore(any(), timed(isBootstrapClassLoader(), "classloader", "global-exclude")).or(timed(excludeTypes, "type", "global-exclude"))
 				.disableClassFormatChanges()
-				.type(stagemonitorByteBuddyTransformer.getTypeMatcher(),
-						stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
-								.and(not(new IsIgnoredClassLoaderElementMatcher())))
+				.type(timed(stagemonitorByteBuddyTransformer.getTypeMatcher(), "type", transformerName),
+						timed(stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
+								.and(not(new IsIgnoredClassLoaderElementMatcher())), "classloader", transformerName))
 				.transform(stagemonitorByteBuddyTransformer.getTransformer())
 				.installOn(instrumentation);
 	}
