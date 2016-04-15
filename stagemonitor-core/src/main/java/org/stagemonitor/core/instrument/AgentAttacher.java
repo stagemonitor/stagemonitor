@@ -46,8 +46,9 @@ public class AgentAttacher {
 	private static Instrumentation instrumentation;
 
 	private static final ElementMatcher.Junction<NamedElement> excludeTypes = nameStartsWith("java")
-			.or(nameStartsWith("com.sun"))
-			.or(nameStartsWith("jdk"))
+			.or(nameStartsWith("com.sun."))
+			.or(nameStartsWith("sun."))
+			.or(nameStartsWith("jdk."))
 			.or(nameStartsWith("org.aspectj"))
 			.or(nameStartsWith("org.groovy"))
 			.or(nameStartsWith("org.hibernate"))
@@ -59,7 +60,7 @@ public class AgentAttacher {
 							.or(nameStartsWith("org.wildfly"))
 							.or(nameStartsWith("org.glassfish"))))
 			.or(nameContains("javassist"))
-			.or(nameContains("asm"));
+			.or(nameContains(".asm."));
 
 	private AgentAttacher() {
 	}
@@ -80,7 +81,9 @@ public class AgentAttacher {
 		if (initInstrumentation()) {
 			final long start = System.currentTimeMillis();
 			classFileTransformers.addAll(initByteBuddyClassFileTransformers());
-			logger.debug("Attached agents in {} ms", System.currentTimeMillis() - start);
+			if (corePlugin.isDebugInstrumentation()) {
+				logger.info("Attached agents in {} ms", System.currentTimeMillis() - start);
+			}
 			TimedElementMatcherDecorator.logMetrics();
 		}
 		return new Runnable() {
@@ -125,7 +128,9 @@ public class AgentAttacher {
 				try {
 					final long start = System.currentTimeMillis();
 					classFileTransformers.add(installClassFileTransformer(stagemonitorByteBuddyTransformer, transformerName));
-					logger.debug("Attached {} in {} ms", transformerName, System.currentTimeMillis() - start);
+					if (corePlugin.isDebugInstrumentation()) {
+						logger.info("Attached {} in {} ms", transformerName, System.currentTimeMillis() - start);
+					}
 				} catch (Exception e) {
 					logger.warn("Error while installing " + transformerName, e);
 				}
