@@ -47,9 +47,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 					"snaq.db.DBPoolDataSource",
 					"com.zaxxer.hikari.HikariDataSource",
 					"org.jboss.jca.adapters.jdbc.WrapperDataSource",
-					"org.springframework.jdbc.datasource.SingleConnectionDataSource",
-					"org.springframework.jdbc.datasource.DriverManagerDataSource",
-					"org.springframework.jdbc.datasource.SimpleDriverDataSource"
+					"org.springframework.jdbc.datasource.AbstractDriverBasedDataSource"
 			))
 			.configurationCategory(JDBC_PLUGIN)
 			.build();
