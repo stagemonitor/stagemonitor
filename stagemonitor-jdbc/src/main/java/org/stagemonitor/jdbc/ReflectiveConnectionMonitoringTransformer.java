@@ -1,15 +1,22 @@
 package org.stagemonitor.jdbc;
 
 import static net.bytebuddy.matcher.ElementMatchers.not;
+import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
 
 import java.lang.reflect.Method;
 import java.sql.Connection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.instrument.Dispatcher;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
@@ -20,6 +27,9 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitoringTransformer {
 
 	private static final String CONNECTION_MONITOR = ConnectionMonitor.class.getName();
+	private static final String ALREADY_TRANSFORMED_KEY = "ReflectiveConnectionMonitoringTransformer.alreadyTransformed";
+
+	private Set<String> alreadyTransformed;
 
 	// [0]: ConnectionMonitor [1]: Method
 	private static ThreadLocal<Object[]> connectionMonitorThreadLocal;
@@ -33,11 +43,11 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 			addConnectionMonitorToThreadLocalOnEachRequest(requestMonitor, monitorGetConnectionMethod);
 
+			Dispatcher.getValues().putIfAbsent(CONNECTION_MONITOR, new ThreadLocal<Object[]>());
 			connectionMonitorThreadLocal = Dispatcher.get(CONNECTION_MONITOR);
-			if (connectionMonitorThreadLocal == null) {
-				connectionMonitorThreadLocal = new ThreadLocal<Object[]>();
-				Dispatcher.put(CONNECTION_MONITOR, connectionMonitorThreadLocal);
-			}
+
+			Dispatcher.getValues().putIfAbsent(ALREADY_TRANSFORMED_KEY, Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>()));
+			alreadyTransformed = Dispatcher.get(ALREADY_TRANSFORMED_KEY);
 		}
 	}
 
@@ -69,10 +79,34 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 		}
 	}
 
+	/**
+	 * Makes sure that no DataSources are instrumented twice, even if multiple stagemonitored applications are
+	 * deployed on one application server
+	 */
+	@Override
+	public ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
+		return super.getIncludeTypeMatcher().and(new ElementMatcher<TypeDescription>() {
+			@Override
+			public boolean matches(TypeDescription target) {
+				// actually already transformed should be a pair of the ClassLoader and the class name but this is
+				// probably negligible
+				return !alreadyTransformed.contains(target.getName());
+			}
+		});
+	}
+
+	/**
+	 * Only applies if stagemonitor can't be loaded by this class loader.
+	 * For example a module class loader which loaded the DataSource but does not have access to the application classes.
+	 */
 	@Override
 	public ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
-		// TODO don't instrument classes of the same classloader twice
-		return not(super.getClassLoaderMatcher());
+		return not(cached(new ElementMatcher<ClassLoader>() {
+			@Override
+			public boolean matches(ClassLoader target) {
+				return !ClassUtils.canLoadClass(target, "org.stagemonitor.core.Stagemonitor");
+			}
+		}));
 	}
 
 	@Advice.OnMethodEnter
@@ -93,5 +127,10 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 				e.printStackTrace();
 			}
 		}
+	}
+
+	@Override
+	public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+		alreadyTransformed.add(typeDescription.getName());
 	}
 }
