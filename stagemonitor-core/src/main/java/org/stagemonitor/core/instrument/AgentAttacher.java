@@ -5,6 +5,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.not;
+import static org.stagemonitor.core.instrument.ReflectionClassLoaderMatcher.isReflectionClassLoader;
 import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -51,14 +52,6 @@ public class AgentAttacher {
 			.or(nameStartsWith("jdk."))
 			.or(nameStartsWith("org.aspectj"))
 			.or(nameStartsWith("org.groovy"))
-			.or(nameStartsWith("org.hibernate"))
-			.or(nameStartsWith("oracle"))
-			.or(not(nameContains("DataSource"))
-					.and(nameStartsWith("org.apache.catalina")
-							.or(nameStartsWith("org.apache.tomcat"))
-							.or(nameStartsWith("org.jboss"))
-							.or(nameStartsWith("org.wildfly"))
-							.or(nameStartsWith("org.glassfish"))))
 			.or(nameContains("javassist"))
 			.or(nameContains(".asm."));
 
@@ -143,7 +136,9 @@ public class AgentAttacher {
 		return new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 				.with(stagemonitorByteBuddyTransformer)
-				.ignore(any(), timed(isBootstrapClassLoader(), "classloader", "global-exclude")).or(timed(excludeTypes, "type", "global-exclude"))
+				.ignore(any(), timed(isBootstrapClassLoader(), "classloader", "bootstrap"))
+				.or(timed(excludeTypes, "type", "global-exclude"))
+				.or(any(), timed(isReflectionClassLoader(), "classloader", "reflection"))
 				.disableClassFormatChanges()
 				.type(timed(stagemonitorByteBuddyTransformer.getTypeMatcher(), "type", transformerName),
 						timed(stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
