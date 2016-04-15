@@ -64,6 +64,7 @@ public class SlaTransformer extends StagemonitorByteBuddyTransformer {
 	protected @interface MonitorSLAs {
 	}
 
+	// TODO use Listener onIngore + matcher + ignore all types
 	/**
 	 * A fake {@link net.bytebuddy.asm.Advice.DynamicValue} implementation that does not actually inject a dynamic value
 	 * but instead triggers the {@link #monitorSla(String, String, SLA, SLAs, MonitorRequests)} method to create SLA
