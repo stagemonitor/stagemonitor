@@ -120,28 +120,28 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 	}
 
 	@Override
-	public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
 		if (DEBUG_INSTRUMENTATION) {
 			logger.info("TRANSFORM {} with {}", typeDescription.getName(), getClass().getSimpleName());
 		}
 	}
 
 	@Override
-	public void onIgnored(TypeDescription typeDescription) {
+	public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
 		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled() && getTypeMatcher().matches(typeDescription)) {
 			logger.debug("IGNORE {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}
 	}
 
 	@Override
-	public void onError(String typeName, Throwable throwable) {
+	public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
 		if (DEBUG_INSTRUMENTATION) {
 			logger.warn("ERROR " + typeName + " " + getClass().getSimpleName(), throwable);
 		}
 	}
 
 	@Override
-	public void onComplete(String typeName) {
+	public void onComplete(String typeName, ClassLoader classLoader) {
 	}
 
 }

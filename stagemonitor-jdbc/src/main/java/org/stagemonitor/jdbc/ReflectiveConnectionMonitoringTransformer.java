@@ -2,8 +2,10 @@ package org.stagemonitor.jdbc;
 
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
+import static org.stagemonitor.core.instrument.CanLoadClassElementMatcher.canLoadClass;
 
 import java.lang.reflect.Method;
+import java.lang.stagemonitor.dispatcher.Dispatcher;
 import java.sql.Connection;
 import java.util.Collections;
 import java.util.Set;
@@ -15,8 +17,6 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
-import org.stagemonitor.core.instrument.Dispatcher;
-import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
@@ -53,7 +53,7 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 	/**
 	 * If the ThreadLocal is added, the code added in {@link #addReflectiveMonitorMethodCall} gets active
-	 *
+	 * <p/>
 	 * Using a ThreadLocal ensures that each application invokes its own instance of the ConnectionMonitor and that
 	 * applications that are not monitored by stagemonitor are not influenced
 	 */
@@ -88,8 +88,9 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 		return super.getIncludeTypeMatcher().and(new ElementMatcher<TypeDescription>() {
 			@Override
 			public boolean matches(TypeDescription target) {
-				// actually already transformed should be a pair of the ClassLoader and the class name but this is
-				// probably negligible
+				// actually already transformed should be a pair of the ClassLoader and the class name but
+				// I can't get a reference to the classloader which wants to load the target type.
+				// But this is probably negligible
 				return !alreadyTransformed.contains(target.getName());
 			}
 		});
@@ -101,12 +102,7 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	 */
 	@Override
 	public ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
-		return not(cached(new ElementMatcher<ClassLoader>() {
-			@Override
-			public boolean matches(ClassLoader target) {
-				return !ClassUtils.canLoadClass(target, "org.stagemonitor.core.Stagemonitor");
-			}
-		}));
+		return not(cached(canLoadClass("org.stagemonitor.core.Stagemonitor")));
 	}
 
 	@Advice.OnMethodEnter
@@ -116,21 +112,20 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 	@Advice.OnMethodExit
 	private static void addReflectiveMonitorMethodCall(@Advice.This Object dataSource, @Advice.Return(readOnly = false) Connection connection, @Advice.Enter long startTime) {
-		Object[] connectionMonitor = (Object[])((ThreadLocal) org.stagemonitor.dispatcher.Dispatcher.getValues().get("org.stagemonitor.jdbc.ConnectionMonitor")).get();
-		if (connectionMonitor != null) {
-			try {
+		try {
+			Object[] connectionMonitor = (Object[]) ((ThreadLocal) Dispatcher.getValues().get("org.stagemonitor.jdbc.ConnectionMonitor")).get();
+			if (connectionMonitor != null) {
 				final Method connectionMonitorMethod = (Method) connectionMonitor[1];
-				final ConnectionMonitor connectionMonitorInstance = (ConnectionMonitor) connectionMonitor[0];
 				final long duration = System.nanoTime() - startTime;
-				connection = (Connection) connectionMonitorMethod.invoke(connectionMonitorInstance, connection, dataSource, duration);
-			} catch (Exception e) {
-				e.printStackTrace();
+				connection = (Connection) connectionMonitorMethod.invoke(connectionMonitor[0], connection, dataSource, duration);
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
 	@Override
-	public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
 		alreadyTransformed.add(typeDescription.getName());
 	}
 }

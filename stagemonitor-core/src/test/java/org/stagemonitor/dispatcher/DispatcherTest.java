@@ -1,10 +1,11 @@
 package org.stagemonitor.dispatcher;
 
+import java.lang.stagemonitor.dispatcher.Dispatcher;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.Dispatcher;
 
 public class DispatcherTest {
 
