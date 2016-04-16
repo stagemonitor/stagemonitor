@@ -3,20 +3,12 @@ package org.stagemonitor.alerting.annotation;
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +18,15 @@ import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.instrument.AbstractClassPathScanner;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitorRequests;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
-public class SlaTransformer extends StagemonitorByteBuddyTransformer {
+public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
-	private static final Logger logger = LoggerFactory.getLogger(SlaTransformer.class);
+	private static final Logger logger = LoggerFactory.getLogger(SlaCheckCreatingClassPathScanner.class);
 
 	private static List<Check> checksCreatedBeforeMeasurementStarted = new LinkedList<Check>();
 
@@ -44,75 +36,22 @@ public class SlaTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Collections.<StagemonitorDynamicValue<?>>singletonList(new MonitorSLAsDynamicValue());
-	}
+	protected void onMethodMatch(MethodDescription.InDefinedShape methodDescription) {
+		final String requestName = configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
+				.getBusinessTransationName(methodDescription.getDeclaringType().getSimpleName(), methodDescription.getName());
+		final String fullMethodSignature = methodDescription.toString();
+		final AnnotationList declaredAnnotations = methodDescription.getDeclaredAnnotations();
 
-	/**
-	 * Empty method whose sole purpose is to trigger
-	 * {@link MonitorSLAsDynamicValue#resolve(MethodDescription.InDefinedShape, ParameterDescription.InDefinedShape,
-	 * AnnotationDescription.Loadable, boolean)}
-	 *
-	 * @param dummy just a dummy value
-	 */
-	@Advice.OnMethodEnter
-	private static void enter(@MonitorSLAs Object dummy) {
-	}
-
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.PARAMETER)
-	protected @interface MonitorSLAs {
-	}
-
-	// TODO use Listener onIngore + matcher + ignore all types
-	/**
-	 * A fake {@link net.bytebuddy.asm.Advice.DynamicValue} implementation that does not actually inject a dynamic value
-	 * but instead triggers the {@link #monitorSla(String, String, SLA, SLAs, MonitorRequests)} method to create SLA
-	 * checks for the method.
-	 */
-	public static class MonitorSLAsDynamicValue extends StagemonitorDynamicValue<MonitorSLAs> {
-
-		@Override
-		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
-							  ParameterDescription.InDefinedShape target,
-							  AnnotationDescription.Loadable<MonitorSLAs> annotation,
-							  boolean initialized) {
-			final String requestName = configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
-					.getBusinessTransationName(instrumentedMethod.getDeclaringType().getSimpleName(), instrumentedMethod.getName());
-			monitorSla(instrumentedMethod.toString(), requestName,
-					getAnnotationOrNull(instrumentedMethod, SLA.class),
-					getAnnotationOrNull(instrumentedMethod, SLAs.class),
-					getAnnotationOrNull(instrumentedMethod, MonitorRequests.class));
-			return null;
-		}
-
-		private <T extends Annotation> T getAnnotationOrNull(MethodDescription.InDefinedShape instrumentedMethod, Class<T> annotationClass) {
-			final AnnotationDescription.Loadable<T> loadable = instrumentedMethod.getDeclaredAnnotations().ofType(annotationClass);
-			if (loadable == null) {
-				return null;
+		if (!declaredAnnotations.isAnnotationPresent(MonitorRequests.class)) {
+			logger.warn("To create an SLA for the method {}, it also has to be annotated with @MonitorRequests",
+					fullMethodSignature);
+		} else {
+			if (declaredAnnotations.isAnnotationPresent(SLA.class)) {
+				createSlaCheck(declaredAnnotations.ofType(SLA.class).loadSilent(), fullMethodSignature, requestName);
 			}
-			return loadable.loadSilent();
-		}
-
-		@Override
-		public Class<MonitorSLAs> getAnnotationClass() {
-			return MonitorSLAs.class;
-		}
-	}
-
-	public static void monitorSla(String fullMethodSignature, String requestName, SLA slaAnnotation, SLAs slasAnnotation, MonitorRequests monitorRequests) {
-		if (slaAnnotation != null || slasAnnotation != null) {
-			if (monitorRequests == null) {
-				logger.warn("To create an SLA for the method {}, it also has to be annotated with @MonitorRequests",
-						fullMethodSignature);
-			} else {
-				if (slaAnnotation != null) {
-					createSlaCheck(slaAnnotation, fullMethodSignature, requestName);
-				}
-				if (slasAnnotation != null) {
-					for (SLA sla : slasAnnotation.value()) {
-						createSlaCheck(sla, fullMethodSignature, requestName);
-					}
+			if (declaredAnnotations.isAnnotationPresent(SLAs.class)) {
+				for (SLA sla : declaredAnnotations.ofType(SLAs.class).loadSilent().value()) {
+					createSlaCheck(sla, fullMethodSignature, requestName);
 				}
 			}
 		}
@@ -156,7 +95,7 @@ public class SlaTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	private static Check createCheck(SLA slaAnnotation, String fullMethodSignature, String requestName, MetricCategory metricCategory,
-							  MetricName metricName, String checkNameSuffix, String checkIdSuffix) {
+									 MetricName metricName, String checkNameSuffix, String checkIdSuffix) {
 		Check check = new Check();
 		check.setId(fullMethodSignature + "." + checkIdSuffix);
 		check.setName(requestName + checkNameSuffix);

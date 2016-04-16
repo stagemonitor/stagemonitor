@@ -1,1 +1,1 @@
-org.stagemonitor.alerting.annotation.SlaTransformer
+org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScanner

@@ -19,7 +19,7 @@ import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.MonitorRequests;
 
-public class SlaTransformerTest {
+public class SlaCheckCreatingClassPathScannerTest {
 
 	private final AlertingPlugin alertingPlugin = Stagemonitor.getPlugin(AlertingPlugin.class);
 
@@ -62,14 +62,14 @@ public class SlaTransformerTest {
 		final Map<String, Check> checks = alertingPlugin.getChecks();
 
 		final Check errorRateCheck = checks
-				.get("void org.stagemonitor.alerting.annotation.SlaTransformerTest$SlaTestClass.monitorSla().errors");
+				.get("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().errors");
 		assertNotNull(checks.keySet().toString(), errorRateCheck);
 		assertEquals("Alerting-Test", errorRateCheck.getApplication());
 		assertEquals(MetricCategory.METER, errorRateCheck.getMetricCategory());
 		assertEquals("\\Qerror_rate_server.Monitor-Sla.All\\E", errorRateCheck.getTarget().toString());
 
 		final Check responseTimeChek = checks
-				.get("void org.stagemonitor.alerting.annotation.SlaTransformerTest$SlaTestClass.monitorSla().responseTime");
+				.get("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().responseTime");
 		assertNotNull(checks.keySet().toString(), responseTimeChek);
 		assertEquals("Alerting-Test", responseTimeChek.getApplication());
 		assertEquals(MetricCategory.TIMER, responseTimeChek.getMetricCategory());
@@ -94,7 +94,7 @@ public class SlaTransformerTest {
 		}
 		alertingPlugin.getThresholdMonitoringReporter().report();
 		final Incident incident = alertingPlugin.getIncidentRepository()
-				.getIncidentByCheckId("void org.stagemonitor.alerting.annotation.SlaTransformerTest$SlaTestClass.monitorSla().responseTime");
+				.getIncidentByCheckId("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().responseTime");
 		assertNotNull(incident);
 	}
 
@@ -108,7 +108,7 @@ public class SlaTransformerTest {
 
 		alertingPlugin.getThresholdMonitoringReporter().report();
 		final Incident incident = alertingPlugin.getIncidentRepository()
-				.getIncidentByCheckId("void org.stagemonitor.alerting.annotation.SlaTransformerTest$SlaTestClass.monitorSla().errors");
+				.getIncidentByCheckId("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().errors");
 		assertNotNull(incident);
 	}
 }
