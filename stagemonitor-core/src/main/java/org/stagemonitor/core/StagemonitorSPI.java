@@ -1,7 +1,7 @@
 package org.stagemonitor.core;
 
 /**
- * Just marks a class as a serivice provider interface that can be used to extend stagemonitor.
+ * Just marks a class as a service provider interface that can be used to extend stagemonitor.
  * <p/>
  * To add a custom implementation, just implement the abstract class and add the full qualified class name to
  * <code>src/main/resources/META-INF/services/{full.class.name.of.SPI}</code>
