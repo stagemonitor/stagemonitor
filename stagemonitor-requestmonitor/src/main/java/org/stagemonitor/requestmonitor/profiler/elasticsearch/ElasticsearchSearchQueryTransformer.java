@@ -10,7 +10,6 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchType;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
@@ -31,11 +30,6 @@ public class ElasticsearchSearchQueryTransformer extends StagemonitorByteBuddyTr
 	@Advice.OnMethodEnter
 	private static void addIOCall(@Advice.This SearchRequestBuilder searchRequestBuilder) {
 		Profiler.addIOCall(ElasticsearchSearchQueryTransformer.getSearchRequestAsString(searchRequestBuilder), 0L);
-	}
-
-	@Override
-	public boolean isActive() {
-		return ClassUtils.isPresent(SEARCH_REQUEST_BUILDER_CLASSNAME);
 	}
 
 	public static String getSearchRequestAsString(SearchRequestBuilder searchRequestBuilder) {
