@@ -5,7 +5,8 @@ import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.not;
-import static org.stagemonitor.core.instrument.ReflectionClassLoaderMatcher.isReflectionClassLoader;
+import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.classLoaderWithName;
+import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.isReflectionClassLoader;
 import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
 
 import java.io.File;
@@ -168,8 +169,9 @@ public class AgentAttacher {
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 				.with(stagemonitorByteBuddyTransformer)
 				.ignore(any(), timed(isBootstrapClassLoader(), "classloader", "bootstrap"))
-				.or(timed(excludeTypes, "type", "global-exclude"))
 				.or(any(), timed(isReflectionClassLoader(), "classloader", "reflection"))
+				.or(any(), timed(classLoaderWithName("org.codehaus.groovy.runtime.callsite.CallSiteClassLoader"), "classloader", "groovy-call-site"))
+				.or(timed(excludeTypes, "type", "global-exclude"))
 				.disableClassFormatChanges()
 				.type(timed(stagemonitorByteBuddyTransformer.getTypeMatcher(), "type", transformerName),
 						timed(stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
