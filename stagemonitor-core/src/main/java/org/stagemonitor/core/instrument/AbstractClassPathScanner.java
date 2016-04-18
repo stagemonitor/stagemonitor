@@ -1,14 +1,9 @@
 package org.stagemonitor.core.instrument;
 
-import static net.bytebuddy.matcher.ElementMatchers.none;
-
-import java.util.Collections;
-import java.util.List;
-
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.dynamic.DynamicType;
 
 /**
  * This transformer does not modify classes but only searches for matching {@link TypeDescription} and {@link MethodDescription}s
@@ -21,15 +16,8 @@ public abstract class AbstractClassPathScanner extends StagemonitorByteBuddyTran
 	}
 
 	@Override
-	public final ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
-		return none();
-	}
-
-	@Override
-	public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
-		if (super.getTypeMatcher().matches(typeDescription) && getClassLoaderMatcher().matches(classLoader)) {
-			onTypeMatch(typeDescription);
-		}
+	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
+		onTypeMatch(typeDescription);
 	}
 
 	protected void onTypeMatch(TypeDescription typeDescription) {
@@ -41,13 +29,4 @@ public abstract class AbstractClassPathScanner extends StagemonitorByteBuddyTran
 
 	protected abstract void onMethodMatch(MethodDescription.InDefinedShape methodDescription);
 
-	@Override
-	protected final List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected final Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
-		return super.getAdviceClass();
-	}
 }
