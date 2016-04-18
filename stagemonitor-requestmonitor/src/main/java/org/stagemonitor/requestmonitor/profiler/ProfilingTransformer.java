@@ -22,7 +22,7 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	 * which are matched by ProfilingTransformer
 	 */
 	private ElementMatcher.Junction<TypeDescription> makeSureClassesAreNotProfiledTwice() {
-		return isSubclass() ? new StagemonitorClassNameMatcher() : ElementMatchers.<TypeDescription>none();
+		return isSubclass() ? StagemonitorClassNameMatcher.INSTANCE : ElementMatchers.<TypeDescription>none();
 	}
 
 	private boolean isSubclass() {
@@ -44,4 +44,8 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 		Profiler.stop();
 	}
 
+	@Override
+	protected int getOrder() {
+		return Integer.MAX_VALUE;
+	}
 }

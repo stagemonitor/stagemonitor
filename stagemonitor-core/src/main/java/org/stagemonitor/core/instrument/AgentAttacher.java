@@ -4,6 +4,7 @@ import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.classLoaderWithName;
 import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.isReflectionClassLoader;
@@ -18,6 +19,7 @@ import java.lang.instrument.Instrumentation;
 import java.lang.stagemonitor.dispatcher.Dispatcher;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -28,7 +30,7 @@ import java.util.jar.JarFile;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
@@ -55,16 +57,6 @@ public class AgentAttacher {
 	private static Set<Integer> hashCodesOfClassLoadersToIgnore = new HashSet<Integer>();
 	private static Instrumentation instrumentation;
 
-	private static final ElementMatcher.Junction<NamedElement> excludeTypes = nameStartsWith("java")
-			.or(nameStartsWith("com.sun."))
-			.or(nameStartsWith("sun."))
-			.or(nameStartsWith("jdk."))
-			.or(nameStartsWith("org.aspectj."))
-			.or(nameStartsWith("org.groovy."))
-			.or(nameStartsWith("net.bytebuddy."))
-			.or(nameContains("javassist"))
-			.or(nameContains(".asm."));
-
 	private AgentAttacher() {
 	}
 
@@ -83,7 +75,7 @@ public class AgentAttacher {
 		final List<ClassFileTransformer> classFileTransformers = new ArrayList<ClassFileTransformer>();
 		if (initInstrumentation()) {
 			final long start = System.currentTimeMillis();
-			classFileTransformers.addAll(initByteBuddyClassFileTransformers());
+			classFileTransformers.add(initByteBuddyClassFileTransformer());
 			if (corePlugin.isDebugInstrumentation()) {
 				logger.info("Attached agents in {} ms", System.currentTimeMillis() - start);
 			}
@@ -143,45 +135,94 @@ public class AgentAttacher {
 		return tempDispatcherJar;
 	}
 
-	private static List<ClassFileTransformer> initByteBuddyClassFileTransformers() {
-		List<ClassFileTransformer> classFileTransformers = new ArrayList<ClassFileTransformer>();
-		final ServiceLoader<StagemonitorByteBuddyTransformer> loader = ServiceLoader.load(StagemonitorByteBuddyTransformer.class, Stagemonitor.class.getClassLoader());
+	private static ClassFileTransformer initByteBuddyClassFileTransformer() {
+		// java 8 - I miss you
+		List<ElementMatcher.Junction<TypeDescription>> typeMatchers = new ArrayList<ElementMatcher.Junction<TypeDescription>>();
+		List<ElementMatcher.Junction<ClassLoader>> classLoaderMatchers = new ArrayList<ElementMatcher.Junction<ClassLoader>>();
+		List<AgentBuilder.Transformer> transformers = new ArrayList<AgentBuilder.Transformer>();
 
-		for (StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer : loader) {
-			final String transformerName = stagemonitorByteBuddyTransformer.getClass().getSimpleName();
-			if (stagemonitorByteBuddyTransformer.isActive() && !isExcluded(transformerName)) {
-				try {
-					final long start = System.currentTimeMillis();
-					classFileTransformers.add(installClassFileTransformer(stagemonitorByteBuddyTransformer, transformerName));
-					if (corePlugin.isDebugInstrumentation()) {
-						logger.info("Attached {} in {} ms", transformerName, System.currentTimeMillis() - start);
-					}
-				} catch (Exception e) {
-					logger.warn("Error while installing " + transformerName, e);
-				}
+		final AgentBuilder agentBuilder = createAgentBuilder();
+
+		for (StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer : getStagemonitorByteBuddyTransformers()) {
+			typeMatchers.add(stagemonitorByteBuddyTransformer.getTypeMatcher());
+			classLoaderMatchers.add(stagemonitorByteBuddyTransformer.getClassLoaderMatcher());
+			final AgentBuilder.Transformer transformer = stagemonitorByteBuddyTransformer.getTransformer();
+			if (transformer != AgentBuilder.Transformer.NoOp.INSTANCE) {
+				transformers.add(transformer);
 			}
 		}
-		return classFileTransformers;
+
+		final ElementMatcher.Junction<ClassLoader> classLoaderJunction = anyMatches(classLoaderMatchers)
+				.and(not(new IsIgnoredClassLoaderElementMatcher()));
+		final long start = System.currentTimeMillis();
+		try {
+			return agentBuilder
+					.type(timed("type", "any", anyMatches(typeMatchers)), timed("classloader", "any", classLoaderJunction))
+					.transform(new AgentBuilder.Transformer.Compound(transformers.toArray(new AgentBuilder.Transformer[transformers.size()])))
+					.installOn(instrumentation);
+		} finally {
+			if (corePlugin.isDebugInstrumentation()) {
+				logger.info("Installed agent in {} ms", System.currentTimeMillis() - start);
+			}
+		}
 	}
 
-	private static ClassFileTransformer installClassFileTransformer(StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer, String transformerName) {
+	private static AgentBuilder createAgentBuilder() {
 		return new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-				.with(stagemonitorByteBuddyTransformer)
-				.ignore(any(), timed(isBootstrapClassLoader(), "classloader", "bootstrap"))
-				.or(any(), timed(isReflectionClassLoader(), "classloader", "reflection"))
-				.or(any(), timed(classLoaderWithName("org.codehaus.groovy.runtime.callsite.CallSiteClassLoader"), "classloader", "groovy-call-site"))
-				.or(timed(excludeTypes, "type", "global-exclude"))
-				.disableClassFormatChanges()
-				.type(timed(stagemonitorByteBuddyTransformer.getTypeMatcher(), "type", transformerName),
-						timed(stagemonitorByteBuddyTransformer.getClassLoaderMatcher()
-								.and(not(new IsIgnoredClassLoaderElementMatcher())), "classloader", transformerName))
-				.transform(stagemonitorByteBuddyTransformer.getTransformer())
-				.installOn(instrumentation);
+				.with(corePlugin.isDebugInstrumentation() ? new ErrorLoggingListener() : AgentBuilder.Listener.NoOp.INSTANCE)
+				.ignore(any(), timed("classloader", "bootstrap", isBootstrapClassLoader()))
+				.or(any(), timed("classloader", "reflection", isReflectionClassLoader()))
+				.or(any(), timed("classloader", "groovy-call-site", classLoaderWithName("org.codehaus.groovy.runtime.callsite.CallSiteClassLoader")))
+				.or(timed("type", "global-exclude", nameStartsWith("java")
+						.or(nameStartsWith("com.sun."))
+						.or(nameStartsWith("sun."))
+						.or(nameStartsWith("jdk."))
+						.or(nameStartsWith("org.aspectj."))
+						.or(nameStartsWith("org.groovy."))
+						.or(nameStartsWith("net.bytebuddy."))
+						.or(nameStartsWith("org.slf4j.").and(not(nameStartsWith("org.slf4j.impl."))))
+						.or(nameContains("javassist"))
+						.or(nameContains(".asm."))
+						.or(nameStartsWith("org.stagemonitor")
+								.and(not(nameContains("Test").or(nameContains("benchmark")))))
+				))
+				.disableClassFormatChanges();
 	}
 
-	private static boolean isExcluded(String transformerName) {
-		return corePlugin.getExcludedInstrumenters().contains(transformerName);
+	private static Iterable<StagemonitorByteBuddyTransformer> getStagemonitorByteBuddyTransformers() {
+		List<StagemonitorByteBuddyTransformer> transformers = new ArrayList<StagemonitorByteBuddyTransformer>();
+		for (StagemonitorByteBuddyTransformer transformer : ServiceLoader.load(StagemonitorByteBuddyTransformer.class, Stagemonitor.class.getClassLoader())) {
+			if (transformer.isActive() && !isExcluded(transformer)) {
+				transformers.add(transformer);
+				if (corePlugin.isDebugInstrumentation()) {
+					logger.info("Registering {}", transformer.getClass().getSimpleName());
+				}
+			} else if (corePlugin.isDebugInstrumentation()) {
+				logger.info("Excluding {}", transformer.getClass().getSimpleName());
+			}
+		}
+		Collections.sort(transformers, new Comparator<StagemonitorByteBuddyTransformer>() {
+			@Override
+			public int compare(StagemonitorByteBuddyTransformer o1, StagemonitorByteBuddyTransformer o2) {
+				return o1.getOrder() < o2.getOrder() ? -1 : 1;
+			}
+		});
+		return transformers;
+	}
+
+	private static <T> ElementMatcher.Junction<T> anyMatches(List<ElementMatcher.Junction<T>> matchers) {
+		// a neat little way to optimize the performance: if we have two equal matchers, we can discard one
+		final HashSet<ElementMatcher.Junction<T>> deduplicated = new HashSet<ElementMatcher.Junction<T>>(matchers);
+		ElementMatcher.Junction<T> result = none();
+		for (ElementMatcher.Junction<T> matcher : deduplicated) {
+			result = result.or(matcher);
+		}
+		return result;
+	}
+
+	private static boolean isExcluded(StagemonitorByteBuddyTransformer transformer) {
+		return corePlugin.getExcludedInstrumenters().contains(transformer.getClass().getSimpleName());
 	}
 
 	private static class IsIgnoredClassLoaderElementMatcher implements ElementMatcher<ClassLoader> {

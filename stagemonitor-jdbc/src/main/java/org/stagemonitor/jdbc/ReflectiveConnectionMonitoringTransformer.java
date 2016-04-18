@@ -15,7 +15,6 @@ import javax.sql.DataSource;
 
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -125,7 +124,7 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	}
 
 	@Override
-	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
+	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
 		alreadyTransformed.add(typeDescription.getName());
 	}
 }

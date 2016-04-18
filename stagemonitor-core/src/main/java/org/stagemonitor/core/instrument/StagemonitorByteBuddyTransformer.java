@@ -31,7 +31,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 
-public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.Listener {
+public abstract class StagemonitorByteBuddyTransformer {
 
 	protected static final Configuration configuration = Stagemonitor.getConfiguration();
 
@@ -40,6 +40,8 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 	private static final Logger logger = LoggerFactory.getLogger(StagemonitorByteBuddyTransformer.class);
 
 	private static final ElementMatcher.Junction<ClassLoader> applicationClassLoaderMatcher = cached(new ApplicationClassLoaderMatcher());
+
+	protected final String transformerName = getClass().getSimpleName();
 
 	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return getIncludeTypeMatcher()
@@ -55,7 +57,7 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return new StagemonitorClassNameMatcher()
+		return StagemonitorClassNameMatcher.INSTANCE
 				.or(not(nameStartsWith("org.stagemonitor"))
 						.and(getExtraIncludeTypeMatcher()));
 	}
@@ -73,10 +75,14 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 	}
 
 	public AgentBuilder.Transformer getTransformer() {
-		final String transformerName = getClass().getSimpleName();
 		return new AgentBuilder.Transformer() {
 			@Override
 			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+				if (!(timed("classloader", transformerName, getClassLoaderMatcher()).matches(classLoader) && timed("type", transformerName, getTypeMatcher()).matches(typeDescription))) {
+					onIgnored(typeDescription, classLoader);
+					return builder;
+				}
+				onTransformation(typeDescription, classLoader);
 				List<StagemonitorDynamicValue<?>> dynamicValues = getDynamicValues();
 
 				Advice.WithCustomMapping withCustomMapping = Advice.withCustomMapping();
@@ -84,10 +90,15 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 					withCustomMapping = withCustomMapping.bind(dynamicValue.getAnnotationClass(), dynamicValue);
 				}
 
-				return builder
-						.visit(withCustomMapping
-								.to(getAdviceClass())
-								.on(timed(getMethodElementMatcher(), "method", transformerName)));
+				final Class<? extends StagemonitorByteBuddyTransformer> adviceClass = getAdviceClass();
+				if (adviceClass != null) {
+					builder = builder
+							.visit(withCustomMapping
+									.to(adviceClass)
+									.on(timed("method", transformerName, getMethodElementMatcher())));
+				}
+
+				return builder;
 			}
 
 		};
@@ -119,29 +130,27 @@ public abstract class StagemonitorByteBuddyTransformer implements AgentBuilder.L
 		public abstract Class<T> getAnnotationClass();
 	}
 
-	@Override
-	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
-		if (DEBUG_INSTRUMENTATION) {
-			logger.info("TRANSFORM {} with {}", typeDescription.getName(), getClass().getSimpleName());
+	/**
+	 * Returns the order of this transformer when multiple transformers match a method.
+	 * </p>
+	 * Higher orders will be applied first
+	 *
+	 * @return the order
+	 */
+	protected int getOrder() {
+		return 0;
+	}
+
+	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled()) {
+			logger.debug("TRANSFORM {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}
 	}
 
-	@Override
 	public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
 		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled() && getTypeMatcher().matches(typeDescription)) {
 			logger.debug("IGNORE {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}
-	}
-
-	@Override
-	public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
-		if (DEBUG_INSTRUMENTATION) {
-			logger.warn("ERROR " + typeName + " " + getClass().getSimpleName(), throwable);
-		}
-	}
-
-	@Override
-	public void onComplete(String typeName, ClassLoader classLoader) {
 	}
 
 }

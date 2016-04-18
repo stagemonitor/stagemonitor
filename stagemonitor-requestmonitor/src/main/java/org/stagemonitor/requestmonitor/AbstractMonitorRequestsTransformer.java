@@ -41,6 +41,11 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 	}
 
 	@Override
+	protected int getOrder() {
+		return Integer.MIN_VALUE;
+	}
+
+	@Override
 	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
 		return Collections.<StagemonitorDynamicValue<?>>singletonList(new RequestNameDynamicValue());
 	}

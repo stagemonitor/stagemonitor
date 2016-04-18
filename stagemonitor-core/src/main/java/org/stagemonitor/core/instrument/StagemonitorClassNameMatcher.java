@@ -28,6 +28,10 @@ public class StagemonitorClassNameMatcher extends ElementMatcher.Junction.Abstra
 
 	private static Collection<String> excludeContaining;
 
+	public static final StagemonitorClassNameMatcher INSTANCE = new StagemonitorClassNameMatcher();
+
+	private StagemonitorClassNameMatcher() {
+	}
 
 	static {
 		initIncludesAndExcludes();

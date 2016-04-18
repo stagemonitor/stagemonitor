@@ -26,7 +26,7 @@ public class TimedElementMatcherDecorator<T> implements ElementMatcher<T> {
 	private final Counter count;
 	private final Counter time;
 
-	public static <T> ElementMatcher<T> timed(ElementMatcher<T> delegate, String type, String transformerName) {
+	public static <T> ElementMatcher<T> timed(String type, String transformerName, ElementMatcher<T> delegate) {
 		if (DEBUG_INSTRUMENTATION) {
 			return new TimedElementMatcherDecorator<T>(delegate, type, transformerName);
 		} else {

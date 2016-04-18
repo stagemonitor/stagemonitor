@@ -1,9 +1,7 @@
 package org.stagemonitor.core.instrument;
 
-import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
 
 /**
  * This transformer does not modify classes but only searches for matching {@link TypeDescription} and {@link MethodDescription}s
@@ -11,12 +9,7 @@ import net.bytebuddy.dynamic.DynamicType;
 public abstract class AbstractClassPathScanner extends StagemonitorByteBuddyTransformer {
 
 	@Override
-	public final AgentBuilder.Transformer getTransformer() {
-		return AgentBuilder.Transformer.NoOp.INSTANCE;
-	}
-
-	@Override
-	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
+	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
 		onTypeMatch(typeDescription);
 	}
 
@@ -29,4 +22,8 @@ public abstract class AbstractClassPathScanner extends StagemonitorByteBuddyTran
 
 	protected abstract void onMethodMatch(MethodDescription.InDefinedShape methodDescription);
 
+	@Override
+	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
+		return null;
+	}
 }
