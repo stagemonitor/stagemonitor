@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
-import org.stagemonitor.core.instrument.TimedElementMatcherDecorator;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
@@ -104,7 +103,7 @@ public final class Stagemonitor {
 
 	private static void start() {
 		initializePlugins();
-		TimedElementMatcherDecorator.logMetrics();
+		AgentAttacher.onStarted();
 		started = true;
 		// don't register a shutdown hook for web applications as this causes a memory leak
 		if (ClassUtils.isNotPresent("javax.servlet.Servlet")) {

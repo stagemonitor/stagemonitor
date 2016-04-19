@@ -47,6 +47,7 @@ public class AgentAttacher {
 	private static final Logger logger = LoggerFactory.getLogger(AgentAttacher.class);
 	private static final String DISPATCHER_CLASS_NAME = "java.lang.stagemonitor.dispatcher.Dispatcher";
 	private static final String IGNORED_CLASSLOADERS_KEY = AgentAttacher.class.getName() + "hashCodesOfClassLoadersToIgnore";
+	private static final DeactivatableCachingBinaryLocator binaryLocator = new DeactivatableCachingBinaryLocator();
 	private static final Runnable NOOP_ON_SHUTDOWN_ACTION = new Runnable() {
 		public void run() {
 		}
@@ -89,6 +90,8 @@ public class AgentAttacher {
 				final int classLoaderHash = System.identityHashCode(AgentAttacher.class.getClassLoader());
 				// This ClassLoader is shutting down so don't try to retransform classes of it in the future
 				hashCodesOfClassLoadersToIgnore.add(classLoaderHash);
+				// it does not harm to clear the caches on shut down once again in case a ClassLoader slipped into the cache
+				binaryLocator.deactivateCaching();
 			}
 		};
 	}
@@ -152,12 +155,12 @@ public class AgentAttacher {
 			}
 		}
 
-		final ElementMatcher.Junction<ClassLoader> classLoaderJunction = anyMatches(classLoaderMatchers)
+		final ElementMatcher.Junction<ClassLoader> classLoaderJunction = matchesAny(classLoaderMatchers)
 				.and(not(new IsIgnoredClassLoaderElementMatcher()));
 		final long start = System.currentTimeMillis();
 		try {
 			return agentBuilder
-					.type(timed("type", "any", anyMatches(typeMatchers)), timed("classloader", "any", classLoaderJunction))
+					.type(timed("type", "any", matchesAny(typeMatchers)), timed("classloader", "any", classLoaderJunction))
 					.transform(new AgentBuilder.Transformer.Compound(transformers.toArray(new AgentBuilder.Transformer[transformers.size()])))
 					.installOn(instrumentation);
 		} finally {
@@ -171,6 +174,7 @@ public class AgentAttacher {
 		return new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 				.with(corePlugin.isDebugInstrumentation() ? new ErrorLoggingListener() : AgentBuilder.Listener.NoOp.INSTANCE)
+				.with(binaryLocator)
 				.ignore(any(), timed("classloader", "bootstrap", isBootstrapClassLoader()))
 				.or(any(), timed("classloader", "reflection", isReflectionClassLoader()))
 				.or(any(), timed("classloader", "groovy-call-site", classLoaderWithName("org.codehaus.groovy.runtime.callsite.CallSiteClassLoader")))
@@ -211,7 +215,7 @@ public class AgentAttacher {
 		return transformers;
 	}
 
-	private static <T> ElementMatcher.Junction<T> anyMatches(List<ElementMatcher.Junction<T>> matchers) {
+	private static <T> ElementMatcher.Junction<T> matchesAny(List<ElementMatcher.Junction<T>> matchers) {
 		// a neat little way to optimize the performance: if we have two equal matchers, we can discard one
 		final HashSet<ElementMatcher.Junction<T>> deduplicated = new HashSet<ElementMatcher.Junction<T>>(matchers);
 		ElementMatcher.Junction<T> result = none();
@@ -223,6 +227,11 @@ public class AgentAttacher {
 
 	private static boolean isExcluded(StagemonitorByteBuddyTransformer transformer) {
 		return corePlugin.getExcludedInstrumenters().contains(transformer.getClass().getSimpleName());
+	}
+
+	public static void onStarted() {
+		TimedElementMatcherDecorator.logMetrics();
+		binaryLocator.deactivateCaching();
 	}
 
 	private static class IsIgnoredClassLoaderElementMatcher implements ElementMatcher<ClassLoader> {
