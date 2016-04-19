@@ -58,7 +58,7 @@ public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 		return Stagemonitor.getMetric2Registry().timer(name("timer").tag("signature", signature).build()).time();
 	}
 
-	@Advice.OnMethodExit
+	@Advice.OnMethodExit(onThrowable = Throwable.class)
 	public static void stopTimer(@Advice.Enter Timer.Context timer) {
 		timer.stop();
 	}

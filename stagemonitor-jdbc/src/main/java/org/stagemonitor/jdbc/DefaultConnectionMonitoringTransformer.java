@@ -17,7 +17,7 @@ public class DefaultConnectionMonitoringTransformer extends ConnectionMonitoring
 	}
 
 	@Advice.OnMethodExit
-	private static void addDirectMonitorMethodCall(@Advice.This Object dataSource,
+	public static void addDirectMonitorMethodCall(@Advice.This Object dataSource,
 												   @Advice.Return(readOnly = false) Connection connection,
 												   @Advice.Enter long startTime) {
 		connection = monitorGetConnection(dataSource, connection, startTime);

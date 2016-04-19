@@ -26,9 +26,9 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 		return isAnnotatedWith(ExceptionMetered.class);
 	}
 
-	@Advice.OnMethodExit
-	public static void meterException(@ExceptionMeteredSignature String signature, @MeterExceptionsFor Class<? extends Exception> cause, @Advice.Thrown Throwable t) {
-		if (t != null && cause.isInstance(t)) {
+	@Advice.OnMethodExit(onThrowable = Exception.class, inline = false)
+	public static void meterException(@ExceptionMeteredSignature String signature, @MeterExceptionsFor Class<? extends Exception> cause, @Advice.Thrown Throwable e) {
+		if (e != null && cause.isInstance(e)) {
 			Stagemonitor.getMetric2Registry().meter(name("exception_rate").tag("signature", signature).build()).mark();
 		}
 	}

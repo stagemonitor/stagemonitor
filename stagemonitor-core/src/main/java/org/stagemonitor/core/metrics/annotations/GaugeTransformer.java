@@ -35,7 +35,7 @@ public class GaugeTransformer extends StagemonitorByteBuddyTransformer {
 		return isConstructor();
 	}
 
-	@Advice.OnMethodExit(onThrowable = false)
+	@Advice.OnMethodExit
 	public static void gauges(@Advice.This Object thiz) {
 		monitorGauges(thiz);
 	}

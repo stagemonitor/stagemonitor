@@ -27,12 +27,8 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 				.monitorStart(new MonitoredMethodRequest(requestName, null, args));
 	}
 
-	@Advice.OnMethodExit
-	private static void monitorStop(@Advice.Thrown Throwable exception) {
-		stop(exception);
-	}
-
-	public static void stop(Throwable exception) {
+	@Advice.OnMethodExit(onThrowable = Throwable.class, inline = false)
+	public static void monitorStop(@Advice.Thrown Throwable exception) {
 		final RequestMonitor requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
 		if (exception != null && exception instanceof Exception) {
 			requestMonitor.recordException((Exception) exception);

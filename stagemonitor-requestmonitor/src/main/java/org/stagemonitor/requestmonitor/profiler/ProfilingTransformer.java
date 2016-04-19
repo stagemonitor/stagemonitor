@@ -39,7 +39,7 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 		Profiler.start(signature);
 	}
 
-	@Advice.OnMethodExit
+	@Advice.OnMethodExit(onThrowable = Throwable.class)
 	public static void exit() {
 		Profiler.stop();
 	}
