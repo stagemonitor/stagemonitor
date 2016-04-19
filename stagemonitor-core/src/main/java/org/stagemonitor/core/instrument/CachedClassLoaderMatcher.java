@@ -4,10 +4,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import net.bytebuddy.matcher.ElementMatcher;
+import org.stagemonitor.core.util.ClassUtils;
 
 public class CachedClassLoaderMatcher extends ElementMatcher.Junction.AbstractBase<ClassLoader> {
 
-	private final ConcurrentMap<Integer, Boolean> cache = new ConcurrentHashMap<Integer, Boolean>();
+	private final ConcurrentMap<String, Boolean> cache = new ConcurrentHashMap<String, Boolean>();
 
 	private final ElementMatcher<ClassLoader> delegate;
 
@@ -21,7 +22,7 @@ public class CachedClassLoaderMatcher extends ElementMatcher.Junction.AbstractBa
 
 	@Override
 	public boolean matches(ClassLoader target) {
-		final int key = System.identityHashCode(target);
+		final String key = ClassUtils.getIdentityString(target);
 		final Boolean result = cache.get(key);
 		if (result != null) {
 			return result;

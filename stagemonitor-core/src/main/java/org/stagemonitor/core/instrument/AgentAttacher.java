@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.IOUtils;
 
 /**
@@ -55,7 +56,7 @@ public class AgentAttacher {
 
 	private static CorePlugin corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
 	private static boolean runtimeAttached = false;
-	private static Set<Integer> hashCodesOfClassLoadersToIgnore = new HashSet<Integer>();
+	private static Set<String> hashCodesOfClassLoadersToIgnore;
 	private static Instrumentation instrumentation;
 
 	private AgentAttacher() {
@@ -87,9 +88,8 @@ public class AgentAttacher {
 				for (ClassFileTransformer classFileTransformer : classFileTransformers) {
 					instrumentation.removeTransformer(classFileTransformer);
 				}
-				final int classLoaderHash = System.identityHashCode(AgentAttacher.class.getClassLoader());
 				// This ClassLoader is shutting down so don't try to retransform classes of it in the future
-				hashCodesOfClassLoadersToIgnore.add(classLoaderHash);
+				hashCodesOfClassLoadersToIgnore.add(ClassUtils.getIdentityString(AgentAttacher.class.getClassLoader()));
 				// it does not harm to clear the caches on shut down once again in case a ClassLoader slipped into the cache
 				binaryLocator.deactivateCaching();
 			}
@@ -237,7 +237,7 @@ public class AgentAttacher {
 	private static class IsIgnoredClassLoaderElementMatcher implements ElementMatcher<ClassLoader> {
 		@Override
 		public boolean matches(ClassLoader target) {
-			return hashCodesOfClassLoadersToIgnore.contains(System.identityHashCode(target));
+			return hashCodesOfClassLoadersToIgnore.contains(ClassUtils.getIdentityString(target));
 		}
 	}
 
