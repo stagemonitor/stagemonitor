@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor.prof;
 
-import net.sf.ehcache.pool.sizeof.AgentSizeOf;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -12,8 +11,6 @@ public class ProfilerTest {
 
 	@BeforeClass
 	public static void attachProfiler() {
-		// tests whether the agent still works if other agents are around
-		new AgentSizeOf();
 		Stagemonitor.init();
 	}
 
