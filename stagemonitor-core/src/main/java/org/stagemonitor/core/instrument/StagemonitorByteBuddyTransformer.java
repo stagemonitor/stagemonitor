@@ -78,30 +78,25 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return new AgentBuilder.Transformer() {
 			@Override
 			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
-				if (!(timed("classloader", transformerName, getClassLoaderMatcher()).matches(classLoader) && timed("type", transformerName, getTypeMatcher()).matches(typeDescription))) {
-					onIgnored(typeDescription, classLoader);
+				if (!beforeTransformation(typeDescription, classLoader)) {
 					return builder;
 				}
-				onTransformation(typeDescription, classLoader);
-				List<StagemonitorDynamicValue<?>> dynamicValues = getDynamicValues();
 
-				Advice.WithCustomMapping withCustomMapping = Advice.withCustomMapping();
-				for (StagemonitorDynamicValue dynamicValue : dynamicValues) {
-					withCustomMapping = withCustomMapping.bind(dynamicValue.getAnnotationClass(), dynamicValue);
-				}
-
-				final Class<? extends StagemonitorByteBuddyTransformer> adviceClass = getAdviceClass();
-				if (adviceClass != null) {
-					builder = builder
-							.visit(withCustomMapping
-									.to(adviceClass)
-									.on(timed("method", transformerName, getMethodElementMatcher())));
-				}
-
-				return builder;
+				return builder.visit(registerDynamicValues()
+						.to(getAdviceClass())
+						.on(timed("method", transformerName, getMethodElementMatcher())));
 			}
 
 		};
+	}
+
+	private Advice.WithCustomMapping registerDynamicValues() {
+		List<StagemonitorDynamicValue<?>> dynamicValues = getDynamicValues();
+		Advice.WithCustomMapping withCustomMapping = Advice.withCustomMapping();
+		for (StagemonitorDynamicValue dynamicValue : dynamicValues) {
+			withCustomMapping = withCustomMapping.bind(dynamicValue.getAnnotationClass(), dynamicValue);
+		}
+		return withCustomMapping;
 	}
 
 	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
@@ -141,16 +136,19 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return 0;
 	}
 
-	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+	/**
+	 * This method is called before the transformation.
+	 * You can stop the transformation from happening by returning false from this method.
+	 *
+	 * @param typeDescription The type that is being transformed.
+	 * @param classLoader     The class loader which is loading this type.
+	 * @return <code>true</code> to proceed with the transformation, <code>false</code> to stop this transformation
+	 */
+	public boolean beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
 		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled()) {
 			logger.debug("TRANSFORM {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}
-	}
-
-	public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
-		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled() && getTypeMatcher().matches(typeDescription)) {
-			logger.debug("IGNORE {} ({})", typeDescription.getName(), getClass().getSimpleName());
-		}
+		return true;
 	}
 
 }

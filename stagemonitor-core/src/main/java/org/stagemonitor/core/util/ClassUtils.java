@@ -54,6 +54,6 @@ public class ClassUtils {
 		if (obj == null) {
 			throw new IllegalArgumentException("obj must not be null");
 		}
-		return obj.getClass() + "@" + System.identityHashCode(obj);
+		return obj.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
 	}
 }

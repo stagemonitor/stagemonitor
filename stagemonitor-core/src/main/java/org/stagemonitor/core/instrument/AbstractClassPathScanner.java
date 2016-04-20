@@ -9,8 +9,9 @@ import net.bytebuddy.description.type.TypeDescription;
 public abstract class AbstractClassPathScanner extends StagemonitorByteBuddyTransformer {
 
 	@Override
-	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+	public boolean beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
 		onTypeMatch(typeDescription);
+		return false;
 	}
 
 	protected void onTypeMatch(TypeDescription typeDescription) {
@@ -22,8 +23,4 @@ public abstract class AbstractClassPathScanner extends StagemonitorByteBuddyTran
 
 	protected abstract void onMethodMatch(MethodDescription.InDefinedShape methodDescription);
 
-	@Override
-	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
-		return null;
-	}
 }

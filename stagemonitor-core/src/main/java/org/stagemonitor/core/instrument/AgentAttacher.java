@@ -30,7 +30,6 @@ import java.util.jar.JarFile;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
@@ -139,30 +138,20 @@ public class AgentAttacher {
 	}
 
 	private static ClassFileTransformer initByteBuddyClassFileTransformer() {
-		// java 8 - I miss you
-		List<ElementMatcher.Junction<TypeDescription>> typeMatchers = new ArrayList<ElementMatcher.Junction<TypeDescription>>();
-		List<ElementMatcher.Junction<ClassLoader>> classLoaderMatchers = new ArrayList<ElementMatcher.Junction<ClassLoader>>();
-		List<AgentBuilder.Transformer> transformers = new ArrayList<AgentBuilder.Transformer>();
-
-		final AgentBuilder agentBuilder = createAgentBuilder();
-
-		for (StagemonitorByteBuddyTransformer stagemonitorByteBuddyTransformer : getStagemonitorByteBuddyTransformers()) {
-			typeMatchers.add(stagemonitorByteBuddyTransformer.getTypeMatcher());
-			classLoaderMatchers.add(stagemonitorByteBuddyTransformer.getClassLoaderMatcher());
-			final AgentBuilder.Transformer transformer = stagemonitorByteBuddyTransformer.getTransformer();
-			if (transformer != AgentBuilder.Transformer.NoOp.INSTANCE) {
-				transformers.add(transformer);
-			}
+		AgentBuilder agentBuilder = createAgentBuilder();
+		for (StagemonitorByteBuddyTransformer transformer : getStagemonitorByteBuddyTransformers()) {
+			agentBuilder = agentBuilder
+					.type(
+							timed("type", "any", transformer.getTypeMatcher()),
+							timed("classloader", "any", transformer.getClassLoaderMatcher().and(not(new IsIgnoredClassLoaderElementMatcher())))
+					)
+					.transform(transformer.getTransformer())
+					.asDecorator();
 		}
 
-		final ElementMatcher.Junction<ClassLoader> classLoaderJunction = matchesAny(classLoaderMatchers)
-				.and(not(new IsIgnoredClassLoaderElementMatcher()));
 		final long start = System.currentTimeMillis();
 		try {
-			return agentBuilder
-					.type(timed("type", "any", matchesAny(typeMatchers)), timed("classloader", "any", classLoaderJunction))
-					.transform(new AgentBuilder.Transformer.Compound(transformers.toArray(new AgentBuilder.Transformer[transformers.size()])))
-					.installOn(instrumentation);
+			return agentBuilder.installOn(instrumentation);
 		} finally {
 			if (corePlugin.isDebugInstrumentation()) {
 				logger.info("Installed agent in {} ms", System.currentTimeMillis() - start);
@@ -209,7 +198,7 @@ public class AgentAttacher {
 		Collections.sort(transformers, new Comparator<StagemonitorByteBuddyTransformer>() {
 			@Override
 			public int compare(StagemonitorByteBuddyTransformer o1, StagemonitorByteBuddyTransformer o2) {
-				return o1.getOrder() < o2.getOrder() ? -1 : 1;
+				return o1.getOrder() > o2.getOrder() ? -1 : 1;
 			}
 		});
 		return transformers;

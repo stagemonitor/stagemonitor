@@ -7,15 +7,13 @@ import static org.stagemonitor.core.instrument.CanLoadClassElementMatcher.canLoa
 import java.lang.reflect.Method;
 import java.lang.stagemonitor.dispatcher.Dispatcher;
 import java.sql.Connection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
@@ -26,9 +24,6 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitoringTransformer {
 
 	private static final String CONNECTION_MONITOR = ConnectionMonitor.class.getName();
-	private static final String ALREADY_TRANSFORMED_KEY = "ReflectiveConnectionMonitoringTransformer.alreadyTransformed";
-
-	private Set<String> alreadyTransformed;
 
 	// [0]: ConnectionMonitor [1]: Method
 	private static ThreadLocal<Object[]> connectionMonitorThreadLocal;
@@ -44,9 +39,6 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 			Dispatcher.getValues().putIfAbsent(CONNECTION_MONITOR, new ThreadLocal<Object[]>());
 			connectionMonitorThreadLocal = Dispatcher.get(CONNECTION_MONITOR);
-
-			Dispatcher.getValues().putIfAbsent(ALREADY_TRANSFORMED_KEY, Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>()));
-			alreadyTransformed = Dispatcher.get(ALREADY_TRANSFORMED_KEY);
 		}
 	}
 
@@ -79,23 +71,6 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	}
 
 	/**
-	 * Makes sure that no DataSources are instrumented twice, even if multiple stagemonitored applications are
-	 * deployed on one application server
-	 */
-	@Override
-	public ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return super.getIncludeTypeMatcher().and(new ElementMatcher<TypeDescription>() {
-			@Override
-			public boolean matches(TypeDescription target) {
-				// actually already transformed should be a pair of the ClassLoader and the class name but
-				// I can't get a reference to the classloader which wants to load the target type.
-				// But this is probably negligible
-				return !alreadyTransformed.contains(target.getName());
-			}
-		});
-	}
-
-	/**
 	 * Only applies if stagemonitor can't be loaded by this class loader.
 	 * For example a module class loader which loaded the DataSource but does not have access to the application classes.
 	 */
@@ -123,8 +98,14 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 		}
 	}
 
+	/**
+	 * Makes sure that no DataSources are instrumented twice, even if multiple stagemonitored applications are
+	 * deployed on one application server
+	 */
 	@Override
-	public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
-		alreadyTransformed.add(typeDescription.getName());
+	public boolean beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+		final String key = typeDescription.getName() + ClassUtils.getIdentityString(classLoader) + ".transformed";
+		final boolean hasAlreadyBeenTransformed = Dispatcher.getValues().putIfAbsent(key, Boolean.TRUE) != null;
+		return !hasAlreadyBeenTransformed;
 	}
 }

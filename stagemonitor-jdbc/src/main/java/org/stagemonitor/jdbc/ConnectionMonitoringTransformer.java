@@ -56,22 +56,4 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 		return active;
 	}
 
-	@Override
-	public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
-		if (DEBUG_INSTRUMENTATION && typeDescription.getName().contains("DataSource")) {
-			if (getTypeMatcher().matches(typeDescription)) {
-				final boolean classLoaderMatches = getClassLoaderMatcher().matches(classLoader);
-				logger.warn("IGNORE {} in {}. ClassLoader: {} matches: {}", typeDescription.getName(),
-						getClass().getSimpleName(), classLoader, classLoaderMatches);
-
-				if (!classLoaderMatches) {
-					logger.warn("excluded by classloader matcher");
-				} else {
-					logger.warn("excluded by global matcher");
-				}
-			} else {
-				logger.info("IGNORE {} in {}", typeDescription.getName(), getClass().getSimpleName());
-			}
-		}
-	}
 }
