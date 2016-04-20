@@ -10,15 +10,15 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
 import org.springframework.mock.web.MockServletContext;
 
-public class FileServletTest {
+public class StagemonitorFileServletTest {
 
-	private FileServlet fileServlet;
+	private StagemonitorFileServlet fileServlet;
 	private MockHttpServletRequest request;
 	private MockHttpServletResponse response;
 
 	@Before
 	public void setUp() throws Exception {
-		fileServlet = new FileServlet();
+		fileServlet = new StagemonitorFileServlet();
 		fileServlet.init(new MockServletConfig(new MockServletContext()));
 
 		request = new MockHttpServletRequest("GET", "/stagemonitor/static/test.js");

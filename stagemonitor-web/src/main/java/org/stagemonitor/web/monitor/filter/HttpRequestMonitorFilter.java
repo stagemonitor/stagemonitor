@@ -33,7 +33,6 @@ import org.stagemonitor.web.monitor.DefaultMonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.MonitoredHttpRequestFactory;
-import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
@@ -94,7 +93,6 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	@Override
 	public final void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
-		setCachingHeadersForBommerangJs(request, response);
 		if (corePlugin.isStagemonitorActive() && !isInternalRequest(request) &&
 				onlyMonitorForwardedRequestsIfConfigured(request)) {
 			doMonitor(request, response, filterChain);
@@ -125,13 +123,6 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			}
 		} catch (Exception e) {
 			handleException(e);
-		}
-	}
-
-	// TODO move to FileServlet
-	private void setCachingHeadersForBommerangJs(HttpServletRequest request, HttpServletResponse response) {
-		if (request.getRequestURI().endsWith(BoomerangJsHtmlInjector.BOOMERANG_FILENAME)) {
-			response.setHeader("cache-control", "public, max-age=315360000");
 		}
 	}
 

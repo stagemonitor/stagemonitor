@@ -40,7 +40,7 @@ import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
 import org.stagemonitor.web.monitor.rum.RumServlet;
-import org.stagemonitor.web.monitor.servlet.FileServlet;
+import org.stagemonitor.web.monitor.servlet.StagemonitorFileServlet;
 import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
 import org.stagemonitor.web.monitor.widget.WidgetServlet;
 import org.stagemonitor.web.session.SessionCounter;
@@ -374,7 +374,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 				.addMapping("/stagemonitor/metrics");
 		ctx.addServlet(RumServlet.class.getSimpleName(), new RumServlet())
 				.addMapping("/stagemonitor/public/rum");
-		ctx.addServlet(FileServlet.class.getSimpleName(), new FileServlet())
+		ctx.addServlet(StagemonitorFileServlet.class.getSimpleName(), new StagemonitorFileServlet())
 				.addMapping("/stagemonitor/static/*", "/stagemonitor/public/static/*");
 		ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
 				.addMapping("/stagemonitor");

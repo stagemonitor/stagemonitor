@@ -27,7 +27,7 @@ public class ServletProfilingTransformerTest {
 
 	@Test
 	public void testDontProfileStagemonitorServlet() throws Exception {
-		Servlet servlet = new FileServlet();
+		Servlet servlet = new StagemonitorFileServlet();
 
 		final CallStackElement total = Profiler.activateProfiling("total");
 		servlet.service(new MockHttpServletRequest(), new MockHttpServletResponse());
