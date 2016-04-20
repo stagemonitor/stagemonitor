@@ -100,7 +100,7 @@ public class AgentAttacher {
 			try {
 				instrumentation = ByteBuddyAgent.getInstrumentation();
 			} catch (IllegalStateException e) {
-				instrumentation = ByteBuddyAgent.install();
+				instrumentation = ByteBuddyAgent.install(new ByteBuddyAgent.AttachmentProvider.Compound(new EhCacheAttachmentProvider(), ByteBuddyAgent.AttachmentProvider.DEFAULT));
 			}
 			ensureDispatcherIsAppendedToBootstrapClasspath(instrumentation);
 			if (!Dispatcher.getValues().containsKey(IGNORED_CLASSLOADERS_KEY)) {
