@@ -103,7 +103,6 @@ public final class Stagemonitor {
 
 	private static void start() {
 		initializePlugins();
-		AgentAttacher.onStarted();
 		started = true;
 		// don't register a shutdown hook for web applications as this causes a memory leak
 		if (ClassUtils.isNotPresent("javax.servlet.Servlet")) {
@@ -113,6 +112,12 @@ public final class Stagemonitor {
 					shutDown();
 				}
 			}));
+		}
+		if (ClassUtils.isNotPresent("org.stagemonitor.requestmonitor.RequestMonitorPlugin")) {
+			// if the RequestMonitorPlugin is available,
+			// TypeDefinition caching should only be deactivated after the first request
+			// if not, deactivate as soon as stagemonitor has started
+			AgentAttacher.onMostClassesLoaded();
 		}
 	}
 

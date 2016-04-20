@@ -1,14 +1,10 @@
 package org.stagemonitor.core.instrument;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import net.bytebuddy.matcher.ElementMatcher;
-import org.stagemonitor.core.util.ClassUtils;
 
 public class CachedClassLoaderMatcher extends ElementMatcher.Junction.AbstractBase<ClassLoader> {
 
-	private final ConcurrentMap<String, Boolean> cache = new ConcurrentHashMap<String, Boolean>();
+	private final WeakConcurrentMap<ClassLoader, Boolean> cache = new WeakConcurrentMap.WithInlinedExpunction<ClassLoader, Boolean>();
 
 	private final ElementMatcher<ClassLoader> delegate;
 
@@ -22,13 +18,12 @@ public class CachedClassLoaderMatcher extends ElementMatcher.Junction.AbstractBa
 
 	@Override
 	public boolean matches(ClassLoader target) {
-		final String key = ClassUtils.getIdentityString(target);
-		final Boolean result = cache.get(key);
+		final Boolean result = cache.get(target);
 		if (result != null) {
 			return result;
 		} else {
 			final boolean delegateResult = delegate.matches(target);
-			cache.put(key, delegateResult);
+			cache.put(target, delegateResult);
 			return delegateResult;
 		}
 	}

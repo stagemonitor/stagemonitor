@@ -25,6 +25,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
@@ -143,6 +144,8 @@ public class RequestMonitor {
 
 		if (!info.firstRequest) {
 			trackOverhead(info.overhead1, overhead2);
+		} else {
+			AgentAttacher.onMostClassesLoaded();
 		}
 
 		for (Runnable onAfterRequestCallback : onAfterRequestCallbacks) {

@@ -60,3 +60,6 @@ stagemonitor-web/src/main/java/org/stagemonitor/web/metrics/StagemonitorMetricsS
 
 This product includes code derived from Apache httpclient, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-requestmonitor/src/main/java/org/stagemonitor/requestmonitor/utils/InetAddressUtils.java
+
+This product includes code derived from https://github.com/raphw/weak-lock-free/, which is available under the "Apache 2.0" license. For details, see
+stagemonitor-core/src/main/java/org/stagemonitor/core/instrument/WeakConcurrentMap.java

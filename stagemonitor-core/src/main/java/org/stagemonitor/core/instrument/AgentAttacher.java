@@ -216,7 +216,13 @@ public class AgentAttacher {
 		return corePlugin.getExcludedInstrumenters().contains(transformer.getClass().getSimpleName());
 	}
 
-	public static void onStarted() {
+	/**
+	 * This method should be called as soon as most classes are loaded.
+	 * <p/>
+	 * It disables caching of {@link net.bytebuddy.description.type.TypeDescription}s which makes further
+	 * transformations a bit slower but also clears the underlying cache which frees resources.
+	 */
+	public static void onMostClassesLoaded() {
 		TimedElementMatcherDecorator.logMetrics();
 		binaryLocator.deactivateCaching();
 	}
