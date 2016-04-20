@@ -166,15 +166,15 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testProfileThisExecutionActiveEvery2Requests() throws Exception {
-		testProfileThisExecutionHelper(2, 0, true);
-		testProfileThisExecutionHelper(2, 1.99, true);
-		testProfileThisExecutionHelper(2, 2, false);
-		testProfileThisExecutionHelper(2, 3, false);
-		testProfileThisExecutionHelper(2, 1, true);
+		doReturn(2d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
+		testProfileThisExecutionHelper(0, true);
+		testProfileThisExecutionHelper(1.99, true);
+		testProfileThisExecutionHelper(2, false);
+		testProfileThisExecutionHelper(3, false);
+		testProfileThisExecutionHelper(1, true);
 	}
 
-	private void testProfileThisExecutionHelper(double onlyCollectNCallTreesPerMinute, double callTreeRate, boolean callStackExpected) throws Exception {
-		doReturn(onlyCollectNCallTreesPerMinute).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
+	private void testProfileThisExecutionHelper(double callTreeRate, boolean callStackExpected) throws Exception {
 		final Meter callTreeMeter = mock(Meter.class);
 		doReturn(callTreeRate).when(callTreeMeter).getOneMinuteRate();
 		requestMonitor.setCallTreeMeter(callTreeMeter);
