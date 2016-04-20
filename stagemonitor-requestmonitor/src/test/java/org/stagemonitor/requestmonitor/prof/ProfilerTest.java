@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor.prof;
 
-import net.sf.ehcache.pool.sizeof.AgentSizeOf;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -12,8 +11,6 @@ public class ProfilerTest {
 
 	@BeforeClass
 	public static void attachProfiler() {
-		new AgentSizeOf();
-		// Stagemonitor agent should pick up the instrumentation loaded by EhCache
 		Stagemonitor.init();
 	}
 
@@ -26,8 +23,8 @@ public class ProfilerTest {
 
 		Assert.assertEquals(total.toString(), 1, total.getChildren().size());
 		Assert.assertEquals(total.toString(), 3, total.getChildren().get(0).getChildren().size());
-		Assert.assertEquals(total.toString(), "int org.stagemonitor.requestmonitor.prof.ProfilerTest.method5()",
-				total.getChildren().get(0).getChildren().get(2).getSignature());
+		final String method5 = total.getChildren().get(0).getChildren().get(2).getSignature();
+		Assert.assertTrue(method5, method5.contains("org.stagemonitor.requestmonitor.prof.ProfilerTest.method5"));
 	}
 
 	@Test
@@ -87,7 +84,7 @@ public class ProfilerTest {
 	}
 
 	private int method9() {
-		return 9;
-	}
+			return 9;
+		}
 
 }

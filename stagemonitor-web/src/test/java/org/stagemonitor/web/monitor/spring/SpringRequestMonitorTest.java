@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -13,15 +14,14 @@ import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
 
-import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.regex.Pattern;
 
+import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricFilter;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Assert;
@@ -31,14 +31,18 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockServletConfig;
+import org.springframework.web.context.support.StaticWebApplicationContext;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.DispatcherServlet;
+import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -58,20 +62,19 @@ public class SpringRequestMonitorTest {
 	private RequestMonitor requestMonitor;
 	private Metric2Registry registry = new Metric2Registry();
 	private HandlerMapping getRequestNameHandlerMapping;
+	private DispatcherServlet dispatcherServlet;
 
 	// the purpose of this class is to obtain a instance to a Method,
 	// because Method objects can't be mocked as they are final
-	private static class TestController { public void testGetRequestName() {} }
+	private static class TestController {
+		public void testGetRequestName() {
+		}
+	}
 
 	@Before
 	public void before() throws Exception {
 		getRequestNameHandlerMapping = createHandlerMapping(mvcRequest, TestController.class.getMethod("testGetRequestName"));
-		registry.removeMatching(new MetricFilter() {
-			@Override
-			public boolean matches(String name, Metric metric) {
-				return true;
-			}
-		});
+		registry.removeMatching(Metric2Filter.ALL);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
@@ -81,10 +84,22 @@ public class SpringRequestMonitorTest {
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
+
+
+		dispatcherServlet = new DispatcherServlet(new StaticWebApplicationContext());
+		dispatcherServlet.init(new MockServletConfig());
+		final Field handlerMappings = DispatcherServlet.class.getDeclaredField("handlerMappings");
+		handlerMappings.setAccessible(true);
+		handlerMappings.set(dispatcherServlet, Collections.singletonList(getRequestNameHandlerMapping));
+		final Field handlerAdapters = DispatcherServlet.class.getDeclaredField("handlerAdapters");
+		handlerAdapters.setAccessible(true);
+		final HandlerAdapter handlerAdapter = mock(HandlerAdapter.class);
+		when(handlerAdapter.supports(any())).thenReturn(true);
+		handlerAdapters.set(dispatcherServlet, Collections.singletonList(handlerAdapter));
 	}
 
 	private HandlerMapping createHandlerMapping(MockHttpServletRequest request, Method requestMappingMethod) throws Exception {
-		System.out.println("createHandlerMapping"+request);
+		System.out.println("createHandlerMapping" + request);
 		HandlerMapping requestMappingHandlerMapping = mock(HandlerMapping.class);
 		HandlerExecutionChain handlerExecutionChain = mock(HandlerExecutionChain.class);
 		HandlerMethod handlerMethod = mock(HandlerMethod.class);
@@ -110,14 +125,13 @@ public class SpringRequestMonitorTest {
 		when(webPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 
 		MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(mvcRequest);
-		registerAspect(monitoredRequest, mvcRequest, getRequestNameHandlerMapping.getHandler(mvcRequest));
+
 		final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals(1, requestInformation.getRequestTimer().getCount());
 		assertEquals("Test Get Request Name", requestInformation.getRequestName());
 		assertEquals("Test Get Request Name", requestInformation.getRequestTrace().getName());
 		assertEquals("/test/requestName", requestInformation.getRequestTrace().getUrl());
-		assertEquals(Integer.valueOf(200), requestInformation.getRequestTrace().getStatusCode());
 		assertEquals("GET", requestInformation.getRequestTrace().getMethod());
 		Assert.assertNull(requestInformation.getExecutionResult());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
@@ -129,7 +143,7 @@ public class SpringRequestMonitorTest {
 		when(webPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(false);
 
 		final MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonMvcRequest);
-		registerAspect(monitoredRequest, nonMvcRequest, null);
+
 		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals("GET *.js", requestInformation.getRequestName());
@@ -145,7 +159,7 @@ public class SpringRequestMonitorTest {
 		when(webPlugin.isMonitorOnlySpringMvcRequests()).thenReturn(true);
 
 		final MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonMvcRequest);
-		registerAspect(monitoredRequest, nonMvcRequest, null);
+
 		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertNull(requestInformation.getRequestTrace().getName());
@@ -153,25 +167,31 @@ public class SpringRequestMonitorTest {
 		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
 	}
 
-	private void registerAspect(MonitoredHttpRequest monitoredRequest, final HttpServletRequest request,
-								final HandlerExecutionChain mapping) throws Exception {
-
-		when(monitoredRequest.execute()).thenAnswer(new Answer<Object>() {
-			@Override
-			public Object answer(InvocationOnMock invocation) throws Throwable {
-				SpringMvcRequestNameDeterminerInstrumenter.setRequestNameByHandler(mapping);
-				return null;
-			}
-		});
-	}
-
 	private RequestMonitor.RequestInformation<HttpRequestTrace> anyRequestInformation() {
 		return any();
 	}
 
-	private MonitoredHttpRequest createMonitoredHttpRequest(HttpServletRequest request) throws IOException {
-		final StatusExposingByteCountingServletResponse response = new StatusExposingByteCountingServletResponse(new MockHttpServletResponse());
-		return Mockito.spy(new MonitoredHttpRequest(request, response, new MockFilterChain(), configuration));
+	private MonitoredHttpRequest createMonitoredHttpRequest(HttpServletRequest request) throws Exception {
+		final StatusExposingByteCountingServletResponse response = mock(StatusExposingByteCountingServletResponse.class);
+		final FilterChain filterChain = mock(FilterChain.class);
+		doAnswer(new Answer() {
+			@Override
+			public Object answer(InvocationOnMock invocation) throws Throwable {
+				dispatcherServlet.service(request, response);
+				return null;
+			}
+		}).when(filterChain).doFilter(any(), any());
+		return Mockito.spy(new MonitoredHttpRequest(request, response, filterChain, configuration));
+	}
+
+	@Test
+	public void testGetRequestNameFromHandler() throws Exception {
+		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
+		try {
+			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());
+			assertEquals("Test Get Request Name", RequestMonitor.getRequest().getName());
+		} finally {
+			requestMonitor.monitorStop();
+		}
 	}
 }
-

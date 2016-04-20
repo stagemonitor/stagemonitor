@@ -31,7 +31,6 @@ import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.instrument.MainStagemonitorClassFileTransformer;
 import org.stagemonitor.core.metrics.MetricNameFilter;
 import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
@@ -335,8 +334,16 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.instrument.excludedInstrumenter")
 			.dynamic(false)
 			.label("Excluded Instrumenters")
-			.description("A list of the simple class names of StagemonitorJavassistInstrumenters that should not be applied")
+			.description("A list of the simple class names of StagemonitorByteBuddyTransformers that should not be applied")
 			.defaultValue(Collections.<String>emptySet())
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<Boolean> debugInstrumentation = ConfigurationOption.booleanOption()
+			.key("stagemonitor.instrument.debug")
+			.dynamic(false)
+			.label("Debug instrumentation")
+			.description("Set to true to log additional information and warnings during the instrumentation process.")
+			.defaultValue(false)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> grafanaUrl = ConfigurationOption.stringOption()
@@ -393,7 +400,6 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(InitArguments initArguments) {
-		MainStagemonitorClassFileTransformer.clearClassPools();
 		this.metricRegistry = initArguments.getMetricRegistry();
 		final Integer reloadInterval = getReloadConfigurationInterval();
 		if (reloadInterval > 0) {
@@ -744,5 +750,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public boolean isOnlyLogElasticsearchMetricReports() {
 		return onlyLogElasticsearchMetricReports.getValue();
+	}
+
+	public boolean isDebugInstrumentation() {
+		return debugInstrumentation.getValue();
 	}
 }

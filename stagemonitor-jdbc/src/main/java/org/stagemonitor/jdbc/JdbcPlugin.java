@@ -37,6 +37,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 			.defaultValue(SetValueConverter.immutableSet(
 					"org.apache.tomcat.jdbc.pool.DataSource",
 					"org.apache.tomcat.dbcp.dbcp.PoolingDataSource",
+					"org.apache.tomcat.jdbc.pool.DataSourceProxy",
 					"org.apache.commons.dbcp2.PoolingDataSource",
 					"org.apache.commons.dbcp.PoolingDataSource",
 					"com.mchange.v2.c3p0.AbstractPoolBackedDataSource",
@@ -46,9 +47,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 					"snaq.db.DBPoolDataSource",
 					"com.zaxxer.hikari.HikariDataSource",
 					"org.jboss.jca.adapters.jdbc.WrapperDataSource",
-					"org.springframework.jdbc.datasource.SingleConnectionDataSource",
-					"org.springframework.jdbc.datasource.DriverManagerDataSource",
-					"org.springframework.jdbc.datasource.SimpleDriverDataSource"
+					"org.springframework.jdbc.datasource.AbstractDriverBasedDataSource"
 			))
 			.configurationCategory(JDBC_PLUGIN)
 			.build();

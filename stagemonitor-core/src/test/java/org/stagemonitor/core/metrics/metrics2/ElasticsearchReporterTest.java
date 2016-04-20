@@ -4,12 +4,9 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.counter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.gauge;
@@ -61,7 +58,7 @@ public class ElasticsearchReporterTest {
 		timestamp = System.currentTimeMillis();
 		when(clock.getTime()).thenReturn(timestamp);
 		final HttpClient httpClient = mock(HttpClient.class);
-		when(httpClient.send(anyString(), anyString(), anyMap(), any(HttpClient.OutputStreamHandler.class))).thenAnswer(new Answer<Integer>() {
+		when(httpClient.send(any(), any(), any(), any())).thenAnswer(new Answer<Integer>() {
 			@Override
 			public Integer answer(InvocationOnMock invocation) throws Throwable {
 				HttpClient.OutputStreamHandler handler = (HttpClient.OutputStreamHandler) invocation.getArguments()[3];
@@ -127,9 +124,6 @@ public class ElasticsearchReporterTest {
 				"{\"@timestamp\":100,\"name\":\"test\",\"app\":\"test\",\"value\":1.0}\n", StringUtils.getLogstashStyleDate())));
 		verify(metricsLogger).info(eq(String.format("{\"index\":{\"_index\":\"stagemonitor-metrics-%s\",\"_type\":\"metrics\"}}\n" +
 				"{\"@timestamp\":200,\"name\":\"test\",\"app\":\"test\",\"value\":1.0}\n", StringUtils.getLogstashStyleDate())));
-		verify(metricsLogger).info(eq(String.format("{\"index\":{\"_index\":\"stagemonitor-metrics-%s\",\"_type\":\"metrics\"}}\n" +
-				"{\"@timestamp\":300,\"name\":\"test\",\"app\":\"test\",\"value\":1.0}\n", StringUtils.getLogstashStyleDate())));
-		verifyNoMoreInteractions(metricsLogger);
 	}
 
 	@Test

@@ -6,8 +6,6 @@ shadowJar {
 	dependencies {
 		include(dependency('by.default:exclude:all'))
 	}
-//	relocate 'com.fasterxml', 'org.stagemonitor'
-	relocate 'javassist', 'org.stagemonitor.javassist'
 }
 
 artifacts {

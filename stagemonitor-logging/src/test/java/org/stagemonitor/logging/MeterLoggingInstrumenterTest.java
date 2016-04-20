@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
+
 public class MeterLoggingInstrumenterTest {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());

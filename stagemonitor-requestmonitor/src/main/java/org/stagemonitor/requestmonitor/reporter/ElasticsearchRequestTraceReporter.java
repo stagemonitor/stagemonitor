@@ -44,7 +44,9 @@ public class ElasticsearchRequestTraceReporter extends AbstractInterceptedReques
 
 	@Override
 	public boolean isActive(IsActiveArguments isActiveArguments) {
-		return !corePlugin.getElasticsearchUrls().isEmpty() && super.isActive(isActiveArguments);
+		final boolean urlAvailable = !corePlugin.getElasticsearchUrls().isEmpty();
+		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
+		return (urlAvailable || logOnly) && super.isActive(isActiveArguments);
 	}
 
 	/**

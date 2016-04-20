@@ -12,11 +12,8 @@ jmh {
 	benchmarkMode = 'AverageTime'
 	humanOutputFile = null
 	timeUnit = 'ns'
-	//jvmArgs = "-javaagent:$rootProject.projectDir/stagemonitor-benchmark/stagemonitor-byte-buddy-agent/build/libs/stagemonitor-byte-buddy-agent-${version}.jar"
 //	include = ['.*VariableMethodsBenchmark.*']
 }
-
-//jmhJar.dependsOn << ':stagemonitor-javaagent:jar' << ':stagemonitor-benchmark:stagemonitor-byte-buddy-agent:jar'
 
 jmhJar {
 	mergeServiceFiles()
@@ -26,7 +23,6 @@ dependencies {
 	compile project(":stagemonitor-web")
 	compile project(":stagemonitor-logging")
 	compile project(":stagemonitor-ehcache")
-	compile project(":stagemonitor-benchmark:stagemonitor-byte-buddy-agent")
 	compile 'org.apache.commons:commons-io:1.3.2'
 	compile "org.slf4j:slf4j-simple:$slf4jVersion"
 	compile "org.elasticsearch:elasticsearch:$esVersion"
@@ -40,5 +36,10 @@ task exportConfigurationOptions(dependsOn: 'classes', type: JavaExec) {
 
 task exportMarkdownConfigurationOptions(dependsOn: 'classes', type: JavaExec) {
 	main = 'org.stagemonitor.ConfigurationOptionsMarkdownExporter'
+	classpath = sourceSets.test.runtimeClasspath
+}
+
+task instrumentationPerformanceTest(dependsOn: 'classes', type: JavaExec) {
+	main = 'org.stagemonitor.InstrumentationPerformanceTest'
 	classpath = sourceSets.test.runtimeClasspath
 }

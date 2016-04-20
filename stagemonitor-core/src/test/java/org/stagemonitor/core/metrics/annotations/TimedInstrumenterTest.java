@@ -52,14 +52,13 @@ public class TimedInstrumenterTest {
 
 	@Before
 	public void before() {
-		TimedInstrumenter.init();
 		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 	}
 
 	@Test
 	public void testTimedAspectDefault() {
 		testObject.timedDefault();
-		assertOneTimerExists(name("timer").tag("signature", "TimedInstrumenterTest$TestObject#timedDefault").build());
+		assertOneTimerExists(name("timer").tag("signature", "TestObject#timedDefault").build());
 	}
 
 	@Test
@@ -77,7 +76,7 @@ public class TimedInstrumenterTest {
 	@Test
 	public void testTimedName() {
 		testObject.timedName();
-		assertOneTimerExists(name("timer").tag("signature", "TimedInstrumenterTest$TestObject#myTimedName").build());
+		assertOneTimerExists(name("timer").tag("signature", "TestObject#myTimedName").build());
 	}
 
 	@Test
@@ -89,7 +88,7 @@ public class TimedInstrumenterTest {
 	@Test
 	public void testAsyncAnnotation() {
 		testObject.asyncCall();
-		assertOneTimerExists(name("timer").tag("signature", "TimedInstrumenterTest$TestObject#asyncCall").build());
+		assertOneTimerExists(name("timer").tag("signature", "TestObject#asyncCall").build());
 	}
 
 	private void assertOneTimerExists(MetricName name) {

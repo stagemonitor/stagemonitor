@@ -25,8 +25,10 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
@@ -142,6 +144,8 @@ public class RequestMonitor {
 
 		if (!info.firstRequest) {
 			trackOverhead(info.overhead1, overhead2);
+		} else {
+			AgentAttacher.onMostClassesLoaded();
 		}
 
 		for (Runnable onAfterRequestCallback : onAfterRequestCallbacks) {
@@ -484,7 +488,7 @@ public class RequestMonitor {
 	 * is called at most once.
 	 */
 	private boolean isActive(RequestTrace requestTrace, RequestTraceReporter requestTraceReporter) {
-		final String requestAttributeActive = System.identityHashCode(requestTraceReporter) + ".active";
+		final String requestAttributeActive = ClassUtils.getIdentityString(requestTraceReporter) + ".active";
 		final Boolean activeFromAttribute = (Boolean) requestTrace.getRequestAttribute(requestAttributeActive);
 		if (activeFromAttribute != null) {
 			return activeFromAttribute;

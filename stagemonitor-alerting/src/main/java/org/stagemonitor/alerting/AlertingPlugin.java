@@ -20,7 +20,7 @@ import org.stagemonitor.alerting.alerter.AlerterTypeServlet;
 import org.stagemonitor.alerting.alerter.IncidentServlet;
 import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.alerting.alerter.TestAlertSenderServlet;
-import org.stagemonitor.alerting.annotation.SlaInstrumenter;
+import org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScanner;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
 import org.stagemonitor.alerting.incident.ElasticsearchIncidentRepository;
@@ -230,7 +230,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 		thresholdMonitoringReporter = new ThresholdMonitoringReporter(initArguments.getMetricRegistry(), alertingPlugin, alertSender, incidentRepository, initArguments.getMeasurementSession());
 		thresholdMonitoringReporter.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
-		SlaInstrumenter.onStart();
+		SlaCheckCreatingClassPathScanner.onStart();
 	}
 
 	@Override

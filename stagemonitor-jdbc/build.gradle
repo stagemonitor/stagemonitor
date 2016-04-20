@@ -1,4 +1,7 @@
 dependencies {
 	compile project(":stagemonitor-requestmonitor")
 	compile 'p6spy:p6spy:2.2.0'
+
+	testCompile 'org.apache.tomcat:tomcat-jdbc:8.5.0'
+	testCompile 'org.hsqldb:hsqldb:2.3.3'
 }
