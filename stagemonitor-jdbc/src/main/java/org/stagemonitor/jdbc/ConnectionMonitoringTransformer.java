@@ -66,6 +66,8 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 
 				if (!classLoaderMatches) {
 					logger.warn("excluded by classloader matcher");
+				} else if (!getRawMatcher().matches(typeDescription, classLoader, null, null)) {
+					logger.warn("excluded by raw matcher");
 				} else {
 					logger.warn("excluded by global matcher");
 				}

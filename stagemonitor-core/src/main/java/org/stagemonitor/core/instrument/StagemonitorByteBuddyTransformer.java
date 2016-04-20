@@ -51,9 +51,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 				final boolean matches = timed("classloader", "any", getClassLoaderMatcher()).matches(classLoader) &&
 						timed("type", "any", getTypeMatcher()).matches(typeDescription) &&
 						getRawMatcher().matches(typeDescription, classLoader, classBeingRedefined, protectionDomain);
-				if (matches) {
-					beforeTransformation(typeDescription, classLoader);
-				} else {
+				if (!matches) {
 					onIgnored(typeDescription, classLoader);
 				}
 				return matches;
@@ -105,6 +103,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return new AgentBuilder.Transformer() {
 			@Override
 			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+				beforeTransformation(typeDescription, classLoader);
 				return builder.visit(registerDynamicValues()
 						.to(getAdviceClass())
 						.on(timed("method", transformerName, getMethodElementMatcher())));
