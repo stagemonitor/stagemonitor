@@ -141,10 +141,7 @@ public class AgentAttacher {
 		AgentBuilder agentBuilder = createAgentBuilder();
 		for (StagemonitorByteBuddyTransformer transformer : getStagemonitorByteBuddyTransformers()) {
 			agentBuilder = agentBuilder
-					.type(
-							timed("type", "any", transformer.getTypeMatcher()),
-							timed("classloader", "any", transformer.getClassLoaderMatcher().and(not(new IsIgnoredClassLoaderElementMatcher())))
-					)
+					.type(transformer.getMatcher())
 					.transform(transformer.getTransformer())
 					.asDecorator();
 		}
@@ -167,6 +164,7 @@ public class AgentAttacher {
 				.ignore(any(), timed("classloader", "bootstrap", isBootstrapClassLoader()))
 				.or(any(), timed("classloader", "reflection", isReflectionClassLoader()))
 				.or(any(), timed("classloader", "groovy-call-site", classLoaderWithName("org.codehaus.groovy.runtime.callsite.CallSiteClassLoader")))
+				.or(any(), new IsIgnoredClassLoaderElementMatcher())
 				.or(timed("type", "global-exclude", nameStartsWith("java")
 						.or(nameStartsWith("com.sun."))
 						.or(nameStartsWith("sun."))

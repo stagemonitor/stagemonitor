@@ -1,5 +1,6 @@
 package org.stagemonitor.core.instrument;
 
+import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 
@@ -9,9 +10,13 @@ import net.bytebuddy.description.type.TypeDescription;
 public abstract class AbstractClassPathScanner extends StagemonitorByteBuddyTransformer {
 
 	@Override
-	public boolean beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+	public AgentBuilder.Transformer getTransformer() {
+		return AgentBuilder.Transformer.NoOp.INSTANCE;
+	}
+
+	@Override
+	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
 		onTypeMatch(typeDescription);
-		return false;
 	}
 
 	protected void onTypeMatch(TypeDescription typeDescription) {

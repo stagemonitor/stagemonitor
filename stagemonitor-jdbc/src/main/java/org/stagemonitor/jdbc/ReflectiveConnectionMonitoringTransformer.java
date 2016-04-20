@@ -6,10 +6,12 @@ import static org.stagemonitor.core.instrument.CanLoadClassElementMatcher.canLoa
 
 import java.lang.reflect.Method;
 import java.lang.stagemonitor.dispatcher.Dispatcher;
+import java.security.ProtectionDomain;
 import java.sql.Connection;
 
 import javax.sql.DataSource;
 
+import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -103,9 +105,16 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	 * deployed on one application server
 	 */
 	@Override
-	public boolean beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
-		final String key = typeDescription.getName() + ClassUtils.getIdentityString(classLoader) + ".transformed";
-		final boolean hasAlreadyBeenTransformed = Dispatcher.getValues().putIfAbsent(key, Boolean.TRUE) != null;
-		return !hasAlreadyBeenTransformed;
+	public AgentBuilder.RawMatcher getRawMatcher() {
+		return new AvoidDuplicateTransformationsRawMatcher();
+	}
+
+	private static class AvoidDuplicateTransformationsRawMatcher implements AgentBuilder.RawMatcher {
+		@Override
+		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+			final String key = typeDescription.getName() + ClassUtils.getIdentityString(classLoader) + ".transformed";
+			final boolean hasAlreadyBeenTransformed = Dispatcher.getValues().putIfAbsent(key, Boolean.TRUE) != null;
+			return !hasAlreadyBeenTransformed;
+		}
 	}
 }

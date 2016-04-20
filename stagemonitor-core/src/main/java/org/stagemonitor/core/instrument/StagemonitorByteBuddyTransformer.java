@@ -16,6 +16,7 @@ import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
 import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
 
 import java.lang.annotation.Annotation;
+import java.security.ProtectionDomain;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,7 +44,33 @@ public abstract class StagemonitorByteBuddyTransformer {
 
 	protected final String transformerName = getClass().getSimpleName();
 
-	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
+	public final AgentBuilder.RawMatcher getMatcher() {
+		return new AgentBuilder.RawMatcher() {
+			@Override
+			public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+				final boolean matches = timed("classloader", "any", getClassLoaderMatcher()).matches(classLoader) &&
+						timed("type", "any", getTypeMatcher()).matches(typeDescription) &&
+						getRawMatcher().matches(typeDescription, classLoader, classBeingRedefined, protectionDomain);
+				if (matches) {
+					beforeTransformation(typeDescription, classLoader);
+				} else {
+					onIgnored(typeDescription, classLoader);
+				}
+				return matches;
+			}
+		};
+	}
+
+	protected AgentBuilder.RawMatcher getRawMatcher() {
+		return new AgentBuilder.RawMatcher() {
+			@Override
+			public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+				return true;
+			}
+		};
+	}
+
+	protected ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return getIncludeTypeMatcher()
 				.and(not(isInterface()))
 				.and(not(isSynthetic()))
@@ -70,7 +97,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return none();
 	}
 
-	public ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
+	protected ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
 		return applicationClassLoaderMatcher;
 	}
 
@@ -78,10 +105,6 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return new AgentBuilder.Transformer() {
 			@Override
 			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
-				if (!beforeTransformation(typeDescription, classLoader)) {
-					return builder;
-				}
-
 				return builder.visit(registerDynamicValues()
 						.to(getAdviceClass())
 						.on(timed("method", transformerName, getMethodElementMatcher())));
@@ -144,11 +167,16 @@ public abstract class StagemonitorByteBuddyTransformer {
 	 * @param classLoader     The class loader which is loading this type.
 	 * @return <code>true</code> to proceed with the transformation, <code>false</code> to stop this transformation
 	 */
-	public boolean beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
 		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled()) {
 			logger.debug("TRANSFORM {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}
-		return true;
+	}
+
+	public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
+		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled() && getTypeMatcher().matches(typeDescription)) {
+			logger.debug("IGNORE {} ({})", typeDescription.getName(), getClass().getSimpleName());
+		}
 	}
 
 }
