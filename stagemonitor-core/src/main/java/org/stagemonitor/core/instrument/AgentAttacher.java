@@ -171,6 +171,7 @@ public class AgentAttacher {
 						.or(nameStartsWith("jdk."))
 						.or(nameStartsWith("org.aspectj."))
 						.or(nameStartsWith("org.groovy."))
+						.or(nameStartsWith("com.p6spy."))
 						.or(nameStartsWith("net.bytebuddy."))
 						.or(nameStartsWith("org.slf4j.").and(not(nameStartsWith("org.slf4j.impl."))))
 						.or(nameContains("javassist"))

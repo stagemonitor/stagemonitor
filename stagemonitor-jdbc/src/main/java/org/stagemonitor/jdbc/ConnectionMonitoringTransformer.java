@@ -1,12 +1,17 @@
 package org.stagemonitor.jdbc;
 
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
+import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
+import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.returns;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 import java.sql.Connection;
+import java.util.Collection;
+
+import javax.sql.DataSource;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -36,8 +41,12 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 
 	@Override
 	public ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
+		final Collection<String> dataSourceImplementations = configuration.getConfig(JdbcPlugin.class).getDataSourceImplementations();
+		if (dataSourceImplementations.isEmpty()) {
+			return nameContains("DataSource").and(isSubTypeOf(DataSource.class));
+		}
 		ElementMatcher.Junction<TypeDescription> matcher = none();
-		for (String impl : configuration.getConfig(JdbcPlugin.class).getDataSourceImplementations()) {
+		for (String impl : dataSourceImplementations) {
 			matcher = matcher.or(named(impl));
 		}
 		return matcher;
@@ -77,4 +86,10 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 		}
 	}
 
+	@Override
+	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled()) {
+			logger.info("TRANSFORM DataSource {} ({})", typeDescription.getName(), getClass().getSimpleName());
+		}
+	}
 }
