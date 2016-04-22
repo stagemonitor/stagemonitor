@@ -21,10 +21,18 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 		return AbstractMonitorRequestsTransformer.class;
 	}
 
-	@Advice.OnMethodEnter
-	private static void monitorStart(@Advice.BoxedArguments Object[] args, @RequestName String requestName) {
-		Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor()
-				.monitorStart(new MonitoredMethodRequest(requestName, null, args));
+	@Advice.OnMethodEnter(inline = false)
+	public static void monitorStart(@Advice.BoxedArguments Object[] args, @RequestName String requestName,
+									 @Advice.Origin("#m") String methodName, @Advice.This Object thiz) {
+		final MonitoredMethodRequest monitoredRequest = new MonitoredMethodRequest(requestName, null, args);
+		final RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
+		requestMonitorPlugin.getRequestMonitor().monitorStart(monitoredRequest);
+		final RequestTrace request = RequestMonitor.getRequest();
+		if (requestName == null && request != null) {
+			request.setName(requestMonitorPlugin
+					.getBusinessTransactionNamingStrategy()
+					.getBusinessTransationName(thiz.getClass().getName(), methodName));
+		}
 	}
 
 	@Advice.OnMethodExit(onThrowable = Throwable.class, inline = false)
@@ -63,8 +71,19 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 							  ParameterDescription.InDefinedShape target,
 							  AnnotationDescription.Loadable<RequestName> annotation,
 							  boolean initialized) {
+			final AnnotationDescription.Loadable<MonitorRequests> monitorRequestsLoadable = instrumentedMethod.getDeclaredAnnotations().ofType(MonitorRequests.class);
+			if (monitorRequestsLoadable != null) {
+				final MonitorRequests monitorRequests = monitorRequestsLoadable.loadSilent();
+				if (!monitorRequests.requestName().isEmpty()) {
+					return monitorRequests.requestName();
+				}
+				if (monitorRequests.resolveNameAtRuntime()) {
+					return null;
+				}
+			}
+			final String typeName = instrumentedMethod.getDeclaringType().getName();
 			return configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
-					.getBusinessTransationName(instrumentedMethod.getDeclaringType().getSimpleName(), instrumentedMethod.getName());
+					.getBusinessTransationName(typeName, instrumentedMethod.getName());
 		}
 	}
 

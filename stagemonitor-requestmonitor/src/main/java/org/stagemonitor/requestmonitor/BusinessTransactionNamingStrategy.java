@@ -9,22 +9,26 @@ public enum BusinessTransactionNamingStrategy {
 
 	METHOD_NAME_SPLIT_CAMEL_CASE {
 		@Override
-		public String getBusinessTransationName(String simpleClassName, String methodName) {
+		public String getBusinessTransationName(String fullClassName, String methodName) {
 			return StringUtils.capitalize(StringUtils.splitCamelCase(methodName));
 		}
 	},
 	CLASS_NAME_HASH_METHOD_NAME {
 		@Override
-		public String getBusinessTransationName(String simpleClassName, String methodName) {
-			return simpleClassName + "#" + methodName;
+		public String getBusinessTransationName(String fullClassName, String methodName) {
+			return shorten(fullClassName) + "#" + methodName;
 		}
 	},
 	CLASS_NAME_DOT_METHOD_NAME {
 		@Override
-		public String getBusinessTransationName(String simpleClassName, String methodName) {
-			return simpleClassName + "." + methodName;
+		public String getBusinessTransationName(String fullClassName, String methodName) {
+			return shorten(fullClassName) + "." + methodName;
 		}
 	};
 
-	public abstract String getBusinessTransationName(String simpleClassName, String methodName);
+	private static String shorten(String fullClassName) {
+		return fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
+	}
+
+	public abstract String getBusinessTransationName(String fullClassName, String methodName);
 }

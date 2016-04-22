@@ -32,7 +32,7 @@ public class RemoteEjbMonitorTransformerTest {
 
 		RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertNotNull(requestTrace);
-		assertEquals("RemoteInterfaceImpl#foo", requestTrace.getName());
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl#foo", requestTrace.getName());
 		assertFalse(requestTrace.getCallStack().toString(), requestTrace.getCallStack().getChildren().isEmpty());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl"));

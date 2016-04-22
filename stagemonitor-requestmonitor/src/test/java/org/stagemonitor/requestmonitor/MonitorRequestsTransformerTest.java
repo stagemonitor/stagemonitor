@@ -14,22 +14,18 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.junit.ConditionalTravisTestRunner;
-import org.stagemonitor.junit.ExcludeOnTravis;
 
-@RunWith(ConditionalTravisTestRunner.class)
 public class MonitorRequestsTransformerTest {
 
 	private TestClass testClass;
 	private TestClassLevelAnnotationClass testClassLevelAnnotationClass;
 	private Metric2Registry metricRegistry;
-	private RequestTraceCapturingReporter requestTraceCapturingReporter = new RequestTraceCapturingReporter();
+	private RequestTraceCapturingReporter requestTraceCapturingReporter;
 
 	@BeforeClass
 	public static void attachProfiler() {
@@ -38,12 +34,13 @@ public class MonitorRequestsTransformerTest {
 
 	@Before
 	public void before() throws Exception {
-		testClass = new TestClass();
+		testClass = new TestSubClass();
 		metricRegistry = Stagemonitor.getMetric2Registry();
 		testClassLevelAnnotationClass = new TestClassLevelAnnotationClass();
 		metricRegistry.removeMatching(Metric2Filter.ALL);
 		Stagemonitor.setMeasurementSession(new MeasurementSession("MonitorRequestsTransformerTest", "test", "test"));
 		Stagemonitor.startMonitoring().get();
+		requestTraceCapturingReporter = new RequestTraceCapturingReporter();
 	}
 
 	@AfterClass
@@ -52,22 +49,20 @@ public class MonitorRequestsTransformerTest {
 	}
 
 	@Test
-	@ExcludeOnTravis
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
-		assertEquals("TestClass#monitorMe", requestTrace.getName());
+		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass.monitorMe"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "TestClass#monitorMe").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass#monitorMe").layer("All").build()));
 	}
 
 	@Test
-	@ExcludeOnTravis
 	public void testMonitorRequestsThrowingException() throws Exception {
 		try {
 			testClass.monitorThrowException();
@@ -79,7 +74,34 @@ public class MonitorRequestsTransformerTest {
 		assertEquals(NullPointerException.class.getName(), requestTrace.getExceptionClass());
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "TestClass#monitorThrowException").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass#monitorThrowException").layer("All").build()));
+	}
+
+	@Test
+	public void testMonitorRequestsAnnonymousInnerClass() throws Exception {
+		testClass.monitorAnnonymousInnerClass();
+		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
+		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", requestTrace.getName());
+		assertEquals(1, requestTrace.getCallStack().getChildren().size());
+		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass$1.run"));
+
+		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass$1#run").layer("All").build()));
+	}
+
+	@Test
+	public void testMonitorRequestsResolvedAtRuntime() throws Exception {
+		testClass.resolveNameAtRuntime();
+		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
+		assertEquals("MonitorRequestsTransformerTest$TestSubClass#resolveNameAtRuntime", requestTrace.getName());
+	}
+
+	@Test
+	public void testMonitorRequestsCustomName() throws Exception {
+		testClass.doFancyStuff();
+		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
+		assertEquals("My Cool Method", requestTrace.getName());
 	}
 
 	private static class TestClass {
@@ -88,26 +110,46 @@ public class MonitorRequestsTransformerTest {
 			return i;
 		}
 
+		@MonitorRequests(resolveNameAtRuntime = true)
+		public void resolveNameAtRuntime() throws Exception {
+		}
+
+		@MonitorRequests(requestName = "My Cool Method")
+		public void doFancyStuff() throws Exception {
+		}
+
+		public void monitorAnnonymousInnerClass() {
+			new Runnable() {
+				@Override
+				@MonitorRequests
+				public void run() {
+
+				}
+			}.run();
+		}
+
 		@MonitorRequests
 		public int monitorThrowException() throws Exception {
 			throw null;
 		}
 	}
 
+	private static class TestSubClass extends TestClass {
+	}
+
 	@Test
-	@ExcludeOnTravis
 	public void testClassLevelAnnotationClass() throws Exception {
 		testClassLevelAnnotationClass.monitorMe("1");
 		testClassLevelAnnotationClass.dontMonitorMe();
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
-		assertEquals("TestClassLevelAnnotationClass#monitorMe", requestTrace.getName());
+		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe"));
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "TestClassLevelAnnotationClass#monitorMe").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe").layer("All").build()));
 	}
 
 
