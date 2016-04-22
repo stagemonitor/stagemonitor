@@ -26,7 +26,6 @@ buildscript {
 		classpath 'net.saliman:gradle-cobertura-plugin:2.3.0'
 		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.6.3'
 		classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
-		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
 		classpath 'com.github.ben-manes:gradle-versions-plugin:0.12.0'
 	}
 }
@@ -62,13 +61,22 @@ subprojects {
 	apply plugin: 'idea'
 	apply plugin: 'eclipse'
 	apply plugin: 'java'
-	apply plugin: 'com.github.johnrengelman.shadow'
 	if (!System.getProperty("java.version").startsWith("1.6.")) {
 		apply plugin: 'cobertura'
 	}
 
 	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
+		apply plugin: 'osgi'
 		apply from: "$rootDir/gradle/publish-maven.gradle"
+
+		jar {
+			manifest {
+				attributes("Implementation-Version": version)
+				instruction 'Bundle-Vendor', 'iSYS Software GmbH'
+				instruction 'Bundle-Description', 'Open source performance monitoring'
+				instruction 'Bundle-DocURL', 'http://www.stagemonitor.org'
+			}
+		}
 	}
 
 	configurations {
@@ -77,9 +85,6 @@ subprojects {
 
 		optional
 		compile.extendsFrom optional
-
-		shade
-		compile.extendsFrom shade
 	}
 
 	repositories {
@@ -124,11 +129,6 @@ subprojects {
 		from configurations.runtime - configurations.provided
 	}
 
-	jar {
-		manifest {
-			attributes("Implementation-Version": version)
-		}
-	}
 }
 
 release {

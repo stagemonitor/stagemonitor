@@ -1,16 +1,4 @@
 apply plugin: 'com.bmuschko.nexus'
-shadowJar {
-	classifier = ''
-	exclude 'LICENSE'
-	exclude 'NOTICE'
-	dependencies {
-		include(dependency('by.default:exclude:all'))
-	}
-}
-
-artifacts {
-	archives shadowJar
-}
 
 uploadArchives.dependsOn << compileJava
 install.dependsOn << compileJava
@@ -29,7 +17,6 @@ modifyPom {
 			def configurations = project.configurations
 			(configurations.compile.allDependencies -
 					configurations.provided.allDependencies -
-					configurations.shade.allDependencies -
 					configurations.optional.allDependencies).each { dep ->
 				dependency {
 					groupId dep.group

@@ -15,9 +15,9 @@ jmh {
 //	include = ['.*VariableMethodsBenchmark.*']
 }
 
-jmhJar {
-	mergeServiceFiles()
-}
+//jmhJar {
+//	mergeServiceFiles()
+//}
 
 dependencies {
 	compile project(":stagemonitor-web")
