@@ -41,13 +41,12 @@ public class GaugeTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	public static void monitorGauges(Object object) {
-		String simpleClassName = object.getClass().getSimpleName();
 		for (final Method method : object.getClass().getDeclaredMethods()) {
 			final Gauge gaugeAnnotation = method.getAnnotation(Gauge.class);
 			// only create gauge, if method takes no parameters and is non-void
 			if (gaugeAnnotation != null && methodTakesNoParamsAndIsNonVoid(method)) {
 				method.setAccessible(true);
-				final String signature = SignatureUtils.getSignature(simpleClassName, method.getName(),
+				final String signature = SignatureUtils.getSignature(object.getClass().getName(), method.getName(),
 						gaugeAnnotation.name(), gaugeAnnotation.absolute());
 
 				registerGauge(object, method, signature);

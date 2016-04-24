@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -16,19 +18,21 @@ import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.instrument.AbstractClassPathScanner;
+import org.stagemonitor.core.metrics.annotations.ExceptionMeteredTransformer;
+import org.stagemonitor.core.metrics.annotations.TimedTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
 import org.stagemonitor.requestmonitor.MonitorRequests;
 import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
 	private static final Logger logger = LoggerFactory.getLogger(SlaCheckCreatingClassPathScanner.class);
 
 	private static List<Check> checksCreatedBeforeMeasurementStarted = new LinkedList<Check>();
+	private static MeasurementSession measurementSession;
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
@@ -37,46 +41,78 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
 	@Override
 	protected void onMethodMatch(MethodDescription.InDefinedShape methodDescription) {
-		final String requestName = configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
-				.getBusinessTransationName(methodDescription.getDeclaringType().getSimpleName(), methodDescription.getName());
 		final String fullMethodSignature = methodDescription.toString();
 		final AnnotationList declaredAnnotations = methodDescription.getDeclaredAnnotations();
 
-		if (!declaredAnnotations.isAnnotationPresent(MonitorRequests.class)) {
-			logger.warn("To create an SLA for the method {}, it also has to be annotated with @MonitorRequests",
-					fullMethodSignature);
-		} else {
-			if (declaredAnnotations.isAnnotationPresent(SLA.class)) {
-				createSlaCheck(declaredAnnotations.ofType(SLA.class).loadSilent(), fullMethodSignature, requestName);
+		final TimerNames timerNames = getTimerNames(methodDescription, declaredAnnotations);
+
+		createChecks(fullMethodSignature, declaredAnnotations, timerNames);
+	}
+
+	private static class TimerNames {
+		private MetricName timerMetricName;
+		private String timerName;
+		private String errorRequestName;
+		private MetricName errorMetricName;
+	}
+
+	private TimerNames getTimerNames(MethodDescription.InDefinedShape methodDescription, AnnotationList declaredAnnotations) {
+		TimerNames timerNames = new TimerNames();
+		if (declaredAnnotations.isAnnotationPresent(MonitorRequests.class)) {
+			timerNames.timerName = AbstractMonitorRequestsTransformer.getRequestName(methodDescription);
+			if (timerNames.timerName != null) {
+				timerNames.timerMetricName = RequestMonitor.getTimerMetricName(timerNames.timerName);
+				timerNames.errorRequestName = timerNames.timerName;
+				timerNames.errorMetricName = RequestMonitor.getErrorMetricName(timerNames.timerName);
 			}
-			if (declaredAnnotations.isAnnotationPresent(SLAs.class)) {
-				for (SLA sla : declaredAnnotations.ofType(SLAs.class).loadSilent().value()) {
-					createSlaCheck(sla, fullMethodSignature, requestName);
-				}
+		} else {
+			if (declaredAnnotations.isAnnotationPresent(Timed.class)) {
+				timerNames.timerName = new TimedTransformer.TimedSignatureDynamicValue().getRequestName(methodDescription);
+				timerNames.timerMetricName = TimedTransformer.getTimerName(timerNames.timerName);
+			}
+			if (declaredAnnotations.isAnnotationPresent(ExceptionMetered.class)) {
+				timerNames.errorRequestName = new ExceptionMeteredTransformer.ExceptionMeteredSignatureDynamicValue().getRequestName(methodDescription);
+				timerNames.errorMetricName = ExceptionMeteredTransformer.getMetricName(timerNames.errorRequestName);
+			}
+		}
+		return timerNames;
+	}
+
+	private void createChecks(String fullMethodSignature, AnnotationList declaredAnnotations, TimerNames timerNames) {
+		if (declaredAnnotations.isAnnotationPresent(SLA.class)) {
+			createSlaCheck(declaredAnnotations.ofType(SLA.class).loadSilent(), fullMethodSignature, timerNames);
+		}
+		if (declaredAnnotations.isAnnotationPresent(SLAs.class)) {
+			for (SLA sla : declaredAnnotations.ofType(SLAs.class).loadSilent().value()) {
+				createSlaCheck(sla, fullMethodSignature, timerNames);
 			}
 		}
 	}
 
-	private static void createSlaCheck(SLA slaAnnotation, String fullMethodSignature, String requestName) {
+	private static void createSlaCheck(SLA slaAnnotation, String fullMethodSignature, TimerNames timerNames) {
 		if (slaAnnotation.metric().length > 0) {
-			addResponseTimeCheck(slaAnnotation, fullMethodSignature, requestName);
+			addResponseTimeCheck(slaAnnotation, fullMethodSignature, timerNames);
 		}
 		if (slaAnnotation.errorRateThreshold() >= 0) {
-			addErrorRateCheck(slaAnnotation, fullMethodSignature, requestName);
+			addErrorRateCheck(slaAnnotation, fullMethodSignature, timerNames);
 		}
 	}
 
-	private static void addResponseTimeCheck(SLA slaAnnotation, String fullMethodSignature, String requestName) {
+	private static void addResponseTimeCheck(SLA slaAnnotation, String fullMethodSignature, TimerNames timerNames) {
 		SLA.Metric[] metrics = slaAnnotation.metric();
 		double[] thresholdValues = slaAnnotation.threshold();
 		if (metrics.length != thresholdValues.length) {
 			logger.warn("The number of provided metrics don't match the number of provided thresholds in @SLA {}", fullMethodSignature);
 			return;
 		}
+		if (timerNames.timerName == null) {
+			logger.warn("To create a timer SLA for the method {}, it also has to be annotated with @MonitorRequests or " +
+					" @Timed. When using @MonitorRequests, resolveNameAtRuntime must not be set to true.", fullMethodSignature);
+			return;
+		}
 
-		final MetricName timerMetricName = RequestMonitor.getTimerMetricName(requestName);
-		Check check = createCheck(slaAnnotation, fullMethodSignature, requestName, MetricCategory.TIMER, timerMetricName,
-				" (response time)", "responseTime");
+		Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.timerName, MetricCategory.TIMER,
+				timerNames.timerMetricName, " (response time)", "responseTime");
 
 		final List<Threshold> thresholds = check.getThresholds(slaAnnotation.severity());
 		for (int i = 0; i < metrics.length; i++) {
@@ -86,9 +122,13 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 		addCheckIfStarted(check);
 	}
 
-	private static void addErrorRateCheck(SLA slaAnnotation, String fullMethodSignature, String requestName) {
-		final MetricName errorMetricName = RequestMonitor.getErrorMetricName(requestName);
-		final Check check = createCheck(slaAnnotation, fullMethodSignature, requestName, MetricCategory.METER, errorMetricName, " (errors)", "errors");
+	private static void addErrorRateCheck(SLA slaAnnotation, String fullMethodSignature, TimerNames timerNames) {
+		if (timerNames.errorRequestName == null) {
+			logger.warn("To create an error SLA for the method {}, it also has to be annotated with @MonitorRequests or " +
+					" @ExceptionMetered. When using @MonitorRequests, resolveNameAtRuntime must not be set to true.", fullMethodSignature);
+			return;
+		}
+		final Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.errorRequestName, MetricCategory.METER, timerNames.errorMetricName, " (errors)", "errors");
 		final Threshold t = new Threshold(SLA.Metric.M1_RATE.getValue(), Threshold.Operator.GREATER_EQUAL, slaAnnotation.errorRateThreshold());
 		check.getThresholds(slaAnnotation.severity()).add(t);
 		addCheckIfStarted(check);
@@ -106,15 +146,15 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 	}
 
 	private static void addCheckIfStarted(Check check) {
-		if (Stagemonitor.isStarted()) {
-			addCheck(check);
+		if (measurementSession != null) {
+			addCheck(check, measurementSession);
 		} else {
 			checksCreatedBeforeMeasurementStarted.add(check);
 		}
 	}
 
-	private static void addCheck(Check check) {
-		check.setApplication(configuration.getConfig(CorePlugin.class).getMeasurementSession().getApplicationName());
+	private static void addCheck(Check check, MeasurementSession measurementSession) {
+		check.setApplication(measurementSession.getApplicationName());
 		try {
 			configuration.getConfig(AlertingPlugin.class).addCheck(check);
 		} catch (IOException e) {
@@ -122,9 +162,10 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 		}
 	}
 
-	public static void onStart() {
+	public static void onStart(MeasurementSession measurementSession) {
+		SlaCheckCreatingClassPathScanner.measurementSession = measurementSession;
 		for (Check check : checksCreatedBeforeMeasurementStarted) {
-			addCheck(check);
+			addCheck(check, measurementSession);
 		}
 		checksCreatedBeforeMeasurementStarted.clear();
 	}

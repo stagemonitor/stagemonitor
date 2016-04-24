@@ -61,7 +61,7 @@ public class MeteredInstrumenterTest {
 	@Test
 	public void testMeteredAspectDefault() {
 		testObject.meteredDefault();
-		assertOneMeterExists(name("rate").tag("signature", "TestObject#meteredDefault").build());
+		assertOneMeterExists(name("rate").tag("signature", "MeteredInstrumenterTest$TestObject#meteredDefault").build());
 	}
 
 	@Test
@@ -79,7 +79,7 @@ public class MeteredInstrumenterTest {
 	@Test
 	public void testMeteredName() {
 		testObject.meteredName();
-		assertOneMeterExists(name("rate").tag("signature", "TestObject#myMeteredName").build());
+		assertOneMeterExists(name("rate").tag("signature", "MeteredInstrumenterTest$TestObject#myMeteredName").build());
 	}
 
 	@Test

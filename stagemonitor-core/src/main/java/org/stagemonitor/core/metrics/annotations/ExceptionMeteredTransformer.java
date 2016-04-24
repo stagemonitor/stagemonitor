@@ -18,6 +18,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -29,8 +30,12 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 	@Advice.OnMethodExit(onThrowable = Exception.class, inline = false)
 	public static void meterException(@ExceptionMeteredSignature String signature, @MeterExceptionsFor Class<? extends Exception> cause, @Advice.Thrown Throwable e) {
 		if (e != null && cause.isInstance(e)) {
-			Stagemonitor.getMetric2Registry().meter(name("exception_rate").tag("signature", signature).build()).mark();
+			Stagemonitor.getMetric2Registry().meter(getMetricName(signature)).mark();
 		}
+	}
+
+	public static MetricName getMetricName(String signature) {
+		return name("exception_rate").tag("signature", signature).build();
 	}
 
 	@Override

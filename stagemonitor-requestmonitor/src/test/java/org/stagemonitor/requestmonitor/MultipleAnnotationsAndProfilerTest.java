@@ -54,8 +54,8 @@ public class MultipleAnnotationsAndProfilerTest {
 		Profiler.stop();
 		final String signature = total.getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MultipleAnnotationsAndProfilerTest$TestObject.testMethod"));
-		assertOneMeterExists(name("rate").tag("signature", "TestObject#testMethod").build());
-		assertOneTimerExists(name("timer").tag("signature", "TestObject#testMethod").build());
+		assertOneMeterExists(name("rate").tag("signature", "MultipleAnnotationsAndProfilerTest$TestObject#testMethod").build());
+		assertOneTimerExists(name("timer").tag("signature", "MultipleAnnotationsAndProfilerTest$TestObject#testMethod").build());
 	}
 
 	private void assertOneMeterExists(MetricName name) {

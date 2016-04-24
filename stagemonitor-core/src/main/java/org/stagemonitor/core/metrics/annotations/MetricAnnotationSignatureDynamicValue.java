@@ -14,8 +14,12 @@ public abstract class MetricAnnotationSignatureDynamicValue<T extends Annotation
 						  ParameterDescription.InDefinedShape target,
 						  AnnotationDescription.Loadable<T> annotation,
 						  boolean initialized) {
+		return getRequestName(instrumentedMethod);
+	}
+
+	public String getRequestName(MethodDescription.InDefinedShape instrumentedMethod) {
 		final NamingParameters namingParameters = getNamingParameters(instrumentedMethod);
-		return SignatureUtils.getSignature(instrumentedMethod.getDeclaringType().getSimpleName(), instrumentedMethod.getName(),
+		return SignatureUtils.getSignature(instrumentedMethod.getDeclaringType().getName(), instrumentedMethod.getName(),
 				namingParameters.getNameFromAnnotation(), namingParameters.isAbsolute());
 	}
 

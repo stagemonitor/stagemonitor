@@ -7,12 +7,16 @@ import java.lang.annotation.Target;
 
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.alerting.check.Threshold;
+import org.stagemonitor.requestmonitor.MonitorRequests;
 
 /**
  * This annotation lets you define service level agreements within the code.
  * <p/>
  * It automatically creates checks for the annotated method.
- * The method also has to be annotated with @{@link org.stagemonitor.requestmonitor.MonitorRequests}
+ * The method also has to be annotated either with @{@link org.stagemonitor.requestmonitor.MonitorRequests}
+ * ({@link MonitorRequests#resolveNameAtRuntime()} must be set to <code>false</code> then) or
+ * with @{@link com.codahale.metrics.annotation.Timed} for response time SLAs
+ * and @{@link com.codahale.metrics.annotation.ExceptionMetered} for {@link #errorRateThreshold()}s.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

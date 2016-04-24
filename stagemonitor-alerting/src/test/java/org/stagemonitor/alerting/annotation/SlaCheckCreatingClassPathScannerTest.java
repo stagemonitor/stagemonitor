@@ -2,10 +2,13 @@ package org.stagemonitor.alerting.annotation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.List;
 import java.util.Map;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -22,6 +25,7 @@ import org.stagemonitor.requestmonitor.MonitorRequests;
 public class SlaCheckCreatingClassPathScannerTest {
 
 	private final AlertingPlugin alertingPlugin = Stagemonitor.getPlugin(AlertingPlugin.class);
+	private Map<String, Check> checks;
 
 	private static class SlaTestClass {
 		@SLAs({
@@ -42,6 +46,36 @@ public class SlaCheckCreatingClassPathScannerTest {
 		void tooFewThresholds() {
 		}
 
+		@MonitorRequests(resolveNameAtRuntime = true)
+		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		void slaMonitorRequestsResolveAtRuntime() {
+		}
+
+		@MonitorRequests(requestName = "monitor requests custom name")
+		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		void slaMonitorRequestsCustomName() {
+		}
+
+		@Timed(name = "timed custom name", absolute = true)
+		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		void slaTimedCustomName() {
+		}
+
+		@Timed
+		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		void slaOnTimed() {
+		}
+
+		@ExceptionMetered
+		@SLA(errorRateThreshold = 0)
+		void slaOnExceptionMetered() {
+		}
+
+		@Timed
+		@SLA(errorRateThreshold = 0)
+		void slaMissingExceptionMetered() {
+		}
+
 		static void makeSureClassIsLoaded() {
 		}
 	}
@@ -55,25 +89,32 @@ public class SlaCheckCreatingClassPathScannerTest {
 
 	@Before
 	public void setUp() throws Exception {
+		checks = alertingPlugin.getChecks();
 	}
 
 	@Test
-	public void testSlaCreatesChecks() throws Exception {
-		final Map<String, Check> checks = alertingPlugin.getChecks();
+	public void testSlaMonitorRequests() throws Exception {
+		testErrorRateCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().errors",
+				"\\Qerror_rate_server.Monitor-Sla.All\\E");
 
-		final Check errorRateCheck = checks
-				.get("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().errors");
+		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().responseTime",
+				"\\Qresponse_time_server.Monitor-Sla.All\\E");
+	}
+
+	private void testErrorRateCheck(String checkId, String checkTargetRegex) {
+		final Check errorRateCheck = checks.get(checkId);
 		assertNotNull(checks.keySet().toString(), errorRateCheck);
 		assertEquals("Alerting-Test", errorRateCheck.getApplication());
 		assertEquals(MetricCategory.METER, errorRateCheck.getMetricCategory());
-		assertEquals("\\Qerror_rate_server.Monitor-Sla.All\\E", errorRateCheck.getTarget().toString());
+		assertEquals(checkTargetRegex, errorRateCheck.getTarget().toString());
+	}
 
-		final Check responseTimeChek = checks
-				.get("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().responseTime");
+	private void testResponseTimeCheck(String checkId, String checkTargetRegex) {
+		final Check responseTimeChek = checks.get(checkId);
 		assertNotNull(checks.keySet().toString(), responseTimeChek);
 		assertEquals("Alerting-Test", responseTimeChek.getApplication());
 		assertEquals(MetricCategory.TIMER, responseTimeChek.getMetricCategory());
-		assertEquals("\\Qresponse_time_server.Monitor-Sla.All\\E", responseTimeChek.getTarget().toString());
+		assertEquals(checkTargetRegex, responseTimeChek.getTarget().toString());
 		final List<Threshold> thresholds = responseTimeChek.getThresholds(CheckResult.Status.ERROR);
 		final Threshold p95 = thresholds.get(0);
 		assertEquals("p95", p95.getMetric());
@@ -83,6 +124,40 @@ public class SlaCheckCreatingClassPathScannerTest {
 		assertEquals("max", max.getMetric());
 		assertEquals(Threshold.Operator.GREATER_EQUAL, max.getOperator());
 		assertEquals(0, max.getThresholdValue(), 0);
+	}
+
+	@Test
+	public void testSlaCustomName() throws Exception {
+		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaMonitorRequestsCustomName().responseTime",
+				"\\Qresponse_time_server.monitor-requests-custom-name.All\\E");
+	}
+
+	@Test
+	public void testTimedCustomName() throws Exception {
+		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaTimedCustomName().responseTime",
+				"\\Qtimer.timed-custom-name\\E");
+	}
+
+	@Test
+	public void testSlaTimed() throws Exception {
+		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaOnTimed().responseTime",
+				"\\Qtimer.SlaCheckCreatingClassPathScannerTest$SlaTestClass#slaOnTimed\\E");
+	}
+
+	@Test
+	public void testSlaExceptionMetered() throws Exception {
+		testErrorRateCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaOnExceptionMetered().errors",
+				"\\Qexception_rate.SlaCheckCreatingClassPathScannerTest$SlaTestClass#slaOnExceptionMetered\\E");
+	}
+
+	@Test
+	public void testSlaMissingExceptionMetered() throws Exception {
+		assertNull(checks.get("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaMissingExceptionMetered().errors"));
+	}
+
+	@Test
+	public void testSlaMonitorRequestsResolveAtRuntime() throws Exception {
+		assertNull(checks.get("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaMonitorRequestsResolveAtRuntime().responseTime"));
 	}
 
 	@Test

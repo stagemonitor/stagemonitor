@@ -93,7 +93,7 @@ public class ExceptionMeteredInstrumenterTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneMeterExists(name("exception_rate").tag("signature", "TestObject#exceptionMeteredDefault").build());
+		assertOneMeterExists(name("exception_rate").tag("signature", "ExceptionMeteredInstrumenterTest$TestObject#exceptionMeteredDefault").build());
 	}
 
 	@Test
@@ -123,7 +123,7 @@ public class ExceptionMeteredInstrumenterTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertOneMeterExists(name("exception_rate").tag("signature", "TestObject#myExceptionMeteredName").build());
+		assertOneMeterExists(name("exception_rate").tag("signature", "ExceptionMeteredInstrumenterTest$TestObject#myExceptionMeteredName").build());
 	}
 
 	@Test

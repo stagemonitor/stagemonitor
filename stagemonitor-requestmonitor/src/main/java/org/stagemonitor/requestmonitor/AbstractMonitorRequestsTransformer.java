@@ -71,20 +71,24 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 							  ParameterDescription.InDefinedShape target,
 							  AnnotationDescription.Loadable<RequestName> annotation,
 							  boolean initialized) {
-			final AnnotationDescription.Loadable<MonitorRequests> monitorRequestsLoadable = instrumentedMethod.getDeclaredAnnotations().ofType(MonitorRequests.class);
-			if (monitorRequestsLoadable != null) {
-				final MonitorRequests monitorRequests = monitorRequestsLoadable.loadSilent();
-				if (!monitorRequests.requestName().isEmpty()) {
-					return monitorRequests.requestName();
-				}
-				if (monitorRequests.resolveNameAtRuntime()) {
-					return null;
-				}
-			}
-			final String typeName = instrumentedMethod.getDeclaringType().getName();
-			return configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
-					.getBusinessTransationName(typeName, instrumentedMethod.getName());
+			return getRequestName(instrumentedMethod);
 		}
+	}
+
+	public static String getRequestName(MethodDescription.InDefinedShape instrumentedMethod) {
+		final AnnotationDescription.Loadable<MonitorRequests> monitorRequestsLoadable = instrumentedMethod.getDeclaredAnnotations().ofType(MonitorRequests.class);
+		if (monitorRequestsLoadable != null) {
+			final MonitorRequests monitorRequests = monitorRequestsLoadable.loadSilent();
+			if (!monitorRequests.requestName().isEmpty()) {
+				return monitorRequests.requestName();
+			}
+			if (monitorRequests.resolveNameAtRuntime()) {
+				return null;
+			}
+		}
+		final String typeName = instrumentedMethod.getDeclaringType().getName();
+		return configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
+				.getBusinessTransationName(typeName, instrumentedMethod.getName());
 	}
 
 }

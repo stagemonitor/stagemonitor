@@ -230,7 +230,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 		thresholdMonitoringReporter = new ThresholdMonitoringReporter(initArguments.getMetricRegistry(), alertingPlugin, alertSender, incidentRepository, initArguments.getMeasurementSession());
 		thresholdMonitoringReporter.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
-		SlaCheckCreatingClassPathScanner.onStart();
+		SlaCheckCreatingClassPathScanner.onStart(initArguments.getMeasurementSession());
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
 
 /**
@@ -55,7 +56,11 @@ public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Advice.OnMethodEnter
 	public static Timer.Context startTimer(@TimedSignature String signature) {
-		return Stagemonitor.getMetric2Registry().timer(name("timer").tag("signature", signature).build()).time();
+		return Stagemonitor.getMetric2Registry().timer(getTimerName(signature)).time();
+	}
+
+	public static MetricName getTimerName(String signature) {
+		return name("timer").tag("signature", signature).build();
 	}
 
 	@Advice.OnMethodExit(onThrowable = Throwable.class)

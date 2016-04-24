@@ -56,4 +56,8 @@ public class ClassUtils {
 		}
 		return obj.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
 	}
+
+	public static String shorten(String fullClassName) {
+		return fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
+	}
 }
