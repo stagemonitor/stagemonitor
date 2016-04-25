@@ -131,6 +131,10 @@ public class AgentAttacher {
 	private static File createTempDispatcherJar() throws IOException {
 		final InputStream input = AgentAttacher.class.getClassLoader()
 				.getResourceAsStream("stagemonitor-dispatcher.jar.gradlePleaseDontExtract");
+		if (input == null) {
+			throw new IllegalStateException("If you see this exception inside you IDE, you have to execute gradle " +
+					"processResources before running the tests.");
+		}
 		final File tempDispatcherJar = File.createTempFile("stagemonitor-dispatcher", ".jar");
 		tempDispatcherJar.deleteOnExit();
 		IOUtils.copy(input, new FileOutputStream(tempDispatcherJar));
