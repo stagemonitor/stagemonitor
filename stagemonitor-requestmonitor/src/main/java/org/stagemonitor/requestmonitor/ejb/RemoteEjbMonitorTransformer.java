@@ -1,5 +1,6 @@
 package org.stagemonitor.requestmonitor.ejb;
 
+import static net.bytebuddy.matcher.ElementMatchers.declaresMethod;
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -53,11 +54,10 @@ public class RemoteEjbMonitorTransformer extends AbstractMonitorRequestsTransfor
 
 		@Override
 		public boolean matches(TypeDescription target) {
-			return !target.getDeclaredMethods()
-					.filter(named(targetMethod.getName())
-							.and(returns(targetMethod.getReturnType().asErasure()))
-							.and(takesArguments(targetMethod.getParameters().asTypeList().asErasures())))
-					.isEmpty();
+			return declaresMethod(named(targetMethod.getName())
+					.and(returns(targetMethod.getReturnType().asErasure()))
+					.and(takesArguments(targetMethod.getParameters().asTypeList().asErasures())))
+					.matches(target);
 		}
 	}
 }
