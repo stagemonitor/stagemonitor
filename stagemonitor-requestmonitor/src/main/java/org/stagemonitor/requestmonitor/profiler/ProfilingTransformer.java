@@ -2,7 +2,17 @@ package org.stagemonitor.requestmonitor.profiler;
 
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Collections;
+import java.util.List;
+
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -35,7 +45,7 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Advice.OnMethodEnter
-	public static void enter(@Advice.Origin("#r #t.#m#s") String signature) {
+	public static void enter(@ProfilerSignature String signature) {
 		Profiler.start(signature);
 	}
 
@@ -47,5 +57,47 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	@Override
 	protected int getOrder() {
 		return Integer.MAX_VALUE;
+	}
+
+	@Override
+	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
+		return Collections.<StagemonitorDynamicValue<?>>singletonList(new ProfilerDynamicValue());
+	}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	public @interface ProfilerSignature {
+	}
+
+	public static class ProfilerDynamicValue extends StagemonitorByteBuddyTransformer.StagemonitorDynamicValue<ProfilerSignature> {
+
+		@Override
+		public Class<ProfilerSignature> getAnnotationClass() {
+			return ProfilerSignature.class;
+		}
+
+		@Override
+		public Object resolve(MethodDescription.InDefinedShape method,
+							  ParameterDescription.InDefinedShape target,
+							  AnnotationDescription.Loadable<ProfilerSignature> annotation,
+							  boolean initialized) {
+			final String returnType = method.getReturnType().asErasure().getSimpleName();
+			final String className = method.getDeclaringType().getName();
+			return String.format("%s %s.%s(%s)", returnType, className, method.getName(), getSignature(method));
+		}
+
+		public String getSignature(MethodDescription.InDefinedShape instrumentedMethod) {
+			StringBuilder stringBuilder = new StringBuilder();
+			boolean comma = false;
+			for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+				if (comma) {
+					stringBuilder.append(',');
+				} else {
+					comma = true;
+				}
+				stringBuilder.append(typeDescription.getSimpleName());
+			}
+			return stringBuilder.toString();
+		}
 	}
 }
