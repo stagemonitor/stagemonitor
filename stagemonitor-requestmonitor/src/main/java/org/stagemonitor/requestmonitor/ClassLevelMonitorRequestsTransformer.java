@@ -1,5 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
+import static net.bytebuddy.matcher.ElementMatchers.inheritsAnnotation;
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -12,7 +13,7 @@ public class ClassLevelMonitorRequestsTransformer extends AbstractMonitorRequest
 
 	@Override
 	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return super.getIncludeTypeMatcher().and(isAnnotatedWith(MonitorRequests.class));
+		return super.getIncludeTypeMatcher().and(inheritsAnnotation(MonitorRequests.class));
 	}
 
 	@Override

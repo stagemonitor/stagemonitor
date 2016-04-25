@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -63,6 +64,12 @@ public class MonitorRequestsTransformerTest {
 	}
 
 	@Test
+	public void testDontMonitorAnySuperMethod() throws Exception {
+		testClass.dontMonitorMe();
+		assertNull(requestTraceCapturingReporter.get());
+	}
+
+	@Test
 	public void testMonitorRequestsThrowingException() throws Exception {
 		try {
 			testClass.monitorThrowException();
@@ -104,10 +111,22 @@ public class MonitorRequestsTransformerTest {
 		assertEquals("My Cool Method", requestTrace.getName());
 	}
 
-	private static class TestClass {
+	private static abstract class SuperAbstractTestClass {
 		@MonitorRequests
+		public abstract int monitorMe(int i) throws Exception;
+	}
+
+	private static abstract class AbstractTestClass extends SuperAbstractTestClass{
+		public abstract void dontMonitorMe() throws Exception;
+	}
+
+	private static class TestClass extends AbstractTestClass {
 		public int monitorMe(int i) throws Exception {
 			return i;
+		}
+
+		@Override
+		public void dontMonitorMe() throws Exception {
 		}
 
 		@MonitorRequests(resolveNameAtRuntime = true)
@@ -152,9 +171,11 @@ public class MonitorRequestsTransformerTest {
 		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe").layer("All").build()));
 	}
 
-
 	@MonitorRequests
-	private static class TestClassLevelAnnotationClass {
+	private static class SuperTestClassLevelAnnotationClass {
+	}
+
+	private static class TestClassLevelAnnotationClass extends SuperTestClassLevelAnnotationClass {
 
 		public String monitorMe(String s) throws Exception {
 			return s;

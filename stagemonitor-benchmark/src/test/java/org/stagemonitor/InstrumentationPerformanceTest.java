@@ -18,6 +18,7 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.TimedElementMatcherDecorator;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
@@ -68,6 +69,7 @@ public class InstrumentationPerformanceTest  {
 				new HashMap<MetricName, Histogram>(), new HashMap<MetricName, Meter>(),
 				Stagemonitor.getMetric2Registry().getTimers());
 
+		TimedElementMatcherDecorator.logMetrics();
 		Stagemonitor.reset();
 	}
 

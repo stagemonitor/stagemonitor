@@ -1,6 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -8,9 +9,12 @@ import java.lang.annotation.Target;
 /**
  * By annotating a type with {@link MonitorRequests}, a Timer will be created for all its public methods and the call stack
  * of these methods will be recorded. It is also possible to annotate at method level.
+ * <p/>
+ * This annotation is inherited, that means that any subtype of an annotated class or method will also be monitored.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
+@Inherited
 public @interface MonitorRequests {
 
 	/**
