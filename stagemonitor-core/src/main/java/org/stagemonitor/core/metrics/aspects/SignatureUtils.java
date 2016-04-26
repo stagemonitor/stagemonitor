@@ -9,12 +9,15 @@ public final class SignatureUtils {
 	}
 
 	public static String getSignature(String fullClassName, String methodName, String nameFromAnnotation, boolean absolute) {
-		String result = StringUtils.isEmpty(nameFromAnnotation) ? methodName : nameFromAnnotation;
-
-		if (!absolute) {
-			result = ClassUtils.shorten(fullClassName) + "#" + result;
+		String name = StringUtils.isEmpty(nameFromAnnotation) ? methodName : nameFromAnnotation;
+		if (absolute) {
+			return name;
 		}
-		return result;
+		return getSignature(fullClassName, name);
+	}
+
+	public static String getSignature(String fullClassName, String methodName) {
+		return ClassUtils.shorten(fullClassName) + "#" + methodName;
 	}
 
 }

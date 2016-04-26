@@ -73,7 +73,7 @@ public class StagemonitorClassNameMatcher extends ElementMatcher.Junction.Abstra
 	 * @param className The name of the class. For example java/lang/String
 	 * @return <code>true</code>, if the class should be instrumented, <code>false</code> otherwise
 	 */
-	private boolean isIncluded(String className) {
+	public static boolean isIncluded(String className) {
 		for (String exclude : excludeContaining) {
 			if (className.contains(exclude)) {
 				return false;
@@ -88,7 +88,7 @@ public class StagemonitorClassNameMatcher extends ElementMatcher.Junction.Abstra
 		return false;
 	}
 
-	private boolean hasMoreSpecificExclude(String className, String include) {
+	private static boolean hasMoreSpecificExclude(String className, String include) {
 		for (String exclude : excludes) {
 			if (exclude.length() > include.length() && exclude.startsWith(include) && className.startsWith(exclude)) {
 				return true;
