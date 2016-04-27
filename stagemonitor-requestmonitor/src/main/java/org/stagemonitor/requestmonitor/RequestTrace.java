@@ -192,23 +192,24 @@ public class RequestTrace {
 	}
 
 	public void setException(Exception e) {
-		error = e != null;
-		Throwable throwable = e;
-		if (throwable != null) {
-			if (requestMonitorPlugin.getUnnestExceptions().contains(throwable.getClass().getName())) {
-				Throwable cause = throwable.getCause();
-				if (cause != null) {
-					throwable = cause;
-				}
-			}
-			exceptionMessage = throwable.getMessage();
-			exceptionClass = throwable.getClass().getCanonicalName();
-
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw, true);
-			throwable.printStackTrace(pw);
-			exceptionStackTrace = sw.getBuffer().toString();
+		if (e == null || requestMonitorPlugin.getIgnoreExceptions().contains(e.getClass().getName())) {
+			return;
 		}
+		error = true;
+		Throwable throwable = e;
+		if (requestMonitorPlugin.getUnnestExceptions().contains(throwable.getClass().getName())) {
+			Throwable cause = throwable.getCause();
+			if (cause != null) {
+				throwable = cause;
+			}
+		}
+		exceptionMessage = throwable.getMessage();
+		exceptionClass = throwable.getClass().getCanonicalName();
+
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw, true);
+		throwable.printStackTrace(pw);
+		exceptionStackTrace = sw.getBuffer().toString();
 	}
 
 	public void setUsername(String username) {

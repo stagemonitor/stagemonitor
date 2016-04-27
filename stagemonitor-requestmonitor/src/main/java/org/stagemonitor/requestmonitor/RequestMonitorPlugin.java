@@ -217,13 +217,24 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.singleton("org.springframework.web.util.NestedServletException"))
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Collection<String>> ignoreExceptions = ConfigurationOption.stringsOption()
+			.key("stagemonitor.requestmonitor.ignoreExeptions")
+			.dynamic(true)
+			.label("Ignore Exceptions")
+			.description("The class names of exception to ignore. These exceptions won't show up in the request trace " +
+					"and won't cause the error flag of the request trace to be set to true.")
+			.defaultValue(Collections.<String>emptyList())
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
-			.key("stagemonitor.requestmonitor.requestparams.confidential.regex")
+			.key("stagemonitor.requestmonitor.params.confidential.regex")
 			.dynamic(true)
 			.label("Confidential parameters (regex)")
 			.description("A list of request parameter name patterns that should not be collected.\n" +
-					"A request parameter is either a query string or a application/x-www-form-urlencoded request " +
-					"body (POST form content)")
+					"In the context of a HTTP request, a request parameter is either a query string or a application/x-www-form-urlencoded request " +
+					"body (POST form content). In the context of a method invocation monitored with @MonitorRequests," +
+					"this refers to the parameter name of the monitored method. Note that you have to compile your classes" +
+					"with 'vars' debug information.")
 			.defaultValue(Arrays.asList(
 					Pattern.compile("(?i).*pass.*"),
 					Pattern.compile("(?i).*credit.*"),
@@ -379,5 +390,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			}
 		}
 		return false;
+	}
+
+	public Collection<String> getIgnoreExceptions() {
+		return ignoreExceptions.getValue();
 	}
 }

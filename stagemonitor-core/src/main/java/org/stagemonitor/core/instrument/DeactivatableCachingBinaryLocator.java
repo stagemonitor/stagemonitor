@@ -22,7 +22,7 @@ public class DeactivatableCachingBinaryLocator extends AgentBuilder.BinaryLocato
 			.WithInlinedExpunction<ClassLoader, TypePool.CacheProvider>();
 
 	public DeactivatableCachingBinaryLocator() {
-		this(TypePool.Default.ReaderMode.FAST);
+		this(TypePool.Default.ReaderMode.EXTENDED);
 	}
 
 	public DeactivatableCachingBinaryLocator(TypePool.Default.ReaderMode readerMode) {
