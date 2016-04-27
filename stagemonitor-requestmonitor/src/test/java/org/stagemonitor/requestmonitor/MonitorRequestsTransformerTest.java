@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-import java.util.Collections;
 import java.util.Map;
 
 import com.codahale.metrics.Timer;
@@ -53,7 +52,7 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
-		assertEquals(Collections.singletonMap("arg0", "1"), requestTrace.getParameters());
+		assertEquals("1", requestTrace.getParameters().values().iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
@@ -161,7 +160,7 @@ public class MonitorRequestsTransformerTest {
 		testClassLevelAnnotationClass.monitorMe("1");
 		testClassLevelAnnotationClass.dontMonitorMe();
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
-		assertEquals(Collections.singletonMap("arg0", "1"), requestTrace.getParameters());
+		assertEquals("1", requestTrace.getParameters().values().iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
