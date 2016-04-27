@@ -68,7 +68,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 
 	@Test
 	public void testSetNameForRestCalls() throws Exception {
-		final MonitoredRequest request = new MonitoredMethodRequest("override me", new MonitoredMethodRequest.MethodExecution() {
+		final MonitoredRequest request = new MonitoredMethodRequest(configuration, "override me", new MonitoredMethodRequest.MethodExecution() {
 			@Override
 			public Object execute() throws Exception {
 				return resource.getTestString();

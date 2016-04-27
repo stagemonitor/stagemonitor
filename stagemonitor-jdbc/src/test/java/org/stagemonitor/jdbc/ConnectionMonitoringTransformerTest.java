@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -28,6 +29,7 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 public class ConnectionMonitoringTransformerTest {
 
+	private final Configuration configuration = Stagemonitor.getConfiguration();
 	private DataSource dataSource;
 	private RequestMonitor requestMonitor;
 
@@ -45,7 +47,6 @@ public class ConnectionMonitoringTransformerTest {
 		poolProperties.setUrl("jdbc:hsqldb:mem:test");
 		dataSource = new org.apache.tomcat.jdbc.pool.DataSource(poolProperties);
 		dataSource.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS STAGEMONITOR (FOO INT)").execute();
-
 		requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
 	}
 
@@ -58,7 +59,7 @@ public class ConnectionMonitoringTransformerTest {
 	@Test
 	public void monitorGetConnection() throws Exception {
 		requestMonitor
-				.monitor(new MonitoredMethodRequest("monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
+				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
 						dataSource.getConnection();
@@ -73,7 +74,7 @@ public class ConnectionMonitoringTransformerTest {
 	public void monitorGetConnectionUsernamePassword() throws Exception {
 		dataSource.getConnection("user", "pw");
 		requestMonitor
-				.monitor(new MonitoredMethodRequest("monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
+				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
 						dataSource.getConnection("user", "pw");
@@ -87,7 +88,7 @@ public class ConnectionMonitoringTransformerTest {
 	@Test
 	public void testRecordSqlPreparedStatement() throws Exception {
 		final RequestMonitor.RequestInformation<RequestTrace> requestInformation = requestMonitor
-				.monitor(new MonitoredMethodRequest("testRecordSqlPreparedStatement", new MonitoredMethodRequest.MethodExecution() {
+				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlPreparedStatement", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
 						executePreparedStatement();
@@ -112,7 +113,7 @@ public class ConnectionMonitoringTransformerTest {
 	@Test
 	public void testRecordSqlStatement() throws Exception {
 		final RequestMonitor.RequestInformation<RequestTrace> requestInformation = requestMonitor
-				.monitor(new MonitoredMethodRequest("testRecordSqlStatement", new MonitoredMethodRequest.MethodExecution() {
+				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlStatement", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
 						executeStatement();

@@ -4,8 +4,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -22,9 +24,16 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 	}
 
 	@Advice.OnMethodEnter(inline = false)
-	public static void monitorStart(@Advice.BoxedArguments Object[] args, @RequestName String requestName,
-									 @Advice.Origin("#m") String methodName, @Advice.This Object thiz) {
-		final MonitoredMethodRequest monitoredRequest = new MonitoredMethodRequest(requestName, null, args);
+	public static void monitorStart(@ParameterNames String parameterNames, @Advice.BoxedArguments Object[] args,
+									@RequestName String requestName, @Advice.Origin("#m") String methodName,
+									@Advice.This Object thiz) {
+		final String[] paramNames = parameterNames.split(",");
+		Map<String, Object> params = new LinkedHashMap<String, Object>();
+		for (int i = 0; i < args.length; i++) {
+			params.put(paramNames[i], args[i]);
+		}
+
+		final MonitoredMethodRequest monitoredRequest = new MonitoredMethodRequest(Stagemonitor.getConfiguration(), requestName, null, params);
 		final RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
 		requestMonitorPlugin.getRequestMonitor().monitorStart(monitoredRequest);
 		final RequestTrace request = RequestMonitor.getRequest();
@@ -51,7 +60,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 
 	@Override
 	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Collections.<StagemonitorDynamicValue<?>>singletonList(new RequestNameDynamicValue());
+		return Arrays.asList(new RequestNameDynamicValue(), new ParameterNamesDynamicValue());
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -89,6 +98,32 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 		final String typeName = instrumentedMethod.getDeclaringType().getName();
 		return configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
 				.getBusinessTransationName(typeName, instrumentedMethod.getName());
+	}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	public @interface ParameterNames {
+	}
+
+
+	public static class ParameterNamesDynamicValue extends StagemonitorDynamicValue<ParameterNames> {
+
+		@Override
+		public Class<ParameterNames> getAnnotationClass() {
+			return ParameterNames.class;
+		}
+
+		@Override
+		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+							  ParameterDescription.InDefinedShape target,
+							  AnnotationDescription.Loadable<ParameterNames> annotation,
+							  boolean initialized) {
+			StringBuilder params = new StringBuilder();
+			for (ParameterDescription.InDefinedShape param : instrumentedMethod.getParameters()) {
+				params.append(param.getName()).append(',');
+			}
+			return params.toString();
+		}
 	}
 
 }

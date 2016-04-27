@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class MonitoredMethodExecutionTest {
@@ -24,12 +25,13 @@ public class MonitoredMethodExecutionTest {
 	private RequestMonitor.RequestInformation<RequestTrace> requestInformation3;
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
+	private Configuration configuration;
 
 	@Before
 	public void clearState() {
 		CorePlugin corePlugin = mock(CorePlugin.class);
 		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		Configuration configuration = mock(Configuration.class);
+		configuration = mock(Configuration.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 
@@ -48,8 +50,8 @@ public class MonitoredMethodExecutionTest {
 		assertFalse(requestInformation1.isForwarded());
 		assertEquals("monitored1()", requestInformation1.requestTrace.getName());
 		final Map<String, String> parameters = requestInformation1.requestTrace.getParameters();
-		assertEquals("1", parameters.get("0"));
-		assertEquals("test", parameters.get("1"));
+		assertEquals(parameters.toString(), "1", parameters.get("arg0"));
+		assertEquals(parameters.toString(), "test", parameters.get("arg1"));
 		assertTrue(requestInformation2.isForwarded());
 		assertTrue(requestInformation3.isForwarded());
 
@@ -79,18 +81,18 @@ public class MonitoredMethodExecutionTest {
 
 		private int monitored1() throws Exception {
 			requestInformation1 = requestMonitor.monitor(
-					new MonitoredMethodRequest("monitored1()", new MonitoredMethodRequest.MethodExecution() {
+					new MonitoredMethodRequest(configuration, "monitored1()", new MonitoredMethodRequest.MethodExecution() {
 						@Override
 						public Object execute() throws Exception {
 							return monitored2();
 						}
-					}, 1, "test"));
+					}, MetricsReporterTestHelper.<String, Object>map("arg0", 1).add("arg1", "test")));
 			return (Integer) requestInformation1.getExecutionResult();
 		}
 
 		private int monitored2() throws Exception {
 			requestInformation2 = requestMonitor.monitor(
-					new MonitoredMethodRequest("monitored2()", new MonitoredMethodRequest.MethodExecution() {
+					new MonitoredMethodRequest(configuration, "monitored2()", new MonitoredMethodRequest.MethodExecution() {
 						@Override
 						public Object execute() throws Exception {
 							return monitored3();
@@ -101,7 +103,7 @@ public class MonitoredMethodExecutionTest {
 
 		private int monitored3() throws Exception {
 			requestInformation3 = requestMonitor.monitor(
-					new MonitoredMethodRequest("monitored3()", new MonitoredMethodRequest.MethodExecution() {
+					new MonitoredMethodRequest(configuration, "monitored3()", new MonitoredMethodRequest.MethodExecution() {
 						@Override
 						public Object execute() throws Exception {
 							return notMonitored();

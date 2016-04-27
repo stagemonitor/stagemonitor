@@ -1,7 +1,11 @@
 package org.stagemonitor.requestmonitor;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
@@ -213,6 +217,21 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.singleton("org.springframework.web.util.NestedServletException"))
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
+			.key("stagemonitor.requestmonitor.requestparams.confidential.regex")
+			.dynamic(true)
+			.label("Confidential parameters (regex)")
+			.description("A list of request parameter name patterns that should not be collected.\n" +
+					"A request parameter is either a query string or a application/x-www-form-urlencoded request " +
+					"body (POST form content)")
+			.defaultValue(Arrays.asList(
+					Pattern.compile("(?i).*pass.*"),
+					Pattern.compile("(?i).*credit.*"),
+					Pattern.compile("(?i).*pwd.*"),
+					Pattern.compile("(?i)pw")))
+			.tags("security-relevant")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 
 	private static RequestMonitor requestMonitor;
 
@@ -334,5 +353,31 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isProfilerObjectPoolingActive() {
 		return profilerObjectPooling.getValue();
+	}
+
+	public Collection<Pattern> getConfidentialParameters() {
+		return confidentialParameters.getValue();
+	}
+
+	public static Map<String, String> getSafeParameterMap(Map<String, String> parameterMap, Collection<Pattern> confidentialParams) {
+		Map<String, String> params = new LinkedHashMap<String, String>();
+		for (Map.Entry<String, String> entry : parameterMap.entrySet()) {
+			final boolean paramExcluded = isParamExcluded(entry.getKey(), confidentialParams);
+			if (paramExcluded) {
+				params.put(entry.getKey(), "XXXX");
+			} else {
+				params.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return params;
+	}
+
+	private static boolean isParamExcluded(String queryParameter, Collection<Pattern> confidentialParams) {
+		for (Pattern excludedParam : confidentialParams) {
+			if (excludedParam.matcher(queryParameter).matches()) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

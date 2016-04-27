@@ -1,16 +1,24 @@
 package org.stagemonitor.requestmonitor;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.stagemonitor.core.configuration.Configuration;
 
 public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
 	private final String methodSignature;
 	private final MethodExecution methodExecution;
-	private final Object[] parameters;
+	private final Map<String, Object> parameters;
+	private final RequestMonitorPlugin requestMonitorPlugin;
 
-	public MonitoredMethodRequest(String methodSignature, MethodExecution methodExecution, Object... parameters) {
+	public MonitoredMethodRequest(Configuration configuration, String methodSignature, MethodExecution methodExecution) {
+		this(configuration, methodSignature, methodExecution, null);
+	}
+
+	public MonitoredMethodRequest(Configuration configuration, String methodSignature, MethodExecution methodExecution, Map<String, Object> parameters) {
+		this.requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		this.methodSignature = methodSignature;
 		this.methodExecution = methodExecution;
 		this.parameters = parameters;
@@ -25,12 +33,12 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	public RequestTrace createRequestTrace() {
 		RequestTrace requestTrace = new RequestTrace(UUID.randomUUID().toString());
 		requestTrace.setName(methodSignature);
-		if (parameters != null && parameters.length > 0) {
-			Map<String, String> params = new HashMap<String, String>();
-			for (int i = 0; i < parameters.length; i++) {
-				params.put(Integer.toString(i), String.valueOf(parameters[i]));
+		if (parameters != null && parameters.size() > 0) {
+			Map<String, String> params = new LinkedHashMap<String, String>();
+			for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+				params.put(entry.getKey(), String.valueOf(entry.getValue()));
 			}
-			requestTrace.setParameters(params);
+			requestTrace.setParameters(RequestMonitorPlugin.getSafeParameterMap(params, requestMonitorPlugin.getConfidentialParameters()));
 		}
 		return requestTrace;
 	}

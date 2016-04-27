@@ -53,7 +53,7 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
-		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
+		assertEquals(Collections.singletonMap("arg0", "1"), requestTrace.getParameters());
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
@@ -161,7 +161,7 @@ public class MonitorRequestsTransformerTest {
 		testClassLevelAnnotationClass.monitorMe("1");
 		testClassLevelAnnotationClass.dontMonitorMe();
 		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
-		assertEquals(Collections.singletonMap("0", "1"), requestTrace.getParameters());
+		assertEquals(Collections.singletonMap("arg0", "1"), requestTrace.getParameters());
 		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", requestTrace.getName());
 		assertEquals(1, requestTrace.getCallStack().getChildren().size());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();

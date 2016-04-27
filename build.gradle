@@ -106,6 +106,10 @@ subprojects {
 		options.debugOptions.debugLevel = "source,lines,vars"
 	}
 
+	compileTestJava {
+		options.debugOptions.debugLevel = "source,lines,vars"
+	}
+
 	tasks.withType(JavaCompile) {
 		options.encoding = 'UTF-8'
 		options.incremental = true

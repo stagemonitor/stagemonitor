@@ -8,7 +8,9 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
@@ -21,6 +23,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -34,6 +37,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	private final Configuration configuration;
 	protected final WebPlugin webPlugin;
 	private final Metric2Registry metricRegistry;
+	private final RequestMonitorPlugin requestMonitorPlugin;
 
 	public MonitoredHttpRequest(HttpServletRequest httpServletRequest,
 								StatusExposingByteCountingServletResponse responseWrapper,
@@ -44,6 +48,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.metricRegistry = Stagemonitor.getMetric2Registry();
+		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 	}
 
 	@Override
@@ -135,16 +140,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		return requestUri;
 	}
 
-	private boolean isParamExcluded(String queryParameter) {
-		final Collection<Pattern> confidentialQueryParams = webPlugin.getRequestParamsConfidential();
-		for (Pattern excludedParam : confidentialQueryParams) {
-			if (excludedParam.matcher(queryParameter).matches()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private Map<String, String> getHeaders(HttpServletRequest request) {
 		Map<String, String> headers = new HashMap<String, String>();
 		final Enumeration headerNames = request.getHeaderNames();
@@ -204,7 +199,14 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		// parameters inside the application
 		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
 		final Map<String, String[]> parameterMap = httpServletRequest.getParameterMap();
-		request.setParameters(getSafeQueryStringMap(parameterMap));
+		Map<String, String> params = new HashMap<String, String>();
+		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+			params.put(entry.getKey(), StringUtils.toCommaSeparatedString(entry.getValue()));
+		}
+		Set<Pattern> confidentialParams = new HashSet<Pattern>();
+		confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
+		confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
+		request.setParameters(requestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
 	}
 
 	private String getSessionId() {
@@ -218,19 +220,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		}
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		return userPrincipal != null ? userPrincipal.getName() : null;
-	}
-
-	private Map<String, String> getSafeQueryStringMap(Map<String, String[]> parameterMap) {
-		Map<String, String> params = new HashMap<String, String>();
-		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
-			final boolean paramExcluded = isParamExcluded(entry.getKey());
-			if (paramExcluded) {
-				params.put(entry.getKey(), "XXXX");
-			} else {
-				params.put(entry.getKey(), StringUtils.toCommaSeparatedString(entry.getValue()));
-			}
-		}
-		return params;
 	}
 
 	/**

@@ -38,4 +38,5 @@ public @interface MonitorRequests {
 	 * @return <code>true</code> if the request name should be evaluated at runtime, <code>false</code> otherwise.
 	 */
 	boolean resolveNameAtRuntime() default false;
+
 }
