@@ -13,6 +13,7 @@ import com.codahale.metrics.Timer;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
@@ -103,6 +104,14 @@ public class MonitorRequestsTransformerTest {
 		assertEquals("MonitorRequestsTransformerTest$TestSubClass#resolveNameAtRuntime", requestTrace.getName());
 	}
 
+	@Ignore
+	@Test
+	public void testMonitorStaticMethod() throws Exception {
+		TestClass.monitorStaticMethod();
+		final RequestTrace requestTrace = requestTraceCapturingReporter.get();
+		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorStaticMethod", requestTrace.getName());
+	}
+
 	@Test
 	public void testMonitorRequestsCustomName() throws Exception {
 		testClass.doFancyStuff();
@@ -130,6 +139,10 @@ public class MonitorRequestsTransformerTest {
 
 		@MonitorRequests(resolveNameAtRuntime = true)
 		public void resolveNameAtRuntime() throws Exception {
+		}
+
+		@MonitorRequests
+		public static void monitorStaticMethod() {
 		}
 
 		@MonitorRequests(requestName = "My Cool Method")

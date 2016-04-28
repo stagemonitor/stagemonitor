@@ -11,6 +11,8 @@ import java.lang.annotation.Target;
  * of these methods will be recorded. It is also possible to annotate at method level.
  * <p/>
  * This annotation is inherited, that means that any subtype of an annotated class or method will also be monitored.
+ * <p/>
+ * Note that static methods can't be monitored.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

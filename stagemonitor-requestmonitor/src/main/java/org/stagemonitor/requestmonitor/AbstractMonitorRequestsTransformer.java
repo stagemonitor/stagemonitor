@@ -1,5 +1,8 @@
 package org.stagemonitor.requestmonitor;
 
+import static net.bytebuddy.matcher.ElementMatchers.isStatic;
+import static net.bytebuddy.matcher.ElementMatchers.not;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -13,10 +16,19 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 
 public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTransformer {
+
+	@Override
+	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getMethodElementMatcher() {
+		// static methods currently can't be monitored as we are injecting the this reference in monitorStart
+		// @Advice.This Object thiz
+		// to be able to get the runtime classname
+		return super.getMethodElementMatcher().and(not(isStatic()));
+	}
 
 	@Override
 	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
