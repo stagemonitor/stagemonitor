@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
@@ -336,7 +335,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 	public static class Initializer implements ServletContainerInitializer {
 
 		@Override
-		public void onStartup(Set<Class<?>> c, ServletContext ctx) throws ServletException {
+		public void onStartup(Set<Class<?>> c, ServletContext ctx) {
 			final AlertingPlugin alertingPlugin = Stagemonitor.getPlugin(AlertingPlugin.class);
 			ctx.addServlet(AlerterTypeServlet.class.getSimpleName(), new AlerterTypeServlet(alertingPlugin, Stagemonitor.getMeasurementSession()))
 					.addMapping("/stagemonitor/alerter-types");

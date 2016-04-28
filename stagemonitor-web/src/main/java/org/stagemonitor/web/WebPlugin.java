@@ -17,7 +17,6 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration;
 import javax.servlet.http.HttpServletRequest;
 
@@ -368,7 +367,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 	}
 
 	@Override
-	public void onStartup(Set<Class<?>> c, ServletContext ctx) throws ServletException {
+	public void onStartup(Set<Class<?>> c, ServletContext ctx) {
 		ctx.addServlet(ConfigurationServlet.class.getSimpleName(), new ConfigurationServlet())
 				.addMapping(ConfigurationServlet.CONFIGURATION_ENDPOINT);
 		ctx.addServlet(StagemonitorMetricsServlet.class.getSimpleName(), new StagemonitorMetricsServlet())
@@ -397,6 +396,10 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		monitorFilter.setAsyncSupported(true);
 
 		ctx.addListener(MDCListener.class);
-		ctx.addListener(SessionCounter.class);
+		try {
+			ctx.addListener(SessionCounter.class);
+		} catch (IllegalArgumentException e) {
+			// embedded servlet containers like jetty don't necessarily support sessions
+		}
 	}
 }
