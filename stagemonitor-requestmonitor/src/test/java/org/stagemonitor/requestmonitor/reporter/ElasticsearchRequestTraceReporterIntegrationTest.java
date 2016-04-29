@@ -18,13 +18,13 @@ import org.stagemonitor.requestmonitor.RequestTrace;
 
 public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractElasticsearchTest {
 
-	private ElasticsearchRequestTraceReporter reporter;
-	private RequestMonitorPlugin requestMonitorPlugin;
+	protected ElasticsearchRequestTraceReporter reporter;
+	protected RequestMonitorPlugin requestMonitorPlugin;
+	protected Configuration configuration;
 
 	@Before
 	public void setUp() throws Exception {
-		Configuration configuration = mock(Configuration.class);
-		final CorePlugin corePlugin = mock(CorePlugin.class);
+		this.configuration = mock(Configuration.class);
 		this.requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);

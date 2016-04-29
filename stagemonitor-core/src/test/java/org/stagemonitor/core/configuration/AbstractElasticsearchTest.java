@@ -26,6 +26,7 @@ public class AbstractElasticsearchTest {
 	protected static int elasticsearchPort;
 	protected static ElasticsearchClient elasticsearchClient;
 	protected static String elasticsearchUrl;
+	protected static CorePlugin corePlugin;
 
 	@BeforeClass
 	public static void beforeClass() throws IOException {
@@ -47,7 +48,7 @@ public class AbstractElasticsearchTest {
 					.put("index.number_of_replicas", "0")
 					.put("discovery.zen.ping.multicast.enabled", "false");
 			elasticsearchUrl = "http://localhost:" + elasticsearchPort;
-			final CorePlugin corePlugin = mock(CorePlugin.class);
+			AbstractElasticsearchTest.corePlugin = mock(CorePlugin.class);
 			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
 			when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 			elasticsearchClient = new ElasticsearchClient(corePlugin);

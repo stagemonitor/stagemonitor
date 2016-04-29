@@ -117,7 +117,6 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 	public @interface ParameterNames {
 	}
 
-
 	public static class ParameterNamesDynamicValue extends StagemonitorDynamicValue<ParameterNames> {
 
 		@Override
