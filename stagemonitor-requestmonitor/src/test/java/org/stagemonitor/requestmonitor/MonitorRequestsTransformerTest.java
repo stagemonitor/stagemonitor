@@ -13,7 +13,6 @@ import com.codahale.metrics.Timer;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
@@ -104,7 +103,6 @@ public class MonitorRequestsTransformerTest {
 		assertEquals("MonitorRequestsTransformerTest$TestSubClass#resolveNameAtRuntime", requestTrace.getName());
 	}
 
-	@Ignore
 	@Test
 	public void testMonitorStaticMethod() throws Exception {
 		TestClass.monitorStaticMethod();

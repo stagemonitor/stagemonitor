@@ -1,8 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import static net.bytebuddy.matcher.ElementMatchers.isStatic;
-import static net.bytebuddy.matcher.ElementMatchers.not;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -16,19 +13,10 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 
 public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTransformer {
-
-	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getMethodElementMatcher() {
-		// static methods currently can't be monitored as we are injecting the this reference in monitorStart
-		// @Advice.This Object thiz
-		// to be able to get the runtime classname
-		return super.getMethodElementMatcher().and(not(isStatic()));
-	}
 
 	@Override
 	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
@@ -37,8 +25,8 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 
 	@Advice.OnMethodEnter(inline = false)
 	public static void monitorStart(@ParameterNames String parameterNames, @Advice.BoxedArguments Object[] args,
-									@RequestName String requestName, @Advice.Origin("#m") String methodName,
-									@Advice.This Object thiz) {
+									@RequestName String requestName, @Advice.Origin("#t") String className,
+									@Advice.Origin("#m") String methodName, @Advice.This(optional = true) Object thiz) {
 		final String[] paramNames = parameterNames.split(",");
 		Map<String, Object> params = new LinkedHashMap<String, Object>();
 		for (int i = 0; i < args.length; i++) {
@@ -50,9 +38,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 		requestMonitorPlugin.getRequestMonitor().monitorStart(monitoredRequest);
 		final RequestTrace request = RequestMonitor.getRequest();
 		if (requestName == null && request != null) {
-			request.setName(requestMonitorPlugin
-					.getBusinessTransactionNamingStrategy()
-					.getBusinessTransationName(thiz.getClass().getName(), methodName));
+			request.setName(getBusinessTransationName(thiz != null ? thiz.getClass().getName() : className, methodName));
 		}
 	}
 
@@ -107,9 +93,13 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 				return null;
 			}
 		}
-		final String typeName = instrumentedMethod.getDeclaringType().getName();
-		return configuration.getConfig(RequestMonitorPlugin.class).getBusinessTransactionNamingStrategy()
-				.getBusinessTransationName(typeName, instrumentedMethod.getName());
+		return getBusinessTransationName(instrumentedMethod.getDeclaringType().getName(), instrumentedMethod.getName());
+	}
+
+	private static String getBusinessTransationName(String className, String methodName) {
+		return configuration.getConfig(RequestMonitorPlugin.class)
+				.getBusinessTransactionNamingStrategy()
+				.getBusinessTransationName(className, methodName);
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
