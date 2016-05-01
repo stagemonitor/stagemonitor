@@ -6,13 +6,12 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.isFinal;
 import static net.bytebuddy.matcher.ElementMatchers.isInterface;
 import static net.bytebuddy.matcher.ElementMatchers.isNative;
-import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
 import static net.bytebuddy.matcher.ElementMatchers.isSynthetic;
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
-import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
+import static org.stagemonitor.core.instrument.StagemonitorClassNameMatcher.isInsideMonitoredProject;
 import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
 
 import java.lang.annotation.Annotation;
@@ -22,6 +21,7 @@ import java.util.List;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -72,9 +72,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return getIncludeTypeMatcher()
 				.and(not(isInterface()))
 				.and(not(isSynthetic()))
-				.and(not(getExtraExcludeTypeMatcher()))
-				.and(not(isSubTypeOf(StagemonitorByteBuddyTransformer.class)))
-				.and(not(isSubTypeOf(StagemonitorDynamicValue.class)));
+				.and(not(getExtraExcludeTypeMatcher()));
 	}
 
 	public boolean isActive() {
@@ -82,9 +80,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return StagemonitorClassNameMatcher.INSTANCE
-				.or(not(nameStartsWith("org.stagemonitor"))
-						.and(getExtraIncludeTypeMatcher()));
+		return isInsideMonitoredProject().or(getExtraIncludeTypeMatcher());
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getExtraIncludeTypeMatcher() {
@@ -101,12 +97,15 @@ public abstract class StagemonitorByteBuddyTransformer {
 
 	public AgentBuilder.Transformer getTransformer() {
 		return new AgentBuilder.Transformer() {
+
+			private AsmVisitorWrapper.ForDeclaredMethods advice = registerDynamicValues()
+					.to(getAdviceClass())
+					.on(timed("method", transformerName, getMethodElementMatcher()));
+
 			@Override
 			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
 				beforeTransformation(typeDescription, classLoader);
-				return builder.visit(registerDynamicValues()
-						.to(getAdviceClass())
-						.on(timed("method", transformerName, getMethodElementMatcher())));
+				return builder.visit(advice);
 			}
 
 		};

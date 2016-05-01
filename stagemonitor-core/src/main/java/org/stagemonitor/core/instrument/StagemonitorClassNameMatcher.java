@@ -30,6 +30,10 @@ public class StagemonitorClassNameMatcher extends ElementMatcher.Junction.Abstra
 
 	public static final StagemonitorClassNameMatcher INSTANCE = new StagemonitorClassNameMatcher();
 
+	public static ElementMatcher.Junction<TypeDescription> isInsideMonitoredProject() {
+		return INSTANCE;
+	}
+
 	private StagemonitorClassNameMatcher() {
 	}
 
