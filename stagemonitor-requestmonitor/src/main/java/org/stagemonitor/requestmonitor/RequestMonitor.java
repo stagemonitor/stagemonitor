@@ -144,8 +144,6 @@ public class RequestMonitor {
 
 		if (!info.firstRequest) {
 			trackOverhead(info.overhead1, overhead2);
-		} else {
-			AgentAttacher.onMostClassesLoaded();
 		}
 
 		for (Runnable onAfterRequestCallback : onAfterRequestCallbacks) {

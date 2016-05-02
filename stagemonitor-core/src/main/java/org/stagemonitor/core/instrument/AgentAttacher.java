@@ -47,7 +47,7 @@ public class AgentAttacher {
 	private static final Logger logger = LoggerFactory.getLogger(AgentAttacher.class);
 	private static final String DISPATCHER_CLASS_NAME = "java.lang.stagemonitor.dispatcher.Dispatcher";
 	private static final String IGNORED_CLASSLOADERS_KEY = AgentAttacher.class.getName() + "hashCodesOfClassLoadersToIgnore";
-	private static final DeactivatableCachingBinaryLocator binaryLocator = new DeactivatableCachingBinaryLocator();
+	private static final AutoEvictingCachingBinaryLocator binaryLocator = new AutoEvictingCachingBinaryLocator();
 	private static final Runnable NOOP_ON_SHUTDOWN_ACTION = new Runnable() {
 		public void run() {
 		}
@@ -90,7 +90,6 @@ public class AgentAttacher {
 				// This ClassLoader is shutting down so don't try to retransform classes of it in the future
 				hashCodesOfClassLoadersToIgnore.add(ClassUtils.getIdentityString(AgentAttacher.class.getClassLoader()));
 				// it does not harm to clear the caches on shut down once again in case a ClassLoader slipped into the cache
-				binaryLocator.deactivateCaching();
 			}
 		};
 	}
@@ -219,17 +218,6 @@ public class AgentAttacher {
 
 	private static boolean isExcluded(StagemonitorByteBuddyTransformer transformer) {
 		return corePlugin.getExcludedInstrumenters().contains(transformer.getClass().getSimpleName());
-	}
-
-	/**
-	 * This method should be called as soon as most classes are loaded.
-	 * <p/>
-	 * It disables caching of {@link net.bytebuddy.description.type.TypeDescription}s which makes further
-	 * transformations a bit slower but also clears the underlying cache which frees resources.
-	 */
-	public static void onMostClassesLoaded() {
-		TimedElementMatcherDecorator.logMetrics();
-		binaryLocator.deactivateCaching();
 	}
 
 	private static class IsIgnoredClassLoaderElementMatcher implements ElementMatcher<ClassLoader> {

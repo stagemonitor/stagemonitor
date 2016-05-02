@@ -2,46 +2,48 @@ package org.stagemonitor.core.instrument;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.pool.TypePool;
+import org.stagemonitor.core.util.ExecutorUtils;
 
 /**
- * This {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} is intended to cache
- * {@link net.bytebuddy.description.type.TypeDescription}s only on application startup.
+ * This {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} caches
+ * {@link net.bytebuddy.description.type.TypeDescription}s and clears the cache every minute to avoid memory leaks.
  * <p/>
- * After the the majority of the transformations are done (for example after the application has started)
- * one should call {@link #deactivateCaching()} to free memory.
+ * Class loader memory leaks are also avoided by using {@link WeakConcurrentMap}.
  */
-public class DeactivatableCachingBinaryLocator extends AgentBuilder.BinaryLocator.WithTypePoolCache {
-
-	private final AtomicBoolean cacheEnabled = new AtomicBoolean(true);
+public class AutoEvictingCachingBinaryLocator extends AgentBuilder.BinaryLocator.WithTypePoolCache {
 
 	private final WeakConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new WeakConcurrentMap
 			.WithInlinedExpunction<ClassLoader, TypePool.CacheProvider>();
 
-	public DeactivatableCachingBinaryLocator() {
+	public AutoEvictingCachingBinaryLocator() {
 		this(TypePool.Default.ReaderMode.EXTENDED);
 	}
 
-	public DeactivatableCachingBinaryLocator(TypePool.Default.ReaderMode readerMode) {
+	public AutoEvictingCachingBinaryLocator(TypePool.Default.ReaderMode readerMode) {
 		super(readerMode);
+		Executors.newScheduledThreadPool(1, new ExecutorUtils.NamedThreadFactory("type-pool-cache-evicter")).scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				cacheProviders.clear();
+				TimedElementMatcherDecorator.logMetrics();
+			}
+		}, 1, 1, TimeUnit.MINUTES);
 	}
 
 	@Override
 	protected TypePool.CacheProvider locate(ClassLoader classLoader) {
-		if (cacheEnabled.get()) {
-			classLoader = classLoader == null ? BootstrapClassLoaderMarker.INSTANCE : classLoader;
-			TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
-			while (cacheProvider == null) {
-				cacheProviders.putIfAbsent(classLoader, new TypePool.CacheProvider.Simple());
-				cacheProvider = cacheProviders.get(classLoader);
-			}
-			return cacheProvider;
-		} else {
-			return TypePool.CacheProvider.NoOp.INSTANCE;
+		classLoader = classLoader == null ? BootstrapClassLoaderMarker.INSTANCE : classLoader;
+		TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
+		while (cacheProvider == null) {
+			cacheProviders.putIfAbsent(classLoader, new TypePool.CacheProvider.Simple());
+			cacheProvider = cacheProviders.get(classLoader);
 		}
+		return cacheProvider;
 	}
 
 	/**
@@ -71,9 +73,5 @@ public class DeactivatableCachingBinaryLocator extends AgentBuilder.BinaryLocato
 		}
 	}
 
-	public void deactivateCaching() {
-		cacheEnabled.set(false);
-		cacheProviders.clear();
-	}
 
 }

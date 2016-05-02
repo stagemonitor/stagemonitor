@@ -113,12 +113,6 @@ public final class Stagemonitor {
 				}
 			}));
 		}
-		if (ClassUtils.isNotPresent("org.stagemonitor.requestmonitor.RequestMonitorPlugin")) {
-			// if the RequestMonitorPlugin is available,
-			// TypeDefinition caching should only be deactivated after the first request
-			// if not, deactivate as soon as stagemonitor has started
-			AgentAttacher.onMostClassesLoaded();
-		}
 	}
 
 	private static void initializePlugins() {
