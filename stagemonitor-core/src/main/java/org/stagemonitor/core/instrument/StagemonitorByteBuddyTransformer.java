@@ -48,9 +48,9 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return new AgentBuilder.RawMatcher() {
 			@Override
 			public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-				final boolean matches = timed("classloader", "any", getClassLoaderMatcher()).matches(classLoader) &&
-						timed("type", "any", getTypeMatcher()).matches(typeDescription) &&
-						getRawMatcher().matches(typeDescription, classLoader, classBeingRedefined, protectionDomain);
+				final boolean matches = timed("type", transformerName, getTypeMatcher()).matches(typeDescription) &&
+						getRawMatcher().matches(typeDescription, classLoader, classBeingRedefined, protectionDomain) &&
+						timed("classloader", "application", getClassLoaderMatcher()).matches(classLoader);
 				if (!matches) {
 					onIgnored(typeDescription, classLoader);
 				}
@@ -60,12 +60,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 	}
 
 	protected AgentBuilder.RawMatcher getRawMatcher() {
-		return new AgentBuilder.RawMatcher() {
-			@Override
-			public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-				return true;
-			}
-		};
+		return NoOpRawMatcher.INSTANCE;
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
@@ -177,4 +172,11 @@ public abstract class StagemonitorByteBuddyTransformer {
 		}
 	}
 
+	private static class NoOpRawMatcher implements AgentBuilder.RawMatcher {
+		public static final NoOpRawMatcher INSTANCE = new NoOpRawMatcher();
+		@Override
+		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+			return true;
+		}
+	}
 }
