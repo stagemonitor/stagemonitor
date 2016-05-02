@@ -243,6 +243,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.tags("security-relevant")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<String> requestIndexTemplate = ConfigurationOption.stringOption()
+			.key("stagemonitor.requestmonitor.elasticsearch.requestIndexTemplate")
+			.dynamic(true)
+			.label("ES Request Index Template")
+			.description("The classpath location of the index template that is used for the stagemonitor-requests-* indices. " +
+					"By specifying the location to your own template, you can fully customize the index template.")
+			.defaultValue("stagemonitor-elasticsearch-request-index-template.json")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.tags("elasticsearch")
+			.build();
 
 	private static RequestMonitor requestMonitor;
 
@@ -252,7 +262,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
-				"stagemonitor-elasticsearch-request-index-template.json", corePlugin.getMoveToColdNodesAfterDays());
+				requestIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
 		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-requests");
 		elasticsearchClient.sendKibanaDashboardAsync("kibana/Kibana3RecentRequests.json");
 		if (corePlugin.isReportToGraphite()) {

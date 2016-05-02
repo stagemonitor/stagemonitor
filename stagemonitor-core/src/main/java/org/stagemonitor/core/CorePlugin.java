@@ -56,10 +56,12 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	private static final String CORE_PLUGIN_NAME = "Core";
 	public static final String POOLS_QUEUE_CAPACITY_LIMIT_KEY = "stagemonitor.threadPools.queueCapacityLimit";
+	private static final String ELASTICSEARCH = "elasticsearch";
+	private static final String METRICS_STORE = "metrics-store";
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	final ConfigurationOption<Boolean> stagemonitorActive = ConfigurationOption.booleanOption()
+	private final ConfigurationOption<Boolean> stagemonitorActive = ConfigurationOption.booleanOption()
 			.key("stagemonitor.active")
 			.dynamic(true)
 			.label("Activate stagemonitor")
@@ -110,7 +112,7 @@ public class CorePlugin extends StagemonitorPlugin {
 					"To deactivate graphite reporting, set this to a value below 1, or don't provide " +
 					"stagemonitor.reporting.graphite.hostName.")
 			.defaultValue(60)
-			.tags("metrics-store", "graphite")
+			.tags(METRICS_STORE, "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> graphiteHostName = ConfigurationOption.stringOption()
@@ -120,7 +122,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("The name of the host where graphite is running. This setting is mandatory, if you want " +
 					"to use the grafana dashboards.")
 			.defaultValue(null)
-			.tags("metrics-store", "graphite")
+			.tags(METRICS_STORE, "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> graphitePort = ConfigurationOption.integerOption()
@@ -129,7 +131,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Carbon port")
 			.description("The port where carbon is listening.")
 			.defaultValue(2003)
-			.tags("metrics-store", "graphite")
+			.tags(METRICS_STORE, "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> influxDbUrl = ConfigurationOption.stringOption()
@@ -138,7 +140,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("InfluxDB URL")
 			.description("The URL of your InfluxDB installation.")
 			.defaultValue(null)
-			.tags("metrics-store", "influx-db")
+			.tags(METRICS_STORE, "influx-db")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> influxDbDb = ConfigurationOption.stringOption()
@@ -147,7 +149,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("InfluxDB database")
 			.description("The target database")
 			.defaultValue("stagemonitor")
-			.tags("metrics-store", "influx-db")
+			.tags(METRICS_STORE, "influx-db")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> reportingIntervalInfluxDb = ConfigurationOption.integerOption()
@@ -156,7 +158,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Reporting interval InfluxDb")
 			.description("The amount of time between the metrics are reported to InfluxDB (in seconds).")
 			.defaultValue(60)
-			.tags("metrics-store", "influx-db")
+			.tags(METRICS_STORE, "influx-db")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> reportingIntervalElasticsearch = ConfigurationOption.integerOption()
@@ -165,7 +167,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Reporting interval Elasticsearch")
 			.description("The amount of time between the metrics are reported to Elasticsearch (in seconds).")
 			.defaultValue(60)
-			.tags("metrics-store", "elasticsearch")
+			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchMetricReports = ConfigurationOption.booleanOption()
@@ -176,7 +178,7 @@ public class CorePlugin extends StagemonitorPlugin {
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
 					"different external process to send the metrics to elasticsearch.", ElasticsearchReporter.ES_METRICS_LOGGER))
 			.defaultValue(false)
-			.tags("metrics-store", "elasticsearch")
+			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> deleteElasticsearchMetricsAfterDays = ConfigurationOption.integerOption()
@@ -185,7 +187,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Delete ES metrics after (days)")
 			.description("The number of days after the metrics stored in elasticsearch should be deleted. Set below 1 to deactivate.")
 			.defaultValue(-1)
-			.tags("metrics-store", "elasticsearch")
+			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> moveToColdNodesAfterDays = ConfigurationOption.integerOption()
@@ -198,7 +200,7 @@ public class CorePlugin extends StagemonitorPlugin {
 					"beefy nodes with node.box_type: hot (either in elasticsearch.yml or start the node using ./bin/elasticsearch --node.box_type hot)" +
 					"and your historical nodes with node.box_type: cold.")
 			.defaultValue(-1)
-			.tags("metrics-store", "elasticsearch")
+			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> applicationName = ConfigurationOption.stringOption()
@@ -240,6 +242,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("A comma separated list of the Elasticsearch URLs that store the request traces and metrics.")
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags(ELASTICSEARCH)
 			.build();
 	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceProfiles = ConfigurationOption.stringsOption()
 			.key("stagemonitor.elasticsearch.configurationSourceProfiles")
@@ -380,6 +383,16 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("advanced")
 			.build();
+	private final ConfigurationOption<String> metricsIndexTemplate = ConfigurationOption.stringOption()
+			.key("stagemonitor.reporting.elasticsearch.metricsIndexTemplate")
+			.dynamic(true)
+			.label("ES Metrics Index Template")
+			.description("The classpath location of the index template that is used for the stagemonitor-metrics-* indices. " +
+					"By specifying the location to your own template, you can fully customize the index template.")
+			.defaultValue("stagemonitor-elasticsearch-metrics-index-template.json")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags(METRICS_STORE, ELASTICSEARCH)
+			.build();
 
 	private static MetricsAggregationReporter aggregationReporter;
 
@@ -497,7 +510,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendBulkAsync("KibanaConfig.bulk");
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrls(), reportingInterval);
 			final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
-					"stagemonitor-elasticsearch-metrics-index-template.json", corePlugin.moveToColdNodesAfterDays.getValue());
+					metricsIndexTemplate.getValue(), corePlugin.moveToColdNodesAfterDays.getValue());
 			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
 			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, this)
 					.globalTags(measurementSession.asMap())
