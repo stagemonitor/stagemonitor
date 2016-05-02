@@ -32,7 +32,7 @@ public class AutoEvictingCachingBinaryLocator extends AgentBuilder.BinaryLocator
 				cacheProviders.clear();
 				TimedElementMatcherDecorator.logMetrics();
 			}
-		}, 1, 1, TimeUnit.MINUTES);
+		}, 5, 1, TimeUnit.MINUTES);
 	}
 
 	@Override
