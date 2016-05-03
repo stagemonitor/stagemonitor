@@ -4,7 +4,6 @@ import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
-import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.classLoaderWithName;
 import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.isReflectionClassLoader;
@@ -20,7 +19,6 @@ import java.lang.stagemonitor.dispatcher.Dispatcher;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -98,7 +96,10 @@ public class AgentAttacher {
 			try {
 				instrumentation = ByteBuddyAgent.getInstrumentation();
 			} catch (IllegalStateException e) {
-				instrumentation = ByteBuddyAgent.install(new ByteBuddyAgent.AttachmentProvider.Compound(new EhCacheAttachmentProvider(), ByteBuddyAgent.AttachmentProvider.DEFAULT));
+				instrumentation = ByteBuddyAgent.install(
+						new ByteBuddyAgent.AttachmentProvider.Compound(
+								new EhCacheAttachmentProvider(),
+								ByteBuddyAgent.AttachmentProvider.DEFAULT));
 			}
 			ensureDispatcherIsAppendedToBootstrapClasspath(instrumentation);
 			if (!Dispatcher.getValues().containsKey(IGNORED_CLASSLOADERS_KEY)) {
@@ -115,16 +116,16 @@ public class AgentAttacher {
 		}
 	}
 
-	private static Class<?> ensureDispatcherIsAppendedToBootstrapClasspath(Instrumentation instrumentation)
+	private static void ensureDispatcherIsAppendedToBootstrapClasspath(Instrumentation instrumentation)
 			throws ClassNotFoundException, IOException {
 		final ClassLoader bootstrapClassloader = ClassLoader.getSystemClassLoader().getParent();
 		try {
-			return bootstrapClassloader.loadClass(DISPATCHER_CLASS_NAME);
+			bootstrapClassloader.loadClass(DISPATCHER_CLASS_NAME);
 			// already injected
 		} catch (ClassNotFoundException e) {
 			final JarFile jarfile = new JarFile(createTempDispatcherJar());
 			instrumentation.appendToBootstrapClassLoaderSearch(jarfile);
-			return bootstrapClassloader.loadClass(DISPATCHER_CLASS_NAME);
+			bootstrapClassloader.loadClass(DISPATCHER_CLASS_NAME);
 		}
 	}
 
@@ -205,16 +206,6 @@ public class AgentAttacher {
 			}
 		});
 		return transformers;
-	}
-
-	private static <T> ElementMatcher.Junction<T> matchesAny(List<ElementMatcher.Junction<T>> matchers) {
-		// a neat little way to optimize the performance: if we have two equal matchers, we can discard one
-		final HashSet<ElementMatcher.Junction<T>> deduplicated = new HashSet<ElementMatcher.Junction<T>>(matchers);
-		ElementMatcher.Junction<T> result = none();
-		for (ElementMatcher.Junction<T> matcher : deduplicated) {
-			result = result.or(matcher);
-		}
-		return result;
 	}
 
 	private static boolean isExcluded(StagemonitorByteBuddyTransformer transformer) {
