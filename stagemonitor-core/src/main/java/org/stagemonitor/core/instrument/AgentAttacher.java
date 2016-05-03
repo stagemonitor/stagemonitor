@@ -55,7 +55,7 @@ public class AgentAttacher {
 
 	private static CorePlugin corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
 	private static boolean runtimeAttached = false;
-	private static Set<String> hashCodesOfClassLoadersToIgnore;
+	private static Set<String> hashCodesOfClassLoadersToIgnore = Collections.emptySet();
 	private static Instrumentation instrumentation;
 
 	private AgentAttacher() {
@@ -89,7 +89,6 @@ public class AgentAttacher {
 				}
 				// This ClassLoader is shutting down so don't try to retransform classes of it in the future
 				hashCodesOfClassLoadersToIgnore.add(ClassUtils.getIdentityString(AgentAttacher.class.getClassLoader()));
-				// it does not harm to clear the caches on shut down once again in case a ClassLoader slipped into the cache
 			}
 		};
 	}
@@ -108,8 +107,10 @@ public class AgentAttacher {
 			hashCodesOfClassLoadersToIgnore = Dispatcher.get(IGNORED_CLASSLOADERS_KEY);
 			return true;
 		} catch (Exception e) {
-			logger.warn("Failed to perform runtime attachment of the stagemonitor agent. " +
-					"You can try loadint the agent with the command line argument -javaagent:/path/to/byte-buddy-agent-<version>.jar", e);
+			logger.warn("Failed to perform runtime attachment of the stagemonitor agent. Make sure that you run your " +
+					"application with a JDK (not a JRE)." +
+					"To make stagemonitor work with a JRE, you have to add the following command line argument to the " +
+					"start of the JVM: -javaagent:/path/to/byte-buddy-agent-<version>.jar", e);
 			return false;
 		}
 	}
