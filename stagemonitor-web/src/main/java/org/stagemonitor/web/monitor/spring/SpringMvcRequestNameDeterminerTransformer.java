@@ -17,24 +17,24 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteBuddyTransformer {
 
-	private static final String DISPATCHER_SERVLET_CLASS = "org.springframework.web.servlet.DispatcherServlet";
-
 	@Override
 	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
-		return named(DISPATCHER_SERVLET_CLASS);
+		return named("org.springframework.web.servlet.DispatcherServlet");
 	}
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
-		return named("getHandler").and(returns(HandlerExecutionChain.class));
+		return named("getHandler").and(returns(named("org.springframework.web.servlet.HandlerExecutionChain")));
 	}
 
+	// method signatures mus not contain HandlerExecutionChain as this type is optional and introspecting the class
+	// with reflection would fail then
 	@Advice.OnMethodExit
-	public static void afterGetHandler(@Advice.Return HandlerExecutionChain handler) {
+	public static void afterGetHandler(@Advice.BoxedReturn Object handler) {
 		SpringMvcRequestNameDeterminerTransformer.setRequestNameByHandler(handler);
 	}
 
-	public static void setRequestNameByHandler(HandlerExecutionChain handler) {
+	public static void setRequestNameByHandler(Object handler) {
 		if (RequestMonitor.getRequest() != null) {
 			final BusinessTransactionNamingStrategy namingStrategy = Stagemonitor.getPlugin(RequestMonitorPlugin.class)
 					.getBusinessTransactionNamingStrategy();
@@ -45,9 +45,10 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 		}
 	}
 
-	private static String getRequestNameFromHandler(HandlerExecutionChain handler, BusinessTransactionNamingStrategy businessTransactionNamingStrategy) {
-		if (handler != null && handler.getHandler() instanceof HandlerMethod) {
-			HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
+	private static String getRequestNameFromHandler(Object handler, BusinessTransactionNamingStrategy businessTransactionNamingStrategy) {
+		final HandlerExecutionChain handlerExecutionChain = (HandlerExecutionChain) handler;
+		if (handler != null && handlerExecutionChain.getHandler() instanceof HandlerMethod) {
+			HandlerMethod handlerMethod = (HandlerMethod) handlerExecutionChain.getHandler();
 			return businessTransactionNamingStrategy.getBusinessTransationName(handlerMethod.getBeanType().getSimpleName(),
 					handlerMethod.getMethod().getName());
 		}
