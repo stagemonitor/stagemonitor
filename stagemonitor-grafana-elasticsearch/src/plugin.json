@@ -1,0 +1,37 @@
+{
+  "type": "app",
+  "name": "Stagemonitor Elasticsearch",
+  "id": "stagemonitor-grafana-elasticsearch",
+
+  "pages": [
+  ],
+
+  "css": {
+  },
+
+  "info": {
+    "description": "Stagemonitor Elasticsearch Dashboards",
+    "author": {
+      "name": "Stagemonitor",
+      "url": "http://stagemonitor.org"
+    },
+    "keywords": ["stagemonitor"],
+    "logos": {
+      "small": "img/small_logo.png",
+      "large": "img/large_logo.png"
+    },
+    "links": [
+      {"name": "Project site", "url": "http://www.stagemonitor.org/"},
+      {"name": "License & Terms", "url": "https://github.com/stagemonitor/stagemonitor/blob/master/LICENSE"}
+    ],
+    "version": "${version}",
+    "updated": "${releaseDate}"
+  },
+
+  "includes": ${dashboards},
+
+  "dependencies": {
+    "grafanaVersion": "3.x.x",
+    "plugins": []
+  }
+}

@@ -1,7 +1,7 @@
 {
   "title": "Request Metrics",
   "originalTitle": "Request Metrics",
-  "tags": [],
+  "tags": ["stagemonitor"],
   "style": "dark",
   "timezone": "browser",
   "editable": true,
