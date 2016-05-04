@@ -15,6 +15,19 @@
                class="gf-form-input"
                placeholder="for example: http://localhost:9200"
                ng-model="ctrl.appModel.jsonData.elasticsearchUrl">
+        <span ng-if="!ctrl.validation.elasticsearchUrlValid" class="gf-form-label width-12 text-error">
+            This field is required.
+        </span>
+    </div>
+    <div class="gf-form">
+        <span class="gf-form-label">Reporting Interval <a href="https://github.com/stagemonitor/stagemonitor/wiki/Configuration-Options#reporting-interval-elasticsearch">(see here)</a></span>
+        <input type="text"
+               class="gf-form-input"
+               placeholder="for example: >60s"
+               ng-model="ctrl.appModel.jsonData.reportingInterval">
+        <span ng-if="!ctrl.validation.reportingIntervalValid" class="gf-form-label width-12 text-error">
+            This field is required.
+        </span>
     </div>
 </div>
 
