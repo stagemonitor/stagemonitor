@@ -18,7 +18,7 @@ public class ClassLevelMonitorRequestsTransformer extends AbstractMonitorRequest
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
-		return not(isAnnotatedWith(MonitorRequests.class)).and(isPublic());
+		return isPublic().and(not(isAnnotatedWith(MonitorRequests.class)));
 	}
 
 }

@@ -83,7 +83,9 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 	}
 
 	public static String getRequestName(MethodDescription.InDefinedShape instrumentedMethod) {
-		final AnnotationDescription.Loadable<MonitorRequests> monitorRequestsLoadable = instrumentedMethod.getDeclaredAnnotations().ofType(MonitorRequests.class);
+		final AnnotationDescription.Loadable<MonitorRequests> monitorRequestsLoadable = instrumentedMethod
+				.getDeclaredAnnotations()
+				.ofType(MonitorRequests.class);
 		if (monitorRequestsLoadable != null) {
 			final MonitorRequests monitorRequests = monitorRequestsLoadable.loadSilent();
 			if (!monitorRequests.requestName().isEmpty()) {

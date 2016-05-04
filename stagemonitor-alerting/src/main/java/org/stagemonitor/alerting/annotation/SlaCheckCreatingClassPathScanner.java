@@ -31,8 +31,9 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
 	private static final Logger logger = LoggerFactory.getLogger(SlaCheckCreatingClassPathScanner.class);
 
+	private static final Object measurementSessionLock = new Object();
 	private static List<Check> checksCreatedBeforeMeasurementStarted = new LinkedList<Check>();
-	private static MeasurementSession measurementSession;
+	private static volatile MeasurementSession measurementSession;
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
@@ -42,11 +43,15 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 	@Override
 	protected void onMethodMatch(MethodDescription.InDefinedShape methodDescription) {
 		final String fullMethodSignature = methodDescription.toString();
-		final AnnotationList declaredAnnotations = methodDescription.getDeclaredAnnotations();
+		final AnnotationList methodAnnotations = methodDescription.getDeclaredAnnotations();
 
-		final TimerNames timerNames = getTimerNames(methodDescription, declaredAnnotations);
-
-		createChecks(fullMethodSignature, declaredAnnotations, timerNames);
+		TimerNames timerNames = getTimerNames(methodDescription, methodAnnotations);
+		if (timerNames.hasAnyName()) {
+			createChecks(fullMethodSignature, methodAnnotations, timerNames);
+		} else {
+			timerNames = getTimerNames(methodDescription, methodDescription.getDeclaringType().getInheritedAnnotations());
+			createChecks(fullMethodSignature, methodAnnotations, timerNames);
+		}
 	}
 
 	private static class TimerNames {
@@ -54,6 +59,10 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 		private String timerName;
 		private String errorRequestName;
 		private MetricName errorMetricName;
+
+		boolean hasAnyName() {
+			return timerName != null || errorRequestName != null;
+		}
 	}
 
 	private TimerNames getTimerNames(MethodDescription.InDefinedShape methodDescription, AnnotationList declaredAnnotations) {
@@ -146,10 +155,12 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 	}
 
 	private static void addCheckIfStarted(Check check) {
-		if (measurementSession != null) {
-			addCheck(check, measurementSession);
-		} else {
-			checksCreatedBeforeMeasurementStarted.add(check);
+		synchronized (measurementSessionLock) {
+			if (measurementSession != null) {
+				addCheck(check, measurementSession);
+			} else {
+				checksCreatedBeforeMeasurementStarted.add(check);
+			}
 		}
 	}
 
@@ -163,10 +174,13 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 	}
 
 	public static void onStart(MeasurementSession measurementSession) {
-		SlaCheckCreatingClassPathScanner.measurementSession = measurementSession;
-		for (Check check : checksCreatedBeforeMeasurementStarted) {
-			addCheck(check, measurementSession);
+		synchronized (measurementSessionLock) {
+			System.out.println("onStart");
+			SlaCheckCreatingClassPathScanner.measurementSession = measurementSession;
+			for (Check check : checksCreatedBeforeMeasurementStarted) {
+				addCheck(check, measurementSession);
+			}
+			checksCreatedBeforeMeasurementStarted.clear();
 		}
-		checksCreatedBeforeMeasurementStarted.clear();
 	}
 }

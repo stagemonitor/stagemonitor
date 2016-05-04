@@ -85,6 +85,8 @@ public class SlaCheckCreatingClassPathScannerTest {
 	public static void init() throws Exception {
 		Stagemonitor.init();
 		SlaTestClass.makeSureClassIsLoaded();
+		ClassLevelMonitorRequestsTestClass.makeSureClassIsLoaded();
+		Stagemonitor.startMonitoring().get();
 	}
 
 	@Before
@@ -158,6 +160,21 @@ public class SlaCheckCreatingClassPathScannerTest {
 	@Test
 	public void testSlaMonitorRequestsResolveAtRuntime() throws Exception {
 		assertNull(checks.get("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaMonitorRequestsResolveAtRuntime().responseTime"));
+	}
+
+	@Test
+	public void testSlaMonitorRequestsClassLevel() throws Exception {
+		testResponseTimeCheck("public void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$ClassLevelMonitorRequestsTestClass.slaMonitorRequestsClassLevel().responseTime",
+				"\\Qresponse_time_server.Sla-Monitor-Requests-Class-Level.All\\E");
+	}
+
+	@MonitorRequests
+	private static class ClassLevelMonitorRequestsTestClass {
+		static void makeSureClassIsLoaded() {
+		}
+		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		public void slaMonitorRequestsClassLevel() {
+		}
 	}
 
 	@Test
