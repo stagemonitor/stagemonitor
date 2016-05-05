@@ -1,0 +1,74 @@
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
+plugins {
+    id "com.moowork.node" version "0.12"
+}
+
+def tree = project.getParent().fileTree(".")
+tree.include "**/grafana/Elasticsearch*.json"
+tree.exclude {
+    it.toString().contains("build") || it.toString().contains("Grafana1")
+}
+ext {
+    originalDashboardJsons = tree.files
+}
+
+
+project.buildDir = "dist"
+
+node {
+    // Version of node to use.
+    version = '4.4.3'
+    download = true
+}
+
+task collectDashboards(type: Copy) {
+    from originalDashboardJsons
+    into "$buildDir/dashboards"
+    rename { String fileName ->
+        fileName.toLowerCase()
+    }
+}
+
+def getDashboardsJson() {
+    def dashboards = []
+
+    def slurper = new JsonSlurper()
+    file("$buildDir/dashboards/").listFiles().each {
+        def relativePathToDashboard = it.canonicalPath.replace(project.buildDir.canonicalPath + '/', '')
+
+        def originalDashboardPath = originalDashboardJsons.find({ file -> file.canonicalPath.toLowerCase().endsWith(it.name) }).canonicalPath
+        def relativeOriginalDashboardPath = originalDashboardPath.replace(rootDir.canonicalPath + '/', '')
+        def projectName = relativeOriginalDashboardPath.substring(0, relativeOriginalDashboardPath.indexOf("/"));
+
+        dashboards.add([
+            'type': "dashboard",
+            'name': slurper.parseText(it.text).title,
+            'path': relativePathToDashboard,
+            'stagemonitorPlugin': projectName
+        ])
+    }
+
+    return JsonOutput.toJson(dashboards)
+}
+
+task addDashboardsToPluginJson(type: Copy, dependsOn: collectDashboards) {
+    from 'src'
+    into "$buildDir"
+    include 'plugin.json'
+    expand(
+        'dashboards': getDashboardsJson(),
+        'version': version,
+        'releaseDate': new Date().format("yyyy-MM-dd")
+    )
+}
+
+task copyAssets(type: Copy) {
+    from 'src'
+    into "$buildDir"
+    exclude 'plugin.json', '*.js'
+}
+
+
+task build(dependsOn: [copyAssets, addDashboardsToPluginJson, npm_install, npm_run_build])

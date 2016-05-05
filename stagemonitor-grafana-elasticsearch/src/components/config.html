@@ -1,0 +1,60 @@
+<h3 class="page-heading">Stagemonitor Elasticsearch Dashboard</h3>
+
+<div ng-show="!ctrl.isDatasourceCreated">
+
+    <p>
+        Use the form below to add your elasticsearch server used in stagemonitor and you are good to go!
+        This will create a new datasource with the name "<em>{{ctrl.datasourceName}}</em>".
+        Do not change the name as it is used for the dashboards.
+        Edit the created datasource if you need to set advanced informations, e.g. regarding authentication.
+    </p>
+
+    <div class="gf-form">
+        <span class="gf-form-label">Elasticsearch Address</span>
+        <input type="text"
+               class="gf-form-input"
+               placeholder="for example: http://localhost:9200"
+               ng-model="ctrl.appModel.jsonData.elasticsearchUrl">
+        <span ng-if="!ctrl.validation.elasticsearchUrlValid" class="gf-form-label width-12 text-error">
+            This field is required.
+        </span>
+    </div>
+    <div class="gf-form">
+        <span class="gf-form-label">Reporting Interval <a href="https://github.com/stagemonitor/stagemonitor/wiki/Configuration-Options#reporting-interval-elasticsearch">(see here)</a></span>
+        <input type="text"
+               class="gf-form-input"
+               placeholder="for example: >60s"
+               ng-model="ctrl.appModel.jsonData.reportingInterval">
+        <span ng-if="!ctrl.validation.reportingIntervalValid" class="gf-form-label width-12 text-error">
+            This field is required.
+        </span>
+    </div>
+</div>
+
+<div ng-show="ctrl.isDatasourceCreated">
+    <p>
+        Your datasource "<em>{{ctrl.datasourceName}}</em>" is configured.
+        Edit the datasource if you need to set advanced informations, e.g. regarding authentication.
+        Use the <em>Dashboards</em>-tab to import the stagemonitor-dashboards.
+        Please note that you should only import the dashboards corresponding to the stagemonitor plugins you use.
+    </p>
+
+    <table class="filter-table">
+        <thead>
+        <tr>
+            <th>Grafana Dashboard</th>
+            <th>Required stagemonitor plugin</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="dashboard in ctrl.dashboards">
+            <td>{{dashboard.name}}</td>
+            <td>{{dashboard.stagemonitorPlugin}}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!--
+<pre>{{ctrl | json}}</pre>
+-->

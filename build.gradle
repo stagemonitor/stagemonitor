@@ -65,7 +65,7 @@ subprojects {
 		apply plugin: 'cobertura'
 	}
 
-	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
+	if (projectsToRelease.contains(project)) {
 		apply plugin: 'osgi'
 		apply from: "$rootDir/gradle/publish-maven.gradle"
 
@@ -144,23 +144,27 @@ release {
 	}
 }
 
-def getProjectsToTest() {
-	subprojects.findAll { !(it.toString() =~ "benchmark|buddy") }
+def getProjectsToRelease() {
+	subprojects.findAll { !(it.toString() =~ "benchmark|byte-buddy|grafana-elasticsearch") }
 }
 
-test.dependsOn << projectsToTest*.tasks*.withType(Test).flatten()
+test.dependsOn << projectsToRelease*.tasks*.withType(Test).flatten()
 
 if (!System.getProperty("java.version").startsWith("1.6.")) {
 	cobertura {
-		coverageMergeDatafiles =  projectsToTest.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
+		coverageMergeDatafiles =  projectsToRelease.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
 		coverageFormats = ['html', 'xml']
 		coverageIgnoreTrivial = true
-		coverageSourceDirs = [ projectsToTest.sourceSets.main.java.srcDirs.flatten() ]
+		coverageSourceDirs = [projectsToRelease.sourceSets.main.java.srcDirs.flatten() ]
 	}
 }
 
 task wrapper(type: Wrapper) {
 	gradleVersion = "2.12"
+}
+
+task printProjectsToTest() << {
+	println getProjectsToRelease()
 }
 
 task install

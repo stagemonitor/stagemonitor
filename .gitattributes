@@ -2,3 +2,8 @@
 *.sh eol=lf
 gradlew eol=lf
 *.bat eol=crlf
+*.so binary
+*.dll binary
+*.dylib binary
+*.png binary
+*.ttf binary
