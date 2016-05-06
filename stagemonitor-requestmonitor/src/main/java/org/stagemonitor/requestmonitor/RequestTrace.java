@@ -2,8 +2,12 @@ package org.stagemonitor.requestmonitor;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -21,7 +25,7 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 /**
  * A request trace is a data structure containing all the important information about a request.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class RequestTrace {
 
 	@JsonIgnore
@@ -32,8 +36,6 @@ public class RequestTrace {
 	@JsonIgnore
 	private CallStackElement callStack;
 	private long executionTime;
-	private long executionTimeDb;
-	private int executionCountDb;
 	private long executionTimeCpu;
 	private boolean error = false;
 	@JsonProperty("@timestamp")
@@ -56,6 +58,10 @@ public class RequestTrace {
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
 	@JsonIgnore
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
+	@JsonIgnore
+	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
+	@JsonIgnore
+	private List<ExternalRequest> externalRequests = new LinkedList<ExternalRequest>();
 
 	public RequestTrace(String requestId) {
 		this(requestId, Stagemonitor.getMeasurementSession(), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
@@ -236,19 +242,6 @@ public class RequestTrace {
 		return clientIp;
 	}
 
-	public long getExecutionTimeDb() {
-		return executionTimeDb;
-	}
-
-	public void dbCallCompleted(long executionTimeDb) {
-		this.executionCountDb++;
-		this.executionTimeDb += executionTimeDb;
-	}
-
-	public int getExecutionCountDb() {
-		return executionCountDb;
-	}
-
 	public long getTimestampEnd() {
 		return timestampEnd;
 	}
@@ -334,8 +327,27 @@ public class RequestTrace {
 		this.uniqueVisitorId = uniqueVisitorId;
 	}
 
+	public List<ExternalRequest> getExternalRequests() {
+		return externalRequests;
+	}
+
+	void addExternalRequest(ExternalRequest externalRequest) {
+		final ExternalRequestStats stats = this.externalRequestStats.get(externalRequest.getRequestType());
+		if (stats == null) {
+			externalRequestStats.put(externalRequest.getRequestType(), new ExternalRequestStats(externalRequest));
+		} else {
+			stats.add(externalRequest);
+		}
+		externalRequests.add(externalRequest);
+	}
+
+	public Collection<ExternalRequestStats> getExternalRequestStats() {
+		return externalRequestStats.values();
+	}
+
 	@Override
-	public void finalize() {
+	public void finalize() throws Throwable {
+		super.finalize();
 		callStack.recycle();
 	}
 }

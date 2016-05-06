@@ -58,7 +58,7 @@ public class ConnectionMonitor {
 				// this avoids that spy.log is being created
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.JMX, Boolean.FALSE.toString());
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.APPENDER, P6SpyMultiLogger.class.getName());
-				P6SpyMultiLogger.addLogger(new StagemonitorP6Logger(configuration, this.metricRegistry));
+				P6SpyMultiLogger.addLogger(new StagemonitorP6Logger(configuration));
 				P6SpyLoadableOptions options = P6SpyOptions.getActiveInstance();
 				// p6spy might already been initialized
 				// for example, wildfily loads all drivers and thus the P6SpyDriver on startup

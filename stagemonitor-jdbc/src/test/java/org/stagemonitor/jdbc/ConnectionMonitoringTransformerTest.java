@@ -97,8 +97,8 @@ public class ConnectionMonitoringTransformerTest {
 				}));
 		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
-		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "All").build()));
-		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringTransformerTest#executePreparedStatement").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc").tag("method", "SELECT").tag("signature", "All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc").tag("method", "SELECT").tag("signature", "ConnectionMonitoringTransformerTest#executePreparedStatement").build()));
 		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
 		assertEquals("testRecordSqlPreparedStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest.executePreparedStatement()",
@@ -122,8 +122,8 @@ public class ConnectionMonitoringTransformerTest {
 				}));
 		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
-		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "All").build()));
-		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringTransformerTest#executeStatement").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc").tag("method", "SELECT").tag("signature", "All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc").tag("method", "SELECT").tag("signature", "ConnectionMonitoringTransformerTest#executeStatement").build()));
 		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest.executeStatement()",
@@ -136,8 +136,8 @@ public class ConnectionMonitoringTransformerTest {
 		executeStatement();
 		final Map<MetricName, Timer> timers = Stagemonitor.getMetric2Registry().getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
-		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "All").build()));
-		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc_statement").tag("signature", "ConnectionMonitoringTransformerTest#executeStatement").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc").tag("method", "SELECT").tag("signature", "All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("jdbc").tag("method", "SELECT").tag("signature", "ConnectionMonitoringTransformerTest#executeStatement").build()));
 	}
 
 	private void executeStatement() throws SQLException {

@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
@@ -25,7 +24,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.instrument.AgentAttacher;
+import org.stagemonitor.core.instrument.CallerUtil;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
@@ -299,20 +298,31 @@ public class RequestMonitor {
 			metricRegistry.meter(getErrorMetricName(requestName)).mark();
 			metricRegistry.meter(getErrorMetricName("All")).mark();
 		}
-		trackDbMetrics(requestName, requestTrace);
+		trackExternalRequestMetrics(requestName, requestTrace);
 	}
 
 	public static MetricName getErrorMetricName(String requestName) {
 		return name("error_rate_server").tag("request_name", requestName).layer("All").build();
 	}
 
-	private <T extends RequestTrace> void trackDbMetrics(String requestName, T requestTrace) {
-		if (requestTrace.getExecutionCountDb() > 0) {
-			if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
-				metricRegistry.timer(name("response_time_server").tag("request_name", requestName).layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
+	private <T extends RequestTrace> void trackExternalRequestMetrics(String requestName, T requestTrace) {
+		for (ExternalRequestStats externalRequestStats : requestTrace.getExternalRequestStats()) {
+			if (externalRequestStats.getExecutionTimeNanos() > 0) {
+				if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
+					metricRegistry.timer(name("response_time_server")
+							.tag("request_name", requestName)
+							.layer(externalRequestStats.getRequestType()).build())
+							.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
+				}
+				metricRegistry.timer(name("response_time_server")
+						.tag("request_name", "All")
+						.layer(externalRequestStats.getRequestType()).build())
+						.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
 			}
-			metricRegistry.timer(name("response_time_server").tag("request_name", "All").layer("jdbc").build()).update(requestTrace.getExecutionTimeDb(), MILLISECONDS);
-			metricRegistry.meter(name("jdbc_query_rate").tag("request_name", requestName).build()).mark(requestTrace.getExecutionCountDb());
+			metricRegistry.meter(name("external_requests_rate")
+					.tag("request_name", requestName)
+					.type(externalRequestStats.getRequestType()).build())
+					.mark(externalRequestStats.getExecutionCount());
 		}
 	}
 
@@ -505,12 +515,67 @@ public class RequestMonitor {
 	}
 
 	/**
+	 * Tracking an external request means that a timer for the execution time, grouped by the executing method
+	 * {see @link #getCallerSignature()} is maintained.
+	 * Additionally, the external requests may be stored in the stagemonitor-external-requests-* index, depending
+	 * on the configuration.
+	 *
+	 * @param externalRequest the external request to track
+	 */
+	public void trackExternalRequest(ExternalRequest externalRequest) {
+		externalRequest.setExecutedBy(CallerUtil.getCallerSignature());
+		if (externalRequest.getExecutionTimeNanos() > 0) {
+			trackExternalRequestMetrics(externalRequest);
+		}
+		final RequestTrace request = getRequest();
+		if (request != null) {
+			externalRequest.setRequestTrace(request);
+			Profiler.addIOCall(externalRequest.getRequest(), externalRequest.getExecutionTimeNanos());
+			// TODO limit rate
+			request.addExternalRequest(externalRequest);
+		}
+	}
+
+	private void trackExternalRequestMetrics(ExternalRequest externalRequest) {
+		final long duration = externalRequest.getExecutionTimeNanos();
+		metricRegistry
+				.timer(name(externalRequest.getRequestType())
+						.tag("signature", "All")
+						.tag("method", externalRequest.getRequestMethod()).build())
+				.update(duration, TimeUnit.NANOSECONDS);
+		if (externalRequest.getExecutedBy() != null) {
+			metricRegistry
+					.timer(name(externalRequest.getRequestType())
+							.tag("signature", externalRequest.getExecutedBy())
+							.tag("method", externalRequest.getRequestMethod()).build())
+					.update(duration, TimeUnit.MILLISECONDS);
+		}
+	}
+
+	/**
 	 * Adds a {@link RequestTraceReporter}
 	 *
 	 * @param requestTraceReporter the {@link RequestTraceReporter} to add
 	 */
 	public static void addRequestTraceReporter(RequestTraceReporter requestTraceReporter) {
-		Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor().addReporter(requestTraceReporter);
+		get().addReporter(requestTraceReporter);
+	}
+
+	/**
+	 * Gets the {@link RequestMonitor}.
+	 * <p/>
+	 * You can use this instance for example to
+	 * <ul>
+	 *     <li>{@link #trackExternalRequest(ExternalRequest)}</li>
+	 *     <li>{@link #addReporter(RequestTraceReporter)}</li>
+	 *     <li>{@link #addOnBeforeRequestCallback(Runnable)}</li>
+	 *     <li>{@link #addOnAfterRequestCallback(Runnable)}</li>
+	 * </ul>
+	 *
+	 * @return the current request monitor
+	 */
+	public static RequestMonitor get() {
+		return Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
 	}
 
 	/**

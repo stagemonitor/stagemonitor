@@ -111,7 +111,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance",
+              "query": "name: jdbc AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance",
               "alias": "{{field}}"
             }
           ],
@@ -195,7 +195,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: jdbc AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -297,7 +297,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: jdbc AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -392,7 +392,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_query_rate AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: external_requests_rate AND !request_name: All AND type: jdbc AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -578,7 +578,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc_statement AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: jdbc AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -683,7 +683,7 @@
         "allFormat": "lucene",
         "multi": false,
         "multiFormat": "lucene",
-        "query": "{\"find\": \"terms\", \"field\": \"signature\", \"query\": \"name: jdbc_statement\"}",
+        "query": "{\"find\": \"terms\", \"field\": \"signature\", \"query\": \"name: jdbc\"}",
         "current": {
           "text": "All",
           "value": "All"

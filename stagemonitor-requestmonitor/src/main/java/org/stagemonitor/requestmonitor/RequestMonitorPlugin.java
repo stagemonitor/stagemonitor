@@ -114,10 +114,10 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
-			.key("stagemonitor.jdbc.collectDbTimePerRequest")
+			.key("stagemonitor.requestmonitor.collectExternalRequestTimePerRequest")
 			.dynamic(true)
-			.label("Collect db time per request group")
-			.description("Whether or not db execution time should be collected per request group\n" +
+			.label("Collect external request time per request group")
+			.description("Whether or not the execution time of external should be collected per request group\n" +
 					"If set to true, a timer will be created for each request to record the total db time per request.")
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
@@ -245,11 +245,21 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<String> requestIndexTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.requestIndexTemplate")
-			.dynamic(true)
+			.dynamic(false)
 			.label("ES Request Index Template")
 			.description("The classpath location of the index template that is used for the stagemonitor-requests-* indices. " +
 					"By specifying the location to your own template, you can fully customize the index template.")
 			.defaultValue("stagemonitor-elasticsearch-request-index-template.json")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.tags("elasticsearch")
+			.build();
+	private final ConfigurationOption<String> externalRequestsIndexTemplate = ConfigurationOption.stringOption()
+			.key("stagemonitor.requestmonitor.elasticsearch.externalRequestsIndexTemplate")
+			.dynamic(false)
+			.label("ES External Requests Index Template")
+			.description("The classpath location of the index template that is used for the stagemonitor-external-requests-* indices. " +
+					"By specifying the location to your own template, you can fully customize the index template.")
+			.defaultValue("stagemonitor-elasticsearch-external-requests-index-template.json")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("elasticsearch")
 			.build();
@@ -261,9 +271,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
+
+		final String requestsMappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
 				requestIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
-		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-requests");
+		elasticsearchClient.sendMappingTemplateAsync(requestsMappingJson, "stagemonitor-requests");
+
+		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
+				externalRequestsIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
+		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-external-requests");
+
 		elasticsearchClient.sendKibanaDashboardAsync("kibana/Kibana3RecentRequests.json");
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
