@@ -285,12 +285,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendBulkAsync("kibana/StagemonitorRequestsIndexPattern.bulk");
-			elasticsearchClient.sendBulkAsync("kibana/RequestDashboard.bulk");
-			elasticsearchClient.sendBulkAsync("kibana/RequestAnalysis.bulk");
-			elasticsearchClient.sendBulkAsync("kibana/WebAnalytics.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/StagemonitorRequestsIndexPattern.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/RequestDashboard.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/RequestAnalysis.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/WebAnalytics.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-requests-",
+					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
+			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
 	}

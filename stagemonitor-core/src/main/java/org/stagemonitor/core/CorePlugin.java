@@ -507,7 +507,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
 									   final MeasurementSession measurementSession, CorePlugin corePlugin) {
 		if (isReportToElasticsearch()) {
-			elasticsearchClient.sendBulkAsync("KibanaConfig.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("KibanaConfig.bulk");
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrls(), reportingInterval);
 			final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
 					metricsIndexTemplate.getValue(), corePlugin.moveToColdNodesAfterDays.getValue());

@@ -187,7 +187,7 @@ public class ElasticsearchClient {
 		return json.toString();
 	}
 
-	public void sendBulkAsync(String resource) {
+	public void sendClassPathRessourceBulkAsync(String resource) {
 		sendBulkAsync(IOUtils.getResourceAsStream(resource));
 	}
 
@@ -205,16 +205,20 @@ public class ElasticsearchClient {
 	}
 
 	public void sendBulk(final InputStream is) {
-		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
-			return;
-		}
-		httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null, new HttpClient.OutputStreamHandler() {
+		sendBulk("", new HttpClient.OutputStreamHandler() {
 			@Override
 			public void withHttpURLConnection(OutputStream os) throws IOException {
 				IOUtils.copy(is, os);
 				os.close();
 			}
-		}, new HttpClient.ResponseHandler<Void>() {
+		});
+	}
+
+	public void sendBulk(String endpoint, HttpClient.OutputStreamHandler outputStreamHandler) {
+		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
+			return;
+		}
+		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", null, outputStreamHandler, new HttpClient.ResponseHandler<Void>() {
 			@Override
 			public Void handleResponse(InputStream is, Integer statusCode) throws IOException {
 				final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);

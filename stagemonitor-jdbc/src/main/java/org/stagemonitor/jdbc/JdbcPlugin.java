@@ -61,7 +61,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteDBQueries.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendBulkAsync("kibana/JdbcDashboard.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/JdbcDashboard.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchJdbcDashboard.json");
 		}
 	}

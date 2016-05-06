@@ -529,7 +529,6 @@ public class RequestMonitor {
 		}
 		final RequestTrace request = getRequest();
 		if (request != null) {
-			externalRequest.setRequestTrace(request);
 			Profiler.addIOCall(externalRequest.getRequest(), externalRequest.getExecutionTimeNanos());
 			// TODO limit rate
 			request.addExternalRequest(externalRequest);

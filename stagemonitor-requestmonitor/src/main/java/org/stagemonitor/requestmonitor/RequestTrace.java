@@ -331,7 +331,8 @@ public class RequestTrace {
 		return externalRequests;
 	}
 
-	void addExternalRequest(ExternalRequest externalRequest) {
+	public void addExternalRequest(ExternalRequest externalRequest) {
+		externalRequest.setRequestTrace(this);
 		final ExternalRequestStats stats = this.externalRequestStats.get(externalRequest.getRequestType());
 		if (stats == null) {
 			externalRequestStats.put(externalRequest.getRequestType(), new ExternalRequestStats(externalRequest));

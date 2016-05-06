@@ -36,14 +36,15 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 public class ElasticsearchRequestTraceReporterTest {
 
 	private ElasticsearchRequestTraceReporter reporter;
-	private ElasticsearchClient elasticsearchClient;
-	private RequestMonitorPlugin requestMonitorPlugin;
-	private Logger requestTraceLogger;
-	private Metric2Registry registry;
+	protected ElasticsearchClient elasticsearchClient;
+	protected RequestMonitorPlugin requestMonitorPlugin;
+	protected Logger requestTraceLogger;
+	protected Metric2Registry registry;
+	protected Configuration configuration;
 
 	@Before
 	public void setUp() throws Exception {
-		Configuration configuration = mock(Configuration.class);
+		configuration = mock(Configuration.class);
 		CorePlugin corePlugin = mock(CorePlugin.class);
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 
