@@ -187,31 +187,27 @@ public class ElasticsearchClient {
 		return json.toString();
 	}
 
-	public void sendClassPathRessourceBulkAsync(String resource) {
-		sendBulkAsync(IOUtils.getResourceAsStream(resource));
+	public void sendClassPathRessourceBulkAsync(final String resource) {
+		sendBulkAsync("", new HttpClient.OutputStreamHandler() {
+			@Override
+			public void withHttpURLConnection(OutputStream os) throws IOException {
+				IOUtils.copy(IOUtils.getResourceAsStream(resource), os);
+				os.close();
+			}
+		});
 	}
 
-	public void sendBulkAsync(final InputStream is) {
+	public void sendBulkAsync(final String endpoint, final HttpClient.OutputStreamHandler outputStreamHandler) {
 		try {
 			asyncESPool.submit(new Runnable() {
 				@Override
 				public void run() {
-					sendBulk(is);
+					sendBulk(endpoint, outputStreamHandler);
 				}
 			});
 		} catch (RejectedExecutionException e) {
 			ExecutorUtils.logRejectionWarning(e);
 		}
-	}
-
-	public void sendBulk(final InputStream is) {
-		sendBulk("", new HttpClient.OutputStreamHandler() {
-			@Override
-			public void withHttpURLConnection(OutputStream os) throws IOException {
-				IOUtils.copy(is, os);
-				os.close();
-			}
-		});
 	}
 
 	public void sendBulk(String endpoint, HttpClient.OutputStreamHandler outputStreamHandler) {

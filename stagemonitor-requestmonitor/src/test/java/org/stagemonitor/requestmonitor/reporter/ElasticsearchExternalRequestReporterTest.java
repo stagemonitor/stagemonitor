@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
@@ -10,41 +9,40 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.requestmonitor.ExternalRequest;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
-public class ElasticsearchExternalRequestReporterTest extends ElasticsearchRequestTraceReporterTest {
+public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsearchRequestTraceReporterTest {
 
-	private ElasticsearchExternalRequestReporter elasticsearchExternalRequestReporter;
+	private ElasticsearchExternalRequestReporter reporter;
 
 	@Override
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		elasticsearchExternalRequestReporter = new ElasticsearchExternalRequestReporter(requestTraceLogger);
-		elasticsearchExternalRequestReporter.init(new RequestTraceReporter.InitArguments(configuration));
+		reporter = new ElasticsearchExternalRequestReporter(requestTraceLogger);
+		reporter.init(new RequestTraceReporter.InitArguments(configuration));
 	}
 
 	@Test
 	public void reportRequestTrace() throws Exception {
-		elasticsearchExternalRequestReporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
 
-		verify(elasticsearchClient).sendBulk(anyString(), any());
-		assertTrue(elasticsearchExternalRequestReporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
+		verify(elasticsearchClient).sendBulkAsync(anyString(), any());
+		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
 	}
 
 	@Test
 	public void testLogReportRequestTrace() throws Exception {
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
-		elasticsearchExternalRequestReporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
 		verify(requestTraceLogger).info(startsWith("{\"index\":{}}\n{"));
-		assertTrue(elasticsearchExternalRequestReporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
+		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
 	}
 
 	private RequestTrace getRequestTrace() {

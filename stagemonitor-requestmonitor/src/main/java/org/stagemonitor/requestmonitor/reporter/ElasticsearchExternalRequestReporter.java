@@ -50,7 +50,7 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	public void reportRequestTrace(final ReportArguments reportArguments) throws Exception {
 		final String index = "stagemonitor-external-requests-" + StringUtils.getLogstashStyleDate();
 		if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
-			elasticsearchClient.sendBulk("/" + index + "/requests", new HttpClient.OutputStreamHandler() {
+			elasticsearchClient.sendBulkAsync("/" + index + "/requests", new HttpClient.OutputStreamHandler() {
 				@Override
 				public void withHttpURLConnection(OutputStream os) throws IOException {
 					writeExternalRequestsToOutputStream(os, reportArguments.getRequestTrace().getExternalRequests());
