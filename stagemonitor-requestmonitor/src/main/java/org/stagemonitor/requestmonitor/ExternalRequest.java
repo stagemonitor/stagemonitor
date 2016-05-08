@@ -71,7 +71,7 @@ public class ExternalRequest {
 	}
 
 	@JsonIgnore
-	long getExecutionTimeNanos() {
+	public long getExecutionTimeNanos() {
 		return executionTimeNanos;
 	}
 
@@ -83,7 +83,7 @@ public class ExternalRequest {
 		return executedBy;
 	}
 
-	void setExecutedBy(String executedBy) {
+	public void setExecutedBy(String executedBy) {
 		this.executedBy = executedBy;
 	}
 

@@ -263,6 +263,38 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("elasticsearch")
 			.build();
+	private final ConfigurationOption<Double> onlyReportNExternalRequestsPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
+			.dynamic(true)
+			.label("Only report N external requests per minute to ES")
+			.description("Limits the rate at which external request traces are reported to Elasticsearch. " +
+					"Set to a value below 1 to deactivate ES reporting and to 1,000,000 or higher to always report.")
+			.defaultValue(1000000d)
+			.tags("external-requests")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> excludeExternalRequestsWhenFasterThanXPercent = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsWhenFasterThanXPercent")
+			.dynamic(true)
+			.label("Exclude external requests from reporting on x% of the fastest external requests")
+			.description("Exclude the external request from Elasticsearch report when the request was faster faster than x " +
+					"percent of external requests with the same initiator (executedBy). This helps to reduce the network and disk overhead " +
+					"as uninteresting external requests (those which are comparatively fast) are excluded." +
+					"Example: set to 1 to always exclude the external request and to 0 to always include it. " +
+					"With a setting of 0.85, the external request will only be reported for the slowest 25% of the requests.")
+			.defaultValue(0d)
+			.tags("external-requests")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> excludeExternalRequestsFasterThan = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsFasterThan")
+			.dynamic(true)
+			.label("Exclude external requests from reporting when faster than x ms")
+			.description("Exclude the external request from Elasticsearch report when the request was faster faster than x ms.")
+			.defaultValue(0d)
+			.tags("external-requests")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 
 	private static RequestMonitor requestMonitor;
 
@@ -422,5 +454,17 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public Collection<String> getIgnoreExceptions() {
 		return ignoreExceptions.getValue();
+	}
+
+	public double getOnlyReportNExternalRequestsPerMinute() {
+		return onlyReportNExternalRequestsPerMinute.getValue();
+	}
+
+	public double getExcludeExternalRequestsWhenFasterThanXPercent() {
+		return excludeExternalRequestsWhenFasterThanXPercent.getValue();
+	}
+
+	public double getExcludeExternalRequestsFasterThan() {
+		return excludeExternalRequestsFasterThan.getValue();
 	}
 }

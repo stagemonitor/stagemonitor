@@ -52,10 +52,10 @@ public class PostExecutionInterceptorContext extends PreExecutionInterceptorCont
 	/**
 	 * Returns the timer for the current request.
 	 *
-	 * @return the timer for the current request (may be <code>null</code>)
+	 * @return the timer for the current request
 	 */
 	public Timer getTimerForThisRequest() {
-		return getMetricRegistry().getTimers().get(getTimerMetricName(getRequestTrace().getName()));
+		return getMetricRegistry().timer(getTimerMetricName(getRequestTrace().getName()));
 	}
 
 }

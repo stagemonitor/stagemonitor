@@ -530,7 +530,6 @@ public class RequestMonitor {
 		final RequestTrace request = getRequest();
 		if (request != null) {
 			Profiler.addIOCall(externalRequest.getRequest(), externalRequest.getExecutionTimeNanos());
-			// TODO limit rate
 			request.addExternalRequest(externalRequest);
 		}
 	}
@@ -544,11 +543,15 @@ public class RequestMonitor {
 				.update(duration, TimeUnit.NANOSECONDS);
 		if (externalRequest.getExecutedBy() != null) {
 			metricRegistry
-					.timer(name(externalRequest.getRequestType())
-							.tag("signature", externalRequest.getExecutedBy())
-							.tag("method", externalRequest.getRequestMethod()).build())
+					.timer(getExternalRequestTimerName(externalRequest))
 					.update(duration, TimeUnit.MILLISECONDS);
 		}
+	}
+
+	public static MetricName getExternalRequestTimerName(ExternalRequest externalRequest) {
+		return name(externalRequest.getRequestType())
+				.tag("signature", externalRequest.getExecutedBy())
+				.tag("method", externalRequest.getRequestMethod()).build();
 	}
 
 	/**

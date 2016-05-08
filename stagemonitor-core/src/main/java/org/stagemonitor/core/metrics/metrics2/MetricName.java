@@ -11,8 +11,11 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
  * Represents a metrics 2.0 name that consists of a name and arbitrary tags (a set of key-value-pairs).
  * </p>
  * This is needed for example for InfluxDB's data model (see https://influxdb.com/docs/v0.9/concepts/schema_and_data_layout.html)
- * </p>
+ * and to store metrics into Elasticsearch (see https://www.elastic.co/blog/elasticsearch-as-a-time-series-data-store).
  * See also http://metrics20.org/
+ * </p>
+ * The cool thing is that it is completely backwards compatible to graphite metric names and can also automatically
+ * replace characters disallowed in graphite (see {@link #toGraphiteName()}).
  */
 public class MetricName {
 

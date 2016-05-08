@@ -1,5 +1,5 @@
 {
-  "template": "stagemonitor-requests-*",
+  "template": "stagemonitor-external-requests-*",
   "order" : 1,
   "settings" : {
     "index" : {

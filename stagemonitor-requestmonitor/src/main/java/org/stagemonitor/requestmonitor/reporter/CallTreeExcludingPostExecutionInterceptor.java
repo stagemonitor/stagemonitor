@@ -1,6 +1,6 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import com.codahale.metrics.Timer;
+import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTraceReporterInterceptor {
@@ -18,19 +18,9 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 				.getConfig(RequestMonitorPlugin.class)
 				.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests();
 
-		if (percentileLimit > 0) {
-			if (percentileLimit >= 1) {
-				exclude(context);
-			} else {
-				final Timer timer = context.getTimerForThisRequest();
-				if (timer != null) {
-					final double percentile = timer.getSnapshot().getValue(percentileLimit);
-					final long executionTime = context.getRequestTrace().getExecutionTime();
-					if (executionTime < percentile) {
-						exclude(context);
-					}
-				}
-			}
+		if (!MetricUtils.isFasterThanXPercentOfAllRequests(context.getRequestTrace().getExecutionTime(),
+				percentileLimit, context.getTimerForThisRequest())) {
+			exclude(context);
 		}
 	}
 
