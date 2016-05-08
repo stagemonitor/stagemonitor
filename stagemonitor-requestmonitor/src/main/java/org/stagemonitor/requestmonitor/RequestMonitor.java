@@ -46,7 +46,7 @@ public class RequestMonitor {
 	 * <p/>
 	 * To enable this behaviour in a web environment, make sure to set stagemonitor.web.monitorOnlyForwardedRequests to true.
 	 */
-	private static ThreadLocal<RequestInformation<? extends RequestTrace>> request = new ThreadLocal<RequestInformation<? extends RequestTrace>>();
+	private ThreadLocal<RequestInformation<? extends RequestTrace>> request = new ThreadLocal<RequestInformation<? extends RequestTrace>>();
 
 	private final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>();
 
@@ -508,10 +508,41 @@ public class RequestMonitor {
 
 	/**
 	 * @return the {@link RequestTrace} of the current request
+	 * @deprecated use <code>RequestMonitor.get().getRequestTrace()</code> or
+	 * <code>RequestMonitor.get().ifRequestPresent(RequestTraceConsumer)</code>
 	 */
+	@Deprecated
 	public static RequestTrace getRequest() {
+		final RequestInformation<? extends RequestTrace> requestInformation = RequestMonitor.get().request.get();
+		return requestInformation != null ? requestInformation.getRequestTrace() : null;
+	}
+
+	/**
+	 * @return the {@link RequestTrace} of the current request (may be <code>null</code>)
+	 */
+	public RequestTrace getRequestTrace() {
 		final RequestInformation<? extends RequestTrace> requestInformation = request.get();
 		return requestInformation != null ? requestInformation.getRequestTrace() : null;
+	}
+
+	/**
+	 * Allows to modify the {@link RequestTrace} without explicit null checks.
+	 * This method behaves simmilar to {@link java.util.Optional#ifPresent(java.util.function.Consumer)} and only applies the provided
+	 * {@link RequestTraceConsumer} if there is a {@link RequestTrace} bound to the current thread.
+	 * <p/>
+	 * This method works well with lambdas and avoids verbose null checks.
+	 *
+	 * @param consumer a consumer which accepts the current {@link RequestTrace}
+	 */
+	public void ifRequestPresent(RequestTraceConsumer consumer) {
+		final RequestTrace requestTrace = getRequestTrace();
+		if (requestTrace != null) {
+			consumer.accept(requestTrace);
+		}
+	}
+
+	public interface RequestTraceConsumer {
+		void accept(RequestTrace requestTrace);
 	}
 
 	/**
@@ -523,35 +554,12 @@ public class RequestMonitor {
 	 * @param externalRequest the external request to track
 	 */
 	public void trackExternalRequest(ExternalRequest externalRequest) {
-		externalRequest.setExecutedBy(CallerUtil.getCallerSignature());
-		if (externalRequest.getExecutionTimeNanos() > 0) {
-			trackExternalRequestMetrics(externalRequest);
-		}
-		final RequestTrace request = getRequest();
+		final RequestTrace request = getRequestTrace();
 		if (request != null) {
+			externalRequest.setExecutedBy(CallerUtil.getCallerSignature());
 			Profiler.addIOCall(externalRequest.getRequest(), externalRequest.getExecutionTimeNanos());
 			request.addExternalRequest(externalRequest);
 		}
-	}
-
-	private void trackExternalRequestMetrics(ExternalRequest externalRequest) {
-		final long duration = externalRequest.getExecutionTimeNanos();
-		metricRegistry
-				.timer(name(externalRequest.getRequestType())
-						.tag("signature", "All")
-						.tag("method", externalRequest.getRequestMethod()).build())
-				.update(duration, TimeUnit.NANOSECONDS);
-		if (externalRequest.getExecutedBy() != null) {
-			metricRegistry
-					.timer(getExternalRequestTimerName(externalRequest))
-					.update(duration, TimeUnit.MILLISECONDS);
-		}
-	}
-
-	public static MetricName getExternalRequestTimerName(ExternalRequest externalRequest) {
-		return name(externalRequest.getRequestType())
-				.tag("signature", externalRequest.getExecutedBy())
-				.tag("method", externalRequest.getRequestMethod()).build();
 	}
 
 	/**
@@ -566,12 +574,14 @@ public class RequestMonitor {
 	/**
 	 * Gets the {@link RequestMonitor}.
 	 * <p/>
-	 * You can use this instance for example to
+	 * You can use this instance for example to call the following methods:
 	 * <ul>
 	 *     <li>{@link #trackExternalRequest(ExternalRequest)}</li>
 	 *     <li>{@link #addReporter(RequestTraceReporter)}</li>
 	 *     <li>{@link #addOnBeforeRequestCallback(Runnable)}</li>
 	 *     <li>{@link #addOnAfterRequestCallback(Runnable)}</li>
+	 *     <li>{@link #getRequestTrace()}</li>
+	 *     <li>{@link #ifRequestPresent(RequestTraceConsumer)}</li>
 	 * </ul>
 	 *
 	 * @return the current request monitor

@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 public class ExternalRequest {
 
@@ -18,9 +19,11 @@ public class ExternalRequest {
 	private final String requestType;
 	private final String requestMethod;
 	@JsonIgnore
-	private final long executionTimeNanos;
+	private long executionTimeNanos;
 	private String executedBy;
 	private final String request;
+	@JsonIgnore
+	private CallStackElement callStackElement;
 
 	public ExternalRequest(String requestType, String requestMethod, long executionTimeNanos, String request) {
 		this.requestType = requestType;
@@ -89,5 +92,17 @@ public class ExternalRequest {
 
 	public String getRequest() {
 		return request;
+	}
+
+	public void incrementExecutionTime(long additionalExecutionTime) {
+		executionTimeNanos += additionalExecutionTime;
+	}
+
+	public CallStackElement getCallStackElement() {
+		return callStackElement;
+	}
+
+	public void setCallStackElement(CallStackElement callStackElement) {
+		this.callStackElement = callStackElement;
 	}
 }

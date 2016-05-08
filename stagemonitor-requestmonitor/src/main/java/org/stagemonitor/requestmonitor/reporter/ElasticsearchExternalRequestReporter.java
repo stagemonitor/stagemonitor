@@ -1,6 +1,6 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import static org.stagemonitor.requestmonitor.RequestMonitor.getExternalRequestTimerName;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
@@ -20,6 +21,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -64,7 +66,9 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	public void reportRequestTrace(final ReportArguments reportArguments) throws Exception {
 		final List<ExternalRequest> externalRequests = reportArguments.getRequestTrace().getExternalRequests();
 		for (Iterator<ExternalRequest> iterator = externalRequests.iterator(); iterator.hasNext(); ) {
-			if (!isReportExternalRequest(iterator.next())) {
+			final ExternalRequest externalRequest = iterator.next();
+			trackExternalRequestMetrics(externalRequest);
+			if (!isReportExternalRequest(externalRequest)) {
 				iterator.remove();
 			}
 		}
@@ -86,6 +90,27 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 			writeExternalRequestsToOutputStream(os, externalRequests);
 			externalRequestsLogger.info(new String(os.toByteArray(), Charset.forName("UTF-8")));
 		}
+	}
+
+	private void trackExternalRequestMetrics(ExternalRequest externalRequest) {
+		if (externalRequest.getExecutionTimeNanos() > 0) {
+			return;
+		}
+		final long duration = externalRequest.getExecutionTimeNanos();
+		registry.timer(name(externalRequest.getRequestType())
+						.tag("signature", "All")
+						.tag("method", externalRequest.getRequestMethod()).build())
+				.update(duration, TimeUnit.NANOSECONDS);
+		if (externalRequest.getExecutedBy() != null) {
+			registry.timer(getExternalRequestTimerName(externalRequest))
+					.update(duration, TimeUnit.MILLISECONDS);
+		}
+	}
+
+	public static MetricName getExternalRequestTimerName(ExternalRequest externalRequest) {
+		return name(externalRequest.getRequestType())
+				.tag("signature", externalRequest.getExecutedBy())
+				.tag("method", externalRequest.getRequestMethod()).build();
 	}
 
 	private void writeExternalRequestsToOutputStream(OutputStream os, Collection<ExternalRequest> externalRequests) throws IOException {

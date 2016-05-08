@@ -39,4 +39,8 @@ public class ExternalRequestStats {
 		executionCount++;
 		executionTimeNanos += externalRequest.getExecutionTimeNanos();
 	}
+
+	public void incrementExecutionTime(long additionalExecutionTime) {
+		executionTimeNanos += additionalExecutionTime;
+	}
 }

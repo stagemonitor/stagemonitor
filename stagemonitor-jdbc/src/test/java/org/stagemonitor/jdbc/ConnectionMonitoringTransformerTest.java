@@ -5,19 +5,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -34,8 +37,8 @@ public class ConnectionMonitoringTransformerTest {
 	private RequestMonitor requestMonitor;
 
 	@BeforeClass
-	public static void attachProfiler() {
-		Stagemonitor.init();
+	public static void attachProfiler() throws Exception {
+		Stagemonitor.startMonitoring(new MeasurementSession("ConnectionMonitoringTransformerTest", "test", "test")).get();
 	}
 
 	@Before
@@ -47,13 +50,14 @@ public class ConnectionMonitoringTransformerTest {
 		poolProperties.setUrl("jdbc:hsqldb:mem:test");
 		dataSource = new org.apache.tomcat.jdbc.pool.DataSource(poolProperties);
 		dataSource.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS STAGEMONITOR (FOO INT)").execute();
+		dataSource.getConnection().prepareStatement("INSERT INTO STAGEMONITOR (FOO) VALUES (1)").execute();
 		requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
 	}
 
 	@AfterClass
 	public static void cleanUp() {
 		Stagemonitor.reset();
-		SharedMetricRegistries.clear();
+		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 	}
 
 	@Test
@@ -107,7 +111,11 @@ public class ConnectionMonitoringTransformerTest {
 	}
 
 	private void executePreparedStatement() throws SQLException {
-		dataSource.getConnection().prepareStatement("SELECT * from STAGEMONITOR").execute();
+		final Connection connection = dataSource.getConnection();
+		final PreparedStatement preparedStatement = connection.prepareStatement("SELECT * from STAGEMONITOR");
+		preparedStatement.execute();
+		final ResultSet resultSet = preparedStatement.getResultSet();
+		resultSet.next();
 	}
 
 	@Test
