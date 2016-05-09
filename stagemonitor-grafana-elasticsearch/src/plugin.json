@@ -30,7 +30,8 @@
       {"name": "stagemonitor DB dashboard", "path": "img/screenshots/db.png"},
       {"name": "stagemonitor EhCache dashboard", "path": "img/screenshots/ehcache.png"},
       {"name": "stagemonitor JVM dashboard", "path": "img/screenshots/jvm.png"},
-      {"name": "stagemonitor Requests Dashboard", "path": "img/screenshots/requests.png"}
+      {"name": "stagemonitor Requests Dashboard", "path": "img/screenshots/requests.png"},
+      {"name": "stagemonitor Hosts Dashboard", "path": "img/screenshots/hosts.png"}
     ],
     "version": "${version}",
     "updated": "${releaseDate}"
