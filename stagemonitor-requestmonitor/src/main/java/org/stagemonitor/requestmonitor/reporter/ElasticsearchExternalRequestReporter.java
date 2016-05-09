@@ -43,7 +43,6 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	private RequestMonitorPlugin requestMonitorPlugin;
 	private ElasticsearchClient elasticsearchClient;
 	private Meter reportingRate = new Meter();
-	private Metric2Registry registry;
 
 	public ElasticsearchExternalRequestReporter() {
 		this(LoggerFactory.getLogger(ES_EXTERNAL_REQUEST_TRACE_LOGGER));
@@ -59,7 +58,6 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 		corePlugin = configuration.getConfig(CorePlugin.class);
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		elasticsearchClient = corePlugin.getElasticsearchClient();
-		registry = corePlugin.getMetricRegistry();
 	}
 
 	@Override
@@ -93,17 +91,18 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	}
 
 	private void trackExternalRequestMetrics(ExternalRequest externalRequest) {
-		if (externalRequest.getExecutionTimeNanos() > 0) {
+		// 0 means the time could not be determined
+		if (externalRequest.getExecutionTimeNanos() <= 0) {
 			return;
 		}
 		final long duration = externalRequest.getExecutionTimeNanos();
-		registry.timer(name(externalRequest.getRequestType())
+		corePlugin.getMetricRegistry().timer(name(externalRequest.getRequestType())
 						.tag("signature", "All")
 						.tag("method", externalRequest.getRequestMethod()).build())
 				.update(duration, TimeUnit.NANOSECONDS);
 		if (externalRequest.getExecutedBy() != null) {
-			registry.timer(getExternalRequestTimerName(externalRequest))
-					.update(duration, TimeUnit.MILLISECONDS);
+			corePlugin.getMetricRegistry().timer(getExternalRequestTimerName(externalRequest))
+					.update(duration, TimeUnit.NANOSECONDS);
 		}
 	}
 
@@ -136,7 +135,7 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 					externalRequest.getExecutedBy(), requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute());
 			return false;
 		}
-		Timer timer = registry.timer(getExternalRequestTimerName(externalRequest));
+		Timer timer = corePlugin.getMetricRegistry().timer(getExternalRequestTimerName(externalRequest));
 		final double percentageThreshold = requestMonitorPlugin.getExcludeExternalRequestsWhenFasterThanXPercent();
 		if (!MetricUtils.isFasterThanXPercentOfAllRequests(externalRequest.getExecutionTimeNanos(), percentageThreshold, timer)) {
 			logger.debug("Exclude external request {} because was faster than {}% of all requests",
@@ -151,5 +150,10 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 		final boolean urlAvailable = !corePlugin.getElasticsearchUrls().isEmpty();
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
 		return (urlAvailable || logOnly);
+	}
+
+	@Override
+	public boolean requiresCallTree() {
+		return false;
 	}
 }

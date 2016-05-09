@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
 public abstract class RequestTraceReporter implements StagemonitorSPI {
@@ -12,20 +13,35 @@ public abstract class RequestTraceReporter implements StagemonitorSPI {
 	/**
 	 * Callback method that is called when a {@link RequestTrace} was created and is ready to be reported
 	 *
-	 * @param reportArguments
+	 * @param reportArguments The parameter object which contains the actual parameters
 	 */
 	public abstract void reportRequestTrace(ReportArguments reportArguments) throws Exception;
 
 	/**
 	 * Whether this {@link RequestTraceReporter} is active
 	 * <p/>
-	 * This method is called at most once from {@link org.stagemonitor.requestmonitor.RequestMonitor} for one request.
+	 * This method is called at most once from {@link RequestMonitor} for one request.
 	 * That means that the result from the first evaluation is final.
+	 * <p/>
+	 * If none of the currently registered {@link RequestTraceReporter}s (
+	 * see {@link RequestMonitor#requestTraceReporters}) which {@link #requiresCallTree()}
+	 * is active (see {@link RequestMonitor#isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestTrace)},
+	 * the profiler does not have to be enabled for the current request.
 	 *
+	 * @param isActiveArguments The parameter object which contains the actual parameters
 	 * @return <code>true</code>, if this {@link RequestTraceReporter} is active, <code>false</code> otherwise
-	 * @param isActiveArguments
 	 */
 	public abstract boolean isActive(IsActiveArguments isActiveArguments);
+
+	/**
+	 * @return <code>true</code>, if this {@link RequestTraceReporter} needs access to the call tree
+	 * ({@link RequestTrace#getCallStack()})
+	 *
+	 * @see #isActive(IsActiveArguments)
+	 */
+	public boolean requiresCallTree() {
+		return true;
+	}
 
 	public void close(CloseArguments initArguments) {
 	}

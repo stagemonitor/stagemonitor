@@ -35,12 +35,12 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	}
 
 	public static void setRequestNameByHandler(Object handler) {
-		if (RequestMonitor.getRequest() != null) {
+		if (RequestMonitor.get().getRequestTrace() != null) {
 			final BusinessTransactionNamingStrategy namingStrategy = Stagemonitor.getPlugin(RequestMonitorPlugin.class)
 					.getBusinessTransactionNamingStrategy();
 			final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
 			if (requestNameFromHandler != null) {
-				RequestMonitor.getRequest().setName(requestNameFromHandler);
+				RequestMonitor.get().getRequestTrace().setName(requestNameFromHandler);
 			}
 		}
 	}

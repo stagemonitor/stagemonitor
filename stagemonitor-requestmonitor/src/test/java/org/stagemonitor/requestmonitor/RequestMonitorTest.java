@@ -157,8 +157,10 @@ public class RequestMonitorTest {
 	}
 
 	@Test
-	public void testProfileThisExecutionNotActiveWhenNoRequestTraceReporterIsActive() throws Exception {
+	public void testDontActivateProfilerWhenNoRequestTraceReporterIsActive() throws Exception {
+		// don't profile if no one is interested in the result
 		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNRequestsPerMinuteToElasticsearch();
+		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNExternalRequestsPerMinute();
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getRequestTrace().getCallStack());

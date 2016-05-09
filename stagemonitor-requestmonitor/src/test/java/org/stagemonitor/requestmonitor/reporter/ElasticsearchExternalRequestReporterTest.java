@@ -9,7 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.requestmonitor.RequestMonitor.getExternalRequestTimerName;
+import static org.stagemonitor.requestmonitor.reporter.ElasticsearchExternalRequestReporter.getExternalRequestTimerName;
 
 import java.util.concurrent.TimeUnit;
 

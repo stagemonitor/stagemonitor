@@ -48,13 +48,9 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 		return ClassUtils.isPresent("javax.ws.rs.Path");
 	}
 
-	@Advice.OnMethodEnter
-	private static void setRequestName(@AbstractMonitorRequestsTransformer.RequestName String requestName) {
-		doSetRequestName(requestName);
-	}
-
-	public static void doSetRequestName(String requestName) {
-		final RequestTrace request = RequestMonitor.getRequest();
+	@Advice.OnMethodEnter(inline = false)
+	public static void setRequestName(@AbstractMonitorRequestsTransformer.RequestName String requestName) {
+		final RequestTrace request = RequestMonitor.get().getRequestTrace();
 		if (request != null) {
 			request.setName(requestName);
 		}

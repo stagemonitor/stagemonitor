@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
+import static org.stagemonitor.requestmonitor.RequestMonitor.getRequest;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -189,7 +190,7 @@ public class SpringRequestMonitorTest {
 		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
 		try {
 			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());
-			assertEquals("Test Get Request Name", RequestMonitor.getRequest().getName());
+			assertEquals("Test Get Request Name", RequestMonitor.get().getRequestTrace().getName());
 		} finally {
 			requestMonitor.monitorStop();
 		}
