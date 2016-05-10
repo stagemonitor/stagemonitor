@@ -9,6 +9,26 @@
   "sharedCrosshair": false,
   "rows": [
     {
+      "title": "Documentation (click me to expand)",
+      "height": "100px",
+      "editable": true,
+      "collapse": true,
+      "panels": [
+        {
+          "title": "Documentation",
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "type": "text",
+          "isNew": true,
+          "mode": "markdown",
+          "content": "$documentation",
+          "links": [],
+          "transparent": false
+        }
+      ]
+    },
+    {
       "collapse": false,
       "editable": true,
       "height": "350px",
@@ -418,99 +438,6 @@
           "y-axis": true,
           "y_formats": [
             "none",
-            "short"
-          ]
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "300px",
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "decimals": null,
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": 100,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 5,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "alias": "usage",
-              "bucketAggs": [
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "dsType": "elasticsearch",
-              "metrics": [
-                {
-                  "field": "value",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "max"
-                }
-              ],
-              "query": "name: jvm_process_cpu_usage AND application: $Application AND host: $Host AND instance: $Instance",
-              "refId": "A",
-              "timeField": "@timestamp"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "JVM Process CPU Usage",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "percent",
             "short"
           ]
         }
