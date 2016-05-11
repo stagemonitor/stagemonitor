@@ -13,14 +13,12 @@ import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
-import com.fasterxml.jackson.databind.SequenceWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricUtils;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
@@ -113,15 +111,14 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	}
 
 	private void writeExternalRequestsToOutputStream(OutputStream os, Collection<ExternalRequest> externalRequests) throws IOException {
-		final SequenceWriter sequenceWriter = JsonUtils.getMapper().writer().writeValues(os);
 		for (ExternalRequest externalRequest : externalRequests) {
 			os.write(BULK_HEADER);
-			sequenceWriter.write(externalRequest);
+			os.write(JsonUtils.getMapper().writeValueAsBytes(externalRequest));
 			os.write('\n');
 			reportingRate.mark();
 		}
 		os.write('\n');
-		sequenceWriter.close();
+		os.close();
 	}
 
 	private boolean isReportExternalRequest(ExternalRequest externalRequest) {
