@@ -5,15 +5,13 @@ plugins {
     id "com.moowork.node" version "0.12"
 }
 
-def tree = project.getParent().fileTree(".")
-tree.include "**/grafana/Elasticsearch*.json"
-tree.exclude {
-    it.toString().contains("build") || it.toString().contains("Grafana1")
+dependencies {
+    // dashboard files for grafana include documentation which is injected in the dashboard when the corresponding project is built.
+    // Therefore stagmeonitor-grafana-elasticsearch depends on them.
+    getProjectsToRelease().each {
+        compile it
+    }
 }
-ext {
-    originalDashboardJsons = tree.files
-}
-
 
 project.buildDir = "dist"
 
@@ -23,22 +21,32 @@ node {
     download = true
 }
 
-task collectDashboards(type: Copy) {
-    from originalDashboardJsons
-    into "$buildDir/dashboards"
-    rename { String fileName ->
-        fileName.toLowerCase()
+def processResourcesTasks = getProjectsToRelease().collect { it.tasks.processResources }
+task collectDashboards(dependsOn: processResourcesTasks) << {
+    copy {
+        from project.parent.fileTree(".") {
+            include "**/build/**/grafana/Elasticsearch*.json"
+            exclude "Grafana1"
+        }.files
+        into "$buildDir/dashboards"
+        rename { String fileName ->
+            fileName.toLowerCase()
+        }
+        includeEmptyDirs = false
     }
 }
 
 def getDashboardsJson() {
+    def slurper = new JsonSlurper()
     def dashboards = []
 
-    def slurper = new JsonSlurper()
     file("$buildDir/dashboards/").listFiles().each {
-        def relativePathToDashboard = it.canonicalPath.replace(project.buildDir.canonicalPath + '/', '')
-
-        def originalDashboardPath = originalDashboardJsons.find({ file -> file.canonicalPath.toLowerCase().endsWith(it.name) }).canonicalPath
+        def relativePathToDashboard = it.canonicalPath - (project.buildDir.canonicalPath + '/');
+        def originalDashboardPath = project.parent.fileTree(".") {
+            include "*/src/**/grafana/Elasticsearch*.json"
+        }.find({ file ->
+            file.canonicalPath.toLowerCase().endsWith(it.name)
+        }).canonicalPath
         def relativeOriginalDashboardPath = originalDashboardPath.replace(rootDir.canonicalPath + '/', '')
         def projectName = relativeOriginalDashboardPath.substring(0, relativeOriginalDashboardPath.indexOf("/"));
 
@@ -53,15 +61,17 @@ def getDashboardsJson() {
     return JsonOutput.toJson(dashboards)
 }
 
-task addDashboardsToPluginJson(type: Copy, dependsOn: collectDashboards) {
-    from 'src'
-    into "$buildDir"
-    include 'plugin.json'
-    expand(
-        'dashboards': getDashboardsJson(),
-        'version': version,
-        'releaseDate': new Date().format("yyyy-MM-dd")
-    )
+task addDashboardsToPluginJson(dependsOn: collectDashboards) << {
+    copy {
+        from 'src'
+        into "$buildDir"
+        include 'plugin.json'
+        expand(
+            'dashboards': getDashboardsJson(),
+            'version': version,
+            'releaseDate': new Date().format("yyyy-MM-dd")
+        )
+    }
 }
 
 task copyAssets(type: Copy) {

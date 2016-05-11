@@ -9,6 +9,26 @@
   "sharedCrosshair": false,
   "rows": [
     {
+      "title": "Documentation (click me to expand)",
+      "height": "250px",
+      "editable": true,
+      "collapse": true,
+      "panels": [
+        {
+          "title": "Documentation",
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "type": "text",
+          "isNew": true,
+          "mode": "markdown",
+          "content": "$documentation",
+          "links": []
+        }
+      ],
+      "showTitle": false
+    },
+    {
       "collapse": false,
       "editable": true,
       "height": "350px",
