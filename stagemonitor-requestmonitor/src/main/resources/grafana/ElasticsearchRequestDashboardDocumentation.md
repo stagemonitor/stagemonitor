@@ -36,3 +36,6 @@ This panel summarizes the load time from the perspective of web page visitors.
 * Network Time: The network time is the time from requesting a page until the first byte arrived minus the server processing time.
 * Page Rendering: The time between the DOM ready and load event.
 * Server: The server time is the time it took the server to process the request.
+
+By default, only aggregated page load times for all requests be collected. To see detailed page load times for each individual request group, you have to enable the configuration option [Collect Page Load Time data per request group](https://github.com/stagemonitor/stagemonitor/wiki/Configuration-Options#collect-page-load-time-data-per-request-group). 
+
