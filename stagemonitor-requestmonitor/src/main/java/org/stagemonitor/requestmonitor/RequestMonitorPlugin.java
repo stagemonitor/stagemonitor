@@ -187,7 +187,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchRequestTraceReports = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.onlyLogElasticsearchRequestTraceReports")
-			.dynamic(false)
+			.dynamic(true)
 			.label("Only log Elasticsearch request trace reports")
 			.description(String.format("If set to true, the request traces won't be reported to elasticsearch but instead logged in bulk format. " +
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +

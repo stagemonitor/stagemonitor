@@ -16,10 +16,13 @@ public class ExternalRequest {
 	private final String timestamp;
 	@JsonIgnore
 	private RequestTrace requestTrace;
+	@JsonProperty("request_type")
 	private final String requestType;
+	@JsonProperty("request_method")
 	private final String requestMethod;
 	@JsonIgnore
 	private long executionTimeNanos;
+	@JsonProperty("executed_by")
 	private String executedBy;
 	private final String request;
 	@JsonIgnore
@@ -49,6 +52,7 @@ public class ExternalRequest {
 		return timestamp;
 	}
 
+	@JsonProperty("measurement_start")
 	public long getMeasurementStart() {
 		return requestTrace.getMeasurementStart();
 	}
