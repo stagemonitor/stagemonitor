@@ -174,6 +174,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		} else {
 			request.setUniqueVisitorId(StringUtils.sha1Hash(clientIp + sessionId + userAgent));
 		}
+		request.setClientIp(clientIp);
 
 		int status = responseWrapper.getStatus();
 		request.setStatusCode(status);
@@ -206,7 +207,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		Set<Pattern> confidentialParams = new HashSet<Pattern>();
 		confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
 		confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
-		request.setParameters(requestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
+		request.setParameters(RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
 	}
 
 	private String getSessionId() {
