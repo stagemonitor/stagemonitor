@@ -214,37 +214,7 @@ public class ElasticsearchClient {
 				IOUtils.copy(is, os);
 				os.close();
 			}
-		}, new HttpClient.ResponseHandler<Void>() {
-			@Override
-			public Void handleResponse(InputStream is, Integer statusCode) throws IOException {
-				final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
-				if (bulkResponse.get("errors").booleanValue()) {
-					reportBulkErrors(bulkResponse.get("items"));
-				}
-				return null;
-			}
-		});
-	}
-
-	private void reportBulkErrors(JsonNode items) {
-		final StringBuilder sb = new StringBuilder("Error(s) while sending a _bulk request to elasticsearch:");
-		for (JsonNode item : items) {
-			final JsonNode error = item.get("index").get("error");
-			if (error != null) {
-				sb.append("\n - ");
-				sb.append(error.get("reason").asText());
-				if (error.get("type").asText().equals("version_conflict_engine_exception")) {
-					sb.append(": Probably you updated a dashboard in Kibana. ")
-							.append("Please don't override the stagemonitor dashboards. ")
-							.append("If you want to customize a dashboard, save it under a different name. ")
-							.append("Stagemonitor will not override your changes, but that also means that you won't ")
-							.append("be able to use the latest dashboard enhancements :(. ")
-							.append("To resolve this issue, save the updated one under a different name, delete it ")
-							.append("and restart stagemonitor so that the dashboard can be recreated.");
-				}
-			}
-		}
-		logger.warn(sb.toString());
+		}, new BulkErrorReportingResponseHandler());
 	}
 
 	public void deleteIndices(String indexPattern) {
@@ -341,5 +311,49 @@ public class ElasticsearchClient {
 				"{\"_index\":\"" + index + "\"," +
 				"\"_type\":\"" + type + "\"}" +
 				"}\n";
+	}
+
+	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
+
+		private static final Logger logger = LoggerFactory.getLogger(BulkErrorReportingResponseHandler.class);
+
+		@Override
+		public Void handleResponse(InputStream is, Integer statusCode) throws IOException {
+			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
+			if (bulkResponse.get("errors").booleanValue()) {
+				reportBulkErrors(bulkResponse.get("items"));
+			}
+			return null;
+		}
+
+		private void reportBulkErrors(JsonNode items) {
+			final StringBuilder sb = new StringBuilder("Error(s) while sending a _bulk request to elasticsearch:");
+			for (JsonNode item : items) {
+				JsonNode action = item.get("index");
+				if (action == null) {
+					action = item.get("create");
+				}
+				final JsonNode error = action.get("error");
+				if (error != null) {
+					sb.append("\n - ");
+					sb.append(error.get("reason").asText());
+					final String errorType = error.get("type").asText();
+					if (errorType.equals("version_conflict_engine_exception")) {
+						sb.append(": Probably you updated a dashboard in Kibana. ")
+								.append("Please don't override the stagemonitor dashboards. ")
+								.append("If you want to customize a dashboard, save it under a different name. ")
+								.append("Stagemonitor will not override your changes, but that also means that you won't ")
+								.append("be able to use the latest dashboard enhancements :(. ")
+								.append("To resolve this issue, save the updated one under a different name, delete it ")
+								.append("and restart stagemonitor so that the dashboard can be recreated.");
+					} else if ("es_rejected_execution_exception".equals(errorType)) {
+						sb.append(": Consider increasing threadpool.bulk.queue_size. See also stagemonitor's " +
+								"documentation for the Elasticsearch data base.");
+					}
+				}
+			}
+			logger.warn(sb.toString());
+		}
+
 	}
 }

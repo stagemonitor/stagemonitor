@@ -5,6 +5,7 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import com.codahale.metrics.Counter;
@@ -30,6 +31,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	public static final String STAGEMONITOR_METRICS_INDEX_PREFIX = "stagemonitor-metrics-";
 	public static final String ES_METRICS_LOGGER = "ElasticsearchMetrics";
 	private static final String METRICS_TYPE = "metrics";
+	private static final byte[] BULK_INDEX_HEADER = "{\"index\":{}}\n".getBytes(Charset.forName("UTF-8"));
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final Logger elasticsearchMetricsLogger;
@@ -58,11 +60,14 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Histogram> histograms,
 							  final Map<MetricName, Meter> meters,
 							  final Map<MetricName, Timer> timers) {
+		long timestamp = clock.getTime();
+
 		final Timer.Context time = registry.timer(name("reporting_time").tag("reporter", "elasticsearch").build()).time();
-		final MetricsOutputStreamHandler metricsOutputStreamHandler = new MetricsOutputStreamHandler(gauges, counters, histograms, meters, timers);
+		final MetricsOutputStreamHandler metricsOutputStreamHandler = new MetricsOutputStreamHandler(gauges, counters, histograms, meters, timers, timestamp);
 		if (!corePlugin.isOnlyLogElasticsearchMetricReports()) {
-			httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null,
-					metricsOutputStreamHandler);
+			final String path = "/" + STAGEMONITOR_METRICS_INDEX_PREFIX + StringUtils.getLogstashStyleDate() + "/" + METRICS_TYPE + "/_bulk";
+			httpClient.send("POST", corePlugin.getElasticsearchUrl() + path, null,
+					metricsOutputStreamHandler, new ElasticsearchClient.BulkErrorReportingResponseHandler());
 		} else {
 			try {
 				final ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -77,8 +82,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
 	public void reportMetrics(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters,
 							  Map<MetricName, Histogram> histograms, final Map<MetricName, Meter> meters,
-							  Map<MetricName, Timer> timers, OutputStream os, byte[] bulkActionBytes) throws IOException {
-		long timestamp = clock.getTime();
+							  Map<MetricName, Timer> timers, OutputStream os, long timestamp) throws IOException {
 
 		reportMetric(gauges, timestamp, new ValueWriter<Gauge>() {
 			public void writeValues(Gauge gauge, JsonGenerator jg) throws IOException {
@@ -94,30 +98,30 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 					jg.writeStringField("value_string", value.toString());
 				}
 			}
-		}, os, bulkActionBytes);
+		}, os);
 		reportMetric(counters, timestamp, new ValueWriter<Counter>() {
 			public void writeValues(Counter counter, JsonGenerator jg) throws IOException {
 				jg.writeObjectField("count", counter.getCount());
 			}
-		}, os, bulkActionBytes);
+		}, os);
 		reportMetric(histograms, timestamp, new ValueWriter<Histogram>() {
 			public void writeValues(Histogram histogram, JsonGenerator jg) throws IOException {
 				final Snapshot snapshot = histogram.getSnapshot();
 				jg.writeNumberField("count", histogram.getCount());
 				writeSnapshot(snapshot, jg);
 			}
-		}, os, bulkActionBytes);
+		}, os);
 		reportMetric(meters, timestamp, new ValueWriter<Meter>() {
 			public void writeValues(Meter meter, JsonGenerator jg) throws IOException {
 				writeMetered(meter, jg);
 			}
-		}, os, bulkActionBytes);
+		}, os);
 		reportMetric(timers, timestamp, new ValueWriter<Timer>() {
 			public void writeValues(Timer timer, JsonGenerator jg) throws IOException {
 				writeMetered(timer, jg);
 				writeSnapshot(timer.getSnapshot(), jg);
 			}
-		}, os, bulkActionBytes);
+		}, os);
 	}
 
 	private void writeSnapshot(Snapshot snapshot, JsonGenerator jg) throws IOException {
@@ -143,10 +147,10 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	}
 
 	private <T extends Metric> void reportMetric(Map<MetricName, T> metrics, long timestamp, ValueWriter<T> valueWriter,
-												 OutputStream os, byte[] bulkActionBytes) throws IOException {
+												 OutputStream os) throws IOException {
 
 		for (Map.Entry<MetricName, T> entry : metrics.entrySet()) {
-			os.write(bulkActionBytes);
+			os.write(BULK_INDEX_HEADER);
 			final JsonGenerator jg = jfactory.createGenerator(os);
 			jg.writeStartObject();
 			MetricName metricName = entry.getKey();
@@ -183,20 +187,20 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		private final Map<MetricName, Histogram> histograms;
 		private final Map<MetricName, Meter> meters;
 		private final Map<MetricName, Timer> timers;
+		private final long timestamp;
 
-		public MetricsOutputStreamHandler(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters, Map<MetricName, Histogram> histograms, Map<MetricName, Meter> meters, Map<MetricName, Timer> timers) {
+		public MetricsOutputStreamHandler(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters, Map<MetricName, Histogram> histograms, Map<MetricName, Meter> meters, Map<MetricName, Timer> timers, long timestamp) {
 			this.gauges = gauges;
 			this.counters = counters;
 			this.histograms = histograms;
 			this.meters = meters;
 			this.timers = timers;
+			this.timestamp = timestamp;
 		}
 
 		@Override
 		public void withHttpURLConnection(OutputStream os) throws IOException {
-			String bulkAction = ElasticsearchClient.getBulkHeader("index", STAGEMONITOR_METRICS_INDEX_PREFIX + StringUtils.getLogstashStyleDate(), METRICS_TYPE);
-			byte[] bulkActionBytes = bulkAction.getBytes("UTF-8");
-			reportMetrics(gauges, counters, histograms, meters, timers, os, bulkActionBytes);
+			reportMetrics(gauges, counters, histograms, meters, timers, os, timestamp);
 			os.close();
 		}
 	}
