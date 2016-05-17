@@ -312,7 +312,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 				externalRequestsIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
 		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-external-requests");
 
-		elasticsearchClient.sendKibanaDashboardAsync("kibana/Kibana3RecentRequests.json");
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}
