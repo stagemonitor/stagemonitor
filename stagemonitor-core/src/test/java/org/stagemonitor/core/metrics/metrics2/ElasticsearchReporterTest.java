@@ -58,7 +58,7 @@ public class ElasticsearchReporterTest {
 		timestamp = System.currentTimeMillis();
 		when(clock.getTime()).thenReturn(timestamp);
 		final HttpClient httpClient = mock(HttpClient.class);
-		when(httpClient.send(any(), any(), any(), any())).thenAnswer(new Answer<Integer>() {
+		when(httpClient.send(any(), any(), any(), any(), any())).thenAnswer(new Answer<Integer>() {
 			@Override
 			public Integer answer(InvocationOnMock invocation) throws Throwable {
 				HttpClient.OutputStreamHandler handler = (HttpClient.OutputStreamHandler) invocation.getArguments()[3];

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.codahale.metrics.MetricRegistry;
@@ -19,6 +18,7 @@ import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.ExecutorUtils;
 
 public final class Stagemonitor {
 
@@ -65,7 +65,7 @@ public final class Stagemonitor {
 	}
 
 	public static Future<?> startMonitoring() {
-		ExecutorService startupThread = Executors.newSingleThreadExecutor();
+		ExecutorService startupThread = ExecutorUtils.createSingleThreadDeamonPool("stagemonitor-startup", 1);
 		try {
 			return startupThread.submit(new Runnable() {
 				@Override

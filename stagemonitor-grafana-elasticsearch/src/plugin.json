@@ -1,0 +1,46 @@
+{
+  "type": "app",
+  "name": "stagemonitor Elasticsearch",
+  "id": "stagemonitor-grafana-elasticsearch",
+
+  "pages": [
+  ],
+
+  "css": {
+  },
+
+  "info": {
+    "description": "stagemonitor Elasticsearch Dashboards",
+    "author": {
+      "name": "stagemonitor",
+      "url": "http://stagemonitor.org"
+    },
+    "keywords": ["stagemonitor"],
+    "logos": {
+      "small": "img/small_logo.png",
+      "large": "img/large_logo.png"
+    },
+    "links": [
+      {"name": "Project site", "url": "http://www.stagemonitor.org/"},
+      {"name": "GitHub", "url": "https://github.com/stagemonitor/stagemonitor"},
+      {"name": "License", "url": "https://github.com/stagemonitor/stagemonitor/blob/master/LICENSE"}
+    ],
+    "screenshots": [
+      {"name": "stagemonitor Application Server dashboard", "path": "img/screenshots/applicationserver.png"},
+      {"name": "stagemonitor DB dashboard", "path": "img/screenshots/db.png"},
+      {"name": "stagemonitor EhCache dashboard", "path": "img/screenshots/ehcache.png"},
+      {"name": "stagemonitor JVM dashboard", "path": "img/screenshots/jvm.png"},
+      {"name": "stagemonitor Requests Dashboard", "path": "img/screenshots/requests.png"},
+      {"name": "stagemonitor Hosts Dashboard", "path": "img/screenshots/hosts.png"}
+    ],
+    "version": "${version}",
+    "updated": "${releaseDate}"
+  },
+
+  "includes": ${dashboards},
+
+  "dependencies": {
+    "grafanaVersion": "3.x.x",
+    "plugins": []
+  }
+}

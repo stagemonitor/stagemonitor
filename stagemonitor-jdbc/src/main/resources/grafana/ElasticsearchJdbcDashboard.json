@@ -1,13 +1,33 @@
 {
   "title": "JDBC",
   "originalTitle": "JDBC",
-  "tags": [],
+  "tags": ["stagemonitor"],
   "style": "dark",
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
   "sharedCrosshair": false,
   "rows": [
+    {
+      "title": "Documentation (click me to expand)",
+      "height": "100px",
+      "editable": true,
+      "collapse": true,
+      "panels": [
+        {
+          "title": "Documentation",
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "type": "text",
+          "isNew": true,
+          "mode": "markdown",
+          "content": "$documentation",
+          "links": [],
+          "transparent": false
+        }
+      ]
+    },
     {
       "collapse": false,
       "editable": true,
@@ -522,6 +542,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 6,
+          "leftYAxisLabel": "Queries/s",
           "legend": {
             "alignAsTable": true,
             "avg": true,
@@ -592,7 +613,7 @@
           "x-axis": true,
           "y-axis": true,
           "y_formats": [
-            "ms",
+            "short",
             "short"
           ]
         }

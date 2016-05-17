@@ -1,13 +1,33 @@
 {
   "title": "Application Server",
   "originalTitle": "Application Server",
-  "tags": [],
+  "tags": ["stagemonitor"],
   "style": "dark",
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
   "sharedCrosshair": false,
   "rows": [
+    {
+      "title": "Documentation (click me to expand)",
+      "height": "100px",
+      "editable": true,
+      "collapse": true,
+      "panels": [
+        {
+          "title": "Documentation",
+          "error": false,
+          "span": 12,
+          "editable": true,
+          "type": "text",
+          "isNew": true,
+          "mode": "markdown",
+          "content": "$documentation",
+          "links": [],
+          "transparent": false
+        }
+      ]
+    },
     {
       "collapse": false,
       "editable": true,

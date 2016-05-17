@@ -94,9 +94,9 @@ public class HttpClient {
 			if (connection != null) {
 				inputStream = connection.getErrorStream();
 				try {
-					return responseHandler.handleResponse(inputStream, getResponseCode(connection));
+					return responseHandler.handleResponse(inputStream, getResponseCode(method, url, connection));
 				} catch (IOException e1) {
-					logger.warn(e1.getMessage(), e1);
+					logger.warn("Error sending {} request to url {}: {}", method, url, e1.getMessage(), e1);
 				}
 			}
 			return null;
@@ -105,11 +105,11 @@ public class HttpClient {
 		}
 	}
 
-	private Integer getResponseCode(HttpURLConnection connection) {
+	private Integer getResponseCode(String method, String url, HttpURLConnection connection) {
 		try {
 			return connection.getResponseCode();
 		} catch (IOException e) {
-			logger.warn(e.getMessage());
+			logger.warn("Error getting response code for {} request to url {}: {}", method, url, e.getMessage(), e);
 			return null;
 		}
 	}

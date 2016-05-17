@@ -16,6 +16,8 @@
  *
  */
 
+import groovy.json.StringEscapeUtils
+
 buildscript {
 	repositories {
 		mavenCentral()
@@ -53,6 +55,7 @@ ext {
 	jacksonVersion = '2.7.2'
 	esVersion = '2.2.0'
 	byteBuddyVersion = '1.3.19'
+	getProjectsToRelease = this.&getProjectsToRelease
 }
 
 subprojects {
@@ -65,7 +68,7 @@ subprojects {
 		apply plugin: 'cobertura'
 	}
 
-	if (!project.name.contains("benchmark") && !project.name.contains("byte-buddy")) {
+	if (projectsToRelease.contains(project)) {
 		apply plugin: 'osgi'
 		apply from: "$rootDir/gradle/publish-maven.gradle"
 
@@ -123,6 +126,28 @@ subprojects {
 		}
 	}
 
+	processResources {
+		eachFile { resource ->
+			def filePath = resource.file.canonicalPath
+			def isGrafanaDashboard = filePath.endsWith(".json") && filePath.contains("grafana/") && filePath.contains("Elasticsearch") && !resource.path.contains("Grafana1")
+			if (isGrafanaDashboard) {
+				def documentationPath = filePath.replace(".json", "Documentation.md")
+				def documentationFile = new File(documentationPath)
+				if (documentationFile.exists()) {
+					def documentationContent = """$documentationFile.text
+
+---
+
+[Edit this page](https://github.com/stagemonitor/stagemonitor/edit/master/${rootProject.relativePath(documentationFile)})
+"""
+					filter { line ->
+						line.replace('$documentation', StringEscapeUtils.escapeJavaScript(documentationContent))
+					}
+				}
+			}
+		}
+	}
+
 	javadoc {
 		if (JavaVersion.current().isJava8Compatible()) {
 			options.addStringOption('Xdoclint:none', '-quiet')
@@ -145,23 +170,27 @@ release {
 	}
 }
 
-def getProjectsToTest() {
-	subprojects.findAll { !(it.toString() =~ "benchmark|buddy") }
+def getProjectsToRelease() {
+	subprojects.findAll { !(it.toString() =~ "benchmark|byte-buddy|grafana-elasticsearch") }
 }
 
-test.dependsOn << projectsToTest*.tasks*.withType(Test).flatten()
+test.dependsOn << projectsToRelease*.tasks*.withType(Test).flatten()
 
 if (!System.getProperty("java.version").startsWith("1.6.")) {
 	cobertura {
-		coverageMergeDatafiles =  projectsToTest.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
+		coverageMergeDatafiles =  projectsToRelease.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
 		coverageFormats = ['html', 'xml']
 		coverageIgnoreTrivial = true
-		coverageSourceDirs = [ projectsToTest.sourceSets.main.java.srcDirs.flatten() ]
+		coverageSourceDirs = [projectsToRelease.sourceSets.main.java.srcDirs.flatten() ]
 	}
 }
 
 task wrapper(type: Wrapper) {
 	gradleVersion = "2.12"
+}
+
+task printProjectsToTest() << {
+	println getProjectsToRelease()
 }
 
 task install
