@@ -434,6 +434,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		if (isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = getGrafanaClient();
 			grafanaClient.createElasticsearchDatasource(getElasticsearchUrl());
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchCustomMetricsDashboard.json");
 		}
 		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
 	}

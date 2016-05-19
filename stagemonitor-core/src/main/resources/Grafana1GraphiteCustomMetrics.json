@@ -355,10 +355,5 @@
     "hide": false
   },
   "refresh": "1m",
-  "tags": [
-    "server",
-    "pool",
-    "session"
-  ],
   "timezone": "browser"
 }
