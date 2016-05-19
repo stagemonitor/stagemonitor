@@ -92,7 +92,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Only report N call trees per minute")
 			.description("Limits the rate at which call trees are collected. " +
-					"Set to a value below 1 to deactivate call tree recording and to 1,000,000 or higher to always collect.")
+					"Set to a value below 1 to deactivate call tree recording and to 1000000 or higher to always collect.")
 			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
@@ -181,7 +181,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Only report N requests per minute to ES")
 			.description("Limits the rate at which request traces are reported to Elasticsearch. " +
-					"Set to a value below 1 to deactivate ES reporting and to 1,000,000 or higher to always report.")
+					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
 			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
@@ -268,8 +268,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Only report N external requests per minute to ES")
 			.description("Limits the rate at which external request traces are reported to Elasticsearch. " +
-					"Set to a value below 1 to deactivate ES reporting and to 1,000,000 or higher to always report.")
-			.defaultValue(1000000d)
+					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
+			.defaultValue(0d)
 			.tags("external-requests")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
@@ -316,11 +316,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/StagemonitorRequestsIndexPattern.bulk");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/RequestDashboard.bulk");
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchExternalRequestsDashboard.json");
+		}
+		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/StagemonitorRequestsIndexPattern.bulk");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/RequestAnalysis.bulk");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/WebAnalytics.bulk");
-			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/ExternalRequests.bulk");
+
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-requests-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",

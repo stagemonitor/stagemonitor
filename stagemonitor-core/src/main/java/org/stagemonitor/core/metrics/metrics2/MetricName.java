@@ -31,12 +31,17 @@ public class MetricName {
 		this.tags = tags;
 	}
 
+	/**
+	 * Returns a copy of this name and appends a single tag
+	 * <p/>
+	 * Note that this method does not override existing tags
+	 *
+	 * @param key   the key of the tag
+	 * @param value the value of the tag
+	 * @return a copy of this name including the provided tag
+	 */
 	public MetricName withTag(String key, String value) {
-		return withTags(Collections.singletonMap(key, value));
-	}
-
-	public MetricName withTags(Map<String, String> prefixTags) {
-		return name(name).tags(prefixTags).tags(this.tags).build();
+		return name(name).tags(this.tags).tags(Collections.singletonMap(key, value)).build();
 	}
 
 	public static Builder name(String name) {

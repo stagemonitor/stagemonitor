@@ -40,10 +40,12 @@ public class ExternalRequest {
 		this.requestTrace = requestTrace;
 	}
 
+	@JsonProperty("request_id")
 	public String getRequestTraceId() {
 		return requestTrace.getId();
 	}
 
+	@JsonProperty("request_name")
 	public String getRequestTraceName() {
 		return requestTrace.getName();
 	}
@@ -82,6 +84,7 @@ public class ExternalRequest {
 		return executionTimeNanos;
 	}
 
+	@JsonProperty("execution_time")
 	public double getExecutionTime() {
 		return executionTimeNanos / MS_IN_NANOS;
 	}

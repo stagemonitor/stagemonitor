@@ -2,6 +2,8 @@
 
 This dashboards allows the observation of the applications response timing.
 
+To analyze the individual requests go to the corresponding Kibana dashboard: <http://your-kibana-host:5601/app/kibana#/dashboard/Request-Analysis>.
+
 ## Response Time
 This panel contains the percentiles of all response timings.
 The p99 percentile is the time, below which 99% of the request times will be.

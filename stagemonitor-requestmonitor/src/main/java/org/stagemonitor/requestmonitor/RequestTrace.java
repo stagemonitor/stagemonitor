@@ -2,7 +2,6 @@ package org.stagemonitor.requestmonitor;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -58,7 +57,6 @@ public class RequestTrace {
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
 	@JsonIgnore
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
-	@JsonIgnore
 	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 	@JsonIgnore
 	private List<ExternalRequest> externalRequests = new LinkedList<ExternalRequest>();

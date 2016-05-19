@@ -3,7 +3,8 @@
   "order" : 1,
   "settings" : {
     "index" : {
-      "refresh_interval" : "5s"
+      "refresh_interval" : "5s",
+      "query.default_field": "name"
     }
   },
   "mappings": {

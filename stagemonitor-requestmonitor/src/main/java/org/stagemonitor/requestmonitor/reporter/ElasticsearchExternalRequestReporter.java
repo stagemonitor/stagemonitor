@@ -94,19 +94,24 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 			return;
 		}
 		final long duration = externalRequest.getExecutionTimeNanos();
-		corePlugin.getMetricRegistry().timer(name(externalRequest.getRequestType())
-						.tag("signature", "All")
-						.tag("method", externalRequest.getRequestMethod()).build())
+		corePlugin.getMetricRegistry()
+				.timer(getExternalRequestTimerName(externalRequest, "All"))
 				.update(duration, TimeUnit.NANOSECONDS);
 		if (externalRequest.getExecutedBy() != null) {
-			corePlugin.getMetricRegistry().timer(getExternalRequestTimerName(externalRequest))
+			corePlugin.getMetricRegistry()
+					.timer(getExternalRequestTimerName(externalRequest))
 					.update(duration, TimeUnit.NANOSECONDS);
 		}
 	}
 
 	public static MetricName getExternalRequestTimerName(ExternalRequest externalRequest) {
-		return name(externalRequest.getRequestType())
-				.tag("signature", externalRequest.getExecutedBy())
+		return getExternalRequestTimerName(externalRequest, externalRequest.getExecutedBy());
+	}
+
+	public static MetricName getExternalRequestTimerName(ExternalRequest externalRequest, String signature) {
+		return name("external_request_response_time")
+				.type(externalRequest.getRequestType())
+				.tag("signature", signature)
 				.tag("method", externalRequest.getRequestMethod()).build();
 	}
 

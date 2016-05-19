@@ -1,6 +1,6 @@
 {
-  "title": "JDBC",
-  "originalTitle": "JDBC",
+  "title": "External Requests",
+  "originalTitle": "External Requests",
   "tags": ["stagemonitor"],
   "style": "dark",
   "timezone": "browser",
@@ -131,13 +131,13 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance",
+              "query": "name: external_request_response_time AND type: $Type AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance",
               "alias": "{{field}}"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "JDBC Response Time",
+          "title": "Response Time",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -215,7 +215,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: external_request_response_time AND type: $Type AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -317,7 +317,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: external_request_response_time AND type: $Type AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -412,7 +412,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: external_requests_rate AND !request_name: All AND type: jdbc AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: external_requests_rate AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -509,7 +509,7 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Time to get Connection (p95)",
+          "title": "Time to get JDBC Connection (p95)",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -599,7 +599,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: jdbc AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "query": "name: external_request_response_time AND type: $Type AND !signature: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,
@@ -704,12 +704,25 @@
         "allFormat": "lucene",
         "multi": false,
         "multiFormat": "lucene",
-        "query": "{\"find\": \"terms\", \"field\": \"signature\", \"query\": \"name: jdbc\"}",
+        "query": "{\"find\": \"terms\", \"field\": \"signature\", \"query\": \"name: external_request_response_time\"}",
         "current": {
           "text": "All",
           "value": "All"
         },
         "refresh": true
+      },
+      {
+        "type": "query",
+        "datasource": "ES stagemonitor",
+        "refresh_on_load": false,
+        "name": "Type",
+        "includeAll": false,
+        "allFormat": "lucene",
+        "multi": false,
+        "multiFormat": "lucene",
+        "query": "{\"find\": \"terms\", \"field\": \"type\", \"query\": \"name: external_request_response_time\"}",
+        "refresh": true,
+        "label": "Request Type"
       }
     ]
   },
