@@ -59,10 +59,10 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-external-requests*/_search").get("hits");
 		assertEquals(1, hits.get("total").intValue());
 		final JsonNode requestTraceJson = hits.get("hits").elements().next().get("_source");
-		assertEquals("jdbc", requestTraceJson.get("requestType").asText());
-		assertEquals("SELECT", requestTraceJson.get("requestMethod").asText());
-		assertEquals(1.0d, requestTraceJson.get("executionTime").asDouble(), 0.0000001);
+		assertEquals("jdbc", requestTraceJson.get("request_type").asText());
+		assertEquals("SELECT", requestTraceJson.get("request_method").asText());
+		assertEquals(1.0d, requestTraceJson.get("execution_time").asDouble(), 0.0000001);
 		assertEquals("SELECT * from STAGEMONITOR", requestTraceJson.get("request").asText());
-		assertEquals("ElasticsearchExternalRequestTraceReporterIntegrationTest#test", requestTraceJson.get("executedBy").asText());
+		assertEquals("ElasticsearchExternalRequestTraceReporterIntegrationTest#test", requestTraceJson.get("executed_by").asText());
 	}
 }
