@@ -1,7 +1,5 @@
 package org.stagemonitor.jdbc.p6spy;
 
-import java.util.concurrent.TimeUnit;
-
 import com.p6spy.engine.logging.Category;
 import com.p6spy.engine.spy.appender.P6Logger;
 import org.stagemonitor.core.Stagemonitor;
@@ -46,7 +44,7 @@ public class StagemonitorP6Logger implements P6Logger {
 		if (StringUtils.isNotEmpty(prepared)) {
 			sql = getSql(prepared, sql);
 			String method = sql.substring(0, sql.indexOf(' ')).toUpperCase();
-			final ExternalRequest jdbcRequest = new ExternalRequest("jdbc", method, Math.max(TimeUnit.MILLISECONDS.toNanos(elapsed), 1), sql);
+			final ExternalRequest jdbcRequest = new ExternalRequest("jdbc", method, elapsed, sql);
 			requestMonitor.trackExternalRequest(jdbcRequest);
 			requestTrace.addRequestAttribute(externalRequestAttribute, jdbcRequest);
 		}

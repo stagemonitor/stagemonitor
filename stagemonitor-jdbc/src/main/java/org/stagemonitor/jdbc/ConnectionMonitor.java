@@ -47,7 +47,8 @@ public class ConnectionMonitor {
 		final Map<String, String> p6SpyOptions = getP6SpyOptions();
 		final boolean p6SpyAlreadyConfigured = !StringUtils.isEmpty(p6SpyOptions.get(P6SpyOptions.DRIVER_NAMES));
 		if (p6SpyAlreadyConfigured) {
-			logger.warn("It seems like you already have p6spy configured. Using p6spy and stagemonitor is not supported. " +
+			logger.warn("It seems like you already have p6spy configured. Using p6spy standalone in combination with " +
+					"stagemonitor is currently not supported. Feel free to create an issue if this is important to you. " +
 					"You won't be able to see SQL queries in the call tree.");
 		}
 		if (!p6SpyAlreadyConfigured && ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class))) {
@@ -57,6 +58,7 @@ public class ConnectionMonitor {
 				// this avoids that spy.log is being created
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.JMX, Boolean.FALSE.toString());
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.APPENDER, StagemonitorP6Logger.class.getName());
+				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.USE_NANO_TIME, Boolean.TRUE.toString());
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6LogOptions.EXCLUDECATEGORIES, "info,debug,batch");
 				// p6spy might already been initialized
 				// for example, wildfily loads all drivers and thus the P6SpyDriver on startup
