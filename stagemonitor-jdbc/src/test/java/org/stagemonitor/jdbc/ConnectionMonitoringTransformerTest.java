@@ -108,8 +108,8 @@ public class ConnectionMonitoringTransformerTest {
 		requestInformation.getRequestTraceReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
-		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("method", "SELECT").tag("signature", "All").build()));
-		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("method", "SELECT").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").tag("method", "SELECT").build()));
 		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
 		assertEquals("testRecordSqlPreparedStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executePreparedStatement()",
@@ -131,8 +131,8 @@ public class ConnectionMonitoringTransformerTest {
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		final String message = timers.keySet().toString();
 		assertTrue(message, timers.size() > 1);
-		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("method", "SELECT").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executeStatement").build()).getCount());
-		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("method", "SELECT").tag("signature", "All").build()).getCount());
+		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executeStatement").tag("method", "SELECT").build()).getCount());
+		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()).getCount());
 		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executeStatement()",
