@@ -1,7 +1,9 @@
 package org.stagemonitor.core.metrics.metrics2;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -17,27 +19,29 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
 public class MetricName {
 
 	private String influxDbLineProtocolString;
+	private int hashCode;
 
 	private final String name;
 
-	// The insertion order is important for the correctness of #toGraphiteName
-	private final LinkedHashMap<String, String> tags;
+	private final List<String> tagKeys;
+	private final List<String> tagValues;
 
-	private MetricName(String name, LinkedHashMap<String, String> tags) {
+	private MetricName(String name, List<String> tagKeys, List<String> tagValues) {
 		this.name = name;
-		this.tags = tags;
+		this.tagKeys = Collections.unmodifiableList(tagKeys);
+		this.tagValues = Collections.unmodifiableList(tagValues);
 	}
 
 	public MetricName withTag(String key, String value) {
-		return withTags(Collections.singletonMap(key, value));
-	}
-
-	public MetricName withTags(Map<String, String> prefixTags) {
-		return name(name).tags(prefixTags).tags(this.tags).build();
+		return name(name).tags(tagKeys, tagValues).tag(key, value).build();
 	}
 
 	public static Builder name(String name) {
 		return new Builder(name);
+	}
+
+	public static Builder name(String name, int estimatedTagSize) {
+		return new Builder(name, estimatedTagSize);
 	}
 
 	public String getName() {
@@ -45,7 +49,19 @@ public class MetricName {
 	}
 
 	public Map<String, String> getTags() {
+		final Map<String, String> tags = new LinkedHashMap<String, String>();
+		for (int i = 0; i < tagKeys.size(); i++) {
+			tags.put(tagKeys.get(i), tagValues.get(i));
+		}
 		return Collections.unmodifiableMap(tags);
+	}
+
+	public List<String> getTagKeys() {
+		return tagKeys;
+	}
+
+	public List<String> getTagValues() {
+		return tagValues;
 	}
 
 	/**
@@ -55,32 +71,43 @@ public class MetricName {
 	 */
 	public String toGraphiteName() {
 		StringBuilder sb = new StringBuilder(GraphiteSanitizer.sanitizeGraphiteMetricSegment(name));
-		for (String value : tags.values()) {
+		for (String value : tagValues) {
 			sb.append('.').append(GraphiteSanitizer.sanitizeGraphiteMetricSegment(value));
 		}
 		return sb.toString();
 	}
 
+	/**
+	 * A {@link MetricName} is only considered equal to another {@link MetricName} if the tags are in the same order.
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (!(o instanceof MetricName)) return false;
+		if (o == null || getClass() != o.getClass()) return false;
 
 		MetricName that = (MetricName) o;
 
-		return name.equals(that.name) && tags.equals(that.tags);
+		if (!name.equals(that.name)) return false;
+		if (!tagKeys.equals(that.tagKeys)) return false;
+		return tagValues.equals(that.tagValues);
+
 	}
 
 	@Override
 	public int hashCode() {
-		int result = name.hashCode();
-		result = 31 * result + tags.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = name.hashCode();
+			result = 31 * result + tagKeys.hashCode();
+			result = 31 * result + tagValues.hashCode();
+			hashCode = result;
+		}
 		return result;
 	}
 
 	public boolean matches(MetricName other) {
 		if (name.equals(other.name)) {
-			return containsAllTags(other.tags);
+			return containsAllTags(other.getTags());
 		} else {
 			return false;
 		}
@@ -88,7 +115,7 @@ public class MetricName {
 
 	private boolean containsAllTags(Map<String, String> tags) {
 		for (Map.Entry<String, String> entry : tags.entrySet()) {
-			if (!entry.getValue().equals(this.tags.get(entry.getKey()))) {
+			if (!entry.getValue().equals(this.getTags().get(entry.getKey()))) {
 				return false;
 			}
 		}
@@ -99,58 +126,69 @@ public class MetricName {
 
 		private final String name;
 
-		private final LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>(8);
+		private final List<String> tagKeys;
+		private final List<String> tagValues;
 
 		public Builder(String name) {
+			this(name, 6);
+		}
+
+		public Builder(String name, int estimatedTagSize) {
 			this.name = name;
+			tagKeys = new ArrayList<String>(estimatedTagSize);
+			tagValues = new ArrayList<String>(estimatedTagSize);
 		}
 
 		public Builder tag(String key, Object value) {
-			this.tags.put(key, value.toString());
+			this.tagKeys.add(key);
+			this.tagValues.add(value.toString());
 			return this;
 		}
 
 		public Builder type(String value) {
-			this.tags.put("type", value);
-			return this;
+			return tag("type", value);
 		}
 
 		public Builder tier(String value) {
-			this.tags.put("tier", value);
-			return this;
+			return tag("tier", value);
 		}
 
 		public Builder layer(String value) {
-			this.tags.put("layer", value);
-			return this;
+			return tag("layer", value);
 		}
 
 		public Builder unit(String value) {
-			this.tags.put("unit", value);
-			return this;
+			return tag("unit", value);
 		}
 
 		public Builder tags(Map<String, String> tags) {
-			this.tags.putAll(tags);
+			this.tagKeys.addAll(tags.keySet());
+			this.tagValues.addAll(tags.values());
+			return this;
+		}
+
+		public Builder tags(List<String> tagKeys, List<String> tagValues) {
+			this.tagKeys.addAll(tagKeys);
+			this.tagValues.addAll(tagValues);
 			return this;
 		}
 
 		public MetricName build() {
-			return new MetricName(name, tags);
+			return new MetricName(name, tagKeys, tagValues);
 		}
 
 	}
 
 	@Override
 	public String toString() {
-		return "name='" + name + '\'' + ", tags=" + tags;
+		return "name='" + name + '\'' + ", tags=" + getTags();
 	}
 
 	public String getInfluxDbLineProtocolString() {
 		if (influxDbLineProtocolString == null) {
-			final StringBuilder sb = new StringBuilder(name.length() + tags.size() * 16 + tags.size());
+			final StringBuilder sb = new StringBuilder(name.length() + tagKeys.size() * 16 + tagKeys.size());
 			sb.append(escapeForInfluxDB(name));
-			appendTags(sb, tags);
+			appendTags(sb, getTags());
 			influxDbLineProtocolString = sb.toString();
 		}
 		return influxDbLineProtocolString;

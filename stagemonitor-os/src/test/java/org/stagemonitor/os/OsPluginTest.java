@@ -123,24 +123,24 @@ public class OsPluginTest {
 	public void testNetworkMetrics() throws Exception {
 		final String ifname = sigar.getNetRouteList()[0].getIfname();
 
-		assertTrue(getLongGauge(name("network_io").type("read").unit("bytes").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_io").type("read").unit("packets").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_io").type("read").unit("errors").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_io").type("read").unit("dropped").tag("ifname", ifname).build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").tag("ifname", ifname).type("read").unit("bytes").build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").tag("ifname", ifname).type("read").unit("packets").build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").tag("ifname", ifname).type("read").unit("errors").build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").tag("ifname", ifname).type("read").unit("dropped").build()) >= 0);
 
-		assertTrue(getLongGauge(name("network_io").type("write").unit("bytes").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_io").type("write").unit("packets").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_io").type("write").unit("errors").tag("ifname", ifname).build()) >= 0);
-		assertTrue(getLongGauge(name("network_io").type("write").unit("dropped").tag("ifname", ifname).build()) >= -1);
+		assertTrue(getLongGauge(name("network_io").tag("ifname", ifname).type("write").unit("bytes").build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").tag("ifname", ifname).type("write").unit("packets").build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").tag("ifname", ifname).type("write").unit("errors").build()) >= 0);
+		assertTrue(getLongGauge(name("network_io").tag("ifname", ifname).type("write").unit("dropped").build()) >= -1);
 	}
 
 	@Test
 	@ExcludeOnTravis
 	public void testFileSystemUsage() throws Exception {
 		String mountPoint = getFirstMountPoint();
-		assertEquals(getLongGauge(name("disk_usage").type("total").tag("mountpoint", mountPoint).build()),
-				getLongGauge(name("disk_usage").type("free").tag("mountpoint", mountPoint).build()) +
-						getLongGauge(name("disk_usage").type("used").tag("mountpoint", mountPoint).build()));
+		assertEquals(getLongGauge(name("disk_usage").tag("mountpoint", mountPoint).type("total").build()),
+				getLongGauge(name("disk_usage").tag("mountpoint", mountPoint).type("free").build()) +
+						getLongGauge(name("disk_usage").tag("mountpoint", mountPoint).type("used").build()));
 	}
 
 	private String getFirstMountPoint() throws SigarException {
@@ -160,8 +160,8 @@ public class OsPluginTest {
 		String mountPoint = getFirstMountPoint();
 		assertTrue(metricRegistry.getGauges().keySet().toString(), getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) >= 0);
 		assertTrue(getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) <= 100);
-		assertTrue(getLongGauge(name("disk_io").type("read").tag("mountpoint", mountPoint).build()) >= 0);
-		assertTrue(getLongGauge(name("disk_io").type("write").tag("mountpoint", mountPoint).build()) >= 0);
+		assertTrue(getLongGauge(name("disk_io").tag("mountpoint", mountPoint).type("read").build()) >= 0);
+		assertTrue(getLongGauge(name("disk_io").tag("mountpoint", mountPoint).type("write").build()) >= 0);
 		assertTrue(getDoubleGauge(name("disk_queue").tag("mountpoint", mountPoint).build()) >= -1);
 	}
 
@@ -179,7 +179,7 @@ public class OsPluginTest {
 
 	private Object getGauge(MetricName gaugeName) {
 		final Gauge gauge = metricRegistry.getGauges().get(gaugeName);
-		assertNotNull(gaugeName + " not found", gauge);
+		assertNotNull(gaugeName + " not found in: " + metricRegistry.getGauges(), gauge);
 		return gauge.getValue();
 	}
 }
