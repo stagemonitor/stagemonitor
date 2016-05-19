@@ -3,7 +3,8 @@
   "order" : 1,
   "settings" : {
     "index" : {
-      "refresh_interval" : "5s"
+      "refresh_interval" : "5s",
+      "query.default_field": "name"
     }
   },
   "mappings": {
@@ -53,10 +54,8 @@
         "exceptionClass":      {"type": "string",  "index": "not_analyzed", "doc_values": true},
         "exceptionMessage":    {"type": "string",  "index": "not_analyzed", "doc_values": true},
         "exceptionStackTrace": {"type": "string",  "index": "not_analyzed", "doc_values": true},
-        "executionCountDb":    {"type": "integer", "doc_values": true},
         "executionTime":       {"type": "integer", "doc_values": true},
         "executionTimeCpu":    {"type": "integer", "doc_values": true},
-        "executionTimeDb":     {"type": "integer", "doc_values": true},
         "method":              {"type": "string",  "index": "not_analyzed", "doc_values": true},
         "name":                {"type": "string",  "analyzer": "standard",
                                  "fields": { "raw": {"type": "string", "index": "not_analyzed", "doc_values": true}}},
@@ -66,7 +65,13 @@
         "statusCode":          {"type": "integer", "doc_values": true},
         "url":                 {"type": "string",  "analyzer": "standard",
                                  "fields": { "raw": {"type": "string", "index": "not_analyzed", "doc_values": true}}},
-        "username":            {"type": "string",  "index": "not_analyzed", "doc_values": true}
+        "username":            {"type": "string",  "index": "not_analyzed", "doc_values": true},
+          "externalRequestStats":{"type": "nested", "properties": {
+            "requestType":       {"type": "string",  "index": "not_analyzed", "doc_values": true},
+            "executionCount":    {"type": "integer", "doc_values": true},
+            "executionTime":     {"type": "double", "doc_values": true}
+          }
+        }
       }
     }
   }

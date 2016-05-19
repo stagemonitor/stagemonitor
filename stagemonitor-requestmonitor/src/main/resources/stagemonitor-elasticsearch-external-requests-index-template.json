@@ -1,0 +1,41 @@
+{
+  "template": "stagemonitor-external-requests-*",
+  "order" : 1,
+  "settings" : {
+    "index" : {
+      "refresh_interval" : "5s",
+      "query.default_field": "request"
+    }
+  },
+  "mappings": {
+    "_default_": {
+      "dynamic_templates" : [
+        {
+          "string_fields" : {
+            "match" : "*",
+            "match_mapping_type" : "string",
+            "mapping" : {
+              "type": "string", "index" : "not_analyzed", "ignore_above" : 256, "doc_values": true}
+            }
+        }
+      ],
+      "_all":                  { "enabled": false },
+      "properties": {
+        "@timestamp":          {"type": "date",    "doc_values": true},
+        "measurement_start":   {"type": "date",    "doc_values": true},
+        "request_id":          {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "application":         {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "host":                {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "instance":            {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "request_name":        {"type": "string",  "analyzer": "standard",
+                                 "fields": { "raw": {"type": "string", "index": "not_analyzed", "doc_values": true}}},
+        "request_type":        {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "request_method":      {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "execution_time":      {"type": "float",   "doc_values": true},
+        "executed_by":         {"type": "string",  "index": "not_analyzed", "doc_values": true},
+        "request":             {"type": "string",  "analyzer": "standard",
+                                 "fields": { "raw": {"type": "string", "index": "not_analyzed", "doc_values": true}}}
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@
 		{{#each metrics}}
 		<tr class="{{#if exceededThreshold}}danger{{/if}}">
 			<td class="col-sm-6">{{name}} {{#if description}}<span class="tip glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right" title="{{description}}"></span>{{/if}}</td>
-			<td class="col-sm-6">{{value}}</td>
+			<td class="col-sm-6">{{breaklines value}}</td>
 		</tr>
 		{{/each}}
 		</tbody>

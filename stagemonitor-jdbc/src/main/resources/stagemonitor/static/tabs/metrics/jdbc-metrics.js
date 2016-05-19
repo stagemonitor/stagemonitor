@@ -9,43 +9,43 @@
 				columns: [
 					{
 						metricCategory: "timers",
-						metricPathRegex: /jdbc_statement.(.+)/,
+						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metric: "m1_rate",
 						title: "Requests/s"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /jdbc_statement.(.+)/,
+						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metric: "max",
 						title: "Max"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /jdbc_statement.(.+)/,
+						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metric: "mean",
 						title: "Mean"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /jdbc_statement.(.+)/,
+						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metric: "min",
 						title: "Min"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /jdbc_statement.(.+)/,
+						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metric: "p50",
 						title: "p50"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /jdbc_statement.(.+)/,
+						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metric: "p95",
 						title: "p95"
 					},
 					{
 						metricCategory: "timers",
-						metricPathRegex: /jdbc_statement.(.+)/,
+						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metric: "stddev",
 						title: "Std. Dev."
 					}
@@ -60,7 +60,7 @@
 								format: 'ms',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "timers", metricPathRegex: "jdbc_statement.(${rowName})", metric: "mean" }
+									{ metricCategory: "timers", metricPathRegex: "external_request_response_time.jdbc.(${rowName})", metric: "mean" }
 								]
 							}
 						},
@@ -71,7 +71,7 @@
 								format: 'requests/sec',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "timers", metricPathRegex: "jdbc_statement.(${rowName})", metric: "m1_rate"}
+									{ metricCategory: "timers", metricPathRegex: "external_request_response_time.jdbc.(${rowName})", metric: "m1_rate"}
 								]
 							}
 						}

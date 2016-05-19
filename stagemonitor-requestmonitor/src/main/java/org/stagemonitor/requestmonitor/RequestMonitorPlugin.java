@@ -92,7 +92,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Only report N call trees per minute")
 			.description("Limits the rate at which call trees are collected. " +
-					"Set to a value below 1 to deactivate call tree recording and to 1,000,000 or higher to always collect.")
+					"Set to a value below 1 to deactivate call tree recording and to 1000000 or higher to always collect.")
 			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
@@ -114,10 +114,10 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
-			.key("stagemonitor.jdbc.collectDbTimePerRequest")
+			.key("stagemonitor.requestmonitor.collectExternalRequestTimePerRequest")
 			.dynamic(true)
-			.label("Collect db time per request group")
-			.description("Whether or not db execution time should be collected per request group\n" +
+			.label("Collect external request time per request group")
+			.description("Whether or not the execution time of external should be collected per request group\n" +
 					"If set to true, a timer will be created for each request to record the total db time per request.")
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
@@ -181,13 +181,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Only report N requests per minute to ES")
 			.description("Limits the rate at which request traces are reported to Elasticsearch. " +
-					"Set to a value below 1 to deactivate ES reporting and to 1,000,000 or higher to always report.")
+					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
 			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchRequestTraceReports = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.onlyLogElasticsearchRequestTraceReports")
-			.dynamic(false)
+			.dynamic(true)
 			.label("Only log Elasticsearch request trace reports")
 			.description(String.format("If set to true, the request traces won't be reported to elasticsearch but instead logged in bulk format. " +
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
@@ -245,13 +245,55 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<String> requestIndexTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.requestIndexTemplate")
-			.dynamic(true)
+			.dynamic(false)
 			.label("ES Request Index Template")
 			.description("The classpath location of the index template that is used for the stagemonitor-requests-* indices. " +
 					"By specifying the location to your own template, you can fully customize the index template.")
 			.defaultValue("stagemonitor-elasticsearch-request-index-template.json")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("elasticsearch")
+			.build();
+	private final ConfigurationOption<String> externalRequestsIndexTemplate = ConfigurationOption.stringOption()
+			.key("stagemonitor.requestmonitor.elasticsearch.externalRequestsIndexTemplate")
+			.dynamic(false)
+			.label("ES External Requests Index Template")
+			.description("The classpath location of the index template that is used for the stagemonitor-external-requests-* indices. " +
+					"By specifying the location to your own template, you can fully customize the index template.")
+			.defaultValue("stagemonitor-elasticsearch-external-requests-index-template.json")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.tags("elasticsearch")
+			.build();
+	private final ConfigurationOption<Double> onlyReportNExternalRequestsPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
+			.dynamic(true)
+			.label("Only report N external requests per minute to ES")
+			.description("Limits the rate at which external request traces are reported to Elasticsearch. " +
+					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
+			.defaultValue(0d)
+			.tags("external-requests")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> excludeExternalRequestsWhenFasterThanXPercent = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsWhenFasterThanXPercent")
+			.dynamic(true)
+			.label("Exclude external requests from reporting on x% of the fastest external requests")
+			.description("Exclude the external request from Elasticsearch report when the request was faster faster than x " +
+					"percent of external requests with the same initiator (executedBy). This helps to reduce the network and disk overhead " +
+					"as uninteresting external requests (those which are comparatively fast) are excluded." +
+					"Example: set to 1 to always exclude the external request and to 0 to always include it. " +
+					"With a setting of 0.85, the external request will only be reported for the slowest 25% of the requests.")
+			.defaultValue(0d)
+			.tags("external-requests")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> excludeExternalRequestsFasterThan = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsFasterThan")
+			.dynamic(true)
+			.label("Exclude external requests from reporting when faster than x ms")
+			.description("Exclude the external request from Elasticsearch report when the request was faster faster than x ms.")
+			.defaultValue(0d)
+			.tags("external-requests")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 
 	private static RequestMonitor requestMonitor;
@@ -261,20 +303,32 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
+
+		final String requestsMappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
 				requestIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
-		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-requests");
-		elasticsearchClient.sendKibanaDashboardAsync("kibana/Kibana3RecentRequests.json");
+		elasticsearchClient.sendMappingTemplateAsync(requestsMappingJson, "stagemonitor-requests");
+
+		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
+				externalRequestsIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
+		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-external-requests");
+
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendBulkAsync("kibana/StagemonitorRequestsIndexPattern.bulk");
-			elasticsearchClient.sendBulkAsync("kibana/RequestDashboard.bulk");
-			elasticsearchClient.sendBulkAsync("kibana/RequestAnalysis.bulk");
-			elasticsearchClient.sendBulkAsync("kibana/WebAnalytics.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/RequestDashboard.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
+			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchExternalRequestsDashboard.json");
+		}
+		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/StagemonitorRequestsIndexPattern.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/RequestAnalysis.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/WebAnalytics.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/ExternalRequests.bulk");
+
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-requests-",
+					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
+			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
 	}
@@ -404,5 +458,17 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public Collection<String> getIgnoreExceptions() {
 		return ignoreExceptions.getValue();
+	}
+
+	public double getOnlyReportNExternalRequestsPerMinute() {
+		return onlyReportNExternalRequestsPerMinute.getValue();
+	}
+
+	public double getExcludeExternalRequestsWhenFasterThanXPercent() {
+		return excludeExternalRequestsWhenFasterThanXPercent.getValue();
+	}
+
+	public double getExcludeExternalRequestsFasterThan() {
+		return excludeExternalRequestsFasterThan.getValue();
 	}
 }

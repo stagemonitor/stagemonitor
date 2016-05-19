@@ -1,2 +1,3 @@
 org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter
 org.stagemonitor.requestmonitor.reporter.LogRequestTraceReporter
+org.stagemonitor.requestmonitor.reporter.ElasticsearchExternalRequestReporter

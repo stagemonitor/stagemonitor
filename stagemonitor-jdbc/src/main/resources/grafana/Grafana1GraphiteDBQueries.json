@@ -25,7 +25,7 @@
 				{
 					"type": "filter",
 					"name": "query",
-					"query": "stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.*",
+					"query": "stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.*",
 					"includeAll": false,
 					"current": {
 						"text": "All",
@@ -124,19 +124,19 @@
 					},
 					"targets": [
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.[[query]].p95),'p95')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.[[query]].p95),'p95')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.[[query]].p75),'p75')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.[[query]].p75),'p75')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.[[query]].p50),'p50')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.[[query]].p50),'p50')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.[[query]].mean),'avg')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.[[query]].mean),'avg')"
 						},
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.[[query]].min),'min')"
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.[[query]].min),'min')"
 						}
 					],
 					"aliasColors": {
@@ -232,7 +232,7 @@
 					},
 					"targets": [
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.[[query]].m1_rate),'total')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.[[query]].m1_rate),'total')"
 						}
 					],
 					"aliasColors": {
@@ -312,7 +312,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.*.p75,'All'),5,'avg'),5)"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.*.p75,'All'),6,'avg'),5)"
 						}
 					],
 					"aliasColors": {},
@@ -373,7 +373,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].jdbc_statement.*.m1_rate,'All'),5,'sum'),5)"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].external_request_response_time.jdbc.*.m1_rate,'All'),6,'sum'),5)"
 						}
 					],
 					"aliasColors": {},
@@ -435,7 +435,7 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].jdbc_query_rate.*.m1_rate,'All'),5,'avg'),5)"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].external_requests_rate.*.external_request_response_time.jdbc.m1_rate,'All'),5,'avg'),5)"
 						}
 					],
 					"aliasColors": {},

@@ -1,5 +1,6 @@
 package org.stagemonitor.requestmonitor.reporter;
 
+import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 class RateLimitingPreExecutionInterceptor extends PreExecutionRequestTraceReporterInterceptor {
@@ -9,9 +10,7 @@ class RateLimitingPreExecutionInterceptor extends PreExecutionRequestTraceReport
 		final double maxReportingRate = context.getConfig(RequestMonitorPlugin.class)
 				.getOnlyReportNRequestsPerMinuteToElasticsearch();
 
-		if (maxReportingRate <= 0) {
-			context.shouldNotReport(getClass());
-		} else if (60 * context.getReportingRate().getOneMinuteRate() > maxReportingRate) {
+		if (MetricUtils.isRateLimitExceeded(maxReportingRate, context.getReportingRate())) {
 			context.shouldNotReport(getClass());
 		}
 	}

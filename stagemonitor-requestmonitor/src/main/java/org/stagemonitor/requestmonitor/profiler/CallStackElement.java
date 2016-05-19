@@ -123,6 +123,10 @@ public class CallStackElement {
 		return net;
 	}
 
+	public void incrementExecutionTime(long additionalExecutionTime) {
+		executionTime += additionalExecutionTime;
+	}
+
 	public List<CallStackElement> getChildren() {
 		return children;
 	}

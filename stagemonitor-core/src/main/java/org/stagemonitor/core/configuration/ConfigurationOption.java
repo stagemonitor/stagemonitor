@@ -266,6 +266,16 @@ public class ConfigurationOption<T> {
 		return value;
 	}
 
+	/**
+	 * Returns the current value
+	 *
+	 * @return the current value
+	 */
+	@JsonIgnore
+	public T get() {
+		return value;
+	}
+
 	void setConfigurationSources(List<ConfigurationSource> configurationSources) {
 		this.configurationSources = configurationSources;
 		loadValue();

@@ -51,7 +51,7 @@
 					},
 					{
 						metricCategory: "meters",
-						metricPathRegex: /jdbc_query_rate.([^\.]+)/,
+						metricPathRegex: /external_requests_rate.([^\.]+).jdbc/,
 						metric: "m1_rate",
 						title: "SQLs/sec"
 					}

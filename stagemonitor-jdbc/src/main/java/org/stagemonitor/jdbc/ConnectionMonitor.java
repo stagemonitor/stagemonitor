@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
+import com.p6spy.engine.logging.P6LogOptions;
 import com.p6spy.engine.spy.P6Core;
-import com.p6spy.engine.spy.P6SpyLoadableOptions;
 import com.p6spy.engine.spy.P6SpyOptions;
 import com.p6spy.engine.spy.option.EnvironmentVariables;
 import com.p6spy.engine.spy.option.SpyDotProperties;
@@ -27,7 +27,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.jdbc.p6spy.P6SpyMultiLogger;
 import org.stagemonitor.jdbc.p6spy.StagemonitorP6Logger;
 
 public class ConnectionMonitor {
@@ -48,7 +47,8 @@ public class ConnectionMonitor {
 		final Map<String, String> p6SpyOptions = getP6SpyOptions();
 		final boolean p6SpyAlreadyConfigured = !StringUtils.isEmpty(p6SpyOptions.get(P6SpyOptions.DRIVER_NAMES));
 		if (p6SpyAlreadyConfigured) {
-			logger.warn("It seems like you already have p6spy configured. Using p6spy and stagemonitor is not supported. " +
+			logger.warn("It seems like you already have p6spy configured. Using p6spy standalone in combination with " +
+					"stagemonitor is currently not supported. Feel free to create an issue if this is important to you. " +
 					"You won't be able to see SQL queries in the call tree.");
 		}
 		if (!p6SpyAlreadyConfigured && ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class))) {
@@ -57,13 +57,13 @@ public class ConnectionMonitor {
 				// set p6spy options before p6spy is initialized
 				// this avoids that spy.log is being created
 				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.JMX, Boolean.FALSE.toString());
-				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.APPENDER, P6SpyMultiLogger.class.getName());
-				P6SpyMultiLogger.addLogger(new StagemonitorP6Logger(configuration, this.metricRegistry));
-				P6SpyLoadableOptions options = P6SpyOptions.getActiveInstance();
+				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.APPENDER, StagemonitorP6Logger.class.getName());
+				System.setProperty(SystemProperties.P6SPY_PREFIX + P6SpyOptions.USE_NANO_TIME, Boolean.TRUE.toString());
+				System.setProperty(SystemProperties.P6SPY_PREFIX + P6LogOptions.EXCLUDECATEGORIES, "info,debug,batch");
 				// p6spy might already been initialized
 				// for example, wildfily loads all drivers and thus the P6SpyDriver on startup
 				// which happens before stagemonitor's initialisation
-				options.setAppender(P6SpyMultiLogger.class.getName());
+				P6SpyOptions.getActiveInstance().reload();
 				P6Core.initialize();
 			}
 		} else {
