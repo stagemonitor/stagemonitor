@@ -63,3 +63,6 @@ stagemonitor-requestmonitor/src/main/java/org/stagemonitor/requestmonitor/utils/
 
 This product includes code derived from https://github.com/raphw/weak-lock-free/, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-core/src/main/java/org/stagemonitor/core/instrument/WeakConcurrentMap.java
+
+This product includes code derived from https://github.com/prometheus/client_java/blob/master/simpleclient_dropwizard/src/main/java/io/prometheus/client/dropwizard/DropwizardExports.java, which is available under the "Apache 2.0" license. For details, see
+stagemonitor-core/src/main/java/org/stagemonitor/core/metrics/prometheus/StagemonitorPrometheusCollector.java

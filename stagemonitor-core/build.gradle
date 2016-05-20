@@ -8,6 +8,7 @@ dependencies {
 	compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"
 	compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
 	compile "net.bytebuddy:byte-buddy-agent:$byteBuddyVersion"
+	provided "io.prometheus:simpleclient:0.0.14"
 	provided project(":stagemonitor-dispatcher")
 
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"

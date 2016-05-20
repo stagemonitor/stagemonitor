@@ -57,6 +57,8 @@ public class MetricName {
 	 * After adding tags with {@link Builder#tag(String, Object)}, call {@link Builder#build()} to get the
 	 * immutable {@link MetricName}
 	 * <p/>
+	 * The metric name should only contain alphanumerical chars and underscores.
+	 * <p/>
 	 * When in doubt how to name a metic, take a look at https://prometheus.io/docs/practices/naming/
 	 *
 	 * @param name the metric name
@@ -165,6 +167,13 @@ public class MetricName {
 			tagValues = new ArrayList<String>(estimatedTagSize);
 		}
 
+		/**
+		 * Adds a tag to the metric name.
+		 *
+		 * @param key The key should only contain alphanumerical chars and underscores.
+		 * @param value The value can contain unicode characters, but it is recommended to not use white spaces.
+		 * @return <code>this</code> for chaining
+		 */
 		public Builder tag(String key, Object value) {
 			this.tagKeys.add(key);
 			this.tagValues.add(value.toString());
