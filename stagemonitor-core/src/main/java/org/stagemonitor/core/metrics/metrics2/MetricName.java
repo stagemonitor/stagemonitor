@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import org.stagemonitor.core.util.GraphiteSanitizer;
 
@@ -26,7 +25,6 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
  */
 public class MetricName {
 
-	private String influxDbLineProtocolString;
 	private int hashCode;
 
 	private final String name;
@@ -210,35 +208,6 @@ public class MetricName {
 	@Override
 	public String toString() {
 		return "name='" + name + '\'' + ", tags=" + getTags();
-	}
-
-	public String getInfluxDbLineProtocolString() {
-		if (influxDbLineProtocolString == null) {
-			final StringBuilder sb = new StringBuilder(name.length() + tagKeys.size() * 16 + tagKeys.size());
-			sb.append(escapeForInfluxDB(name));
-			appendTags(sb, getTags());
-			influxDbLineProtocolString = sb.toString();
-		}
-		return influxDbLineProtocolString;
-	}
-
-	public static String getInfluxDbTags(Map<String, String> tags) {
-		final StringBuilder sb = new StringBuilder();
-		appendTags(sb, tags);
-		return sb.toString();
-	}
-
-	private static void appendTags(StringBuilder sb, Map<String, String> tags) {
-		for (String key : new TreeSet<String>(tags.keySet())) {
-			sb.append(',').append(escapeForInfluxDB(key)).append('=').append(escapeForInfluxDB(tags.get(key)));
-		}
-	}
-
-	private static String escapeForInfluxDB(String s) {
-		if (s.indexOf(',') != -1 || s.indexOf(' ') != -1) {
-			return s.replace(" ", "\\ ").replace(",", "\\,");
-		}
-		return s;
 	}
 
 }

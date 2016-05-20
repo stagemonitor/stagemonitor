@@ -5,6 +5,8 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -19,6 +21,7 @@ import org.stagemonitor.core.util.HttpClient;
 public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 
 	private static final int MAX_BATCH_SIZE = 5000;
+	private static final Map<MetricName, String> metricNameToInfluxDBFormatCache = new ConcurrentHashMap<MetricName, String>();
 
 	private List<String> batchLines = new ArrayList<String>(MAX_BATCH_SIZE);
 	private final String globalTags;
@@ -31,7 +34,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 
 	private InfluxDbReporter(Builder builder) {
 		super(builder);
-		this.globalTags = MetricName.getInfluxDbTags(builder.getGlobalTags());
+		this.globalTags = getInfluxDbTags(builder.getGlobalTags());
 		this.httpClient = builder.getHttpClient();
 		this.corePlugin = builder.getCorePlugin();
 	}
@@ -58,7 +61,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		for (Map.Entry<MetricName, Gauge> entry : gauges.entrySet()) {
 			final String value = getGaugeValueForInfluxDb(entry.getValue().getValue());
 			if (value != null) {
-				reportLine(entry.getKey().getInfluxDbLineProtocolString(), value, timestamp);
+				reportLine(getInfluxDbLineProtocolString(entry.getKey()), value, timestamp);
 			}
 		}
 	}
@@ -66,7 +69,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 	private void reportCounter(Map<MetricName, Counter> counters, long timestamp) {
 		for (Map.Entry<MetricName, Counter> entry : counters.entrySet()) {
 			final Counter counter = entry.getValue();
-			reportLine(entry.getKey().getInfluxDbLineProtocolString(),
+			reportLine(getInfluxDbLineProtocolString(entry.getKey()),
 					"count=" + getIntegerValue(counter.getCount()), timestamp);
 		}
 	}
@@ -75,7 +78,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		for (Map.Entry<MetricName, Histogram> entry : histograms.entrySet()) {
 			final Histogram hist = entry.getValue();
 			final Snapshot snapshot = hist.getSnapshot();
-			reportLine(entry.getKey().getInfluxDbLineProtocolString(),
+			reportLine(getInfluxDbLineProtocolString(entry.getKey()),
 					"count=" + getIntegerValue(hist.getCount()) + ","
 							+ reportSnapshot(snapshot), timestamp);
 		}
@@ -84,7 +87,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 	private void reportMeters(Map<MetricName, Meter> meters, long timestamp) {
 		for (Map.Entry<MetricName, Meter> entry : meters.entrySet()) {
 			final Meter meter = entry.getValue();
-			reportLine(entry.getKey().getInfluxDbLineProtocolString(), reportMetered(meter), timestamp);
+			reportLine(getInfluxDbLineProtocolString(entry.getKey()), reportMetered(meter), timestamp);
 		}
 	}
 
@@ -92,7 +95,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		for (Map.Entry<MetricName, Timer> entry : timers.entrySet()) {
 			final Timer timer = entry.getValue();
 			final Snapshot snapshot = timer.getSnapshot();
-			reportLine(entry.getKey().getInfluxDbLineProtocolString(),
+			reportLine(getInfluxDbLineProtocolString(entry.getKey()),
 					reportMetered(timer) + ","
 							+ reportSnapshot(snapshot), timestamp);
 		}
@@ -206,5 +209,36 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		public CorePlugin getCorePlugin() {
 			return corePlugin;
 		}
+	}
+
+	public static String getInfluxDbLineProtocolString(MetricName metricName) {
+		String influxDbString = metricNameToInfluxDBFormatCache.get(metricName);
+		if (influxDbString == null) {
+			final StringBuilder sb = new StringBuilder(metricName.getName().length() + metricName.getTagKeys().size() * 16 + metricName.getTagKeys().size());
+			sb.append(escapeForInfluxDB(metricName.getName()));
+			appendTags(sb, metricName.getTags());
+			influxDbString = sb.toString();
+			metricNameToInfluxDBFormatCache.put(metricName, influxDbString);
+		}
+		return influxDbString;
+	}
+
+	private static String getInfluxDbTags(Map<String, String> tags) {
+		final StringBuilder sb = new StringBuilder();
+		appendTags(sb, tags);
+		return sb.toString();
+	}
+
+	private static void appendTags(StringBuilder sb, Map<String, String> tags) {
+		for (String key : new TreeSet<String>(tags.keySet())) {
+			sb.append(',').append(escapeForInfluxDB(key)).append('=').append(escapeForInfluxDB(tags.get(key)));
+		}
+	}
+
+	private static String escapeForInfluxDB(String s) {
+		if (s.indexOf(',') != -1 || s.indexOf(' ') != -1) {
+			return s.replace(" ", "\\ ").replace(",", "\\,");
+		}
+		return s;
 	}
 }

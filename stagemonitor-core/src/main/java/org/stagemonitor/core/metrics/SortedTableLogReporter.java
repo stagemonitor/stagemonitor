@@ -20,11 +20,18 @@ import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 
 public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
+
+	private static final int CONSOLE_WIDTH = 80;
+
+	private final Locale locale;
+	private final Logger log;
+
 	/**
 	 * Returns a new {@link SortedTableLogReporter.Builder} for {@link SortedTableLogReporter}.
 	 *
@@ -75,11 +82,6 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 			return new SortedTableLogReporter(this);
 		}
 	}
-
-	private static final int CONSOLE_WIDTH = 80;
-
-	private final Locale locale;
-	private final Logger log;
 
 	private SortedTableLogReporter(Builder builder) {
 		super(builder);
@@ -135,7 +137,7 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 				}
 			});
 			for (Map.Entry<MetricName, Gauge> entry : sortedGauges.entrySet()) {
-				printGauge(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
+				printGauge(InfluxDbReporter.getInfluxDbLineProtocolString(entry.getKey()), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
@@ -153,7 +155,7 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 				}
 			});
 			for (Map.Entry<MetricName, Counter> entry : sortedCounters.entrySet()) {
-				printCounter(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
+				printCounter(InfluxDbReporter.getInfluxDbLineProtocolString(entry.getKey()), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
@@ -171,7 +173,7 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 				}
 			});
 			for (Map.Entry<MetricName, Histogram> entry : sortedHistograms.entrySet()) {
-				printHistogram(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
+				printHistogram(InfluxDbReporter.getInfluxDbLineProtocolString(entry.getKey()), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
@@ -189,7 +191,7 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 				}
 			});
 			for (Map.Entry<MetricName, Meter> entry : sortedMeters.entrySet()) {
-				printMeter(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
+				printMeter(InfluxDbReporter.getInfluxDbLineProtocolString(entry.getKey()), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
@@ -206,7 +208,7 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 				}
 			});
 			for (Map.Entry<MetricName, Timer> entry : sortedTimers.entrySet()) {
-				printTimer(entry.getKey().getInfluxDbLineProtocolString(), entry.getValue(), maxLength, sb);
+				printTimer(InfluxDbReporter.getInfluxDbLineProtocolString(entry.getKey()), entry.getValue(), maxLength, sb);
 			}
 			sb.append('\n');
 		}
@@ -230,8 +232,8 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 	private static int getMaxLengthOfKeys(Map<MetricName, ?> map) {
 		int maxLength = -1;
 		for (MetricName n : map.keySet()) {
-			if (n.getInfluxDbLineProtocolString().length() > maxLength) {
-				maxLength = n.getInfluxDbLineProtocolString().length();
+			if (InfluxDbReporter.getInfluxDbLineProtocolString(n).length() > maxLength) {
+				maxLength = InfluxDbReporter.getInfluxDbLineProtocolString(n).length();
 			}
 		}
 		return maxLength;

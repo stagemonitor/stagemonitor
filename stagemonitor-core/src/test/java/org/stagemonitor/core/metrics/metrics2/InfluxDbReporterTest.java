@@ -3,6 +3,7 @@ package org.stagemonitor.core.metrics.metrics2;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -168,5 +169,29 @@ public class InfluxDbReporterTest {
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
 				eq(singletonList(format("response_time,app=test count=1i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
+	}
+
+	@Test
+	public void testGetInfluxDbStringOrderedTags() throws Exception {
+		assertEquals("cpu_usage,core=1,level=user",
+				InfluxDbReporter.getInfluxDbLineProtocolString(name("cpu_usage").tag("level", "user").tag("core", "1").build()));
+	}
+
+	@Test
+	public void testGetInfluxDbStringWhiteSpace() throws Exception {
+		assertEquals("cpu\\ usage,level=soft\\ irq",
+				InfluxDbReporter.getInfluxDbLineProtocolString(name("cpu usage").tag("level", "soft irq").build()));
+	}
+
+	@Test
+	public void testGetInfluxDbStringNoTags() throws Exception {
+		assertEquals("cpu_usage",
+				InfluxDbReporter.getInfluxDbLineProtocolString(name("cpu_usage").build()));
+	}
+
+	@Test
+	public void testGetInfluxDbStringAllEscapingAndQuotingBehavior() throws Exception {
+		assertEquals("\"measurement\\ with\\ quotes\",tag\\ key\\ with\\ spaces=tag\\,value\\,with\"commas\"",
+				InfluxDbReporter.getInfluxDbLineProtocolString(name("\"measurement with quotes\"").tag("tag key with spaces", "tag,value,with\"commas\"").build()));
 	}
 }
