@@ -11,13 +11,18 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
 
 /**
  * Represents a metrics 2.0 name that consists of a name and arbitrary tags (a set of key-value-pairs).
- * </p>
+ * <p/>
+ * To create a new {@link MetricName}, use the static {@link MetricName}.{@link #name(String)} method. Example:
+ * <code>name("api_request_duration").tag("stage", "transform").build()</code>
+ * <p/>
  * This is needed for example for InfluxDB's data model (see https://influxdb.com/docs/v0.9/concepts/schema_and_data_layout.html)
  * and to store metrics into Elasticsearch (see https://www.elastic.co/blog/elasticsearch-as-a-time-series-data-store).
  * See also http://metrics20.org/
- * </p>
+ * <p/>
  * The cool thing is that it is completely backwards compatible to graphite metric names and can also automatically
  * replace characters disallowed in graphite (see {@link #toGraphiteName()}).
+ * <p/>
+ * This class is immutable
  */
 public class MetricName {
 
@@ -48,6 +53,17 @@ public class MetricName {
 		return name(name).tags(tagKeys, tagValues).tag(key, value).build();
 	}
 
+	/**
+	 * Constructs a new {@link Builder} with the provided name.
+	 * <p/>
+	 * After adding tags with {@link Builder#tag(String, Object)}, call {@link Builder#build()} to get the
+	 * immutable {@link MetricName}
+	 * <p/>
+	 * When in doubt how to name a metic, take a look at https://prometheus.io/docs/practices/naming/
+	 *
+	 * @param name the metric name
+	 * @return a {@link Builder} with the provided name
+	 */
 	public static Builder name(String name) {
 		return new Builder(name);
 	}
