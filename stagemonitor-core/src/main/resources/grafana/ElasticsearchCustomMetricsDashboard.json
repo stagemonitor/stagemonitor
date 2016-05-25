@@ -152,32 +152,43 @@
           "id": 2,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "avg",
-                  "id": "1",
-                  "field": "value",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
-              "dsType": "elasticsearch",
+              "alias": "{{term name}}",
               "bucketAggs": [
                 {
-                  "type": "date_histogram",
+                  "type": "terms",
+                  "field": "name",
+                  "id": "3",
+                  "fake": true,
+                  "settings": {
+                    "order": "asc",
+                    "size": "0",
+                    "orderBy": "_term"
+                  }
+                },
+                {
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
                     "interval": "auto",
                     "min_doc_count": 0,
                     "trimEdges": 0
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
-              "timeField": "@timestamp",
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "value",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                }
+              ],
               "query": "name: gauge_*  AND application: $Application AND host: $Host AND instance: $Instance",
-              "alias": ""
+              "refId": "A",
+              "timeField": "@timestamp"
             }
           ],
           "datasource": "ES stagemonitor",
