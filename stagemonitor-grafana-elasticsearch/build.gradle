@@ -50,15 +50,16 @@ def getDashboardsJson() {
         def relativeOriginalDashboardPath = originalDashboardPath.replace(rootDir.canonicalPath + '/', '')
         def projectName = relativeOriginalDashboardPath.substring(0, relativeOriginalDashboardPath.indexOf("/"));
 
-        dashboards.add([
+        dashboards << [
             'type': "dashboard",
             'name': slurper.parseText(it.text).title,
             'path': relativePathToDashboard,
-            'stagemonitorPlugin': projectName
-        ])
+            'stagemonitorPlugin': projectName,
+            'revision': project.version
+        ]
     }
 
-    return JsonOutput.toJson(dashboards)
+    return JsonOutput.prettyPrint(JsonOutput.toJson(dashboards))
 }
 
 task addDashboardsToPluginJson(dependsOn: collectDashboards) << {

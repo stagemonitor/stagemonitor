@@ -1,7 +1,9 @@
 {
   "title": "Request Metrics",
   "originalTitle": "Request Metrics",
-  "tags": ["stagemonitor"],
+  "tags": [
+    "stagemonitor"
+  ],
   "style": "dark",
   "timezone": "browser",
   "editable": true,
@@ -9,24 +11,24 @@
   "sharedCrosshair": false,
   "rows": [
     {
-      "title": "Documentation (click me to expand)",
-      "height": "250px",
-      "editable": true,
       "collapse": true,
+      "editable": true,
+      "height": "250px",
       "panels": [
         {
-          "title": "Documentation",
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "type": "text",
-          "isNew": true,
-          "mode": "markdown",
           "content": "$documentation",
-          "links": []
+          "editable": true,
+          "error": false,
+          "isNew": true,
+          "links": [],
+          "mode": "markdown",
+          "span": 12,
+          "title": "Documentation",
+          "type": "text"
         }
       ],
-      "showTitle": false
+      "showTitle": false,
+      "title": "Documentation (click me to expand)"
     },
     {
       "collapse": false,
@@ -35,11 +37,13 @@
       "panels": [
         {
           "aliasColors": {
-            "median": "#0A437C",
+            "max": "#0A50A1",
+            "median": "#1F78C1",
             "p25": "#052B51",
-            "p75": "#1F78C1",
-            "p95": "#5195CE",
-            "p99": "#64B0C8"
+            "p75": "#447EBC",
+            "p95": "#64B0C8",
+            "p99": "#5195CE",
+            "p999": "#1F78C1"
           },
           "bars": false,
           "datasource": "ES stagemonitor",
@@ -82,57 +86,87 @@
           "steppedLine": false,
           "targets": [
             {
+              "alias": "{{field}}",
               "bucketAggs": [
                 {
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
                   },
                   "type": "date_histogram"
                 }
               ],
               "metrics": [
                 {
-                  "field": "p99",
+                  "type": "max",
+                  "field": "max",
+                  "id": "7",
+                  "settings": {},
+                  "meta": {}
+                },
+                {
+                  "field": "p999",
                   "id": "1",
                   "meta": {},
-                  "settings": {},
-                  "type": "avg"
+                  "settings": {
+                    "percents": [
+                      "99.9"
+                    ]
+                  },
+                  "type": "percentiles"
+                },
+                {
+                  "field": "p99",
+                  "id": "3",
+                  "meta": {},
+                  "settings": {
+                    "percents": [
+                      "99"
+                    ]
+                  },
+                  "type": "percentiles"
                 },
                 {
                   "field": "p95",
-                  "id": "3",
+                  "id": "4",
                   "meta": {},
-                  "settings": {},
-                  "type": "avg"
+                  "settings": {
+                    "percents": [
+                      "95"
+                    ]
+                  },
+                  "type": "percentiles"
                 },
                 {
                   "field": "p75",
-                  "id": "4",
+                  "id": "5",
                   "meta": {},
-                  "settings": {},
-                  "type": "avg"
+                  "settings": {
+                    "percents": [
+                      "75"
+                    ]
+                  },
+                  "type": "percentiles"
                 },
                 {
                   "field": "median",
-                  "id": "5",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                },
-                {
-                  "field": "p25",
                   "id": "6",
                   "meta": {},
-                  "settings": {},
-                  "type": "avg"
+                  "settings": {
+                    "percents": [
+                      "50"
+                    ]
+                  },
+                  "type": "percentiles"
                 }
               ],
               "query": "name: response_time_$Time AND layer: All AND request_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "B",
               "timeField": "@timestamp",
-              "alias": "{{field}}"
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -140,7 +174,8 @@
           "title": "Response Time",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -148,7 +183,28 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 10,
+              "min": 10,
+              "max": null,
+              "format": "ms"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         },
         {
           "aliasColors": {
@@ -197,39 +253,40 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "avg",
-                  "id": "1",
-                  "field": "m1_rate",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "http_code",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "size": "5",
-                    "orderBy": "1"
-                  }
+                    "orderBy": "1",
+                    "size": "5"
+                  },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
+              "metrics": [
+                {
+                  "field": "m1_rate",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                }
+              ],
+              "query": "name: request_throughput AND request_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "A",
               "timeField": "@timestamp",
-              "query": "name: request_throughput AND request_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance"
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -237,7 +294,8 @@
           "title": "Throughput by Status",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -245,7 +303,28 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": 0,
+              "max": null,
+              "format": "short"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         }
       ],
       "title": "Row"
@@ -299,39 +378,42 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "avg",
-                  "id": "1",
-                  "field": "median",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "request_name",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "size": "5",
-                    "orderBy": "1"
-                  }
+                    "orderBy": "1",
+                    "size": "5"
+                  },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
+              "metrics": [
+                {
+                  "field": "median",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                }
+              ],
+              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "A",
               "timeField": "@timestamp",
-              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -339,7 +421,8 @@
           "title": "Slowest Requests (Median)",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -347,7 +430,28 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": 0,
+              "max": null,
+              "format": "ms"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         },
         {
           "aliasColors": {},
@@ -393,39 +497,40 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "avg",
-                  "id": "1",
-                  "field": "m1_rate",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "request_name",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "size": "5",
-                    "orderBy": "1"
-                  }
+                    "orderBy": "1",
+                    "size": "5"
+                  },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
+              "metrics": [
+                {
+                  "field": "m1_rate",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                }
+              ],
+              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "A",
               "timeField": "@timestamp",
-              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -433,7 +538,8 @@
           "title": "Highest Throughput",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -441,7 +547,28 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": 0,
+              "max": null,
+              "format": "short"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         }
       ],
       "title": "New row"
@@ -495,39 +622,40 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "avg",
-                  "id": "1",
-                  "field": "p95",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "request_name",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "size": "5",
-                    "orderBy": "1"
-                  }
+                    "orderBy": "1",
+                    "size": "5"
+                  },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
+              "metrics": [
+                {
+                  "field": "p95",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                }
+              ],
+              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "A",
               "timeField": "@timestamp",
-              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -535,7 +663,8 @@
           "title": "Slowest Requests (p95)",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -543,7 +672,28 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": 0,
+              "max": null,
+              "format": "ms"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         },
         {
           "aliasColors": {},
@@ -589,39 +739,40 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "avg",
-                  "id": "1",
-                  "field": "m1_rate",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "request_name",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "desc",
-                    "size": "5",
-                    "orderBy": "1"
-                  }
+                    "orderBy": "1",
+                    "size": "5"
+                  },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
+              "metrics": [
+                {
+                  "field": "m1_rate",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                }
+              ],
+              "query": "name: error_rate_server AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "A",
               "timeField": "@timestamp",
-              "query": "name: error_rate_server AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -629,7 +780,8 @@
           "title": "Most Errors",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -637,7 +789,28 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": 0,
+              "max": null,
+              "format": "short"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         }
       ],
       "title": "New row"
@@ -696,39 +869,40 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "avg",
-                  "id": "1",
-                  "field": "mean",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "layer",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "_term"
-                  }
+                    "orderBy": "_term",
+                    "size": "0"
+                  },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
+              "metrics": [
+                {
+                  "field": "mean",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "avg"
+                }
+              ],
+              "query": "name: response_time_rum AND request_name: All AND !layer: All AND application: $Application AND host: $Host AND instance: $Instance",
+              "refId": "A",
               "timeField": "@timestamp",
-              "query": "name: response_time_rum AND request_name: All AND !layer: All AND application: $Application AND host: $Host AND instance: $Instance"
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -736,7 +910,8 @@
           "title": "Page Load Time Breakdown",
           "tooltip": {
             "shared": true,
-            "value_type": "individual"
+            "value_type": "individual",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -744,7 +919,28 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": 0,
+              "max": null,
+              "format": "ms"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         }
       ],
       "title": "New row"
@@ -790,92 +986,116 @@
       {
         "allFormat": "lucene",
         "datasource": "ES stagemonitor",
+        "hide": 0,
         "includeAll": false,
         "multi": false,
         "multiFormat": "lucene",
         "name": "Application",
         "query": "{\"find\": \"terms\", \"field\": \"application\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
         "type": "query"
       },
       {
-        "type": "query",
+        "allFormat": "lucene",
         "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
+        "includeAll": true,
+        "multi": true,
+        "multiFormat": "lucene",
         "name": "Host",
-        "includeAll": true,
-        "allFormat": "lucene",
-        "multi": true,
-        "multiFormat": "lucene",
         "query": "{\"find\": \"terms\", \"field\": \"host\"}",
-        "refresh": true
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query"
       },
       {
-        "type": "query",
-        "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
-        "name": "Instance",
-        "includeAll": true,
         "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "includeAll": true,
         "multi": true,
         "multiFormat": "lucene",
+        "name": "Instance",
         "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
-        "refresh": true
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query"
       },
       {
-        "type": "query",
-        "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
-        "name": "Request",
-        "includeAll": false,
         "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "includeAll": false,
         "multi": false,
         "multiFormat": "lucene",
+        "name": "Request",
         "query": "{\"find\": \"terms\", \"field\": \"request_name\"}",
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query",
+        "useTags": false,
         "current": {
           "text": "All",
           "value": "All"
-        },
-        "useTags": false,
-        "refresh": true
+        }
       },
       {
-        "type": "custom",
+        "allFormat": "glob",
+        "current": {
+          "tags": [],
+          "text": "Server",
+          "value": "server"
+        },
         "datasource": null,
-        "refresh_on_load": false,
+        "includeAll": false,
+        "multi": false,
+        "multiFormat": "glob",
         "name": "Time",
         "options": [
           {
+            "selected": false,
             "text": "Server",
-            "value": "server",
-            "selected": false
+            "value": "server"
           },
           {
+            "selected": true,
             "text": "Real User Monitoring",
-            "value": "rum",
-            "selected": true
+            "value": "rum"
           }
         ],
-        "includeAll": false,
-        "allFormat": "glob",
-        "multi": false,
-        "multiFormat": "glob",
         "query": "server, rum",
+        "refresh_on_load": false,
+        "type": "custom"
+      },
+      {
+        "auto": true,
+        "auto_count": 200,
+        "auto_min": "60s",
         "current": {
-          "text": "Server",
-          "value": "server",
-          "tags": []
-        }
-      }
-    ]
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "Interval",
+        "options": [
+          {
+            "selected": true,
+            "text": "auto",
+            "value": "$__auto_interval"
+          }
+        ],
+        "query": "",
+        "refresh": 0,
+        "type": "interval",
+        "allFormat": "glob"
+      }    ]
   },
   "annotations": {
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 7,
-  "version": 5,
+  "schemaVersion": 12,
   "links": []
 }

@@ -1,7 +1,9 @@
 {
   "title": "EhCache",
   "originalTitle": "EhCache",
-  "tags": ["stagemonitor"],
+  "tags": [
+    "stagemonitor"
+  ],
   "style": "dark",
   "timezone": "browser",
   "editable": true,
@@ -9,24 +11,24 @@
   "sharedCrosshair": false,
   "rows": [
     {
-      "title": "Documentation (click me to expand)",
-      "height": "100px",
-      "editable": true,
       "collapse": true,
+      "editable": true,
+      "height": "100px",
       "panels": [
         {
-          "title": "Documentation",
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "type": "text",
-          "isNew": true,
-          "mode": "markdown",
           "content": "$documentation",
+          "editable": true,
+          "error": false,
+          "isNew": true,
           "links": [],
-          "transparent": false
+          "mode": "markdown",
+          "span": 12,
+          "title": "Documentation",
+          "transparent": false,
+          "type": "text"
         }
-      ]
+      ],
+      "title": "Documentation (click me to expand)"
     },
     {
       "collapse": false,
@@ -56,13 +58,13 @@
           "interval": ">10s",
           "leftYAxisLabel": "",
           "legend": {
-            "avg": false,
+            "avg": true,
             "current": false,
             "max": false,
             "min": false,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -94,7 +96,9 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
                   },
                   "type": "date_histogram"
                 }
@@ -110,7 +114,8 @@
               ],
               "query": "name: cache_hit_ratio AND tier: All AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -118,7 +123,8 @@
           "title": "Cache Hit Rate (worst 10)",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -126,7 +132,28 @@
           "y_formats": [
             "percent",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": 0,
+              "max": 100,
+              "format": "percent"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         },
         {
           "aliasColors": {},
@@ -152,11 +179,11 @@
           "legend": {
             "avg": false,
             "current": false,
-            "max": false,
+            "max": true,
             "min": false,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -188,7 +215,7 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
@@ -204,7 +231,8 @@
               ],
               "query": "name: cache_size_bytes AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -212,7 +240,8 @@
           "title": "Cache Size (highest 10)",
           "tooltip": {
             "shared": true,
-            "value_type": "individual"
+            "value_type": "individual",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -220,7 +249,28 @@
           "y_formats": [
             "bytes",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": 0,
+              "max": null,
+              "format": "bytes"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         }
       ],
       "title": "Row"
@@ -253,13 +303,13 @@
           "interval": ">10s",
           "leftYAxisLabel": "Gets/Sec",
           "legend": {
-            "avg": false,
+            "avg": true,
             "current": false,
             "max": false,
             "min": false,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -291,7 +341,7 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
@@ -307,7 +357,8 @@
               ],
               "query": "name: cache_get tier: All AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -315,7 +366,8 @@
           "title": "Gets per Second (highest 10)",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -323,7 +375,28 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         },
         {
           "aliasColors": {},
@@ -348,13 +421,13 @@
           "interval": ">10s",
           "leftYAxisLabel": "Expires/Sec",
           "legend": {
-            "avg": false,
+            "avg": true,
             "current": false,
             "max": false,
             "min": false,
             "show": true,
             "total": false,
-            "values": false
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -386,7 +459,7 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
@@ -402,7 +475,8 @@
               ],
               "query": "name: cache_delete AND reason: expire AND tier: All AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
-              "timeField": "@timestamp"
+              "timeField": "@timestamp",
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -410,7 +484,8 @@
           "title": "Expires per Second (highest 10)",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -418,7 +493,28 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         }
       ],
       "title": "New row"
@@ -469,34 +565,58 @@
         "multiFormat": "lucene",
         "name": "Application",
         "query": "{\"find\": \"terms\", \"field\": \"application\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
         "type": "query"
       },
       {
-        "type": "query",
-        "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
-        "name": "Host",
-        "includeAll": true,
         "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "includeAll": true,
         "multi": true,
         "multiFormat": "lucene",
+        "name": "Host",
         "query": "{\"find\": \"terms\", \"field\": \"host\"}",
-        "refresh": true
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query"
       },
       {
-        "type": "query",
-        "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
-        "name": "Instance",
-        "includeAll": true,
         "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "includeAll": true,
         "multi": true,
         "multiFormat": "lucene",
+        "name": "Instance",
         "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
-        "refresh": true
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query"
+      },
+      {
+        "auto": true,
+        "auto_count": 200,
+        "auto_min": "60s",
+        "current": {
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "Interval",
+        "options": [
+          {
+            "selected": true,
+            "text": "auto",
+            "value": "$__auto_interval"
+          }
+        ],
+        "query": "",
+        "refresh": 0,
+        "type": "interval"
       }
     ]
   },
@@ -504,7 +624,6 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 7,
-  "version": 1,
+  "schemaVersion": 12,
   "links": []
 }

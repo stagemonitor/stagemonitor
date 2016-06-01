@@ -35,11 +35,13 @@
       "panels": [
         {
           "aliasColors": {
-            "median": "#7EB26D",
-            "p25": "#9AC48A",
-            "p75": "#629E51",
-            "p95": "#508642",
-            "p99": "#3F6833"
+            "max": "#0A50A1",
+            "median": "#1F78C1",
+            "p25": "#052B51",
+            "p75": "#447EBC",
+            "p95": "#64B0C8",
+            "p99": "#5195CE",
+            "p999": "#1F78C1"
           },
           "bars": false,
           "datasource": "ES stagemonitor",
@@ -60,20 +62,20 @@
           },
           "id": 1,
           "legend": {
-            "avg": true,
-            "current": true,
+            "avg": false,
+            "current": false,
             "max": false,
             "min": false,
             "show": true,
             "total": false,
-            "values": true
+            "values": false
           },
           "lines": true,
           "linewidth": 2,
           "links": [],
           "nullPointMode": "connected",
           "percentage": false,
-          "pointradius": 5,
+          "pointradius": 1,
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
@@ -82,57 +84,87 @@
           "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "avg",
-                  "id": "1",
-                  "field": "p99",
-                  "settings": {},
-                  "meta": {}
-                },
-                {
-                  "type": "avg",
-                  "field": "p95",
-                  "id": "3",
-                  "settings": {},
-                  "meta": {}
-                },
-                {
-                  "type": "avg",
-                  "field": "p75",
-                  "id": "4",
-                  "settings": {},
-                  "meta": {}
-                },
-                {
-                  "type": "avg",
-                  "field": "median",
-                  "id": "5",
-                  "settings": {},
-                  "meta": {}
-                },
-                {
-                  "type": "avg",
-                  "field": "p25",
-                  "id": "6",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
+              "alias": "{{field}}",
               "bucketAggs": [
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
-              "timeField": "@timestamp",
+              "metrics": [
+                {
+                  "type": "max",
+                  "field": "max",
+                  "id": "7",
+                  "settings": {},
+                  "meta": {}
+                },
+                {
+                  "field": "p999",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {
+                    "percents": [
+                      "99.9"
+                    ]
+                  },
+                  "type": "percentiles"
+                },
+                {
+                  "field": "p99",
+                  "id": "3",
+                  "meta": {},
+                  "settings": {
+                    "percents": [
+                      "99"
+                    ]
+                  },
+                  "type": "percentiles"
+                },
+                {
+                  "field": "p95",
+                  "id": "4",
+                  "meta": {},
+                  "settings": {
+                    "percents": [
+                      "95"
+                    ]
+                  },
+                  "type": "percentiles"
+                },
+                {
+                  "field": "p75",
+                  "id": "5",
+                  "meta": {},
+                  "settings": {
+                    "percents": [
+                      "75"
+                    ]
+                  },
+                  "type": "percentiles"
+                },
+                {
+                  "field": "median",
+                  "id": "6",
+                  "meta": {},
+                  "settings": {
+                    "percents": [
+                      "50"
+                    ]
+                  },
+                  "type": "percentiles"
+                }
+              ],
               "query": "name: external_request_response_time AND type: $Type AND signature: $Signature AND application: $Application AND host: $Host AND instance: $Instance",
-              "alias": "{{field}}"
+              "refId": "B",
+              "timeField": "@timestamp",
+              "dsType": "elasticsearch"
             }
           ],
           "timeFrom": null,
@@ -140,7 +172,8 @@
           "title": "Response Time",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
           "x-axis": true,
@@ -148,7 +181,28 @@
           "y_formats": [
             "ms",
             "short"
-          ]
+          ],
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 10,
+              "min": 10,
+              "max": null,
+              "format": "ms"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         },
         {
           "aliasColors": {},
@@ -209,7 +263,7 @@
                   "type": "date_histogram",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "field": "@timestamp"
                 }
@@ -311,7 +365,7 @@
                   "type": "date_histogram",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "field": "@timestamp"
                 }
@@ -406,7 +460,7 @@
                   "type": "date_histogram",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "field": "@timestamp"
                 }
@@ -497,7 +551,7 @@
                   "type": "date_histogram",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "field": "@timestamp"
                 }
@@ -593,7 +647,7 @@
                   "type": "date_histogram",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "field": "@timestamp"
                 }
@@ -666,7 +720,7 @@
         "multiFormat": "lucene",
         "name": "Application",
         "query": "{\"find\": \"terms\", \"field\": \"application\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
         "type": "query"
@@ -681,7 +735,7 @@
         "multi": true,
         "multiFormat": "lucene",
         "query": "{\"find\": \"terms\", \"field\": \"host\"}",
-        "refresh": true
+        "refresh": 1
       },
       {
         "type": "query",
@@ -693,7 +747,7 @@
         "multi": true,
         "multiFormat": "lucene",
         "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
-        "refresh": true
+        "refresh": 1
       },
       {
         "type": "query",
@@ -709,7 +763,7 @@
           "text": "All",
           "value": "All"
         },
-        "refresh": true
+        "refresh": 1
       },
       {
         "type": "query",
@@ -721,8 +775,32 @@
         "multi": false,
         "multiFormat": "lucene",
         "query": "{\"find\": \"terms\", \"field\": \"type\", \"query\": \"name: external_request_response_time\"}",
-        "refresh": true,
+        "refresh": 1,
         "label": "Request Type"
+      },
+      {
+        "auto": true,
+        "auto_count": 200,
+        "auto_min": "60s",
+        "current": {
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "Interval",
+        "options": [
+          {
+            "selected": true,
+            "text": "auto",
+            "value": "$__auto_interval"
+          }
+        ],
+        "query": "",
+        "refresh": 0,
+        "type": "interval"
       }
     ]
   },
@@ -730,7 +808,7 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 7,
+  "schemaVersion": 12,
   "version": 1,
   "links": []
 }

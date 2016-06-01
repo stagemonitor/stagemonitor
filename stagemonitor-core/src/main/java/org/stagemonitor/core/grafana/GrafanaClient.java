@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -73,7 +74,7 @@ public class GrafanaClient {
 		try {
 			final ObjectNode dashboard = (ObjectNode) JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(classPathLocation));
 			dashboard.put("editable", false);
-			addMinIntervalToPanels(dashboard, ">" + corePlugin.getElasticsearchReportingInterval() + "s");
+			addMinIntervalToPanels(dashboard, corePlugin.getElasticsearchReportingInterval() + "s");
 			final String requestBody = "{\"dashboard\":" + dashboard + ",\"overwrite\": true}";
 			asyncGrafanaRequest("POST", "/api/dashboards/db", requestBody);
 		} catch (IOException e) {
@@ -85,8 +86,13 @@ public class GrafanaClient {
 		for (JsonNode row : dashboard.get("rows")) {
 			for (JsonNode panel : row.get("panels")) {
 				if (panel.has("datasource") && panel.get("datasource").asText().equals(ES_STAGEMONITOR_DS_NAME)) {
-					((ObjectNode) panel).put("interval", interval);
+					((ObjectNode) panel).put("interval", "$Interval");
 				}
+			}
+		}
+		for (JsonNode template : dashboard.get("templating").get("list")) {
+			if (template.has("name") && "Interval".equals(template.get("name").asText())) {
+				((ObjectNode) template).put("auto_min", interval);
 			}
 		}
 	}
@@ -117,6 +123,15 @@ public class GrafanaClient {
 
 	public void close() {
 		asyncRestPool.shutdown();
+	}
+
+	public void waitForCompletion() throws ExecutionException, InterruptedException {
+		// because the pool is single threaded,
+		// all previously submitted tasks are completed when this task finishes
+		asyncRestPool.submit(new Runnable() {
+			public void run() {
+			}
+		}).get();
 	}
 
 }

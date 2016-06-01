@@ -99,7 +99,7 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
@@ -199,7 +199,7 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
@@ -282,7 +282,7 @@
         "multiFormat": "lucene",
         "name": "Application",
         "query": "{\"find\": \"terms\", \"field\": \"application\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
         "type": "query"
@@ -297,7 +297,7 @@
         "multi": true,
         "multiFormat": "lucene",
         "query": "{\"find\": \"terms\", \"field\": \"host\"}",
-        "refresh": true
+        "refresh": 1
       },
       {
         "type": "query",
@@ -309,7 +309,31 @@
         "multi": true,
         "multiFormat": "lucene",
         "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
-        "refresh": true
+        "refresh": 1
+      },
+      {
+        "auto": true,
+        "auto_count": 200,
+        "auto_min": "60s",
+        "current": {
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "Interval",
+        "options": [
+          {
+            "selected": true,
+            "text": "auto",
+            "value": "$__auto_interval"
+          }
+        ],
+        "query": "",
+        "refresh": 0,
+        "type": "interval"
       }
     ]
   },
@@ -317,7 +341,7 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 7,
+  "schemaVersion": 12,
   "version": 0,
   "links": []
 }

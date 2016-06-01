@@ -1,7 +1,9 @@
 {
   "title": "JVM",
   "originalTitle": "JVM",
-  "tags": ["stagemonitor"],
+  "tags": [
+    "stagemonitor"
+  ],
   "style": "dark",
   "timezone": "browser",
   "editable": true,
@@ -9,24 +11,24 @@
   "sharedCrosshair": false,
   "rows": [
     {
-      "title": "Documentation (click me to expand)",
-      "height": "100px",
-      "editable": true,
       "collapse": true,
+      "editable": true,
+      "height": "100px",
       "panels": [
         {
-          "title": "Documentation",
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "type": "text",
-          "isNew": true,
-          "mode": "markdown",
           "content": "$documentation",
+          "editable": true,
+          "error": false,
+          "isNew": true,
           "links": [],
-          "transparent": false
+          "mode": "markdown",
+          "span": 12,
+          "title": "Documentation",
+          "transparent": false,
+          "type": "text"
         }
-      ]
+      ],
+      "title": "Documentation (click me to expand)"
     },
     {
       "collapse": false,
@@ -45,12 +47,6 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
             "threshold1": null,
             "threshold1Color": "rgba(216, 200, 27, 0.27)",
             "threshold2": null,
@@ -89,14 +85,16 @@
                     "order": "asc",
                     "orderBy": "_term",
                     "size": "0"
-                },
+                  },
                   "type": "terms"
                 },
                 {
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
                   },
                   "type": "date_histogram"
                 }
@@ -109,8 +107,8 @@
                   "meta": {},
                   "settings": {},
                   "type": "max"
-            }
-          ],
+                }
+              ],
               "query": "name: jvm_memory_heap AND !type: usage AND !type: init AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp"
@@ -121,15 +119,29 @@
           "title": "Heap Usage",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "bytes",
-            "short"
-          ]
+          "yaxes": [
+            {
+              "show": true,
+              "min": 0,
+              "max": null,
+              "logBase": 1,
+              "format": "bytes"
+            },
+            {
+              "show": true,
+              "min": null,
+              "max": null,
+              "logBase": 1,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         },
         {
           "aliasColors": {
@@ -143,12 +155,6 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
             "threshold1": null,
             "threshold1Color": "rgba(216, 200, 27, 0.27)",
             "threshold2": null,
@@ -187,14 +193,14 @@
                     "order": "asc",
                     "orderBy": "_term",
                     "size": "0"
-                },
+                  },
                   "type": "terms"
                 },
                 {
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
@@ -207,8 +213,8 @@
                   "meta": {},
                   "settings": {},
                   "type": "max"
-            }
-          ],
+                }
+              ],
               "query": "name: jvm_memory_non_heap AND !type: usage AND !type: init AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp"
@@ -219,15 +225,29 @@
           "title": "Non-Heap Usage",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "bytes",
-            "short"
-          ]
+          "yaxes": [
+            {
+              "show": true,
+              "min": 0,
+              "max": null,
+              "logBase": 1,
+              "format": "bytes"
+            },
+            {
+              "show": true,
+              "min": null,
+              "max": null,
+              "logBase": 1,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         }
       ],
       "title": "Row"
@@ -239,18 +259,12 @@
       "panels": [
         {
           "aliasColors": {},
-          "bars": false,
+          "bars": true,
           "datasource": "ES stagemonitor",
           "editable": true,
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
             "threshold1": null,
             "threshold1Color": "rgba(216, 200, 27, 0.27)",
             "threshold2": null,
@@ -266,7 +280,7 @@
             "total": false,
             "values": false
           },
-          "lines": true,
+          "lines": false,
           "linewidth": 2,
           "links": [],
           "nullPointMode": "connected",
@@ -300,8 +314,9 @@
                   "order": "asc",
                   "orderBy": "_term",
                   "settings": {
-                    "interval": "auto",
-                    "min_doc_count": 0
+                    "interval": "$Interval",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
                   },
                   "size": "0",
                   "type": "date_histogram"
@@ -311,19 +326,19 @@
               "metrics": [
                 {
                   "field": "value",
+                  "hide": true,
                   "id": "1",
                   "meta": {},
                   "settings": {},
-                  "type": "max",
-                  "hide": true
+                  "type": "max"
                 },
                 {
-                  "type": "derivative",
                   "field": "1",
                   "id": "4",
-                  "settings": {},
                   "meta": {},
-                  "pipelineAgg": "1"
+                  "pipelineAgg": "1",
+                  "settings": {},
+                  "type": "derivative"
                 }
               ],
               "query": "name: jvm_gc_time AND application: $Application AND host: $Host AND instance: $Instance",
@@ -336,15 +351,29 @@
           "title": "GC",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "ms",
-            "short"
-          ]
+          "yaxes": [
+            {
+              "show": true,
+              "min": 0,
+              "max": null,
+              "logBase": 1,
+              "format": "ms"
+            },
+            {
+              "show": true,
+              "min": null,
+              "max": null,
+              "logBase": 1,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         },
         {
           "aliasColors": {},
@@ -354,12 +383,6 @@
           "error": false,
           "fill": 0,
           "grid": {
-            "leftLogBase": 1,
-            "leftMax": 1,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
             "threshold1": null,
             "threshold1Color": "rgba(216, 200, 27, 0.27)",
             "threshold2": null,
@@ -407,7 +430,7 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
@@ -431,15 +454,29 @@
           "title": "Memory Pools",
           "tooltip": {
             "shared": true,
-            "value_type": "cumulative"
+            "value_type": "cumulative",
+            "msResolution": false
           },
           "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "none",
-            "short"
-          ]
+          "yaxes": [
+            {
+              "show": true,
+              "min": 0,
+              "max": 1,
+              "logBase": 1,
+              "format": "none"
+            },
+            {
+              "show": true,
+              "min": null,
+              "max": null,
+              "logBase": 1,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true
+          }
         }
       ],
       "title": "New row"
@@ -490,34 +527,66 @@
         "multiFormat": "lucene",
         "name": "Application",
         "query": "{\"find\": \"terms\", \"field\": \"application\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
-        "type": "query"
+        "type": "query",
+        "hide": 0
       },
       {
-        "type": "query",
+        "allFormat": "lucene",
         "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
+        "includeAll": true,
+        "multi": true,
+        "multiFormat": "lucene",
         "name": "Host",
-        "includeAll": true,
-        "allFormat": "lucene",
-        "multi": true,
-        "multiFormat": "lucene",
         "query": "{\"find\": \"terms\", \"field\": \"host\"}",
-        "refresh": true
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query",
+        "hide": 0
       },
       {
-        "type": "query",
-        "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
-        "name": "Instance",
-        "includeAll": true,
         "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "includeAll": true,
         "multi": true,
         "multiFormat": "lucene",
+        "name": "Instance",
         "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
-        "refresh": true
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query",
+        "hide": 0
+      },
+      {
+        "auto": true,
+        "auto_count": 200,
+        "auto_min": "60s",
+        "current": {
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "Interval",
+        "options": [
+          {
+            "text": "auto",
+            "value": "$__auto_interval",
+            "selected": true
+          },
+          {
+            "text": "",
+            "value": "",
+            "selected": false
+          }
+        ],
+        "query": "",
+        "refresh": 0,
+        "type": "interval"
       }
     ]
   },
@@ -525,7 +594,6 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 8,
-  "version": 0,
+  "schemaVersion": 12,
   "links": []
 }

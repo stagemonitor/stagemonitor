@@ -1,7 +1,9 @@
 {
   "title": "Custom Metrics",
   "originalTitle": "Custom Metrics",
-  "tags": ["stagemonitor"],
+  "tags": [
+    "stagemonitor"
+  ],
   "style": "dark",
   "timezone": "browser",
   "editable": true,
@@ -17,6 +19,7 @@
           "content": "$documentation",
           "editable": true,
           "error": false,
+          "id": 5,
           "isNew": true,
           "links": [],
           "mode": "markdown",
@@ -29,147 +32,178 @@
       "title": "Documentation (click me to expand)"
     },
     {
-      "title": "New row",
-      "height": "450px",
-      "editable": true,
       "collapse": false,
+      "editable": true,
+      "height": "450px",
       "panels": [
         {
-          "title": "Timer",
-          "error": false,
-          "span": 6,
-          "editable": true,
-          "type": "graph",
-          "isNew": true,
-          "id": 1,
-          "targets": [
-            {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "max",
-                  "id": "1",
-                  "field": "p75",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
-              "dsType": "elasticsearch",
-              "bucketAggs": [
-                {
-                  "type": "terms",
-                  "field": "signature",
-                  "id": "3",
-                  "fake": true,
-                  "settings": {
-                    "order": "asc",
-                    "size": "0",
-                    "orderBy": "_term"
-                  }
-                },
-                {
-                  "type": "date_histogram",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto",
-                    "min_doc_count": 0,
-                    "trimEdges": 0
-                  },
-                  "field": "@timestamp"
-                }
-              ],
-              "timeField": "@timestamp",
-              "query": "name: timer AND application: $Application AND host: $Host AND instance: $Instance",
-              "alias": "{{term signature}} ({{field}})"
-            }
-          ],
+          "aliasColors": {},
+          "bars": false,
           "datasource": "ES stagemonitor",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "ms"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          },
+          "editable": true,
+          "error": false,
+          "fill": 0,
           "grid": {
             "threshold1": null,
-            "threshold2": null,
             "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "msResolution": false
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "links": []
-        },
-        {
-          "title": "Gauges",
-          "error": false,
-          "span": 6,
-          "editable": true,
-          "type": "graph",
+          "id": 1,
           "isNew": true,
-          "id": 2,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
           "targets": [
             {
-              "alias": "{{term name}}",
+              "alias": "{{term signature}} ({{field}})",
               "bucketAggs": [
                 {
-                  "type": "terms",
-                  "field": "name",
-                  "id": "3",
                   "fake": true,
+                  "field": "signature",
+                  "id": "3",
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "_term"
-                  }
+                    "orderBy": "_term",
+                    "size": "0"
+                  },
+                  "type": "terms"
                 },
                 {
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto",
+                    "interval": "$Interval",
+                    "min_doc_count": 0,
+                    "trimEdges": 0
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "p75",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {
+                    "percents": [
+                      "75"
+                    ]
+                  },
+                  "type": "percentiles"
+                }
+              ],
+              "query": "name: timer AND application: $Application AND host: $Host AND instance: $Instance AND signature: $Signature",
+              "refId": "A",
+              "timeField": "@timestamp"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Timer",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "ms",
+              "label": null,
+              "logBase": 10,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "ES stagemonitor",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 2,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "{{term name}}",
+              "bucketAggs": [
+                {
+                  "fake": true,
+                  "field": "name",
+                  "id": "3",
+                  "settings": {
+                    "order": "asc",
+                    "orderBy": "_term",
+                    "size": "0"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "$Interval",
                     "min_doc_count": 0,
                     "trimEdges": 0
                   },
@@ -191,290 +225,263 @@
               "timeField": "@timestamp"
             }
           ],
-          "datasource": "ES stagemonitor",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Gauges",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
           "xaxis": {
             "show": true
           },
-          "grid": {
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "msResolution": false
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "links": []
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
         }
-      ]
+      ],
+      "title": "New row"
     },
     {
-      "title": "New row",
-      "height": "450px",
-      "editable": true,
       "collapse": false,
+      "editable": true,
+      "height": "450px",
       "panels": [
         {
-          "title": "Method invocation rate",
-          "error": false,
-          "span": 6,
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "ES stagemonitor",
           "editable": true,
-          "type": "graph",
-          "isNew": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
           "id": 3,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "max",
-                  "id": "1",
-                  "field": "m1_rate",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
-              "dsType": "elasticsearch",
+              "alias": "{{term signature}} ({{field}})",
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "signature",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "_term"
-                  }
+                    "orderBy": "_term",
+                    "size": "0"
+                  },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto",
+                    "interval": "$Interval",
                     "min_doc_count": 0,
                     "trimEdges": 0
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
-              "timeField": "@timestamp",
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "m1_rate",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "max"
+                }
+              ],
               "query": "name: rate AND application: $Application AND host: $Host AND instance: $Instance",
-              "alias": "{{term signature}} ({{field}})"
+              "refId": "A",
+              "timeField": "@timestamp"
             }
           ],
-          "datasource": "ES stagemonitor",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": "Invocations/s",
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Method invocation rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
           "xaxis": {
             "show": true
           },
-          "grid": {
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "msResolution": false
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "links": []
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Invocations/s",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
         },
         {
-          "title": "Exception rate",
-          "error": false,
-          "span": 6,
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "ES stagemonitor",
           "editable": true,
-          "type": "graph",
-          "isNew": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
           "id": 4,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
           "targets": [
             {
-              "refId": "A",
-              "metrics": [
-                {
-                  "type": "max",
-                  "id": "1",
-                  "field": "m1_rate",
-                  "settings": {},
-                  "meta": {}
-                }
-              ],
-              "dsType": "elasticsearch",
+              "alias": "{{term signature}} ({{field}})",
               "bucketAggs": [
                 {
-                  "type": "terms",
+                  "fake": true,
                   "field": "signature",
                   "id": "3",
-                  "fake": true,
                   "settings": {
                     "order": "asc",
-                    "size": "0",
-                    "orderBy": "_term"
-                  }
+                    "orderBy": "_term",
+                    "size": "0"
+                  },
+                  "type": "terms"
                 },
                 {
-                  "type": "date_histogram",
+                  "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "auto",
+                    "interval": "$Interval",
                     "min_doc_count": 0,
                     "trimEdges": 0
                   },
-                  "field": "@timestamp"
+                  "type": "date_histogram"
                 }
               ],
-              "timeField": "@timestamp",
+              "dsType": "elasticsearch",
+              "metrics": [
+                {
+                  "field": "m1_rate",
+                  "id": "1",
+                  "meta": {},
+                  "settings": {},
+                  "type": "max"
+                }
+              ],
               "query": "name: exception_rate AND application: $Application AND host: $Host AND instance: $Instance",
-              "alias": "{{term signature}} ({{field}})"
+              "refId": "A",
+              "timeField": "@timestamp"
             }
           ],
-          "datasource": "ES stagemonitor",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": "Exceptions/s",
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Exception rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
           "xaxis": {
             "show": true
           },
-          "grid": {
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "msResolution": false
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "links": []
+          "yaxes": [
+            {
+              "format": "short",
+              "label": "Exceptions/s",
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
         }
-      ]
+      ],
+      "title": "New row"
     }
   ],
   "time": {
@@ -517,39 +524,83 @@
       {
         "allFormat": "lucene",
         "datasource": "ES stagemonitor",
+        "hide": 0,
         "includeAll": false,
         "multi": false,
         "multiFormat": "lucene",
         "name": "Application",
         "query": "{\"find\": \"terms\", \"field\": \"application\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
         "type": "query"
       },
       {
-        "type": "query",
-        "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
-        "name": "Host",
-        "includeAll": true,
         "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "hide": 0,
+        "includeAll": true,
         "multi": true,
         "multiFormat": "lucene",
+        "name": "Host",
         "query": "{\"find\": \"terms\", \"field\": \"host\"}",
-        "refresh": true
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query"
       },
       {
-        "type": "query",
-        "datasource": "ES stagemonitor",
-        "refresh_on_load": false,
-        "name": "Instance",
-        "includeAll": true,
         "allFormat": "lucene",
+        "datasource": "ES stagemonitor",
+        "hide": 0,
+        "includeAll": true,
         "multi": true,
         "multiFormat": "lucene",
+        "name": "Instance",
         "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
-        "refresh": true
+        "refresh": 1,
+        "refresh_on_load": false,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "datasource": "ES stagemonitor",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "Signature",
+        "query": "{\"find\": \"terms\", \"field\": \"signature\", \"query\": \"name: timer\"}",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "auto": true,
+        "auto_count": 200,
+        "auto_min": "60s",
+        "current": {
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "Interval",
+        "options": [
+          {
+            "selected": true,
+            "text": "auto",
+            "value": "$__auto_interval"
+          },
+          {
+            "selected": false,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "refresh": 0,
+        "type": "interval"
       }
     ]
   },
@@ -557,7 +608,6 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 7,
-  "version": 1,
+  "schemaVersion": 12,
   "links": []
 }

@@ -9,24 +9,24 @@
   "sharedCrosshair": false,
   "rows": [
     {
-      "title": "Documentation (click me to expand)",
-      "height": "100px",
-      "editable": true,
       "collapse": true,
+      "editable": true,
+      "height": "100px",
       "panels": [
         {
-          "title": "Documentation",
-          "error": false,
-          "span": 12,
-          "editable": true,
-          "type": "text",
-          "isNew": true,
-          "mode": "markdown",
           "content": "$documentation",
+          "editable": true,
+          "error": false,
+          "isNew": true,
           "links": [],
-          "transparent": false
+          "mode": "markdown",
+          "span": 12,
+          "title": "Documentation",
+          "transparent": false,
+          "type": "text"
         }
-      ]
+      ],
+      "title": "Documentation (click me to expand)"
     },
     {
       "collapse": false,
@@ -73,15 +73,8 @@
           "points": false,
           "renderer": "flot",
           "repeat": "Instance",
-          "scopedVars": {
-            "Instance": {
-              "text": "localhost",
-              "value": "localhost",
-              "selected": false
-            }
-          },
           "seriesOverrides": [],
-          "span": 6,
+          "span": 12,
           "stack": true,
           "steppedLine": false,
           "targets": [
@@ -103,11 +96,12 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "10s"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "count",
@@ -126,16 +120,38 @@
           "timeShift": null,
           "title": "Sessions $Instance",
           "tooltip": {
+            "msResolution": false,
             "shared": true,
             "value_type": "individual"
           },
           "transparent": false,
           "type": "graph",
           "x-axis": true,
+          "xaxis": {
+            "show": true
+          },
           "y-axis": true,
           "y_formats": [
             "short",
             "short"
+          ],
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
           ]
         }
       ],
@@ -186,15 +202,8 @@
           "points": false,
           "renderer": "flot",
           "repeat": "Instance",
-          "scopedVars": {
-            "Instance": {
-              "text": "localhost",
-              "value": "localhost",
-              "selected": false
-            }
-          },
           "seriesOverrides": [],
-          "span": 6,
+          "span": 12,
           "stack": true,
           "steppedLine": false,
           "targets": [
@@ -216,11 +225,12 @@
                   "field": "@timestamp",
                   "id": "2",
                   "settings": {
-                    "interval": "10s"
+                    "interval": "$Interval"
                   },
                   "type": "date_histogram"
                 }
               ],
+              "dsType": "elasticsearch",
               "metrics": [
                 {
                   "field": "value",
@@ -239,16 +249,38 @@
           "timeShift": null,
           "title": "Thread Pool Usage $Instance",
           "tooltip": {
+            "msResolution": false,
             "shared": true,
             "value_type": "individual"
           },
           "transparent": false,
           "type": "graph",
           "x-axis": true,
+          "xaxis": {
+            "show": true
+          },
           "y-axis": true,
           "y_formats": [
             "short",
             "short"
+          ],
+          "yaxes": [
+            {
+              "format": "percent",
+              "label": null,
+              "logBase": 1,
+              "max": 100,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
           ]
         }
       ],
@@ -300,7 +332,7 @@
         "multiFormat": "lucene",
         "name": "Application",
         "query": "{\"find\": \"terms\", \"field\": \"application\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
         "type": "query"
@@ -313,7 +345,7 @@
         "multiFormat": "lucene",
         "name": "Host",
         "query": "{\"find\": \"terms\", \"field\": \"host\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "type": "query"
       },
@@ -325,10 +357,34 @@
         "multiFormat": "lucene",
         "name": "Instance",
         "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
-        "refresh": true,
+        "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
         "type": "query"
+      },
+      {
+        "auto": true,
+        "auto_count": 200,
+        "auto_min": "60s",
+        "current": {
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "Interval",
+        "options": [
+          {
+            "selected": true,
+            "text": "auto",
+            "value": "$__auto_interval"
+          }
+        ],
+        "query": "",
+        "refresh": 0,
+        "type": "interval"
       }
     ]
   },
@@ -336,7 +392,6 @@
     "list": []
   },
   "refresh": "30s",
-  "schemaVersion": 7,
-  "version": 0,
+  "schemaVersion": 12,
   "links": []
 }
