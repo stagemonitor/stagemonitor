@@ -21,6 +21,17 @@ public class ClassUtils {
 		return forNameOrNull(className) != null;
 	}
 
+	public static boolean hasMethod(String className, String methodName, Class<?>... parameterTypes) {
+		try {
+			Class.forName(className).getMethod(methodName, parameterTypes);
+			return true;
+		} catch (NoSuchMethodException e) {
+			return false;
+		} catch (ClassNotFoundException e) {
+			return false;
+		}
+	}
+
 	public static boolean canLoadClass(ClassLoader loader, String className) {
 		return loadClassOrReturnNull(loader, className) != null;
 	}

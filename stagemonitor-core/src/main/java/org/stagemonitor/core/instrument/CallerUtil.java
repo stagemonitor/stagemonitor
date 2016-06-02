@@ -12,7 +12,7 @@ public final class CallerUtil {
 	private static final Object javaLangAccessObject;
 
 	static {
-		if (ClassUtils.isPresent("sun.misc.SharedSecrets")) {
+		if (ClassUtils.hasMethod("sun.misc.JavaLangAccess", "getStackTraceDepth", Throwable.class)) {
 			javaLangAccessObject = SharedSecrets.getJavaLangAccess();
 		} else {
 			javaLangAccessObject = null;
