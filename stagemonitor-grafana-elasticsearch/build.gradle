@@ -76,7 +76,7 @@ task addDashboardsToPluginJson(dependsOn: collectDashboards) << {
 }
 
 task copyAssets(type: Copy) {
-    from 'src'
+    from 'src', 'README.md'
     into "$buildDir"
     exclude 'plugin.json', '*.js'
 }

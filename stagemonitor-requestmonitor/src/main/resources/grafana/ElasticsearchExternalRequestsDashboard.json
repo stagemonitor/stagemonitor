@@ -187,7 +187,7 @@
               "label": null,
               "show": true,
               "logBase": 10,
-              "min": 10,
+              "min": null,
               "max": null,
               "format": "ms"
             },
