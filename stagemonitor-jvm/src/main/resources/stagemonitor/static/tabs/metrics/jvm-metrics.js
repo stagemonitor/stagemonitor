@@ -15,18 +15,50 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "jvm_memory_heap.(max)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "jvm_memory_heap.(committed)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "jvm_memory_heap.(used)", metric: "value" }
+						{
+							metricPathRegex: "jvm_memory_heap.(max)",
+							metricMatcher: {
+								name: "jvm_memory_heap",
+								type: "max"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "jvm_memory_heap.(committed)",
+							metricMatcher: {
+								name: "jvm_memory_heap",
+								type: "committed"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "jvm_memory_heap.(used)",
+							metricMatcher: {
+								name: "jvm_memory_heap",
+								type: "used"
+							},
+							groupBy: "type",
+							metric: "value"
+						}
 					]
 				},
 				{
 					bindto: '#memory-pools',
 					min: 0,
-					max: 100,
-					format: 'percent',
+					max: 1,
+					format: 'percent0To1',
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /jvm_memory_pools.([^\.]+).usage/, metric: "value" }
+						{
+							metricPathRegex: /jvm_memory_pools.([^\.]+).usage/,
+							metricMatcher: {
+								name: "jvm_memory_pools",
+								type: "usage"
+							},
+							groupBy: "memory_pool",
+							metric: "value"
+						}
 					]
 				},
 				{
@@ -36,7 +68,13 @@
 					fill: 0.1,
 					format: 'percent',
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "jvm_process_cpu_(usage)", metric: "value" }
+						{
+							metricPathRegex: "jvm_process_cpu_(usage)",
+							metricMatcher: {
+								name: "jvm_process_cpu_usage"
+							},
+							metric: "value"
+						}
 					]
 				},
 				{
@@ -55,11 +93,14 @@
 					derivative: true,
 					columns: [
 						{
-							metricCategory: "gauges",
 							// A regex of metric paths. A line is created for each distinct regex group.
 							// That's why the wildcard [^\.]+ is put in parentesis.
 							// That way a line is created and named after each GC-Algorithm
 							metricPathRegex: /jvm_gc_time.([^\.]+)/,
+							metricMatcher: {
+								name: "jvm_gc_time"
+							},
+							groupBy: "collector",
 							metric: "value"
 						}
 					]

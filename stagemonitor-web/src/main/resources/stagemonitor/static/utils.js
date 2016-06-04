@@ -86,6 +86,15 @@ var utils = (function () {
 				.replace(/'/g, '&#39;')
 				.replace(/</g, '&lt;')
 				.replace(/>/g, '&gt;');
+		}, 
+		matches: function(metric, metricMatcher) {
+			for (var tag in metricMatcher) {
+				var value = metricMatcher[tag];
+				if (value !== '*' && metric[tag] !== value) {
+					return false;
+				}
+			}
+			return true;
 		}
 	}
 })();

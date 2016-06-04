@@ -12,14 +12,78 @@
 					stack: true,
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(soft-interrupt)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(interrupt)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(stolen)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(nice)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(wait)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(sys)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(user)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "cpu_usage.(idle)", metric: "value" }
+						{
+							metricPathRegex: "cpu_usage.(soft-interrupt)",
+							metricMatcher: {
+								name: "cpu_usage",
+								type: "soft-interrupt"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "cpu_usage.(interrupt)",
+							metricMatcher: {
+								name: "cpu_usage",
+								type: "interrupt"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "cpu_usage.(stolen)",
+							metricMatcher: {
+								name: "cpu_usage",
+								type: "stolen"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "cpu_usage.(nice)",
+							metricMatcher: {
+								name: "cpu_usage",
+								type: "nice"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "cpu_usage.(wait)",
+							metricMatcher: {
+								name: "cpu_usage",
+								type: "wait"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "cpu_usage.(sys)",
+							metricMatcher: {
+								name: "cpu_usage",
+								type: "sys"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "cpu_usage.(user)",
+							metricMatcher: {
+								name: "cpu_usage",
+								type: "user"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "cpu_usage.(idle)",
+							metricMatcher: {
+								name: "cpu_usage",
+								type: "idle"
+							},
+							groupBy: "type",
+							metric: "value"
+						}
 					]
 				},
 				{
@@ -28,8 +92,28 @@
 					format: 'bytes',
 					derivative: true,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /network_io.[^\.]+.write.bytes/, metric: "value", title: "send" },
-						{ metricCategory: "gauges", metricPathRegex: /network_io.[^\.]+.read.bytes/, metric: "value", title: "receive" }
+						{
+							metricPathRegex: /network_io.[^\.]+.write.bytes/,
+							metricMatcher: {
+								name: "network_io",
+								type: "write",
+								unit: "bytes"
+							},
+							groupBy: "ifname",
+							metric: "value",
+							title: "send" 
+						},
+						{
+							metricPathRegex: /network_io.[^\.]+.read.bytes/,
+							metricMatcher: {
+								name: "network_io",
+								type: "read",
+								unit: "bytes"
+							},
+							groupBy: "ifname",
+							metric: "value",
+							title: "receive"
+						}
 					]
 				},
 				{
@@ -39,7 +123,14 @@
 					format: 'bytes',
 					derivative: true,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /disk_io.[^\.]+.([^\.]+)/, metric: "value" }
+						{
+							metricPathRegex: /disk_io.[^\.]+.([^\.]+)/,
+							metricMatcher: {
+								name: "disk_io"
+							},
+							groupBy: "type",
+							metric: "value"
+						}
 					]
 				},
 				{
@@ -48,7 +139,14 @@
 					max: 100,
 					format: 'percent',
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /disk_usage_percent.([^\.]+)/, metric: "value" }
+						{
+							metricPathRegex: /disk_usage_percent.([^\.]+)/,
+							metricMatcher: {
+								name: "disk_usage_percent"
+							},
+							groupBy: "mountpoint",
+							metric: "value"
+						}
 					]
 				},
 				{
@@ -57,7 +155,14 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: /mem_usage\.([^\.]+)/, metric: "value" }
+						{
+							metricPathRegex: /mem_usage\.([^\.]+)/,
+							metricMatcher: {
+								name: "mem_usage"
+							},
+							groupBy: "type",
+							metric: "value"
+						}
 					]
 				},
 				{
@@ -66,8 +171,24 @@
 					format: 'bytes',
 					fill: 0.1,
 					columns: [
-						{ metricCategory: "gauges", metricPathRegex: "swap_usage.(total)", metric: "value" },
-						{ metricCategory: "gauges", metricPathRegex: "swap_usage.(used)", metric: "value" }
+						{
+							metricPathRegex: "swap_usage.(total)",
+							metricMatcher: {
+								name: "swap_usage",
+								type: "total"
+							},
+							groupBy: "type",
+							metric: "value"
+						},
+						{
+							metricPathRegex: "swap_usage.(used)",
+							metricMatcher: {
+								name: "swap_usage",
+								type: "used"
+							},
+							groupBy: "type",
+							metric: "value"
+						}
 					]
 				}
 			]

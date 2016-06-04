@@ -8,50 +8,74 @@
 				nameLabel: "Name",
 				columns: [
 					{
-						metricCategory: "timers",
-						metricPathRegex: /response_time_server.([^\.]+).All/,
+						metricMatcher: {
+							name: "response_time_server",
+							layer: "All"
+						},
+						groupBy: "request_name",
 						metric: "m1_rate",
 						title: "Requests/s"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /response_time_server.([^\.]+).All/,
+						metricMatcher: {
+							name: "response_time_server",
+							layer: "All"
+						},
+						groupBy: "request_name",
 						metric: "max",
 						title: "Max"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /response_time_server.([^\.]+).All/,
+						metricMatcher: {
+							name: "response_time_server",
+							layer: "All"
+						},
+						groupBy: "request_name",
 						metric: "mean",
 						title: "Mean"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /response_time_server.([^\.]+).All/,
+						metricMatcher: {
+							name: "response_time_server",
+							layer: "All"
+						},
+						groupBy: "request_name",
 						metric: "min",
 						title: "Min"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /response_time_server.([^\.]+).All/,
+						metricMatcher: {
+							name: "response_time_server",
+							layer: "All"
+						},
+						groupBy: "request_name",
 						metric: "p50",
 						title: "p50"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /response_time_server.([^\.]+).All/,
+						metricMatcher: {
+							name: "response_time_server",
+							layer: "All"
+						},
+						groupBy: "request_name",
 						metric: "p95",
 						title: "p95"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /response_time_server.([^\.]+).All/,
-						metric: "stddev",
+						metricMatcher: {
+							name: "response_time_server",
+							layer: "All"
+						},
+						groupBy: "request_name",
+						metric: "std",
 						title: "Std. Dev."
 					},
 					{
-						metricCategory: "meters",
-						metricPathRegex: /external_requests_rate.([^\.]+).jdbc/,
+						metricMatcher: {
+							name: "external_requests_rate",
+							type: "jdbc"
+						},
+						groupBy: "request_name",
 						metric: "m1_rate",
 						title: "SQLs/sec"
 					}
@@ -66,7 +90,16 @@
 								format: 'ms',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "timers", metricPathRegex: "response_time_server.(${rowName}).All", metric: "mean" }
+									{
+										metricMatcher: {
+											name: "response_time_server",
+											layer: "All",
+											request_name: "${rowName}"
+										},
+										groupBy: "request_name",
+										metricPathRegex: "response_time_server.(${rowName}).All", 
+										metric: "mean" 
+									}
 								]
 							}
 						},
@@ -77,7 +110,16 @@
 								format: 'requests/sec',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "timers", metricPathRegex: "response_time_server.(${rowName}).All", metric: "m1_rate"}
+									{
+										metricMatcher: {
+											name: "response_time_server",
+											layer: "All",
+											request_name: "${rowName}"
+										},
+										groupBy: "request_name",
+										metricPathRegex: "response_time_server.(${rowName}).All", 
+										metric: "m1_rate"
+									}
 								]
 							}
 						}

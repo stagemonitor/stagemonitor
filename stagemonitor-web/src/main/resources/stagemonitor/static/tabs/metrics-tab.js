@@ -1,12 +1,14 @@
 function renderMetricsTab() {
 	window.plugins = [];
+	var requiredMetricNames = [];
 	var tickMs = +localStorage.getItem("widget-settings-metrics-refresh") * 1000;
 	var activePluginId;
 
 	var scripts = $.map(stagemonitor.pathsOfWidgetMetricTabPlugins, function (path) {
 		return path + ".js"
 	});
-	utils.loadScripts(scripts, function() {
+
+	utils.loadScripts(scripts, function () {
 		plugins.sort(function (p1, p2) {
 			return p1.label.localeCompare(p2.label);
 		});
@@ -22,11 +24,42 @@ function renderMetricsTab() {
 			// custom invisible class, not hidden
 			// because flot requires the elements not to be hidden as it needs to know the width and height
 			$("#metric-plugins").append('<div id="' + plugin.id + '" class="metric-plugin invisible"></div>');
+			registerAllMetricMatchers(plugin);
 		});
 
 		loadHtmlOfPlugins();
 		initSideMenu();
 	});
+
+	function registerAllMetricMatchers(plugin) {
+		if (plugin.table) {
+			for (var j = 0; j < plugin.table.columns.length; j++) {
+				registerMetricMatcher(plugin.table.columns[j].metricMatcher);
+			}
+			if (plugin.table.graphTemplates) {
+				for (var j = 0; j < plugin.table.graphTemplates.length; j++) {
+					registerMetricMatcher(plugin.table.graphTemplates[j].template.metricMatcher);
+				}
+			}
+		}
+		if (plugin.graphs) {
+			for (var j = 0; j < plugin.graphs.length; j++) {
+				var graph = plugin.graphs[j];
+				for (var k = 0; k < graph.columns.length; k++) {
+					registerMetricMatcher(graph.columns[k].metricMatcher);
+				}
+			}
+		}
+	}
+
+	function registerMetricMatcher(metricMatcher) {
+		if (metricMatcher) {
+			var metricName = metricMatcher.name;
+			if (requiredMetricNames.indexOf(metricName) == -1) {
+				requiredMetricNames.push(metricName);
+			}
+		}
+	}
 
 	function loadHtmlOfPlugins() {
 		$.when.apply(null, $.map(stagemonitor.pathsOfWidgetMetricTabPlugins, loadPluginHtml)).done(function () {
@@ -105,11 +138,14 @@ function renderMetricsTab() {
 	}
 
 	function getMetricsFromServer(onMetricsReceived) {
-		$.getJSON(stagemonitor.baseUrl + "/stagemonitor/metrics", function (metrics) {
-			var date = new Date();
-			metrics['timestamp'] = date.getTime();
-			onMetricsReceived(metrics);
-		});
+		$.getJSON(stagemonitor.baseUrl + "/stagemonitor/metrics", {
+			metricNames: requiredMetricNames
+		})
+			.done(function (metrics) {
+				var date = new Date();
+				metrics['timestamp'] = date.getTime();
+				onMetricsReceived(metrics);
+			});
 	}
 
 	function getPluginId(pluginPath) {

@@ -66,14 +66,13 @@ var tableRenderer = (function () {
 	function getData(metrics, metricTable) {
 		var dataByRowName = {};
 		$.each(metricTable.columns, function (columnIndex, column) {
-			var metricCategory = metrics[column.metricCategory];
-			for (metricPath in metricCategory) {
-				var match = column.metricPathRegex.exec(metricPath);
-				if (match) {
-					var rowName = match[1] || match[0];
+			for (var i = 0; i < metrics.length; i++) {
+				var metric = metrics[i];
+				if (utils.matches(metric, column.metricMatcher)) {
+					var rowName = metric[column.groupBy] || metric.name;
 					dataByRowName[rowName] = dataByRowName[rowName] || {};
 					dataByRowName[rowName].name = rowName;
-					var value = metricCategory[metricPath][column.metric];
+					var value = metric[column.metric];
 					if (isNaN(value)) {
 						value = 0;
 					}
@@ -158,10 +157,14 @@ var tableRenderer = (function () {
 	}
 
 	function processGraphTemplate(graphTemplate, rowName, table, quoteRowName) {
+		// TODO quoteRowName
 		var template = JSON.parse(JSON.stringify(graphTemplate.template));
 		template.disabled = rowName != table.graphTemplates.defaultRowSelection;
 		for (var j = 0; j < template.columns.length; j++) {
 			var column = template.columns[j];
+			$.each(column.metricMatcher, function (tag, value) {
+				column.metricMatcher[tag] = value.replace("${rowName}", rowName);
+			});
 			column.metricPathRegex = column.metricPathRegex.replace("${rowName}", quoteRowName ? RegExp.quote(rowName) : rowName);
 		}
 		return template;

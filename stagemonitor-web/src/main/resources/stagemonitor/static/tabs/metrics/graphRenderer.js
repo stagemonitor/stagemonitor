@@ -96,7 +96,11 @@ var graphRenderer = (function () {
 						fill: graph.fill,
 						lineWidth: 2
 					},
-					shadowSize: 1
+					shadowSize: 1,
+					points: {
+						show: true,
+						radius: 1
+					}
 				},
 				grid: {
 					minBorderMargin: null,
@@ -161,39 +165,35 @@ var graphRenderer = (function () {
 		}
 	}
 
-	function getAllMetricsForGraphWithValues(graph, data) {
+	function getAllMetricsForGraphWithValues(graph, metricsFromServer) {
 		var metrics = {};
 		$.each(graph.columns, function (i, metricPath) {
-			var metricCategory = data[metricPath.metricCategory];
 			// merge objects
-			$.extend(metrics, findPropertyValuesByRegex(metricCategory, metricPath));
+			$.extend(metrics, findPropertyValuesByMetricPath(metricsFromServer, metricPath));
 		});
 		return metrics;
 	}
 
-	function findPropertyValuesByRegex(obj, metricPath) {
+	function findPropertyValuesByMetricPath(metricsFromServer, metricPath) {
 		var metrics = {};
-		var matches = 0;
-		$.each(obj, function(key, metric) {
-			if (!(metricPath.metricPathRegex instanceof RegExp)) {
-				metricPath.metricPathRegex = new RegExp(metricPath.metricPathRegex);
-			}
-			var match = metricPath.metricPathRegex.exec(key);
-			if (match != null) {
-				matches++;
-				var graphName = metricPath.title || match[1] || match[0];
+		var noOfMatches = 0;
+		for (var i = 0; i < metricsFromServer.length; i++) {
+			var metric = metricsFromServer[i];
+			if (utils.matches(metric, metricPath.metricMatcher)) {
+				noOfMatches++;
+				var graphName = metricPath.title || metric[metricPath.groupBy] || metric.name;
 				var value = +metric[metricPath.metric] || 0; // convert "NaN" to 0
 				metrics[graphName] = metrics[graphName] || 0;
 				if (metricPath.aggregate === 'mean' && metrics) {
-					var sumOfPreviousValues = metrics[graphName] * (matches - 1);
-					metrics[graphName] = (sumOfPreviousValues + value) / matches;
+					var sumOfPreviousValues = metrics[graphName] * (noOfMatches - 1);
+					metrics[graphName] = (sumOfPreviousValues + value) / noOfMatches;
 				} else {
 					// sum by default
 					// deprecated behaviour, use metricPath.aggregate to explicitly set aggregation type
 					metrics[graphName] = metrics[graphName] + value;
 				}
 			}
-		});
+		}
 		return metrics;
 	}
 
@@ -211,6 +211,9 @@ var graphRenderer = (function () {
 			},
 			percent: function (percent) {
 				return round(percent) + ' %';
+			},
+			percent0To1: function (value) {
+				return formatters().percent(value * 100);
 			},
 			ms: function (size) {
 				if (size === null) {

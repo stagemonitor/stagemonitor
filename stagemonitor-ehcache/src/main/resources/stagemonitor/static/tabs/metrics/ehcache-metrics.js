@@ -15,43 +15,66 @@
 				nameLabel: "Name",
 				columns: [
 					{
-						// the metrics are grouped by the categories gauges, counters, timers, meters and histograms
-						metricCategory: "gauges",
 						// A regex of metric paths. A table row is created for each distinct regex group. That's
 						// why the wildcard [^\.]+ is put in parentesis. That way a row is created for each individual
 						// cache name
 						metricPathRegex: /cache_hit_ratio.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_hit_ratio",
+							tier: "All"
+						},
+						groupBy: "cache_name",
 						metric: "value",
 						// the column label
 						title: "Hit Rate (%)"
 					},
 					{
-						metricCategory: "gauges",
 						metricPathRegex: /cache_size_bytes.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_size_bytes",
+							tier: "All"
+						},
+						groupBy: "cache_name",
 						metric: "value",
 						title: "Bytes used"
 					},
 					{
-						metricCategory: "gauges",
 						metricPathRegex: /cache_size_count.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_size_count",
+							tier: "All"
+						},
+						groupBy: "cache_name",
 						metric: "value",
 						title: "Elements in cache"
 					},
 					{
-						metricCategory: "timers",
 						metricPathRegex: /cache_get.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_get",
+							tier: "All"
+						},
+						groupBy: "cache_name",
 						metric: "m1_rate",
 						title: "Gets/sec"
 					},
 					{
-						metricCategory: "timers",
 						metricPathRegex: /cache_get.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_get",
+							tier: "All"
+						},
+						groupBy: "cache_name",
 						metric: "mean",
 						title: "Avg get time"
 					},
 					{
-						metricCategory: "timers",
 						metricPathRegex: /cache_get.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_get",
+							tier: "All"
+						},
+						groupBy: "cache_name",
 						metric: "p95",
 						title: "p95 get time"
 					}
@@ -62,7 +85,7 @@
 				graphTemplates: {
 					// This is the default value for the placeholder ${rowName} when no row is selected.
 					// [^\\.]+ means, per default, show a line for each cache
-					defaultRowSelection: '[^\\.]+',
+					defaultRowSelection: '*',
 					templates: [
 						{
 							template: {
@@ -80,11 +103,16 @@
 								fill: 0.1,
 								columns: [
 									{
-										metricCategory: "gauges",
 										// A regex of metric paths. A line is created for each distinct regex group.
 										// That's why the placeholder ${rowName} is put in parentesis.
 										// That way a line is created and named after the selected cache name
 										metricPathRegex: "cache_hit_(ratio).${rowName}.All",
+										metricMatcher: {
+											name: "cache_hit_ratio",
+											tier: "All",
+											cache_name: "${rowName}"
+										},
+										groupBy: "cache_name",
 										metric: "value",
 										aggregate: 'mean'
 									}
@@ -99,8 +127,13 @@
 								fill: 0.1,
 								columns: [
 									{
-										metricCategory: "gauges",
 										metricPathRegex: "cache_size_(bytes).${rowName}.All",
+										metricMatcher: {
+											name: "cache_size_bytes",
+											tier: "All",
+											cache_name: "${rowName}"
+										},
+										groupBy: "cache_name",
 										metric: "value",
 										aggregate: 'sum'
 									}
