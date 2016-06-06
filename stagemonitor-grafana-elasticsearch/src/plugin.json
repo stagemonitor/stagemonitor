@@ -1,7 +1,7 @@
 {
   "type": "app",
   "name": "stagemonitor Elasticsearch",
-  "id": "stagemonitor-grafana-elasticsearch",
+  "id": "stagemonitor-elasticsearch-app",
 
   "pages": [
   ],
