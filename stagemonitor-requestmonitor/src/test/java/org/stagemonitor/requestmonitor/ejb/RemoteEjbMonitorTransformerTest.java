@@ -18,6 +18,7 @@ import org.stagemonitor.requestmonitor.RequestTraceCapturingReporter;
 public class RemoteEjbMonitorTransformerTest {
 
 	private RemoteInterface remote = new RemoteInterfaceImpl();
+	private RemoteInterfaceAlternate remoteAlt = new RemoteInterfaceAlternateImpl();
 	private RequestTraceCapturingReporter requestTraceCapturingReporter = new RequestTraceCapturingReporter();
 
 	@BeforeClass
@@ -36,6 +37,18 @@ public class RemoteEjbMonitorTransformerTest {
 		assertFalse(requestTrace.getCallStack().toString(), requestTrace.getCallStack().getChildren().isEmpty());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl"));
+	}
+
+	@Test
+	public void testMonitorRemoteCallsAlternateHierarchy() throws Exception {
+		remoteAlt.bar();
+
+		RequestTrace requestTrace = requestTraceCapturingReporter.get();
+		assertNotNull(requestTrace);
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceAlternateImpl#bar", requestTrace.getName());
+		assertFalse(requestTrace.getCallStack().toString(), requestTrace.getCallStack().getChildren().isEmpty());
+		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceAlternateImpl"));
 	}
 
 	@Test
@@ -63,4 +76,20 @@ public class RemoteEjbMonitorTransformerTest {
 		}
 	}
 
+	@Remote
+	private interface RemoteInterfaceAlternate {
+		void bar();
+	}
+
+	public class RemoteInterfaceAlternateImpl implements RemoteInterfaceAlternate {
+
+		@Override
+		public void bar() {
+		}
+
+		@Override
+		public String toString() {
+			return super.toString();
+		}
+	}
 }
