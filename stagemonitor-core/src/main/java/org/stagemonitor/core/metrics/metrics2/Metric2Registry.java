@@ -17,6 +17,7 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricSet;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 
 /**
@@ -38,7 +39,7 @@ public class Metric2Registry implements Metric2Set {
 
 	public Metric2Registry(ConcurrentMap<MetricName, Metric> metrics) {
 		this.metrics = metrics;
-		this.metricRegistry = new MetricRegistry();
+		this.metricRegistry = SharedMetricRegistries.getOrCreate("stagemonitor");
 	}
 
 	/**
