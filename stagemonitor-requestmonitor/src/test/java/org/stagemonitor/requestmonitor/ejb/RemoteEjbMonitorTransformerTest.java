@@ -18,7 +18,7 @@ import org.stagemonitor.requestmonitor.RequestTraceCapturingReporter;
 public class RemoteEjbMonitorTransformerTest {
 
 	private RemoteInterface remote = new RemoteInterfaceImpl();
-	private RemoteInterfaceAlternate remoteAlt = new RemoteInterfaceAlternateImpl();
+	private RemoteInterfaceWithRemoteAnnotation remoteAlt = new RemoteInterfaceWithRemoteAnnotationImpl();
 	private RequestTraceCapturingReporter requestTraceCapturingReporter = new RequestTraceCapturingReporter();
 
 	@BeforeClass
@@ -45,10 +45,22 @@ public class RemoteEjbMonitorTransformerTest {
 
 		RequestTrace requestTrace = requestTraceCapturingReporter.get();
 		assertNotNull(requestTrace);
-		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceAlternateImpl#bar", requestTrace.getName());
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#bar", requestTrace.getName());
 		assertFalse(requestTrace.getCallStack().toString(), requestTrace.getCallStack().getChildren().isEmpty());
 		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceAlternateImpl"));
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl"));
+	}
+
+	@Test
+	public void testMonitorRemoteCallsSuperInterface() throws Exception {
+		remoteAlt.foo();
+
+		RequestTrace requestTrace = requestTraceCapturingReporter.get();
+		assertNotNull(requestTrace);
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#foo", requestTrace.getName());
+		assertFalse(requestTrace.getCallStack().toString(), requestTrace.getCallStack().getChildren().isEmpty());
+		final String signature = requestTrace.getCallStack().getChildren().get(0).getSignature();
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl"));
 	}
 
 	@Test
@@ -59,8 +71,19 @@ public class RemoteEjbMonitorTransformerTest {
 		assertNull(requestTrace);
 	}
 
-	private interface RemoteInterface {
+	@Test
+	public void testDontMonitorNonRemoteEjb() throws Exception {
+		new NoRemoteEJB().foo();
+
+		RequestTrace requestTrace = requestTraceCapturingReporter.get();
+		assertNull(requestTrace);
+	}
+
+	private interface SuperInterface {
 		void foo();
+	}
+
+	private interface RemoteInterface extends SuperInterface {
 	}
 
 	@Remote(RemoteInterface.class)
@@ -77,11 +100,11 @@ public class RemoteEjbMonitorTransformerTest {
 	}
 
 	@Remote
-	private interface RemoteInterfaceAlternate {
+	private interface RemoteInterfaceWithRemoteAnnotation extends RemoteInterface {
 		void bar();
 	}
 
-	public class RemoteInterfaceAlternateImpl implements RemoteInterfaceAlternate {
+	public class RemoteInterfaceWithRemoteAnnotationImpl implements RemoteInterfaceWithRemoteAnnotation {
 
 		@Override
 		public void bar() {
@@ -91,5 +114,16 @@ public class RemoteEjbMonitorTransformerTest {
 		public String toString() {
 			return super.toString();
 		}
+
+		@Override
+		public void foo() {
+		}
 	}
+
+	public class NoRemoteEJB implements SuperInterface {
+		@Override
+		public void foo() {
+		}
+	}
+
 }
