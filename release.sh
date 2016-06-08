@@ -14,11 +14,9 @@ git checkout $VERSION
 
 ./gradlew uploadArchives
 
-git checkout master
-
-# build and push grafana
+# build and push grafana app
 ./gradlew :stagemonitor-grafana-elasticsearch:clean :stagemonitor-grafana-elasticsearch:build
-cd stagemonitor-grafana-elasticsearch
+pushd stagemonitor-grafana-elasticsearch
 git init
 git remote add origin git@github.com:stagemonitor/stagemonitor-grafana-elasticsearch.git
 git fetch
@@ -28,3 +26,6 @@ git commit -m "Releasing $VERSION"
 git tag -a -m "Releasing $VERSION" "$VERSION"
 git push origin master --follow-tags
 rm -rf .git
+popd
+
+git checkout master
