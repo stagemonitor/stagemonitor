@@ -57,7 +57,7 @@ public class InstrumentationPerformanceTest  {
 		ByteBuddyAgent.install();
 		new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(false)))
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-				.with(new AgentBuilder.BinaryLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, new ConcurrentHashMap<Object, TypePool.CacheProvider>()))
+				.with(new AgentBuilder.TypeLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, new ConcurrentHashMap<Object, TypePool.CacheProvider>()))
 				.ignore(any(), timed("classloader", "bootstrap", isBootstrapClassLoader()))
 				.or(any(), timed("classloader", "reflection", isReflectionClassLoader()))
 				.or(any(), timed("classloader", "groovy-call-site", classLoaderWithName("org.codehaus.groovy.runtime.callsite.CallSiteClassLoader")))

@@ -4,7 +4,6 @@ dependencies {
 	optional 'javax.ejb:ejb-api:3.0'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
-	testCompile 'commons-io:commons-io:2.4'
 	testCompile 'net.sf.ehcache:ehcache-core:2.6.6'
 }
 

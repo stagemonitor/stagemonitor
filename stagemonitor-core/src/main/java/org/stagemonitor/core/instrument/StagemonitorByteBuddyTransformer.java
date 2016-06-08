@@ -26,6 +26,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.JavaModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -47,9 +48,9 @@ public abstract class StagemonitorByteBuddyTransformer {
 	public final AgentBuilder.RawMatcher getMatcher() {
 		return new AgentBuilder.RawMatcher() {
 			@Override
-			public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+			public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule javaModule, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
 				final boolean matches = timed("type", transformerName, getTypeMatcher()).matches(typeDescription) &&
-						getRawMatcher().matches(typeDescription, classLoader, classBeingRedefined, protectionDomain) &&
+						getRawMatcher().matches(typeDescription, classLoader, javaModule, classBeingRedefined, protectionDomain) &&
 						timed("classloader", "application", getClassLoaderMatcher()).matches(classLoader);
 				if (!matches) {
 					onIgnored(typeDescription, classLoader);
@@ -175,7 +176,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 	private static class NoOpRawMatcher implements AgentBuilder.RawMatcher {
 		public static final NoOpRawMatcher INSTANCE = new NoOpRawMatcher();
 		@Override
-		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule javaModule, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
 			return true;
 		}
 	}
