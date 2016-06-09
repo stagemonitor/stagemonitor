@@ -5,7 +5,6 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
@@ -18,6 +17,7 @@ import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
+import org.stagemonitor.alerting.check.ValueType;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.instrument.AbstractClassPathScanner;
 import org.stagemonitor.core.metrics.annotations.ExceptionMeteredTransformer;
@@ -108,9 +108,9 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 	}
 
 	private static void addResponseTimeCheck(SLA slaAnnotation, String fullMethodSignature, TimerNames timerNames) {
-		SLA.Metric[] metrics = slaAnnotation.metric();
+		ValueType[] valueTypes = slaAnnotation.metric();
 		double[] thresholdValues = slaAnnotation.threshold();
-		if (metrics.length != thresholdValues.length) {
+		if (valueTypes.length != thresholdValues.length) {
 			logger.warn("The number of provided metrics don't match the number of provided thresholds in @SLA {}", fullMethodSignature);
 			return;
 		}
@@ -124,8 +124,8 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 				timerNames.timerMetricName, " (response time)", "responseTime");
 
 		final List<Threshold> thresholds = check.getThresholds(slaAnnotation.severity());
-		for (int i = 0; i < metrics.length; i++) {
-			thresholds.add(new Threshold(metrics[i].getValue(), slaAnnotation.operator(), thresholdValues[i]));
+		for (int i = 0; i < valueTypes.length; i++) {
+			thresholds.add(new Threshold(valueTypes[i].getName(), slaAnnotation.operator(), thresholdValues[i]));
 		}
 
 		addCheckIfStarted(check);
@@ -138,7 +138,7 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 			return;
 		}
 		final Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.errorRequestName, MetricCategory.METER, timerNames.errorMetricName, " (errors)", "errors");
-		final Threshold t = new Threshold(SLA.Metric.M1_RATE.getValue(), Threshold.Operator.GREATER_EQUAL, slaAnnotation.errorRateThreshold());
+		final Threshold t = new Threshold(ValueType.M1_RATE.getName(), Threshold.Operator.GREATER_EQUAL, slaAnnotation.errorRateThreshold());
 		check.getThresholds(slaAnnotation.severity()).add(t);
 		addCheckIfStarted(check);
 	}
@@ -149,7 +149,7 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 		check.setId(fullMethodSignature + "." + checkIdSuffix);
 		check.setName(requestName + checkNameSuffix);
 		check.setMetricCategory(metricCategory);
-		check.setTarget(Pattern.compile(Pattern.quote(metricName.toGraphiteName())));
+		check.setTarget(metricName);
 		check.setAlertAfterXFailures(slaAnnotation.alertAfterXFailures());
 		return check;
 	}

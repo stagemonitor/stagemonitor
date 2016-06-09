@@ -1,5 +1,7 @@
 package org.stagemonitor.alerting.alerter;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,7 @@ public class AlertSender {
 		Check check = new Check();
 		check.setName("Test Check");
 		check.setApplication("testApp");
-		check.setTarget(Pattern.compile("test"));
+		check.setTarget(name("test").build());
 		check.setMetricCategory(MetricCategory.TIMER);
 		check.getWarn().add(new Threshold("mean", Threshold.Operator.GREATER_EQUAL, 1));
 

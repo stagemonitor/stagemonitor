@@ -10,9 +10,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 /**
  * A {@link Check} is a named collection of {@link Threshold}s with the same {@link MetricCategory} and target.
@@ -27,7 +27,7 @@ public class Check {
 	private String id = UUID.randomUUID().toString();
 	private String name;
 	private MetricCategory metricCategory;
-	private Pattern target;
+	private MetricName target;
 	private int alertAfterXFailures = 1;
 	private Map<CheckResult.Status, List<Threshold>> thresholds = new LinkedHashMap<CheckResult.Status, List<Threshold>>(){{
 		put(CheckResult.Status.CRITICAL, new LinkedList<Threshold>());
@@ -44,7 +44,7 @@ public class Check {
 	 * @param actualTarget the actual target that matched the {@link #target} pattern
 	 * @return a list of check results (results with OK statuses are omitted)
 	 */
-	public List<CheckResult> check(String actualTarget, Map<String, Double> currentValuesByMetric) {
+	public List<CheckResult> check(MetricName actualTarget, Map<String, Number> currentValuesByMetric) {
 		for (Map.Entry<CheckResult.Status, List<Threshold>> entry : thresholds.entrySet()) {
 			List<CheckResult> results = checkThresholds(entry.getValue(), entry.getKey(), actualTarget, currentValuesByMetric);
 			if (!results.isEmpty()) {
@@ -55,7 +55,7 @@ public class Check {
 	}
 
 	private List<CheckResult> checkThresholds(List<Threshold> thresholds, CheckResult.Status severity,
-											  String actualTarget, Map<String, Double> currentValuesByMetric) {
+											  MetricName actualTarget, Map<String, Number> currentValuesByMetric) {
 		List<CheckResult> results = new ArrayList<CheckResult>(thresholds.size());
 		for (Threshold threshold : thresholds) {
 			CheckResult result = threshold.check(severity, actualTarget, currentValuesByMetric);
@@ -82,11 +82,11 @@ public class Check {
 		this.name = name;
 	}
 
-	public Pattern getTarget() {
+	public MetricName getTarget() {
 		return target;
 	}
 
-	public void setTarget(Pattern target) {
+	public void setTarget(MetricName target) {
 		this.target = target;
 	}
 

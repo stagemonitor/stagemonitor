@@ -49,8 +49,8 @@ public class StagemonitorMetricsServletTest {
 		registry.meter(name("foo").tag("bar", "baz").build()).mark();
 		final MockHttpServletResponse resp = new MockHttpServletResponse();
 		servlet.doGet(new MockHttpServletRequest(), resp);
-		final double m1_rate = JsonUtils.getMapper().readTree(resp.getContentAsString()).get(0).get("m1_rate").doubleValue();
-		assertTrue("Expected m1 rate of > 0, but got " + m1_rate, m1_rate > 0);
+		final double mean_rate = JsonUtils.getMapper().readTree(resp.getContentAsString()).get(0).get("mean_rate").doubleValue();
+		assertTrue("Expected m1 rate of > 0, but got " + mean_rate, mean_rate > 0);
 	}
 
 }
