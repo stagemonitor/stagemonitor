@@ -333,11 +333,14 @@ public class CorePlugin extends StagemonitorPlugin {
 			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
-	private final ConfigurationOption<Collection<String>> excludedInstrumenters = ConfigurationOption.stringsOption()
-			.key("stagemonitor.instrument.excludedInstrumenter")
+	private final ConfigurationOption<Collection<String>> exportClassesWithName = ConfigurationOption.stringsOption()
+			.key("stagemonitor.instrument.exportGeneratedClassesWithName")
 			.dynamic(false)
-			.label("Excluded Instrumenters")
-			.description("A list of the simple class names of StagemonitorByteBuddyTransformers that should not be applied")
+			.label("Export generated classes with name")
+			.description("A list of the fully qualified class names which should be exported to the file system after they have been " +
+					"modified by Byte Buddy. This option is useful to debug problems inside the generated class. " +
+					"Classes are exported to a temporary directory. The logs contain the information where the files " +
+					"are stored.")
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -347,6 +350,14 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Debug instrumentation")
 			.description("Set to true to log additional information and warnings during the instrumentation process.")
 			.defaultValue(false)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<Collection<String>> excludedInstrumenters = ConfigurationOption.stringsOption()
+			.key("stagemonitor.instrument.excludedInstrumenter")
+			.dynamic(false)
+			.label("Excluded Instrumenters")
+			.description("A list of the simple class names of StagemonitorByteBuddyTransformers that should not be applied")
+			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<String> grafanaUrl = ConfigurationOption.stringOption()
@@ -768,5 +779,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public boolean isDebugInstrumentation() {
 		return debugInstrumentation.getValue();
+	}
+
+	public Collection<String> getExportClassesWithName() {
+		return exportClassesWithName.getValue();
 	}
 }

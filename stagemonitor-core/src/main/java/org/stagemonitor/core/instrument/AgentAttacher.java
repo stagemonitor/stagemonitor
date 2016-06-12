@@ -164,7 +164,7 @@ public class AgentAttacher {
 	private static AgentBuilder createAgentBuilder() {
 		return new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.of(corePlugin.isDebugInstrumentation())))
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-				.with(corePlugin.isDebugInstrumentation() ? new ErrorLoggingListener() : AgentBuilder.Listener.NoOp.INSTANCE)
+				.with(getListener())
 				.with(binaryLocator)
 				.ignore(any(), timed("classloader", "bootstrap", isBootstrapClassLoader()))
 				.or(any(), timed("classloader", "reflection", isReflectionClassLoader()))
@@ -185,6 +185,17 @@ public class AgentAttacher {
 								.and(not(nameContains("Test").or(nameContains("benchmark")))))
 				))
 				.disableClassFormatChanges();
+	}
+
+	private static AgentBuilder.Listener getListener() {
+		List<AgentBuilder.Listener> listeners = new ArrayList<AgentBuilder.Listener>(2);
+		if (corePlugin.isDebugInstrumentation()) {
+			listeners.add(new ErrorLoggingListener());
+		}
+		if (!corePlugin.getExportClassesWithName().isEmpty()) {
+			listeners.add(new FileExportingListener(corePlugin.getExportClassesWithName()));
+		}
+		return new AgentBuilder.Listener.Compound(listeners);
 	}
 
 	private static Iterable<StagemonitorByteBuddyTransformer> getStagemonitorByteBuddyTransformers() {
