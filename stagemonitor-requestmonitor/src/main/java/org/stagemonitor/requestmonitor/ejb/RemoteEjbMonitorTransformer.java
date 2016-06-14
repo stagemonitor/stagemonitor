@@ -22,17 +22,16 @@ import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
 public class RemoteEjbMonitorTransformer extends AbstractMonitorRequestsTransformer {
 
 	@Override
-	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return super.getIncludeTypeMatcher()
-				.and(isAnnotatedWith(Remote.class))
-				.or(implementsInterfaceWhichIsAnnotatedWithRemote());
+	protected ElementMatcher.Junction<TypeDescription> getNarrowTypesMatcher() {
+		return isAnnotatedWith(Remote.class).or(implementsInterfaceWhichIsAnnotatedWithRemote());
 	}
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
-		return isPublic()
-				.and(overridesMethodFromRemoteAnnotationValue())
-				.or(overridesMethodFromInterfaceWhichIsAnnotatedWithRemote());
+		return isPublic().and(
+				overridesMethodFromRemoteAnnotationValue()
+						.or(overridesMethodFromInterfaceWhichIsAnnotatedWithRemote())
+		);
 	}
 
 	@Override

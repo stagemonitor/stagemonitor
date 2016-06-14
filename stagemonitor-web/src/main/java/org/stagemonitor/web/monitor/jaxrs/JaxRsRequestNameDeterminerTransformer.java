@@ -25,8 +25,8 @@ import org.stagemonitor.requestmonitor.RequestTrace;
 public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Override
-	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return super.getIncludeTypeMatcher().and(isAnnotatedWith(Path.class));
+	protected ElementMatcher.Junction<TypeDescription> getNarrowTypesMatcher() {
+		return isAnnotatedWith(Path.class);
 	}
 
 	@Override
