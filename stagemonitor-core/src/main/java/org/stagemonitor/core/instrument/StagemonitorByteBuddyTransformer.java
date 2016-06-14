@@ -76,11 +76,15 @@ public abstract class StagemonitorByteBuddyTransformer {
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return isInsideMonitoredProject().or(getExtraIncludeTypeMatcher());
+		return isInsideMonitoredProject().or(getExtraIncludeTypeMatcher()).and(getNarrowTypesMatcher());
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getExtraIncludeTypeMatcher() {
 		return none();
+	}
+
+	protected ElementMatcher.Junction<TypeDescription> getNarrowTypesMatcher() {
+		return any();
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getExtraExcludeTypeMatcher() {

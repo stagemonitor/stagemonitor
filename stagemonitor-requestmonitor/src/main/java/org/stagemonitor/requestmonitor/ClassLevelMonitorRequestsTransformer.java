@@ -12,8 +12,8 @@ import net.bytebuddy.matcher.ElementMatcher;
 public class ClassLevelMonitorRequestsTransformer extends AbstractMonitorRequestsTransformer {
 
 	@Override
-	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return super.getIncludeTypeMatcher().and(inheritsAnnotation(MonitorRequests.class));
+	protected ElementMatcher.Junction<TypeDescription> getNarrowTypesMatcher() {
+		return inheritsAnnotation(MonitorRequests.class);
 	}
 
 	@Override

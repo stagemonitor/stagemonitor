@@ -63,6 +63,14 @@ public class RemoteEjbMonitorTransformerTest {
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl"));
 	}
 
+
+	@Test
+	public void testExcludeGeneratedClasses() throws Exception {
+		// classes which contain $$ are usually generated classes
+		new $$ExcludeGeneratedClasses().bar();
+		assertNull(requestTraceCapturingReporter.get());
+	}
+
 	@Test
 	public void testDontMonitorToString() throws Exception {
 		remote.toString();
@@ -121,6 +129,17 @@ public class RemoteEjbMonitorTransformerTest {
 	}
 
 	public class NoRemoteEJB implements SuperInterface {
+		@Override
+		public void foo() {
+		}
+	}
+
+	public class $$ExcludeGeneratedClasses implements RemoteInterfaceWithRemoteAnnotation {
+
+		@Override
+		public void bar() {
+		}
+
 		@Override
 		public void foo() {
 		}
