@@ -16,28 +16,31 @@
 					fill: 0.1,
 					columns: [
 						{
-							metricPathRegex: "jvm_memory_heap.(max)",
 							metricMatcher: {
 								name: "jvm_memory_heap",
-								type: "max"
+								tags: {
+									type: "max"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "jvm_memory_heap.(committed)",
 							metricMatcher: {
 								name: "jvm_memory_heap",
-								type: "committed"
+								tags: {
+									type: "committed"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "jvm_memory_heap.(used)",
 							metricMatcher: {
 								name: "jvm_memory_heap",
-								type: "used"
+								tags: {
+									type: "used"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
@@ -51,10 +54,11 @@
 					format: 'percent0To1',
 					columns: [
 						{
-							metricPathRegex: /jvm_memory_pools.([^\.]+).usage/,
 							metricMatcher: {
 								name: "jvm_memory_pools",
-								type: "usage"
+								tags: {
+									type: "usage"
+								}
 							},
 							groupBy: "memory_pool",
 							metric: "value"
@@ -69,11 +73,11 @@
 					format: 'percent',
 					columns: [
 						{
-							metricPathRegex: "jvm_process_cpu_(usage)",
 							metricMatcher: {
 								name: "jvm_process_cpu_usage"
 							},
-							metric: "value"
+							metric: "value",
+							title: "usage"
 						}
 					]
 				},
@@ -96,7 +100,6 @@
 							// A regex of metric paths. A line is created for each distinct regex group.
 							// That's why the wildcard [^\.]+ is put in parentesis.
 							// That way a line is created and named after each GC-Algorithm
-							metricPathRegex: /jvm_gc_time.([^\.]+)/,
 							metricMatcher: {
 								name: "jvm_gc_time"
 							},

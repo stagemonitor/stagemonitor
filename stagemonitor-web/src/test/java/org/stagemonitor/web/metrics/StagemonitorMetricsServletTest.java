@@ -30,7 +30,10 @@ public class StagemonitorMetricsServletTest {
 		registry.counter(name("qux").tag("quux", "foo").build()).inc();
 		final MockHttpServletResponse resp = new MockHttpServletResponse();
 		servlet.doGet(new MockHttpServletRequest(), resp);
-		assertEquals("[{\"name\":\"qux\",\"quux\":\"foo\",\"count\":1},{\"name\":\"foo\",\"bar\":\"baz\",\"count\":1}]", resp.getContentAsString());
+		assertEquals("[" +
+				"{\"name\":\"qux\",\"tags\":{\"quux\":\"foo\"},\"values\":{\"count\":1}}," +
+				"{\"name\":\"foo\",\"tags\":{\"bar\":\"baz\"},\"values\":{\"count\":1}}" +
+				"]", resp.getContentAsString());
 	}
 
 	@Test
@@ -41,7 +44,7 @@ public class StagemonitorMetricsServletTest {
 		final MockHttpServletRequest req = new MockHttpServletRequest();
 		req.addParameter("metricNames[]", "foo");
 		servlet.doGet(req, resp);
-		assertEquals("[{\"name\":\"foo\",\"bar\":\"baz\",\"count\":1}]", resp.getContentAsString());
+		assertEquals("[{\"name\":\"foo\",\"tags\":{\"bar\":\"baz\"},\"values\":{\"count\":1}}]", resp.getContentAsString());
 	}
 
 	@Test
@@ -49,7 +52,7 @@ public class StagemonitorMetricsServletTest {
 		registry.meter(name("foo").tag("bar", "baz").build()).mark();
 		final MockHttpServletResponse resp = new MockHttpServletResponse();
 		servlet.doGet(new MockHttpServletRequest(), resp);
-		final double mean_rate = JsonUtils.getMapper().readTree(resp.getContentAsString()).get(0).get("mean_rate").doubleValue();
+		final double mean_rate = JsonUtils.getMapper().readTree(resp.getContentAsString()).get(0).get("values").get("mean_rate").doubleValue();
 		assertTrue("Expected m1 rate of > 0, but got " + mean_rate, mean_rate > 0);
 	}
 

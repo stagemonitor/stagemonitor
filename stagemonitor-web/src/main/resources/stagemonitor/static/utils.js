@@ -88,13 +88,20 @@ var utils = (function () {
 				.replace(/>/g, '&gt;');
 		}, 
 		matches: function(metric, metricMatcher) {
-			for (var tag in metricMatcher) {
-				var value = metricMatcher[tag];
-				if (value !== '*' && metric[tag] !== value) {
+			if (metric.name !== metricMatcher.name) {
+				return false;
+			}
+
+			for (var tag in metricMatcher.tags || {}) {
+				var value = metricMatcher.tags[tag];
+				if (value !== '*' && metric.tags[tag] !== value) {
 					return false;
 				}
 			}
 			return true;
+		},
+		metricAsString: function(metric, valueType) {
+			return metric.name + JSON.stringify(metric.tags).split('"').join('') + ' ' + valueType;
 		}
 	}
 })();

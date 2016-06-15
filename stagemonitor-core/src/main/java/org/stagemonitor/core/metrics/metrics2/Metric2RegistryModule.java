@@ -84,10 +84,14 @@ public class Metric2RegistryModule extends Module {
 				gen.writeStartObject();
 				MetricName metricName = entry.getKey();
 				gen.writeStringField("name", metricName.getName());
+				gen.writeObjectFieldStart("tags");
 				for (Map.Entry<String, String> tagEntry : metricName.getTags().entrySet()) {
 					gen.writeObjectField(tagEntry.getKey(), tagEntry.getValue());
 				}
+				gen.writeEndObject();
+				gen.writeObjectFieldStart("values");
 				valueWriter.writeValues(entry.getValue(), gen);
+				gen.writeEndObject();
 				gen.writeEndObject();
 			}
 		}

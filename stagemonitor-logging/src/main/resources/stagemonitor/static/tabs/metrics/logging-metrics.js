@@ -8,7 +8,6 @@
 				nameLabel: "Name",
 				columns: [
 					{
-						metricPathRegex: /logging.([^\.]+)/,
 						metricMatcher: {
 							name: "logging"
 						},
@@ -17,7 +16,6 @@
 						title: "Logs/s (1m)"
 					},
 					{
-						metricPathRegex: /logging.([^\.]+)/,
 						metricMatcher: {
 							name: "logging"
 						},
@@ -26,7 +24,6 @@
 						title: "Logs/s (5m)"
 					},
 					{
-						metricPathRegex: /logging.([^\.]+)/,
 						metricMatcher: {
 							name: "logging"
 						},
@@ -35,7 +32,6 @@
 						title: "Logs/s (15m)"
 					},
 					{
-						metricPathRegex: /logging.([^\.]+)/,
 						metricMatcher: {
 							name: "logging"
 						},
@@ -55,10 +51,11 @@
 								fill: 0.1,
 								columns: [
 									{
-										metricPathRegex: "logging.(${rowName})",
 										metricMatcher: {
 											name: "logging",
-											log_level: "${rowName}"
+											tags: {
+												log_level: "${rowName}"
+											}
 										},
 										groupBy: "log_level",
 										metric: "m1_rate" 
@@ -74,10 +71,11 @@
 								fill: 0.1,
 								columns: [
 									{
-										metricPathRegex: "logging.(${rowName})",
 										metricMatcher: {
 											name: "logging",
-											log_level: "${rowName}"
+											tags: {
+												log_level: "${rowName}"
+											}
 										},
 										groupBy: "log_level",
 										metric: "m5_rate"

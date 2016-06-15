@@ -26,7 +26,10 @@ public class Metric2RegistryModuleTest {
 	public void testCounter() throws Exception {
 		registry.counter(name("foo").tag("bar", "baz").build()).inc();
 		registry.counter(name("qux").tag("quux", "foo").build()).inc();
-		assertEquals("[{\"name\":\"qux\",\"quux\":\"foo\",\"count\":1},{\"name\":\"foo\",\"bar\":\"baz\",\"count\":1}]", mapper.writeValueAsString(registry));
+		assertEquals("[" +
+				"{\"name\":\"qux\",\"tags\":{\"quux\":\"foo\"},\"values\":{\"count\":1}}," +
+				"{\"name\":\"foo\",\"tags\":{\"bar\":\"baz\"},\"values\":{\"count\":1}}" +
+				"]", mapper.writeValueAsString(registry));
 	}
 
 	@Test
@@ -37,6 +40,6 @@ public class Metric2RegistryModuleTest {
 				return 1.1;
 			}
 		});
-		assertEquals("[{\"name\":\"foo\",\"bar\":\"baz\",\"value\":1.1}]", mapper.writeValueAsString(registry));
+		assertEquals("[{\"name\":\"foo\",\"tags\":{\"bar\":\"baz\"},\"values\":{\"value\":1.1}}]", mapper.writeValueAsString(registry));
 	}
 }

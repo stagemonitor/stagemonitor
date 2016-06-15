@@ -13,73 +13,81 @@
 					fill: 0.1,
 					columns: [
 						{
-							metricPathRegex: "cpu_usage.(soft-interrupt)",
 							metricMatcher: {
 								name: "cpu_usage",
-								type: "soft-interrupt"
+								tags: {
+									type: "soft-interrupt"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "cpu_usage.(interrupt)",
 							metricMatcher: {
 								name: "cpu_usage",
-								type: "interrupt"
+								tags: {
+									type: "interrupt"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "cpu_usage.(stolen)",
 							metricMatcher: {
 								name: "cpu_usage",
-								type: "stolen"
+								tags: {
+									type: "stolen"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "cpu_usage.(nice)",
 							metricMatcher: {
 								name: "cpu_usage",
-								type: "nice"
+								tags: {
+									type: "nice"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "cpu_usage.(wait)",
 							metricMatcher: {
 								name: "cpu_usage",
-								type: "wait"
+								tags: {
+									type: "wait"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "cpu_usage.(sys)",
 							metricMatcher: {
 								name: "cpu_usage",
-								type: "sys"
+								tags: {
+									type: "sys"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "cpu_usage.(user)",
 							metricMatcher: {
 								name: "cpu_usage",
-								type: "user"
+								tags: {
+									type: "user"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "cpu_usage.(idle)",
 							metricMatcher: {
 								name: "cpu_usage",
-								type: "idle"
+								tags: {
+									type: "idle"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
@@ -93,22 +101,24 @@
 					derivative: true,
 					columns: [
 						{
-							metricPathRegex: /network_io.[^\.]+.write.bytes/,
 							metricMatcher: {
 								name: "network_io",
-								type: "write",
-								unit: "bytes"
+								tags: {
+									type: "write",
+									unit: "bytes"
+								}
 							},
 							groupBy: "ifname",
 							metric: "value",
-							title: "send" 
+							title: "send"
 						},
 						{
-							metricPathRegex: /network_io.[^\.]+.read.bytes/,
 							metricMatcher: {
 								name: "network_io",
-								type: "read",
-								unit: "bytes"
+								tags: {
+									type: "read",
+									unit: "bytes"
+								}
 							},
 							groupBy: "ifname",
 							metric: "value",
@@ -124,7 +134,6 @@
 					derivative: true,
 					columns: [
 						{
-							metricPathRegex: /disk_io.[^\.]+.([^\.]+)/,
 							metricMatcher: {
 								name: "disk_io"
 							},
@@ -140,7 +149,6 @@
 					format: 'percent',
 					columns: [
 						{
-							metricPathRegex: /disk_usage_percent.([^\.]+)/,
 							metricMatcher: {
 								name: "disk_usage_percent"
 							},
@@ -156,7 +164,6 @@
 					fill: 0.1,
 					columns: [
 						{
-							metricPathRegex: /mem_usage\.([^\.]+)/,
 							metricMatcher: {
 								name: "mem_usage"
 							},
@@ -172,19 +179,21 @@
 					fill: 0.1,
 					columns: [
 						{
-							metricPathRegex: "swap_usage.(total)",
 							metricMatcher: {
 								name: "swap_usage",
-								type: "total"
+								tags: {
+									type: "total"
+								}
 							},
 							groupBy: "type",
 							metric: "value"
 						},
 						{
-							metricPathRegex: "swap_usage.(used)",
 							metricMatcher: {
 								name: "swap_usage",
-								type: "used"
+								tags: {
+									type: "used"
+								}
 							},
 							groupBy: "type",
 							metric: "value"

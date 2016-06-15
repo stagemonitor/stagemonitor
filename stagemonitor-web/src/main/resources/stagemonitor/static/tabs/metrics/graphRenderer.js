@@ -181,8 +181,8 @@ var graphRenderer = (function () {
 			var metric = metricsFromServer[i];
 			if (utils.matches(metric, metricPath.metricMatcher)) {
 				noOfMatches++;
-				var graphName = metricPath.title || metric[metricPath.groupBy] || metric.name;
-				var value = +metric[metricPath.metric] || 0; // convert "NaN" to 0
+				var graphName = metricPath.title || metric.tags[metricPath.groupBy] || utils.metricAsString(metric, metricPath.metric);
+				var value = +metric.values[metricPath.metric] || 0; // convert "NaN" to 0
 				metrics[graphName] = metrics[graphName] || 0;
 				if (metricPath.aggregate === 'mean' && metrics) {
 					var sumOfPreviousValues = metrics[graphName] * (noOfMatches - 1);

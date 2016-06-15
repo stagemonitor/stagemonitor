@@ -8,70 +8,77 @@
 				nameLabel: "Name",
 				columns: [
 					{
-						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metricMatcher: {
 							name: "external_request_response_time",
-							type: "jdbc"
+							tags: {
+								type: "jdbc"
+							}
 						},
 						groupBy: "signature",
 						metric: "m1_rate",
 						title: "Requests/s"
 					},
 					{
-						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metricMatcher: {
 							name: "external_request_response_time",
-							type: "jdbc"
+							tags: {
+								type: "jdbc"
+							}
 						},
 						groupBy: "signature",
 						metric: "max",
 						title: "Max"
 					},
 					{
-						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metricMatcher: {
 							name: "external_request_response_time",
-							type: "jdbc"
+							tags: {
+								type: "jdbc"
+							}
 						},
 						groupBy: "signature",
 						metric: "mean",
 						title: "Mean"
 					},
 					{
-						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metricMatcher: {
 							name: "external_request_response_time",
-							type: "jdbc"
+							tags: {
+								type: "jdbc"
+							}
 						},
 						groupBy: "signature",
 						metric: "min",
 						title: "Min"
 					},
 					{
-						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metricMatcher: {
 							name: "external_request_response_time",
-							type: "jdbc"
+							tags: {
+								type: "jdbc"
+							}
 						},
 						groupBy: "signature",
 						metric: "p50",
 						title: "p50"
 					},
 					{
-						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metricMatcher: {
 							name: "external_request_response_time",
-							type: "jdbc"
+							tags: {
+								type: "jdbc"
+							}
 						},
 						groupBy: "signature",
 						metric: "p95",
 						title: "p95"
 					},
 					{
-						metricPathRegex: /external_request_response_time.jdbc.([^\.]+).+/,
 						metricMatcher: {
 							name: "external_request_response_time",
-							type: "jdbc"
+							tags: {
+								type: "jdbc"
+							}
 						},
 						groupBy: "signature",
 						metric: "std",
@@ -89,11 +96,12 @@
 								fill: 0.1,
 								columns: [
 									{
-										metricPathRegex: "external_request_response_time.jdbc.(${rowName})",
 										metricMatcher: {
 											name: "external_request_response_time",
-											type: "jdbc",
-											signature: "${rowName}"
+											tags: {
+												type: "jdbc",
+												signature: "${rowName}"
+											}
 										},
 										groupBy: "signature",
 										metric: "mean"
@@ -109,11 +117,12 @@
 								fill: 0.1,
 								columns: [
 									{
-										metricPathRegex: "external_request_response_time.jdbc.(${rowName})",
 										metricMatcher: {
 											name: "external_request_response_time",
-											type: "jdbc",
-											signature: "${rowName}"
+											tags: {
+												type: "jdbc",
+												signature: "${rowName}"
+											}
 										},
 										groupBy: "signature",
 										metric: "m1_rate"

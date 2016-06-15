@@ -10,7 +10,9 @@
 					{
 						metricMatcher: {
 							name: "response_time_server",
-							layer: "All"
+							tags: {
+								layer: "All"
+							}
 						},
 						groupBy: "request_name",
 						metric: "m1_rate",
@@ -19,7 +21,9 @@
 					{
 						metricMatcher: {
 							name: "response_time_server",
-							layer: "All"
+							tags: {
+								layer: "All"
+							}
 						},
 						groupBy: "request_name",
 						metric: "max",
@@ -28,7 +32,9 @@
 					{
 						metricMatcher: {
 							name: "response_time_server",
-							layer: "All"
+							tags: {
+								layer: "All"
+							}
 						},
 						groupBy: "request_name",
 						metric: "mean",
@@ -37,7 +43,9 @@
 					{
 						metricMatcher: {
 							name: "response_time_server",
-							layer: "All"
+							tags: {
+								layer: "All"
+							}
 						},
 						groupBy: "request_name",
 						metric: "min",
@@ -46,7 +54,9 @@
 					{
 						metricMatcher: {
 							name: "response_time_server",
-							layer: "All"
+							tags: {
+								layer: "All"
+							}
 						},
 						groupBy: "request_name",
 						metric: "p50",
@@ -55,7 +65,9 @@
 					{
 						metricMatcher: {
 							name: "response_time_server",
-							layer: "All"
+							tags: {
+								layer: "All"
+							}
 						},
 						groupBy: "request_name",
 						metric: "p95",
@@ -64,7 +76,9 @@
 					{
 						metricMatcher: {
 							name: "response_time_server",
-							layer: "All"
+							tags: {
+								layer: "All"
+							}
 						},
 						groupBy: "request_name",
 						metric: "std",
@@ -73,7 +87,9 @@
 					{
 						metricMatcher: {
 							name: "external_requests_rate",
-							type: "jdbc"
+							tags: {
+								type: "jdbc"
+							}
 						},
 						groupBy: "request_name",
 						metric: "m1_rate",
@@ -93,12 +109,13 @@
 									{
 										metricMatcher: {
 											name: "response_time_server",
-											layer: "All",
-											request_name: "${rowName}"
+											tags: {
+												layer: "All",
+												request_name: "${rowName}"
+											}
 										},
 										groupBy: "request_name",
-										metricPathRegex: "response_time_server.(${rowName}).All", 
-										metric: "mean" 
+										metric: "mean"
 									}
 								]
 							}
@@ -113,11 +130,12 @@
 									{
 										metricMatcher: {
 											name: "response_time_server",
-											layer: "All",
-											request_name: "${rowName}"
+											tags: {
+												layer: "All",
+												request_name: "${rowName}"
+											}
 										},
 										groupBy: "request_name",
-										metricPathRegex: "response_time_server.(${rowName}).All", 
 										metric: "m1_rate"
 									}
 								]
