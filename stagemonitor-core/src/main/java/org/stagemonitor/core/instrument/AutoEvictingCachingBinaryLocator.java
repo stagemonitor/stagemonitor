@@ -10,12 +10,12 @@ import net.bytebuddy.pool.TypePool;
 import org.stagemonitor.core.util.ExecutorUtils;
 
 /**
- * This {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} caches
+ * This {@link net.bytebuddy.agent.builder.AgentBuilder.TypeLocator} caches
  * {@link net.bytebuddy.description.type.TypeDescription}s and clears the cache every minute to avoid memory leaks.
  * <p/>
  * Class loader memory leaks are also avoided by using {@link WeakConcurrentMap}.
  */
-public class AutoEvictingCachingBinaryLocator extends AgentBuilder.BinaryLocator.WithTypePoolCache {
+public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.WithTypePoolCache {
 
 	private final WeakConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new WeakConcurrentMap
 			.WithInlinedExpunction<ClassLoader, TypePool.CacheProvider>();

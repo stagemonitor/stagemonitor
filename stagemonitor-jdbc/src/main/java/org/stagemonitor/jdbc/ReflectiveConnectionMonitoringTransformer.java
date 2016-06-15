@@ -15,6 +15,7 @@ import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.JavaModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.ClassUtils;
@@ -115,7 +116,7 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 	private static class AvoidDuplicateTransformationsRawMatcher implements AgentBuilder.RawMatcher {
 		@Override
-		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule javaModule, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
 			final String key = getClassAlreadyTransformedKey(typeDescription, classLoader);
 			final boolean hasAlreadyBeenTransformed = Dispatcher.getValues().containsKey(key);
 			if (DEBUG_INSTRUMENTATION) {

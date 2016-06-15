@@ -24,7 +24,7 @@ import com.codahale.metrics.Timer;
  */
 public class Metric2Registry implements Metric2Set {
 
-	private final ConcurrentMap<MetricName, Metric> metrics;
+	private final ConcurrentMap<MetricName, Metric> metrics = new ConcurrentHashMap<MetricName, Metric>();
 	
 	// An internal reference to a legacy Dropwizard Metric Registry
 	// that we echo registration/removal of Metrics to so that it
@@ -33,12 +33,11 @@ public class Metric2Registry implements Metric2Set {
 	private final MetricRegistry metricRegistry;
 
 	public Metric2Registry() {
-		this(new ConcurrentHashMap<MetricName, Metric>());
+		this(new MetricRegistry());
 	}
 
-	public Metric2Registry(ConcurrentMap<MetricName, Metric> metrics) {
-		this.metrics = metrics;
-		this.metricRegistry = new MetricRegistry();
+	public Metric2Registry(MetricRegistry metricRegistry) {
+		this.metricRegistry = metricRegistry;
 	}
 
 	/**

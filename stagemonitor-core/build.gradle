@@ -12,7 +12,6 @@ dependencies {
 	provided project(":stagemonitor-dispatcher")
 
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
-	testCompile 'commons-io:commons-io:2.4'
 	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
 }
 

@@ -7,7 +7,6 @@ dependencies {
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
-	testCompile 'commons-io:commons-io:2.4'
 	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
 	testCompile 'org.springframework:spring-test:4.1.0.RELEASE'
 }

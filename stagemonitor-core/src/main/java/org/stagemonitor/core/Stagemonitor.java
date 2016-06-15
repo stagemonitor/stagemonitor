@@ -10,12 +10,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
-import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.ExecutorUtils;
@@ -32,7 +32,7 @@ public final class Stagemonitor {
 	private static List<String> pathsOfWidgetTabPlugins = Collections.emptyList();
 	private static Iterable<StagemonitorPlugin> plugins;
 	private static List<Runnable> onShutdownActions = new CopyOnWriteArrayList<Runnable>();
-	private static Metric2Registry metric2Registry = new Metric2Registry();
+	private static Metric2Registry metric2Registry = new Metric2Registry(SharedMetricRegistries.getOrCreate("stagemonitor"));
 
 	static {
 		try {
@@ -238,7 +238,6 @@ public final class Stagemonitor {
 		started = false;
 		disabled = false;
 		measurementSession = new MeasurementSession(null, null, null);
-		metric2Registry.removeMatching(Metric2Filter.ALL);
 		if (configuration == null) {
 			reloadPluginsAndConfiguration();
 		}

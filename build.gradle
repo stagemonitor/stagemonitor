@@ -51,10 +51,10 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 
 ext {
 	metricsVersion = '3.1.2'
-	slf4jVersion = '1.7.18'
-	jacksonVersion = '2.7.2'
+	slf4jVersion = '1.7.21'
+	jacksonVersion = '2.7.4'
 	esVersion = '2.2.0'
-	byteBuddyVersion = '1.3.19'
+	byteBuddyVersion = '1.4.1'
 	getProjectsToRelease = this.&getProjectsToRelease
 }
 
@@ -98,7 +98,8 @@ subprojects {
 	dependencies {
 		testCompile 'junit:junit:4.12'
 		testCompile 'org.mockito:mockito-all:2.0.2-beta'
-		testCompile 'ch.qos.logback:logback-classic:1.1.6'
+		testCompile 'ch.qos.logback:logback-classic:1.1.7'
+		testCompile 'commons-io:commons-io:2.5'
 	}
 
 	test.testLogging.exceptionFormat = 'full'
