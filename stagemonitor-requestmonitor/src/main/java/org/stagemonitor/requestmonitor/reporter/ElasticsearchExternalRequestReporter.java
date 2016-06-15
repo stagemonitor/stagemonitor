@@ -69,12 +69,14 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 			}
 		}
 
-		if (externalRequests.isEmpty()) {
-			return;
+		if (!externalRequests.isEmpty() && isReportToElasticsearch()) {
+			reportExternalRequestsToElasticsearch(externalRequests);
 		}
+	}
 
+	private void reportExternalRequestsToElasticsearch(final List<ExternalRequest> externalRequests) throws IOException {
 		final String index = "stagemonitor-external-requests-" + StringUtils.getLogstashStyleDate();
-		if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
+		if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports() && !corePlugin.getElasticsearchUrls().isEmpty()) {
 			elasticsearchClient.sendBulkAsync("/" + index + "/requests", new HttpClient.OutputStreamHandler() {
 				@Override
 				public void withHttpURLConnection(OutputStream os) throws IOException {
@@ -147,11 +149,15 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 		return true;
 	}
 
-	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
+	public boolean isReportToElasticsearch() {
 		final boolean urlAvailable = !corePlugin.getElasticsearchUrls().isEmpty();
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
 		return (urlAvailable || logOnly);
+	}
+
+	@Override
+	public boolean isActive(IsActiveArguments isActiveArguments) {
+		return true;
 	}
 
 	@Override
