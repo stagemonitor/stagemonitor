@@ -336,19 +336,24 @@ public class ElasticsearchClient {
 				final JsonNode error = action.get("error");
 				if (error != null) {
 					sb.append("\n - ");
-					sb.append(error.get("reason").asText());
-					final String errorType = error.get("type").asText();
-					if (errorType.equals("version_conflict_engine_exception")) {
-						sb.append(": Probably you updated a dashboard in Kibana. ")
-								.append("Please don't override the stagemonitor dashboards. ")
-								.append("If you want to customize a dashboard, save it under a different name. ")
-								.append("Stagemonitor will not override your changes, but that also means that you won't ")
-								.append("be able to use the latest dashboard enhancements :(. ")
-								.append("To resolve this issue, save the updated one under a different name, delete it ")
-								.append("and restart stagemonitor so that the dashboard can be recreated.");
-					} else if ("es_rejected_execution_exception".equals(errorType)) {
-						sb.append(": Consider increasing threadpool.bulk.queue_size. See also stagemonitor's " +
-								"documentation for the Elasticsearch data base.");
+					final JsonNode reason = error.get("reason");
+					if (reason != null) {
+						sb.append(reason.asText());
+						final String errorType = error.get("type").asText();
+						if (errorType.equals("version_conflict_engine_exception")) {
+							sb.append(": Probably you updated a dashboard in Kibana. ")
+									.append("Please don't override the stagemonitor dashboards. ")
+									.append("If you want to customize a dashboard, save it under a different name. ")
+									.append("Stagemonitor will not override your changes, but that also means that you won't ")
+									.append("be able to use the latest dashboard enhancements :(. ")
+									.append("To resolve this issue, save the updated one under a different name, delete it ")
+									.append("and restart stagemonitor so that the dashboard can be recreated.");
+						} else if ("es_rejected_execution_exception".equals(errorType)) {
+							sb.append(": Consider increasing threadpool.bulk.queue_size. See also stagemonitor's " +
+									"documentation for the Elasticsearch data base.");
+						}
+					} else {
+						sb.append(error.toString());
 					}
 				}
 			}
