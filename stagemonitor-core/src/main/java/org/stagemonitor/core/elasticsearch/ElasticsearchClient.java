@@ -352,6 +352,8 @@ public class ElasticsearchClient {
 							sb.append(": Consider increasing threadpool.bulk.queue_size. See also stagemonitor's " +
 									"documentation for the Elasticsearch data base.");
 						}
+					} else {
+						sb.append(error.toString());
 					}
 				}
 			}
