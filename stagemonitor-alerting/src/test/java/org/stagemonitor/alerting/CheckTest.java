@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.check.ValueType;
 import org.stagemonitor.core.util.JsonUtils;
@@ -66,7 +65,6 @@ public class CheckTest {
 		Check check = new Check();
 		check.setName("Test Timer");
 		check.setTarget(name("timer").tag("foo", "bar").tag("qux", "quux").build());
-		check.setMetricCategory(MetricCategory.TIMER);
 		check.setAlertAfterXFailures(2);
 		check.getWarn().add(new Threshold("mean", Threshold.Operator.GREATER_EQUAL, 3));
 
@@ -74,7 +72,6 @@ public class CheckTest {
 		final Check checkFromJson = JsonUtils.getMapper().readValue(json, Check.class);
 		assertEquals("Test Timer", checkFromJson.getName());
 		assertEquals(name("timer").tag("foo", "bar").tag("qux", "quux").build(), checkFromJson.getTarget());
-		assertEquals(MetricCategory.TIMER, checkFromJson.getMetricCategory());
 		assertEquals(2, checkFromJson.getAlertAfterXFailures());
 		assertEquals(1, checkFromJson.getWarn().size());
 		assertEquals(ValueType.MEAN, checkFromJson.getWarn().get(0).getValueType());

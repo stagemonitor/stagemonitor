@@ -26,7 +26,6 @@ public class Check {
 
 	private String id = UUID.randomUUID().toString();
 	private String name;
-	private MetricCategory metricCategory;
 	private MetricName target;
 	private int alertAfterXFailures = 1;
 	private Map<CheckResult.Status, List<Threshold>> thresholds = new LinkedHashMap<CheckResult.Status, List<Threshold>>(){{
@@ -88,14 +87,6 @@ public class Check {
 
 	public void setTarget(MetricName target) {
 		this.target = target;
-	}
-
-	public MetricCategory getMetricCategory() {
-		return metricCategory;
-	}
-
-	public void setMetricCategory(MetricCategory metricCategory) {
-		this.metricCategory = metricCategory;
 	}
 
 	public int getAlertAfterXFailures() {

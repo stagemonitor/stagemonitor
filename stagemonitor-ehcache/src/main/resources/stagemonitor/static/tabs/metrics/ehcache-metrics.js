@@ -90,8 +90,8 @@
 				// Each time a row in the table is selected the placeholder gets replaced by the row name (e.g. the cache name)
 				graphTemplates: {
 					// This is the default value for the placeholder ${rowName} when no row is selected.
-					// [^\\.]+ means, per default, show a line for each cache
-					defaultRowSelection: '*',
+					// per default, show a line for each cache
+					defaultRowSelection: '',
 					templates: [
 						{
 							template: {

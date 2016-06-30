@@ -17,9 +17,8 @@ import org.junit.Test;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.alerting.check.ValueType;
-import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
+import org.stagemonitor.alerting.check.ValueType;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -110,7 +109,6 @@ public class SlaCheckCreatingClassPathScannerTest {
 		final Check errorRateCheck = checks.get(checkId);
 		assertNotNull(checks.keySet().toString(), errorRateCheck);
 		assertEquals("Alerting-Test", errorRateCheck.getApplication());
-		assertEquals(MetricCategory.METER, errorRateCheck.getMetricCategory());
 		assertEquals(checkTarget, errorRateCheck.getTarget());
 	}
 
@@ -118,7 +116,6 @@ public class SlaCheckCreatingClassPathScannerTest {
 		final Check responseTimeChek = checks.get(checkId);
 		assertNotNull(checks.keySet().toString(), responseTimeChek);
 		assertEquals("Alerting-Test", responseTimeChek.getApplication());
-		assertEquals(MetricCategory.TIMER, responseTimeChek.getMetricCategory());
 		assertEquals(checkTarget, responseTimeChek.getTarget());
 		final List<Threshold> thresholds = responseTimeChek.getThresholds(CheckResult.Status.ERROR);
 		final Threshold p95 = thresholds.get(0);

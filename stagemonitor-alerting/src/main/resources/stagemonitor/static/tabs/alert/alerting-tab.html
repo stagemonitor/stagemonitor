@@ -244,35 +244,59 @@
 					   class="form-control" value="{{check.alertAfterXFailures}}" min="1" required>
 				</div>
 			</div>
-			<div class="form-group">
-				<label class="col-sm-2 control-label" for="metric-category-input">Metric Category</label>
-				<div class="col-sm-10">
-					<select id="metric-category-input" class="form-control" name="metricCategory">
-						{{#each metricCategories}}
-							<option value="{{@key}}"
-									{{#ifCond @key '==' ../check.metricCategory}}selected{{/ifCond}}>{{this.label}}</option>
-						{{/each}}
-					</select>
+			<fieldset>
+				<legend>Target</legend>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="target-name-input">
+						Name
+						<span class="glyphicon glyphicon-question-sign tip"
+							  title="Enter the name of the metric. For example 'response_time_server'.
+							  Press the arrow down key in the field to see all currently available metric names"></span>
+					</label>
+					<div class="col-sm-5">
+						<input id="target-name-input" class="form-control typeahead" name="target[name]" value="{{check.target.name}}" required>
+					</div>
+					<label class="col-sm-1 control-label" for="target-input">Matches</label>
+					<div class="col-sm-4">
+						<input id="target-matches-input" class="form-control" disabled>
+					</div>
 				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-2 control-label" for="target-input">
-					Target
-					<span class="glyphicon glyphicon-question-sign tip"
-						  title="Enter a regex to select one or multiple targets. For example 'response_time_server.*.All'"></span>
-				</label>
-				<div class="col-sm-7">
-					<input id="target-input" type="text" class="form-control typeahead" name="target" value="{{check.target}}" required>
-				</div>
-				<label class="col-sm-1 control-label" for="target-input">Matches</label>
-				<div class="col-sm-2">
-					<input id="target-matches-input" class="form-control" disabled>
-				</div>
-			</div>
+
+				{{#each check.target.tags}}
+					<div class="threshold-form-group row form-group">
+						<div class="col-lg-2">
+							<div class="pull-right">
+								<a href="#" class="add-tag-filter btn btn-default"><span
+										class="glyphicon glyphicon-plus"></span></a>
+								<a href="#" class="remove-tag-filter btn btn-default" data-tag="{{@key}}"><span
+										class="glyphicon glyphicon-minus"></span></a>
+							</div>
+						</div>
+						<div class="col-lg-5">
+							<!--<input id="target-input" type="text" class="form-control typeahead" name="target.tags[{{@key}}]" value="{{check.target.name}}" required>-->
+							<input id="tag-key-{{@key}}" class="form-control typeahead tag-key" name="target[tagKeys][]" value="{{@key}}" required>
+						</div>
+						<div class="col-lg-5">
+							<input id="tag-value-{{@key}}" class="form-control typeahead tag-value" name="target[tagValues][]" value="{{this}}" required>
+						</div>
+					</div>
+				{{/each}}
+				{{#unless hasTagFilters}}
+					<div class="row form-group">
+						<div class="col-lg-2">
+							<div class="pull-right">
+								<a href="#" class="add-tag-filter btn btn-default"><span
+										class="glyphicon glyphicon-plus"></span></a>
+							</div>
+						</div>
+					</div>
+				{{/unless}}
+
+			</fieldset>
 
 			{{#each check.thresholds}}
 				<fieldset>
-					<legend>{{capitalize @key}}</legend>
+					<legend>Threshold {{capitalize @key}}</legend>
 					{{#each this}}
 						<div class="threshold-form-group row form-group">
 							<div class="col-lg-2">
@@ -284,10 +308,10 @@
 								</div>
 							</div>
 							<div class="col-lg-3">
-								<select class="form-control" name="thresholds[{{@key}}][][metric]">
-									{{#each @root.metrics}}
+								<select class="form-control" name="thresholds[{{@key}}][][valueType]">
+									{{#each @root.valueTypes}}
 										<option value="{{this}}"
-												{{#ifCond ../metric '==' this}}selected{{/ifCond}}>{{this}}</option>
+												{{#ifCond ../valueType '==' this}}selected{{/ifCond}}>{{this}}</option>
 									{{/each}}
 								</select>
 							</div>

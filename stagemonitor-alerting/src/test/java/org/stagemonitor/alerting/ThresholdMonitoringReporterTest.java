@@ -30,7 +30,6 @@ import org.stagemonitor.alerting.alerter.Alerter;
 import org.stagemonitor.alerting.alerter.Subscription;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.incident.CheckResults;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
@@ -218,7 +217,6 @@ public class ThresholdMonitoringReporterTest {
 		check.setName("Test Timer");
 		check.setApplication("testApp");
 		check.setTarget(name("test_timer").build());
-		check.setMetricCategory(MetricCategory.TIMER);
 		check.setAlertAfterXFailures(alertAfterXFailures);
 		check.getWarn().add(new Threshold("mean", Threshold.Operator.GREATER_EQUAL, meanMs));
 		return check;

@@ -1,20 +1,8 @@
 package org.stagemonitor.jdbc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
-
-import javax.sql.DataSource;
-
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Timer;
+
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -30,6 +18,19 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ConnectionMonitoringTransformerTest {
 

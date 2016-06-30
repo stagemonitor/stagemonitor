@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.MeasurementSession;
@@ -65,7 +64,6 @@ public class AlertSender {
 		check.setName("Test Check");
 		check.setApplication("testApp");
 		check.setTarget(name("test").build());
-		check.setMetricCategory(MetricCategory.TIMER);
 		check.getWarn().add(new Threshold("mean", Threshold.Operator.GREATER_EQUAL, 1));
 
 		Incident testIncident = new Incident(check, new MeasurementSession("testApp", "testHost", "testInstance"),

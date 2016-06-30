@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
-import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.check.ValueType;
 import org.stagemonitor.core.MeasurementSession;
@@ -120,7 +119,7 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 			return;
 		}
 
-		Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.timerName, MetricCategory.TIMER,
+		Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.timerName,
 				timerNames.timerMetricName, " (response time)", "responseTime");
 
 		final List<Threshold> thresholds = check.getThresholds(slaAnnotation.severity());
@@ -137,18 +136,17 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 					" @ExceptionMetered. When using @MonitorRequests, resolveNameAtRuntime must not be set to true.", fullMethodSignature);
 			return;
 		}
-		final Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.errorRequestName, MetricCategory.METER, timerNames.errorMetricName, " (errors)", "errors");
+		final Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.errorRequestName, timerNames.errorMetricName, " (errors)", "errors");
 		final Threshold t = new Threshold(ValueType.M1_RATE.getName(), Threshold.Operator.GREATER_EQUAL, slaAnnotation.errorRateThreshold());
 		check.getThresholds(slaAnnotation.severity()).add(t);
 		addCheckIfStarted(check);
 	}
 
-	private static Check createCheck(SLA slaAnnotation, String fullMethodSignature, String requestName, MetricCategory metricCategory,
+	private static Check createCheck(SLA slaAnnotation, String fullMethodSignature, String requestName,
 									 MetricName metricName, String checkNameSuffix, String checkIdSuffix) {
 		Check check = new Check();
 		check.setId(fullMethodSignature + "." + checkIdSuffix);
 		check.setName(requestName + checkNameSuffix);
-		check.setMetricCategory(metricCategory);
 		check.setTarget(metricName);
 		check.setAlertAfterXFailures(slaAnnotation.alertAfterXFailures());
 		return check;
