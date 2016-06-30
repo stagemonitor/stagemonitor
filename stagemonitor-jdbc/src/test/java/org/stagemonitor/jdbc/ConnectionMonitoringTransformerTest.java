@@ -1,25 +1,16 @@
 package org.stagemonitor.jdbc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
-
-import javax.sql.DataSource;
-
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Timer;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
@@ -31,13 +22,46 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
+@RunWith(Parameterized.class)
 public class ConnectionMonitoringTransformerTest {
+
+	private static final String DRIVER_CLASS_NAME = "org.hsqldb.jdbcDriver";
+	private static final String URL = "jdbc:hsqldb:mem:test";
 
 	private Configuration configuration;
 	private DataSource dataSource;
 	private RequestMonitor requestMonitor;
 	private Metric2Registry metric2Registry;
 	private TestDao testDao;
+
+	@Parameterized.Parameters(name = "{index}: {0}")
+	public static Iterable<Object[]> data() throws Exception {
+		final PoolProperties poolProperties = new PoolProperties();
+		poolProperties.setDriverClassName(DRIVER_CLASS_NAME);
+		poolProperties.setUrl(URL);
+		ComboPooledDataSource cpds = new ComboPooledDataSource();
+		cpds.setDriverClass(DRIVER_CLASS_NAME);
+		cpds.setJdbcUrl(URL);
+		return Arrays.asList(new Object[][]{{new org.apache.tomcat.jdbc.pool.DataSource(poolProperties)}, {cpds}});
+	}
+
+	public ConnectionMonitoringTransformerTest(DataSource dataSource) {
+		this.dataSource = dataSource;
+	}
 
 	@BeforeClass
 	public static void attachProfiler() throws Exception {
@@ -49,10 +73,10 @@ public class ConnectionMonitoringTransformerTest {
 		metric2Registry = Stagemonitor.getMetric2Registry();
 		metric2Registry.removeMatching(MetricFilter.ALL);
 
-		final PoolProperties poolProperties = new PoolProperties();
-		poolProperties.setDriverClassName("org.hsqldb.jdbcDriver");
-		poolProperties.setUrl("jdbc:hsqldb:mem:test");
-		dataSource = new org.apache.tomcat.jdbc.pool.DataSource(poolProperties);
+//		final PoolProperties poolProperties = new PoolProperties();
+//		poolProperties.setDriverClassName("org.hsqldb.jdbcDriver");
+//		poolProperties.setUrl("jdbc:hsqldb:mem:test");
+//		dataSource = new org.apache.tomcat.jdbc.pool.DataSource(poolProperties);
 		dataSource.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS STAGEMONITOR (FOO INT)").execute();
 		dataSource.getConnection().prepareStatement("INSERT INTO STAGEMONITOR (FOO) VALUES (1)").execute();
 		requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
