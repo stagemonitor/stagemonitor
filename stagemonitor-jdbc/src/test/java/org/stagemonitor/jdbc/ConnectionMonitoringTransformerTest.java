@@ -3,6 +3,7 @@ package org.stagemonitor.jdbc;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Timer;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.zaxxer.hikari.HikariDataSource;
 
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.junit.AfterClass;
@@ -26,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -48,15 +50,30 @@ public class ConnectionMonitoringTransformerTest {
 	private Metric2Registry metric2Registry;
 	private TestDao testDao;
 
-	@Parameterized.Parameters(name = "{index}: {0}")
+	@Parameterized.Parameters
 	public static Iterable<Object[]> data() throws Exception {
 		final PoolProperties poolProperties = new PoolProperties();
 		poolProperties.setDriverClassName(DRIVER_CLASS_NAME);
 		poolProperties.setUrl(URL);
-		ComboPooledDataSource cpds = new ComboPooledDataSource();
-		cpds.setDriverClass(DRIVER_CLASS_NAME);
-		cpds.setJdbcUrl(URL);
-		return Arrays.asList(new Object[][]{{new org.apache.tomcat.jdbc.pool.DataSource(poolProperties)}, {cpds}});
+		final org.apache.tomcat.jdbc.pool.DataSource tomcatDataSource = new org.apache.tomcat.jdbc.pool.DataSource(poolProperties);
+
+		ComboPooledDataSource comboPooledDataSource = new ComboPooledDataSource();
+		comboPooledDataSource.setDriverClass(DRIVER_CLASS_NAME);
+		comboPooledDataSource.setJdbcUrl(URL);
+
+		HikariDataSource hikariDataSource = new HikariDataSource();
+		hikariDataSource.setDriverClassName(DRIVER_CLASS_NAME);
+		hikariDataSource.setJdbcUrl(URL);
+
+		org.apache.commons.dbcp.BasicDataSource dbcp = new org.apache.commons.dbcp.BasicDataSource();
+		dbcp.setDriverClassName(DRIVER_CLASS_NAME);
+		dbcp.setUrl(URL);
+
+		org.apache.commons.dbcp2.BasicDataSource dbcp2 = new org.apache.commons.dbcp2.BasicDataSource();
+		dbcp2.setDriverClassName(DRIVER_CLASS_NAME);
+		dbcp2.setUrl(URL);
+
+		return Arrays.asList(new Object[][]{{tomcatDataSource}, {comboPooledDataSource}, {hikariDataSource}, {dbcp}, {dbcp2}});
 	}
 
 	public ConnectionMonitoringTransformerTest(DataSource dataSource) {
@@ -73,12 +90,10 @@ public class ConnectionMonitoringTransformerTest {
 		metric2Registry = Stagemonitor.getMetric2Registry();
 		metric2Registry.removeMatching(MetricFilter.ALL);
 
-//		final PoolProperties poolProperties = new PoolProperties();
-//		poolProperties.setDriverClassName("org.hsqldb.jdbcDriver");
-//		poolProperties.setUrl("jdbc:hsqldb:mem:test");
-//		dataSource = new org.apache.tomcat.jdbc.pool.DataSource(poolProperties);
-		dataSource.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS STAGEMONITOR (FOO INT)").execute();
-		dataSource.getConnection().prepareStatement("INSERT INTO STAGEMONITOR (FOO) VALUES (1)").execute();
+		try (final Connection connection = dataSource.getConnection()) {
+			connection.prepareStatement("CREATE TABLE IF NOT EXISTS STAGEMONITOR (FOO INT)").execute();
+			connection.prepareStatement("INSERT INTO STAGEMONITOR (FOO) VALUES (1)").execute();
+		}
 		requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
 		configuration = Stagemonitor.getConfiguration();
 		testDao = new TestDao(dataSource);
@@ -96,7 +111,7 @@ public class ConnectionMonitoringTransformerTest {
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
-						dataSource.getConnection();
+						dataSource.getConnection().close();
 						return null;
 					}
 				})).getRequestTraceReporterFuture().get();
@@ -106,12 +121,17 @@ public class ConnectionMonitoringTransformerTest {
 
 	@Test
 	public void monitorGetConnectionUsernamePassword() throws Exception {
-		dataSource.getConnection("user", "pw");
+		try {
+			dataSource.getConnection("sa", "").close();
+		} catch (SQLFeatureNotSupportedException | UnsupportedOperationException e) {
+			// ignore
+			return;
+		}
 		requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
-						dataSource.getConnection("user", "pw");
+						dataSource.getConnection("sa", "").close();
 						return null;
 					}
 				})).getRequestTraceReporterFuture().get();
@@ -173,15 +193,18 @@ public class ConnectionMonitoringTransformerTest {
 		}
 
 		private void executePreparedStatement() throws SQLException {
-			final Connection connection = dataSource.getConnection();
-			final PreparedStatement preparedStatement = connection.prepareStatement("SELECT * from STAGEMONITOR");
-			preparedStatement.execute();
-			final ResultSet resultSet = preparedStatement.getResultSet();
-			resultSet.next();
+			try (final Connection connection = dataSource.getConnection()) {
+				final PreparedStatement preparedStatement = connection.prepareStatement("SELECT * from STAGEMONITOR");
+				preparedStatement.execute();
+				final ResultSet resultSet = preparedStatement.getResultSet();
+				resultSet.next();
+			}
 		}
 
 		private void executeStatement() throws SQLException {
-			dataSource.getConnection().createStatement().execute("SELECT * from STAGEMONITOR");
+			try (final Connection connection = dataSource.getConnection()) {
+				connection.createStatement().execute("SELECT * from STAGEMONITOR");
+			}
 		}
 	}
 

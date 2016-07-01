@@ -4,4 +4,8 @@ dependencies {
 
 	testCompile 'org.apache.tomcat:tomcat-jdbc:8.5.0'
 	testCompile 'org.hsqldb:hsqldb:2.3.3'
+	testCompile 'com.mchange:c3p0:0.9.5.2'
+	testCompile 'com.zaxxer:HikariCP:2.4.6'
+	testCompile 'org.apache.commons:commons-dbcp2:2.1.1'
+	testCompile 'commons-dbcp:commons-dbcp:1.4'
 }
