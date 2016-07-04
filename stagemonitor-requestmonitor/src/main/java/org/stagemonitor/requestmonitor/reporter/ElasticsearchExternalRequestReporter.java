@@ -1,18 +1,8 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -25,6 +15,17 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.ExternalRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 /**
  * An implementation of {@link RequestTraceReporter} that reports
@@ -69,22 +70,24 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 			}
 		}
 
-		if (externalRequests.isEmpty()) {
-			return;
+		if (!externalRequests.isEmpty() && isReportToElasticsearch()) {
+			reportExternalRequestsToElasticsearch(externalRequests);
 		}
+	}
 
-		final String index = "stagemonitor-external-requests-" + StringUtils.getLogstashStyleDate();
-		if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
+	private void reportExternalRequestsToElasticsearch(final List<ExternalRequest> externalRequests) throws IOException {
+		if (requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
+			final ByteArrayOutputStream os = new ByteArrayOutputStream();
+			writeExternalRequestsToOutputStream(os, externalRequests);
+			externalRequestsLogger.info(new String(os.toByteArray(), Charset.forName("UTF-8")));
+		} else if (!corePlugin.getElasticsearchUrls().isEmpty()) {
+			final String index = "stagemonitor-external-requests-" + StringUtils.getLogstashStyleDate();
 			elasticsearchClient.sendBulkAsync("/" + index + "/requests", new HttpClient.OutputStreamHandler() {
 				@Override
 				public void withHttpURLConnection(OutputStream os) throws IOException {
 					writeExternalRequestsToOutputStream(os, externalRequests);
 				}
 			});
-		} else {
-			final ByteArrayOutputStream os = new ByteArrayOutputStream();
-			writeExternalRequestsToOutputStream(os, externalRequests);
-			externalRequestsLogger.info(new String(os.toByteArray(), Charset.forName("UTF-8")));
 		}
 	}
 
@@ -147,11 +150,15 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 		return true;
 	}
 
-	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
+	private boolean isReportToElasticsearch() {
 		final boolean urlAvailable = !corePlugin.getElasticsearchUrls().isEmpty();
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
 		return (urlAvailable || logOnly);
+	}
+
+	@Override
+	public boolean isActive(IsActiveArguments isActiveArguments) {
+		return true;
 	}
 
 	@Override
