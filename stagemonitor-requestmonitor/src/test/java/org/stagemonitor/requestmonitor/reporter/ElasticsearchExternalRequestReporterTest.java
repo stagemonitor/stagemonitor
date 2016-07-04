@@ -1,5 +1,18 @@
 package org.stagemonitor.requestmonitor.reporter;
 
+import com.codahale.metrics.Timer;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.requestmonitor.ExternalRequest;
+import org.stagemonitor.requestmonitor.RequestTrace;
+
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
@@ -10,14 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.requestmonitor.reporter.ElasticsearchExternalRequestReporter.getExternalRequestTimerName;
-
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.requestmonitor.ExternalRequest;
-import org.stagemonitor.requestmonitor.RequestTrace;
 
 public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsearchRequestTraceReporterTest {
 
@@ -40,6 +45,20 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient).sendBulkAsync(anyString(), any());
 		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
+		verifyTimerCreated(1);
+	}
+
+	@Test
+	public void doNotReportRequestTrace() throws Exception {
+		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(false);
+		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.emptyList());
+		when(corePlugin.getElasticsearchUrl()).thenReturn(null);
+		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
+
+		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
+		verify(requestTraceLogger, times(0)).info(anyString());
+		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
+		verifyTimerCreated(1);
 	}
 
 	@Test
@@ -49,22 +68,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
 		verify(requestTraceLogger).info(startsWith("{\"index\":{}}\n{"));
 		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
-	}
-
-	private RequestTrace getRequestTrace() {
-		return getRequestTrace(1);
-	}
-
-	private RequestTrace getRequestTrace(long executionTimeMillis) {
-		final RequestTrace requestTrace = new RequestTrace("abc", new MeasurementSession(getClass().getName(), "test", "test"), requestMonitorPlugin);
-		requestTrace.setName("Report Me");
-		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", TimeUnit.MILLISECONDS.toNanos(executionTimeMillis), "SELECT * from STAGEMONITOR");
-		externalRequest.setExecutedBy("ElasticsearchExternalRequestReporterTest#test");
-		requestTrace.addExternalRequest(externalRequest);
-		registry
-				.timer(getExternalRequestTimerName(externalRequest))
-				.update(executionTimeMillis, TimeUnit.MILLISECONDS);
-		return requestTrace;
+		verifyTimerCreated(1);
 	}
 
 	@Test
@@ -75,6 +79,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		Thread.sleep(5010); // the meter only updates every 5 seconds
 		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
 		verifyNoMoreInteractions(requestTraceLogger);
+		verifyTimerCreated(2);
 	}
 
 	@Test
@@ -86,6 +91,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(99)));
 		verifyNoMoreInteractions(requestTraceLogger);
+		verifyTimerCreated(2);
 	}
 
 	@Test
@@ -96,6 +102,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		verify(requestTraceLogger).info(anyString());
 		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(250)));
 		verifyNoMoreInteractions(requestTraceLogger);
+		verifyTimerCreated(2);
 	}
 
 	@Test
@@ -106,5 +113,35 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(1000)));
 
 		verify(requestTraceLogger, times(2)).info(anyString());
+		verifyTimerCreated(2);
+	}
+
+	private RequestTrace getRequestTrace() {
+		return getRequestTrace(1);
+	}
+
+	private RequestTrace getRequestTrace(long executionTimeMillis) {
+		final RequestTrace requestTrace = new RequestTrace("abc", new MeasurementSession(getClass().getName(), "test", "test"), requestMonitorPlugin);
+		requestTrace.setName("Report Me");
+		final ExternalRequest externalRequest = getTestExternalRequest(executionTimeMillis);
+		requestTrace.addExternalRequest(externalRequest);
+		return requestTrace;
+	}
+
+	private ExternalRequest getTestExternalRequest(long executionTimeMillis) {
+		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", TimeUnit.MILLISECONDS.toNanos(executionTimeMillis), "SELECT * from STAGEMONITOR");
+		externalRequest.setExecutedBy("ElasticsearchExternalRequestReporterTest#test");
+		return externalRequest;
+	}
+
+	private void verifyTimerCreated(int count) {
+		final ExternalRequest externalRequest = getTestExternalRequest(1);
+		final Timer timer = registry.getTimers().get(getExternalRequestTimerName(externalRequest));
+		assertNotNull(timer);
+		assertEquals(count, timer.getCount());
+
+		final Timer allTimer = registry.getTimers().get(getExternalRequestTimerName(externalRequest, "All"));
+		assertNotNull(allTimer);
+		assertEquals(count, allTimer.getCount());
 	}
 }

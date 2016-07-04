@@ -1,12 +1,5 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Collections;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
@@ -19,17 +12,25 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
+import java.util.Collections;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 public class AbstractElasticsearchRequestTraceReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
 	protected RequestMonitorPlugin requestMonitorPlugin;
 	protected Logger requestTraceLogger;
 	protected Metric2Registry registry;
 	protected Configuration configuration;
+	protected CorePlugin corePlugin;
 
 	@Before
 	public void setUp() throws Exception {
 		configuration = mock(Configuration.class);
-		CorePlugin corePlugin = mock(CorePlugin.class);
+		corePlugin = mock(CorePlugin.class);
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
