@@ -1,12 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
-
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
@@ -14,6 +7,13 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
@@ -387,7 +387,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void onShutDown() {
-		getRequestMonitor().close();
+		if (requestMonitor != null) {
+			requestMonitor.close();
+		}
 	}
 
 	public double getMinExecutionTimePercent() {

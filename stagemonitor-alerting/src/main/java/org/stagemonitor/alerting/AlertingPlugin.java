@@ -1,16 +1,7 @@
 package org.stagemonitor.alerting;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.alerter.AlertSender;
@@ -29,6 +20,16 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.source.SimpleSource;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
 
 public class AlertingPlugin extends StagemonitorPlugin {
 
@@ -234,7 +235,9 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void onShutDown() {
-		thresholdMonitoringReporter.close();
+		if (thresholdMonitoringReporter != null) {
+			thresholdMonitoringReporter.close();
+		}
 	}
 
 	@Override

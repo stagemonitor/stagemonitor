@@ -1,16 +1,8 @@
 package org.stagemonitor.core;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
@@ -19,6 +11,15 @@ import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.ExecutorUtils;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public final class Stagemonitor {
 
@@ -140,11 +141,6 @@ public final class Stagemonitor {
 			pathsOfWidgetTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetTabPlugins());
 			stagemonitorPlugin.registerWidgetTabPlugins(new StagemonitorPlugin.WidgetTabPluginsRegistry(pathsOfWidgetTabPlugins));
 			stagemonitorPlugin.registerWidgetMetricTabPlugins(new StagemonitorPlugin.WidgetMetricTabPluginsRegistry(pathsOfWidgetMetricTabPlugins));
-			onShutdownActions.add(new Runnable() {
-				public void run() {
-					stagemonitorPlugin.onShutDown();
-				}
-			});
 		} catch (Exception e) {
 			logger.warn("Error while initializing plugin " + pluginName + " (this exception is ignored)", e);
 		}
@@ -164,6 +160,13 @@ public final class Stagemonitor {
 			try {
 				onShutdownAction.run();
 			} catch (RuntimeException e) {
+				logger.warn(e.getMessage(), e);
+			}
+		}
+		for (StagemonitorPlugin plugin : plugins) {
+			try {
+				plugin.onShutDown();
+			} catch (Exception e) {
 				logger.warn(e.getMessage(), e);
 			}
 		}
