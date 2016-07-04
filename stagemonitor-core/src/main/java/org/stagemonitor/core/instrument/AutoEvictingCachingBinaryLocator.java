@@ -1,13 +1,15 @@
 package org.stagemonitor.core.instrument;
 
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.pool.TypePool;
+
+import org.stagemonitor.core.util.ExecutorUtils;
+
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.pool.TypePool;
-import org.stagemonitor.core.util.ExecutorUtils;
 
 /**
  * This {@link net.bytebuddy.agent.builder.AgentBuilder.TypeLocator} caches
@@ -19,6 +21,7 @@ public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.W
 
 	private final WeakConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new WeakConcurrentMap
 			.WithInlinedExpunction<ClassLoader, TypePool.CacheProvider>();
+	private final ScheduledExecutorService executorService;
 
 	public AutoEvictingCachingBinaryLocator() {
 		this(TypePool.Default.ReaderMode.EXTENDED);
@@ -26,7 +29,8 @@ public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.W
 
 	public AutoEvictingCachingBinaryLocator(TypePool.Default.ReaderMode readerMode) {
 		super(readerMode);
-		Executors.newScheduledThreadPool(1, new ExecutorUtils.NamedThreadFactory("type-pool-cache-evicter")).scheduleAtFixedRate(new Runnable() {
+		executorService = Executors.newScheduledThreadPool(1, new ExecutorUtils.NamedThreadFactory("type-pool-cache-evicter"));
+		executorService.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
 				cacheProviders.clear();
@@ -73,5 +77,11 @@ public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.W
 		}
 	}
 
+	/**
+	 * Shuts down the internal thread pool
+	 */
+	public void close() {
+		executorService.shutdown();
+	}
 
 }

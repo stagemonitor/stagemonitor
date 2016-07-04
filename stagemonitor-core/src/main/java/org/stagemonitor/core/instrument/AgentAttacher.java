@@ -47,7 +47,6 @@ public class AgentAttacher {
 	private static final Logger logger = LoggerFactory.getLogger(AgentAttacher.class);
 	private static final String DISPATCHER_CLASS_NAME = "java.lang.stagemonitor.dispatcher.Dispatcher";
 	private static final String IGNORED_CLASSLOADERS_KEY = AgentAttacher.class.getName() + "hashCodesOfClassLoadersToIgnore";
-	private static final AutoEvictingCachingBinaryLocator binaryLocator = new AutoEvictingCachingBinaryLocator();
 	private static final Runnable NOOP_ON_SHUTDOWN_ACTION = new Runnable() {
 		public void run() {
 		}
@@ -74,9 +73,10 @@ public class AgentAttacher {
 		runtimeAttached = true;
 
 		final List<ClassFileTransformer> classFileTransformers = new ArrayList<ClassFileTransformer>();
+		final AutoEvictingCachingBinaryLocator binaryLocator = new AutoEvictingCachingBinaryLocator();
 		if (initInstrumentation()) {
 			final long start = System.currentTimeMillis();
-			classFileTransformers.add(initByteBuddyClassFileTransformer());
+			classFileTransformers.add(initByteBuddyClassFileTransformer(binaryLocator));
 			if (corePlugin.isDebugInstrumentation()) {
 				logger.info("Attached agents in {} ms", System.currentTimeMillis() - start);
 			}
@@ -89,6 +89,7 @@ public class AgentAttacher {
 				}
 				// This ClassLoader is shutting down so don't try to retransform classes of it in the future
 				hashCodesOfClassLoadersToIgnore.add(ClassUtils.getIdentityString(AgentAttacher.class.getClassLoader()));
+				binaryLocator.close();
 			}
 		};
 	}
@@ -144,8 +145,8 @@ public class AgentAttacher {
 		return tempDispatcherJar;
 	}
 
-	private static ClassFileTransformer initByteBuddyClassFileTransformer() {
-		AgentBuilder agentBuilder = createAgentBuilder();
+	private static ClassFileTransformer initByteBuddyClassFileTransformer(AutoEvictingCachingBinaryLocator binaryLocator) {
+		AgentBuilder agentBuilder = createAgentBuilder(binaryLocator);
 		for (StagemonitorByteBuddyTransformer transformer : getStagemonitorByteBuddyTransformers()) {
 			agentBuilder = agentBuilder
 					.type(transformer.getMatcher())
@@ -163,7 +164,7 @@ public class AgentAttacher {
 		}
 	}
 
-	private static AgentBuilder createAgentBuilder() {
+	private static AgentBuilder createAgentBuilder(AutoEvictingCachingBinaryLocator binaryLocator) {
 		final ByteBuddy byteBuddy = new ByteBuddy()
 				.with(TypeValidation.of(corePlugin.isDebugInstrumentation()))
 				.with(MethodGraph.Empty.INSTANCE);
