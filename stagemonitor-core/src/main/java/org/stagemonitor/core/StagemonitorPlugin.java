@@ -1,11 +1,11 @@
 package org.stagemonitor.core;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base class for stagemonitor Plugins.
@@ -32,7 +32,14 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
 	}
 
-	public void onShutDown() {
+	/**
+	 * This method is called when stagemonitor shuts down.
+	 * The shutdown is triggered by {@link org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter#destroy()},
+	 * for example. In non-servlet applications this method has to be called manually.
+	 * <p>
+	 * Note that this method will be called even if {@link #initializePlugin(InitArguments)} has not been called.
+	 */
+	public void onShutDown() throws Exception {
 	}
 
 	/**
