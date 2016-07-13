@@ -10,6 +10,7 @@ import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
 
 import java.util.ArrayList;
@@ -66,16 +67,21 @@ public final class Stagemonitor {
 	}
 
 	public static Future<?> startMonitoring() {
-		ExecutorService startupThread = ExecutorUtils.createSingleThreadDeamonPool("stagemonitor-startup", 1);
-		try {
-			return startupThread.submit(new Runnable() {
-				@Override
-				public void run() {
-					doStartMonitoring();
-				}
-			});
-		} finally {
-			startupThread.shutdown();
+		if (getPlugin(CorePlugin.class).isInitAsync()) {
+			ExecutorService startupThread = ExecutorUtils.createSingleThreadDeamonPool("stagemonitor-startup", 1);
+			try {
+				return startupThread.submit(new Runnable() {
+					@Override
+					public void run() {
+						doStartMonitoring();
+					}
+				});
+			} finally {
+				startupThread.shutdown();
+			}
+		} else {
+			doStartMonitoring();
+			return new CompletedFuture<Void>(null);
 		}
 	}
 

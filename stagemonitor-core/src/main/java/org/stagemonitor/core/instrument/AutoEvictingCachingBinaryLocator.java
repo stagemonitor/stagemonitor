@@ -5,8 +5,6 @@ import net.bytebuddy.pool.TypePool;
 
 import org.stagemonitor.core.util.ExecutorUtils;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,40 +39,16 @@ public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.W
 
 	@Override
 	protected TypePool.CacheProvider locate(ClassLoader classLoader) {
-		classLoader = classLoader == null ? BootstrapClassLoaderMarker.INSTANCE : classLoader;
+		classLoader = classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader;
 		TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
 		while (cacheProvider == null) {
-			cacheProviders.putIfAbsent(classLoader, new TypePool.CacheProvider.Simple());
-			cacheProvider = cacheProviders.get(classLoader);
-		}
-		return cacheProvider;
-	}
-
-	/**
-	 * A marker for the bootstrap class loader which is represented by {@code null}.
-	 */
-	private static class BootstrapClassLoaderMarker extends ClassLoader {
-
-		/**
-		 * A static reference to the a singleton instance of the marker to preserve reference equality.
-		 */
-		protected static final ClassLoader INSTANCE = AccessController.doPrivileged(new CreationAction());
-
-		@Override
-		protected Class<?> loadClass(String name, boolean resolve) {
-			throw new UnsupportedOperationException("This loader is only a non-null marker and is not supposed to be used");
-		}
-
-		/**
-		 * A simple action for creating a bootstrap class loader marker.
-		 */
-		private static class CreationAction implements PrivilegedAction<ClassLoader> {
-
-			@Override
-			public ClassLoader run() {
-				return new BootstrapClassLoaderMarker();
+			cacheProvider = TypePool.CacheProvider.Simple.withObjectType();
+			TypePool.CacheProvider previous = cacheProviders.putIfAbsent(classLoader, cacheProvider);
+			if (previous != null) {
+				cacheProvider = previous;
 			}
 		}
+		return cacheProvider;
 	}
 
 	/**
