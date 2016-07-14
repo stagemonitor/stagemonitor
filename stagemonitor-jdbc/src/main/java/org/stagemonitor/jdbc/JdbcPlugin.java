@@ -1,13 +1,12 @@
 package org.stagemonitor.jdbc;
 
-import java.util.Collection;
-
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.grafana.GrafanaClient;
+
+import java.util.Collection;
 
 public class JdbcPlugin extends StagemonitorPlugin {
 	public static final String JDBC_PLUGIN = "JDBC Plugin";
@@ -40,7 +39,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 					"org.apache.tomcat.jdbc.pool.DataSourceProxy",
 					"org.apache.commons.dbcp2.PoolingDataSource",
 					"org.apache.commons.dbcp.PoolingDataSource",
-					"com.mchange.v2.c3p0.AbstractPoolBackedDataSource",
+					"com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource",
 					"com.mchange.v2.c3p0.PoolBackedDataSource",
 					"com.mchange.v2.c3p0.ComboPooledDataSource",
 					"com.jolbox.bonecp.BoneCPDataSource",
@@ -56,7 +55,6 @@ public class JdbcPlugin extends StagemonitorPlugin {
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
-		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteDBQueries.json");
 		}

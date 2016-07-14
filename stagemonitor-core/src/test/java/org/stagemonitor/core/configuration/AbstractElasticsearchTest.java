@@ -1,12 +1,5 @@
 package org.stagemonitor.core.configuration;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.ServerSocket;
-
 import org.apache.commons.io.FileUtils;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
@@ -17,6 +10,14 @@ import org.junit.BeforeClass;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.Collections;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class AbstractElasticsearchTest {
 
@@ -50,6 +51,7 @@ public class AbstractElasticsearchTest {
 			elasticsearchUrl = "http://localhost:" + elasticsearchPort;
 			AbstractElasticsearchTest.corePlugin = mock(CorePlugin.class);
 			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
+			when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(elasticsearchUrl));
 			when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 			elasticsearchClient = new ElasticsearchClient(corePlugin);
 

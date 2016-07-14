@@ -1,13 +1,13 @@
 package org.stagemonitor.core.instrument;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.pool.TypePool;
+
 import org.stagemonitor.core.util.ExecutorUtils;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This {@link net.bytebuddy.agent.builder.AgentBuilder.TypeLocator} caches
@@ -19,6 +19,7 @@ public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.W
 
 	private final WeakConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new WeakConcurrentMap
 			.WithInlinedExpunction<ClassLoader, TypePool.CacheProvider>();
+	private final ScheduledExecutorService executorService;
 
 	public AutoEvictingCachingBinaryLocator() {
 		this(TypePool.Default.ReaderMode.EXTENDED);
@@ -26,7 +27,8 @@ public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.W
 
 	public AutoEvictingCachingBinaryLocator(TypePool.Default.ReaderMode readerMode) {
 		super(readerMode);
-		Executors.newScheduledThreadPool(1, new ExecutorUtils.NamedThreadFactory("type-pool-cache-evicter")).scheduleAtFixedRate(new Runnable() {
+		executorService = Executors.newScheduledThreadPool(1, new ExecutorUtils.NamedThreadFactory("type-pool-cache-evicter"));
+		executorService.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
 				cacheProviders.clear();
@@ -37,41 +39,23 @@ public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.W
 
 	@Override
 	protected TypePool.CacheProvider locate(ClassLoader classLoader) {
-		classLoader = classLoader == null ? BootstrapClassLoaderMarker.INSTANCE : classLoader;
+		classLoader = classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader;
 		TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
 		while (cacheProvider == null) {
-			cacheProviders.putIfAbsent(classLoader, new TypePool.CacheProvider.Simple());
-			cacheProvider = cacheProviders.get(classLoader);
+			cacheProvider = TypePool.CacheProvider.Simple.withObjectType();
+			TypePool.CacheProvider previous = cacheProviders.putIfAbsent(classLoader, cacheProvider);
+			if (previous != null) {
+				cacheProvider = previous;
+			}
 		}
 		return cacheProvider;
 	}
 
 	/**
-	 * A marker for the bootstrap class loader which is represented by {@code null}.
+	 * Shuts down the internal thread pool
 	 */
-	private static class BootstrapClassLoaderMarker extends ClassLoader {
-
-		/**
-		 * A static reference to the a singleton instance of the marker to preserve reference equality.
-		 */
-		protected static final ClassLoader INSTANCE = AccessController.doPrivileged(new CreationAction());
-
-		@Override
-		protected Class<?> loadClass(String name, boolean resolve) {
-			throw new UnsupportedOperationException("This loader is only a non-null marker and is not supposed to be used");
-		}
-
-		/**
-		 * A simple action for creating a bootstrap class loader marker.
-		 */
-		private static class CreationAction implements PrivilegedAction<ClassLoader> {
-
-			@Override
-			public ClassLoader run() {
-				return new BootstrapClassLoaderMarker();
-			}
-		}
+	public void close() {
+		executorService.shutdown();
 	}
-
 
 }

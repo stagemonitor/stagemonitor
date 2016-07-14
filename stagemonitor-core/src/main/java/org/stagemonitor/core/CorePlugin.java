@@ -1,27 +1,12 @@
 package org.stagemonitor.core;
 
-import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
@@ -46,6 +31,22 @@ import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.StringUtils;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 /**
  * This class contains the configuration options for stagemonitor's core functionality
@@ -404,6 +405,18 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.build();
+	private final ConfigurationOption<Boolean> initAsync = ConfigurationOption.booleanOption()
+			.key("stagemonitor.init.async")
+			.dynamic(false)
+			.label("Async initialize stagemonitor")
+			.description("When set to true, stagemonitor initializes asynchronously which improves the startup time of the application. " +
+					"In case when `stagemonitor.instanceName` is not set explicitly but should be read from the first " +
+					"request, setting this to true improves the performance of the first request.\n" +
+					"WARNING: On JBoss this might lead to deadlocks on startup. See https://github.com/stagemonitor/stagemonitor/issues/179 for more details.")
+			.defaultValue(false)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags("performance")
+			.build();
 
 	private MetricsAggregationReporter aggregationReporter;
 
@@ -579,8 +592,12 @@ public class CorePlugin extends StagemonitorPlugin {
 			}
 		}
 
-		getElasticsearchClient().close();
-		getGrafanaClient().close();
+		if (elasticsearchClient != null) {
+			elasticsearchClient.close();
+		}
+		if (grafanaClient != null) {
+			grafanaClient.close();
+		}
 	}
 
 	public MeasurementSession getMeasurementSession() {
@@ -782,5 +799,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public Collection<String> getExportClassesWithName() {
 		return exportClassesWithName.getValue();
+	}
+
+	public boolean isInitAsync() {
+		return initAsync.getValue();
 	}
 }

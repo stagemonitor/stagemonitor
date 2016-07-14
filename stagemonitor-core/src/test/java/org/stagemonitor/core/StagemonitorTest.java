@@ -1,16 +1,5 @@
 package org.stagemonitor.core;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -18,6 +7,17 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.CompletedFuture;
+
+import java.util.Arrays;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class StagemonitorTest {
 
@@ -101,7 +101,18 @@ public class StagemonitorTest {
 		final MeasurementSession measurementSession = new MeasurementSession(null, "testHost", "testInstance");
 		Stagemonitor.startMonitoring(measurementSession).get();
 
-		verify(logger, atLeastOnce()).warn("Measurement Session is not initialized: {}", measurementSession);
+		assertFalse(Stagemonitor.isStarted());
+	}
+
+	@Test
+	public void testNoAsyncInitByDefault() throws Exception {
+		assertTrue(Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance")) instanceof CompletedFuture);
+	}
+
+	@Test
+	public void testAsyncInit() throws Exception {
+		when(corePlugin.isInitAsync()).thenReturn(true);
+		assertFalse(Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance")) instanceof CompletedFuture);
 	}
 
 }

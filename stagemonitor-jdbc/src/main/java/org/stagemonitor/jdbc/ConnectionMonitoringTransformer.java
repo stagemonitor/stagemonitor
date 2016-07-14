@@ -1,26 +1,24 @@
 package org.stagemonitor.jdbc;
 
-import static net.bytebuddy.matcher.ElementMatchers.isPublic;
-import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
-import static net.bytebuddy.matcher.ElementMatchers.nameContains;
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.none;
-import static net.bytebuddy.matcher.ElementMatchers.returns;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
-
-import java.sql.Connection;
-import java.util.Collection;
-
-import javax.sql.DataSource;
-
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+
+import java.sql.Connection;
+import java.util.Collection;
+
+import static net.bytebuddy.matcher.ElementMatchers.isPublic;
+import static net.bytebuddy.matcher.ElementMatchers.nameContains;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.matcher.ElementMatchers.returns;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -43,7 +41,10 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 	public ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
 		final Collection<String> dataSourceImplementations = configuration.getConfig(JdbcPlugin.class).getDataSourceImplementations();
 		if (dataSourceImplementations.isEmpty()) {
-			return nameContains("DataSource").and(isSubTypeOf(DataSource.class));
+			// This does not work reliably as connections might be wrapped twice.
+			// Also, don't add isSubTypeOf(DataSource.class) as the getConnection method
+			// might be on a super class not implementing DataSource like in tomcat-jdbc.
+			return nameContains("DataSource");
 		}
 		ElementMatcher.Junction<TypeDescription> matcher = none();
 		for (String impl : dataSourceImplementations) {
