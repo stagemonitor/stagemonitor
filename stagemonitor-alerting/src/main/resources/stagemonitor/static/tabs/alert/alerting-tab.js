@@ -401,7 +401,6 @@
 				}
 
 				function renderCheckModal(title, check) {
-					$(".tip").tooltip({html: true});
 					$.getJSON(stagemonitor.baseUrl + "/stagemonitor/metrics", function (metrics) {
 
 						var matchingMetrics = getMatchingMetrics(metrics, check.target);
@@ -412,10 +411,14 @@
 							hasTagFilters: Object.keys(check.target.tags).length > 0,
 							valueTypes: matchingValueTypes
 						}));
+						$(".tip").tooltip({html: true});
+
 						var allMetricNames = $.unique($.map(metrics, function(metric) { return metric.name }));
+						allMetricNames.sort();
 
 						typeahead("#target-name-input", allMetricNames);
 						var matchingTagKeys = $.unique([].concat.apply([], $.map(matchingMetrics, function(metric) { return Object.keys(metric.tags) })));
+						matchingTagKeys.sort();
 						typeahead(".tag-key", matchingTagKeys);
 
 						var tagKeys = Object.keys(check.target.tags);
