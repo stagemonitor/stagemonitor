@@ -258,7 +258,11 @@
 						columns: [
 							{ data: "application" },
 							{ data: "name" },
-							{ data: "target" },
+							{
+								render: function (data, type, full, meta) {
+									return utils.metricAsString(full.target, "");
+								}
+							},
 							{ data: "alertAfterXFailures" },
 							{
 								render: function (data, type, full, meta) {
@@ -323,7 +327,10 @@
 				function rerenderCheckModal() {
 					renderCheckModal($("#check-modal-label").html(), getCheckFromForm());
 				}
-				$checkModal.on('change', "#target-name-input, .tag-key, .tag-value", function () {
+				$checkModal.on('change', "#target-name-input, .tag-key, .tag-value, .tt-dropdown-menu", function () {
+					rerenderCheckModal();
+				});
+				$checkModal.on('typeahead:change', ".typeahead", function () {
 					rerenderCheckModal();
 				});
 
@@ -396,16 +403,18 @@
 				function renderCheckModal(title, check) {
 					$(".tip").tooltip({html: true});
 					$.getJSON(stagemonitor.baseUrl + "/stagemonitor/metrics", function (metrics) {
+
+						var matchingMetrics = getMatchingMetrics(metrics, check.target);
+						var matchingValueTypes = $.unique([].concat.apply([], $.map(matchingMetrics, function(metric) { return Object.keys(metric.values) })));
 						$("#check-modal-content").html(checkModalTemplate({
 							title: title,
 							check: check,
-							hasTagFilters: Object.keys(check.target.tags).length > 0
+							hasTagFilters: Object.keys(check.target.tags).length > 0,
+							valueTypes: matchingValueTypes
 						}));
-
-						var matchingMetrics = getMatchingMetrics(metrics, check.target);
 						var allMetricNames = $.unique($.map(metrics, function(metric) { return metric.name }));
-						typeahead("#target-name-input", allMetricNames);
 
+						typeahead("#target-name-input", allMetricNames);
 						var matchingTagKeys = $.unique([].concat.apply([], $.map(matchingMetrics, function(metric) { return Object.keys(metric.tags) })));
 						typeahead(".tag-key", matchingTagKeys);
 
@@ -431,7 +440,8 @@
 						{
 							name: 'targets',
 							displayKey: 'value',
-							source: substringMatcher(source)
+							source: substringMatcher(source),
+							limit: 100
 						});
 				}
 
