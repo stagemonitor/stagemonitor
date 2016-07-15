@@ -1,22 +1,17 @@
 package org.stagemonitor.alerting.annotation;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.regex.Pattern;
-
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
-import org.stagemonitor.alerting.check.MetricCategory;
+import org.stagemonitor.alerting.check.MetricValueType;
 import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.instrument.AbstractClassPathScanner;
@@ -26,6 +21,12 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
 import org.stagemonitor.requestmonitor.MonitorRequests;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 
 public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
@@ -108,9 +109,9 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 	}
 
 	private static void addResponseTimeCheck(SLA slaAnnotation, String fullMethodSignature, TimerNames timerNames) {
-		SLA.Metric[] metrics = slaAnnotation.metric();
+		MetricValueType[] valueTypes = slaAnnotation.metric();
 		double[] thresholdValues = slaAnnotation.threshold();
-		if (metrics.length != thresholdValues.length) {
+		if (valueTypes.length != thresholdValues.length) {
 			logger.warn("The number of provided metrics don't match the number of provided thresholds in @SLA {}", fullMethodSignature);
 			return;
 		}
@@ -120,12 +121,12 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 			return;
 		}
 
-		Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.timerName, MetricCategory.TIMER,
+		Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.timerName,
 				timerNames.timerMetricName, " (response time)", "responseTime");
 
 		final List<Threshold> thresholds = check.getThresholds(slaAnnotation.severity());
-		for (int i = 0; i < metrics.length; i++) {
-			thresholds.add(new Threshold(metrics[i].getValue(), slaAnnotation.operator(), thresholdValues[i]));
+		for (int i = 0; i < valueTypes.length; i++) {
+			thresholds.add(new Threshold(valueTypes[i].getName(), slaAnnotation.operator(), thresholdValues[i]));
 		}
 
 		addCheckIfStarted(check);
@@ -137,19 +138,18 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 					" @ExceptionMetered. When using @MonitorRequests, resolveNameAtRuntime must not be set to true.", fullMethodSignature);
 			return;
 		}
-		final Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.errorRequestName, MetricCategory.METER, timerNames.errorMetricName, " (errors)", "errors");
-		final Threshold t = new Threshold(SLA.Metric.M1_RATE.getValue(), Threshold.Operator.GREATER_EQUAL, slaAnnotation.errorRateThreshold());
+		final Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.errorRequestName, timerNames.errorMetricName, " (errors)", "errors");
+		final Threshold t = new Threshold(MetricValueType.M1_RATE.getName(), Threshold.Operator.LESS, slaAnnotation.errorRateThreshold());
 		check.getThresholds(slaAnnotation.severity()).add(t);
 		addCheckIfStarted(check);
 	}
 
-	private static Check createCheck(SLA slaAnnotation, String fullMethodSignature, String requestName, MetricCategory metricCategory,
+	private static Check createCheck(SLA slaAnnotation, String fullMethodSignature, String requestName,
 									 MetricName metricName, String checkNameSuffix, String checkIdSuffix) {
 		Check check = new Check();
 		check.setId(fullMethodSignature + "." + checkIdSuffix);
 		check.setName(requestName + checkNameSuffix);
-		check.setMetricCategory(metricCategory);
-		check.setTarget(Pattern.compile(Pattern.quote(metricName.toGraphiteName())));
+		check.setTarget(metricName);
 		check.setAlertAfterXFailures(slaAnnotation.alertAfterXFailures());
 		return check;
 	}

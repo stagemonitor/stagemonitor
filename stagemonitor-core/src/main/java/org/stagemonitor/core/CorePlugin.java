@@ -418,7 +418,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags("performance")
 			.build();
 
-	private static MetricsAggregationReporter aggregationReporter;
+	private MetricsAggregationReporter aggregationReporter;
 
 	private List<Closeable> reporters = new CopyOnWriteArrayList<Closeable>();
 
@@ -471,9 +471,9 @@ public class CorePlugin extends StagemonitorPlugin {
 		}
 		
 		Metric2Filter allFilters = new AndMetric2Filter(regexFilter, new MetricsWithCountFilter());
-		MetricRegistry metricRegistry = metric2Registry.getMetricRegistry();
+		MetricRegistry legacyMetricRegistry = metric2Registry.getMetricRegistry();
 
-		reportToGraphite(metricRegistry, getGraphiteReportingInterval(), measurementSession);
+		reportToGraphite(legacyMetricRegistry, getGraphiteReportingInterval(), measurementSession);
 		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(),
 				measurementSession);
 		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
@@ -485,7 +485,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		if (configuration.getConfig(CorePlugin.class).isReportToJMX()) {
 			// Because JMX reporter is on registration and not periodic only the
 			// regex filter is applicable here (not filtering metrics by count)
-			reportToJMX(metricRegistry);
+			reportToJMX(legacyMetricRegistry);
 		}
 	}
 
@@ -500,13 +500,12 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	private void reportToGraphite(MetricRegistry metricRegistry, long reportingInterval, MeasurementSession measurementSession) {
-		String graphiteHostName = getGraphiteHostName();
 		if (isReportToGraphite()) {
 			final GraphiteReporter graphiteReporter = GraphiteReporter.forRegistry(metricRegistry)
 					.prefixedWith(getGraphitePrefix(measurementSession))
 					.convertRatesTo(TimeUnit.SECONDS)
 					.convertDurationsTo(TimeUnit.MILLISECONDS)
-					.build(new Graphite(new InetSocketAddress(graphiteHostName, getGraphitePort())));
+					.build(new Graphite(new InetSocketAddress(getGraphiteHostName(), getGraphitePort())));
 
 			graphiteReporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(graphiteReporter);

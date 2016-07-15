@@ -1,37 +1,34 @@
 package org.stagemonitor.alerting;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.alerter.AlertSender;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.alerting.check.MetricCategory;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 import org.stagemonitor.core.util.JsonUtils;
 
-public class ThresholdMonitoringReporter extends ScheduledReporter {
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-	public static final int OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES = 10;
+public class ThresholdMonitoringReporter extends ScheduledMetrics2Reporter {
+
+	private static final int OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES = 10;
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final AlertSender alertSender;
@@ -39,43 +36,59 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 	private final MeasurementSession measurementSession;
 	private final AlertingPlugin alertingPlugin;
 
-	protected ThresholdMonitoringReporter(Metric2Registry registry, AlertingPlugin alertingPlugin,
-										  AlertSender alertSender, IncidentRepository incidentRepository,
-										  MeasurementSession measurementSession) {
-		super(registry.getMetricRegistry(), "threshold-monitoring-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-		this.alertingPlugin = alertingPlugin;
-		this.alertSender = alertSender;
-		this.incidentRepository = incidentRepository;
-		this.measurementSession = measurementSession;
+	public static ThresholdMonitoringReporterBuilder forRegistry(Metric2Registry registry) {
+		return new ThresholdMonitoringReporterBuilder(registry);
+	}
+
+	public ThresholdMonitoringReporter(ThresholdMonitoringReporterBuilder builder) {
+		super(builder);
+		this.alertingPlugin = builder.getAlertingPlugin();
+		this.alertSender = builder.getAlertSender();
+		this.incidentRepository = builder.getIncidentRepository();
+		this.measurementSession = builder.getMeasurementSession();
 	}
 
 	@Override
-	public void report(SortedMap<String, Gauge> gauges, SortedMap<String, Counter> counters,
-					   SortedMap<String, Histogram> histograms, SortedMap<String, Meter> meters,
-					   SortedMap<String, Timer> timers) {
-		ObjectNode metrics = JsonUtils.getMapper().createObjectNode();
-		metrics.set(MetricCategory.GAUGE.getPath(), JsonUtils.toObjectNode(gauges));
-		metrics.set(MetricCategory.COUNTER.getPath(), JsonUtils.toObjectNode(counters));
-		metrics.set(MetricCategory.HISTOGRAM.getPath(), JsonUtils.toObjectNode(histograms));
-		metrics.set(MetricCategory.METER.getPath(), JsonUtils.toObjectNode(meters));
-		metrics.set(MetricCategory.TIMER.getPath(), JsonUtils.toObjectNode(timers));
+	public void reportMetrics(Map<MetricName, Gauge> gauges, Map<MetricName, Counter> counters, Map<MetricName, Histogram> histograms, Map<MetricName, Meter> meters, Map<MetricName, Timer> timers) {
+		Map<String, Map<MetricName, Metric>> metricsGroupedByName = new HashMap<String, Map<MetricName, Metric>>();
+		addMetrics(metricsGroupedByName, gauges);
+		addMetrics(metricsGroupedByName, counters);
+		addMetrics(metricsGroupedByName, histograms);
+		addMetrics(metricsGroupedByName, meters);
+		addMetrics(metricsGroupedByName, timers);
 
 		for (Check check : alertingPlugin.getChecks().values()) {
 			if (measurementSession.getApplicationName().equals(check.getApplication()) && check.isActive()) {
-				checkMetrics(metrics, check);
+				checkMetrics(metricsGroupedByName, check);
 			}
 		}
 	}
 
-	private void checkMetrics(JsonNode metrics, Check check) {
+	private <T extends Metric> void addMetrics(Map<String, Map<MetricName, Metric>> metricsGroupedByName, Map<MetricName, T > metrics) {
+		for (Map.Entry<MetricName, T> entry : metrics.entrySet()) {
+			Map<MetricName, Metric> metricsForName = metricsGroupedByName.get(entry.getKey().getName());
+			if (metricsForName == null) {
+				metricsForName = new HashMap<MetricName, Metric>();
+				metricsGroupedByName.put(entry.getKey().getName(), metricsForName);
+			}
+			metricsForName.put(entry.getKey(), entry.getValue());
+		}
+	}
+
+	private void checkMetrics(Map<String, Map<MetricName, Metric>> metricsGroupedByName, Check check) {
 		List<CheckResult> checkResults = new LinkedList<CheckResult>();
 
-		Iterator<Map.Entry<String, JsonNode>> metricsOfCategory = metrics.get(check.getMetricCategory().getPath()).fields();
-		while (metricsOfCategory.hasNext()) {
-			Map.Entry<String, JsonNode> metricTypes = metricsOfCategory.next();
-			if (check.getTarget().matcher(metricTypes.getKey()).matches()) {
-				Map<String, Double> valuesByMetricType = getValuesByMetricType(metricTypes.getValue());
-				checkResults.addAll(check.check(metricTypes.getKey(), valuesByMetricType));
+		Map<MetricName, Metric> metricsOfName = metricsGroupedByName.get(check.getTarget().getName());
+		if (metricsOfName == null) {
+			metricsOfName = Collections.emptyMap();
+		}
+		for (Map.Entry<MetricName, Metric> entry : metricsOfName.entrySet()) {
+			if (entry.getKey().matches(check.getTarget())) {
+				try {
+					checkResults.addAll(check.check(entry.getKey(), asMap(entry.getValue())));
+				} catch (RuntimeException e) {
+					logger.warn(e.getMessage(), e);
+				}
 			}
 		}
 		try {
@@ -85,14 +98,8 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 		}
 	}
 
-	private Map<String, Double> getValuesByMetricType(JsonNode metricTypes) {
-		Map<String, Double> metricTypesMap = new HashMap<String, Double>();
-		final Iterator<Map.Entry<String, JsonNode>> fields = metricTypes.fields();
-		while (fields.hasNext()) {
-			Map.Entry<String, JsonNode> stringJsonNodeEntry = fields.next();
-			metricTypesMap.put(stringJsonNodeEntry.getKey(), stringJsonNodeEntry.getValue().asDouble());
-		}
-		return metricTypesMap;
+	private Map<String, Number> asMap(Metric metric) {
+		return JsonUtils.getMapper().convertValue(metric, Map.class);
 	}
 
 	private void addIncident(Check check, List<CheckResult> results) {
@@ -151,6 +158,58 @@ public class ThresholdMonitoringReporter extends ScheduledReporter {
 			return false;
 		}
 		return true;
+	}
+
+	public static class ThresholdMonitoringReporterBuilder extends ScheduledMetrics2Reporter.Builder<ThresholdMonitoringReporter, ThresholdMonitoringReporterBuilder> {
+		private AlertSender alertSender;
+		private IncidentRepository incidentRepository;
+		private MeasurementSession measurementSession;
+		private AlertingPlugin alertingPlugin;
+
+		private ThresholdMonitoringReporterBuilder(Metric2Registry registry) {
+			super(registry, "threshold-monitoring-reporter");
+		}
+
+		@Override
+		public ThresholdMonitoringReporter build() {
+			return new ThresholdMonitoringReporter(this);
+		}
+
+		public AlertSender getAlertSender() {
+			return alertSender;
+		}
+
+		public ThresholdMonitoringReporterBuilder alertSender(AlertSender alertSender) {
+			this.alertSender = alertSender;
+			return this;
+		}
+
+		public IncidentRepository getIncidentRepository() {
+			return incidentRepository;
+		}
+
+		public ThresholdMonitoringReporterBuilder incidentRepository(IncidentRepository incidentRepository) {
+			this.incidentRepository = incidentRepository;
+			return this;
+		}
+
+		public MeasurementSession getMeasurementSession() {
+			return measurementSession;
+		}
+
+		public ThresholdMonitoringReporterBuilder measurementSession(MeasurementSession measurementSession) {
+			this.measurementSession = measurementSession;
+			return this;
+		}
+
+		public AlertingPlugin getAlertingPlugin() {
+			return alertingPlugin;
+		}
+
+		public ThresholdMonitoringReporterBuilder alertingPlugin(AlertingPlugin alertingPlugin) {
+			this.alertingPlugin = alertingPlugin;
+			return this;
+		}
 	}
 
 }

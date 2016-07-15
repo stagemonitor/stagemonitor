@@ -1,14 +1,8 @@
 package org.stagemonitor.alerting.annotation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-import java.util.List;
-import java.util.Map;
-
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -16,11 +10,20 @@ import org.junit.Test;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.alerting.check.MetricCategory;
+import org.stagemonitor.alerting.check.MetricValueType;
 import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitorRequests;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class SlaCheckCreatingClassPathScannerTest {
 
@@ -29,7 +32,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 
 	private static class SlaTestClass {
 		@SLAs({
-				@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0}),
+				@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0}),
 				@SLA(errorRateThreshold = 0)
 		})
 		@MonitorRequests
@@ -42,27 +45,27 @@ public class SlaCheckCreatingClassPathScannerTest {
 		}
 
 		@MonitorRequests
-		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = 0)
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = 0)
 		void tooFewThresholds() {
 		}
 
 		@MonitorRequests(resolveNameAtRuntime = true)
-		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaMonitorRequestsResolveAtRuntime() {
 		}
 
 		@MonitorRequests(requestName = "monitor requests custom name")
-		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaMonitorRequestsCustomName() {
 		}
 
 		@Timed(name = "timed custom name", absolute = true)
-		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaTimedCustomName() {
 		}
 
 		@Timed
-		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaOnTimed() {
 		}
 
@@ -97,59 +100,57 @@ public class SlaCheckCreatingClassPathScannerTest {
 	@Test
 	public void testSlaMonitorRequests() throws Exception {
 		testErrorRateCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().errors",
-				"\\Qerror_rate_server.Monitor-Sla.All\\E");
+				name("error_rate_server").tag("request_name", "Monitor Sla").layer("All").build());
 
 		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().responseTime",
-				"\\Qresponse_time_server.Monitor-Sla.All\\E");
+				name("response_time_server").tag("request_name", "Monitor Sla").layer("All").build());
 	}
 
-	private void testErrorRateCheck(String checkId, String checkTargetRegex) {
+	private void testErrorRateCheck(String checkId, MetricName checkTarget) {
 		final Check errorRateCheck = checks.get(checkId);
 		assertNotNull(checks.keySet().toString(), errorRateCheck);
 		assertEquals("Alerting-Test", errorRateCheck.getApplication());
-		assertEquals(MetricCategory.METER, errorRateCheck.getMetricCategory());
-		assertEquals(checkTargetRegex, errorRateCheck.getTarget().toString());
+		assertEquals(checkTarget, errorRateCheck.getTarget());
 	}
 
-	private void testResponseTimeCheck(String checkId, String checkTargetRegex) {
+	private void testResponseTimeCheck(String checkId, MetricName checkTarget) {
 		final Check responseTimeChek = checks.get(checkId);
 		assertNotNull(checks.keySet().toString(), responseTimeChek);
 		assertEquals("Alerting-Test", responseTimeChek.getApplication());
-		assertEquals(MetricCategory.TIMER, responseTimeChek.getMetricCategory());
-		assertEquals(checkTargetRegex, responseTimeChek.getTarget().toString());
+		assertEquals(checkTarget, responseTimeChek.getTarget());
 		final List<Threshold> thresholds = responseTimeChek.getThresholds(CheckResult.Status.ERROR);
 		final Threshold p95 = thresholds.get(0);
-		assertEquals("p95", p95.getMetric());
-		assertEquals(Threshold.Operator.GREATER_EQUAL, p95.getOperator());
+		assertEquals(MetricValueType.P95, p95.getValueType());
+		assertEquals(Threshold.Operator.LESS, p95.getOperator());
 		assertEquals(0, p95.getThresholdValue(), 0);
 		final Threshold max = thresholds.get(1);
-		assertEquals("max", max.getMetric());
-		assertEquals(Threshold.Operator.GREATER_EQUAL, max.getOperator());
+		assertEquals(MetricValueType.MAX, max.getValueType());
+		assertEquals(Threshold.Operator.LESS, max.getOperator());
 		assertEquals(0, max.getThresholdValue(), 0);
 	}
 
 	@Test
 	public void testSlaCustomName() throws Exception {
 		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaMonitorRequestsCustomName().responseTime",
-				"\\Qresponse_time_server.monitor-requests-custom-name.All\\E");
+				name("response_time_server").tag("request_name", "monitor requests custom name").layer("All").build());
 	}
 
 	@Test
 	public void testTimedCustomName() throws Exception {
 		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaTimedCustomName().responseTime",
-				"\\Qtimer.timed-custom-name\\E");
+				name("timer").tag("signature", "timed custom name").build());
 	}
 
 	@Test
 	public void testSlaTimed() throws Exception {
 		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaOnTimed().responseTime",
-				"\\Qtimer.SlaCheckCreatingClassPathScannerTest$SlaTestClass#slaOnTimed\\E");
+				name("timer").tag("signature", "SlaCheckCreatingClassPathScannerTest$SlaTestClass#slaOnTimed").build());
 	}
 
 	@Test
 	public void testSlaExceptionMetered() throws Exception {
 		testErrorRateCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaOnExceptionMetered().errors",
-				"\\Qexception_rate.SlaCheckCreatingClassPathScannerTest$SlaTestClass#slaOnExceptionMetered\\E");
+				name("exception_rate").tag("signature", "SlaCheckCreatingClassPathScannerTest$SlaTestClass#slaOnExceptionMetered").build());
 	}
 
 	@Test
@@ -165,14 +166,14 @@ public class SlaCheckCreatingClassPathScannerTest {
 	@Test
 	public void testSlaMonitorRequestsClassLevel() throws Exception {
 		testResponseTimeCheck("public void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$ClassLevelMonitorRequestsTestClass.slaMonitorRequestsClassLevel().responseTime",
-				"\\Qresponse_time_server.Sla-Monitor-Requests-Class-Level.All\\E");
+				name("response_time_server").tag("request_name", "Sla Monitor Requests Class Level").layer("All").build());
 	}
 
 	@MonitorRequests
 	private static class ClassLevelMonitorRequestsTestClass {
 		static void makeSureClassIsLoaded() {
 		}
-		@SLA(metric = {SLA.Metric.P95, SLA.Metric.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		public void slaMonitorRequestsClassLevel() {
 		}
 	}

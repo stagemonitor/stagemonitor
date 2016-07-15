@@ -3,6 +3,16 @@ var utils = (function () {
 		return (str + '').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
 	};
 
+	Object.values = function (obj) {
+		var vals = [];
+		for( var key in obj ) {
+			if ( obj.hasOwnProperty(key) ) {
+				vals.push(obj[key]);
+			}
+		}
+		return vals;
+	};
+
 	// http://stackoverflow.com/questions/646628/how-to-check-if-a-string-startswith-another-string
 	if (typeof String.prototype.startsWith != 'function') {
 		String.prototype.startsWith = function (str){
@@ -86,6 +96,22 @@ var utils = (function () {
 				.replace(/'/g, '&#39;')
 				.replace(/</g, '&lt;')
 				.replace(/>/g, '&gt;');
+		}, 
+		matches: function(metric, metricMatcher) {
+			if (metricMatcher.name && metric.name !== metricMatcher.name) {
+				return false;
+			}
+
+			for (var tag in metricMatcher.tags || {}) {
+				var value = metricMatcher.tags[tag];
+				if (value && value !== '*' && metric.tags[tag] !== value) {
+					return false;
+				}
+			}
+			return true;
+		},
+		metricAsString: function(metric, valueType) {
+			return metric.name + JSON.stringify(metric.tags).split('"').join('') + ' ' + valueType;
 		}
 	}
 })();

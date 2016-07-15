@@ -175,7 +175,7 @@ pre {
 /*
  * Alerts Tab
  */
-#check-form .tt-dropdown-menu {
+#check-form .tt-menu {
 	max-height: 20em;
 	overflow-y: auto;
 }

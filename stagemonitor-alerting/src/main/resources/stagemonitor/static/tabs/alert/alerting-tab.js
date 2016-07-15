@@ -6,35 +6,6 @@
 		tooltip: "Show status and current incidents of the application.",
 		renderTab: function(tmpl) {
 
-			var metricCategories = {
-				TIMER: {
-					label: "Timer",
-					value: "timers",
-					metrics: ["count", "mean", "min", "max", "stddev", "p50", "p75", "p95", "p98", "p99", "p999",
-						"mean_rate", "m1_rate", "m5_rate", "m15_rate"]
-				},
-				GAUGE: {
-					label: "Gauge",
-					value: "gauges",
-					metrics: ["value"]
-				},
-				METER: {
-					label: "Meter",
-					value: "meters",
-					metrics: ["count", "mean_rate", "m1_rate", "m5_rate", "m15_rate"]
-				},
-				HISTOGRAM: {
-					label: "Histogram",
-					value: "histograms",
-					metrics: ["count", "mean", "min", "max", "stddev", "p50", "p75", "p95", "p98", "p99", "p999"]
-				},
-				COUNTER: {
-					label: "Counter",
-					value: "counters",
-					metrics: ["count"]
-				}
-			};
-
 			var $tmpl = $(tmpl);
 			var template = Handlebars.compile($tmpl.find("#alerts-content-template").html());
 			var checkModalTemplate = Handlebars.compile($tmpl.find("#check-modal-template").html());
@@ -287,7 +258,11 @@
 						columns: [
 							{ data: "application" },
 							{ data: "name" },
-							{ data: "target" },
+							{
+								render: function (data, type, full, meta) {
+									return utils.metricAsString(full.target, "");
+								}
+							},
 							{ data: "alertAfterXFailures" },
 							{
 								render: function (data, type, full, meta) {
@@ -349,18 +324,43 @@
 					}
 				});
 
-				$checkModal.on('change', "#metric-category-input", function () {
+				function rerenderCheckModal() {
 					renderCheckModal($("#check-modal-label").html(), getCheckFromForm());
+				}
+				$checkModal.on('change', "#target-name-input, .tag-key, .tag-value, .tt-dropdown-menu", function () {
+					rerenderCheckModal();
+				});
+				$checkModal.on('typeahead:change', ".typeahead", function () {
+					rerenderCheckModal();
 				});
 
 				$checkModal.on('click', ".remove-threshold", function () {
 					$(this).parents(".threshold-form-group").remove();
-					renderCheckModal($("#check-modal-label").html(), getCheckFromForm());
+					rerenderCheckModal();
 				});
 
 				$checkModal.on('click', ".add-threshold", function () {
 					var check = getCheckFromForm();
 					check.thresholds[$(this).data('severity')].push({});
+					renderCheckModal($("#check-modal-label").html(), check);
+				});
+
+				$checkModal.on('click', ".add-tag-filter", function () {
+					var check = getCheckFromForm();
+					check.target.tags[""] = "";
+					renderCheckModal($("#check-modal-label").html(), check);
+				});
+
+				$checkModal.on('click', ".add-tag-filter", function () {
+					var check = getCheckFromForm();
+					check.target.tags = check.target.tags || {};
+					check.target.tags[""] = "";
+					renderCheckModal($("#check-modal-label").html(), check);
+				});
+
+				$checkModal.on('click', ".remove-tag-filter", function () {
+					var check = getCheckFromForm();
+					delete check.target.tags[$(this).data('tag')];
 					renderCheckModal($("#check-modal-label").html(), check);
 				});
 
@@ -373,12 +373,26 @@
 						application: stagemonitor.measurementSession.applicationName,
 						active: true,
 						alertAfterXFailures: 1,
-						thresholds: {WARN: [], ERROR: [], CRITICAL: []}
+						thresholds: {WARN: [], ERROR: [], CRITICAL: []},
+						target: {
+							tags: {}
+						}
 					});
 				});
 
 				function getCheckFromForm() {
 					var check = $("#check-form").serializeObject();
+
+					check.target = check.target || {};
+					check.target.tags = check.target.tags || {};
+					var tagKeys = check.target.tagKeys || [];
+					var tagValues = check.target.tagValues || [];
+					for (var i = 0; i < tagKeys.length; i++) {
+						check.target.tags[tagKeys[i]] = tagValues[i];
+					}
+					delete check.target.tagKeys;
+					delete check.target.tagValues;
+
 					check.thresholds = check.thresholds || {};
 					check.thresholds.WARN = check.thresholds.WARN || [];
 					check.thresholds.ERROR = check.thresholds.ERROR || [];
@@ -387,39 +401,62 @@
 				}
 
 				function renderCheckModal(title, check) {
-					var metricCategory = metricCategories[check.metricCategory || 'TIMER'];
-					$("#check-modal-content").html(checkModalTemplate({
-						title: title,
-						check: check,
-						metricCategories: metricCategories,
-						metrics: metricCategory.metrics
-					}));
-					$(".tip").tooltip({html: true});
 					$.getJSON(stagemonitor.baseUrl + "/stagemonitor/metrics", function (metrics) {
-						var source = Object.keys(metrics[metricCategory.value]);
-						updateMatchesCount();
-						$("#target-input").typeahead({
-								hint: true,
-								highlight: true,
-								minLength: 0
-							},
-							{
-								name: 'targets',
-								displayKey: 'value',
-								source: substringMatcher($.map(source, function(str) { return RegExp.quote(str) }))
-							}).on('keyup change', updateMatchesCount);
 
-						function updateMatchesCount() {
-							var matches = 0;
-							var regExp = new RegExp($("#target-input").val());
-							for (var i = 0; i < source.length; i++) {
-								if (regExp.test(source[i])) {
-									matches++;
-								}
+						var matchingMetrics = getMatchingMetrics(metrics, check.target);
+						var matchingValueTypes = $.unique([].concat.apply([], $.map(matchingMetrics, function(metric) { return Object.keys(metric.values) })));
+						$("#check-modal-content").html(checkModalTemplate({
+							title: title,
+							check: check,
+							hasTagFilters: Object.keys(check.target.tags).length > 0,
+							valueTypes: matchingValueTypes
+						}));
+						$(".tip").tooltip({html: true});
+
+						var allMetricNames = $.unique($.map(metrics, function(metric) { return metric.name }));
+						allMetricNames.sort();
+
+						typeahead("#target-name-input", allMetricNames);
+						var matchingTagKeys = $.unique([].concat.apply([], $.map(matchingMetrics, function(metric) { return Object.keys(metric.tags) })));
+						matchingTagKeys.sort();
+						typeahead(".tag-key", matchingTagKeys);
+
+						var tagKeys = Object.keys(check.target.tags);
+						for (var i = 0; i < tagKeys.length; i++) {
+							var tagKey = tagKeys[i];
+							if (tagKey) {
+								var matchingTagValues = $.unique($.map(matchingMetrics, function (metric) { return metric.tags[tagKey] }));
+								typeahead("#tag-value-" + tagKey, matchingTagValues);
 							}
-							$("#target-matches-input").val(matches);
 						}
+
+						$("#target-matches-input").val(matchingMetrics.length);
 					});
+				}
+
+				function typeahead(selector, source) {
+					$(selector).typeahead({
+							hint: true,
+							highlight: true,
+							minLength: 0
+						},
+						{
+							name: 'targets',
+							displayKey: 'value',
+							source: substringMatcher(source),
+							limit: 100
+						});
+				}
+
+				function getMatchingMetrics(metrics, target) {
+					var matchingMetrics = [];
+					for (var i = 0; i < metrics.length; i++) {
+						var metric = metrics[i];
+						if (utils.matches(metric, target)) {
+							matchingMetrics.push(metric)
+						}
+					}
+					return matchingMetrics;
 				}
 
 				var substringMatcher = function(strs) {

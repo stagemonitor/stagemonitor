@@ -8,32 +8,40 @@
 				nameLabel: "Name",
 				columns: [
 					{
-						metricCategory: "meters",
-						metricPathRegex: /logging.([^\.]+)/,
+						metricMatcher: {
+							name: "logging"
+						},
+						groupBy: "log_level",
 						metric: "m1_rate",
 						title: "Logs/s (1m)"
 					},
 					{
-						metricCategory: "meters",
-						metricPathRegex: /logging.([^\.]+)/,
+						metricMatcher: {
+							name: "logging"
+						},
+						groupBy: "log_level",
 						metric: "m5_rate",
 						title: "Logs/s (5m)"
 					},
 					{
-						metricCategory: "meters",
-						metricPathRegex: /logging.([^\.]+)/,
+						metricMatcher: {
+							name: "logging"
+						},
+						groupBy: "log_level",
 						metric: "m15_rate",
 						title: "Logs/s (15m)"
 					},
 					{
-						metricCategory: "meters",
-						metricPathRegex: /logging.([^\.]+)/,
+						metricMatcher: {
+							name: "logging"
+						},
+						groupBy: "log_level",
 						metric: "count",
 						title: "Count"
 					}
 				],
 				graphTemplates: {
-					defaultRowSelection: '[^\\.]+',
+					defaultRowSelection: '*',
 					templates: [
 						{
 							template: {
@@ -42,7 +50,16 @@
 								format: 'logs/sec',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "meters", metricPathRegex: "logging.(${rowName})", metric: "m1_rate" }
+									{
+										metricMatcher: {
+											name: "logging",
+											tags: {
+												log_level: "${rowName}"
+											}
+										},
+										groupBy: "log_level",
+										metric: "m1_rate" 
+									}
 								]
 							}
 						},
@@ -53,7 +70,16 @@
 								format: 'logs/sec',
 								fill: 0.1,
 								columns: [
-									{ metricCategory: "meters", metricPathRegex: "logging.(${rowName})", metric: "m5_rate"}
+									{
+										metricMatcher: {
+											name: "logging",
+											tags: {
+												log_level: "${rowName}"
+											}
+										},
+										groupBy: "log_level",
+										metric: "m5_rate"
+									}
 								]
 							}
 						}

@@ -228,7 +228,12 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		}
 		logger.info("Using {} for storing incidents.", incidentRepository.getClass().getSimpleName());
 
-		thresholdMonitoringReporter = new ThresholdMonitoringReporter(initArguments.getMetricRegistry(), alertingPlugin, alertSender, incidentRepository, initArguments.getMeasurementSession());
+		thresholdMonitoringReporter = ThresholdMonitoringReporter.forRegistry(initArguments.getMetricRegistry())
+				.alertingPlugin(alertingPlugin)
+				.alertSender(alertSender)
+				.incidentRepository(incidentRepository)
+				.measurementSession(initArguments.getMeasurementSession())
+				.build();
 		thresholdMonitoringReporter.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
 		SlaCheckCreatingClassPathScanner.onStart(initArguments.getMeasurementSession());
 	}

@@ -15,43 +15,72 @@
 				nameLabel: "Name",
 				columns: [
 					{
-						// the metrics are grouped by the categories gauges, counters, timers, meters and histograms
-						metricCategory: "gauges",
 						// A regex of metric paths. A table row is created for each distinct regex group. That's
 						// why the wildcard [^\.]+ is put in parentesis. That way a row is created for each individual
 						// cache name
-						metricPathRegex: /cache_hit_ratio.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_hit_ratio",
+							tags: {
+								tier: "All"
+							}
+						},
+						groupBy: "cache_name",
 						metric: "value",
 						// the column label
 						title: "Hit Rate (%)"
 					},
 					{
-						metricCategory: "gauges",
-						metricPathRegex: /cache_size_bytes.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_size_bytes",
+							tags: {
+								tier: "All"
+							}
+						},
+						groupBy: "cache_name",
 						metric: "value",
 						title: "Bytes used"
 					},
 					{
-						metricCategory: "gauges",
-						metricPathRegex: /cache_size_count.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_size_count",
+							tags: {
+								tier: "All"
+							}
+						},
+						groupBy: "cache_name",
 						metric: "value",
 						title: "Elements in cache"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /cache_get.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_get",
+							tags: {
+								tier: "All"
+							}
+						},
+						groupBy: "cache_name",
 						metric: "m1_rate",
 						title: "Gets/sec"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /cache_get.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_get",
+							tags: {
+								tier: "All"
+							}
+						},
+						groupBy: "cache_name",
 						metric: "mean",
 						title: "Avg get time"
 					},
 					{
-						metricCategory: "timers",
-						metricPathRegex: /cache_get.([^\.]+).All/,
+						metricMatcher: {
+							name: "cache_get",
+							tags: {
+								tier: "All"
+							}
+						},
+						groupBy: "cache_name",
 						metric: "p95",
 						title: "p95 get time"
 					}
@@ -61,8 +90,8 @@
 				// Each time a row in the table is selected the placeholder gets replaced by the row name (e.g. the cache name)
 				graphTemplates: {
 					// This is the default value for the placeholder ${rowName} when no row is selected.
-					// [^\\.]+ means, per default, show a line for each cache
-					defaultRowSelection: '[^\\.]+',
+					// per default, show a line for each cache
+					defaultRowSelection: '',
 					templates: [
 						{
 							template: {
@@ -80,11 +109,17 @@
 								fill: 0.1,
 								columns: [
 									{
-										metricCategory: "gauges",
 										// A regex of metric paths. A line is created for each distinct regex group.
 										// That's why the placeholder ${rowName} is put in parentesis.
 										// That way a line is created and named after the selected cache name
-										metricPathRegex: "cache_hit_(ratio).${rowName}.All",
+										metricMatcher: {
+											name: "cache_hit_ratio",
+											tags: {
+												tier: "All",
+												cache_name: "${rowName}"
+											}
+										},
+										groupBy: "cache_name",
 										metric: "value",
 										aggregate: 'mean'
 									}
@@ -99,8 +134,14 @@
 								fill: 0.1,
 								columns: [
 									{
-										metricCategory: "gauges",
-										metricPathRegex: "cache_size_(bytes).${rowName}.All",
+										metricMatcher: {
+											name: "cache_size_bytes",
+											tags: {
+												tier: "All",
+												cache_name: "${rowName}"
+											}
+										},
+										groupBy: "cache_name",
 										metric: "value",
 										aggregate: 'sum'
 									}
@@ -114,7 +155,7 @@
 			/**
 			 * Called after the corresponding html (${plugin-id}.html) got rendered
 			 */
-			onHtmlInitialized: function() {
+			onHtmlInitialized: function () {
 			},
 			/**
 			 * Called each time metrics from the server are received.
@@ -122,7 +163,7 @@
 			 *
 			 * @param metrics
 			 */
-			onMetricsReceived: function(metrics) {
+			onMetricsReceived: function (metrics) {
 			}
 		}
 	);

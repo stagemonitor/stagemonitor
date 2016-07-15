@@ -1,5 +1,16 @@
 package org.stagemonitor.alerting.alerter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.alerting.AlertingPlugin;
+import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckResult;
+import org.stagemonitor.alerting.check.Threshold;
+import org.stagemonitor.alerting.incident.Incident;
+import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.HttpClient;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,19 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.alerting.AlertingPlugin;
-import org.stagemonitor.alerting.check.Check;
-import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.alerting.check.MetricCategory;
-import org.stagemonitor.alerting.check.Threshold;
-import org.stagemonitor.alerting.incident.Incident;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.HttpClient;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class AlertSender {
 
@@ -63,8 +63,7 @@ public class AlertSender {
 		Check check = new Check();
 		check.setName("Test Check");
 		check.setApplication("testApp");
-		check.setTarget(Pattern.compile("test"));
-		check.setMetricCategory(MetricCategory.TIMER);
+		check.setTarget(name("test").build());
 		check.getWarn().add(new Threshold("mean", Threshold.Operator.GREATER_EQUAL, 1));
 
 		Incident testIncident = new Incident(check, new MeasurementSession("testApp", "testHost", "testInstance"),

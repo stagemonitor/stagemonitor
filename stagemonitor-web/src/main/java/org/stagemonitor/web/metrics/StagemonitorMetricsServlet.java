@@ -1,7 +1,12 @@
 package org.stagemonitor.web.metrics;
 
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -12,7 +17,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.util.JSONPObject;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.MetricNameFilter;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.Metric2RegistryModule;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.web.WebPlugin;
 
@@ -23,9 +32,9 @@ import org.stagemonitor.web.WebPlugin;
  */
 public class StagemonitorMetricsServlet extends HttpServlet {
 
-	private final Metric2Registry registry;
-	private final WebPlugin webPlugin;
-	private final ObjectMapper mapper;
+	private final transient Metric2Registry registry;
+	private final transient WebPlugin webPlugin;
+	private final transient ObjectMapper mapper;
 
 	public StagemonitorMetricsServlet() {
 		this(Stagemonitor.getMetric2Registry(), Stagemonitor.getPlugin(WebPlugin.class), JsonUtils.getMapper());
@@ -50,9 +59,9 @@ public class StagemonitorMetricsServlet extends HttpServlet {
 		try {
 			String jsonpParamName = webPlugin.getMetricsServletJsonpParamName();
 			if (jsonpParamName != null && req.getParameter(jsonpParamName) != null) {
-				getWriter(req).writeValue(output, new JSONPObject(req.getParameter(jsonpParamName), registry.getMetricRegistry()));
+				getWriter(req).writeValue(output, new JSONPObject(req.getParameter(jsonpParamName), registry));
 			} else {
-				getWriter(req).writeValue(output, registry.getMetricRegistry());
+				getWriter(req).writeValue(output, registry);
 			}
 		} finally {
 			output.close();
@@ -60,9 +69,26 @@ public class StagemonitorMetricsServlet extends HttpServlet {
 	}
 
 	private ObjectWriter getWriter(HttpServletRequest request) {
+		ObjectMapper objectMapperCopy = mapper.copy();
+
+		registerMetricsRegistryModule(request, objectMapperCopy);
+
 		if (Boolean.parseBoolean(request.getParameter("pretty"))) {
-			return mapper.writerWithDefaultPrettyPrinter();
+			return objectMapperCopy.writerWithDefaultPrettyPrinter();
 		}
-		return mapper.writer();
+		return objectMapperCopy.writer();
+	}
+
+	private void registerMetricsRegistryModule(HttpServletRequest request, ObjectMapper objectMapperCopy) {
+		Metric2Filter metricFilter = Metric2Filter.ALL;
+		final String[] metricNames = request.getParameterValues("metricNames[]");
+		if (metricNames != null && metricNames.length > 0) {
+			List<MetricName> metricNameList = new ArrayList<MetricName>(metricNames.length);
+			for (String metricName : metricNames) {
+				metricNameList.add(name(metricName).build());
+			}
+			metricFilter = new MetricNameFilter(metricNameList);
+		}
+		objectMapperCopy.registerModule(new Metric2RegistryModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, metricFilter));
 	}
 }

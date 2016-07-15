@@ -1,11 +1,15 @@
 package org.stagemonitor.core.metrics.metrics2;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 
 /**
@@ -25,17 +29,31 @@ import org.stagemonitor.core.util.GraphiteSanitizer;
  */
 public class MetricName {
 
+	@JsonIgnore
 	private int hashCode;
 
 	private final String name;
 
+	@JsonIgnore
 	private final List<String> tagKeys;
+	@JsonIgnore
 	private final List<String> tagValues;
 
 	private MetricName(String name, List<String> tagKeys, List<String> tagValues) {
 		this.name = name;
 		this.tagKeys = Collections.unmodifiableList(tagKeys);
 		this.tagValues = Collections.unmodifiableList(tagValues);
+	}
+
+	@JsonCreator
+	private MetricName(@JsonProperty("name") String name, @JsonProperty("tags") Map<String, String> tags) {
+		this.name = name;
+		tagKeys = new ArrayList<String>(tags.size());
+		tagValues = new ArrayList<String>(tags.size());
+		for (Map.Entry<String, String> entry : tags.entrySet()) {
+			tagKeys.add(entry.getKey());
+			tagValues.add(entry.getValue());
+		}
 	}
 
 	/**
@@ -76,6 +94,7 @@ public class MetricName {
 		return name;
 	}
 
+	@JsonProperty
 	public Map<String, String> getTags() {
 		final Map<String, String> tags = new LinkedHashMap<String, String>();
 		for (int i = 0; i < tagKeys.size(); i++) {
@@ -116,9 +135,8 @@ public class MetricName {
 		MetricName that = (MetricName) o;
 
 		if (!name.equals(that.name)) return false;
-		if (!tagKeys.equals(that.tagKeys)) return false;
-		return tagValues.equals(that.tagValues);
-
+		if (tagKeys.size() != that.tagKeys.size()) return false;
+		return containsAllTags(that);
 	}
 
 	@Override
@@ -126,24 +144,38 @@ public class MetricName {
 		int result = hashCode;
 		if (result == 0) {
 			result = name.hashCode();
-			result = 31 * result + tagKeys.hashCode();
-			result = 31 * result + tagValues.hashCode();
+			result = 31 * result + hashCodeUnordered(tagKeys);
+			result = 31 * result + hashCodeUnordered(tagValues);
 			hashCode = result;
 		}
 		return result;
 	}
 
-	public boolean matches(MetricName other) {
-		if (name.equals(other.name)) {
-			return containsAllTags(other.getTags());
-		} else {
-			return false;
-		}
+	/**
+	 * Calculates the hashcode of a collection.
+	 * <p/>
+	 * Returns the same hash code for two collections with the same elements but a different order.
+	 * @param collection
+	 * @param <T>
+	 * @return
+	 */
+	private static <T> int hashCodeUnordered(Collection<T> collection) {
+		int hashCode = 1;
+		for (T e : collection)
+			hashCode = hashCode + (e==null ? 0 : e.hashCode());
+		return hashCode;
 	}
 
-	private boolean containsAllTags(Map<String, String> tags) {
-		for (Map.Entry<String, String> entry : tags.entrySet()) {
-			if (!entry.getValue().equals(this.getTags().get(entry.getKey()))) {
+	public boolean matches(MetricName other) {
+		return name.equals(other.name) && containsAllTags(other);
+	}
+
+	private boolean containsAllTags(MetricName other) {
+		List<String> otherTagKeys = other.getTagKeys();
+		for (int i = 0; i < otherTagKeys.size(); i++) {
+			String key = otherTagKeys.get(i);
+			final int index = tagKeys.indexOf(key);
+			if (index == -1 || !other.tagValues.get(i).equals(tagValues.get(index))) {
 				return false;
 			}
 		}

@@ -66,14 +66,13 @@ var tableRenderer = (function () {
 	function getData(metrics, metricTable) {
 		var dataByRowName = {};
 		$.each(metricTable.columns, function (columnIndex, column) {
-			var metricCategory = metrics[column.metricCategory];
-			for (metricPath in metricCategory) {
-				var match = column.metricPathRegex.exec(metricPath);
-				if (match) {
-					var rowName = match[1] || match[0];
+			for (var i = 0; i < metrics.length; i++) {
+				var metric = metrics[i];
+				if (utils.matches(metric, column.metricMatcher)) {
+					var rowName = metric.tags[column.groupBy] || utils.metricAsString(metric, column.metric);
 					dataByRowName[rowName] = dataByRowName[rowName] || {};
 					dataByRowName[rowName].name = rowName;
-					var value = metricCategory[metricPath][column.metric];
+					var value = metric.values[column.metric];
 					if (isNaN(value)) {
 						value = 0;
 					}
@@ -138,31 +137,34 @@ var tableRenderer = (function () {
 	}
 
 	function onNewRow(table, rowName, metrics) {
-		addGraphsFromTemplates(table, rowName, metrics, true);
+		addGraphsFromTemplates(table, rowName, metrics);
 		if (table.graphTemplates && table.graphTemplates.templates && table.graphTemplates.defaultRowSelection) {
 			// don't Regex-quote the defaultRowSelection as it may be a regex
-			addGraphsFromTemplates(table, table.graphTemplates.defaultRowSelection, metrics, false);
+			addGraphsFromTemplates(table, table.graphTemplates.defaultRowSelection, metrics);
 		}
 	}
 
-	function addGraphsFromTemplates(table, rowName, metrics, quoteRowName) {
+	function addGraphsFromTemplates(table, rowName, metrics) {
 		if (table.graphTemplates && table.graphTemplates.templates) {
 			$.each(table.graphTemplates.templates, function (i, graphTemplate) {
 				graphTemplate.graphs = graphTemplate.graphs || {};
 				if (!graphTemplate.graphs[rowName]) {
-					graphTemplate.graphs[rowName] = processGraphTemplate(graphTemplate, rowName, table, quoteRowName);
+					graphTemplate.graphs[rowName] = processGraphTemplate(graphTemplate, rowName, table);
 					graphRenderer.addGraph(table.pluginId, graphTemplate.graphs[rowName], metrics);
 				}
 			});
 		}
 	}
 
-	function processGraphTemplate(graphTemplate, rowName, table, quoteRowName) {
+	function processGraphTemplate(graphTemplate, rowName, table) {
+		// TODO quoteRowName
 		var template = JSON.parse(JSON.stringify(graphTemplate.template));
 		template.disabled = rowName != table.graphTemplates.defaultRowSelection;
 		for (var j = 0; j < template.columns.length; j++) {
 			var column = template.columns[j];
-			column.metricPathRegex = column.metricPathRegex.replace("${rowName}", quoteRowName ? RegExp.quote(rowName) : rowName);
+			$.each(column.metricMatcher.tags, function (tag, value) {
+				column.metricMatcher.tags[tag] = value.replace("${rowName}", rowName);
+			});
 		}
 		return template;
 	}

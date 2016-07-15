@@ -321,6 +321,8 @@ public class RequestMonitor {
 						.layer(externalRequestStats.getRequestType()).build())
 						.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
 			}
+			// the difference to ElasticsearchExternalRequestReporter is that the
+			// external_requests_rate is grouped by the request name, not the dao method name
 			metricRegistry.meter(name("external_requests_rate")
 					.tag("request_name", requestName)
 					.type(externalRequestStats.getRequestType()).build())

@@ -1,22 +1,14 @@
 package org.stagemonitor.core.metrics.metrics2;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Map;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.Metered;
 import com.codahale.metrics.Metric;
-import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -24,6 +16,13 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Map;
+
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
@@ -38,6 +37,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	private final CorePlugin corePlugin;
 	private final HttpClient httpClient;
 	private final JsonFactory jfactory = new JsonFactory();
+	private final Metric2RegistryModule metric2RegistryModule;
 
 	public static ElasticsearchReporter.Builder forRegistry(Metric2Registry registry, CorePlugin corePlugin) {
 		return new Builder(registry, corePlugin);
@@ -49,6 +49,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		this.globalTags = builder.getGlobalTags();
 		this.httpClient = builder.getHttpClient();
 		this.jfactory.setCodec(JsonUtils.getMapper());
+		this.metric2RegistryModule = new Metric2RegistryModule(builder.getRateUnit(), builder.getDurationUnit());
 		this.corePlugin = builder.getCorePlugin();
 	}
 
@@ -81,69 +82,14 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  Map<MetricName, Histogram> histograms, final Map<MetricName, Meter> meters,
 							  Map<MetricName, Timer> timers, OutputStream os, byte[] bulkActionBytes, long timestamp) throws IOException {
 
-		reportMetric(gauges, timestamp, new ValueWriter<Gauge>() {
-			public void writeValues(Gauge gauge, JsonGenerator jg) throws IOException {
-				final Object value = gauge.getValue();
-				if (value == null) {
-					return;
-				}
-				if (value instanceof Number) {
-					writeDoubleUnlessNaN(jg, "value", ((Number)value).doubleValue());
-				} else if (value instanceof Boolean) {
-					jg.writeBooleanField("value_boolean", (Boolean) value);
-				} else {
-					jg.writeStringField("value_string", value.toString());
-				}
-			}
-		}, os, bulkActionBytes);
-		reportMetric(counters, timestamp, new ValueWriter<Counter>() {
-			public void writeValues(Counter counter, JsonGenerator jg) throws IOException {
-				jg.writeObjectField("count", counter.getCount());
-			}
-		}, os, bulkActionBytes);
-		reportMetric(histograms, timestamp, new ValueWriter<Histogram>() {
-			public void writeValues(Histogram histogram, JsonGenerator jg) throws IOException {
-				final Snapshot snapshot = histogram.getSnapshot();
-				jg.writeNumberField("count", histogram.getCount());
-				writeSnapshot(snapshot, jg);
-			}
-		}, os, bulkActionBytes);
-		reportMetric(meters, timestamp, new ValueWriter<Meter>() {
-			public void writeValues(Meter meter, JsonGenerator jg) throws IOException {
-				writeMetered(meter, jg);
-			}
-		}, os, bulkActionBytes);
-		reportMetric(timers, timestamp, new ValueWriter<Timer>() {
-			public void writeValues(Timer timer, JsonGenerator jg) throws IOException {
-				writeMetered(timer, jg);
-				writeSnapshot(timer.getSnapshot(), jg);
-			}
-		}, os, bulkActionBytes);
+		reportMetric(gauges, timestamp, metric2RegistryModule.getValueWriter(Gauge.class), os, bulkActionBytes);
+		reportMetric(counters, timestamp, metric2RegistryModule.getValueWriter(Counter.class), os, bulkActionBytes);
+		reportMetric(histograms, timestamp, metric2RegistryModule.getValueWriter(Histogram.class), os, bulkActionBytes);
+		reportMetric(meters, timestamp, metric2RegistryModule.getValueWriter(Meter.class), os, bulkActionBytes);
+		reportMetric(timers, timestamp, metric2RegistryModule.getValueWriter(Timer.class), os, bulkActionBytes);
 	}
 
-	private void writeSnapshot(Snapshot snapshot, JsonGenerator jg) throws IOException {
-		writeDoubleUnlessNaN(jg, "min", convertDuration(snapshot.getMin()));
-		writeDoubleUnlessNaN(jg, "max", convertDuration(snapshot.getMax()));
-		writeDoubleUnlessNaN(jg, "mean", convertDuration(snapshot.getMean()));
-		writeDoubleUnlessNaN(jg, "median", convertDuration(snapshot.getMedian()));
-		writeDoubleUnlessNaN(jg, "std", convertDuration(snapshot.getStdDev()));
-		writeDoubleUnlessNaN(jg, "p25", convertDuration(snapshot.getValue(0.25)));
-		writeDoubleUnlessNaN(jg, "p75", convertDuration(snapshot.get75thPercentile()));
-		writeDoubleUnlessNaN(jg, "p95", convertDuration(snapshot.get95thPercentile()));
-		writeDoubleUnlessNaN(jg, "p98", convertDuration(snapshot.get98thPercentile()));
-		writeDoubleUnlessNaN(jg, "p99", convertDuration(snapshot.get99thPercentile()));
-		writeDoubleUnlessNaN(jg, "p999", convertDuration(snapshot.get999thPercentile()));
-	}
-
-	private void writeMetered(Metered metered, JsonGenerator jg) throws IOException {
-		jg.writeNumberField("count", metered.getCount());
-		writeDoubleUnlessNaN(jg, "m1_rate", convertRate(metered.getOneMinuteRate()));
-		writeDoubleUnlessNaN(jg, "m5_rate", convertRate(metered.getFiveMinuteRate()));
-		writeDoubleUnlessNaN(jg, "m15_rate", convertRate(metered.getFifteenMinuteRate()));
-		writeDoubleUnlessNaN(jg, "mean_rate", convertRate(metered.getMeanRate()));
-	}
-
-	private <T extends Metric> void reportMetric(Map<MetricName, T> metrics, long timestamp, ValueWriter<T> valueWriter,
+	private <T extends Metric> void reportMetric(Map<MetricName, T> metrics, long timestamp, Metric2RegistryModule.ValueWriter<T> valueWriter,
 												 OutputStream os, byte[] bulkActionBytes) throws IOException {
 
 		for (Map.Entry<MetricName, T> entry : metrics.entrySet()) {
@@ -162,20 +108,10 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		}
 	}
 
-	private static void writeDoubleUnlessNaN(JsonGenerator jg, String key, double value) throws IOException {
-		if (!Double.isNaN(value)) {
-			jg.writeNumberField(key, value);
-		}
-	}
-
 	private void writeMap(JsonGenerator jg, Map<String, String> map) throws IOException {
 		for (Map.Entry<String, String> entry : map.entrySet()) {
 			jg.writeObjectField(entry.getKey(), entry.getValue());
 		}
-	}
-
-	private interface ValueWriter<T extends Metric> {
-		void writeValues(T value, JsonGenerator jg) throws IOException;
 	}
 
 	private class MetricsOutputStreamHandler implements HttpClient.OutputStreamHandler {

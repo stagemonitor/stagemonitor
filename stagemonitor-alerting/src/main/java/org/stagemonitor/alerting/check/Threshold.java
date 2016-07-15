@@ -1,25 +1,28 @@
 package org.stagemonitor.alerting.check;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+
+import java.util.Map;
 
 /**
  * Represents a threshold to check
  */
 public class Threshold {
 
-	private final String metric;
+	private final MetricValueType valueType;
 	private final Operator operator;
 	private final double thresholdValue;
 
 	@JsonCreator
-	public Threshold(@JsonProperty("metric") String metric, @JsonProperty("operator") Operator operator, @JsonProperty("thresholdValue") double thresholdValue) {
+	public Threshold(@JsonProperty("valueType") String metric, @JsonProperty("operator") Operator operator, @JsonProperty("thresholdValue") double thresholdValue) {
 		if (operator == null) {
 			throw new IllegalArgumentException("Operator may not be null");
 		}
-		this.metric = metric;
+		this.valueType = MetricValueType.valueOf(metric.toUpperCase());
 		this.operator = operator;
 		this.thresholdValue = thresholdValue;
 	}
@@ -31,7 +34,7 @@ public class Threshold {
 	 * @return <code>true</code>, if the actual value exceeds the threshold, <code>false</code> otherwise
 	 */
 	public boolean isExceeded(double actualValue) {
-		return operator.check(actualValue, thresholdValue);
+		return !operator.check(actualValue, thresholdValue);
 	}
 
 	public Operator getOperator() {
@@ -42,22 +45,22 @@ public class Threshold {
 		return thresholdValue;
 	}
 
-	public String getMetric() {
-		return metric;
+	public MetricValueType getValueType() {
+		return valueType;
 	}
 
 	public String toString() {
-		return metric + " " + operator.operatorString + " " + thresholdValue;
+		return valueType.getName() + " " + operator.operatorString + " " + thresholdValue;
 	}
 
-	public String getCheckExpressionAsString(String target) {
-		return target + '.' + metric + " " + operator.operatorString + " " + thresholdValue;
+	public String getCheckExpressionAsString(MetricName target) {
+		return InfluxDbReporter.getInfluxDbLineProtocolString(target) + ' ' + valueType.getName() + " " + operator.operatorString + " " + thresholdValue;
 	}
 
-	public CheckResult check(CheckResult.Status severity, String target, Map<String, Double> currentValuesByMetric) {
-		Double actualValue = currentValuesByMetric.get(metric);
+	public CheckResult check(CheckResult.Status severity, MetricName target, Map<String, Number> currentValuesByMetric) {
+		double actualValue = currentValuesByMetric.get(valueType.getName()).doubleValue();
 		if (isExceeded(actualValue)) {
-			return new CheckResult(getCheckExpressionAsString(target), actualValue, severity);
+			return new CheckResult(getCheckExpressionAsString(target) + " is false", actualValue, severity);
 		}
 		return new CheckResult(null, actualValue, CheckResult.Status.OK);
 	}
@@ -66,7 +69,7 @@ public class Threshold {
 	 * Represents a boolean operator that can be used to check whether the expression
 	 * <code>actualValue OPERATOR thresholdValue</code> is true or false
 	 */
-	public static enum Operator {
+	public enum Operator {
 
 		LESS("<") {
 			@Override
