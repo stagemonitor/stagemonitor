@@ -1,9 +1,9 @@
 package org.stagemonitor.alerting.check;
 
-import java.util.Collection;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Collection;
 
 /**
  * The result of a check
@@ -46,12 +46,12 @@ public class CheckResult {
 		return currentValue;
 	}
 
-	public static enum Status {
-		OK(0), WARN(1), ERROR(2), CRITICAL(3);
+	public enum Status {
+		CRITICAL(3), ERROR(2), WARN(1), OK(0);
 
 		private final int severity;
 
-		private Status(int severity) {
+		Status(int severity) {
 			this.severity = severity;
 		}
 

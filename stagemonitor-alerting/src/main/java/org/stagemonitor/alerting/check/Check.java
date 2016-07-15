@@ -1,7 +1,8 @@
 package org.stagemonitor.alerting.check;
 
-import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
-import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,10 +10,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 /**
  * A {@link Check} is a named collection of {@link Threshold}s with the same {@link MetricCategory} and target.
@@ -44,7 +47,8 @@ public class Check {
 	 * @return a list of check results (results with OK statuses are omitted)
 	 */
 	public List<CheckResult> check(MetricName actualTarget, Map<String, Number> currentValuesByMetric) {
-		for (Map.Entry<CheckResult.Status, List<Threshold>> entry : thresholds.entrySet()) {
+		SortedMap<CheckResult.Status, List<Threshold>> sortedThresholds = new TreeMap<CheckResult.Status, List<Threshold>>(thresholds);
+		for (Map.Entry<CheckResult.Status, List<Threshold>> entry : sortedThresholds.entrySet()) {
 			List<CheckResult> results = checkThresholds(entry.getValue(), entry.getKey(), actualTarget, currentValuesByMetric);
 			if (!results.isEmpty()) {
 				return results;

@@ -54,6 +54,25 @@ public class CheckTest {
 		assertEquals(3.5, result.getCurrentValue(), 0);
 		assertEquals(CheckResult.Status.CRITICAL, result.getStatus());
 	}
+	@Test
+	public void testCheckCriticalFromJson() throws Exception {
+		Check checkFromJson = JsonUtils.getMapper().readValue("{\"id\":\"50d3063f-437f-431c-bbf5-601ea0943cdf\"," +
+				"\"name\":null," +
+				"\"target\":null," +
+				"\"alertAfterXFailures\":1," +
+				"\"thresholds\":{" +
+				"\"ERROR\":[{\"valueType\":\"VALUE\",\"operator\":\"LESS_EQUAL\",\"thresholdValue\":2.0}]," +
+				// WARN is not in list
+				// CRITICAL is last in list
+				"\"CRITICAL\":[{\"valueType\":\"VALUE\",\"operator\":\"LESS_EQUAL\",\"thresholdValue\":3.0}]" +
+				"}," +
+				"\"application\":null," +
+				"\"active\":true}", Check.class);
+		CheckResult result = checkFromJson.check(name("test").build(), singletonMap("value", 3.5)).iterator().next();
+		assertEquals(CheckResult.Status.CRITICAL, result.getStatus());
+		assertEquals("test value <= 3.0 is false", result.getFailingExpression());
+		assertEquals(3.5, result.getCurrentValue(), 0);
+	}
 
 	@Test
 	public void testGetMostSevereStatus() {
