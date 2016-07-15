@@ -46,9 +46,9 @@ public @interface SLA {
 	CheckResult.Status severity() default CheckResult.Status.ERROR;
 
 	/**
-	 * Trigger alert when <code>actualValue OPERATOR threshold</code>
+	 * Trigger alert when <code>actualValue OPERATOR threshold</code> evaluates to <code>false</code>
 	 */
-	Threshold.Operator operator() default Threshold.Operator.GREATER_EQUAL;
+	Threshold.Operator operator() default Threshold.Operator.LESS;
 
 	/**
 	 * Can be used to make alerts less noisy

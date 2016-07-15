@@ -21,9 +21,9 @@ public class CheckTest {
 	@Before
 	public void setUp() {
 		check = new Check();
-		check.getCritical().add(new Threshold("value", Threshold.Operator.GREATER, 3));
-		check.getError().add(new Threshold("value", Threshold.Operator.GREATER, 2));
-		check.getWarn().add(new Threshold("value", Threshold.Operator.GREATER, 1));
+		check.getCritical().add(new Threshold("value", Threshold.Operator.LESS_EQUAL, 3));
+		check.getError().add(new Threshold("value", Threshold.Operator.LESS_EQUAL, 2));
+		check.getWarn().add(new Threshold("value", Threshold.Operator.LESS_EQUAL, 1));
 	}
 
 	@Test
@@ -34,7 +34,7 @@ public class CheckTest {
 	@Test
 	public void testCheckWarn() throws Exception {
 		CheckResult result = check.check(name("test").build(), singletonMap("value", 1.5)).iterator().next();
-		assertEquals("test value > 1.0", result.getFailingExpression());
+		assertEquals("test value <= 1.0 is false", result.getFailingExpression());
 		assertEquals(1.5, result.getCurrentValue(), 0);
 		assertEquals(CheckResult.Status.WARN, result.getStatus());
 	}
@@ -42,7 +42,7 @@ public class CheckTest {
 	@Test
 	public void testCheckError() throws Exception {
 		CheckResult result = check.check(name("test").build(), singletonMap("value", 2.5)).iterator().next();
-		assertEquals("test value > 2.0", result.getFailingExpression());
+		assertEquals("test value <= 2.0 is false", result.getFailingExpression());
 		assertEquals(2.5, result.getCurrentValue(), 0);
 		assertEquals(CheckResult.Status.ERROR, result.getStatus());
 	}
@@ -50,7 +50,7 @@ public class CheckTest {
 	@Test
 	public void testCheckCritical() throws Exception {
 		CheckResult result = check.check(name("test").build(), singletonMap("value", 3.5)).iterator().next();
-		assertEquals("test value > 3.0", result.getFailingExpression());
+		assertEquals("test value <= 3.0 is false", result.getFailingExpression());
 		assertEquals(3.5, result.getCurrentValue(), 0);
 		assertEquals(CheckResult.Status.CRITICAL, result.getStatus());
 	}

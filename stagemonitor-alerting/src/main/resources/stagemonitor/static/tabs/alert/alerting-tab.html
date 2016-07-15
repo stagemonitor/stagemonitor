@@ -213,7 +213,12 @@
 	<div class="modal-header">
 		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
 				aria-hidden="true">&times;</span></button>
-		<h4 class="modal-title" id="check-modal-label">{{title}}</h4>
+		<h4 class="modal-title">
+			<span id="check-modal-label">{{title}}</span>
+			<span class="glyphicon glyphicon-question-sign tip" data-placement="bottom"
+			  title="An alert will be triggered when one of the thresholds is exceeded (if the expression returns false)">
+			</span>
+		</h4>
 	</div>
 	<div class="modal-body">
 		<form id="check-form" class="form-horizontal" data-parsley-validate>

@@ -121,11 +121,11 @@ public class SlaCheckCreatingClassPathScannerTest {
 		final List<Threshold> thresholds = responseTimeChek.getThresholds(CheckResult.Status.ERROR);
 		final Threshold p95 = thresholds.get(0);
 		assertEquals(MetricValueType.P95, p95.getValueType());
-		assertEquals(Threshold.Operator.GREATER_EQUAL, p95.getOperator());
+		assertEquals(Threshold.Operator.LESS, p95.getOperator());
 		assertEquals(0, p95.getThresholdValue(), 0);
 		final Threshold max = thresholds.get(1);
 		assertEquals(MetricValueType.MAX, max.getValueType());
-		assertEquals(Threshold.Operator.GREATER_EQUAL, max.getOperator());
+		assertEquals(Threshold.Operator.LESS, max.getOperator());
 		assertEquals(0, max.getThresholdValue(), 0);
 	}
 

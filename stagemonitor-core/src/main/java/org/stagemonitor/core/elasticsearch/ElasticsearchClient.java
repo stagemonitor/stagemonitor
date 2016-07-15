@@ -1,6 +1,23 @@
 package org.stagemonitor.core.elasticsearch;
 
-import static org.stagemonitor.core.util.StringUtils.slugify;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
+import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
+import org.stagemonitor.core.util.CompletedFuture;
+import org.stagemonitor.core.util.DateUtils;
+import org.stagemonitor.core.util.ExecutorUtils;
+import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -22,23 +39,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
-import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
-import org.stagemonitor.core.util.CompletedFuture;
-import org.stagemonitor.core.util.DateUtils;
-import org.stagemonitor.core.util.ExecutorUtils;
-import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.core.util.StringUtils;
+import static org.stagemonitor.core.util.StringUtils.slugify;
 
 public class ElasticsearchClient {
 
@@ -68,7 +69,7 @@ public class ElasticsearchClient {
 
 	public <T> T getObject(final String path, Class<T> type) {
 		try {
-			return JsonUtils.getMapper().readerFor(type).readValue(getJson(path).get("_source"));
+			return JsonUtils.getObjectReader(type).readValue(getJson(path).get("_source"));
 		} catch (FileNotFoundException e) {
 			return null;
 		} catch (IOException e) {
@@ -80,7 +81,7 @@ public class ElasticsearchClient {
 		try {
 			JsonNode hits = getJson(path + "/_search?size=" + limit).get("hits").get("hits");
 			List<T> all = new ArrayList<T>(hits.size());
-			ObjectReader reader = JsonUtils.getMapper().readerFor(clazz);
+			ObjectReader reader = JsonUtils.getObjectReader(clazz);
 			for (JsonNode hit : hits) {
 				all.add(reader.<T>readValue(hit.get("_source")));
 			}

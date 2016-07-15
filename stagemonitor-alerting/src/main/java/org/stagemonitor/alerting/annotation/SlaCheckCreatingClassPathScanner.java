@@ -139,7 +139,7 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 			return;
 		}
 		final Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.errorRequestName, timerNames.errorMetricName, " (errors)", "errors");
-		final Threshold t = new Threshold(MetricValueType.M1_RATE.getName(), Threshold.Operator.GREATER_EQUAL, slaAnnotation.errorRateThreshold());
+		final Threshold t = new Threshold(MetricValueType.M1_RATE.getName(), Threshold.Operator.LESS, slaAnnotation.errorRateThreshold());
 		check.getThresholds(slaAnnotation.severity()).add(t);
 		addCheckIfStarted(check);
 	}

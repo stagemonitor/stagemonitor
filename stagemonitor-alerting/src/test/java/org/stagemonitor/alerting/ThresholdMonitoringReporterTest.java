@@ -1,27 +1,7 @@
 package org.stagemonitor.alerting;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.Timer;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -41,6 +21,27 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.JsonUtils;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ThresholdMonitoringReporterTest {
 
@@ -98,7 +99,7 @@ public class ThresholdMonitoringReporterTest {
 		assertEquals(2, checkResults.size());
 
 		CheckResult result = checkResults.get(0);
-		assertEquals("test_timer,signature=timer3 mean >= 5.0", result.getFailingExpression());
+		assertEquals("test_timer,signature=timer3 mean < 5.0 is false", result.getFailingExpression());
 		assertEquals(6.0, result.getCurrentValue(), 0);
 		assertEquals(CheckResult.Status.WARN, result.getStatus());
 	}
@@ -218,7 +219,7 @@ public class ThresholdMonitoringReporterTest {
 		check.setApplication("testApp");
 		check.setTarget(name("test_timer").build());
 		check.setAlertAfterXFailures(alertAfterXFailures);
-		check.getWarn().add(new Threshold("mean", Threshold.Operator.GREATER_EQUAL, meanMs));
+		check.getWarn().add(new Threshold("mean", Threshold.Operator.LESS, meanMs));
 		return check;
 	}
 

@@ -1,18 +1,20 @@
 package org.stagemonitor.core.util;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.json.MetricsModule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 public class JsonUtils {
 
@@ -65,6 +67,17 @@ public class JsonUtils {
 
 	public static ObjectNode toObjectNode(Object o) {
 		return MAPPER.valueToTree(o);
+	}
+
+	public static <T> ObjectReader getObjectReader(Class<T> type) {
+		final ObjectReader objectReader;
+		if (getMapper().version().compareTo(new Version(2, 6, 0, null, "com.fasterxml.jackson.core", "jackson-databind")) >= 0) {
+			objectReader = getMapper().readerFor(type);
+		} else {
+			objectReader = getMapper().reader(type);
+
+		}
+		return objectReader;
 	}
 
 	private static class AfterburnerModuleRegisterer {
