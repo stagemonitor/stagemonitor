@@ -1,15 +1,8 @@
 package org.stagemonitor.alerting.annotation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.List;
-import java.util.Map;
-
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -17,12 +10,20 @@ import org.junit.Test;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
+import org.stagemonitor.alerting.check.MetricValueType;
 import org.stagemonitor.alerting.check.Threshold;
-import org.stagemonitor.alerting.check.ValueType;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitorRequests;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class SlaCheckCreatingClassPathScannerTest {
 
@@ -31,7 +32,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 
 	private static class SlaTestClass {
 		@SLAs({
-				@SLA(metric = {ValueType.P95, ValueType.MAX}, threshold = {0, 0}),
+				@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0}),
 				@SLA(errorRateThreshold = 0)
 		})
 		@MonitorRequests
@@ -44,27 +45,27 @@ public class SlaCheckCreatingClassPathScannerTest {
 		}
 
 		@MonitorRequests
-		@SLA(metric = {ValueType.P95, ValueType.MAX}, threshold = 0)
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = 0)
 		void tooFewThresholds() {
 		}
 
 		@MonitorRequests(resolveNameAtRuntime = true)
-		@SLA(metric = {ValueType.P95, ValueType.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaMonitorRequestsResolveAtRuntime() {
 		}
 
 		@MonitorRequests(requestName = "monitor requests custom name")
-		@SLA(metric = {ValueType.P95, ValueType.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaMonitorRequestsCustomName() {
 		}
 
 		@Timed(name = "timed custom name", absolute = true)
-		@SLA(metric = {ValueType.P95, ValueType.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaTimedCustomName() {
 		}
 
 		@Timed
-		@SLA(metric = {ValueType.P95, ValueType.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaOnTimed() {
 		}
 
@@ -119,11 +120,11 @@ public class SlaCheckCreatingClassPathScannerTest {
 		assertEquals(checkTarget, responseTimeChek.getTarget());
 		final List<Threshold> thresholds = responseTimeChek.getThresholds(CheckResult.Status.ERROR);
 		final Threshold p95 = thresholds.get(0);
-		assertEquals(ValueType.P95, p95.getValueType());
+		assertEquals(MetricValueType.P95, p95.getValueType());
 		assertEquals(Threshold.Operator.GREATER_EQUAL, p95.getOperator());
 		assertEquals(0, p95.getThresholdValue(), 0);
 		final Threshold max = thresholds.get(1);
-		assertEquals(ValueType.MAX, max.getValueType());
+		assertEquals(MetricValueType.MAX, max.getValueType());
 		assertEquals(Threshold.Operator.GREATER_EQUAL, max.getOperator());
 		assertEquals(0, max.getThresholdValue(), 0);
 	}
@@ -172,7 +173,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 	private static class ClassLevelMonitorRequestsTestClass {
 		static void makeSureClassIsLoaded() {
 		}
-		@SLA(metric = {ValueType.P95, ValueType.MAX}, threshold = {0, 0})
+		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		public void slaMonitorRequestsClassLevel() {
 		}
 	}

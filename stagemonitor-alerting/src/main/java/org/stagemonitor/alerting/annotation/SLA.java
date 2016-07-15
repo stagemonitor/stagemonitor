@@ -1,14 +1,14 @@
 package org.stagemonitor.alerting.annotation;
 
+import org.stagemonitor.alerting.check.CheckResult;
+import org.stagemonitor.alerting.check.MetricValueType;
+import org.stagemonitor.alerting.check.Threshold;
+import org.stagemonitor.requestmonitor.MonitorRequests;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.alerting.check.ValueType;
-import org.stagemonitor.alerting.check.Threshold;
-import org.stagemonitor.requestmonitor.MonitorRequests;
 
 /**
  * This annotation lets you define service level agreements within the code.
@@ -33,7 +33,7 @@ public @interface SLA {
 	 * <p/>
 	 * Make sure the number of metrics and thresholds match
 	 */
-	ValueType[] metric() default {};
+	MetricValueType[] metric() default {};
 
 	/**
 	 * The thresholds for the metrics

@@ -1,18 +1,19 @@
 package org.stagemonitor.alerting.check;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+
+import java.util.Map;
 
 /**
  * Represents a threshold to check
  */
 public class Threshold {
 
-	private final ValueType valueType;
+	private final MetricValueType valueType;
 	private final Operator operator;
 	private final double thresholdValue;
 
@@ -21,7 +22,7 @@ public class Threshold {
 		if (operator == null) {
 			throw new IllegalArgumentException("Operator may not be null");
 		}
-		this.valueType = ValueType.valueOf(metric.toUpperCase());
+		this.valueType = MetricValueType.valueOf(metric.toUpperCase());
 		this.operator = operator;
 		this.thresholdValue = thresholdValue;
 	}
@@ -44,7 +45,7 @@ public class Threshold {
 		return thresholdValue;
 	}
 
-	public ValueType getValueType() {
+	public MetricValueType getValueType() {
 		return valueType;
 	}
 

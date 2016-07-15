@@ -1,15 +1,5 @@
 package org.stagemonitor.alerting.alerter;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.AlertingPlugin;
@@ -20,6 +10,16 @@ import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.HttpClient;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class AlertSender {
 

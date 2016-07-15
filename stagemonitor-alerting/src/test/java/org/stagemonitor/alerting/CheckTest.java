@@ -1,18 +1,18 @@
 package org.stagemonitor.alerting;
 
-import static java.util.Collections.singletonMap;
-import static org.junit.Assert.assertEquals;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.Collections;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.check.CheckResult;
+import org.stagemonitor.alerting.check.MetricValueType;
 import org.stagemonitor.alerting.check.Threshold;
-import org.stagemonitor.alerting.check.ValueType;
 import org.stagemonitor.core.util.JsonUtils;
+
+import java.util.Collections;
+
+import static java.util.Collections.singletonMap;
+import static org.junit.Assert.assertEquals;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class CheckTest {
 
@@ -74,7 +74,7 @@ public class CheckTest {
 		assertEquals(name("timer").tag("foo", "bar").tag("qux", "quux").build(), checkFromJson.getTarget());
 		assertEquals(2, checkFromJson.getAlertAfterXFailures());
 		assertEquals(1, checkFromJson.getWarn().size());
-		assertEquals(ValueType.MEAN, checkFromJson.getWarn().get(0).getValueType());
+		assertEquals(MetricValueType.MEAN, checkFromJson.getWarn().get(0).getValueType());
 		assertEquals(Threshold.Operator.GREATER_EQUAL, checkFromJson.getWarn().get(0).getOperator());
 		assertEquals(3, checkFromJson.getWarn().get(0).getThresholdValue(), 0);
 		assertEquals(0, checkFromJson.getError().size());

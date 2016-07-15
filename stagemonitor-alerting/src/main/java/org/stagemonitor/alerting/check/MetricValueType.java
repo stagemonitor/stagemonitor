@@ -1,6 +1,6 @@
 package org.stagemonitor.alerting.check;
 
-public enum ValueType {
+public enum MetricValueType {
 
 	COUNT("count"),
 	MEAN("mean"),
@@ -19,14 +19,14 @@ public enum ValueType {
 	M15_RATE("m15_rate"),
 	VALUE("value");
 
-	private final String value;
+	private final String name;
 
-	ValueType(String value) {
-		this.value = value;
+	MetricValueType(String name) {
+		this.name = name;
 	}
 
 	public String getName() {
-		return value;
+		return name;
 	}
 
 }
