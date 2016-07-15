@@ -54,7 +54,7 @@ ext {
 	slf4jVersion = '1.7.21'
 	jacksonVersion = '2.7.4'
 	esVersion = '2.2.0'
-	byteBuddyVersion = '1.4.7'
+	byteBuddyVersion = '1.4.11'
 	getProjectsToRelease = this.&getProjectsToRelease
 }
 
