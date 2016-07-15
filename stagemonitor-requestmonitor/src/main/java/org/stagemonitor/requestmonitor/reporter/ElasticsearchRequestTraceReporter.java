@@ -30,7 +30,6 @@ public class ElasticsearchRequestTraceReporter extends AbstractInterceptedReques
 	protected <T extends RequestTrace> void doReport(T requestTrace, PostExecutionInterceptorContext context) {
 		final String index = "stagemonitor-requests-" + StringUtils.getLogstashStyleDate();
 		final String type = "requests";
-		if (true) return;
 		if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
 			if (context.getExcludedProperties().isEmpty()) {
 				elasticsearchClient.index(index, type, requestTrace);

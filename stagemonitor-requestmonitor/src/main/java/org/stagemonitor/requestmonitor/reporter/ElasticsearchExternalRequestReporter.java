@@ -65,7 +65,7 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 		for (Iterator<ExternalRequest> iterator = externalRequests.iterator(); iterator.hasNext(); ) {
 			final ExternalRequest externalRequest = iterator.next();
 			trackExternalRequestMetrics(externalRequest);
-			if (false && !isReportExternalRequest(externalRequest)) {
+			if (!isReportExternalRequest(externalRequest)) {
 				iterator.remove();
 			}
 		}
