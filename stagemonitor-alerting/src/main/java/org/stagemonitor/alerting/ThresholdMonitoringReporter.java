@@ -1,17 +1,12 @@
 package org.stagemonitor.alerting;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.alerting.alerter.AlertSender;
@@ -25,9 +20,15 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 import org.stagemonitor.core.util.JsonUtils;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 public class ThresholdMonitoringReporter extends ScheduledMetrics2Reporter {
 
-	public static final int OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES = 10;
+	private static final int OPTIMISTIC_CONCURRENCY_CONTROL_RETRIES = 10;
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final AlertSender alertSender;
@@ -63,8 +64,8 @@ public class ThresholdMonitoringReporter extends ScheduledMetrics2Reporter {
 		}
 	}
 
-	private <T extends Metric> void addMetrics(Map<String, Map<MetricName, Metric>> metricsGroupedByName, Map<MetricName, T > gauges) {
-		for (Map.Entry<MetricName, T> entry : gauges.entrySet()) {
+	private <T extends Metric> void addMetrics(Map<String, Map<MetricName, Metric>> metricsGroupedByName, Map<MetricName, T > metrics) {
+		for (Map.Entry<MetricName, T> entry : metrics.entrySet()) {
 			Map<MetricName, Metric> metricsForName = metricsGroupedByName.get(entry.getKey().getName());
 			if (metricsForName == null) {
 				metricsForName = new HashMap<MetricName, Metric>();

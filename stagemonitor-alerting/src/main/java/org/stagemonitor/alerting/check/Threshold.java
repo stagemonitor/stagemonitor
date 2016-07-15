@@ -69,7 +69,6 @@ public class Threshold {
 	 * Represents a boolean operator that can be used to check whether the expression
 	 * <code>actualValue OPERATOR thresholdValue</code> is true or false
 	 */
-	// TODO invert operators?
 	public enum Operator {
 
 		LESS("<") {

@@ -1,12 +1,5 @@
 package org.stagemonitor.core.metrics.metrics2;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Map;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -15,6 +8,7 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -22,6 +16,13 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Map;
+
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
@@ -178,5 +179,4 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		}
 
 	}
-
 }
