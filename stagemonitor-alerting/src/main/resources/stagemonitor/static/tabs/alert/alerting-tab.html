@@ -321,15 +321,17 @@
 							</div>
 							<div class="col-lg-2">
 								<select class="form-control" name="thresholds[{{@key}}][][operator]">
-									<option value="GREATER" {{#ifCond operator '==' 'GREATER'}}selected{{/ifCond}}>
-										&gt;</option>
-									<option value="GREATER_EQUAL"
-											{{#ifCond operator '==' 'GREATER_EQUAL'}}selected{{/ifCond}}>&gt;=
-									</option>
 									<option value="LESS" {{#ifCond operator '==' 'LESS'}}selected{{/ifCond}}>
-										&lt;</option>
-									<option value="LESS_EQUAL"
-											{{#ifCond operator '==' 'LESS_EQUAL'}}selected{{/ifCond}}>&lt;=
+										&lt;
+									</option>
+									<option value="LESS_EQUAL" {{#ifCond operator '==' 'LESS_EQUAL'}}selected{{/ifCond}}>
+										&lt;=
+									</option>
+									<option value="GREATER" {{#ifCond operator '==' 'GREATER'}}selected{{/ifCond}}>
+										&gt;
+									</option>
+									<option value="GREATER_EQUAL" {{#ifCond operator '==' 'GREATER_EQUAL'}}selected{{/ifCond}}>
+										&gt;=
 									</option>
 								</select>
 							</div>
