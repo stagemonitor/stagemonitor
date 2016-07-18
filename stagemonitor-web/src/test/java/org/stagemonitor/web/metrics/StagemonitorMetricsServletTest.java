@@ -1,10 +1,5 @@
 package org.stagemonitor.web.metrics;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -12,6 +7,11 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.web.WebPlugin;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class StagemonitorMetricsServletTest {
 
@@ -31,8 +31,8 @@ public class StagemonitorMetricsServletTest {
 		final MockHttpServletResponse resp = new MockHttpServletResponse();
 		servlet.doGet(new MockHttpServletRequest(), resp);
 		assertEquals("[" +
-				"{\"name\":\"qux\",\"tags\":{\"quux\":\"foo\"},\"values\":{\"count\":1}}," +
-				"{\"name\":\"foo\",\"tags\":{\"bar\":\"baz\"},\"values\":{\"count\":1}}" +
+				"{\"name\":\"foo\",\"tags\":{\"bar\":\"baz\"},\"values\":{\"count\":1}}," +
+				"{\"name\":\"qux\",\"tags\":{\"quux\":\"foo\"},\"values\":{\"count\":1}}" +
 				"]", resp.getContentAsString());
 	}
 

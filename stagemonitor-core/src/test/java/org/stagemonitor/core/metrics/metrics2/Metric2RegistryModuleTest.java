@@ -1,15 +1,16 @@
 package org.stagemonitor.core.metrics.metrics2;
 
-import static org.junit.Assert.assertEquals;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.Gauge;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class Metric2RegistryModuleTest {
 
@@ -27,8 +28,8 @@ public class Metric2RegistryModuleTest {
 		registry.counter(name("foo").tag("bar", "baz").build()).inc();
 		registry.counter(name("qux").tag("quux", "foo").build()).inc();
 		assertEquals("[" +
-				"{\"name\":\"qux\",\"tags\":{\"quux\":\"foo\"},\"values\":{\"count\":1}}," +
-				"{\"name\":\"foo\",\"tags\":{\"bar\":\"baz\"},\"values\":{\"count\":1}}" +
+				"{\"name\":\"foo\",\"tags\":{\"bar\":\"baz\"},\"values\":{\"count\":1}}," +
+				"{\"name\":\"qux\",\"tags\":{\"quux\":\"foo\"},\"values\":{\"count\":1}}" +
 				"]", mapper.writeValueAsString(registry));
 	}
 

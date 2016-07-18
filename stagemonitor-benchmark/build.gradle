@@ -5,6 +5,7 @@ plugins {
 apply plugin: 'me.champeau.gradle.jmh'
 
 jmh {
+	jmhVersion = '1.12'
 	iterations = 5
 	fork = 2
 	warmupIterations = 1
@@ -12,12 +13,10 @@ jmh {
 	benchmarkMode = 'AverageTime'
 	humanOutputFile = null
 	timeUnit = 'ns'
-//	include = ['.*VariableMethodsBenchmark.*']
+	include = '.*MetricNameBenchmark.*'
+//	profilers = ['hs_gc']
+	//	mergeServiceFiles()
 }
-
-//jmhJar {
-//	mergeServiceFiles()
-//}
 
 dependencies {
 	compile project(":stagemonitor-web")

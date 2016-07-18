@@ -1,16 +1,19 @@
 package org.stagemonitor.core.metrics.metrics2;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.stagemonitor.core.util.GraphiteSanitizer;
+
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.stagemonitor.core.util.GraphiteSanitizer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Represents a metrics 2.0 name that consists of a name and arbitrary tags (a set of key-value-pairs).
@@ -34,26 +37,18 @@ public class MetricName {
 
 	private final String name;
 
-	@JsonIgnore
-	private final List<String> tagKeys;
-	@JsonIgnore
-	private final List<String> tagValues;
+	// The insertion order is important for the correctness of #toGraphiteName
+	private final LinkedHashMap<String, String> tags;
 
-	private MetricName(String name, List<String> tagKeys, List<String> tagValues) {
+	private MetricName(String name, LinkedHashMap<String, String> tags) {
 		this.name = name;
-		this.tagKeys = Collections.unmodifiableList(tagKeys);
-		this.tagValues = Collections.unmodifiableList(tagValues);
+		this.tags = tags;
 	}
 
 	@JsonCreator
 	private MetricName(@JsonProperty("name") String name, @JsonProperty("tags") Map<String, String> tags) {
 		this.name = name;
-		tagKeys = new ArrayList<String>(tags.size());
-		tagValues = new ArrayList<String>(tags.size());
-		for (Map.Entry<String, String> entry : tags.entrySet()) {
-			tagKeys.add(entry.getKey());
-			tagValues.add(entry.getValue());
-		}
+		this.tags = new LinkedHashMap<String, String>(tags);
 	}
 
 	/**
@@ -66,7 +61,7 @@ public class MetricName {
 	 * @return a copy of this name including the provided tag
 	 */
 	public MetricName withTag(String key, String value) {
-		return name(name).tags(tagKeys, tagValues).tag(key, value).build();
+		return name(name).tags(tags).tag(key, value).build();
 	}
 
 	/**
@@ -86,29 +81,22 @@ public class MetricName {
 		return new Builder(name);
 	}
 
-	public static Builder name(String name, int estimatedTagSize) {
-		return new Builder(name, estimatedTagSize);
-	}
-
 	public String getName() {
 		return name;
 	}
 
-	@JsonProperty
 	public Map<String, String> getTags() {
-		final Map<String, String> tags = new LinkedHashMap<String, String>();
-		for (int i = 0; i < tagKeys.size(); i++) {
-			tags.put(tagKeys.get(i), tagValues.get(i));
-		}
 		return Collections.unmodifiableMap(tags);
 	}
 
+	@JsonIgnore
 	public List<String> getTagKeys() {
-		return tagKeys;
+		return new ArrayList<String>(tags.keySet());
 	}
 
+	@JsonIgnore
 	public List<String> getTagValues() {
-		return tagValues;
+		return new ArrayList<String>(tags.values());
 	}
 
 	/**
@@ -118,7 +106,7 @@ public class MetricName {
 	 */
 	public String toGraphiteName() {
 		StringBuilder sb = new StringBuilder(GraphiteSanitizer.sanitizeGraphiteMetricSegment(name));
-		for (String value : tagValues) {
+		for (String value : tags.values()) {
 			sb.append('.').append(GraphiteSanitizer.sanitizeGraphiteMetricSegment(value));
 		}
 		return sb.toString();
@@ -134,9 +122,7 @@ public class MetricName {
 
 		MetricName that = (MetricName) o;
 
-		if (!name.equals(that.name)) return false;
-		if (tagKeys.size() != that.tagKeys.size()) return false;
-		return containsAllTags(that);
+		return name.equals(that.name) && tags.equals(that.tags);
 	}
 
 	@Override
@@ -144,71 +130,126 @@ public class MetricName {
 		int result = hashCode;
 		if (result == 0) {
 			result = name.hashCode();
-			result = 31 * result + hashCodeUnordered(tagKeys);
-			result = 31 * result + hashCodeUnordered(tagValues);
+			result = 31 * result + tags.hashCode();
 			hashCode = result;
 		}
 		return result;
 	}
 
-	/**
-	 * Calculates the hashcode of a collection.
-	 * <p/>
-	 * Returns the same hash code for two collections with the same elements but a different order.
-	 * @param collection
-	 * @param <T>
-	 * @return
-	 */
-	private static <T> int hashCodeUnordered(Collection<T> collection) {
-		int hashCode = 1;
-		for (T e : collection)
-			hashCode = hashCode + (e==null ? 0 : e.hashCode());
-		return hashCode;
-	}
-
 	public boolean matches(MetricName other) {
-		return name.equals(other.name) && containsAllTags(other);
+		return name.equals(other.name) && containsAllTags(other.tags);
 	}
 
-	private boolean containsAllTags(MetricName other) {
-		List<String> otherTagKeys = other.getTagKeys();
-		for (int i = 0; i < otherTagKeys.size(); i++) {
-			String key = otherTagKeys.get(i);
-			final int index = tagKeys.indexOf(key);
-			if (index == -1 || !other.tagValues.get(i).equals(tagValues.get(index))) {
+	private boolean containsAllTags(Map<String, String> tags) {
+		for (Map.Entry<String, String> entry : tags.entrySet()) {
+			if (!entry.getValue().equals(this.tags.get(entry.getKey()))) {
 				return false;
 			}
 		}
 		return true;
 	}
 
+	/**
+	 * A {@link MetricNameTemplate} lets you efficiently create similar {@link MetricName}s so that if a {@link
+	 * MetricName} has already been {@link #build(String)} for the same value(s), the previous instance is reused.
+	 * <p/>
+	 * In other words, this is a cache for {@link MetricName}s
+	 * <p/>
+	 * Example:
+	 * <pre>
+	 *     MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time_server")
+	 *             .tag("request_name", "")
+	 *             .layer("All")
+	 *             .templateFor("request_name");
+	 *     MetricName metricName = timerMetricNameTemplate.build("Search Products");
+	 * </pre>
+	 */
+	public static class MetricNameTemplate {
+		private final ConcurrentMap<Object, MetricName> metricNameCache = new ConcurrentHashMap<Object, MetricName>();
+		private final MetricName template;
+		private final String key;
+		private final List<String> keys;
+
+		private MetricNameTemplate(MetricName template, String key) {
+			this.template = template;
+			this.key = key;
+			this.keys = null;
+		}
+
+		private MetricNameTemplate(MetricName template, String... keys) {
+			this.template = template;
+			this.key = null;
+			this.keys = Arrays.asList(keys);
+		}
+
+		/**
+		 * Creates a new or reused {@link MetricName} according to the {@link #template} with the given {@link #key}
+		 * and the provided value
+		 *
+		 * @param value The tag value
+		 * @return A {@link MetricName} according to the {@link #template}
+		 * @throws IllegalArgumentException When this template is intended for multiple values i.e. was initialized via
+		 *                                  {@link MetricNameTemplate#MetricNameTemplate(MetricName, String...)}
+		 */
+		public MetricName build(String value) {
+			if (key == null) {
+				throw new IllegalArgumentException("Size of key does not match size of values");
+			}
+			MetricName metricName = metricNameCache.get(value);
+			if (metricName == null) {
+				metricName = template.withTag(key, value);
+				metricNameCache.put(value, metricName);
+			}
+			return metricName;
+		}
+
+		/**
+		 * Creates a new or reused {@link MetricName} according to the {@link #template} with the given {@link #keys}
+		 * and the provided values
+		 *
+		 * @param values The tag values (must match the size of {@link #keys}
+		 * @return A {@link MetricName} according to the {@link #template}
+		 * @throws IllegalArgumentException When number of {@link #keys} does not match the number of provided values or
+		 *                                  this template is intended for a single value i.e. was initialized via {@link
+		 *                                  MetricNameTemplate#MetricNameTemplate(MetricName, String)}
+		 */
+		public MetricName build(String... values) {
+			if (keys == null || keys.size() != values.length) {
+				throw new IllegalArgumentException("Size of key does not match size of values");
+			}
+			List<String> valuesList = Arrays.asList(values);
+			MetricName metricName = metricNameCache.get(valuesList);
+			if (metricName == null) {
+				Builder builder = name(template.name).tags(template.tags);
+				for (int i = 0; i < keys.size(); i++) {
+					builder.tag(keys.get(i), valuesList.get(i));
+				}
+				metricName = builder.build();
+				metricNameCache.put(valuesList, metricName);
+			}
+			return metricName;
+		}
+	}
+
 	public static class Builder {
 
 		private final String name;
 
-		private final List<String> tagKeys;
-		private final List<String> tagValues;
+		private final LinkedHashMap<String, String> tags = new LinkedHashMap<String, String>(8);
 
 		public Builder(String name) {
-			this(name, 6);
-		}
-
-		public Builder(String name, int estimatedTagSize) {
 			this.name = name;
-			tagKeys = new ArrayList<String>(estimatedTagSize);
-			tagValues = new ArrayList<String>(estimatedTagSize);
 		}
 
 		/**
 		 * Adds a tag to the metric name.
 		 *
-		 * @param key The key should only contain alphanumerical chars and underscores.
+		 * @param key   The key should only contain alphanumerical chars and underscores.
 		 * @param value The value can contain unicode characters, but it is recommended to not use white spaces.
 		 * @return <code>this</code> for chaining
 		 */
 		public Builder tag(String key, Object value) {
-			this.tagKeys.add(key);
-			this.tagValues.add(value.toString());
+			this.tags.put(key, value.toString());
 			return this;
 		}
 
@@ -229,19 +270,32 @@ public class MetricName {
 		}
 
 		public Builder tags(Map<String, String> tags) {
-			this.tagKeys.addAll(tags.keySet());
-			this.tagValues.addAll(tags.values());
-			return this;
-		}
-
-		public Builder tags(List<String> tagKeys, List<String> tagValues) {
-			this.tagKeys.addAll(tagKeys);
-			this.tagValues.addAll(tagValues);
+			this.tags.putAll(tags);
 			return this;
 		}
 
 		public MetricName build() {
-			return new MetricName(name, tagKeys, tagValues);
+			return new MetricName(name, tags);
+		}
+
+		/**
+		 * Creates a {@link MetricNameTemplate} with a single tag
+		 *
+		 * @param key The template tag key
+		 * @return The {@link MetricNameTemplate}
+		 */
+		public MetricNameTemplate templateFor(String key) {
+			return new MetricNameTemplate(build(), key);
+		}
+
+		/**
+		 * Creates a {@link MetricNameTemplate} with multiple tags
+		 *
+		 * @param keys The template tag keys
+		 * @return The {@link MetricNameTemplate}
+		 */
+		public MetricNameTemplate templateFor(String... keys) {
+			return new MetricNameTemplate(build(), keys);
 		}
 
 	}

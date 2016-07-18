@@ -50,6 +50,11 @@ public class RequestMonitor {
 	// TODO remove static keyword. This is currently needed for tests
 	private static ThreadLocal<RequestInformation<? extends RequestTrace>> request = new ThreadLocal<RequestInformation<? extends RequestTrace>>();
 
+	private static MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time_server")
+			.tag("request_name", "")
+			.layer("All")
+			.templateFor("request_name");
+
 	private final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>();
 
 	private final List<Runnable> onBeforeRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
@@ -331,7 +336,7 @@ public class RequestMonitor {
 	}
 
 	public static MetricName getTimerMetricName(String requestName) {
-		return name("response_time_server").tag("request_name", requestName).layer("All").build();
+		return timerMetricNameTemplate.build(requestName);
 	}
 
 	private <T extends RequestTrace> void reportRequestTrace(final RequestInformation<T> requestInformation) {
