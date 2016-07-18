@@ -175,7 +175,6 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
 	public static void onStart(MeasurementSession measurementSession) {
 		synchronized (measurementSessionLock) {
-			System.out.println("onStart");
 			SlaCheckCreatingClassPathScanner.measurementSession = measurementSession;
 			for (Check check : checksCreatedBeforeMeasurementStarted) {
 				addCheck(check, measurementSession);
