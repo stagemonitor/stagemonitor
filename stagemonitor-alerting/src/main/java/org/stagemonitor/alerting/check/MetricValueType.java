@@ -7,7 +7,7 @@ public enum MetricValueType {
 	MIN("min"),
 	MAX("max"),
 	STDDEV("stddev"),
-	MEDIAN("median"),
+	P50("p50"),
 	P75("p75"),
 	P95("p95"),
 	P98("p98"),
