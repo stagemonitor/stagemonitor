@@ -1,10 +1,5 @@
 package org.stagemonitor.core.metrics.metrics2;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -21,6 +16,11 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class Metric2RegistryModule extends Module {
 
@@ -164,9 +164,9 @@ public class Metric2RegistryModule extends Module {
 		writeDoubleUnlessNaN(jg, "min", convertDuration(snapshot.getMin()));
 		writeDoubleUnlessNaN(jg, "max", convertDuration(snapshot.getMax()));
 		writeDoubleUnlessNaN(jg, "mean", convertDuration(snapshot.getMean()));
-		writeDoubleUnlessNaN(jg, "median", convertDuration(snapshot.getMedian()));
 		writeDoubleUnlessNaN(jg, "std", convertDuration(snapshot.getStdDev()));
 		writeDoubleUnlessNaN(jg, "p25", convertDuration(snapshot.getValue(0.25)));
+		writeDoubleUnlessNaN(jg, "p50", convertDuration(snapshot.getMedian()));
 		writeDoubleUnlessNaN(jg, "p75", convertDuration(snapshot.get75thPercentile()));
 		writeDoubleUnlessNaN(jg, "p95", convertDuration(snapshot.get95thPercentile()));
 		writeDoubleUnlessNaN(jg, "p98", convertDuration(snapshot.get98thPercentile()));
