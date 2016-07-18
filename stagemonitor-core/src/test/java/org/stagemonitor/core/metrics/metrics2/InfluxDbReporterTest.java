@@ -1,5 +1,20 @@
 package org.stagemonitor.core.metrics.metrics2;
 
+import com.codahale.metrics.Clock;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.util.HttpClient;
+
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
@@ -15,20 +30,6 @@ import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.meter;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.metricNameMap;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
-import com.codahale.metrics.Clock;
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Timer;
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.util.HttpClient;
 
 public class InfluxDbReporterTest {
 
@@ -142,7 +143,7 @@ public class InfluxDbReporterTest {
 				metricNameMap(Timer.class));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("histogram,app=test count=1i,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
+				eq(singletonList(format("histogram,app=test count=1i,min=4.0,max=2.0,mean=4.0,p50=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
 	}
 
 	@Test
@@ -168,7 +169,7 @@ public class InfluxDbReporterTest {
 				metricNameMap(name("response_time").build(), timer(4)));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("response_time,app=test count=1i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
+				eq(singletonList(format("response_time,app=test count=1i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=4.0,max=2.0,mean=4.0,p50=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
 	}
 
 	@Test

@@ -1,18 +1,19 @@
 package org.stagemonitor.core.metrics;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
+
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MetricsReporterTestHelper {
 
@@ -31,14 +32,14 @@ public class MetricsReporterTestHelper {
 		return snapshot(mean, 2L, 4L, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0);
 	}
 
-	public static Snapshot snapshot(double mean, long max, long min, double stdDev, double median, double p75, double p95,
+	public static Snapshot snapshot(double mean, long max, long min, double stdDev, double p50, double p75, double p95,
 								double p98, double p99, double p999) {
 		final Snapshot snapshot = mock(Snapshot.class);
 		when(snapshot.getMax()).thenReturn(max);
 		when(snapshot.getMean()).thenReturn(mean);
 		when(snapshot.getMin()).thenReturn(min);
 		when(snapshot.getStdDev()).thenReturn(stdDev);
-		when(snapshot.getMedian()).thenReturn(median);
+		when(snapshot.getMedian()).thenReturn(p50);
 		when(snapshot.get75thPercentile()).thenReturn(p75);
 		when(snapshot.get95thPercentile()).thenReturn(p95);
 		when(snapshot.get98thPercentile()).thenReturn(p98);

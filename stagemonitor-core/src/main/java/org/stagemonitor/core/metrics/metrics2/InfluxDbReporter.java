@@ -1,13 +1,5 @@
 package org.stagemonitor.core.metrics.metrics2;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -15,8 +7,17 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metered;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
+
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.HttpClient;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 
@@ -105,7 +106,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 		return "min=" + getDuration(snapshot.getMin()) + ","
 				+ "max=" + getDuration(snapshot.getMax()) + ","
 				+ "mean=" + getDuration(snapshot.getMean()) + ","
-				+ "median=" + getDuration(snapshot.getMedian()) + ","
+				+ "p50=" + getDuration(snapshot.getMedian()) + ","
 				+ "std=" + getDuration(snapshot.getStdDev()) + ","
 				+ "p25=" + getDuration(snapshot.getValue(0.25)) + ","
 				+ "p75=" + getDuration(snapshot.get75thPercentile()) + ","

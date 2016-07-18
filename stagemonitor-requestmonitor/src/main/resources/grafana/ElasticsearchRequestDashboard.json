@@ -38,7 +38,7 @@
         {
           "aliasColors": {
             "max": "#0A50A1",
-            "median": "#1F78C1",
+            "p50": "#1F78C1",
             "p25": "#052B51",
             "p75": "#447EBC",
             "p95": "#64B0C8",
@@ -152,7 +152,7 @@
                   "type": "percentiles"
                 },
                 {
-                  "field": "median",
+                  "field": "p50",
                   "id": "6",
                   "meta": {},
                   "settings": {
@@ -403,7 +403,7 @@
               ],
               "metrics": [
                 {
-                  "field": "median",
+                  "field": "p50",
                   "id": "1",
                   "meta": {},
                   "settings": {},

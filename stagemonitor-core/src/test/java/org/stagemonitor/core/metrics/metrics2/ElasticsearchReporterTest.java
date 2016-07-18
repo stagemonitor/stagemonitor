@@ -1,5 +1,30 @@
 package org.stagemonitor.core.metrics.metrics2;
 
+import com.codahale.metrics.Clock;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.metrics.MetricNameFilter;
+import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.StringUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.net.HttpURLConnection;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
@@ -17,30 +42,6 @@ import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.metricName
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.objectMap;
 import static org.stagemonitor.core.metrics.MetricsReporterTestHelper.timer;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.io.ByteArrayOutputStream;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
-
-import com.codahale.metrics.Clock;
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Timer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.slf4j.Logger;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.metrics.MetricNameFilter;
-import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.core.util.StringUtils;
 
 public class ElasticsearchReporterTest {
 
@@ -252,7 +253,7 @@ public class ElasticsearchReporterTest {
 						.add("count", 1)
 						.add("max", 2.0)
 						.add("mean", 4.0)
-						.add("median", 6.0)
+						.add("p50", 6.0)
 						.add("min", 4.0)
 						.add("p25", 0.0)
 						.add("p75", 7.0)
@@ -303,7 +304,7 @@ public class ElasticsearchReporterTest {
 						.add("mean_rate", 2.0)
 						.add("max", 2.0)
 						.add("mean", 4.0)
-						.add("median", 6.0)
+						.add("p50", 6.0)
 						.add("min", 4.0)
 						.add("p25", 0.0)
 						.add("p75", 7.0)
