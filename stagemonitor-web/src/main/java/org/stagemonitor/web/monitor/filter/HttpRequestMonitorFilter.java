@@ -1,5 +1,8 @@
 package org.stagemonitor.web.monitor.filter;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import static javax.servlet.DispatcherType.FORWARD;
 
 import java.io.ByteArrayOutputStream;
@@ -105,25 +108,45 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		return request.getDispatcherType() != FORWARD || webPlugin.isMonitorOnlyForwardedRequests();
 	}
 
-	private void doMonitor(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+	private void doMonitor(final HttpServletRequest request, final HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
 
 		final StatusExposingByteCountingServletResponse responseWrapper;
-		HttpServletResponseBufferWrapper httpServletResponseBufferWrapper = null;
+		final HttpServletResponseBufferWrapper httpServletResponseBufferWrapper;
 		if (isInjectContentToHtml(request)) {
 			httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper(response);
 			responseWrapper = new StatusExposingByteCountingServletResponse(httpServletResponseBufferWrapper);
 		} else {
+            httpServletResponseBufferWrapper = null;
 			responseWrapper = new StatusExposingByteCountingServletResponse(response);
 		}
 
-		try {
-			final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = monitorRequest(filterChain, request, responseWrapper);
-			if (isInjectContentToHtml(request)) {
-				injectHtml(response, request, httpServletResponseBufferWrapper, requestInformation);
-			}
-		} catch (Exception e) {
-			handleException(e);
-		}
+		//try {
+            final ListenableFuture<RequestMonitor.RequestInformation<HttpRequestTrace>> future =
+                    monitorRequestAsync(filterChain, request, responseWrapper);
+
+            if (isInjectContentToHtml(request)) {
+                Futures.addCallback(future, new FutureCallback<RequestMonitor.RequestInformation<HttpRequestTrace>>()
+                {
+                    @Override
+                    public void onSuccess(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation)
+                    {
+                        try {
+                            injectHtml(response, request, httpServletResponseBufferWrapper, requestInformation);
+                        } catch (IOException e) {
+                            //???
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable e)
+                    {
+                        //???
+                    }
+                });
+            }
+		//} catch (Exception e) {
+		//	handleException(e);
+		//}
 	}
 
 	private boolean isInjectContentToHtml(HttpServletRequest httpServletRequest) {
@@ -155,6 +178,11 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	protected RequestMonitor.RequestInformation<HttpRequestTrace> monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
 		final MonitoredHttpRequest monitoredRequest = monitoredHttpRequestFactory.createMonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
 		return requestMonitor.monitor(monitoredRequest);
+	}
+
+	protected ListenableFuture<RequestMonitor.RequestInformation<HttpRequestTrace>> monitorRequestAsync(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) {
+		final MonitoredHttpRequest monitoredRequest = monitoredHttpRequestFactory.createMonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
+		return requestMonitor.monitorAsync(monitoredRequest);
 	}
 
 	protected void injectHtml(HttpServletResponse response, HttpServletRequest httpServletRequest,

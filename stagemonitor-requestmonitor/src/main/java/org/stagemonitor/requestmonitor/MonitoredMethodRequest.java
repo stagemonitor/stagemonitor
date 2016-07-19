@@ -1,5 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +48,11 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	public Object execute() throws Exception {
 		return methodExecution.execute();
 	}
+
+    @Override
+    public ListenableFuture<Object> executeAsync() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
 	@Override
 	public void onPostExecute(RequestMonitor.RequestInformation<RequestTrace> requestTrace) {

@@ -18,6 +18,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -184,6 +189,38 @@ public class RequestMonitor {
 		} finally {
 			monitorStop();
 		}
+	}
+
+	public <T extends RequestTrace> ListenableFuture<RequestInformation<T>> monitorAsync(MonitoredRequest<T> monitoredRequest) { //throws Exception {
+		//try {
+			monitorStart(monitoredRequest);
+			final RequestInformation<T> info = (RequestInformation<T>) request.get();
+
+            final SettableFuture<RequestInformation<T>> future = SettableFuture.create();
+
+            Futures.addCallback(monitoredRequest.executeAsync(), new FutureCallback<Object>() {
+                @Override
+                public void onSuccess(Object f) {
+                    info.executionResult = f;
+                    request.set(info);
+                    monitorStop();
+                    future.set(info);
+                }
+
+                @Override
+                public void onFailure(Throwable thrwbl) {
+                    info.executionResult = thrwbl;
+                    request.set(info);
+                    monitorStop();
+                    future.setException(thrwbl);
+                }
+            });
+
+            return future;
+		//} catch (Exception e) {
+		//	recordException(e);
+		//	throw e;
+		//}
 	}
 
 	public void recordException(Exception e) {
