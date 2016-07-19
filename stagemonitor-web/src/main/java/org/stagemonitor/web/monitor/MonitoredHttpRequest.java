@@ -1,6 +1,17 @@
 package org.stagemonitor.web.monitor;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.MonitoredRequest;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.logging.MDCListener;
+import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
+import org.stagemonitor.web.monitor.widget.WidgetAjaxRequestTraceReporter;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,17 +28,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.MonitoredRequest;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.logging.MDCListener;
-import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-import org.stagemonitor.web.monitor.widget.WidgetAjaxRequestTraceReporter;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
@@ -38,6 +39,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	protected final WebPlugin webPlugin;
 	private final Metric2Registry metricRegistry;
 	private final RequestMonitorPlugin requestMonitorPlugin;
+	private final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("request_name", "http_code");
 
 	public MonitoredHttpRequest(HttpServletRequest httpServletRequest,
 								StatusExposingByteCountingServletResponse responseWrapper,
@@ -178,8 +180,8 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 		int status = responseWrapper.getStatus();
 		request.setStatusCode(status);
-		metricRegistry.meter(name("request_throughput").tag("request_name", info.getRequestName()).tag("http_code", status).build()).mark();
-		metricRegistry.meter(name("request_throughput").tag("request_name", "All").tag("http_code", status).build()).mark();
+		metricRegistry.meter(throughputMetricNameTemplate.build(info.getRequestName(), Integer.toString(status))).mark();
+		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
 		if (status >= 400) {
 			request.setError(true);
 		}

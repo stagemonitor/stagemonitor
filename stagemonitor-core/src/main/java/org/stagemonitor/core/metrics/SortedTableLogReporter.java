@@ -1,6 +1,20 @@
 package org.stagemonitor.core.metrics;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.Timer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,24 +24,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Metered;
-import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.Timer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 
 	private static final int CONSOLE_WIDTH = 80;
+	private static final MetricName reportingTimeMetricName = name("reporting_time").tag("reporter", "log").build();
 
 	private final Locale locale;
 	private final Logger log;
@@ -96,7 +98,7 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 							  Map<MetricName, Meter> meters,
 							  Map<MetricName, Timer> timers) {
 
-		final Timer.Context time = Stagemonitor.getMetric2Registry().timer(name("reporting_time").tag("reporter", "log").build()).time();
+		final Timer.Context time = Stagemonitor.getMetric2Registry().timer(reportingTimeMetricName).time();
 
 		StringBuilder sb = new StringBuilder(1000);
 		printWithBanner("Metrics", '=', sb);

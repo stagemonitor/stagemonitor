@@ -248,8 +248,8 @@ public class MetricName {
 		 * @param value The value can contain unicode characters, but it is recommended to not use white spaces.
 		 * @return <code>this</code> for chaining
 		 */
-		public Builder tag(String key, Object value) {
-			this.tags.put(key, value.toString());
+		public Builder tag(String key, String value) {
+			this.tags.put(key, value);
 			return this;
 		}
 

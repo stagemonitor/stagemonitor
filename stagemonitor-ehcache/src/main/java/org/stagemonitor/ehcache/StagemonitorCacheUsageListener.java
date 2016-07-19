@@ -1,30 +1,38 @@
 package org.stagemonitor.ehcache;
 
-import static com.codahale.metrics.RatioGauge.Ratio;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import com.codahale.metrics.Meter;
+
+import net.sf.ehcache.statistics.CacheUsageListener;
+
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 import java.util.concurrent.TimeUnit;
 
-import com.codahale.metrics.Meter;
-import net.sf.ehcache.statistics.CacheUsageListener;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import static com.codahale.metrics.RatioGauge.Ratio;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class StagemonitorCacheUsageListener implements CacheUsageListener {
 
-	private final String cacheName;
 	private final Metric2Registry registry;
 	private final boolean timeGet;
-	final MetricName allCacheHitsMetricName;
-	final MetricName allCacheMissesMetricName;
+	private final MetricName allCacheHitsMetricName;
+	private final MetricName allCacheMissesMetricName;
+	private final MetricName getMetricName;
+	private final MetricName deleteEvictionMetricName;
+	private final MetricName deleteExpireMetricName;
+	private final MetricName deleteRemovedMetricName;
 
 
 	public StagemonitorCacheUsageListener(String cacheName, Metric2Registry registry, boolean timeGet) {
-		this.cacheName = cacheName;
 		this.registry = registry;
 		this.timeGet = timeGet;
 		allCacheHitsMetricName = name("cache_hits").tag("cache_name", cacheName).tier("All").build();
 		allCacheMissesMetricName = name("cache_misses").tag("cache_name", cacheName).tier("All").build();
+		getMetricName = name("cache_get").tag("cache_name", cacheName).tier("All").build();
+		deleteEvictionMetricName = name("cache_delete").tag("cache_name", cacheName).tag("reason", "eviction").tier("All").build();
+		deleteExpireMetricName = name("cache_delete").tag("cache_name", cacheName).tag("reason", "expire").tier("All").build();
+		deleteRemovedMetricName = name("cache_delete").tag("cache_name", cacheName).tag("reason", "remove").tier("All").build();
 	}
 
 	@Override
@@ -106,25 +114,25 @@ public class StagemonitorCacheUsageListener implements CacheUsageListener {
 	@Override
 	public void notifyGetTimeNanos(long nanos) {
 		if (timeGet) {
-			registry.timer(name("cache_get").tag("cache_name", cacheName).tier("All").build()).update(nanos, TimeUnit.NANOSECONDS);
+			registry.timer(getMetricName).update(nanos, TimeUnit.NANOSECONDS);
 		} else {
-			registry.meter(name("cache_get").tag("cache_name", cacheName).tier("All").build()).mark();
+			registry.meter(getMetricName).mark();
 		}
 	}
 
 	@Override
 	public void notifyCacheElementEvicted() {
-		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "eviction").tier("All").build()).mark();
+		registry.meter(deleteEvictionMetricName).mark();
 	}
 
 	@Override
 	public void notifyCacheElementExpired() {
-		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "expire").tier("All").build()).mark();
+		registry.meter(deleteExpireMetricName).mark();
 	}
 
 	@Override
 	public void notifyCacheElementRemoved() {
-		registry.meter(name("cache_delete").tag("cache_name", cacheName).tag("reason", "remove").tier("All").build()).mark();
+		registry.meter(deleteRemovedMetricName).mark();
 	}
 
 	@Override

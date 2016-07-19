@@ -35,6 +35,7 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	private static final String ES_EXTERNAL_REQUEST_TRACE_LOGGER = "ElasticsearchExternalRequestTraces";
 	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchExternalRequestReporter.class);
+	private static final MetricName.MetricNameTemplate externalRequestTemplate = name("external_request_response_time").templateFor("type", "signature", "method");
 	private final Logger externalRequestsLogger;
 
 	private static final byte[] BULK_HEADER = "{\"index\":{}}\n".getBytes(Charset.forName("UTF-8"));
@@ -112,10 +113,7 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	}
 
 	public static MetricName getExternalRequestTimerName(ExternalRequest externalRequest, String signature) {
-		return name("external_request_response_time")
-				.type(externalRequest.getRequestType())
-				.tag("signature", signature)
-				.tag("method", externalRequest.getRequestMethod()).build();
+		return externalRequestTemplate.build(externalRequest.getRequestType(), signature, externalRequest.getRequestMethod());
 	}
 
 	private void writeExternalRequestsToOutputStream(OutputStream os, Collection<ExternalRequest> externalRequests) throws IOException {

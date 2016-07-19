@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.GraphiteSanitizer;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.jdbc.p6spy.StagemonitorP6Logger;
@@ -36,6 +37,7 @@ public class ConnectionMonitor {
 
 	private final Logger logger = LoggerFactory.getLogger(ConnectionMonitor.class);
 	private final boolean collectSql;
+	private final MetricName.MetricNameTemplate getConnectionTemplate = name("get_jdbc_connection").templateFor("url");
 
 	private ConcurrentMap<DataSource, String> dataSourceUrlMap = new ConcurrentHashMap<DataSource, String>();
 
@@ -98,7 +100,7 @@ public class ConnectionMonitor {
 		if (active && dataSource instanceof DataSource && !(connection instanceof P6Proxy)) {
 			ensureUrlExistsForDataSource((DataSource) dataSource, connection);
 			String url = dataSourceUrlMap.get(dataSource);
-			metricRegistry.timer(name("get_jdbc_connection").tag("url", url).build()).update(duration, TimeUnit.NANOSECONDS);
+			metricRegistry.timer(getConnectionTemplate.build(url)).update(duration, TimeUnit.NANOSECONDS);
 			return collectSql ? P6Core.wrapConnection(connection) : connection;
 		} else {
 			return connection;

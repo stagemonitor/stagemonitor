@@ -55,6 +55,14 @@ public class MetricNameTest {
 		assertNotEquals(metricNameTemplate.build("baz", "quux"), metricNameTemplate.build("baz2", "quux"));
 	}
 
+	@Test
+	public void testTemplateMultipleValues2() {
+		final MetricName.MetricNameTemplate metricNameTemplate = name("foo").templateFor("bar", "qux");
+		assertEquals(name("foo").tag("bar", "baz").tag("qux", "q").build(), metricNameTemplate.build("baz", "q"));
+		assertSame(metricNameTemplate.build("baz", "quux"), metricNameTemplate.build("baz", "quux"));
+		assertNotEquals(metricNameTemplate.build("baz", "quux"), metricNameTemplate.build("baz2", "quux"));
+	}
+
 	@Test(expected = IllegalArgumentException.class)
 	public void testTemplateMultipleValuesBuildEmptyValues() {
 		final MetricName.MetricNameTemplate metricNameTemplate = name("foo").tag("bar", "").tag("qux", "quux").templateFor("bar", "qux");
@@ -73,12 +81,12 @@ public class MetricNameTest {
 		metricNameTemplate.build("foo", "bar", "baz");
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testMetricNameNull() {
 		name("foo").tag("bar", null).tag("qux", null).build();
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testTemplateMultipleValuesNull() {
 		final MetricName.MetricNameTemplate metricNameTemplate = name("foo").tag("bar", "").tag("qux", "quux").templateFor("bar", "qux");
 		metricNameTemplate.build(null, null);

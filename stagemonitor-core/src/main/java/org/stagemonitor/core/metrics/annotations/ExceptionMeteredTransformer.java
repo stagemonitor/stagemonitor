@@ -1,7 +1,16 @@
 package org.stagemonitor.core.metrics.annotations;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import com.codahale.metrics.annotation.ExceptionMetered;
+
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.matcher.ElementMatcher;
+
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,17 +19,12 @@ import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.List;
 
-import com.codahale.metrics.annotation.ExceptionMetered;
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.matcher.ElementMatcher;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransformer {
+
+	private static final MetricName.MetricNameTemplate metricNameTemplate = name("exception_rate").templateFor("signature");
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
@@ -35,7 +39,7 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 	}
 
 	public static MetricName getMetricName(String signature) {
-		return name("exception_rate").tag("signature", signature).build();
+		return metricNameTemplate.build(signature);
 	}
 
 	@Override

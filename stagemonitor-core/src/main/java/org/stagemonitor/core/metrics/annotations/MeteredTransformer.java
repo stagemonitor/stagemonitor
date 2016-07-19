@@ -1,7 +1,14 @@
 package org.stagemonitor.core.metrics.annotations;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import com.codahale.metrics.annotation.Metered;
+
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.matcher.ElementMatcher;
+
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,17 +17,15 @@ import java.lang.annotation.Target;
 import java.util.Collections;
 import java.util.List;
 
-import com.codahale.metrics.annotation.Metered;
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.matcher.ElementMatcher;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 /**
  * Implementation for the {@link Metered} annotation
  */
 public class MeteredTransformer extends StagemonitorByteBuddyTransformer {
+
+	public static final MetricName.MetricNameTemplate metricNameTemplate = name("rate").templateFor("signature");
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
@@ -29,7 +34,7 @@ public class MeteredTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Advice.OnMethodEnter
 	public static void meter(@MeteredSignature String signature) {
-		Stagemonitor.getMetric2Registry().meter(name("rate").tag("signature", signature).build()).mark();
+		Stagemonitor.getMetric2Registry().meter(metricNameTemplate.build(signature)).mark();
 	}
 
 	@Override

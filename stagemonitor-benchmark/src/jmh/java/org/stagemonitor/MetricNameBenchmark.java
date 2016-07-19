@@ -6,7 +6,6 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +19,13 @@ public class MetricNameBenchmark {
 			.tag("request_name", "Process Find Form")
 			.tag("layer", "All")
 			.build();
+	private static MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time_server")
+			.tag("request_name", "")
+			.layer("All")
+			.templateFor("request_name");
+	private static final MetricName.MetricNameTemplate externalRequestTemplate = name("external_request_response_time")
+			.templateFor("type", "signature", "method");
+
 	private List<MetricName> names = new ArrayList<>();
 
 	int i = 0;
@@ -542,17 +548,35 @@ public class MetricNameBenchmark {
 	}
 
 	@Benchmark
-	public MetricName createMetricName() {
+	public MetricName buildMetricTemplateSingleValue() {
 		i++;
-		return RequestMonitor.getTimerMetricName(Integer.toString(i % 100));
+		return timerMetricNameTemplate.build(Integer.toString(i % 100));
 	}
 
-	public static void main(String[] args) {
-		System.out.println(RequestMonitor.getTimerMetricName("1"));
-		System.out.println(RequestMonitor.getTimerMetricName("2"));
+	@Benchmark
+	public MetricName buildMetricNameSingleValue() {
+		i++;
+		return name("response_time_server")
+				.tag("request_name", Integer.toString(i % 100))
+				.layer("All")
+				.build();
 	}
 
-//	@Benchmark
+	@Benchmark
+	public MetricName buildMetricTemplateMultipleValues() {
+		i++;
+		final String s = Integer.toString(i % 100);
+		return externalRequestTemplate.build(s, s, s);
+	}
+
+	@Benchmark
+	public MetricName buildMetricNameMultipleValues() {
+		i++;
+		final String s = Integer.toString(i % 100);
+		return name("external_request_response_time").type(s).tag("signature", s).tag("method", s).build();
+	}
+
+	@Benchmark
 	public void matchMetricName(Blackhole bh) {
 		for (MetricName name : names) {
 			bh.consume(name.matches(METRIC_NAME));

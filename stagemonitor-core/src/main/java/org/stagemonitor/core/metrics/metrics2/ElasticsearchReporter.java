@@ -29,6 +29,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	public static final String STAGEMONITOR_METRICS_INDEX_PREFIX = "stagemonitor-metrics-";
 	public static final String ES_METRICS_LOGGER = "ElasticsearchMetrics";
 	private static final String METRICS_TYPE = "metrics";
+	private static final MetricName reportingTimeMetricName = name("reporting_time").tag("reporter", "elasticsearch").build();
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final Logger elasticsearchMetricsLogger;
@@ -61,7 +62,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Timer> timers) {
 		long timestamp = clock.getTime();
 
-		final Timer.Context time = registry.timer(name("reporting_time").tag("reporter", "elasticsearch").build()).time();
+		final Timer.Context time = registry.timer(reportingTimeMetricName).time();
 		final MetricsOutputStreamHandler metricsOutputStreamHandler = new MetricsOutputStreamHandler(gauges, counters, histograms, meters, timers, timestamp);
 		if (!corePlugin.isOnlyLogElasticsearchMetricReports()) {
 			httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null,

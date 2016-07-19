@@ -23,6 +23,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 
 	private static final int MAX_BATCH_SIZE = 5000;
 	private static final Map<MetricName, String> metricNameToInfluxDBFormatCache = new ConcurrentHashMap<MetricName, String>();
+	private static final MetricName reportingTimeMetricName = name("reporting_time").tag("reporter", "influxdb").build();
 
 	private List<String> batchLines = new ArrayList<String>(MAX_BATCH_SIZE);
 	private final String globalTags;
@@ -47,7 +48,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 							  Map<MetricName, Meter> meters,
 							  Map<MetricName, Timer> timers) {
 
-		final Timer.Context time = registry.timer(name("reporting_time").tag("reporter", "influxdb").build()).time();
+		final Timer.Context time = registry.timer(reportingTimeMetricName).time();
 		long timestamp = clock.getTime();
 		reportGauges(gauges, timestamp);
 		reportCounter(counters, timestamp);

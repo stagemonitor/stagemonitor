@@ -1,16 +1,17 @@
 package org.stagemonitor.core.metrics.metrics2;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import com.codahale.metrics.Gauge;
+
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.MetricNameFilter;
+import org.stagemonitor.core.metrics.SortedTableLogReporter;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import com.codahale.metrics.Gauge;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.metrics.MetricNameFilter;
-import org.stagemonitor.core.metrics.SortedTableLogReporter;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MetricsStoreBenchmark {
 
@@ -75,19 +76,19 @@ public class MetricsStoreBenchmark {
 
 	private void updateTimers(int numberOfTimers) {
 		for (int i = 0; i < numberOfTimers; i++) {
-			metricRegistry.timer(name("timer").tag("number", i).build()).update((long) (Math.random() * 1000), TimeUnit.MILLISECONDS);
+			metricRegistry.timer(name("timer").tag("number", Integer.toString(i)).build()).update((long) (Math.random() * 1000), TimeUnit.MILLISECONDS);
 		}
 	}
 
 	private void updateMeters(int n) {
 		for (int i = 0; i < n; i++) {
-			metricRegistry.meter(name("meter").tag("number", i).build()).mark();
+			metricRegistry.meter(name("meter").tag("number", Integer.toString(i)).build()).mark();
 		}
 	}
 
 	private void registerGauges(int n) {
 		for (int i = 0; i < n; i++) {
-			metricRegistry.register(name("gauge").tag("number", i).build(), new Gauge<Double>() {
+			metricRegistry.register(name("gauge").tag("number", Integer.toString(i)).build(), new Gauge<Double>() {
 				@Override
 				public Double getValue() {
 					return Math.random();

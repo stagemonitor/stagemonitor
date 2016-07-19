@@ -39,6 +39,7 @@ import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
+	private static final MetricName.MetricNameTemplate errorRateTemplate = name("error_rate_server").tag("request_name", "").layer("All").templateFor("request_name");
 
 	/**
 	 * Helps to detect, if this request is the 'real' one or just the forwarding one.
@@ -60,6 +61,10 @@ public class RequestMonitor {
 	private final List<Runnable> onBeforeRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
 
 	private final List<Runnable> onAfterRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
+	private final MetricName.MetricNameTemplate externalRequestRateTemplate = name("external_requests_rate").templateFor("request_name", "type");
+	private final MetricName.MetricNameTemplate responseTimeExternalRequestLayerTemplate = name("response_time_server").templateFor("request_name", "layer");
+	private final MetricName.MetricNameTemplate responseTimeCpuTemplate = name("response_time_cpu").tag("request_name", "").layer("All").templateFor("request_name");
+	private final MetricName internalOverheadMetricName = name("internal_overhead_request_monitor").build();
 
 	private ExecutorService asyncRequestTraceReporterPool;
 
@@ -191,7 +196,7 @@ public class RequestMonitor {
 	private void trackOverhead(long overhead1, long overhead2) {
 		if (corePlugin.isInternalMonitoringActive()) {
 			overhead2 = System.nanoTime() - overhead2;
-			metricRegistry.timer(name("internal_overhead_request_monitor").build()).update(overhead2 + overhead1, NANOSECONDS);
+			metricRegistry.timer(internalOverheadMetricName).update(overhead2 + overhead1, NANOSECONDS);
 		}
 	}
 
@@ -297,8 +302,8 @@ public class RequestMonitor {
 		metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
 
 		if (requestMonitorPlugin.isCollectCpuTime()) {
-			metricRegistry.timer(name("response_time_cpu").tag("request_name", requestName).layer("All").build()).update(cpuTime, NANOSECONDS);
-			metricRegistry.timer(name("response_time_cpu").tag("request_name", "All").layer("All").build()).update(cpuTime, NANOSECONDS);
+			metricRegistry.timer(responseTimeCpuTemplate.build(requestName)).update(cpuTime, NANOSECONDS);
+			metricRegistry.timer(responseTimeCpuTemplate.build("All")).update(cpuTime, NANOSECONDS);
 		}
 
 		if (requestTrace.isError()) {
@@ -309,28 +314,25 @@ public class RequestMonitor {
 	}
 
 	public static MetricName getErrorMetricName(String requestName) {
-		return name("error_rate_server").tag("request_name", requestName).layer("All").build();
+		return errorRateTemplate.build(requestName);
 	}
 
 	private <T extends RequestTrace> void trackExternalRequestMetrics(String requestName, T requestTrace) {
 		for (ExternalRequestStats externalRequestStats : requestTrace.getExternalRequestStats()) {
 			if (externalRequestStats.getExecutionTimeNanos() > 0) {
 				if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
-					metricRegistry.timer(name("response_time_server")
-							.tag("request_name", requestName)
-							.layer(externalRequestStats.getRequestType()).build())
+					metricRegistry.timer(responseTimeExternalRequestLayerTemplate
+							.build(requestName, externalRequestStats.getRequestType()))
 							.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
 				}
-				metricRegistry.timer(name("response_time_server")
-						.tag("request_name", "All")
-						.layer(externalRequestStats.getRequestType()).build())
+				metricRegistry.timer(responseTimeExternalRequestLayerTemplate
+						.build("All", externalRequestStats.getRequestType()))
 						.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
 			}
 			// the difference to ElasticsearchExternalRequestReporter is that the
 			// external_requests_rate is grouped by the request name, not the dao method name
-			metricRegistry.meter(name("external_requests_rate")
-					.tag("request_name", requestName)
-					.type(externalRequestStats.getRequestType()).build())
+			metricRegistry.meter(externalRequestRateTemplate
+					.build(requestName, externalRequestStats.getRequestType()))
 					.mark(externalRequestStats.getExecutionCount());
 		}
 	}
