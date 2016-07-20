@@ -1,5 +1,13 @@
 # Contributing to stagemonitor
 
+## Code Style
+At the very least, respect the settings in `.editorconfig`. Some IDEs like InjelliJ support [EditorConfig](http://editorconfig.org/)
+out of the box. For others like Eclipse, there are plugins available.
+
+For more advanced and Java specific styling, please use the `intellij-java-stagemonitor-style.xml` when developing
+with IntelliJ. When using Eclipse, it would be awesome if you could contribute a formatter which is based on the one
+for IntelliJ. Otherwise, just try to not screw up the formatting too much (especially imports in existing classes).
+
 ## Contributor License Agreement (CLA)
 If you want to submit a non-trivial pull request like implementing a new feature, you have to sign a CLA.
 But don't worry, the process is really simple.
