@@ -45,6 +45,9 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ElasticsearchReporterTest {
 
+	private static final TimeUnit DURATION_UNIT = TimeUnit.MICROSECONDS;
+	private static final double DURATION_FACTOR = 1.0 / DURATION_UNIT.toNanos(1);
+	
 	private ElasticsearchReporter elasticsearchReporter;
 	private long timestamp;
 	private ByteArrayOutputStream out;
@@ -73,7 +76,7 @@ public class ElasticsearchReporterTest {
 		corePlugin = mock(CorePlugin.class);
 		registry = new Metric2Registry();
 		elasticsearchReporter = ElasticsearchReporter.forRegistry(registry, corePlugin)
-				.convertDurationsTo(TimeUnit.NANOSECONDS)
+				.convertDurationsTo(DURATION_UNIT)
 				.globalTags(singletonMap("app", "test"))
 				.httpClient(httpClient)
 				.clock(clock)
@@ -243,7 +246,7 @@ public class ElasticsearchReporterTest {
 		elasticsearchReporter.reportMetrics(
 				metricNameMap(Gauge.class),
 				metricNameMap(Counter.class),
-				metricNameMap(name("histogram").build(), histogram(4)),
+				metricNameMap(name("histogram").build(), histogram(400)),
 				metricNameMap(Meter.class),
 				metricNameMap(Timer.class));
 
@@ -251,17 +254,17 @@ public class ElasticsearchReporterTest {
 						.add("name", "histogram")
 						.add("app", "test")
 						.add("count", 1)
-						.add("max", 2.0)
-						.add("mean", 4.0)
-						.add("p50", 6.0)
-						.add("min", 4.0)
+						.add("max", 200.0)
+						.add("mean", 400.0)
+						.add("p50", 600.0)
+						.add("min", 400.0)
 						.add("p25", 0.0)
-						.add("p75", 7.0)
-						.add("p95", 8.0)
-						.add("p98", 9.0)
-						.add("p99", 10.0)
-						.add("p999", 11.0)
-						.add("std", 5.0),
+						.add("p75", 700.0)
+						.add("p95", 800.0)
+						.add("p98", 900.0)
+						.add("p99", 1000.0)
+						.add("p999", 1100.0)
+						.add("std", 500.0),
 				asMap(out));
 	}
 
@@ -292,7 +295,7 @@ public class ElasticsearchReporterTest {
 				metricNameMap(Counter.class),
 				metricNameMap(Histogram.class),
 				metricNameMap(Meter.class),
-				metricNameMap(name("response_time").build(), timer(4)));
+				metricNameMap(name("response_time").build(), timer(400)));
 
 		assertEquals(map("@timestamp", timestamp, Object.class)
 						.add("name", "response_time")
@@ -302,17 +305,17 @@ public class ElasticsearchReporterTest {
 						.add("m1_rate", 3.0)
 						.add("m5_rate", 4.0)
 						.add("mean_rate", 2.0)
-						.add("max", 2.0)
-						.add("mean", 4.0)
-						.add("p50", 6.0)
-						.add("min", 4.0)
-						.add("p25", 0.0)
-						.add("p75", 7.0)
-						.add("p95", 8.0)
-						.add("p98", 9.0)
-						.add("p99", 10.0)
-						.add("p999", 11.0)
-						.add("std", 5.0),
+						.add("max", 200.0 * DURATION_FACTOR)
+						.add("mean", 400.0 * DURATION_FACTOR)
+						.add("p50", 600.0 * DURATION_FACTOR)
+						.add("min", 400.0 * DURATION_FACTOR)
+						.add("p25", 0.0 * DURATION_FACTOR)
+						.add("p75", 700.0 * DURATION_FACTOR)
+						.add("p95", 800.0 * DURATION_FACTOR)
+						.add("p98", 900.0 * DURATION_FACTOR)
+						.add("p99", 1000.0 * DURATION_FACTOR)
+						.add("p999", 1100.0 * DURATION_FACTOR)
+						.add("std", 500.0 * DURATION_FACTOR),
 				asMap(out));
 	}
 

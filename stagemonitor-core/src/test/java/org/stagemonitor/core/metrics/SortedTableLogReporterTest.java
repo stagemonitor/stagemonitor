@@ -20,6 +20,9 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 
+	private static final TimeUnit DURATION_UNIT = TimeUnit.MICROSECONDS;
+	private static final double DURATION_FACTOR = 1.0 / DURATION_UNIT.toNanos(1);
+	
 	private Logger logger;
 	private SortedTableLogReporter reporter;
 
@@ -30,7 +33,7 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 				.forRegistry(mock(Metric2Registry.class))
 				.log(logger)
 				.convertRatesTo(TimeUnit.SECONDS)
-				.convertDurationsTo(TimeUnit.NANOSECONDS)
+				.convertDurationsTo(DURATION_UNIT)
 				.formattedFor(Locale.US)
 				.build();
 	}
@@ -82,14 +85,14 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 				"\n" +
 				"-- Histograms ------------------------------------------------------------------\n" +
 				"name            | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      |\n" +
-				"test.histogram2 |         1 |      4.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 | \n" +
-				" test.histogram |         1 |      3.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 | \n" +
+				"test.histogram2 |         1 |    400.00 |    400.00 |    200.00 |    500.00 |    600.00 |    700.00 |    800.00 |    900.00 |  1,000.00 |  1,100.00 | \n" +
+				" test.histogram |         1 |    300.00 |    400.00 |    200.00 |    500.00 |    600.00 |    700.00 |    800.00 |    900.00 |  1,000.00 |  1,100.00 | \n" +
 				"\n" +
 				"\n");
 	}
 
 	private FluentMap<MetricName, Histogram> testHistograms() {
-		return map(name("test.histogram").build(), histogram(3.0)).add(name("test.histogram2").build(), histogram(4.0));
+		return map(name("test.histogram").build(), histogram(300.0)).add(name("test.histogram2").build(), histogram(400.0));
 	}
 
 	@Test
@@ -105,8 +108,8 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 				"\n" +
 				"-- Meters ----------------------------------------------------------------------\n" +
 				"name                | count     | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n" +
-				"        test.meter2 |         2 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
-				"test.meter1,foo=bar |         1 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
+				"        test.meter2 |         2 |      2.00 |      3.00 |      4.00 |      5.00 | second        | microseconds\n" +
+				"test.meter1,foo=bar |         1 |      2.00 |      3.00 |      4.00 |      5.00 | second        | microseconds\n" +
 				"\n" +
 				"\n");
 	}
@@ -118,15 +121,15 @@ public class SortedTableLogReporterTest extends MetricsReporterTestHelper {
 				map(),
 				map(),
 				map(),
-				map(name("timer1").build(), timer(4)).add(name("timer2").build(), timer(2)).add(name("timer3").build(), timer(3)));
+				map(name("timer1").build(), timer(400)).add(name("timer2").build(), timer(200)).add(name("timer3").build(), timer(300)));
 
 		verify(logger).info("Metrics ========================================================================\n" +
 				"\n" +
 				"-- Timers ----------------------------------------------------------------------\n" +
 				"name   | count     | mean      | min       | max       | stddev    | p50       | p75       | p95       | p98       | p99       | p999      | mean_rate | m1_rate   | m5_rate   | m15_rate  | rate_unit     | duration_unit\n" +
-				"timer1 |         1 |      4.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
-				"timer3 |         1 |      3.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
-				"timer2 |         1 |      2.00 |      4.00 |      2.00 |      5.00 |      6.00 |      7.00 |      8.00 |      9.00 |     10.00 |     11.00 |      2.00 |      3.00 |      4.00 |      5.00 | second        | nanoseconds\n" +
+				"timer1 |         1 |      0.40 |      0.40 |      0.20 |      0.50 |      0.60 |      0.70 |      0.80 |      0.90 |      1.00 |      1.10 |      2.00 |      3.00 |      4.00 |      5.00 | second        | microseconds\n" +
+				"timer3 |         1 |      0.30 |      0.40 |      0.20 |      0.50 |      0.60 |      0.70 |      0.80 |      0.90 |      1.00 |      1.10 |      2.00 |      3.00 |      4.00 |      5.00 | second        | microseconds\n" +
+				"timer2 |         1 |      0.20 |      0.40 |      0.20 |      0.50 |      0.60 |      0.70 |      0.80 |      0.90 |      1.00 |      1.10 |      2.00 |      3.00 |      4.00 |      5.00 | second        | microseconds\n" +
 				"\n" +
 				"\n");
 	}

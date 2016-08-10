@@ -272,11 +272,11 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 	private void printHistogram(String name, Histogram histogram, int maxNameLength, StringBuilder sb) {
 		sb.append(String.format("%" + maxNameLength + "s | ", name));
 		sb.append(formatCount(histogram.getCount()));
-		printSnapshot(histogram.getSnapshot(), sb);
+		printHistogramSnapshot(histogram.getSnapshot(), sb);
 		sb.append('\n');
 	}
 
-	private void printSnapshot(Snapshot snapshot, StringBuilder sb) {
+	private void printTimerSnapshot(Snapshot snapshot, StringBuilder sb) {
 		printDouble(convertDuration(snapshot.getMean()), sb);
 		printDouble(convertDuration(snapshot.getMin()), sb);
 		printDouble(convertDuration(snapshot.getMax()), sb);
@@ -288,12 +288,25 @@ public class SortedTableLogReporter extends ScheduledMetrics2Reporter {
 		printDouble(convertDuration(snapshot.get99thPercentile()), sb);
 		printDouble(convertDuration(snapshot.get999thPercentile()), sb);
 	}
+	
+	private void printHistogramSnapshot(Snapshot snapshot, StringBuilder sb) {
+		printDouble(snapshot.getMean(), sb);
+		printDouble(snapshot.getMin(), sb);
+		printDouble(snapshot.getMax(), sb);
+		printDouble(snapshot.getStdDev(), sb);
+		printDouble(snapshot.getMedian(), sb);
+		printDouble(snapshot.get75thPercentile(), sb);
+		printDouble(snapshot.get95thPercentile(), sb);
+		printDouble(snapshot.get98thPercentile(), sb);
+		printDouble(snapshot.get99thPercentile(), sb);
+		printDouble(snapshot.get999thPercentile(), sb);
+	}
 
 	private void printTimer(String name, Timer timer, int maxNameLength, StringBuilder sb) {
 		final Snapshot snapshot = timer.getSnapshot();
 		sb.append(String.format("%" + maxNameLength + "s | ", name));
 		sb.append(formatCount(timer.getCount()));
-		printSnapshot(snapshot, sb);
+		printTimerSnapshot(snapshot, sb);
 		printMetered(timer, sb);
 		sb.append('\n');
 	}
