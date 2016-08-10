@@ -80,7 +80,7 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 			final Snapshot snapshot = hist.getSnapshot();
 			reportLine(getInfluxDbLineProtocolString(entry.getKey()),
 					"count=" + getIntegerValue(hist.getCount()) + ","
-							+ reportSnapshot(snapshot), timestamp);
+							+ reportHistogramSnapshot(snapshot), timestamp);
 		}
 	}
 
@@ -97,11 +97,11 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 			final Snapshot snapshot = timer.getSnapshot();
 			reportLine(getInfluxDbLineProtocolString(entry.getKey()),
 					reportMetered(timer) + ","
-							+ reportSnapshot(snapshot), timestamp);
+							+ reportTimerSnapshot(snapshot), timestamp);
 		}
 	}
 
-	private String reportSnapshot(Snapshot snapshot) {
+	private String reportTimerSnapshot(Snapshot snapshot) {
 		return "min=" + getDuration(snapshot.getMin()) + ","
 				+ "max=" + getDuration(snapshot.getMax()) + ","
 				+ "mean=" + getDuration(snapshot.getMean()) + ","
@@ -113,6 +113,20 @@ public class InfluxDbReporter extends ScheduledMetrics2Reporter {
 				+ "p98=" + getDuration(snapshot.get98thPercentile()) + ","
 				+ "p99=" + getDuration(snapshot.get99thPercentile()) + ","
 				+ "p999=" + getDuration(snapshot.get999thPercentile());
+	}
+	
+	private String reportHistogramSnapshot(Snapshot snapshot) {
+		return "min=" + snapshot.getMin() + ","
+				+ "max=" + snapshot.getMax() + ","
+				+ "mean=" + snapshot.getMean() + ","
+				+ "median=" + snapshot.getMedian() + ","
+				+ "std=" + snapshot.getStdDev() + ","
+				+ "p25=" + snapshot.getValue(0.25) + ","
+				+ "p75=" + snapshot.get75thPercentile() + ","
+				+ "p95=" + snapshot.get95thPercentile() + ","
+				+ "p98=" + snapshot.get98thPercentile() + ","
+				+ "p99=" + snapshot.get99thPercentile() + ","
+				+ "p999=" + snapshot.get999thPercentile();
 	}
 
 	private String reportMetered(Metered metered) {

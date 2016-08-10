@@ -28,7 +28,7 @@ public class MetricsReporterTestHelper {
 	}
 
 	public static Snapshot snapshot(double mean) {
-		return snapshot(mean, 2L, 4L, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0);
+		return snapshot(mean, 200L, 400L, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0, 1100.0);
 	}
 
 	public static Snapshot snapshot(double mean, long max, long min, double stdDev, double median, double p75, double p95,

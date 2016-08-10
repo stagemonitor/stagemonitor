@@ -32,6 +32,8 @@ import org.stagemonitor.core.util.HttpClient;
 
 public class InfluxDbReporterTest {
 
+	private static final TimeUnit DURATION_UNIT = TimeUnit.MICROSECONDS;
+
 	private InfluxDbReporter influxDbReporter;
 	private HttpClient httpClient;
 	private long timestamp;
@@ -47,7 +49,7 @@ public class InfluxDbReporterTest {
 		when(corePlugin.getInfluxDbDb()).thenReturn("stm");
 		influxDbReporter = InfluxDbReporter.forRegistry(new Metric2Registry(), corePlugin)
 				.convertRatesTo(TimeUnit.SECONDS)
-				.convertDurationsTo(TimeUnit.NANOSECONDS)
+				.convertDurationsTo(DURATION_UNIT)
 				.globalTags(singletonMap("app", "test"))
 				.httpClient(httpClient)
 				.clock(clock)
@@ -137,12 +139,12 @@ public class InfluxDbReporterTest {
 		influxDbReporter.reportMetrics(
 				metricNameMap(Gauge.class),
 				metricNameMap(Counter.class),
-				metricNameMap(name("histogram").build(), histogram(4)),
+				metricNameMap(name("histogram").build(), histogram(400)),
 				metricNameMap(Meter.class),
 				metricNameMap(Timer.class));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("histogram,app=test count=1i,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
+				eq(singletonList(format("histogram,app=test count=1i,min=400,max=200,mean=400.0,median=600.0,std=500.0,p25=0.0,p75=700.0,p95=800.0,p98=900.0,p99=1000.0,p999=1100.0 %d", timestamp))));
 	}
 
 	@Test
@@ -165,10 +167,10 @@ public class InfluxDbReporterTest {
 				metricNameMap(Counter.class),
 				metricNameMap(Histogram.class),
 				metricNameMap(Meter.class),
-				metricNameMap(name("response_time").build(), timer(4)));
+				metricNameMap(name("response_time").build(), timer(400)));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("response_time,app=test count=1i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=4.0,max=2.0,mean=4.0,median=6.0,std=5.0,p25=0.0,p75=7.0,p95=8.0,p98=9.0,p99=10.0,p999=11.0 %d", timestamp))));
+				eq(singletonList(format("response_time,app=test count=1i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=0.4,max=0.2,mean=0.4,median=0.6,std=0.5,p25=0.0,p75=0.7000000000000001,p95=0.8,p98=0.9,p99=1.0,p999=1.1 %d", timestamp))));
 	}
 
 	@Test
