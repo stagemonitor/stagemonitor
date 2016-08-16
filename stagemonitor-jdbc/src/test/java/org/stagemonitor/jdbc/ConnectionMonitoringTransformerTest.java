@@ -116,7 +116,7 @@ public class ConnectionMonitoringTransformerTest {
 					}
 				})).getRequestTraceReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:hsqldb:mem:test-SA").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
 	}
 
 	@Test
@@ -136,7 +136,7 @@ public class ConnectionMonitoringTransformerTest {
 					}
 				})).getRequestTraceReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:hsqldb:mem:test-SA").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
 	}
 
 	@Test
