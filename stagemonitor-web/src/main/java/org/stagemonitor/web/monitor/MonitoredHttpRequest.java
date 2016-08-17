@@ -172,7 +172,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	public ListenableFuture<Object> executeAsync() {
 		try {
 			filterChain.doFilter(httpServletRequest, responseWrapper);
-		} catch (IOException|ServletException e) {
+		} catch (Exception e) {
 			return Futures.immediateFailedFuture(e);
 		}
 
