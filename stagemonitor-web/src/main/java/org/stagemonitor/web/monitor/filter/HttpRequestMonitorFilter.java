@@ -116,37 +116,30 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 			httpServletResponseBufferWrapper = new HttpServletResponseBufferWrapper(response);
 			responseWrapper = new StatusExposingByteCountingServletResponse(httpServletResponseBufferWrapper);
 		} else {
-            httpServletResponseBufferWrapper = null;
+			httpServletResponseBufferWrapper = null;
 			responseWrapper = new StatusExposingByteCountingServletResponse(response);
 		}
 
-		//try {
-            final ListenableFuture<RequestMonitor.RequestInformation<HttpRequestTrace>> future =
-                    monitorRequestAsync(filterChain, request, responseWrapper);
+		final ListenableFuture<RequestMonitor.RequestInformation<HttpRequestTrace>> future =
+				monitorRequestAsync(filterChain, request, responseWrapper);
 
-            if (isInjectContentToHtml(request)) {
-                Futures.addCallback(future, new FutureCallback<RequestMonitor.RequestInformation<HttpRequestTrace>>()
-                {
-                    @Override
-                    public void onSuccess(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation)
-                    {
-                        try {
-                            injectHtml(response, request, httpServletResponseBufferWrapper, requestInformation);
-                        } catch (IOException e) {
-                            //???
-                        }
-                    }
+		if (isInjectContentToHtml(request)) {
+			Futures.addCallback(future, new FutureCallback<RequestMonitor.RequestInformation<HttpRequestTrace>>() {
+				@Override
+				public void onSuccess(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
+					try {
+						injectHtml(response, request, httpServletResponseBufferWrapper, requestInformation);
+					} catch (IOException e) {
+						//???
+					}
+				}
 
-                    @Override
-                    public void onFailure(Throwable e)
-                    {
-                        //???
-                    }
-                });
-            }
-		//} catch (Exception e) {
-		//	handleException(e);
-		//}
+				@Override
+				public void onFailure(Throwable e) {
+					//???
+				}
+			});
+		}
 	}
 
 	private boolean isInjectContentToHtml(HttpServletRequest httpServletRequest) {

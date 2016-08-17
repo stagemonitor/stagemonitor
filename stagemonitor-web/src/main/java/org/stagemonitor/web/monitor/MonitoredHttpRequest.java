@@ -26,12 +26,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -168,43 +168,42 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		return null;
 	}
 
+	@Override
 	public ListenableFuture<Object> executeAsync() {
-        try {
-            filterChain.doFilter(httpServletRequest, responseWrapper);
-        } catch (Exception e) {
-            return Futures.immediateFailedFuture(e);
-        }
+		try {
+			filterChain.doFilter(httpServletRequest, responseWrapper);
+		} catch (IOException|ServletException e) {
+			return Futures.immediateFailedFuture(e);
+		}
 
-        if (httpServletRequest.isAsyncStarted()) {
-            final SettableFuture<Object> future = SettableFuture.create();
-            httpServletRequest.getAsyncContext().addListener(new AsyncListener() {
-                @Override
-                public void onComplete(AsyncEvent ae) throws IOException
-                {
-                    future.set(null);
-                }
+		// This request started an async response, hook into it so we know when
+		// it finishes
+		if (httpServletRequest.isAsyncStarted()) {
+			final SettableFuture<Object> future = SettableFuture.create();
+			httpServletRequest.getAsyncContext().addListener(new AsyncListener() {
+				@Override
+				public void onComplete(AsyncEvent ae) throws IOException {
+					future.set(null);
+				}
 
-                @Override
-                public void onTimeout(AsyncEvent ae) throws IOException
-                {
-                    future.set(null);
-                }
+				@Override
+				public void onTimeout(AsyncEvent ae) throws IOException {
+					future.set(null);
+				}
 
-                @Override
-                public void onError(AsyncEvent ae) throws IOException
-                {
-                    future.setException(ae.getThrowable());
-                }
+				@Override
+				public void onError(AsyncEvent ae) throws IOException {
+					future.setException(ae.getThrowable());
+				}
 
-                @Override
-                public void onStartAsync(AsyncEvent ae) throws IOException
-                {
-                }
-            });
-            return future;
-        } else {
-            return Futures.immediateFuture(null);
-        }
+				@Override
+				public void onStartAsync(AsyncEvent ae) throws IOException {
+				}
+			});
+			return future;
+		} else {
+			return Futures.immediateFuture(null);
+		}
 	}
 
 	@Override

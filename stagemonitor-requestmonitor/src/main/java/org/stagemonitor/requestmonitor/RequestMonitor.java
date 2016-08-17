@@ -191,36 +191,31 @@ public class RequestMonitor {
 		}
 	}
 
-	public <T extends RequestTrace> ListenableFuture<RequestInformation<T>> monitorAsync(MonitoredRequest<T> monitoredRequest) { //throws Exception {
-		//try {
-			monitorStart(monitoredRequest);
-			final RequestInformation<T> info = (RequestInformation<T>) request.get();
+	public <T extends RequestTrace> ListenableFuture<RequestInformation<T>> monitorAsync(MonitoredRequest<T> monitoredRequest) {
+		monitorStart(monitoredRequest);
+		final RequestInformation<T> info = (RequestInformation<T>) request.get();
 
-            final SettableFuture<RequestInformation<T>> future = SettableFuture.create();
+		final SettableFuture<RequestInformation<T>> future = SettableFuture.create();
 
-            Futures.addCallback(monitoredRequest.executeAsync(), new FutureCallback<Object>() {
-                @Override
-                public void onSuccess(Object f) {
-                    info.executionResult = f;
-                    request.set(info);
-                    monitorStop();
-                    future.set(info);
-                }
+		Futures.addCallback(monitoredRequest.executeAsync(), new FutureCallback<Object>() {
+			@Override
+			public void onSuccess(Object f) {
+				info.executionResult = f;
+				request.set(info);
+				monitorStop();
+				future.set(info);
+			}
 
-                @Override
-                public void onFailure(Throwable thrwbl) {
-                    info.executionResult = thrwbl;
-                    request.set(info);
-                    monitorStop();
-                    future.setException(thrwbl);
-                }
-            });
+			@Override
+			public void onFailure(Throwable thrwbl) {
+				info.executionResult = thrwbl;
+				request.set(info);
+				monitorStop();
+				future.setException(thrwbl);
+			}
+		});
 
-            return future;
-		//} catch (Exception e) {
-		//	recordException(e);
-		//	throw e;
-		//}
+		return future;
 	}
 
 	public void recordException(Exception e) {

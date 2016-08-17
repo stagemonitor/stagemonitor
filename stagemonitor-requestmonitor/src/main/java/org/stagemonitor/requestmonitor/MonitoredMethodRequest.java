@@ -1,5 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -49,10 +50,15 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 		return methodExecution.execute();
 	}
 
-    @Override
-    public ListenableFuture<Object> executeAsync() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+	@Override
+	public ListenableFuture<Object> executeAsync() {
+		try {
+			return Futures.immediateFuture(methodExecution.execute());
+		}
+		catch (Exception e) {
+			return Futures.immediateFailedFuture(e);
+		}
+	}
 
 	@Override
 	public void onPostExecute(RequestMonitor.RequestInformation<RequestTrace> requestTrace) {
