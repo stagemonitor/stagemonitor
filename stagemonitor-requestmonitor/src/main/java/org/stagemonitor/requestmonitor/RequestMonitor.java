@@ -18,11 +18,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -35,6 +30,9 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
+import org.stagemonitor.core.util.ListenableFuture;
+import org.stagemonitor.core.util.ListenableFuture.FutureCallback;
+import org.stagemonitor.core.util.SettableFuture;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
@@ -195,27 +193,28 @@ public class RequestMonitor {
 		monitorStart(monitoredRequest);
 		final RequestInformation<T> info = (RequestInformation<T>) request.get();
 
-		final SettableFuture<RequestInformation<T>> future = SettableFuture.create();
+		final SettableFuture<RequestInformation<T>> returnFuture = new SettableFuture<RequestInformation<T>>();
+		ListenableFuture<Object> future = monitoredRequest.executeAsync();
 
-		Futures.addCallback(monitoredRequest.executeAsync(), new FutureCallback<Object>() {
+		future.addCallback(new FutureCallback<Object>() {
 			@Override
-			public void onSuccess(Object f) {
+			public void success(Object f) {
 				info.executionResult = f;
 				request.set(info);
 				monitorStop();
-				future.set(info);
+				returnFuture.set(info);
 			}
 
 			@Override
-			public void onFailure(Throwable thrwbl) {
+			public void failure(Throwable thrwbl) {
 				info.executionResult = thrwbl;
 				request.set(info);
 				monitorStop();
-				future.setException(thrwbl);
+				returnFuture.setException(thrwbl);
 			}
 		});
 
-		return future;
+		return returnFuture;
 	}
 
 	public void recordException(Exception e) {

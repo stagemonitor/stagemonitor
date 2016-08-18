@@ -1,8 +1,5 @@
 package org.stagemonitor.web.monitor;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
@@ -31,11 +28,13 @@ import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
 
 import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import org.stagemonitor.core.util.CompletedFuture;
+import org.stagemonitor.core.util.ListenableFuture;
+import org.stagemonitor.core.util.SettableFuture;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
@@ -173,13 +172,13 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		try {
 			filterChain.doFilter(httpServletRequest, responseWrapper);
 		} catch (Exception e) {
-			return Futures.immediateFailedFuture(e);
+			return new CompletedFuture<Object>(e);
 		}
 
 		// This request started an async response, hook into it so we know when
 		// it finishes
 		if (httpServletRequest.isAsyncStarted()) {
-			final SettableFuture<Object> future = SettableFuture.create();
+			final SettableFuture<Object> future = new SettableFuture<Object>();
 			httpServletRequest.getAsyncContext().addListener(new AsyncListener() {
 				@Override
 				public void onComplete(AsyncEvent ae) throws IOException {
@@ -202,7 +201,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 			});
 			return future;
 		} else {
-			return Futures.immediateFuture(null);
+			return new CompletedFuture<Object>();
 		}
 	}
 

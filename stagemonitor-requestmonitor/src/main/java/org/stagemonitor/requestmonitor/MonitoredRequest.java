@@ -1,6 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import org.stagemonitor.core.util.ListenableFuture;
 
 public interface MonitoredRequest<T extends RequestTrace> {
 

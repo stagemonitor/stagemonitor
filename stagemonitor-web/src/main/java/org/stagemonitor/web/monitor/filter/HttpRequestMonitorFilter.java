@@ -1,8 +1,5 @@
 package org.stagemonitor.web.monitor.filter;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import static javax.servlet.DispatcherType.FORWARD;
 
 import java.io.ByteArrayOutputStream;
@@ -28,6 +25,8 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.ListenableFuture;
+import org.stagemonitor.core.util.ListenableFuture.FutureCallback;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -121,12 +120,12 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 
 		final ListenableFuture<RequestMonitor.RequestInformation<HttpRequestTrace>> future =
-				monitorRequestAsync(filterChain, request, responseWrapper);
+				monitorRequest(filterChain, request, responseWrapper);
 
 		if (isInjectContentToHtml(request)) {
-			Futures.addCallback(future, new FutureCallback<RequestMonitor.RequestInformation<HttpRequestTrace>>() {
+			future.addCallback(new FutureCallback<RequestMonitor.RequestInformation<HttpRequestTrace>>() {
 				@Override
-				public void onSuccess(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
+				public void success(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
 					try {
 						injectHtml(response, request, httpServletResponseBufferWrapper, requestInformation);
 					} catch (IOException e) {
@@ -135,7 +134,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 				}
 
 				@Override
-				public void onFailure(Throwable e) {
+				public void failure(Throwable e) {
 					//???
 				}
 			});
@@ -168,12 +167,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		return request.getRequestURI().startsWith(request.getContextPath() + "/stagemonitor");
 	}
 
-	protected RequestMonitor.RequestInformation<HttpRequestTrace> monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
-		final MonitoredHttpRequest monitoredRequest = monitoredHttpRequestFactory.createMonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
-		return requestMonitor.monitor(monitoredRequest);
-	}
-
-	protected ListenableFuture<RequestMonitor.RequestInformation<HttpRequestTrace>> monitorRequestAsync(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) {
+	protected ListenableFuture<RequestMonitor.RequestInformation<HttpRequestTrace>> monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) {
 		final MonitoredHttpRequest monitoredRequest = monitoredHttpRequestFactory.createMonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
 		return requestMonitor.monitorAsync(monitoredRequest);
 	}

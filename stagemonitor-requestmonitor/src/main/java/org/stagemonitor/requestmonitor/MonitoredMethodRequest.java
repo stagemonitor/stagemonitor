@@ -1,12 +1,12 @@
 package org.stagemonitor.requestmonitor;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.CompletedFuture;
+import org.stagemonitor.core.util.ListenableFuture;
 
 public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
@@ -53,10 +53,10 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	@Override
 	public ListenableFuture<Object> executeAsync() {
 		try {
-			return Futures.immediateFuture(methodExecution.execute());
+			return new CompletedFuture<Object>(methodExecution.execute());
 		}
 		catch (Exception e) {
-			return Futures.immediateFailedFuture(e);
+			return new CompletedFuture<Object>(e);
 		}
 	}
 

@@ -81,7 +81,7 @@ public final class Stagemonitor {
 			}
 		} else {
 			doStartMonitoring();
-			return new CompletedFuture<Void>(null);
+			return new CompletedFuture<Void>();
 		}
 	}
 
