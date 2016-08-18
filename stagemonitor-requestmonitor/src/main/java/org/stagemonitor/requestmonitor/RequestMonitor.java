@@ -177,15 +177,9 @@ public class RequestMonitor {
 
 	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
 		try {
-			monitorStart(monitoredRequest);
-			final RequestInformation<T> info = (RequestInformation<T>) request.get();
-			info.executionResult = monitoredRequest.execute();
-			return info;
+			return monitorAsync(monitoredRequest).get();
 		} catch (Exception e) {
-			recordException(e);
 			throw e;
-		} finally {
-			monitorStop();
 		}
 	}
 
@@ -194,7 +188,7 @@ public class RequestMonitor {
 		final RequestInformation<T> info = (RequestInformation<T>) request.get();
 
 		final SettableFuture<RequestInformation<T>> returnFuture = new SettableFuture<RequestInformation<T>>();
-		ListenableFuture<Object> future = monitoredRequest.executeAsync();
+		ListenableFuture<Object> future = monitoredRequest.execute();
 
 		future.addCallback(new FutureCallback<Object>() {
 			@Override

@@ -46,12 +46,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	}
 
 	@Override
-	public Object execute() throws Exception {
-		return methodExecution.execute();
-	}
-
-	@Override
-	public ListenableFuture<Object> executeAsync() {
+	public ListenableFuture<Object> execute() {
 		try {
 			return new CompletedFuture<Object>(methodExecution.execute());
 		}

@@ -162,13 +162,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	@Override
-	public Object execute() throws Exception {
-		filterChain.doFilter(httpServletRequest, responseWrapper);
-		return null;
-	}
-
-	@Override
-	public ListenableFuture<Object> executeAsync() {
+	public ListenableFuture<Object> execute() {
 		try {
 			filterChain.doFilter(httpServletRequest, responseWrapper);
 		} catch (Exception e) {

@@ -34,9 +34,7 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	 * @return the result of the execution
 	 * @throws Exception
 	 */
-	Object execute() throws Exception;
-
-	ListenableFuture<Object> executeAsync();
+	ListenableFuture<Object> execute();
 
 	/**
 	 * Implement this method to do actions after the execution context
