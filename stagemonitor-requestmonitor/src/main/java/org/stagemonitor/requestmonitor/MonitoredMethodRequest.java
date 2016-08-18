@@ -1,5 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -46,6 +48,16 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	@Override
 	public Object execute() throws Exception {
 		return methodExecution.execute();
+	}
+
+	@Override
+	public ListenableFuture<Object> executeAsync() {
+		try {
+			return Futures.immediateFuture(methodExecution.execute());
+		}
+		catch (Exception e) {
+			return Futures.immediateFailedFuture(e);
+		}
 	}
 
 	@Override
