@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
+import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -188,7 +189,13 @@ public class RequestMonitor {
 		final RequestInformation<T> info = (RequestInformation<T>) request.get();
 
 		final SettableFuture<RequestInformation<T>> returnFuture = new SettableFuture<RequestInformation<T>>();
-		ListenableFuture<Object> future = monitoredRequest.execute();
+		ListenableFuture<Object> future;
+		try {
+			future = monitoredRequest.execute();
+		}
+		catch (Throwable t) {
+			future = new CompletedFuture<Object>(t);
+		}
 
 		future.addCallback(new FutureCallback<Object>() {
 			@Override
@@ -201,8 +208,10 @@ public class RequestMonitor {
 
 			@Override
 			public void failure(Throwable thrwbl) {
-				info.executionResult = thrwbl;
 				request.set(info);
+				if (thrwbl instanceof Exception) {
+					recordException((Exception) thrwbl);
+				}
 				monitorStop();
 				returnFuture.setException(thrwbl);
 			}

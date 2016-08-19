@@ -29,6 +29,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.util.CompletedFuture;
 
 
 public class RequestMonitorTest {
@@ -90,6 +91,28 @@ public class RequestMonitorTest {
 	@Test
 	public void testRecordException() throws Exception {
 		final MonitoredRequest<RequestTrace> monitoredRequest = createMonitoredRequest();
+		doReturn(new CompletedFuture<String>(new RuntimeException("test"))).when(monitoredRequest).execute();
+
+		doAnswer(new Answer<Void>() {
+			@Override
+			public Void answer(InvocationOnMock invocation) throws Throwable {
+				RequestMonitor.RequestInformation<?> requestInformation = (RequestMonitor.RequestInformation) invocation.getArguments()[0];
+				assertEquals("java.lang.RuntimeException", requestInformation.getRequestTrace().getExceptionClass());
+				assertEquals("test", requestInformation.getRequestTrace().getExceptionMessage());
+				assertNotNull(requestInformation.getRequestTrace().getExceptionStackTrace());
+				return null;
+			}
+		}).when(monitoredRequest).onPostExecute(Mockito.<RequestMonitor.RequestInformation<RequestTrace>>any());
+
+		try {
+			requestMonitor.monitor(monitoredRequest);
+		} catch (Exception e) {
+		}
+	}
+
+	@Test
+	public void testNonAsyncException() throws Exception {
+		final MonitoredRequest<RequestTrace> monitoredRequest = createMonitoredRequest();
 		doThrow(new RuntimeException("test")).when(monitoredRequest).execute();
 
 		doAnswer(new Answer<Void>() {
@@ -134,7 +157,7 @@ public class RequestMonitorTest {
 	private MonitoredRequest<RequestTrace> createMonitoredRequest() throws Exception {
 		@SuppressWarnings("unchecked")
 		final MonitoredRequest<RequestTrace> monitoredRequest = mock(MonitoredRequest.class);
-		doReturn("test").when(monitoredRequest).execute();
+		doReturn(new CompletedFuture<String>("test")).when(monitoredRequest).execute();
 		final RequestTrace requestTrace = new RequestTrace("1");
 		requestTrace.setName("test");
 		doReturn(requestTrace).when(monitoredRequest).createRequestTrace();
