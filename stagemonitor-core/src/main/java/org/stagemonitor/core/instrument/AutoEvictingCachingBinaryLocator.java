@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Class loader memory leaks are also avoided by using {@link WeakConcurrentMap}.
  */
-public class AutoEvictingCachingBinaryLocator extends AgentBuilder.TypeLocator.WithTypePoolCache {
+public class AutoEvictingCachingBinaryLocator extends AgentBuilder.PoolStrategy.WithTypePoolCache {
 
 	private final WeakConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new WeakConcurrentMap
 			.WithInlinedExpunction<ClassLoader, TypePool.CacheProvider>();
