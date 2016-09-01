@@ -575,6 +575,23 @@ public class RequestMonitor {
 		final RequestInformation<? extends RequestTrace> requestInformation = request.get();
 		return requestInformation != null ? requestInformation.getRequestTrace() : null;
 	}
+	/**
+	 * Use this method in order to propagate the state to different threads.
+	 *
+	 * @return the {@link RequestInformation} of the current request (may be <code>null</code>).
+	 */
+	public RequestInformation<? extends RequestTrace> getRequestInformation() {
+		return request.get();
+	}
+
+	/**
+	 * Use this method in order to propagate the state to different threads.
+	 *
+	 * @param requestInformation The {@link RequestInformation} object obtained by {@link #getRequestInformation()}
+	 */
+	public void setRequestInformation(RequestInformation<? extends RequestTrace> requestInformation) {
+		request.set(requestInformation);
+	}
 
 	/**
 	 * Allows to modify the {@link RequestTrace} without explicit null checks.

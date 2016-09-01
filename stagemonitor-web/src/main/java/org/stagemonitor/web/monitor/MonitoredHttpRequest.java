@@ -1,19 +1,23 @@
 package org.stagemonitor.web.monitor;
 
-import java.io.IOException;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.util.CompletedFuture;
+import org.stagemonitor.core.util.ListenableFuture;
+import org.stagemonitor.core.util.SettableFuture;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.WidgetAjaxRequestTraceReporter;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -24,20 +28,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
-
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-import org.stagemonitor.core.util.CompletedFuture;
-import org.stagemonitor.core.util.ListenableFuture;
-import org.stagemonitor.core.util.SettableFuture;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
+	private static final String STAGEMONITOR_REQUEST_INFORMATION = "stagemonitor.requestInformation";
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
@@ -56,7 +58,19 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.metricRegistry = Stagemonitor.getMetric2Registry();
-		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
+		this.requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
+		httpServletRequest.setAttribute(STAGEMONITOR_REQUEST_INFORMATION, RequestMonitor.get().getRequestInformation());
+	}
+
+	/**
+	 * Use this method to transfer the monitoring state to this thread.
+	 *
+	 * This is useful if you want to continue an asynchronous request in a different thread.
+	 * @param httpServletRequest
+	 * @see HttpServletRequest#startAsync()
+	 */
+	public static void transferMonitoringStateToCurrentThread(HttpServletRequest httpServletRequest) {
+		RequestMonitor.get().setRequestInformation((RequestMonitor.RequestInformation<? extends RequestTrace>) httpServletRequest.getAttribute(STAGEMONITOR_REQUEST_INFORMATION));
 	}
 
 	@Override
