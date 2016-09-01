@@ -1,6 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import org.stagemonitor.core.util.ListenableFuture;
 
 public interface MonitoredRequest<T extends RequestTrace> {
 
@@ -34,9 +34,7 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	 * @return the result of the execution
 	 * @throws Exception
 	 */
-	Object execute() throws Exception;
-
-	ListenableFuture<Object> executeAsync();
+	ListenableFuture<Object> execute();
 
 	/**
 	 * Implement this method to do actions after the execution context

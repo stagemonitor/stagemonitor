@@ -1,7 +1,5 @@
 package org.stagemonitor.web.monitor.filter;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,6 +33,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.CompletedFuture;
+import org.stagemonitor.core.util.ListenableFuture;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -75,7 +75,7 @@ public class HttpRequestMonitorFilterTest {
 				when(requestTrace.toJson()).thenReturn("");
 				when(requestTrace.getName()).thenReturn("testName");
 				when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
-				return Futures.immediateFuture(requestInformation);
+				return new CompletedFuture<RequestMonitor.RequestInformation<?>>(requestInformation);
 			}
 		});
 

@@ -124,12 +124,19 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 			try {
 				URL resource = getClass().getClassLoader().getResource(location);
 				if (resource == null) {
-					resource = new URL("file://" + location);
+					String protocol = "file://";
+					if (location.charAt(0) != '/') {
+						//fix issue with tests on Windows detecting the drive letter
+						//as the URL's authority
+						protocol = "file:///";
+					}
+					resource = new URL(protocol + location);
 				}
 				if (!"file".equals(resource.getProtocol())) {
 					throw new IOException("Saving to property files inside a war, ear or jar is not possible.");
 				}
-				File file = new File(resource.toURI());
+				java.net.URI u = resource.toURI();
+				File file = new File(u);
 				final FileOutputStream out = new FileOutputStream(file);
 				properties.store(out, null);
 				out.flush();
