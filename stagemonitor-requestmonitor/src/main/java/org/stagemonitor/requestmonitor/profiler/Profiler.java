@@ -55,6 +55,10 @@ public final class Profiler {
 		methodCallParent.set(null);
 	}
 
+	/**
+	 * Adds the current
+	 * @return
+	 */
 	public static CallStackElement getMethodCallParent() {
 		return methodCallParent.get();
 	}

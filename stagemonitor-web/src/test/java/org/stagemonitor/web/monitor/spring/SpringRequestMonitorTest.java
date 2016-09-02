@@ -1,34 +1,10 @@
 package org.stagemonitor.web.monitor.spring;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
-import static org.stagemonitor.requestmonitor.RequestMonitor.getRequest;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.regex.Pattern;
-
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -51,6 +27,28 @@ import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.regex.Pattern;
+
+import javax.servlet.FilterChain;
+import javax.servlet.http.HttpServletRequest;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
 
 public class SpringRequestMonitorTest {
 
@@ -108,15 +106,12 @@ public class SpringRequestMonitorTest {
 		when(handlerMethod.getMethod()).thenReturn(requestMappingMethod);
 		doReturn(TestController.class).when(handlerMethod).getBeanType();
 		when(handlerExecutionChain.getHandler()).thenReturn(handlerMethod);
-		when(requestMappingHandlerMapping.getHandler(Matchers.argThat(new BaseMatcher<HttpServletRequest>() {
+		when(requestMappingHandlerMapping.getHandler(ArgumentMatchers.argThat(new ArgumentMatcher<HttpServletRequest>() {
 			@Override
-			public boolean matches(Object item) {
-				return ((HttpServletRequest) item).getRequestURI().equals("/test/requestName");
+			public boolean matches(HttpServletRequest item) {
+				return item.getRequestURI().equals("/test/requestName");
 			}
 
-			@Override
-			public void describeTo(Description description) {
-			}
 		}))).thenReturn(handlerExecutionChain);
 		return requestMappingHandlerMapping;
 	}
