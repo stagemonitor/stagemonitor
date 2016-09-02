@@ -85,7 +85,7 @@ public class FreemarkerProfilingTransformer extends StagemonitorByteBuddyTransfo
 	 * Therefore, <code>getFoo</code> does not invoke the model and thus is not relevant for the call tree
 	 */
 	private static void removeCurrentNodeIfItHasNoChildren(CallStackElement currentFreemarkerCall) {
-		if (currentFreemarkerCall.getChildren().isEmpty()) {
+		if (currentFreemarkerCall != null && currentFreemarkerCall.getChildren().isEmpty()) {
 			currentFreemarkerCall.remove();
 		}
 	}

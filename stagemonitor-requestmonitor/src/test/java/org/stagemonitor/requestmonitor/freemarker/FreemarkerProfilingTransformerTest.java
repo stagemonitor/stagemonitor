@@ -16,7 +16,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-public class FreemarkerProfilingTest {
+public class FreemarkerProfilingTransformerTest {
 
 	@Test
 	public void testFreemarkerProfiling() throws Exception {
@@ -33,7 +33,7 @@ public class FreemarkerProfilingTest {
 
 		assertThat(freemarkerNode.getChildren().size(), is(1));
 		final CallStackElement templateModelNode = freemarkerNode.getChildren().get(0);
-		assertThat(templateModelNode.getSignature(), is("String org.stagemonitor.requestmonitor.freemarker.FreemarkerProfilingTest$TemplateModel.getFoo()"));
+		assertThat(templateModelNode.getSignature(), is("String org.stagemonitor.requestmonitor.freemarker.FreemarkerProfilingTransformerTest$TemplateModel.getFoo()"));
 	}
 
 	@Test
@@ -51,7 +51,13 @@ public class FreemarkerProfilingTest {
 
 		assertThat(freemarkerNode.getChildren().size(), is(1));
 		final CallStackElement templateModelNode = freemarkerNode.getChildren().get(0);
-		assertThat(templateModelNode.getSignature(), is("String org.stagemonitor.requestmonitor.freemarker.FreemarkerProfilingTest$TemplateModel.getFoo()"));
+		assertThat(templateModelNode.getSignature(), is("String org.stagemonitor.requestmonitor.freemarker.FreemarkerProfilingTransformerTest$TemplateModel.getFoo()"));
+	}
+
+	@Test
+	public void testFreemarkerWorksIfNotProfiling() throws Exception {
+		final String renderedTemplate = processTemplate("test.ftl", "${templateModel.getFoo()}", new TemplateModel());
+		assertThat(renderedTemplate, is("foo"));
 	}
 
 	@Test
@@ -63,7 +69,7 @@ public class FreemarkerProfilingTest {
 
 	public static class TemplateModel {
 		public String getFoo() {
-			Profiler.start("String org.stagemonitor.requestmonitor.freemarker.FreemarkerProfilingTest$TemplateModel.getFoo()");
+			Profiler.start("String org.stagemonitor.requestmonitor.freemarker.FreemarkerProfilingTransformerTest$TemplateModel.getFoo()");
 			try {
 				return "foo";
 			} finally {
