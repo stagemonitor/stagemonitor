@@ -2,6 +2,7 @@ dependencies {
 	compile project(":stagemonitor-core")
 	optional "org.elasticsearch:elasticsearch:$esVersion"
 	optional 'javax.ejb:ejb-api:3.0'
+	optional 'org.freemarker:freemarker:2.3.23'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
 	testCompile 'net.sf.ehcache:ehcache-core:2.6.6'

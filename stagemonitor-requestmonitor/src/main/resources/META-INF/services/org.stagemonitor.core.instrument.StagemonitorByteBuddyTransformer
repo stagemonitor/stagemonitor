@@ -3,3 +3,4 @@ org.stagemonitor.requestmonitor.profiler.elasticsearch.ElasticsearchSearchQueryT
 org.stagemonitor.requestmonitor.MethodLevelMonitorRequestsTransformer
 org.stagemonitor.requestmonitor.ClassLevelMonitorRequestsTransformer
 org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformer
+org.stagemonitor.requestmonitor.freemarker.FreemarkerProfilingTransformer
