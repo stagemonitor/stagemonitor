@@ -143,7 +143,7 @@ public class Metric2RegistryModule extends Module {
 		public void writeValues(Histogram histogram, JsonGenerator jg) throws IOException {
 			final Snapshot snapshot = histogram.getSnapshot();
 			jg.writeNumberField("count", histogram.getCount());
-			writeSnapshot(snapshot, jg);
+			writeHistogramSnapshot(snapshot, jg);
 		}
 	}
 
@@ -156,11 +156,11 @@ public class Metric2RegistryModule extends Module {
 	private class TimerValueWriter implements ValueWriter<Timer> {
 		public void writeValues(Timer timer, JsonGenerator jg) throws IOException {
 			writeMetered(timer, jg);
-			writeSnapshot(timer.getSnapshot(), jg);
+			writeTimerSnapshot(timer.getSnapshot(), jg);
 		}
 	}
 
-	private void writeSnapshot(Snapshot snapshot, JsonGenerator jg) throws IOException {
+	private void writeTimerSnapshot(Snapshot snapshot, JsonGenerator jg) throws IOException {
 		writeDoubleUnlessNaN(jg, "min", convertDuration(snapshot.getMin()));
 		writeDoubleUnlessNaN(jg, "max", convertDuration(snapshot.getMax()));
 		writeDoubleUnlessNaN(jg, "mean", convertDuration(snapshot.getMean()));
@@ -172,6 +172,20 @@ public class Metric2RegistryModule extends Module {
 		writeDoubleUnlessNaN(jg, "p98", convertDuration(snapshot.get98thPercentile()));
 		writeDoubleUnlessNaN(jg, "p99", convertDuration(snapshot.get99thPercentile()));
 		writeDoubleUnlessNaN(jg, "p999", convertDuration(snapshot.get999thPercentile()));
+	}
+	
+	private void writeHistogramSnapshot(Snapshot snapshot, JsonGenerator jg) throws IOException {
+		writeDoubleUnlessNaN(jg, "min", snapshot.getMin());
+		writeDoubleUnlessNaN(jg, "max", snapshot.getMax());
+		writeDoubleUnlessNaN(jg, "mean", snapshot.getMean());
+		writeDoubleUnlessNaN(jg, "p50", snapshot.getMedian());
+		writeDoubleUnlessNaN(jg, "std", snapshot.getStdDev());
+		writeDoubleUnlessNaN(jg, "p25", snapshot.getValue(0.25));
+		writeDoubleUnlessNaN(jg, "p75", snapshot.get75thPercentile());
+		writeDoubleUnlessNaN(jg, "p95", snapshot.get95thPercentile());
+		writeDoubleUnlessNaN(jg, "p98", snapshot.get98thPercentile());
+		writeDoubleUnlessNaN(jg, "p99", snapshot.get99thPercentile());
+		writeDoubleUnlessNaN(jg, "p999", snapshot.get999thPercentile());
 	}
 
 	private void writeMetered(Metered metered, JsonGenerator jg) throws IOException {
