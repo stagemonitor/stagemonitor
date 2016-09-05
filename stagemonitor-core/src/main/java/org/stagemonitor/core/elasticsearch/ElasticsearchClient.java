@@ -110,6 +110,13 @@ public class ElasticsearchClient {
 		sendAsJsonAsync("POST", "/" + index + "/" + type, json);
 	}
 
+	public void update(final String index, final String type, final String id, final Object document) {
+		final ObjectNode json = JsonUtils.toObjectNode(document);
+		removeDisallowedCharsFromPropertyNames(json);
+
+		sendAsJsonAsync("POST", "/" + index + "/" + type + "/" + id + "/_update", json);
+	}
+
 	private void removeDisallowedCharsFromPropertyNames(ObjectNode json) {
 		final Iterator<String> fieldNames = json.fieldNames();
 		List<String> toRemove = new LinkedList<String>();
@@ -308,7 +315,7 @@ public class ElasticsearchClient {
 	}
 
 	public static String getBulkHeader(String action, String index, String type) {
-		return "{\""+action+"\":" +
+		return "{\"" + action + "\":" +
 				"{\"_index\":\"" + index + "\"," +
 				"\"_type\":\"" + type + "\"}" +
 				"}\n";
