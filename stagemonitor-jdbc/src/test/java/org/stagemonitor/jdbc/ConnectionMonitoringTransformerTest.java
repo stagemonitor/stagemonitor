@@ -1,8 +1,10 @@
 package org.stagemonitor.jdbc;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Timer;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.p6spy.engine.spy.P6DataSource;
 import com.zaxxer.hikari.HikariDataSource;
 
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -73,7 +75,12 @@ public class ConnectionMonitoringTransformerTest {
 		dbcp2.setDriverClassName(DRIVER_CLASS_NAME);
 		dbcp2.setUrl(URL);
 
-		return Arrays.asList(new Object[][]{{tomcatDataSource}, {comboPooledDataSource}, {hikariDataSource}, {dbcp}, {dbcp2}});
+		DruidDataSource druidDataSource = new DruidDataSource();
+		druidDataSource.setDriverClassName(DRIVER_CLASS_NAME);
+		druidDataSource.setUrl(URL);
+		druidDataSource.setTestWhileIdle(false);
+
+		return Arrays.asList(new Object[][]{{tomcatDataSource}, {comboPooledDataSource}, {hikariDataSource}, {dbcp}, {dbcp2}, {new P6DataSource(druidDataSource)}});
 	}
 
 	public ConnectionMonitoringTransformerTest(DataSource dataSource) {
@@ -107,6 +114,10 @@ public class ConnectionMonitoringTransformerTest {
 
 	@Test
 	public void monitorGetConnection() throws Exception {
+		if (dataSource instanceof P6DataSource) {
+			// connection monitoring is not available
+			return;
+		}
 		requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
 					@Override
