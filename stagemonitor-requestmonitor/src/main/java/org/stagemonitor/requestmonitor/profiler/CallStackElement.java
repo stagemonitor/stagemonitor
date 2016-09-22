@@ -1,5 +1,10 @@
 package org.stagemonitor.requestmonitor.profiler;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -7,10 +12,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class CallStackElement {
 
@@ -151,7 +152,7 @@ public class CallStackElement {
 	 * otherwise
 	 */
 	public String getShortSignature() {
-		if (signature.indexOf('(') == -1) {
+		if (signature.indexOf('(') == -1 || signature.indexOf(':') != -1) {
 			return null;
 		}
 		String[] split = signature.substring(0, signature.indexOf('(')).split("\\.");
@@ -172,6 +173,16 @@ public class CallStackElement {
 
 	private void removeLastChild() {
 		children.remove(children.size() - 1).recycle();
+	}
+
+	/**
+	 * Removes this node from the parent
+	 */
+	public void remove() {
+		if (parent != null) {
+			parent.getChildren().remove(this);
+			recycle();
+		}
 	}
 
 	public void executionStopped(long executionTime) {

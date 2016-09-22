@@ -1,10 +1,7 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.JsonNode;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
@@ -16,6 +13,10 @@ import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.requestmonitor.ExternalRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends AbstractElasticsearchTest {
 
@@ -50,7 +51,7 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 	public void reportRequestTrace() throws Exception {
 		final RequestTrace requestTrace = new RequestTrace("abc", new MeasurementSession(getClass().getName(), "test", "test"), requestMonitorPlugin);
 		requestTrace.setName("Report Me");
-		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", 1000000, "SELECT * from STAGEMONITOR");
+		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", 1000000, "SELECT * from STAGEMONITOR where 1 < 2");
 		externalRequest.setExecutedBy("ElasticsearchExternalRequestTraceReporterIntegrationTest#test");
 		requestTrace.addExternalRequest(externalRequest);
 		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
@@ -62,7 +63,7 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 		assertEquals("jdbc", requestTraceJson.get("request_type").asText());
 		assertEquals("SELECT", requestTraceJson.get("request_method").asText());
 		assertEquals(1.0d, requestTraceJson.get("execution_time").asDouble(), 0.0000001);
-		assertEquals("SELECT * from STAGEMONITOR", requestTraceJson.get("request").asText());
+		assertEquals("SELECT * from STAGEMONITOR where 1 < 2", requestTraceJson.get("request").asText());
 		assertEquals("ElasticsearchExternalRequestTraceReporterIntegrationTest#test", requestTraceJson.get("executed_by").asText());
 	}
 }
