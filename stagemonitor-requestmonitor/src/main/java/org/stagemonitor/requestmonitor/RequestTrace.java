@@ -1,7 +1,24 @@
 package org.stagemonitor.requestmonitor;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.uber.jaeger.utils.Utils;
+
+import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -10,21 +27,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import io.opentracing.NoopTracer;
+import io.opentracing.Span;
+import io.opentracing.tag.Tags;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A request trace is a data structure containing all the important information about a request.
+ *
+ * @deprecated use {@link io.opentracing.Span}
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Deprecated
 public class RequestTrace {
 
 	@JsonIgnore
@@ -61,6 +76,8 @@ public class RequestTrace {
 	@JsonIgnore
 	private List<ExternalRequest> externalRequests = new LinkedList<ExternalRequest>();
 
+	protected Span span = new NoopTracer().buildSpan(null).start();
+
 	public RequestTrace(String requestId) {
 		this(requestId, Stagemonitor.getMeasurementSession(), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
 	}
@@ -73,6 +90,9 @@ public class RequestTrace {
 		this.host = measurementSession.getHostName();
 		this.instance = measurementSession.getInstanceName();
 		this.timestamp = StringUtils.dateAsIsoString(new Date());
+		span.setTag("application", application);
+		span.setTag("host", host);
+		span.setTag("instance", instance);
 	}
 
 	public boolean isError() {
@@ -80,6 +100,7 @@ public class RequestTrace {
 	}
 
 	public void setError(boolean failed) {
+		Tags.ERROR.set(span, failed);
 		this.error = failed;
 	}
 
@@ -115,6 +136,7 @@ public class RequestTrace {
 	 * The name of the request (e.g. 'Show Item Detail').
 	 * <p/>
 	 * If the name is not set when the requests ends, it won't be considered for the measurements and reportings.
+	 *
 	 * @return The name of the request
 	 */
 	public String getName() {
@@ -127,6 +149,7 @@ public class RequestTrace {
 	 * @param name the name of the request
 	 */
 	public void setName(String name) {
+		span.setOperationName(name);
 		this.name = name;
 	}
 
@@ -144,6 +167,7 @@ public class RequestTrace {
 	}
 
 	public void setExecutionTimeCpu(long executionTimeCpu) {
+		span.setTag("duration_cpu", MILLISECONDS.toMicros(executionTimeCpu));
 		this.executionTimeCpu = executionTimeCpu;
 	}
 
@@ -157,6 +181,9 @@ public class RequestTrace {
 
 	public void setParameters(Map<String, String> parameters) {
 		this.parameters = parameters;
+		for (Map.Entry<String, String> entry : parameters.entrySet()) {
+			span.setTag("paremeters." + entry.getKey(), entry.getValue());
+		}
 	}
 
 	public String getApplication() {
@@ -209,23 +236,39 @@ public class RequestTrace {
 		}
 		exceptionMessage = throwable.getMessage();
 		exceptionClass = throwable.getClass().getCanonicalName();
+		span.setTag("exception.message", throwable.getMessage());
+		span.setTag("exception.class", throwable.getClass().getName());
 
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw, true);
 		throwable.printStackTrace(pw);
 		exceptionStackTrace = sw.getBuffer().toString();
+		span.setTag("exception.stackTrace", exceptionStackTrace);
 	}
 
 	public void setUsername(String username) {
 		this.username = username;
+		span.setTag("username", username);
 	}
 
 	void setDisclosedUserName(String disclosedUserName) {
 		this.disclosedUserName = disclosedUserName;
+		span.setTag("disclosedUserName", username);
 	}
 
 	public void setClientIp(String clientIp) {
 		this.clientIp = clientIp;
+		try {
+			final InetAddress inetAddress = InetAddress.getByName(clientIp);
+			if (inetAddress instanceof Inet4Address) {
+				Tags.PEER_HOST_IPV4.set(span, clientIp != null ? Utils.ipToInt(clientIp) : null);
+				span.setTag("peer.ipv4_string", clientIp);
+			} else if (inetAddress instanceof Inet6Address) {
+				Tags.PEER_HOST_IPV6.set(span, clientIp);
+			}
+		} catch (UnknownHostException e) {
+			// ignore
+		}
 	}
 
 	public String getUsername() {
@@ -285,10 +328,6 @@ public class RequestTrace {
 		return customProperties;
 	}
 
-	public void setCustomProperties(Map<String, Object> customProperties) {
-		this.customProperties = customProperties;
-	}
-
 	/**
 	 * Use this method to add a custom property to this request trace.
 	 * <p/>
@@ -299,6 +338,7 @@ public class RequestTrace {
 	 */
 	@JsonAnySetter
 	public void addCustomProperty(String key, Object value) {
+		span.setTag(key, String.valueOf(value));
 		customProperties.put(key, value);
 	}
 
@@ -306,8 +346,6 @@ public class RequestTrace {
 	 * Adds an attribute to the request which can later be retrieved by {@link #getRequestAttribute(String)}
 	 * <p/>
 	 * The attributes won't be reported
-	 * @param key
-	 * @param value
 	 */
 	public void addRequestAttribute(String key, Object value) {
 		requestAttributes.put(key, value);
@@ -322,6 +360,7 @@ public class RequestTrace {
 	}
 
 	public void setUniqueVisitorId(String uniqueVisitorId) {
+		span.setTag("tracking.uniqueVisitorId", uniqueVisitorId);
 		this.uniqueVisitorId = uniqueVisitorId;
 	}
 
@@ -360,5 +399,13 @@ public class RequestTrace {
 	public void finalize() throws Throwable {
 		super.finalize();
 		callStack.recycle();
+	}
+
+	public Span getSpan() {
+		return span;
+	}
+
+	public void setSpan(Span span) {
+		this.span = span;
 	}
 }

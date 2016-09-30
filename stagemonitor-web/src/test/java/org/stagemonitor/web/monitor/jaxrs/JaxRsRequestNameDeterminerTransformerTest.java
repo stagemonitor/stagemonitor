@@ -1,23 +1,15 @@
 package org.stagemonitor.web.monitor.jaxrs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
+import com.uber.jaeger.Tracer;
+import com.uber.jaeger.reporters.LoggingReporter;
+import com.uber.jaeger.samplers.ConstSampler;
 
-import java.util.Collections;
-import java.util.regex.Pattern;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
@@ -29,6 +21,18 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.RequestTraceCapturingReporter;
 import org.stagemonitor.web.WebPlugin;
+
+import java.util.Collections;
+import java.util.regex.Pattern;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
 
 public class JaxRsRequestNameDeterminerTransformerTest {
 
@@ -51,6 +55,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 
 	@Before
 	public void before() throws Exception {
+		Stagemonitor.startMonitoring(new MeasurementSession("JaxRsRequestNameDeterminerTransformerTest", "testHost", "testInstance"));
 		registry.removeMatching(Metric2Filter.ALL);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
@@ -62,6 +67,8 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
+		final Tracer tracer = new Tracer.Builder("JaxRsRequestNameDeterminerTransformerTest", new LoggingReporter(), new ConstSampler(true)).build();
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
 		requestMonitor.addReporter(requestTraceCapturingReporter);

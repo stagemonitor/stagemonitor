@@ -1,5 +1,18 @@
 package org.stagemonitor.requestmonitor;
 
+import com.uber.jaeger.Tracer;
+import com.uber.jaeger.reporters.LoggingReporter;
+import com.uber.jaeger.samplers.ConstSampler;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -8,15 +21,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.Map;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 public class MonitoredMethodExecutionTest {
 
@@ -39,6 +43,10 @@ public class MonitoredMethodExecutionTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
+
+		final Tracer tracer = new Tracer.Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+
 		requestInformation1 = requestInformation2 = requestInformation3 = null;
 		testObject = new TestObject(new RequestMonitor(configuration, registry));
 	}

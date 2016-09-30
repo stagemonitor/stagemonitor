@@ -1,18 +1,5 @@
 package org.stagemonitor.web.monitor;
 
-import static java.util.Arrays.asList;
-import static junit.framework.Assert.assertNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,6 +10,19 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
+
+import static java.util.Arrays.asList;
+import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MonitoredHttpRequestTest {
 
@@ -77,10 +77,6 @@ public class MonitoredHttpRequestTest {
 		assertNotNull(requestTrace.getId());
 		assertNotNull(requestTrace.getTimestamp());
 		assertTrue("Timestamp should be in format yyyy-MM-dd'T'HH:mm:ss.SSSZ", requestTrace.getTimestamp().contains("T"));
-
-		assertEquals("MonitoredHttpRequestTest", requestTrace.getApplication());
-		assertEquals("testHost", requestTrace.getHost());
-		assertEquals("testInstance", requestTrace.getInstance());
 
 		assertEquals(new HashSet<String>(asList("accept")), requestTrace.getHeaders().keySet());
 		assertFalse(requestTrace.getHeaders().containsKey("cookie"));

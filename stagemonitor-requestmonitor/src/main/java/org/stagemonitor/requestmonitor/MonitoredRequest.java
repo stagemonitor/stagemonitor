@@ -1,5 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
+import io.opentracing.Span;
+
 public interface MonitoredRequest<T extends RequestTrace> {
 
 	/**
@@ -25,6 +27,8 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	 * @return the {@link RequestTrace}
 	 */
 	T createRequestTrace();
+
+	Span createSpan();
 
 	/**
 	 * Executing this method triggers the execution of the execution context.

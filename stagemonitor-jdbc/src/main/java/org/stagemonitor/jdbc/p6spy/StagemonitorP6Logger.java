@@ -2,6 +2,8 @@ package org.stagemonitor.jdbc.p6spy;
 
 import com.p6spy.engine.logging.Category;
 import com.p6spy.engine.spy.appender.P6Logger;
+import com.uber.jaeger.context.TracingUtils;
+
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.StringUtils;
@@ -11,10 +13,16 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
+import java.util.concurrent.TimeUnit;
+
+import io.opentracing.Span;
+import io.opentracing.tag.Tags;
+
 public class StagemonitorP6Logger implements P6Logger {
 
 	private final JdbcPlugin jdbcPlugin;
 	private final RequestMonitor requestMonitor;
+	private RequestMonitorPlugin requestMonitorPlugin;
 
 	public StagemonitorP6Logger() {
 		this(Stagemonitor.getConfiguration());
@@ -22,7 +30,8 @@ public class StagemonitorP6Logger implements P6Logger {
 
 	public StagemonitorP6Logger(Configuration configuration) {
 		this.jdbcPlugin = configuration.getConfig(JdbcPlugin.class);
-		requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
+		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
+		requestMonitor = requestMonitorPlugin.getRequestMonitor();
 	}
 
 	@Override
@@ -44,6 +53,13 @@ public class StagemonitorP6Logger implements P6Logger {
 		if (StringUtils.isNotEmpty(prepared)) {
 			sql = getSql(prepared, sql);
 			String method = sql.substring(0, sql.indexOf(' ')).toUpperCase();
+			final long nowNanos = System.nanoTime();
+			final Span span = requestMonitorPlugin.getTracer().buildSpan("jdbc_query")
+					.asChildOf(TracingUtils.getTraceContext().getCurrentSpan())
+					.withStartTimestamp(TimeUnit.NANOSECONDS.toMicros(nowNanos - elapsed))
+					.start();
+			span.finish(nowNanos);
+			Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 			final ExternalRequest jdbcRequest = new ExternalRequest("jdbc", method, elapsed, sql);
 			requestMonitor.trackExternalRequest(jdbcRequest);
 			requestTrace.addRequestAttribute(externalRequestAttribute, jdbcRequest);

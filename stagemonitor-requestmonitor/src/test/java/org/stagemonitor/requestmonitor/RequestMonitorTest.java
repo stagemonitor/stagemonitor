@@ -1,24 +1,18 @@
 package org.stagemonitor.requestmonitor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.Collections;
-
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
+import com.uber.jaeger.Span;
+import com.uber.jaeger.Tracer;
+import com.uber.jaeger.Tracer.Builder;
+import com.uber.jaeger.context.TracingUtils;
+import com.uber.jaeger.reporters.LoggingReporter;
+import com.uber.jaeger.samplers.ConstSampler;
+
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -29,6 +23,26 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
+
+import java.util.Collections;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 
 public class RequestMonitorTest {
@@ -51,16 +65,21 @@ public class RequestMonitorTest {
 
 		doReturn(true).when(corePlugin).isStagemonitorActive();
 		doReturn(1000).when(corePlugin).getThreadPoolQueueCapacityLimit();
+		doReturn(new Metric2Registry()).when(corePlugin).getMetricRegistry();
 		doReturn(Collections.singletonList("http://mockhost:9200")).when(corePlugin).getElasticsearchUrls();
 		doReturn(mock(ElasticsearchClient.class)).when(corePlugin).getElasticsearchClient();
 		doReturn(false).when(corePlugin).isOnlyLogElasticsearchMetricReports();
 
 		doReturn(true).when(requestMonitorPlugin).isCollectRequestStats();
 		doReturn(true).when(requestMonitorPlugin).isProfilerActive();
+		final Tracer tracer = new Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+//		doReturn(tracer).when(requestMonitorPlugin.getTracer());
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyReportNRequestsPerMinuteToElasticsearch();
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
 		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));
 		requestMonitor = new RequestMonitor(configuration, registry);
+		requestMonitor.addReporter(new LoggingSpanReporter());
 	}
 
 	@After
@@ -132,14 +151,12 @@ public class RequestMonitorTest {
 	}
 
 	private MonitoredRequest<RequestTrace> createMonitoredRequest() throws Exception {
-		@SuppressWarnings("unchecked")
-		final MonitoredRequest<RequestTrace> monitoredRequest = mock(MonitoredRequest.class);
-		doReturn("test").when(monitoredRequest).execute();
-		final RequestTrace requestTrace = new RequestTrace("1");
-		requestTrace.setName("test");
-		doReturn(requestTrace).when(monitoredRequest).createRequestTrace();
-
-		return monitoredRequest;
+		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", new MonitoredMethodRequest.MethodExecution() {
+			@Override
+			public Object execute() throws Exception {
+				return "test";
+			}
+		}));
 	}
 
 	@Test
@@ -190,10 +207,45 @@ public class RequestMonitorTest {
 	}
 
 	@Test
+	@Ignore
 	public void testGetInstanceNameFromExecution() throws Exception {
 		final MonitoredRequest<RequestTrace> monitoredRequest = createMonitoredRequest();
 		doReturn("testInstance").when(monitoredRequest).getInstanceName();
 		requestMonitor.monitor(monitoredRequest);
 		assertEquals("testInstance", Stagemonitor.getMeasurementSession().getInstanceName());
+	}
+
+	@Test
+	public void testExecutorServiceContextPropagation() throws Exception {
+		RequestTraceCapturingReporter requestTraceCapturingReporter = new RequestTraceCapturingReporter(requestMonitor);
+
+		final ExecutorService executorService = TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor());
+		final Span[] firstSpan = new Span[1];
+		final Span[] asyncSpan = new Span[1];
+
+		requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
+			firstSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+			return monitorAsyncMethodCall(executorService, asyncSpan);
+		}));
+		executorService.shutdown();
+		RequestTrace firstRequestTrace = requestTraceCapturingReporter.get();
+		RequestTrace asyncRequestTrace = requestTraceCapturingReporter.get();
+		assertSame(firstSpan[0], firstRequestTrace.getSpan());
+		assertSame(asyncSpan[0], asyncRequestTrace.getSpan());
+		assertEquals("test", firstSpan[0].getOperationName());
+		assertEquals("async", asyncSpan[0].getOperationName());
+		assertEquals(firstSpan[0].getContext().getSpanID(), asyncSpan[0].getContext().getParentID());
+	}
+
+	private Object monitorAsyncMethodCall(ExecutorService executorService, final Span[] asyncSpan) {
+		return executorService.submit((Callable<Object>) () ->
+				requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
+					asyncSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+					return callAsyncMethod();
+				})));
+	}
+
+	private Object callAsyncMethod() {
+		return null;
 	}
 }

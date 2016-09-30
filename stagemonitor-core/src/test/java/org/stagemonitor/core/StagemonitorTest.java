@@ -7,7 +7,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.CompletedFuture;
 
 import java.util.Arrays;
 
@@ -102,17 +101,6 @@ public class StagemonitorTest {
 		Stagemonitor.startMonitoring(measurementSession).get();
 
 		assertFalse(Stagemonitor.isStarted());
-	}
-
-	@Test
-	public void testNoAsyncInitByDefault() throws Exception {
-		assertTrue(Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance")) instanceof CompletedFuture);
-	}
-
-	@Test
-	public void testAsyncInit() throws Exception {
-		when(corePlugin.isInitAsync()).thenReturn(true);
-		assertFalse(Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance")) instanceof CompletedFuture);
 	}
 
 }

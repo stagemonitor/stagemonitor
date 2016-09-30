@@ -12,6 +12,7 @@ import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.WidgetAjaxRequestTraceReporter;
+import org.stagemonitor.web.opentracing.HttpServletRequestTextMapExtractAdapter;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -27,6 +28,12 @@ import java.util.regex.Pattern;
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
+import io.opentracing.Span;
+import io.opentracing.SpanContext;
+import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
@@ -75,6 +82,15 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		request.setName(getRequestName());
 
 		return request;
+	}
+
+	@Override
+	public Span createSpan() {
+		final Tracer tracer = requestMonitorPlugin.getTracer();
+		SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
+		final Span span = tracer.buildSpan(getRequestName()).asChildOf(spanCtx).start();
+		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+		return span;
 	}
 
 	private String getReferringSite() {

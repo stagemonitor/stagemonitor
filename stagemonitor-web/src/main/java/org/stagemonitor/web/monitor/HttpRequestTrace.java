@@ -1,17 +1,21 @@
 package org.stagemonitor.web.monitor;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
+
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.web.WebPlugin;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import io.opentracing.tag.Tags;
 
 /**
  * This class extends the generic request trace with data specific for http requests
@@ -52,9 +56,16 @@ public class HttpRequestTrace extends RequestTrace {
 							MeasurementSession measurementSession, RequestMonitorPlugin requestMonitorPlugin) {
 		super(requestId, measurementSession, requestMonitorPlugin);
 		this.url = url;
+		Tags.HTTP_URL.set(span, url);
 		this.headers = headers;
+		if (headers != null) {
+			for (Map.Entry<String, String> entry : headers.entrySet()) {
+				span.setTag("https.headers." + entry.getKey(), entry.getValue());
+			}
+		}
 		this.connectionId = connectionId;
 		this.method = method;
+		span.setTag("http.method", method);
 		this.showWidgetAllowed = showWidgetAllowed;
 	}
 
@@ -115,6 +126,7 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	public void setStatusCode(Integer statusCode) {
+		Tags.HTTP_STATUS.set(span, statusCode);
 		this.statusCode = statusCode;
 	}
 
@@ -127,6 +139,7 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	public void setBytesWritten(Integer bytesWritten) {
+		span.setTag("bytesWritten", bytesWritten);
 		this.bytesWritten = bytesWritten;
 	}
 
@@ -157,6 +170,7 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	public void setSessionId(String sessionId) {
+		span.setTag("sessionId", sessionId);
 		this.sessionId = sessionId;
 	}
 
@@ -177,6 +191,7 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	public void setReferringSite(String referringSite) {
+		span.setTag("http.referrer_site", getReferringSite());
 		this.referringSite = referringSite;
 	}
 

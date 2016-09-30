@@ -1,11 +1,15 @@
 package org.stagemonitor.requestmonitor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
+import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.io.IOException;
 
@@ -14,15 +18,12 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
-import org.stagemonitor.web.monitor.MonitoredHttpRequest;
-import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MonitoredHttpExecutionForwardingTest {
 
@@ -34,6 +35,8 @@ public class MonitoredHttpExecutionForwardingTest {
 
 	@Before
 	public void clearState() {
+		Stagemonitor.reset();
+		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpExecutionForwardingTest", "testHost", "testInstance"));
 		requestInformation1 = requestInformation2 = requestInformation3 = null;
 		metricRegistry = new Metric2Registry();
 		testObject = new TestObject(new RequestMonitor(Stagemonitor.getConfiguration(), metricRegistry));

@@ -1,10 +1,15 @@
 package org.stagemonitor.requestmonitor;
 
+import com.uber.jaeger.context.TracingUtils;
+
+import org.stagemonitor.core.configuration.Configuration;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.stagemonitor.core.configuration.Configuration;
+import io.opentracing.Span;
+import io.opentracing.Tracer;
 
 public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
@@ -41,6 +46,16 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 			requestTrace.setParameters(RequestMonitorPlugin.getSafeParameterMap(params, requestMonitorPlugin.getConfidentialParameters()));
 		}
 		return requestTrace;
+	}
+
+	@Override
+	public Span createSpan() {
+		final Tracer tracer = requestMonitorPlugin.getTracer();
+		if (!TracingUtils.getTraceContext().isEmpty()) {
+			return tracer.buildSpan(methodSignature).asChildOf(TracingUtils.getTraceContext().getCurrentSpan()).start();
+		} else {
+			return tracer.buildSpan(methodSignature).start();
+		}
 	}
 
 	@Override

@@ -1,13 +1,13 @@
 package org.stagemonitor.requestmonitor;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 public class RequestTraceCapturingReporter extends RequestTraceReporter {
-	private final BlockingQueue<RequestTrace> requestTraces = new ArrayBlockingQueue<RequestTrace>(1);
+	private final BlockingQueue<RequestTrace> requestTraces = new LinkedBlockingQueue<>();
 
 	public RequestTraceCapturingReporter() {
 		RequestMonitor.addRequestTraceReporter(this);
@@ -28,6 +28,7 @@ public class RequestTraceCapturingReporter extends RequestTraceReporter {
 	}
 
 	public RequestTrace get() throws InterruptedException {
+//		return requestTraces.take();
 		return requestTraces.poll(500, TimeUnit.MILLISECONDS);
 	}
 }

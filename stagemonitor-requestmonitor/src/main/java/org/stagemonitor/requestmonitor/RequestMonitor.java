@@ -1,23 +1,11 @@
 package org.stagemonitor.requestmonitor;
 
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.Date;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
+import com.uber.jaeger.context.ThreadLocalTraceContext;
+import com.uber.jaeger.context.TraceContext;
+import com.uber.jaeger.context.TracingUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -30,11 +18,36 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import io.opentracing.Span;
+import io.opentracing.tag.Tags;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class RequestMonitor {
 
@@ -123,10 +136,10 @@ public class RequestMonitor {
 				getInstanceNameFromExecution(monitoredRequest);
 			}
 
+			if (!Stagemonitor.isStarted()) {
+				Stagemonitor.startMonitoring();
+			}
 			if (info.monitorThisRequest()) {
-				if (!Stagemonitor.isStarted()) {
-					info.startup = Stagemonitor.startMonitoring();
-				}
 				beforeExecution(monitoredRequest, info);
 			}
 		} finally {
@@ -138,11 +151,11 @@ public class RequestMonitor {
 		long overhead2 = System.nanoTime();
 		final RequestInformation<T> info = (RequestInformation<T>) request.get();
 		request.set(info.parent);
+		if (info.getSpan() != null) {
+			TracingUtils.getTraceContext().pop();
+		}
 		if (info.monitorThisRequest() && info.hasRequestName()) {
 			try {
-				if (info.startup != null) {
-					info.startup.get();
-				}
 				monitorAfterExecution(info.monitoredRequest, info);
 			} catch (Exception e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
@@ -223,6 +236,10 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		info.requestTrace = monitoredRequest.createRequestTrace();
+		info.span = monitoredRequest.createSpan();
+		info.requestTrace.setSpan(info.span);
+		TracingUtils.getTraceContext().push(info.span);
+
 		try {
 			if (info.isProfileThisRequest()) {
 				callTreeMeter.mark();
@@ -251,6 +268,7 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void monitorAfterExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		final T requestTrace = info.requestTrace;
+		final Span span = info.span;
 		final long executionTime = System.nanoTime() - info.start;
 		final long cpuTime = getCpuTime() - info.startCpu;
 		requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
@@ -266,8 +284,11 @@ public class RequestMonitor {
 			if (minExecutionTimeMultiplier > 0d) {
 				callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
 			}
+			span.setTag("callTreeJson", JsonUtils.toJson(callTree));
+			span.setTag("callTreeAscii", callTree.toString(true));
 		}
 		reportRequestTrace(info);
+		span.finish();
 		trackMetrics(info, executionTime, cpuTime);
 	}
 
@@ -379,12 +400,13 @@ public class RequestMonitor {
 	public class RequestInformation<T extends RequestTrace> {
 		private boolean timerCreated = false;
 		T requestTrace = null;
+		private Span span;
 		private long start = System.nanoTime();
 		private long startCpu = getCpuTime();
 		private Object executionResult = null;
 		private Future<?> startup;
 		private long overhead1;
-		private MonitoredRequest<T> monitoredRequest;
+		private MonitoredRequest monitoredRequest;
 		private boolean firstRequest;
 		private RequestInformation<T> parent;
 		private RequestInformation<T> child;
@@ -400,18 +422,39 @@ public class RequestMonitor {
 		}
 
 		private boolean monitorThisRequest() {
-			if (!requestMonitorPlugin.isCollectRequestStats() || !isWarmedUp()) {
+			final String msg = "This reqest is not monitored because {}";
+			if (!Stagemonitor.isStarted()) {
+				logger.debug(msg, "stagemonitor has not been started yet");
+				return false;
+			}
+			if (!requestMonitorPlugin.isCollectRequestStats()) {
+				logger.debug(msg, "the collection of request stats is disabled");
+				return false;
+			}
+			if (!isWarmedUp()) {
+				logger.debug(msg, "the application is not warmed up");
 				return false;
 			}
 
 			if (isForwarded() && isForwarding()) {
+				logger.debug(msg, "this request is both forwarded and forwarding");
 				return false;
 			}
 			if (isForwarded()) {
-				return monitoredRequest.isMonitorForwardedExecutions();
+				if (monitoredRequest.isMonitorForwardedExecutions()) {
+					return true;
+				} else {
+					logger.debug(msg, "this is a forwarded request and monitoring forwarded requests is disabled for this type of request");
+					return false;
+				}
 			}
 			if (isForwarding()) {
-				return !monitoredRequest.isMonitorForwardedExecutions();
+				if (!monitoredRequest.isMonitorForwardedExecutions()) {
+					return true;
+				} else {
+					logger.debug(msg, "this is a forwarding request and monitoring forwarding requests is disabled for this type of request");
+					return false;
+				}
 			}
 			return true;
 		}
@@ -494,6 +537,14 @@ public class RequestMonitor {
 
 		public Future<?> getRequestTraceReporterFuture() {
 			return requestTraceReporterFuture;
+		}
+
+		public Span getSpan() {
+			return span;
+		}
+
+		public void setSpan(Span span) {
+			this.span = span;
 		}
 	}
 

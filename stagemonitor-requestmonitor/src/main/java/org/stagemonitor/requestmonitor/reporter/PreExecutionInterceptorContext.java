@@ -8,6 +8,8 @@ import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
+import io.opentracing.Span;
+
 public class PreExecutionInterceptorContext {
 
 	private static final Logger logger = LoggerFactory.getLogger(PreExecutionInterceptorContext.class);
@@ -48,6 +50,10 @@ public class PreExecutionInterceptorContext {
 
 	public RequestTrace getRequestTrace() {
 		return requestTrace;
+	}
+
+	public Span getSpan() {
+		return requestTrace.getSpan();
 	}
 
 	public Meter getReportingRate() {

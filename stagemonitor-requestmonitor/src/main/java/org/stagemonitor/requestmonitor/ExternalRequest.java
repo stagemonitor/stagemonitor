@@ -1,12 +1,13 @@
 package org.stagemonitor.requestmonitor;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class ExternalRequest {
 

@@ -1,5 +1,9 @@
 package org.stagemonitor.requestmonitor;
 
+import com.uber.jaeger.reporters.CompositeReporter;
+import com.uber.jaeger.reporters.LoggingReporter;
+import com.uber.jaeger.samplers.ConstSampler;
+
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
@@ -14,6 +18,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import io.opentracing.Tracer;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
@@ -298,6 +304,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	private static RequestMonitor requestMonitor;
 
+	private Tracer tracer;
+
+	public Tracer getTracer() {
+		return tracer;
+	}
+
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
@@ -331,6 +343,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
+		tracer = new com.uber.jaeger.Tracer.Builder(initArguments.getMeasurementSession().getApplicationName(), new CompositeReporter(new LoggingReporter()), new ConstSampler(true)).build();
 	}
 
 	@Override

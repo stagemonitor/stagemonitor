@@ -9,5 +9,6 @@ include 'stagemonitor-alerting',
 		'stagemonitor-os',
 		'stagemonitor-requestmonitor',
 		'stagemonitor-web',
-		'stagemonitor-grafana-elasticsearch'
+		'stagemonitor-grafana-elasticsearch',
+		'stagemonitor-zipkin'
 

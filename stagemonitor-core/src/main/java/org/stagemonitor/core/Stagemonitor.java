@@ -11,7 +11,6 @@ import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
-import org.stagemonitor.core.util.ExecutorUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public final class Stagemonitor {
@@ -66,23 +64,10 @@ public final class Stagemonitor {
 		Stagemonitor.measurementSession = measurementSession;
 	}
 
+	// TODO void
 	public static Future<?> startMonitoring() {
-		if (getPlugin(CorePlugin.class).isInitAsync()) {
-			ExecutorService startupThread = ExecutorUtils.createSingleThreadDeamonPool("stagemonitor-startup", 1);
-			try {
-				return startupThread.submit(new Runnable() {
-					@Override
-					public void run() {
-						doStartMonitoring();
-					}
-				});
-			} finally {
-				startupThread.shutdown();
-			}
-		} else {
-			doStartMonitoring();
-			return new CompletedFuture<Void>(null);
-		}
+		doStartMonitoring();
+		return new CompletedFuture<Void>(null);
 	}
 
 	public synchronized static Future<?> startMonitoring(MeasurementSession measurementSession) {
