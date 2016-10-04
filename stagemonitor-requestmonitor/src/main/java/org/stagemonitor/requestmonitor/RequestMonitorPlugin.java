@@ -259,6 +259,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("elasticsearch")
 			.build();
+	private final ConfigurationOption<String> spanIndexTemplate = ConfigurationOption.stringOption()
+			.key("stagemonitor.requestmonitor.elasticsearch.spanIndexTemplate")
+			.dynamic(false)
+			.label("ES Request Span Template")
+			.description("The classpath location of the index template that is used for the stagemonitor-spans-* indices. " +
+					"By specifying the location to your own template, you can fully customize the index template.")
+			.defaultValue("stagemonitor-elasticsearch-span-index-template.json")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.tags("elasticsearch")
+			.build();
 	private final ConfigurationOption<String> externalRequestsIndexTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.externalRequestsIndexTemplate")
 			.dynamic(false)
@@ -319,6 +329,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final String requestsMappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
 				requestIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
 		elasticsearchClient.sendMappingTemplateAsync(requestsMappingJson, "stagemonitor-requests");
+		final String spanMappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
+				spanIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
+		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
 
 		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
 				externalRequestsIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());

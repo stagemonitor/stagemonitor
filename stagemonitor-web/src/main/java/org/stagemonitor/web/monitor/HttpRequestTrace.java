@@ -60,7 +60,7 @@ public class HttpRequestTrace extends RequestTrace {
 		this.headers = headers;
 		if (headers != null) {
 			for (Map.Entry<String, String> entry : headers.entrySet()) {
-				span.setTag("https.headers." + entry.getKey(), entry.getValue());
+				span.setTag("http.headers." + entry.getKey(), entry.getValue());
 			}
 		}
 		this.connectionId = connectionId;

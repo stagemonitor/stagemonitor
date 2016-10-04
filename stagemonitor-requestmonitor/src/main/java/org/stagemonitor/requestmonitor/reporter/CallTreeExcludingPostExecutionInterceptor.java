@@ -25,6 +25,6 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 	}
 
 	private void exclude(PostExecutionInterceptorContext context) {
-		context.addExcludedProperties("callStack", "callStackJson", "callTree").addProperty("containsCallTree", false);
+		context.addExcludedProperties("callStack", "callStackJson", "callTreeAscii", "callTreeJson").addProperty("containsCallTree", false);
 	}
 }

@@ -31,7 +31,7 @@
             }
         },
         {
-          "user_agent": {
+          "parameters": {
             "path_match": "parameters.*",
             "mapping": { "type": "string", "index": "not_analyzed", "doc_values": true }
           }
