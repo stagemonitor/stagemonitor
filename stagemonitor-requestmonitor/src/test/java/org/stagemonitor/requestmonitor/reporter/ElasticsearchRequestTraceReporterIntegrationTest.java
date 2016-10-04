@@ -1,12 +1,7 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Collections;
-
 import com.fasterxml.jackson.databind.JsonNode;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
@@ -15,6 +10,12 @@ import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
+
+import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractElasticsearchTest {
 

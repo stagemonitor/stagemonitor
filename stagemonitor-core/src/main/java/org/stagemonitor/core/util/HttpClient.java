@@ -96,9 +96,18 @@ public class HttpClient {
 				try {
 					return responseHandler.handleResponse(inputStream, getResponseCode(method, url, connection));
 				} catch (IOException e1) {
-					logger.warn("Error sending {} request to url {}: {}", method, url, e1.getMessage(), e1);
+					logger.warn("Error sending {} request to url {}: {}", method, url, e.getMessage(), e);
+					logger.warn("Error handling error response for {} request to url {}: {}", method, url, e1.getMessage(), e1);
+					try {
+						logger.trace(new String(IOUtils.readToBytes(inputStream), "UTF_8"));
+					} catch (IOException e2) {
+						logger.trace("Could not read error stream: {}", e2.getMessage(), e2);
+					}
 				}
 			}
+			else
+				logger.warn("Error sending {} request to url {}: {}", method, url, e.getMessage(), e);
+
 			return null;
 		} finally {
 			IOUtils.closeQuietly(inputStream);
