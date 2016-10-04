@@ -7,7 +7,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 
 import java.sql.Connection;
@@ -30,11 +29,7 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 
 	static {
 		active = ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class));
-		if (active) {
-			connectionMonitor = new ConnectionMonitor(configuration, Stagemonitor.getMetric2Registry());
-		} else {
-			connectionMonitor = null;
-		}
+		connectionMonitor = new ConnectionMonitor(configuration);
 	}
 
 	@Override

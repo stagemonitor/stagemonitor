@@ -52,7 +52,7 @@ public class ConnectionMonitoringTransformerTest {
 	private Metric2Registry metric2Registry;
 	private TestDao testDao;
 
-	@Parameterized.Parameters
+	@Parameterized.Parameters(name = "{index}: {1}")
 	public static Iterable<Object[]> data() throws Exception {
 		final PoolProperties poolProperties = new PoolProperties();
 		poolProperties.setDriverClassName(DRIVER_CLASS_NAME);
@@ -80,10 +80,17 @@ public class ConnectionMonitoringTransformerTest {
 		druidDataSource.setUrl(URL);
 		druidDataSource.setTestWhileIdle(false);
 
-		return Arrays.asList(new Object[][]{{tomcatDataSource}, {comboPooledDataSource}, {hikariDataSource}, {dbcp}, {dbcp2}, {new P6DataSource(druidDataSource)}});
+		return Arrays.asList(new Object[][]{
+				{tomcatDataSource, tomcatDataSource.getClass()},
+				{comboPooledDataSource, comboPooledDataSource.getClass()},
+				{hikariDataSource, hikariDataSource.getClass()},
+				{dbcp, dbcp.getClass()},
+				{dbcp2, dbcp2.getClass()},
+				{new P6DataSource(druidDataSource), druidDataSource.getClass()}
+		});
 	}
 
-	public ConnectionMonitoringTransformerTest(DataSource dataSource) {
+	public ConnectionMonitoringTransformerTest(DataSource dataSource, Class<? extends DataSource> dataSourceClass) {
 		this.dataSource = dataSource;
 	}
 
@@ -114,10 +121,6 @@ public class ConnectionMonitoringTransformerTest {
 
 	@Test
 	public void monitorGetConnection() throws Exception {
-		if (dataSource instanceof P6DataSource) {
-			// connection monitoring is not available
-			return;
-		}
 		requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
 					@Override
