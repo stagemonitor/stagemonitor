@@ -2,9 +2,8 @@ package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
-import com.uber.jaeger.context.ThreadLocalTraceContext;
-import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.context.TracingUtils;
+import com.uber.jaeger.utils.SystemClock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,13 +26,9 @@ import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.math.BigInteger;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -77,6 +72,7 @@ public class RequestMonitor {
 	private final MetricName.MetricNameTemplate externalRequestRateTemplate = name("external_requests_rate").templateFor("request_name", "type");
 	private final MetricName.MetricNameTemplate responseTimeExternalRequestLayerTemplate = name("response_time_server").templateFor("request_name", "layer");
 	private final MetricName.MetricNameTemplate responseTimeCpuTemplate = name("response_time_cpu").tag("request_name", "").layer("All").templateFor("request_name");
+
 	private final MetricName internalOverheadMetricName = name("internal_overhead_request_monitor").build();
 
 	private ExecutorService asyncRequestTraceReporterPool;
@@ -287,8 +283,9 @@ public class RequestMonitor {
 			span.setTag("callTreeJson", JsonUtils.toJson(callTree));
 			span.setTag("callTreeAscii", callTree.toString(true));
 		}
-		reportRequestTrace(info);
 		span.finish();
+		reportRequestTrace(info);
+		// TODO move tracking of metrics to reporter
 		trackMetrics(info, executionTime, cpuTime);
 	}
 
@@ -627,7 +624,28 @@ public class RequestMonitor {
 			externalRequest.setExecutedBy(CallerUtil.getCallerSignature());
 			Profiler.addIOCall(externalRequest.getRequest(), externalRequest.getExecutionTimeNanos());
 			request.addExternalRequest(externalRequest);
+			final Span span = createSpan(externalRequest);
+			// TODO report span
 		}
+	}
+
+	private Span createSpan(ExternalRequest externalRequest) {
+		final long durationMicros = TimeUnit.NANOSECONDS.toMicros(externalRequest.getExecutionTimeNanos());
+		final long endTime = new SystemClock().currentTimeMicros();
+		final Span span = requestMonitorPlugin.getTracer().buildSpan(externalRequest.getExecutedBy())
+				.asChildOf(TracingUtils.getTraceContext().getCurrentSpan())
+				.withStartTimestamp(TimeUnit.NANOSECONDS.toMicros(endTime - durationMicros))
+				.start();
+		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
+		Tags.PEER_SERVICE.set(span, externalRequest.getUrl());
+		span.setTag("type", externalRequest.getRequestType());
+		span.setTag("method", externalRequest.getRequestMethod());
+		span.setTag("request", externalRequest.getRequest());
+		for (Map.Entry<String, String> entry : corePlugin.getMeasurementSession().asMap().entrySet()) {
+			span.setTag(entry.getKey(), entry.getValue());
+		}
+		span.finish(endTime);
+		return span;
 	}
 
 	/**

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.requestmonitor.reporter.ElasticsearchExternalRequestReporter.getExternalRequestTimerName;
+import static org.stagemonitor.requestmonitor.reporter.ExternalRequestMetricsReporter.getExternalRequestTimerName;
 
 public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsearchRequestTraceReporterTest {
 
@@ -129,7 +129,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private ExternalRequest getTestExternalRequest(long executionTimeMillis) {
-		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", TimeUnit.MILLISECONDS.toNanos(executionTimeMillis), "SELECT * from STAGEMONITOR");
+		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", TimeUnit.MILLISECONDS.toNanos(executionTimeMillis), "SELECT * from STAGEMONITOR", "foo@jdbc:bar");
 		externalRequest.setExecutedBy("ElasticsearchExternalRequestReporterTest#test");
 		return externalRequest;
 	}

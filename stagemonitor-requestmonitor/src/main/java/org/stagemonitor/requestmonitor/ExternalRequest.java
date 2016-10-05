@@ -9,6 +9,10 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @deprecated use {@link io.opentracing.Span}
+ */
+@Deprecated
 public class ExternalRequest {
 
 	private final double MS_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
@@ -26,14 +30,16 @@ public class ExternalRequest {
 	@JsonProperty("executed_by")
 	private String executedBy;
 	private final String request;
+	private final String url;
 	@JsonIgnore
 	private CallStackElement callStackElement;
 
-	public ExternalRequest(String requestType, String requestMethod, long executionTimeNanos, String request) {
+	public ExternalRequest(String requestType, String requestMethod, long executionTimeNanos, String request, String url) {
 		this.requestType = requestType;
 		this.requestMethod = requestMethod;
 		this.executionTimeNanos = executionTimeNanos;
 		this.request = request;
+		this.url = url;
 		this.timestamp = StringUtils.dateAsIsoString(new Date());
 	}
 
@@ -112,5 +118,9 @@ public class ExternalRequest {
 
 	public void setCallStackElement(CallStackElement callStackElement) {
 		this.callStackElement = callStackElement;
+	}
+
+	public String getUrl() {
+		return url;
 	}
 }

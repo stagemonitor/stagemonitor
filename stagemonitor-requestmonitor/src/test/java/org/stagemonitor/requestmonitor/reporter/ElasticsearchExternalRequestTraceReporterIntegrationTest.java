@@ -51,7 +51,7 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 	public void reportRequestTrace() throws Exception {
 		final RequestTrace requestTrace = new RequestTrace("abc", new MeasurementSession(getClass().getName(), "test", "test"), requestMonitorPlugin);
 		requestTrace.setName("Report Me");
-		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", 1000000, "SELECT * from STAGEMONITOR where 1 < 2");
+		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", 1000000, "SELECT * from STAGEMONITOR where 1 < 2", "foo@jdbc:bar");
 		externalRequest.setExecutedBy("ElasticsearchExternalRequestTraceReporterIntegrationTest#test");
 		requestTrace.addExternalRequest(externalRequest);
 		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));

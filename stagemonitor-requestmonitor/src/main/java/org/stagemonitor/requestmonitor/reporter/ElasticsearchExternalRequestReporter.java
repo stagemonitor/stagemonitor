@@ -9,7 +9,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricUtils;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -23,19 +22,20 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import static org.stagemonitor.requestmonitor.reporter.ExternalRequestMetricsReporter.getExternalRequestTimerName;
 
 /**
  * An implementation of {@link RequestTraceReporter} that reports
  * {@link org.stagemonitor.requestmonitor.RequestTrace#externalRequests} into to <code>stagemonitor-external-requests-*</code>
  * Elasticsearch index
+ *
+ * TODO remove
  */
+@Deprecated
 public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	private static final String ES_EXTERNAL_REQUEST_TRACE_LOGGER = "ElasticsearchExternalRequestTraces";
 	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchExternalRequestReporter.class);
-	private static final MetricName.MetricNameTemplate externalRequestTemplate = name("external_request_response_time").templateFor("type", "signature", "method");
 	private final Logger externalRequestsLogger;
 
 	private static final byte[] BULK_HEADER = "{\"index\":{}}\n".getBytes(Charset.forName("UTF-8"));
@@ -65,7 +65,6 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 		final List<ExternalRequest> externalRequests = reportArguments.getRequestTrace().getExternalRequests();
 		for (Iterator<ExternalRequest> iterator = externalRequests.iterator(); iterator.hasNext(); ) {
 			final ExternalRequest externalRequest = iterator.next();
-			trackExternalRequestMetrics(externalRequest);
 			if (!isReportExternalRequest(externalRequest)) {
 				iterator.remove();
 			}
@@ -90,30 +89,6 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 				}
 			});
 		}
-	}
-
-	private void trackExternalRequestMetrics(ExternalRequest externalRequest) {
-		// 0 means the time could not be determined
-		if (externalRequest.getExecutionTimeNanos() <= 0) {
-			return;
-		}
-		final long duration = externalRequest.getExecutionTimeNanos();
-		corePlugin.getMetricRegistry()
-				.timer(getExternalRequestTimerName(externalRequest, "All"))
-				.update(duration, TimeUnit.NANOSECONDS);
-		if (externalRequest.getExecutedBy() != null) {
-			corePlugin.getMetricRegistry()
-					.timer(getExternalRequestTimerName(externalRequest))
-					.update(duration, TimeUnit.NANOSECONDS);
-		}
-	}
-
-	public static MetricName getExternalRequestTimerName(ExternalRequest externalRequest) {
-		return getExternalRequestTimerName(externalRequest, externalRequest.getExecutedBy());
-	}
-
-	public static MetricName getExternalRequestTimerName(ExternalRequest externalRequest, String signature) {
-		return externalRequestTemplate.build(externalRequest.getRequestType(), signature, externalRequest.getRequestMethod());
 	}
 
 	private void writeExternalRequestsToOutputStream(OutputStream os, Collection<ExternalRequest> externalRequests) throws IOException {

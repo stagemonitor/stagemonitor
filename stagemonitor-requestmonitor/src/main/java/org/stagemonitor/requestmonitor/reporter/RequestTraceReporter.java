@@ -5,6 +5,8 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
+import io.opentracing.Span;
+
 public abstract class RequestTraceReporter implements StagemonitorSPI {
 
 	public void init(InitArguments initArguments) {
@@ -71,6 +73,10 @@ public abstract class RequestTraceReporter implements StagemonitorSPI {
 		public RequestTrace getRequestTrace() {
 			return requestTrace;
 		}
+
+		public Span getSpan() {
+			return requestTrace.getSpan();
+		}
 	}
 
 	public static class ReportArguments {
@@ -85,6 +91,10 @@ public abstract class RequestTraceReporter implements StagemonitorSPI {
 
 		public RequestTrace getRequestTrace() {
 			return requestTrace;
+		}
+
+		public Span getSpan() {
+			return requestTrace.getSpan();
 		}
 	}
 }
