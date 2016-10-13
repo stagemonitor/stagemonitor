@@ -34,7 +34,7 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchExternalRequestReporter();
-		reporter.init(new RequestTraceReporter.InitArguments(configuration));
+		reporter.init(new SpanReporter.InitArguments(configuration));
 		final String mappingTemplate = IOUtils.getResourceAsString("stagemonitor-elasticsearch-external-requests-index-template.json");
 		elasticsearchClient.sendMappingTemplateAsync(mappingTemplate, "stagemonitor-external-requests");
 		elasticsearchClient.waitForCompletion();
@@ -54,7 +54,7 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", 1000000, "SELECT * from STAGEMONITOR where 1 < 2", "foo@jdbc:bar");
 		externalRequest.setExecutedBy("ElasticsearchExternalRequestTraceReporterIntegrationTest#test");
 		requestTrace.addExternalRequest(externalRequest);
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
+		reporter.report(new SpanReporter.ReportArguments(requestTrace, null));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-external-requests*/_search").get("hits");

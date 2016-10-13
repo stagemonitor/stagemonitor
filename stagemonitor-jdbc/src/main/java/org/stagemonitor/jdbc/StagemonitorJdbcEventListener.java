@@ -3,16 +3,18 @@ package org.stagemonitor.jdbc;
 import com.p6spy.engine.common.ConnectionInformation;
 import com.p6spy.engine.common.StatementInformation;
 import com.p6spy.engine.event.SimpleJdbcEventListener;
+import com.uber.jaeger.context.TracingUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.instrument.CallerUtil;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.ExternalRequest;
+import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
@@ -26,6 +28,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
+
+import io.opentracing.Span;
+import io.opentracing.Tracer;
+import io.opentracing.tag.Tags;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
@@ -78,30 +84,86 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 	}
 
 	@Override
+	public void onBeforeAnyExecute(StatementInformation statementInformation) {
+		requestMonitorPlugin.getRequestMonitor().monitorStart(new MonitoredJdbcRequest(requestMonitorPlugin));
+	}
+
+	@Override
 	public void onAfterAnyExecute(StatementInformation statementInformation, long timeElapsedNanos, SQLException e) {
-		final RequestTrace requestTrace = RequestMonitor.get().getRequestTrace();
-		if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && requestTrace != null && jdbcPlugin.isCollectSql()) {
-			String url = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
-			createExternalRequest(statementInformation, requestTrace, timeElapsedNanos, url);
+		if (!TracingUtils.getTraceContext().isEmpty()) {
+			final Span span = TracingUtils.getTraceContext().getCurrentSpan();
+			if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
+				String url = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
+				Tags.PEER_SERVICE.set(span, url);
+				if (StringUtils.isNotEmpty(statementInformation.getSql())) {
+					String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
+					Profiler.addIOCall(sql, timeElapsedNanos);
+					span.setTag("method", sql.substring(0, sql.indexOf(' ')).toUpperCase());
+					span.setTag("request", sql);
+				}
+
+			}
+			requestMonitorPlugin.getRequestMonitor().monitorStop();
 		}
 	}
-
-	private void createExternalRequest(StatementInformation statementInformation, RequestTrace requestTrace, long elapsed, String url) {
-		if (StringUtils.isNotEmpty(statementInformation.getSql())) {
-			String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
-			Profiler.addIOCall(sql, elapsed);
-			String method = sql.substring(0, sql.indexOf(' ')).toUpperCase();
-
-			final ExternalRequest jdbcRequest = new ExternalRequest("jdbc", method, elapsed, sql, url);
-			requestMonitorPlugin.getRequestMonitor().trackExternalRequest(jdbcRequest);
-		}
-	}
-
 
 	private String getSql(String prepared, String sql) {
 		if (StringUtils.isEmpty(sql) || !jdbcPlugin.isCollectPreparedStatementParameters()) {
 			sql = prepared;
 		}
 		return sql.trim();
+	}
+
+	private static class MonitoredJdbcRequest implements MonitoredRequest<RequestTrace> {
+
+		private final RequestMonitorPlugin requestMonitorPlugin;
+		private final String jdbc = "jdbc";
+
+		private MonitoredJdbcRequest(RequestMonitorPlugin requestMonitorPlugin) {
+			this.requestMonitorPlugin = requestMonitorPlugin;
+		}
+
+		@Override
+		public String getInstanceName() {
+			return null;
+		}
+
+		@Override
+		public RequestTrace createRequestTrace() {
+			return null;
+		}
+
+		@Override
+		public Span createSpan() {
+			final Tracer tracer = requestMonitorPlugin.getTracer();
+			final String callerSignature = CallerUtil.getCallerSignature();
+			final Span span;
+			if (!TracingUtils.getTraceContext().isEmpty()) {
+				span = tracer.buildSpan(callerSignature).asChildOf(TracingUtils.getTraceContext().getCurrentSpan()).start();
+			} else {
+				span = tracer.buildSpan(callerSignature).start();
+			}
+			Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
+			span.setTag("type", getType());
+			return span;
+		}
+
+		private String getType() {
+			return jdbc;
+		}
+
+		@Override
+		public Object execute() throws Exception {
+			return null;
+		}
+
+		@Override
+		public void onPostExecute(RequestMonitor.RequestInformation<RequestTrace> requestInformation) {
+		}
+
+		@Override
+		public boolean isMonitorForwardedExecutions() {
+			return true;
+		}
 	}
 }

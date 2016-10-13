@@ -19,7 +19,7 @@ import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
-import org.stagemonitor.requestmonitor.RequestTraceCapturingReporter;
+import org.stagemonitor.requestmonitor.SpanCapturingReporter;
 import org.stagemonitor.web.WebPlugin;
 
 import java.util.Collections;
@@ -37,7 +37,7 @@ import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.
 public class JaxRsRequestNameDeterminerTransformerTest {
 
 	private TestResource resource = new TestResource();
-	private RequestTraceCapturingReporter requestTraceCapturingReporter = new RequestTraceCapturingReporter();
+	private SpanCapturingReporter requestTraceCapturingReporter = new SpanCapturingReporter();
 
 	@BeforeClass
 	@AfterClass

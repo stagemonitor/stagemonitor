@@ -1,17 +1,5 @@
 package org.stagemonitor.web.monitor.widget;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.UUID;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,10 +12,22 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class RequestTraceServletTest {
 
@@ -57,7 +57,7 @@ public class RequestTraceServletTest {
 
 	@Test
 	public void testRequestTraceBeforeRequest() throws Exception {
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -71,8 +71,8 @@ public class RequestTraceServletTest {
 
 	@Test
 	public void testTwoRequestTraceBeforeRequest() throws Exception {
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -119,7 +119,7 @@ public class RequestTraceServletTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
 		waitForResponse(response);
 
 		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
@@ -134,7 +134,7 @@ public class RequestTraceServletTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(httpRequestTrace));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
 		waitForResponse(response);
 
 		Assert.assertEquals("[]", response.getContentAsString());
@@ -174,6 +174,6 @@ public class RequestTraceServletTest {
 
 		Assert.assertEquals(404, response.getStatus());
 		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
-		Assert.assertFalse(reporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace)));
+		Assert.assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(requestTrace, null)));
 	}
 }

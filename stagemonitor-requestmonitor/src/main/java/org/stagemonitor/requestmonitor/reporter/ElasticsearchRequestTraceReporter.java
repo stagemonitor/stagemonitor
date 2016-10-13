@@ -10,9 +10,9 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
 /**
- * An implementation of {@link RequestTraceReporter} that sends the {@link RequestTrace} to Elasticsearch
+ * An implementation of {@link SpanReporter} that sends the {@link RequestTrace} to Elasticsearch
  */
-public class ElasticsearchRequestTraceReporter extends AbstractInterceptedRequestTraceReporter {
+public class ElasticsearchRequestTraceReporter extends AbstractInterceptedSpanReporter {
 
 	public static final String ES_REQUEST_TRACE_LOGGER = "ElasticsearchRequestTraces";
 
@@ -27,7 +27,8 @@ public class ElasticsearchRequestTraceReporter extends AbstractInterceptedReques
 	}
 
 	@Override
-	protected <T extends RequestTrace> void doReport(T requestTrace, PostExecutionInterceptorContext context) {
+	protected void doReport(ReportArguments reportArguments, PostExecutionInterceptorContext context) {
+		final RequestTrace requestTrace = reportArguments.getRequestTrace();
 		final String index = "stagemonitor-requests-" + StringUtils.getLogstashStyleDate();
 		final String type = "requests";
 		if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
@@ -44,6 +45,9 @@ public class ElasticsearchRequestTraceReporter extends AbstractInterceptedReques
 
 	@Override
 	public boolean isActive(IsActiveArguments isActiveArguments) {
+		if (isActiveArguments.getRequestTrace() == null) {
+			return false;
+		}
 		final boolean urlAvailable = !corePlugin.getElasticsearchUrls().isEmpty();
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
 		return (urlAvailable || logOnly) && super.isActive(isActiveArguments);

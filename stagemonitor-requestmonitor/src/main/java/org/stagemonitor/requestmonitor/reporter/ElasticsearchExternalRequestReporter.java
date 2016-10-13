@@ -26,14 +26,14 @@ import java.util.List;
 import static org.stagemonitor.requestmonitor.reporter.ExternalRequestMetricsReporter.getExternalRequestTimerName;
 
 /**
- * An implementation of {@link RequestTraceReporter} that reports
+ * An implementation of {@link SpanReporter} that reports
  * {@link org.stagemonitor.requestmonitor.RequestTrace#externalRequests} into to <code>stagemonitor-external-requests-*</code>
  * Elasticsearch index
  *
  * TODO remove
  */
 @Deprecated
-public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
+public class ElasticsearchExternalRequestReporter extends SpanReporter {
 	private static final String ES_EXTERNAL_REQUEST_TRACE_LOGGER = "ElasticsearchExternalRequestTraces";
 	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchExternalRequestReporter.class);
 	private final Logger externalRequestsLogger;
@@ -61,7 +61,7 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 	}
 
 	@Override
-	public void reportRequestTrace(final ReportArguments reportArguments) throws Exception {
+	public void report(final ReportArguments reportArguments) throws Exception {
 		final List<ExternalRequest> externalRequests = reportArguments.getRequestTrace().getExternalRequests();
 		for (Iterator<ExternalRequest> iterator = externalRequests.iterator(); iterator.hasNext(); ) {
 			final ExternalRequest externalRequest = iterator.next();
@@ -131,7 +131,7 @@ public class ElasticsearchExternalRequestReporter extends RequestTraceReporter {
 
 	@Override
 	public boolean isActive(IsActiveArguments isActiveArguments) {
-		return true;
+		return isActiveArguments.getRequestTrace() != null;
 	}
 
 	@Override

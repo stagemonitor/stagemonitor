@@ -16,14 +16,16 @@ public class PreExecutionInterceptorContext {
 
 	private final Configuration configuration;
 	private final RequestTrace requestTrace;
+	private final Span span;
 	private final Meter reportingRate;
 	private final Metric2Registry metricRegistry;
 	private boolean mustReport = false;
 	private boolean report = true;
 
-	PreExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Meter reportingRate, Metric2Registry metricRegistry) {
+	PreExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Span span, Meter reportingRate, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
 		this.requestTrace = requestTrace;
+		this.span = span;
 		this.reportingRate = reportingRate;
 		this.metricRegistry = metricRegistry;
 	}
@@ -53,7 +55,7 @@ public class PreExecutionInterceptorContext {
 	}
 
 	public Span getSpan() {
-		return requestTrace.getSpan();
+		return span;
 	}
 
 	public Meter getReportingRate() {

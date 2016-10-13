@@ -1,5 +1,10 @@
 package org.stagemonitor.web.monitor.widget;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.requestmonitor.reporter.SpanReporter;
+import org.stagemonitor.web.monitor.HttpRequestTrace;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -12,12 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
-
-public class WidgetAjaxRequestTraceReporter extends RequestTraceReporter {
+public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 
 	public static final String CONNECTION_ID = "x-stagemonitor-connection-id";
 	private static final long MAX_REQUEST_TRACE_BUFFERING_TIME = 60 * 1000;
@@ -80,13 +80,13 @@ public class WidgetAjaxRequestTraceReporter extends RequestTraceReporter {
 	}
 
 	@Override
-	public void reportRequestTrace(ReportArguments reportArguments) throws IOException {
-		if (isActive(new IsActiveArguments(reportArguments.getRequestTrace())) && reportArguments.getRequestTrace() instanceof HttpRequestTrace) {
+	public void report(ReportArguments reportArguments) throws IOException {
+		if (isActive(new IsActiveArguments(reportArguments.getRequestTrace(), reportArguments.getSpan())) && reportArguments.getRequestTrace() instanceof HttpRequestTrace) {
 			HttpRequestTrace httpRequestTrace = (HttpRequestTrace) reportArguments.getRequestTrace();
 
 			final String connectionId = httpRequestTrace.getConnectionId();
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
-				logger.debug("reportRequestTrace {} ({})", reportArguments.getRequestTrace().getName(), reportArguments.getRequestTrace().getTimestamp());
+				logger.debug("report {} ({})", reportArguments.getRequestTrace().getName(), reportArguments.getRequestTrace().getTimestamp());
 				bufferRequestTrace(connectionId, httpRequestTrace);
 
 				final Object lock = connectionIdToLockMap.remove(connectionId);

@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.tag.Tags;
 
 public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
@@ -51,11 +52,14 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	@Override
 	public Span createSpan() {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
+		final Span span;
 		if (!TracingUtils.getTraceContext().isEmpty()) {
-			return tracer.buildSpan(methodSignature).asChildOf(TracingUtils.getTraceContext().getCurrentSpan()).start();
+			span = tracer.buildSpan(methodSignature).asChildOf(TracingUtils.getTraceContext().getCurrentSpan()).start();
 		} else {
-			return tracer.buildSpan(methodSignature).start();
+			span = tracer.buildSpan(methodSignature).start();
 		}
+		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+		return span;
 	}
 
 	@Override

@@ -1,25 +1,25 @@
 package org.stagemonitor.requestmonitor.ejb;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.requestmonitor.SpanCapturingReporter;
+
+import javax.ejb.Remote;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import javax.ejb.Remote;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.RequestTrace;
-import org.stagemonitor.requestmonitor.RequestTraceCapturingReporter;
-
 public class RemoteEjbMonitorTransformerTest {
 
 	private RemoteInterface remote = new RemoteInterfaceImpl();
 	private RemoteInterfaceWithRemoteAnnotation remoteAlt = new RemoteInterfaceWithRemoteAnnotationImpl();
-	private RequestTraceCapturingReporter requestTraceCapturingReporter = new RequestTraceCapturingReporter();
+	private SpanCapturingReporter requestTraceCapturingReporter = new SpanCapturingReporter();
 
 	@BeforeClass
 	@AfterClass

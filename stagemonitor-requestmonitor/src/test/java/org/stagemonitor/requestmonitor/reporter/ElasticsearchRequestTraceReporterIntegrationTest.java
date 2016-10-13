@@ -33,7 +33,7 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		reporter = new ElasticsearchRequestTraceReporter();
-		reporter.init(new RequestTraceReporter.InitArguments(configuration));
+		reporter.init(new SpanReporter.InitArguments(configuration));
 	}
 
 	@Test
@@ -41,7 +41,7 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 		final RequestTrace requestTrace = new RequestTrace("1", new MeasurementSession("ERTRIT", "test", "test"), requestMonitorPlugin);
 		requestTrace.setParameters(Collections.singletonMap("attr.Color", "Blue"));
 		requestTrace.addCustomProperty("foo.bar", "baz");
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestTrace));
+		reporter.report(new SpanReporter.ReportArguments(requestTrace, null));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-requests*/_search").get("hits");

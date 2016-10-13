@@ -7,7 +7,6 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
@@ -18,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsReporter.getTimerMetricName;
 
 public class AbstractElasticsearchRequestTraceReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
@@ -50,7 +50,7 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 		requestTrace.setCallStack(CallStackElement.createRoot("test"));
 		requestTrace.setName("Report Me");
 		requestTrace.setExecutionTime(executionTime);
-		registry.timer(RequestMonitor.getTimerMetricName(requestTrace.getName())).update(executionTime, TimeUnit.NANOSECONDS);
+		registry.timer(getTimerMetricName(requestTrace.getName())).update(executionTime, TimeUnit.NANOSECONDS);
 		return requestTrace;
 	}
 }

@@ -55,6 +55,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
+import static org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsReporter.getTimerMetricName;
 
 public class SpringRequestMonitorTest {
 
@@ -134,7 +135,7 @@ public class SpringRequestMonitorTest {
 
 		final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
 
-		assertEquals(1, requestInformation.getRequestTimer().getCount());
+		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getRequestName())).getCount());
 		assertEquals("Test Get Request Name", requestInformation.getRequestName());
 		assertEquals("Test Get Request Name", requestInformation.getRequestTrace().getName());
 		assertEquals("/test/requestName", requestInformation.getRequestTrace().getUrl());
@@ -155,7 +156,7 @@ public class SpringRequestMonitorTest {
 		assertEquals("GET *.js", requestInformation.getRequestName());
 		assertEquals("GET *.js", requestInformation.getRequestTrace().getName());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		assertEquals(1, requestInformation.getRequestTimer().getCount());
+		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getRequestName())).getCount());
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 //		verify(monitoredRequest, times(1)).getRequestName();
 	}

@@ -1,15 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.Map;
-
 import com.codahale.metrics.Timer;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -20,12 +12,21 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 public class MonitorRequestsTransformerTest {
 
 	private TestClass testClass;
 	private TestClassLevelAnnotationClass testClassLevelAnnotationClass;
 	private Metric2Registry metricRegistry;
-	private RequestTraceCapturingReporter requestTraceCapturingReporter;
+	private SpanCapturingReporter requestTraceCapturingReporter;
 
 	@BeforeClass
 	public static void attachProfiler() {
@@ -40,7 +41,7 @@ public class MonitorRequestsTransformerTest {
 		metricRegistry.removeMatching(Metric2Filter.ALL);
 		Stagemonitor.setMeasurementSession(new MeasurementSession("MonitorRequestsTransformerTest", "test", "test"));
 		Stagemonitor.startMonitoring().get();
-		requestTraceCapturingReporter = new RequestTraceCapturingReporter();
+		requestTraceCapturingReporter = new SpanCapturingReporter();
 	}
 
 	@AfterClass

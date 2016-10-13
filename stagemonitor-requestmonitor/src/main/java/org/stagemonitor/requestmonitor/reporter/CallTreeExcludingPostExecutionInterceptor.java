@@ -7,6 +7,11 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
+		if (context.getRequestTrace() == null) {
+			// TODO
+			return;
+		}
+
 		if (context.getRequestTrace().getCallStack() == null) {
 			context.addProperty("containsCallTree", false);
 			return;

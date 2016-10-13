@@ -7,7 +7,7 @@ import org.stagemonitor.requestmonitor.RequestTrace;
 
 import io.opentracing.Span;
 
-public abstract class RequestTraceReporter implements StagemonitorSPI {
+public abstract class SpanReporter implements StagemonitorSPI {
 
 	public void init(InitArguments initArguments) {
 	}
@@ -17,26 +17,26 @@ public abstract class RequestTraceReporter implements StagemonitorSPI {
 	 *
 	 * @param reportArguments The parameter object which contains the actual parameters
 	 */
-	public abstract void reportRequestTrace(ReportArguments reportArguments) throws Exception;
+	public abstract void report(ReportArguments reportArguments) throws Exception;
 
 	/**
-	 * Whether this {@link RequestTraceReporter} is active
+	 * Whether this {@link SpanReporter} is active
 	 * <p/>
 	 * This method is called at most once from {@link RequestMonitor} for one request.
 	 * That means that the result from the first evaluation is final.
 	 * <p/>
-	 * If none of the currently registered {@link RequestTraceReporter}s (
-	 * see {@link RequestMonitor#requestTraceReporters}) which {@link #requiresCallTree()}
+	 * If none of the currently registered {@link SpanReporter}s (
+	 * see {@link RequestMonitor#spanReporters}) which {@link #requiresCallTree()}
 	 * is active (see {@link RequestMonitor#isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestTrace)},
 	 * the profiler does not have to be enabled for the current request.
 	 *
 	 * @param isActiveArguments The parameter object which contains the actual parameters
-	 * @return <code>true</code>, if this {@link RequestTraceReporter} is active, <code>false</code> otherwise
+	 * @return <code>true</code>, if this {@link SpanReporter} is active, <code>false</code> otherwise
 	 */
 	public abstract boolean isActive(IsActiveArguments isActiveArguments);
 
 	/**
-	 * @return <code>true</code>, if this {@link RequestTraceReporter} needs access to the call tree
+	 * @return <code>true</code>, if this {@link SpanReporter} needs access to the call tree
 	 * ({@link RequestTrace#getCallStack()})
 	 *
 	 * @see #isActive(IsActiveArguments)
@@ -65,9 +65,11 @@ public abstract class RequestTraceReporter implements StagemonitorSPI {
 
 	public static class IsActiveArguments {
 		private final RequestTrace requestTrace;
+		private final Span span;
 
-		public IsActiveArguments(RequestTrace requestTrace) {
+		public IsActiveArguments(RequestTrace requestTrace, Span span) {
 			this.requestTrace = requestTrace;
+			this.span = span;
 		}
 
 		public RequestTrace getRequestTrace() {
@@ -75,18 +77,21 @@ public abstract class RequestTraceReporter implements StagemonitorSPI {
 		}
 
 		public Span getSpan() {
-			return requestTrace.getSpan();
+			return span;
 		}
 	}
 
 	public static class ReportArguments {
 		private final RequestTrace requestTrace;
+		private final Span span;
 
 		/**
 		 * @param requestTrace the {@link RequestTrace} of the current request
+		 * @param span
 		 */
-		public ReportArguments(RequestTrace requestTrace) {
+		public ReportArguments(RequestTrace requestTrace, Span span) {
 			this.requestTrace = requestTrace;
+			this.span = span;
 		}
 
 		public RequestTrace getRequestTrace() {
@@ -94,7 +99,8 @@ public abstract class RequestTraceReporter implements StagemonitorSPI {
 		}
 
 		public Span getSpan() {
-			return requestTrace.getSpan();
+			return span;
 		}
+
 	}
 }

@@ -311,6 +311,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.tags("external-requests")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Boolean> reportSpansAsync = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.report.async")
+			.dynamic(true)
+			.label("Report Async")
+			.description("Set to true to report collected spans asynchronously. It's recommended to always set this to " +
+					"true. Otherwise the performance of your requests will suffer as spans are reported in band.")
+			.defaultValue(true)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 
 	private static RequestMonitor requestMonitor;
 
@@ -498,5 +507,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public double getExcludeExternalRequestsFasterThan() {
 		return excludeExternalRequestsFasterThan.getValue();
+	}
+
+	public boolean isReportAsync() {
+		return reportSpansAsync.getValue();
 	}
 }

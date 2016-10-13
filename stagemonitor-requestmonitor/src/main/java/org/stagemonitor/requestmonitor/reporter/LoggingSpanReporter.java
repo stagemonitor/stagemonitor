@@ -15,7 +15,8 @@ public class LoggingSpanReporter extends AbstractInterceptedSpanReporter {
 	private static final Logger logger = LoggerFactory.getLogger(LoggingSpanReporter.class);
 
 	@Override
-	void reportSpan(io.opentracing.Span span, PostExecutionInterceptorContext context) {
+	protected void doReport(ReportArguments reportArguments, PostExecutionInterceptorContext context) {
+		io.opentracing.Span span = reportArguments.getSpan();
 		logger.info("Reporting span");
 		if (span instanceof Span) {
 			Span jaegerSpan = (Span) span;
@@ -25,7 +26,7 @@ public class LoggingSpanReporter extends AbstractInterceptedSpanReporter {
 			sb.append("###########################\n");
 			appendLine(sb, "name", jaegerSpan.getOperationName());
 			appendLine(sb, "duration", jaegerSpan.getDuration());
-			appendLine(sb, "context", jaegerSpan.getContext().contextAsString());
+			appendLine(sb, "context", jaegerSpan.context().contextAsString());
 			appendLine(sb, "endpoint", jaegerSpan.getPeer());
 			sb.append("###########################\n");
 			sb.append("# Tags                    #\n");

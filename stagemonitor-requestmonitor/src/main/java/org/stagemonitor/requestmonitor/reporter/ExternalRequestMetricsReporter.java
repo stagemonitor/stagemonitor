@@ -7,11 +7,10 @@ import org.stagemonitor.requestmonitor.ExternalRequest;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
-import io.opentracing.tag.Tags;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class ExternalRequestMetricsReporter extends RequestTraceReporter {
+public class ExternalRequestMetricsReporter extends SpanReporter {
 
 	public static final String EXTERNAL_REQUEST_TYPE = "type";
 	public static final String EXTERNAL_REQUEST_METHOD = "method";
@@ -27,7 +26,7 @@ public class ExternalRequestMetricsReporter extends RequestTraceReporter {
 	}
 
 	@Override
-	public void reportRequestTrace(ReportArguments reportArguments) throws Exception {
+	public void report(ReportArguments reportArguments) throws Exception {
 		final Span span = reportArguments.getSpan();
 		if (isExternalRequest(span)) {
 			trackExternalRequestMetrics((com.uber.jaeger.Span) span);
@@ -69,7 +68,7 @@ public class ExternalRequestMetricsReporter extends RequestTraceReporter {
 	public boolean isExternalRequest(Span span) {
 		if (span instanceof com.uber.jaeger.Span) {
 			com.uber.jaeger.Span jaegerSpan = (com.uber.jaeger.Span) span;
-			return Tags.SPAN_KIND_CLIENT.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey())) &&
+			return jaegerSpan.isRPCClient() &&
 					jaegerSpan.getTags().containsKey(EXTERNAL_REQUEST_TYPE) &&
 					jaegerSpan.getTags().containsKey(EXTERNAL_REQUEST_METHOD);
 		}

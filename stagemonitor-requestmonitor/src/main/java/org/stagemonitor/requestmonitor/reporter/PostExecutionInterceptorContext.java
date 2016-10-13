@@ -1,23 +1,26 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import static org.stagemonitor.requestmonitor.RequestMonitor.getTimerMetricName;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
+
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.RequestTrace;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Timer;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestTrace;
+import io.opentracing.Span;
+
+import static org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsReporter.getTimerMetricName;
 
 public class PostExecutionInterceptorContext extends PreExecutionInterceptorContext {
 
 	private final Collection<String> excludedProperties = new LinkedList<String>();
 
-	PostExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Meter reportingRate, Metric2Registry metricRegistry) {
-		super(configuration, requestTrace, reportingRate, metricRegistry);
+	PostExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Span span, Meter reportingRate, Metric2Registry metricRegistry) {
+		super(configuration, requestTrace, span, reportingRate, metricRegistry);
 	}
 
 	public PostExecutionInterceptorContext addExcludedProperty(String properties) {

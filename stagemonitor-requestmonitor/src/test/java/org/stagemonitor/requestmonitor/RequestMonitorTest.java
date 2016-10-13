@@ -33,7 +33,6 @@ import java.util.concurrent.Executors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -217,7 +216,7 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testExecutorServiceContextPropagation() throws Exception {
-		RequestTraceCapturingReporter requestTraceCapturingReporter = new RequestTraceCapturingReporter(requestMonitor);
+		SpanCapturingReporter requestTraceCapturingReporter = new SpanCapturingReporter(requestMonitor);
 
 		final ExecutorService executorService = TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor());
 		final Span[] firstSpan = new Span[1];
@@ -228,13 +227,9 @@ public class RequestMonitorTest {
 			return monitorAsyncMethodCall(executorService, asyncSpan);
 		}));
 		executorService.shutdown();
-		RequestTrace firstRequestTrace = requestTraceCapturingReporter.get();
-		RequestTrace asyncRequestTrace = requestTraceCapturingReporter.get();
-		assertSame(firstSpan[0], firstRequestTrace.getSpan());
-		assertSame(asyncSpan[0], asyncRequestTrace.getSpan());
 		assertEquals("test", firstSpan[0].getOperationName());
 		assertEquals("async", asyncSpan[0].getOperationName());
-		assertEquals(firstSpan[0].getContext().getSpanID(), asyncSpan[0].getContext().getParentID());
+		assertEquals(firstSpan[0].context().getSpanID(), asyncSpan[0].context().getParentID());
 	}
 
 	private Object monitorAsyncMethodCall(ExecutorService executorService, final Span[] asyncSpan) {

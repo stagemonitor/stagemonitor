@@ -15,6 +15,10 @@ public class DoNotTrackPostExecutionInterceptor extends PostExecutionRequestTrac
 
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
+		if (context.getRequestTrace() == null) {
+			// TODO
+			return;
+		}
 		if (!context.getConfig(WebPlugin.class).isHonorDoNotTrackHeader()) {
 			return;
 		}

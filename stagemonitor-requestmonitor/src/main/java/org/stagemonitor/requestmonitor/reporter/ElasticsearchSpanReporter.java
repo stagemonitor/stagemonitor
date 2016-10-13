@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-import io.opentracing.Span;
-
 public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 
 	public static final String ES_SPAN_LOGGER = "ElasticsearchSpanReporter";
@@ -39,17 +37,17 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 	}
 
 	@Override
-	void reportSpan(Span span, PostExecutionInterceptorContext context) {
+	protected void doReport(ReportArguments reportArguments, PostExecutionInterceptorContext context) {
 		final String index = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 		final String type = "spans";
 		if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
 			if (context.getExcludedProperties().isEmpty()) {
-				elasticsearchClient.index(index, type, span);
+				elasticsearchClient.index(index, type, reportArguments.getSpan());
 			} else {
-				elasticsearchClient.index(index, type, JsonUtils.toObjectNode(span).remove(context.getExcludedProperties()));
+				elasticsearchClient.index(index, type, JsonUtils.toObjectNode(reportArguments.getSpan()).remove(context.getExcludedProperties()));
 			}
 		} else {
-			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", index, type) + JsonUtils.toJson(span));
+			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", index, type) + JsonUtils.toJson(reportArguments.getSpan()));
 		}
 	}
 
@@ -124,11 +122,11 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 					gen.writeStringField("name", span.getOperationName());
 					gen.writeNumberField("duration", span.getDuration());
 					gen.writeNumberField("@timestamp", span.getStart());
-					gen.writeStringField("id", String.format("%x", span.getContext().getSpanID()));
-					gen.writeStringField("trace_id", String.format("%x", span.getContext().getTraceID()));
-					gen.writeStringField("parent_id", String.format("%x", span.getContext().getSpanID()));
-					gen.writeBooleanField("sampled", span.getContext().isSampled());
-					gen.writeBooleanField("debug", span.getContext().isDebug());
+					gen.writeStringField("id", String.format("%x", span.context().getSpanID()));
+					gen.writeStringField("trace_id", String.format("%x", span.context().getTraceID()));
+					gen.writeStringField("parent_id", String.format("%x", span.context().getSpanID()));
+					gen.writeBooleanField("sampled", span.context().isSampled());
+					gen.writeBooleanField("debug", span.context().isDebug());
 					gen.writeStringField("peer.service", span.getPeer().getService_name());
 					gen.writeNumberField("peer.port", span.getPeer().getPort());
 					gen.writeNumberField("peer.ipv4", span.getPeer().getIpv4());

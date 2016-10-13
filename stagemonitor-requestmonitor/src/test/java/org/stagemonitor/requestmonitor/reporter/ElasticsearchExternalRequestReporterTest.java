@@ -35,16 +35,16 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchExternalRequestReporter(requestTraceLogger);
-		reporter.init(new RequestTraceReporter.InitArguments(configuration));
+		reporter.init(new SpanReporter.InitArguments(configuration));
 	}
 
 	@Test
 	public void reportRequestTrace() throws Exception {
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(false);
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(), null));
 
 		verify(elasticsearchClient).sendBulkAsync(anyString(), any());
-		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
+		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(getRequestTrace(), null)));
 		verifyTimerCreated(1);
 	}
 
@@ -53,31 +53,31 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(false);
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.emptyList());
 		when(corePlugin.getElasticsearchUrl()).thenReturn(null);
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(), null));
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
 		verify(requestTraceLogger, times(0)).info(anyString());
-		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
+		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(getRequestTrace(), null)));
 		verifyTimerCreated(1);
 	}
 
 	@Test
 	public void testLogReportRequestTrace() throws Exception {
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(), null));
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
 		verify(requestTraceLogger).info(startsWith("{\"index\":{}}\n{"));
-		assertTrue(reporter.isActive(new RequestTraceReporter.IsActiveArguments(getRequestTrace())));
+		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(getRequestTrace(), null)));
 		verifyTimerCreated(1);
 	}
 
 	@Test
 	public void reportRequestTraceRateLimited() throws Exception {
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1d);
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(), null));
 		verify(requestTraceLogger).info(anyString());
 		Thread.sleep(5010); // the meter only updates every 5 seconds
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace()));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(), null));
 		verifyNoMoreInteractions(requestTraceLogger);
 		verifyTimerCreated(2);
 	}
@@ -86,10 +86,10 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void excludeExternalRequestsFasterThan() throws Exception {
 		when(requestMonitorPlugin.getExcludeExternalRequestsFasterThan()).thenReturn(100d);
 
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(100)));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(100), null));
 		verify(requestTraceLogger).info(anyString());
 
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(99)));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(99), null));
 		verifyNoMoreInteractions(requestTraceLogger);
 		verifyTimerCreated(2);
 	}
@@ -98,9 +98,9 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void testElasticsearchExcludeFastCallTree() throws Exception {
 		when(requestMonitorPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
 
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(1000)));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(1000), null));
 		verify(requestTraceLogger).info(anyString());
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(250)));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(250), null));
 		verifyNoMoreInteractions(requestTraceLogger);
 		verifyTimerCreated(2);
 	}
@@ -109,8 +109,8 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void testElasticsearchDontExcludeSlowCallTree() throws Exception {
 		when(requestMonitorPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
 
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(250)));
-		reporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(getRequestTrace(1000)));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(250), null));
+		reporter.report(new SpanReporter.ReportArguments(getRequestTrace(1000), null));
 
 		verify(requestTraceLogger, times(2)).info(anyString());
 		verifyTimerCreated(2);

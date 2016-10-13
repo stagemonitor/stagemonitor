@@ -6,9 +6,9 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
 /**
- * An implementation of {@link RequestTraceReporter} that logs the {@link RequestTrace}
+ * An implementation of {@link SpanReporter} that logs the {@link RequestTrace}
  */
-public class LogRequestTraceReporter extends RequestTraceReporter {
+public class LogRequestTraceReporter extends SpanReporter {
 
 	private static final Logger logger = LoggerFactory.getLogger(LogRequestTraceReporter.class);
 
@@ -20,7 +20,7 @@ public class LogRequestTraceReporter extends RequestTraceReporter {
 	}
 
 	@Override
-	public void reportRequestTrace(ReportArguments reportArguments) {
+	public void report(ReportArguments reportArguments) {
 		if (logger.isInfoEnabled()) {
 			long start = System.currentTimeMillis();
 			StringBuilder log = new StringBuilder(10000);

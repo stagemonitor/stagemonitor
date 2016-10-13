@@ -3,7 +3,6 @@ package org.stagemonitor.requestmonitor;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.uber.jaeger.context.TracingUtils;
-import com.uber.jaeger.utils.SystemClock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +10,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.instrument.CallerUtil;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
@@ -21,12 +19,13 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
-import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -39,39 +38,31 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.opentracing.Span;
-import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import static org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsReporter.getTimerMetricName;
 
 public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
-	private static final MetricName.MetricNameTemplate errorRateTemplate = name("error_rate_server").tag("request_name", "").layer("All").templateFor("request_name");
 
 	/**
-	 * Helps to detect, if this request is the 'real' one or just the forwarding one.
-	 * Example: /a is forwarding the request to /b. /a is the forwarding request /b is the real or forwarded request.
-	 * Only /b will be measured, /a will be ignored.
+	 * Helps to detect, if this request is the 'real' one or just the forwarding one. Example: /a is forwarding the
+	 * request to /b. /a is the forwarding request /b is the real or forwarded request. Only /b will be measured, /a
+	 * will be ignored.
 	 * <p/>
-	 * To enable this behaviour in a web environment, make sure to set stagemonitor.web.monitorOnlyForwardedRequests to true.
+	 * To enable this behaviour in a web environment, make sure to set stagemonitor.web.monitorOnlyForwardedRequests to
+	 * true.
 	 */
 	// TODO remove static keyword. This is currently needed for tests
 	private static ThreadLocal<RequestInformation<? extends RequestTrace>> request = new ThreadLocal<RequestInformation<? extends RequestTrace>>();
 
-	private static MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time_server")
-			.tag("request_name", "")
-			.layer("All")
-			.templateFor("request_name");
-
-	private final List<RequestTraceReporter> requestTraceReporters = new CopyOnWriteArrayList<RequestTraceReporter>();
+	private final List<SpanReporter> spanReporters = new CopyOnWriteArrayList<SpanReporter>();
 
 	private final List<Runnable> onBeforeRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
 
 	private final List<Runnable> onAfterRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
-	private final MetricName.MetricNameTemplate externalRequestRateTemplate = name("external_requests_rate").templateFor("request_name", "type");
-	private final MetricName.MetricNameTemplate responseTimeExternalRequestLayerTemplate = name("response_time_server").templateFor("request_name", "layer");
-	private final MetricName.MetricNameTemplate responseTimeCpuTemplate = name("response_time_cpu").tag("request_name", "").layer("All").templateFor("request_name");
 
 	private final MetricName internalOverheadMetricName = name("internal_overhead_request_monitor").build();
 
@@ -90,15 +81,15 @@ public class RequestMonitor {
 	private Meter callTreeMeter = new Meter();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
-		this(configuration, registry, ServiceLoader.load(RequestTraceReporter.class, RequestMonitor.class.getClassLoader()));
+		this(configuration, registry, ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader()));
 	}
 
-	public RequestMonitor(Configuration configuration, Metric2Registry registry, Iterable<RequestTraceReporter> requestTraceReporters) {
+	public RequestMonitor(Configuration configuration, Metric2Registry registry, Iterable<SpanReporter> requestTraceReporters) {
 		this(configuration, registry, configuration.getConfig(RequestMonitorPlugin.class), requestTraceReporters);
 	}
 
 	private RequestMonitor(Configuration configuration, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin,
-						   Iterable<RequestTraceReporter> requestTraceReporters) {
+						   Iterable<SpanReporter> requestTraceReporters) {
 		this.configuration = configuration;
 		this.metricRegistry = registry;
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
@@ -107,8 +98,8 @@ public class RequestMonitor {
 		this.endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
 		this.asyncRequestTraceReporterPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit());
-		for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
-			addReporter(requestTraceReporter);
+		for (SpanReporter spanReporter : requestTraceReporters) {
+			addReporter(spanReporter);
 		}
 	}
 
@@ -233,7 +224,12 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		info.requestTrace = monitoredRequest.createRequestTrace();
 		info.span = monitoredRequest.createSpan();
-		info.requestTrace.setSpan(info.span);
+		for (Map.Entry<String, String> entry : corePlugin.getMeasurementSession().asMap().entrySet()) {
+			info.span.setTag(entry.getKey(), entry.getValue());
+		}
+		if (info.requestTrace != null) {
+			info.requestTrace.setSpan(info.span);
+		}
 		TracingUtils.getTraceContext().push(info.span);
 
 		try {
@@ -267,26 +263,28 @@ public class RequestMonitor {
 		final Span span = info.span;
 		final long executionTime = System.nanoTime() - info.start;
 		final long cpuTime = getCpuTime() - info.startCpu;
-		requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
-		requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
-		monitoredRequest.onPostExecute(info);
-		anonymizeUserNameAndIp(requestTrace);
+		if (requestTrace != null) {
+			requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
+			requestTrace.setExecutionTimeNanos(executionTime);
+			requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
+			requestTrace.setExecutionTimeCpuNanos(cpuTime);
+			monitoredRequest.onPostExecute(info);
+			anonymizeUserNameAndIp(requestTrace);
 
-		if (requestTrace.getCallStack() != null) {
-			Profiler.stop();
-			requestTrace.getCallStack().setSignature(requestTrace.getName());
-			final CallStackElement callTree = requestTrace.getCallStack();
-			final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
-			if (minExecutionTimeMultiplier > 0d) {
-				callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
+			if (requestTrace.getCallStack() != null) {
+				Profiler.stop();
+				requestTrace.getCallStack().setSignature(requestTrace.getName());
+				final CallStackElement callTree = requestTrace.getCallStack();
+				final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
+				if (minExecutionTimeMultiplier > 0d) {
+					callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
+				}
+				span.setTag("callTreeJson", JsonUtils.toJson(callTree));
+				span.setTag("callTreeAscii", callTree.toString(true));
 			}
-			span.setTag("callTreeJson", JsonUtils.toJson(callTree));
-			span.setTag("callTreeAscii", callTree.toString(true));
 		}
 		span.finish();
-		reportRequestTrace(info);
-		// TODO move tracking of metrics to reporter
-		trackMetrics(info, executionTime, cpuTime);
+		info.requestTraceReporterFuture = report(info);
 	}
 
 	void anonymizeUserNameAndIp(RequestTrace requestTrace) {
@@ -304,80 +302,44 @@ public class RequestMonitor {
 	}
 
 	private <T extends RequestTrace> void removeTimerIfCountIsZero(RequestInformation<T> info) {
-		if (info.timerCreated) {
-			MetricName timerMetricName = getTimerMetricName(info.getRequestName());
-			if (info.getRequestTimer().getCount() == 0 && metricRegistry.getMetrics().get(timerMetricName) != null) {
+		final String requestName = info.getRequestName();
+		if (requestName != null) {
+			MetricName timerMetricName = getTimerMetricName(requestName);
+			final Timer timer = metricRegistry.getTimers().get(timerMetricName);
+			if (timer != null && timer.getCount() == 0) {
 				metricRegistry.remove(timerMetricName);
 			}
 		}
 	}
 
-	private <T extends RequestTrace> void trackMetrics(RequestInformation<T> info, long executionTime, long cpuTime) {
-		T requestTrace = info.requestTrace;
-		String requestName = info.getRequestName();
-
-		info.getRequestTimer().update(executionTime, NANOSECONDS);
-		metricRegistry.timer(getTimerMetricName("All")).update(executionTime, NANOSECONDS);
-
-		if (requestMonitorPlugin.isCollectCpuTime()) {
-			metricRegistry.timer(responseTimeCpuTemplate.build(requestName)).update(cpuTime, NANOSECONDS);
-			metricRegistry.timer(responseTimeCpuTemplate.build("All")).update(cpuTime, NANOSECONDS);
-		}
-
-		if (requestTrace.isError()) {
-			metricRegistry.meter(getErrorMetricName(requestName)).mark();
-			metricRegistry.meter(getErrorMetricName("All")).mark();
-		}
-		trackExternalRequestMetrics(requestName, requestTrace);
-	}
-
-	public static MetricName getErrorMetricName(String requestName) {
-		return errorRateTemplate.build(requestName);
-	}
-
-	private <T extends RequestTrace> void trackExternalRequestMetrics(String requestName, T requestTrace) {
-		for (ExternalRequestStats externalRequestStats : requestTrace.getExternalRequestStats()) {
-			if (externalRequestStats.getExecutionTimeNanos() > 0) {
-				if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
-					metricRegistry.timer(responseTimeExternalRequestLayerTemplate
-							.build(requestName, externalRequestStats.getRequestType()))
-							.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
-				}
-				metricRegistry.timer(responseTimeExternalRequestLayerTemplate
-						.build("All", externalRequestStats.getRequestType()))
-						.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
-			}
-			// the difference to ElasticsearchExternalRequestReporter is that the
-			// external_requests_rate is grouped by the request name, not the dao method name
-			metricRegistry.meter(externalRequestRateTemplate
-					.build(requestName, externalRequestStats.getRequestType()))
-					.mark(externalRequestStats.getExecutionCount());
-		}
-	}
-
-	public static MetricName getTimerMetricName(String requestName) {
-		return timerMetricNameTemplate.build(requestName);
-	}
-
-	private <T extends RequestTrace> void reportRequestTrace(final RequestInformation<T> requestInformation) {
+	private <T extends RequestTrace> Future<?> report(final RequestInformation<T> requestInformation) {
 		try {
-			requestInformation.requestTraceReporterFuture = asyncRequestTraceReporterPool.submit(new Runnable() {
-				@Override
-				public void run() {
-					for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
-						if (isActive(requestInformation.getRequestTrace(), requestTraceReporter)) {
-							try {
-								requestTraceReporter.reportRequestTrace(new RequestTraceReporter.ReportArguments(requestInformation.getRequestTrace()));
-							} catch (Exception e) {
-								logger.warn(e.getMessage() + " (this exception is ignored)", e);
-							}
-						}
+			if (requestMonitorPlugin.isReportAsync()) {
+				return asyncRequestTraceReporterPool.submit(new Runnable() {
+					@Override
+					public void run() {
+						doReport(requestInformation);
 					}
-				}
-			});
+				});
+			} else {
+				doReport(requestInformation);
+				return new CompletedFuture<Object>(null);
+			}
 		} catch (RejectedExecutionException e) {
-			requestInformation.requestTraceReporterFuture = new CompletedFuture<Object>(null);
 			ExecutorUtils.logRejectionWarning(e);
+			return new CompletedFuture<Object>(null);
+		}
+	}
+
+	private <T extends RequestTrace> void doReport(RequestInformation<T> requestInformation) {
+		for (SpanReporter spanReporter : spanReporters) {
+			if (isActive(requestInformation, spanReporter)) {
+				try {
+					spanReporter.report(new SpanReporter.ReportArguments(requestInformation.getRequestTrace(), requestInformation.getSpan()));
+				} catch (Exception e) {
+					logger.warn(e.getMessage() + " (this exception is ignored)", e);
+				}
+			}
 		}
 	}
 
@@ -395,19 +357,18 @@ public class RequestMonitor {
 	}
 
 	public class RequestInformation<T extends RequestTrace> {
-		private boolean timerCreated = false;
 		T requestTrace = null;
 		private Span span;
 		private long start = System.nanoTime();
 		private long startCpu = getCpuTime();
 		private Object executionResult = null;
-		private Future<?> startup;
 		private long overhead1;
 		private MonitoredRequest monitoredRequest;
 		private boolean firstRequest;
 		private RequestInformation<T> parent;
 		private RequestInformation<T> child;
 		private Future<?> requestTraceReporterFuture;
+		private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 
 		/**
 		 * If the request has no name it means that it should not be monitored.
@@ -415,7 +376,8 @@ public class RequestMonitor {
 		 * @return <code>true</code>, if the request trace has a name, <code>false</code> otherwise
 		 */
 		private boolean hasRequestName() {
-			return requestTrace != null && requestTrace.getName() != null && !requestTrace.getName().isEmpty();
+			final String requestName = getRequestName();
+			return requestName != null && !requestName.isEmpty();
 		}
 
 		private boolean monitorThisRequest() {
@@ -441,7 +403,9 @@ public class RequestMonitor {
 				if (monitoredRequest.isMonitorForwardedExecutions()) {
 					return true;
 				} else {
-					logger.debug(msg, "this is a forwarded request and monitoring forwarded requests is disabled for this type of request");
+					if (logger.isDebugEnabled()) {
+						logger.debug(msg, "this is a forwarded request and monitoring forwarded requests is disabled for " + monitoredRequest.getClass().getSimpleName());
+					}
 					return false;
 				}
 			}
@@ -449,7 +413,9 @@ public class RequestMonitor {
 				if (!monitoredRequest.isMonitorForwardedExecutions()) {
 					return true;
 				} else {
-					logger.debug(msg, "this is a forwarding request and monitoring forwarding requests is disabled for this type of request");
+					if (logger.isDebugEnabled()) {
+						logger.debug(msg, "this is a forwarding request and monitoring forwarding requests is disabled for " + monitoredRequest.getClass().getSimpleName());
+					}
 					return false;
 				}
 			}
@@ -457,26 +423,28 @@ public class RequestMonitor {
 		}
 
 		public String getRequestName() {
-			return requestTrace.getName();
+			if (span instanceof com.uber.jaeger.Span) {
+				return ((com.uber.jaeger.Span) span).getOperationName();
+			}
+			return null;
 		}
 
 		/**
 		 * Returns the request trace or <code>null</code>, if
 		 * {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()} is <code>false</code>
 		 *
-		 * @return the request trace or <code>null</code>, if
-		 *         {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()} is <code>false</code>
+		 * @return the request trace or <code>null</code>, if {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()}
+		 * is <code>false</code>
 		 */
 		public T getRequestTrace() {
 			return requestTrace;
 		}
 
-		public Timer getRequestTimer() {
-			timerCreated = true;
-			return metricRegistry.timer(getTimerMetricName(getRequestName()));
-		}
-
 		private boolean isProfileThisRequest() {
+			if (requestTrace == null) {
+				// TODO don't profile client spans
+				return false;
+			}
 			double callTreeRateLimit = requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute();
 			if (!requestMonitorPlugin.isProfilerActive()) {
 				logger.debug("Not profiling this request because stagemonitor.profiler.active=false");
@@ -484,8 +452,8 @@ public class RequestMonitor {
 			} else if (callTreeRateLimit <= 0) {
 				logger.debug("Not profiling this request because stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch <= 0");
 				return false;
-			} else if (!isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(getRequestTrace())) {
-				logger.debug("Not profiling this request because no RequestTraceReporter is active {}", requestTraceReporters);
+			} else if (!isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(this)) {
+				logger.debug("Not profiling this request because no RequestTraceReporter is active {}", spanReporters);
 				return false;
 			} else if (callTreeRateLimit < 1000000d && callTreeMeter.getOneMinuteRate() >= callTreeRateLimit) {
 				logger.debug("Not profiling this request because more than {} call trees per minute where created", callTreeRateLimit);
@@ -543,11 +511,24 @@ public class RequestMonitor {
 		public void setSpan(Span span) {
 			this.span = span;
 		}
+
+		/**
+		 * Adds an attribute to the request which can later be retrieved by {@link #getRequestAttribute(String)}
+		 * <p/>
+		 * The attributes won't be reported
+		 */
+		public void addRequestAttribute(String key, Object value) {
+			requestAttributes.put(key, value);
+		}
+
+		public Object getRequestAttribute(String key) {
+			return requestAttributes.get(key);
+		}
 	}
 
-	private boolean isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestTrace requestTrace) {
-		for (RequestTraceReporter reporter : requestTraceReporters) {
-			if (reporter.requiresCallTree() && isActive(requestTrace, reporter)) {
+	private boolean isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestInformation<?> requestInformation) {
+		for (SpanReporter reporter : spanReporters) {
+			if (reporter.requiresCallTree() && isActive(requestInformation, reporter)) {
 				return true;
 			}
 		}
@@ -555,26 +536,25 @@ public class RequestMonitor {
 	}
 
 	/**
-	 * Checks whether the given {@link RequestTraceReporter} is active for the current {@link RequestTrace}.
-	 * If this method was already called for a {@link RequestTraceReporter} in the context of the current request
-	 * it returns the previous result. In other words this method makes sure that {@link RequestTraceReporter#isActive(RequestTraceReporter.IsActiveArguments)}
-	 * is called at most once.
+	 * Checks whether the given {@link SpanReporter} is active for the current {@link RequestTrace}. If this method was
+	 * already called for a {@link SpanReporter} in the context of the current request it returns the previous result.
+	 * In other words this method makes sure that {@link SpanReporter#isActive(SpanReporter.IsActiveArguments)} is
+	 * called at most once.
 	 */
-	private boolean isActive(RequestTrace requestTrace, RequestTraceReporter requestTraceReporter) {
-		final String requestAttributeActive = ClassUtils.getIdentityString(requestTraceReporter) + ".active";
-		final Boolean activeFromAttribute = (Boolean) requestTrace.getRequestAttribute(requestAttributeActive);
+	private boolean isActive(RequestInformation<?> requestInformation, SpanReporter spanReporter) {
+		final String requestAttributeActive = ClassUtils.getIdentityString(spanReporter) + ".active";
+		final Boolean activeFromAttribute = (Boolean) requestInformation.getRequestAttribute(requestAttributeActive);
 		if (activeFromAttribute != null) {
 			return activeFromAttribute;
 		}
-		final boolean active = requestTraceReporter.isActive(new RequestTraceReporter.IsActiveArguments(requestTrace));
-		requestTrace.addRequestAttribute(requestAttributeActive, active);
+		final boolean active = spanReporter.isActive(new SpanReporter.IsActiveArguments(requestInformation.requestTrace, requestInformation.span));
+		requestInformation.addRequestAttribute(requestAttributeActive, active);
 		return active;
 	}
 
 	/**
 	 * @return the {@link RequestTrace} of the current request
-	 * @deprecated use <code>RequestMonitor.get().getRequestTrace()</code> or
-	 * <code>RequestMonitor.get().ifRequestPresent(RequestTraceConsumer)</code>
+	 * @deprecated use <code>RequestMonitor.get().getRequestTrace()</code> or <code>RequestMonitor.get().ifRequestPresent(RequestTraceConsumer)</code>
 	 */
 	@Deprecated
 	public static RequestTrace getRequest() {
@@ -591,70 +571,12 @@ public class RequestMonitor {
 	}
 
 	/**
-	 * Allows to modify the {@link RequestTrace} without explicit null checks.
-	 * This method behaves simmilar to {@link java.util.Optional#ifPresent(java.util.function.Consumer)} and only applies the provided
-	 * {@link RequestTraceConsumer} if there is a {@link RequestTrace} bound to the current thread.
-	 * <p/>
-	 * This method works well with lambdas and avoids verbose null checks.
+	 * Adds a {@link SpanReporter}
 	 *
-	 * @param consumer a consumer which accepts the current {@link RequestTrace}
+	 * @param spanReporter the {@link SpanReporter} to add
 	 */
-	public void ifRequestPresent(RequestTraceConsumer consumer) {
-		final RequestTrace requestTrace = getRequestTrace();
-		if (requestTrace != null) {
-			consumer.accept(requestTrace);
-		}
-	}
-
-	public interface RequestTraceConsumer {
-		void accept(RequestTrace requestTrace);
-	}
-
-	/**
-	 * Tracking an external request means that a timer for the execution time, grouped by the executing method
-	 * {see @link #getCallerSignature()} is maintained.
-	 * Additionally, the external requests may be stored in the stagemonitor-external-requests-* index, depending
-	 * on the configuration.
-	 *
-	 * @param externalRequest the external request to track
-	 */
-	public void trackExternalRequest(ExternalRequest externalRequest) {
-		final RequestTrace request = getRequestTrace();
-		if (request != null) {
-			externalRequest.setExecutedBy(CallerUtil.getCallerSignature());
-			Profiler.addIOCall(externalRequest.getRequest(), externalRequest.getExecutionTimeNanos());
-			request.addExternalRequest(externalRequest);
-			final Span span = createSpan(externalRequest);
-			// TODO report span
-		}
-	}
-
-	private Span createSpan(ExternalRequest externalRequest) {
-		final long durationMicros = TimeUnit.NANOSECONDS.toMicros(externalRequest.getExecutionTimeNanos());
-		final long endTime = new SystemClock().currentTimeMicros();
-		final Span span = requestMonitorPlugin.getTracer().buildSpan(externalRequest.getExecutedBy())
-				.asChildOf(TracingUtils.getTraceContext().getCurrentSpan())
-				.withStartTimestamp(TimeUnit.NANOSECONDS.toMicros(endTime - durationMicros))
-				.start();
-		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
-		Tags.PEER_SERVICE.set(span, externalRequest.getUrl());
-		span.setTag("type", externalRequest.getRequestType());
-		span.setTag("method", externalRequest.getRequestMethod());
-		span.setTag("request", externalRequest.getRequest());
-		for (Map.Entry<String, String> entry : corePlugin.getMeasurementSession().asMap().entrySet()) {
-			span.setTag(entry.getKey(), entry.getValue());
-		}
-		span.finish(endTime);
-		return span;
-	}
-
-	/**
-	 * Adds a {@link RequestTraceReporter}
-	 *
-	 * @param requestTraceReporter the {@link RequestTraceReporter} to add
-	 */
-	public static void addRequestTraceReporter(RequestTraceReporter requestTraceReporter) {
-		get().addReporter(requestTraceReporter);
+	public static void addRequestTraceReporter(SpanReporter spanReporter) {
+		get().addReporter(spanReporter);
 	}
 
 	/**
@@ -662,12 +584,10 @@ public class RequestMonitor {
 	 * <p/>
 	 * You can use this instance for example to call the following methods:
 	 * <ul>
-	 *     <li>{@link #trackExternalRequest(ExternalRequest)}</li>
-	 *     <li>{@link #addReporter(RequestTraceReporter)}</li>
-	 *     <li>{@link #addOnBeforeRequestCallback(Runnable)}</li>
-	 *     <li>{@link #addOnAfterRequestCallback(Runnable)}</li>
-	 *     <li>{@link #getRequestTrace()}</li>
-	 *     <li>{@link #ifRequestPresent(RequestTraceConsumer)}</li>
+	 * <li>{@link #addReporter(SpanReporter)}</li>
+	 * <li>{@link #addOnBeforeRequestCallback(Runnable)}</li>
+	 * <li>{@link #addOnAfterRequestCallback(Runnable)}</li>
+	 * <li>{@link #getRequestTrace()}</li>
 	 * </ul>
 	 *
 	 * @return the current request monitor
@@ -677,19 +597,19 @@ public class RequestMonitor {
 	}
 
 	/**
-	 * Adds a {@link RequestTraceReporter}
+	 * Adds a {@link SpanReporter}
 	 *
-	 * @param requestTraceReporter the {@link RequestTraceReporter} to add
+	 * @param spanReporter the {@link SpanReporter} to add
 	 */
-	public void addReporter(RequestTraceReporter requestTraceReporter) {
-		requestTraceReporters.add(0, requestTraceReporter);
-		requestTraceReporter.init(new RequestTraceReporter.InitArguments(configuration));
+	public void addReporter(SpanReporter spanReporter) {
+		spanReporters.add(0, spanReporter);
+		spanReporter.init(new SpanReporter.InitArguments(configuration));
 	}
 
-	public <T extends RequestTraceReporter> T getReporter(Class<T> reporterClass) {
-		for (RequestTraceReporter requestTraceReporter : requestTraceReporters) {
-			if (requestTraceReporter.getClass() == reporterClass) {
-				return (T) requestTraceReporter;
+	public <T extends SpanReporter> T getReporter(Class<T> reporterClass) {
+		for (SpanReporter spanReporter : spanReporters) {
+			if (spanReporter.getClass() == reporterClass) {
+				return (T) spanReporter;
 			}
 		}
 		return null;

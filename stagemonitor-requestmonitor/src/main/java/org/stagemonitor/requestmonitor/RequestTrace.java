@@ -31,7 +31,7 @@ import io.opentracing.NoopTracer;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A request trace is a data structure containing all the important information about a request.
@@ -70,13 +70,15 @@ public class RequestTrace {
 	private String clientIp;
 	private String uniqueVisitorId;
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
-	@JsonIgnore
-	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 	@JsonIgnore
 	private List<ExternalRequest> externalRequests = new LinkedList<ExternalRequest>();
-
+	@JsonIgnore
 	protected Span span = new NoopTracer().buildSpan(null).start();
+	@JsonIgnore
+	private long executionTimeNanos;
+	@JsonIgnore
+	private long executionTimeCpuNanos;
 
 	public RequestTrace(String requestId) {
 		this(requestId, Stagemonitor.getMeasurementSession(), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
@@ -90,9 +92,6 @@ public class RequestTrace {
 		this.host = measurementSession.getHostName();
 		this.instance = measurementSession.getInstanceName();
 		this.timestamp = StringUtils.dateAsIsoString(new Date());
-		span.setTag("application", application);
-		span.setTag("host", host);
-		span.setTag("instance", instance);
 	}
 
 	public boolean isError() {
@@ -167,7 +166,6 @@ public class RequestTrace {
 	}
 
 	public void setExecutionTimeCpu(long executionTimeCpu) {
-		span.setTag("duration_cpu", MILLISECONDS.toMicros(executionTimeCpu));
 		this.executionTimeCpu = executionTimeCpu;
 	}
 
@@ -342,19 +340,6 @@ public class RequestTrace {
 		customProperties.put(key, value);
 	}
 
-	/**
-	 * Adds an attribute to the request which can later be retrieved by {@link #getRequestAttribute(String)}
-	 * <p/>
-	 * The attributes won't be reported
-	 */
-	public void addRequestAttribute(String key, Object value) {
-		requestAttributes.put(key, value);
-	}
-
-	public Object getRequestAttribute(String key) {
-		return requestAttributes.get(key);
-	}
-
 	public String getUniqueVisitorId() {
 		return uniqueVisitorId;
 	}
@@ -401,11 +386,25 @@ public class RequestTrace {
 		callStack.recycle();
 	}
 
-	public Span getSpan() {
-		return span;
-	}
-
 	public void setSpan(Span span) {
 		this.span = span;
+	}
+
+
+	public void setExecutionTimeNanos(long executionTimeNanos) {
+		this.executionTimeNanos = executionTimeNanos;
+	}
+
+	public long getExecutionTimeNanos() {
+		return executionTimeNanos;
+	}
+
+	public void setExecutionTimeCpuNanos(long executionTimeCpuNanos) {
+		span.setTag("duration_cpu", NANOSECONDS.toMicros(executionTimeCpu));
+		this.executionTimeCpuNanos = executionTimeCpuNanos;
+	}
+
+	public long getExecutionTimeCpuNanos() {
+		return executionTimeCpuNanos;
 	}
 }
