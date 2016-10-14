@@ -224,7 +224,7 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		info.requestTrace = monitoredRequest.createRequestTrace();
 		info.span = monitoredRequest.createSpan();
-		for (Map.Entry<String, String> entry : corePlugin.getMeasurementSession().asMap().entrySet()) {
+		for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
 			info.span.setTag(entry.getKey(), entry.getValue());
 		}
 		if (info.requestTrace != null) {

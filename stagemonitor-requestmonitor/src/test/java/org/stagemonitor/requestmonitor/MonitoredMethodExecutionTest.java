@@ -42,6 +42,7 @@ public class MonitoredMethodExecutionTest {
 		when(requestMonitorPlugin.getNoOfWarmupRequests()).thenReturn(0);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
+		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 
 		final Tracer tracer = new Tracer.Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();

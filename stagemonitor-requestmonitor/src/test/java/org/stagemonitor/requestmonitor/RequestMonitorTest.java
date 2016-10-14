@@ -1,7 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
@@ -21,6 +20,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
@@ -83,8 +83,8 @@ public class RequestMonitorTest {
 
 	@After
 	public void after() {
+		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
-		SharedMetricRegistries.clear();
 	}
 
 	@Test
@@ -227,6 +227,8 @@ public class RequestMonitorTest {
 			return monitorAsyncMethodCall(executorService, asyncSpan);
 		}));
 		executorService.shutdown();
+		RequestTrace firstRequestTrace = requestTraceCapturingReporter.get();
+		RequestTrace asyncRequestTrace = requestTraceCapturingReporter.get();
 		assertEquals("test", firstSpan[0].getOperationName());
 		assertEquals("async", asyncSpan[0].getOperationName());
 		assertEquals(firstSpan[0].context().getSpanID(), asyncSpan[0].context().getParentID());

@@ -79,4 +79,9 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 	public boolean isActive(IsActiveArguments isActiveArguments) {
 		return true;
 	}
+
+	@Override
+	public boolean requiresCallTree() {
+		return false;
+	}
 }
