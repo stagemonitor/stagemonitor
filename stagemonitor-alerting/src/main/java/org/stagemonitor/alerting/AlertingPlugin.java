@@ -221,7 +221,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		final AlertingPlugin alertingPlugin = initArguments.getPlugin(AlertingPlugin.class);
 		alertSender = new AlertSender(initArguments.getConfiguration());
 		CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
-		if (corePlugin.getElasticsearchUrl() != null) {
+		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
 			incidentRepository = new ElasticsearchIncidentRepository(corePlugin.getElasticsearchClient());
 		} else {
 			incidentRepository = new ConcurrentMapIncidentRepository();

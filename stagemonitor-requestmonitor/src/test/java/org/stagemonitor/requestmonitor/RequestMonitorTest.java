@@ -1,22 +1,9 @@
 package org.stagemonitor.requestmonitor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.Collections;
-
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,6 +17,20 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
+import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+
 
 public class RequestMonitorTest {
 
@@ -38,6 +39,7 @@ public class RequestMonitorTest {
 	private Metric2Registry registry;
 	private RequestMonitor requestMonitor;
 	private Configuration configuration;
+	private ElasticsearchClient elasticsearchClient;
 
 	@Before
 	public void before() {
@@ -52,7 +54,9 @@ public class RequestMonitorTest {
 		doReturn(true).when(corePlugin).isStagemonitorActive();
 		doReturn(1000).when(corePlugin).getThreadPoolQueueCapacityLimit();
 		doReturn(Collections.singletonList("http://mockhost:9200")).when(corePlugin).getElasticsearchUrls();
-		doReturn(mock(ElasticsearchClient.class)).when(corePlugin).getElasticsearchClient();
+		elasticsearchClient = mock(ElasticsearchClient.class);
+		doReturn(true).when(elasticsearchClient).isElasticsearchAvailable();
+		doReturn(elasticsearchClient).when(corePlugin).getElasticsearchClient();
 		doReturn(false).when(corePlugin).isOnlyLogElasticsearchMetricReports();
 
 		doReturn(true).when(requestMonitorPlugin).isCollectRequestStats();

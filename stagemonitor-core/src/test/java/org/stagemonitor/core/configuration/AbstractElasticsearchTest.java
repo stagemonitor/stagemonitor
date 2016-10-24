@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.util.HttpClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class AbstractElasticsearchTest {
 			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
 			when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(elasticsearchUrl));
 			when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-			elasticsearchClient = new ElasticsearchClient(corePlugin);
+			elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1);
 
 			node = nodeBuilder.node();
 			node.client().admin().cluster().prepareHealth().setWaitForGreenStatus().get();

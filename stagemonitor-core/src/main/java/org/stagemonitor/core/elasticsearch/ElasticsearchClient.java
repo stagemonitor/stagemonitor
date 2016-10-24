@@ -38,6 +38,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.stagemonitor.core.util.StringUtils.slugify;
 
@@ -47,11 +49,12 @@ public class ElasticsearchClient {
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
 	private final CorePlugin corePlugin;
+	private final AtomicBoolean elasticsearchAvailable = new AtomicBoolean(true);
 
 	private final ThreadPoolExecutor asyncESPool;
 	private Timer timer;
 
-	public ElasticsearchClient(CorePlugin corePlugin) {
+	public ElasticsearchClient(final CorePlugin corePlugin, final HttpClient httpClient, int esAvailabilityCheckIntervalSec) {
 		this.corePlugin = corePlugin;
 		asyncESPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-elasticsearch", corePlugin.getThreadPoolQueueCapacityLimit());
@@ -60,7 +63,11 @@ public class ElasticsearchClient {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncESPool, "internal.asyncESPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetric2Registry());
 		}
-		this.httpClient = new HttpClient();
+		this.httpClient = httpClient;
+		if (esAvailabilityCheckIntervalSec > 0) {
+			final long period = TimeUnit.SECONDS.toMillis(esAvailabilityCheckIntervalSec);
+			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin), period, period);
+		}
 	}
 
 	public JsonNode getJson(final String path) throws IOException {
@@ -97,13 +104,16 @@ public class ElasticsearchClient {
 	}
 
 	public int sendAsJson(final String method, final String path, final Object requestBody) {
-		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
+		if (!isElasticsearchAvailable()) {
 			return -1;
 		}
 		return httpClient.sendAsJson(method, corePlugin.getElasticsearchUrl() + path, requestBody);
 	}
 
 	public void index(final String index, final String type, final Object document) {
+		if (!isElasticsearchAvailable()) {
+			return;
+		}
 		final ObjectNode json = JsonUtils.toObjectNode(document);
 		removeDisallowedCharsFromPropertyNames(json);
 
@@ -134,7 +144,7 @@ public class ElasticsearchClient {
 	}
 
 	private Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
-		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
+		if (isElasticsearchAvailable()) {
 			try {
 				return asyncESPool.submit(new Runnable() {
 					@Override
@@ -158,7 +168,7 @@ public class ElasticsearchClient {
 	}
 
 	public Future<?> sendDashboardAsync(String path, String dashboardPath) {
-		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
+		if (isElasticsearchAvailable()) {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
 				final String titleSlug = slugify(dashboard.get(TITLE).asText());
@@ -212,7 +222,7 @@ public class ElasticsearchClient {
 	}
 
 	public void sendBulk(String endpoint, HttpClient.OutputStreamHandler outputStreamHandler) {
-		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
+		if (!isElasticsearchAvailable()) {
 			return;
 		}
 		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", null, outputStreamHandler, new BulkErrorReportingResponseHandler());
@@ -227,21 +237,19 @@ public class ElasticsearchClient {
 	}
 
 	public void updateIndexSettings(String indexPattern, Map<String, ?> settings) {
-		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
-		if (StringUtils.isEmpty(elasticsearchUrl)) {
+		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		final String url = elasticsearchUrl + "/" + indexPattern + "/_settings?ignore_unavailable=true";
+		final String url = corePlugin.getElasticsearchUrl() + "/" + indexPattern + "/_settings?ignore_unavailable=true";
 		logger.info("Updating index settings {}\n{}", url, settings);
 		httpClient.sendAsJson("PUT", url, settings);
 	}
 
 	private void execute(String method, String path, String logMessage) {
-		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
-		if (StringUtils.isEmpty(elasticsearchUrl)) {
+		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		final String url = elasticsearchUrl + "/" + path;
+		final String url = corePlugin.getElasticsearchUrl() + "/" + path;
 		logger.info(logMessage, url);
 		try {
 			httpClient.send(method, url);
@@ -308,10 +316,14 @@ public class ElasticsearchClient {
 	}
 
 	public static String getBulkHeader(String action, String index, String type) {
-		return "{\""+action+"\":" +
+		return "{\"" + action + "\":" +
 				"{\"_index\":\"" + index + "\"," +
 				"\"_type\":\"" + type + "\"}" +
 				"}\n";
+	}
+
+	public boolean isElasticsearchAvailable() {
+		return !corePlugin.getElasticsearchUrls().isEmpty() && elasticsearchAvailable.get();
 	}
 
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
@@ -319,7 +331,7 @@ public class ElasticsearchClient {
 		private static final Logger logger = LoggerFactory.getLogger(BulkErrorReportingResponseHandler.class);
 
 		@Override
-		public Void handleResponse(InputStream is, Integer statusCode) throws IOException {
+		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
 			if (bulkResponse.get("errors").booleanValue()) {
 				reportBulkErrors(bulkResponse.get("items"));
@@ -361,5 +373,42 @@ public class ElasticsearchClient {
 			logger.warn(sb.toString());
 		}
 
+	}
+
+	private class CheckEsAvailability extends TimerTask {
+		private final HttpClient httpClient;
+		private final CorePlugin corePlugin;
+
+		public CheckEsAvailability(HttpClient httpClient, CorePlugin corePlugin) {
+			this.httpClient = httpClient;
+			this.corePlugin = corePlugin;
+		}
+
+		@Override
+		public void run() {
+			// TODO actually, the availability check has to be performed for each URL as multiple ES urls can be configured
+			// in the future, detect all available nodes in the cluster: http://{oneOfTheProvidedUrls}/_nodes/box_type:hot/none
+			// -> response.nodes*.http_address
+			final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
+			if (StringUtils.isEmpty(elasticsearchUrl)) {
+				return;
+			}
+			httpClient.send("HEAD", elasticsearchUrl, null, null, new HttpClient.ResponseHandler<Object>() {
+				@Override
+				public Object handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
+					if (e != null) {
+						logger.warn("Elasticsearch is not available. " +
+								"Stagemonitor won't try to send request traces to Elasticsearch until it is available again.");
+						elasticsearchAvailable.set(false);
+					} else {
+						if (!elasticsearchAvailable.get()) {
+							logger.info("Elasticsearch is available again.");
+						}
+						elasticsearchAvailable.set(true);
+					}
+					return null;
+				}
+			});
+		}
 	}
 }
