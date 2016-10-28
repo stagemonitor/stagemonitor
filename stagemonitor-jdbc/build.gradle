@@ -1,6 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-requestmonitor")
-	compile 'p6spy:p6spy:2.3.1'
+	compile 'p6spy:p6spy:3.0.0'
 
 	testCompile 'org.apache.tomcat:tomcat-jdbc:8.5.0'
 	testCompile 'org.hsqldb:hsqldb:2.3.3'
@@ -8,4 +8,5 @@ dependencies {
 	testCompile 'com.zaxxer:HikariCP:2.4.6'
 	testCompile 'org.apache.commons:commons-dbcp2:2.1.1'
 	testCompile 'commons-dbcp:commons-dbcp:1.4'
+	testCompile 'com.alibaba:druid:1.0.26'
 }

@@ -1,8 +1,10 @@
 package org.stagemonitor.jdbc;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Timer;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.p6spy.engine.spy.P6DataSource;
 import com.zaxxer.hikari.HikariDataSource;
 
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -50,7 +52,7 @@ public class ConnectionMonitoringTransformerTest {
 	private Metric2Registry metric2Registry;
 	private TestDao testDao;
 
-	@Parameterized.Parameters
+	@Parameterized.Parameters(name = "{index}: {1}")
 	public static Iterable<Object[]> data() throws Exception {
 		final PoolProperties poolProperties = new PoolProperties();
 		poolProperties.setDriverClassName(DRIVER_CLASS_NAME);
@@ -73,10 +75,22 @@ public class ConnectionMonitoringTransformerTest {
 		dbcp2.setDriverClassName(DRIVER_CLASS_NAME);
 		dbcp2.setUrl(URL);
 
-		return Arrays.asList(new Object[][]{{tomcatDataSource}, {comboPooledDataSource}, {hikariDataSource}, {dbcp}, {dbcp2}});
+		DruidDataSource druidDataSource = new DruidDataSource();
+		druidDataSource.setDriverClassName(DRIVER_CLASS_NAME);
+		druidDataSource.setUrl(URL);
+		druidDataSource.setTestWhileIdle(false);
+
+		return Arrays.asList(new Object[][]{
+				{tomcatDataSource, tomcatDataSource.getClass()},
+				{comboPooledDataSource, comboPooledDataSource.getClass()},
+				{hikariDataSource, hikariDataSource.getClass()},
+				{dbcp, dbcp.getClass()},
+				{dbcp2, dbcp2.getClass()},
+				{new P6DataSource(druidDataSource), druidDataSource.getClass()}
+		});
 	}
 
-	public ConnectionMonitoringTransformerTest(DataSource dataSource) {
+	public ConnectionMonitoringTransformerTest(DataSource dataSource, Class<? extends DataSource> dataSourceClass) {
 		this.dataSource = dataSource;
 	}
 
@@ -116,7 +130,7 @@ public class ConnectionMonitoringTransformerTest {
 					}
 				})).getRequestTraceReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:hsqldb:mem:test-SA").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
 	}
 
 	@Test
@@ -136,7 +150,7 @@ public class ConnectionMonitoringTransformerTest {
 					}
 				})).getRequestTraceReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "jdbc:hsqldb:mem:test-SA").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
 	}
 
 	@Test
