@@ -1,18 +1,22 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.uber.jaeger.reporters.LoggingReporter;
+import com.uber.jaeger.samplers.ConstSampler;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.requestmonitor.ExternalRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
+
+import java.util.concurrent.TimeUnit;
+
+import io.opentracing.Span;
+import io.opentracing.tag.Tags;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -20,9 +24,10 @@ import static org.mockito.Mockito.when;
 
 public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends AbstractElasticsearchTest {
 
-	protected ElasticsearchExternalRequestReporter reporter;
+	protected ElasticsearchSpanReporter reporter;
 	protected RequestMonitorPlugin requestMonitorPlugin;
 	protected Configuration configuration;
+	private com.uber.jaeger.Tracer tracer;
 
 	@Before
 	public void setUp() throws Exception {
@@ -33,37 +38,48 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1000000d);
-		reporter = new ElasticsearchExternalRequestReporter();
+		reporter = new ElasticsearchSpanReporter();
 		reporter.init(new SpanReporter.InitArguments(configuration));
-		final String mappingTemplate = IOUtils.getResourceAsString("stagemonitor-elasticsearch-external-requests-index-template.json");
-		elasticsearchClient.sendMappingTemplateAsync(mappingTemplate, "stagemonitor-external-requests");
+		final String mappingTemplate = IOUtils.getResourceAsString("stagemonitor-elasticsearch-span-index-template.json");
+		elasticsearchClient.sendMappingTemplateAsync(mappingTemplate, "stagemonitor-spans");
 		elasticsearchClient.waitForCompletion();
+		tracer = new com.uber.jaeger.Tracer.Builder("ElasticsearchExternalRequestTraceReporterIntegrationTest", new LoggingReporter(), new ConstSampler(true)).build();
+
 	}
 
 	@Test
 	public void reportTemplateCreated() throws Exception {
-		final JsonNode template = elasticsearchClient.getJson("/_template/stagemonitor-external-requests").get("stagemonitor-external-requests");
-		assertEquals("stagemonitor-external-requests-*", template.get("template").asText());
+		final JsonNode template = elasticsearchClient.getJson("/_template/stagemonitor-spans").get("stagemonitor-spans");
+		assertEquals("stagemonitor-spans-*", template.get("template").asText());
 		assertEquals(false, template.get("mappings").get("_default_").get("_all").get("enabled").asBoolean());
 	}
 
 	@Test
-	public void reportRequestTrace() throws Exception {
-		final RequestTrace requestTrace = new RequestTrace("abc", new MeasurementSession(getClass().getName(), "test", "test"), requestMonitorPlugin);
-		requestTrace.setName("Report Me");
-		final ExternalRequest externalRequest = new ExternalRequest("jdbc", "SELECT", 1000000, "SELECT * from STAGEMONITOR where 1 < 2", "foo@jdbc:bar");
-		externalRequest.setExecutedBy("ElasticsearchExternalRequestTraceReporterIntegrationTest#test");
-		requestTrace.addExternalRequest(externalRequest);
-		reporter.report(new SpanReporter.ReportArguments(requestTrace, null));
+	public void reportSpan() throws Exception {
+		reporter.report(new SpanReporter.ReportArguments(null, getSpan(100)));
 		elasticsearchClient.waitForCompletion();
 		refresh();
-		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-external-requests*/_search").get("hits");
+		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
 		assertEquals(1, hits.get("total").intValue());
 		final JsonNode requestTraceJson = hits.get("hits").elements().next().get("_source");
-		assertEquals("jdbc", requestTraceJson.get("request_type").asText());
-		assertEquals("SELECT", requestTraceJson.get("request_method").asText());
-		assertEquals(1.0d, requestTraceJson.get("execution_time").asDouble(), 0.0000001);
+		assertEquals("jdbc", requestTraceJson.get("type").asText());
+		assertEquals("SELECT", requestTraceJson.get("method").asText());
+		assertEquals(100000, requestTraceJson.get("duration").asInt());
 		assertEquals("SELECT * from STAGEMONITOR where 1 < 2", requestTraceJson.get("request").asText());
-		assertEquals("ElasticsearchExternalRequestTraceReporterIntegrationTest#test", requestTraceJson.get("executed_by").asText());
+		assertEquals("ElasticsearchExternalRequestTraceReporterIntegrationTest#test", requestTraceJson.get("name").asText());
+	}
+
+	private Span getSpan(long executionTimeMillis) {
+		final Span span = tracer
+				.buildSpan("ElasticsearchExternalRequestTraceReporterIntegrationTest#test")
+				.withStartTimestamp(1)
+				.start();
+		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
+		span.setTag("type", "jdbc");
+		span.setTag("method", "SELECT");
+		span.setTag("request", "SELECT * from STAGEMONITOR where 1 < 2");
+		Tags.PEER_SERVICE.set(span, "foo@jdbc:bar");
+		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis) + 1);
+		return span;
 	}
 }

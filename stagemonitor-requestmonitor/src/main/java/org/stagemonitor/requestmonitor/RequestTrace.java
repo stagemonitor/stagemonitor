@@ -19,11 +19,8 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,9 +67,6 @@ public class RequestTrace {
 	private String clientIp;
 	private String uniqueVisitorId;
 	private Map<String, Object> customProperties = new HashMap<String, Object>();
-	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
-	@JsonIgnore
-	private List<ExternalRequest> externalRequests = new LinkedList<ExternalRequest>();
 	@JsonIgnore
 	protected Span span = new NoopTracer().buildSpan(null).start();
 	@JsonIgnore
@@ -347,25 +341,6 @@ public class RequestTrace {
 	public void setUniqueVisitorId(String uniqueVisitorId) {
 		span.setTag("tracking.uniqueVisitorId", uniqueVisitorId);
 		this.uniqueVisitorId = uniqueVisitorId;
-	}
-
-	public List<ExternalRequest> getExternalRequests() {
-		return externalRequests;
-	}
-
-	public void addExternalRequest(ExternalRequest externalRequest) {
-		externalRequest.setRequestTrace(this);
-		final ExternalRequestStats stats = this.externalRequestStats.get(externalRequest.getRequestType());
-		if (stats == null) {
-			externalRequestStats.put(externalRequest.getRequestType(), new ExternalRequestStats(externalRequest));
-		} else {
-			stats.add(externalRequest);
-		}
-		externalRequests.add(externalRequest);
-	}
-
-	public Collection<ExternalRequestStats> getExternalRequestStats() {
-		return externalRequestStats.values();
 	}
 
 	@Override

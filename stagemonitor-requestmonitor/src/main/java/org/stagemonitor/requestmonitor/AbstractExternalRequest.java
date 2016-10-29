@@ -29,7 +29,9 @@ public abstract class AbstractExternalRequest implements MonitoredRequest<Reques
 		final String callerSignature = CallerUtil.getCallerSignature();
 		final Span span;
 		if (!TracingUtils.getTraceContext().isEmpty()) {
-			span = tracer.buildSpan(callerSignature).asChildOf(TracingUtils.getTraceContext().getCurrentSpan()).start();
+			final Span currentSpan = TracingUtils.getTraceContext().getCurrentSpan();
+			span = tracer.buildSpan(callerSignature).asChildOf(currentSpan).start();
+			span.setTag("parent_name", ((com.uber.jaeger.Span)span).getOperationName());
 		} else {
 			span = tracer.buildSpan(callerSignature).start();
 		}

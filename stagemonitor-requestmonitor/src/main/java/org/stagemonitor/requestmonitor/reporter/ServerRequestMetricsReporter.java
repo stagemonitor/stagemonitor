@@ -3,7 +3,6 @@ package org.stagemonitor.requestmonitor.reporter;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.ExternalRequestStats;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
@@ -12,10 +11,6 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ServerRequestMetricsReporter extends SpanReporter {
 
-	private static final MetricName.MetricNameTemplate externalRequestRateTemplate = name("external_requests_rate")
-			.templateFor("request_name", "type");
-	private static final MetricName.MetricNameTemplate responseTimeExternalRequestLayerTemplate = name("response_time_server")
-			.templateFor("request_name", "layer");
 	private static final MetricName.MetricNameTemplate responseTimeCpuTemplate = name("response_time_cpu")
 			.tag("request_name", "").layer("All")
 			.templateFor("request_name");
@@ -58,31 +53,10 @@ public class ServerRequestMetricsReporter extends SpanReporter {
 			metricRegistry.meter(getErrorMetricName(requestName)).mark();
 			metricRegistry.meter(getErrorMetricName("All")).mark();
 		}
-		trackExternalRequestMetrics(requestName, requestTrace);
 	}
 
 	public static MetricName getErrorMetricName(String requestName) {
 		return errorRateTemplate.build(requestName);
-	}
-
-	private <T extends RequestTrace> void trackExternalRequestMetrics(String requestName, T requestTrace) {
-		for (ExternalRequestStats externalRequestStats : requestTrace.getExternalRequestStats()) {
-			if (externalRequestStats.getExecutionTimeNanos() > 0) {
-				if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
-					metricRegistry.timer(responseTimeExternalRequestLayerTemplate
-							.build(requestName, externalRequestStats.getRequestType()))
-							.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
-				}
-				metricRegistry.timer(responseTimeExternalRequestLayerTemplate
-						.build("All", externalRequestStats.getRequestType()))
-						.update(externalRequestStats.getExecutionTimeNanos(), NANOSECONDS);
-			}
-			// the difference to ElasticsearchExternalRequestReporter is that the
-			// external_requests_rate is grouped by the request name, not the dao method name
-			metricRegistry.meter(externalRequestRateTemplate
-					.build(requestName, externalRequestStats.getRequestType()))
-					.mark(externalRequestStats.getExecutionCount());
-		}
 	}
 
 	public static MetricName getTimerMetricName(String requestName) {
