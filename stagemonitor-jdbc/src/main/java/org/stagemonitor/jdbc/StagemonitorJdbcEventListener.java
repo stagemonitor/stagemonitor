@@ -10,14 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.instrument.CallerUtil;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.MonitoredRequest;
-import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.AbstractExternalRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import java.sql.Connection;
@@ -30,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
 import io.opentracing.Span;
-import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -114,56 +110,16 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 		return sql.trim();
 	}
 
-	private static class MonitoredJdbcRequest implements MonitoredRequest<RequestTrace> {
-
-		private final RequestMonitorPlugin requestMonitorPlugin;
-		private final String jdbc = "jdbc";
+	private static class MonitoredJdbcRequest extends AbstractExternalRequest {
 
 		private MonitoredJdbcRequest(RequestMonitorPlugin requestMonitorPlugin) {
-			this.requestMonitorPlugin = requestMonitorPlugin;
+			super(requestMonitorPlugin);
 		}
 
 		@Override
-		public String getInstanceName() {
-			return null;
+		protected String getType() {
+			return "jdbc";
 		}
 
-		@Override
-		public RequestTrace createRequestTrace() {
-			return null;
-		}
-
-		@Override
-		public Span createSpan() {
-			final Tracer tracer = requestMonitorPlugin.getTracer();
-			final String callerSignature = CallerUtil.getCallerSignature();
-			final Span span;
-			if (!TracingUtils.getTraceContext().isEmpty()) {
-				span = tracer.buildSpan(callerSignature).asChildOf(TracingUtils.getTraceContext().getCurrentSpan()).start();
-			} else {
-				span = tracer.buildSpan(callerSignature).start();
-			}
-			Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
-			span.setTag("type", getType());
-			return span;
-		}
-
-		private String getType() {
-			return jdbc;
-		}
-
-		@Override
-		public Object execute() throws Exception {
-			return null;
-		}
-
-		@Override
-		public void onPostExecute(RequestMonitor.RequestInformation<RequestTrace> requestInformation) {
-		}
-
-		@Override
-		public boolean isMonitorForwardedExecutions() {
-			return true;
-		}
 	}
 }

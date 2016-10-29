@@ -17,16 +17,18 @@ public class PreExecutionInterceptorContext {
 	private final Configuration configuration;
 	private final RequestTrace requestTrace;
 	private final Span span;
-	private final Meter reportingRate;
+	private final Meter internalRequestReportingRate;
+	private final Meter externalRequestReportingRate;
 	private final Metric2Registry metricRegistry;
 	private boolean mustReport = false;
 	private boolean report = true;
 
-	PreExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Span span, Meter reportingRate, Metric2Registry metricRegistry) {
+	PreExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Span span, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
 		this.requestTrace = requestTrace;
 		this.span = span;
-		this.reportingRate = reportingRate;
+		this.externalRequestReportingRate = externalRequestReportingRate;
+		this.internalRequestReportingRate = internalRequestReportingRate;
 		this.metricRegistry = metricRegistry;
 	}
 
@@ -45,11 +47,6 @@ public class PreExecutionInterceptorContext {
 		return this;
 	}
 
-	public PreExecutionInterceptorContext addProperty(String key, Object value) {
-		requestTrace.addCustomProperty(key, value);
-		return this;
-	}
-
 	public RequestTrace getRequestTrace() {
 		return requestTrace;
 	}
@@ -57,9 +54,16 @@ public class PreExecutionInterceptorContext {
 	public Span getSpan() {
 		return span;
 	}
+	public com.uber.jaeger.Span getInternalSpan() {
+		return (com.uber.jaeger.Span) span;
+	}
 
-	public Meter getReportingRate() {
-		return reportingRate;
+	public Meter getExternalRequestReportingRate() {
+		return externalRequestReportingRate;
+	}
+
+	public Meter getInternalRequestReportingRate() {
+		return internalRequestReportingRate;
 	}
 
 	public boolean isReport() {

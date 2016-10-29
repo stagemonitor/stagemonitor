@@ -1,5 +1,8 @@
 package org.stagemonitor.requestmonitor.reporter;
 
+import com.uber.jaeger.reporters.NoopReporter;
+import com.uber.jaeger.samplers.ConstSampler;
+
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
@@ -37,6 +40,7 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.singleton("Report Me"));
+		when(requestMonitorPlugin.getTracer()).thenReturn(new com.uber.jaeger.Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true)).build());
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));

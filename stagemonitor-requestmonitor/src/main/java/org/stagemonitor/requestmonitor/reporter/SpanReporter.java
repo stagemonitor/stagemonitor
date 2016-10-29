@@ -102,5 +102,9 @@ public abstract class SpanReporter implements StagemonitorSPI {
 			return span;
 		}
 
+		public com.uber.jaeger.Span getInternalSpan() {
+			return (com.uber.jaeger.Span) span;
+		}
+
 	}
 }

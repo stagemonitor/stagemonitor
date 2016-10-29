@@ -22,7 +22,8 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 	protected Collection<PostExecutionRequestTraceReporterInterceptor> postInterceptors =
 			new CopyOnWriteArrayList<PostExecutionRequestTraceReporterInterceptor>();
 	protected Configuration configuration;
-	private Meter reportingRate = new Meter();
+	private Meter internalRequestReportingRate = new Meter();
+	private Meter externalRequestReportingRate = new Meter();
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
@@ -48,6 +49,7 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 	private void registerPostInterceptors() {
 		this.postInterceptors.add(new NameFilteringPostExecutionInterceptor());
 		this.postInterceptors.add(new CallTreeExcludingPostExecutionInterceptor());
+		this.postInterceptors.add(new FastExecutionExclustionPostExecutionInterceptor());
 
 		for (PreExecutionRequestTraceReporterInterceptor interceptor : ServiceLoader.load(
 				PreExecutionRequestTraceReporterInterceptor.class,
@@ -59,7 +61,7 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 	@Override
 	public void report(ReportArguments reportArguments) {
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, reportArguments.getRequestTrace(),
-				reportArguments.getSpan(), reportingRate, corePlugin.getMetricRegistry());
+				reportArguments.getSpan(), internalRequestReportingRate, externalRequestReportingRate, corePlugin.getMetricRegistry());
 		for (PostExecutionRequestTraceReporterInterceptor interceptor : postInterceptors) {
 			try {
 				interceptor.interceptReport(context);
@@ -68,7 +70,11 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 			}
 		}
 		if (context.isReport()) {
-			reportingRate.mark();
+			if (reportArguments.getInternalSpan().isRPCClient()) {
+				externalRequestReportingRate.mark();
+			} else {
+				internalRequestReportingRate.mark();
+			}
 			doReport(reportArguments, context);
 		}
 	}
@@ -78,7 +84,7 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 	@Override
 	public boolean isActive(IsActiveArguments isActiveArguments) {
 		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration, isActiveArguments.getRequestTrace(),
-				isActiveArguments.getSpan(), reportingRate, corePlugin.getMetricRegistry());
+				isActiveArguments.getSpan(), internalRequestReportingRate, externalRequestReportingRate, corePlugin.getMetricRegistry());
 		for (PreExecutionRequestTraceReporterInterceptor interceptor : preInterceptors) {
 			try {
 				interceptor.interceptReport(context);

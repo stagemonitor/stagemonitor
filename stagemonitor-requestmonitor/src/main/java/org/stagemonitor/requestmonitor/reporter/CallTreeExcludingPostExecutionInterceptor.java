@@ -13,10 +13,10 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 		}
 
 		if (context.getRequestTrace().getCallStack() == null) {
-			context.addProperty("containsCallTree", false);
+			context.getSpan().setTag("containsCallTree", false);
 			return;
 		} else {
-			context.addProperty("containsCallTree", true);
+			context.getSpan().setTag("containsCallTree", true);
 		}
 
 		final double percentileLimit = context
@@ -30,6 +30,6 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 	}
 
 	private void exclude(PostExecutionInterceptorContext context) {
-		context.addExcludedProperties("callStack", "callStackJson", "callTreeAscii", "callTreeJson").addProperty("containsCallTree", false);
+		context.addExcludedProperties("callStack", "callStackJson", "callTreeAscii", "callTreeJson").getSpan().setTag("containsCallTree", false);
 	}
 }

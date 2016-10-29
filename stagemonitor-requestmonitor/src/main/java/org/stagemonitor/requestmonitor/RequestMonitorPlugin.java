@@ -186,7 +186,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
 			.label("Only report N requests per minute to ES")
-			.description("Limits the rate at which request traces are reported to Elasticsearch. " +
+			.description("Limits the rate at which spans are reported to Elasticsearch. " +
 					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
 			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
@@ -195,9 +195,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.requestmonitor.elasticsearch.onlyLogElasticsearchRequestTraceReports")
 			.dynamic(true)
 			.label("Only log Elasticsearch request trace reports")
-			.description(String.format("If set to true, the request traces won't be reported to elasticsearch but instead logged in bulk format. " +
+			.description(String.format("If set to true, the spans won't be reported to elasticsearch but instead logged in bulk format. " +
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
-					"different external process to send the request traces to elasticsearch.", ElasticsearchRequestTraceReporter.ES_REQUEST_TRACE_LOGGER))
+					"different external process to send the spans to elasticsearch.", ElasticsearchRequestTraceReporter.ES_REQUEST_TRACE_LOGGER))
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
@@ -283,7 +283,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
 			.dynamic(true)
 			.label("Only report N external requests per minute to ES")
-			.description("Limits the rate at which external request traces are reported to Elasticsearch. " +
+			.description("Limits the rate at which external spans are reported to Elasticsearch. " +
 					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
 			.defaultValue(0d)
 			.tags("external-requests")

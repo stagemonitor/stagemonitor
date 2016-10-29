@@ -364,18 +364,6 @@ public class RequestTrace {
 		externalRequests.add(externalRequest);
 	}
 
-	public void addTimeToExternalRequest(ExternalRequest externalRequest, long additionalExecutionTime) {
-		externalRequest.incrementExecutionTime(additionalExecutionTime);
-		final ExternalRequestStats externalRequestStats = this.externalRequestStats.get(externalRequest.getRequestType());
-		if (externalRequestStats != null) {
-			externalRequestStats.incrementExecutionTime(additionalExecutionTime);
-		}
-		final CallStackElement callStackElement = externalRequest.getCallStackElement();
-		if (callStackElement != null) {
-			callStackElement.incrementExecutionTime(additionalExecutionTime);
-		}
-	}
-
 	public Collection<ExternalRequestStats> getExternalRequestStats() {
 		return externalRequestStats.values();
 	}

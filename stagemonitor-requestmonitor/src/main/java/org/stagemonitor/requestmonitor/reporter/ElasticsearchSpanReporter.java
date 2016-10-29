@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.uber.jaeger.LogData;
+import com.uber.jaeger.Span;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,14 +42,14 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 	protected void doReport(ReportArguments reportArguments, PostExecutionInterceptorContext context) {
 		final String index = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 		final String type = "spans";
-		if (!requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
+		if (requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
+			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", index, type) + JsonUtils.toJson(reportArguments.getSpan()));
+		} else {
 			if (context.getExcludedProperties().isEmpty()) {
 				elasticsearchClient.index(index, type, reportArguments.getSpan());
 			} else {
 				elasticsearchClient.index(index, type, JsonUtils.toObjectNode(reportArguments.getSpan()).remove(context.getExcludedProperties()));
 			}
-		} else {
-			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", index, type) + JsonUtils.toJson(reportArguments.getSpan()));
 		}
 	}
 
@@ -90,6 +92,7 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 	}
 
 	private static class SpanModule extends Module {
+
 		@Override
 		public String getModuleName() {
 			return "stagemonitor-spans";
@@ -102,22 +105,25 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 
 		@Override
 		public void setupModule(SetupContext context) {
-			context.addSerializers(new SimpleSerializers(Collections.<JsonSerializer<?>>singletonList(new JsonSerializer<com.uber.jaeger.Span>() {
+			context.addSerializers(new SimpleSerializers(Collections.<JsonSerializer<?>>singletonList(new StdSerializer<com.uber.jaeger.Span>(Span.class) {
+
 				@Override
 				public void serialize(com.uber.jaeger.Span span, JsonGenerator gen, SerializerProvider serializers) throws IOException, JsonProcessingException {
 					gen.writeStartObject();
 					for (Map.Entry<String, Object> entry : span.getTags().entrySet()) {
 						gen.writeObjectField(entry.getKey(), entry.getValue());
 					}
-					gen.writeArrayFieldStart("logs");
-					for (LogData logData : span.getLogs()) {
-						gen.writeStartObject();
-						gen.writeNumberField("time", logData.getTime());
-						gen.writeStringField("message", logData.getMessage());
-						gen.writeObjectField("payload", logData.getPayload());
-						gen.writeEndObject();
+					if (span.getLogs() != null) {
+						gen.writeArrayFieldStart("logs");
+						for (LogData logData : span.getLogs()) {
+							gen.writeStartObject();
+							gen.writeNumberField("time", logData.getTime());
+							gen.writeStringField("message", logData.getMessage());
+							gen.writeObjectField("payload", logData.getPayload());
+							gen.writeEndObject();
+						}
+						gen.writeEndArray();
 					}
-					gen.writeEndArray();
 
 					gen.writeStringField("name", span.getOperationName());
 					gen.writeNumberField("duration", span.getDuration());
@@ -127,9 +133,11 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 					gen.writeStringField("parent_id", String.format("%x", span.context().getSpanID()));
 					gen.writeBooleanField("sampled", span.context().isSampled());
 					gen.writeBooleanField("debug", span.context().isDebug());
-					gen.writeStringField("peer.service", span.getPeer().getService_name());
-					gen.writeNumberField("peer.port", span.getPeer().getPort());
-					gen.writeNumberField("peer.ipv4", span.getPeer().getIpv4());
+					if (span.getPeer() != null) {
+						gen.writeStringField("peer.service", span.getPeer().getService_name());
+						gen.writeNumberField("peer.port", span.getPeer().getPort());
+						gen.writeNumberField("peer.ipv4", span.getPeer().getIpv4());
+					}
 					gen.writeEndObject();
 				}
 			})));

@@ -26,7 +26,7 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(ReportArguments reportArguments) throws Exception {
+	public void report(ReportArguments reportArguments) {
 		final Span span = reportArguments.getSpan();
 		if (isExternalRequest(span)) {
 			trackExternalRequestMetrics((com.uber.jaeger.Span) span);
@@ -69,8 +69,8 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 		if (span instanceof com.uber.jaeger.Span) {
 			com.uber.jaeger.Span jaegerSpan = (com.uber.jaeger.Span) span;
 			return jaegerSpan.isRPCClient() &&
-					jaegerSpan.getTags().containsKey(EXTERNAL_REQUEST_TYPE) &&
-					jaegerSpan.getTags().containsKey(EXTERNAL_REQUEST_METHOD);
+					jaegerSpan.getTags().get(EXTERNAL_REQUEST_TYPE) != null &&
+					jaegerSpan.getTags().get(EXTERNAL_REQUEST_METHOD) != null;
 		}
 		return false;
 	}

@@ -19,8 +19,8 @@ public class PostExecutionInterceptorContext extends PreExecutionInterceptorCont
 
 	private final Collection<String> excludedProperties = new LinkedList<String>();
 
-	PostExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Span span, Meter reportingRate, Metric2Registry metricRegistry) {
-		super(configuration, requestTrace, span, reportingRate, metricRegistry);
+	PostExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Span span, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
+		super(configuration, requestTrace, span, internalRequestReportingRate, externalRequestReportingRate, metricRegistry);
 	}
 
 	public PostExecutionInterceptorContext addExcludedProperty(String properties) {
@@ -30,11 +30,6 @@ public class PostExecutionInterceptorContext extends PreExecutionInterceptorCont
 
 	public PostExecutionInterceptorContext addExcludedProperties(String... properties) {
 		excludedProperties.addAll(Arrays.asList(properties));
-		return this;
-	}
-
-	public PostExecutionInterceptorContext addProperty(String key, Object value) {
-		super.addProperty(key, value);
 		return this;
 	}
 
