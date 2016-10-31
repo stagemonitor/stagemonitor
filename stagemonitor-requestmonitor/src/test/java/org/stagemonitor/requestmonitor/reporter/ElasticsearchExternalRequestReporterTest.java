@@ -4,7 +4,7 @@ import com.codahale.metrics.Timer;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -40,9 +40,9 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchSpanReporter(requestTraceLogger);
-		reporter.init(new SpanReporter.InitArguments(configuration));
+		reporter.init(new SpanReporter.InitArguments(configuration, registry));
 		externalRequestMetricsReporter = new ExternalRequestMetricsReporter();
-		externalRequestMetricsReporter.init(new SpanReporter.InitArguments(configuration));
+		externalRequestMetricsReporter.init(new SpanReporter.InitArguments(configuration, registry));
 		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.emptyList());
 	}
 
@@ -143,7 +143,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final Span span = tracer.buildSpan("External Request").withStartTimestamp(1).start();
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
-		Spans.setOperationType(span, "jdbc");
+		SpanTags.setOperationType(span, "jdbc");
 		span.setTag("method", "SELECT");
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis) + 1);
 		return span;

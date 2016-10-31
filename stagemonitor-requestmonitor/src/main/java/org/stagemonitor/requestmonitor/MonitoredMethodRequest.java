@@ -3,7 +3,7 @@ package org.stagemonitor.requestmonitor;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -67,8 +67,8 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 			span = tracer.buildSpan(methodSignature).start();
 		}
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
-		Spans.setParameters(span, safeParameters);
-		Spans.setOperationType(span, "method_invocation");
+		SpanTags.setParameters(span, safeParameters);
+		SpanTags.setOperationType(span, "method_invocation");
 		return span;
 	}
 

@@ -18,11 +18,16 @@ import java.util.Map;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
-public class Spans {
+public class SpanTags {
+
+	private SpanTags() {
+	}
 
 	public static final String CALL_TREE_ASCII = "call_tree_ascii";
 	public static final String CALL_TREE_JSON = "call_tree_json";
 	public static final String HTTP_HEADERS_PREFIX = "http.headers.";
+	public static final String USERNAME = "username";
+	public static final String PARAMETERS_PREFIX = "parameters.";
 
 	public static void setClientIp(Span span, String clientIp) {
 		try {
@@ -43,7 +48,7 @@ public class Spans {
 			return;
 		}
 		for (Map.Entry<String, String> entry : parameters.entrySet()) {
-			span.setTag("parameter_" + entry.getKey(), entry.getValue());
+			span.setTag(PARAMETERS_PREFIX + entry.getKey(), entry.getValue());
 		}
 	}
 

@@ -6,6 +6,7 @@ import com.uber.jaeger.Span;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,9 @@ public class LoggingSpanReporter extends AbstractInterceptedSpanReporter {
 			sb.append("# Tags                    #\n");
 			sb.append("###########################\n");
 			for (Map.Entry<String, Object> entry : jaegerSpan.getTags().entrySet()) {
-				appendLine(sb, entry.getKey(), entry.getValue());
+				if (!SpanTags.CALL_TREE_JSON.equals(entry.getKey())) {
+					appendLine(sb, entry.getKey(), entry.getValue());
+				}
 			}
 			sb.append("###########################\n");
 			final List<LogData> logs = jaegerSpan.getLogs();
@@ -56,4 +59,8 @@ public class LoggingSpanReporter extends AbstractInterceptedSpanReporter {
 		}
 	}
 
+	@Override
+	public boolean isActive(IsActiveArguments isActiveArguments) {
+		return super.requestMonitorPlugin.isLogCallStacks() && super.isActive(isActiveArguments);
+	}
 }

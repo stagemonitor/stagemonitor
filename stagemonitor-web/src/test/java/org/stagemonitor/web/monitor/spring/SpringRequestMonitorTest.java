@@ -80,14 +80,16 @@ public class SpringRequestMonitorTest {
 	@Before
 	public void before() throws Exception {
 		Stagemonitor.reset();
+		registry.removeMatching(Metric2Filter.ALL);
+		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance")).get();
 		getRequestNameHandlerMapping = createHandlerMapping(mvcRequest, TestController.class.getMethod("testGetRequestName"));
-		registry.removeMatching(Metric2Filter.ALL);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
+		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 		final Tracer tracer = new Tracer.Builder("SpringRequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();

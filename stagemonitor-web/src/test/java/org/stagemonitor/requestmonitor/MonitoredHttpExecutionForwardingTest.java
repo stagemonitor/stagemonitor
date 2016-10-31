@@ -6,6 +6,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -36,9 +37,10 @@ public class MonitoredHttpExecutionForwardingTest {
 	@Before
 	public void clearState() {
 		Stagemonitor.reset();
+		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpExecutionForwardingTest", "testHost", "testInstance"));
 		requestInformation1 = requestInformation2 = requestInformation3 = null;
-		metricRegistry = new Metric2Registry();
+		metricRegistry = Stagemonitor.getMetric2Registry();
 		testObject = new TestObject(new RequestMonitor(Stagemonitor.getConfiguration(), metricRegistry));
 	}
 

@@ -9,7 +9,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -31,7 +31,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 	public void setUp() throws Exception {
 		super.setUp();
 		reporter = new ElasticsearchSpanReporter(requestTraceLogger);
-		reporter.init(new SpanReporter.InitArguments(configuration));
+		reporter.init(new SpanReporter.InitArguments(configuration, registry));
 	}
 
 	@Test
@@ -101,8 +101,8 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 		ArgumentCaptor<JsonNode> requestTraceCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), requestTraceCaptor.capture());
 		JsonNode span = requestTraceCaptor.getValue();
-		assertFalse(span.has(Spans.CALL_TREE_ASCII));
-		assertFalse(span.has(Spans.CALL_TREE_JSON));
+		assertFalse(span.has(SpanTags.CALL_TREE_ASCII));
+		assertFalse(span.has(SpanTags.CALL_TREE_JSON));
 		assertFalse(span.get("contains_call_tree").booleanValue());
 	}
 

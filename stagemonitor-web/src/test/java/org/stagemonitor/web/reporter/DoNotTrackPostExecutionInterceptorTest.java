@@ -12,7 +12,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 import org.stagemonitor.web.WebPlugin;
 
 import java.util.Collections;
@@ -48,14 +48,14 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		reporter = new ElasticsearchSpanReporter();
-		reporter.init(new SpanReporter.InitArguments(configuration));
+		reporter.init(new SpanReporter.InitArguments(configuration, mock(Metric2Registry.class)));
 	}
 
 	@Test
 	public void testHonorDoNotTrack() throws Exception {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		final Span span = mock(Span.class);
-		when(span.getTags()).thenReturn(Collections.singletonMap(Spans.HTTP_HEADERS_PREFIX + "dnt", "1"));
+		when(span.getTags()).thenReturn(Collections.singletonMap(SpanTags.HTTP_HEADERS_PREFIX + "dnt", "1"));
 
 		reporter.report(new SpanReporter.ReportArguments(null, span));
 
@@ -67,7 +67,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 	public void testDoNotTrackDisabled() throws Exception {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		final Span span = mock(Span.class);
-		when(span.getTags()).thenReturn(Collections.singletonMap(Spans.HTTP_HEADERS_PREFIX + "dnt", "0"));
+		when(span.getTags()).thenReturn(Collections.singletonMap(SpanTags.HTTP_HEADERS_PREFIX + "dnt", "0"));
 
 		reporter.report(new SpanReporter.ReportArguments(null, span));
 
@@ -91,7 +91,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 	public void testDontHonorDoNotTrack() throws Exception {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(false);
 		final Span span = mock(Span.class);
-		when(span.getTags()).thenReturn(Collections.singletonMap(Spans.HTTP_HEADERS_PREFIX + "dnt", "1"));
+		when(span.getTags()).thenReturn(Collections.singletonMap(SpanTags.HTTP_HEADERS_PREFIX + "dnt", "1"));
 
 		reporter.report(new SpanReporter.ReportArguments(null, span));
 

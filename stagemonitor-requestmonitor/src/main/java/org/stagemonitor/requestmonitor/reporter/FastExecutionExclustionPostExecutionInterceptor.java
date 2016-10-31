@@ -6,7 +6,7 @@ import com.uber.jaeger.Span;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +17,7 @@ public class FastExecutionExclustionPostExecutionInterceptor extends PostExecuti
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
 		final Span internalSpan = context.getInternalSpan();
-		if (Spans.isExternalRequest(internalSpan)) {
+		if (SpanTags.isExternalRequest(internalSpan)) {
 			final RequestMonitorPlugin requestMonitorPlugin = context.getConfig(RequestMonitorPlugin.class);
 			final double thresholdMs = requestMonitorPlugin.getExcludeExternalRequestsFasterThan();
 			final long durationMs = TimeUnit.MICROSECONDS.toMillis(internalSpan.getDuration());

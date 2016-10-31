@@ -8,7 +8,7 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -91,10 +91,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
 		final Span span = tracer.buildSpan(getRequestName()).asChildOf(spanCtx).start();
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
-		Spans.setOperationType(span, "http");
-		Spans.setHttpHeaders(span, getHeaders(httpServletRequest));
+		SpanTags.setOperationType(span, "http");
+		SpanTags.setHttpHeaders(span, getHeaders(httpServletRequest));
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
 		span.setTag("http.method", httpServletRequest.getMethod());
+		span.setTag("http.referring_site", getReferringSite());
+
 
 		return span;
 	}
@@ -185,14 +187,13 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 	@Override
 	public void onPostExecute(RequestMonitor.RequestInformation<HttpRequestTrace> info) {
-		HttpRequestTrace request = info.getRequestTrace();
 		final Span span = info.getSpan();
 
 		final String clientIp = getClientIp(httpServletRequest);
-		final String userName = getUserName(request);
+		final String userName = getUserName(SpanTags.getInternalSpan(span));
 		final String userAgent = httpServletRequest.getHeader("user-agent");
 		final String sessionId = getSessionId();
-		span.setTag("username", userName);
+		span.setTag(SpanTags.USERNAME, userName);
 		span.setTag("session_id", sessionId);
 		if (userName != null) {
 			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(userName));
@@ -200,17 +201,15 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(clientIp + sessionId + userAgent));
 
 		}
-		Spans.setClientIp(span, clientIp);
+		SpanTags.setClientIp(span, clientIp);
 
 		int status = responseWrapper.getStatus();
-		request.setStatusCode(status);
 		Tags.HTTP_STATUS.set(span, status);
 
 		metricRegistry.meter(throughputMetricNameTemplate.build(info.getRequestName(), Integer.toString(status))).mark();
 		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
 		if (status >= 400) {
 			Tags.ERROR.set(span, true);
-			request.setError(true);
 		}
 
 		// Search the configured exception attributes that may have been set
@@ -218,7 +217,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		for (String requestExceptionAttribute : webPlugin.getRequestExceptionAttributes()) {
 			Object exception = httpServletRequest.getAttribute(requestExceptionAttribute);
 			if (exception != null && exception instanceof Exception) {
-				Spans.setException(span, (Exception) exception, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
+				SpanTags.setException(span, (Exception) exception, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
 				break;
 			}
 		}
@@ -236,7 +235,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		Set<Pattern> confidentialParams = new HashSet<Pattern>();
 		confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
 		confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
-		Spans.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
+		SpanTags.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
 	}
 
 	private String getSessionId() {
@@ -244,9 +243,10 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		return session != null ? session.getId() : null;
 	}
 
-	private String getUserName(HttpRequestTrace request) {
-		if (request.getUsername() != null) {
-			return request.getUsername();
+	private String getUserName(com.uber.jaeger.Span span) {
+		final Object username = span.getTags().get(SpanTags.USERNAME);
+		if (username != null) {
+			return username.toString();
 		}
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		return userPrincipal != null ? userPrincipal.getName() : null;

@@ -1,12 +1,14 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import org.stagemonitor.core.CorePlugin;
+import com.uber.jaeger.Span;
+
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
 
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import io.opentracing.tag.Tags;
+
+import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ServerRequestMetricsReporter extends SpanReporter {
@@ -28,28 +30,28 @@ public class ServerRequestMetricsReporter extends SpanReporter {
 
 	@Override
 	public void init(InitArguments initArguments) {
-		metricRegistry = initArguments.getConfiguration().getConfig(CorePlugin.class).getMetricRegistry();
+		metricRegistry = initArguments.getMetricRegistry();
 		requestMonitorPlugin = initArguments.getConfiguration().getConfig(RequestMonitorPlugin.class);
 	}
 
 	@Override
 	public void report(ReportArguments reportArguments) throws Exception {
-		if (reportArguments.getRequestTrace() != null) {
-			trackMetrics(reportArguments.getRequestTrace());
+		if (!reportArguments.getInternalSpan().isRPCClient()) {
+			trackMetrics(reportArguments.getInternalSpan());
 		}
 	}
 
-	private void trackMetrics(RequestTrace requestTrace) {
-		String requestName = requestTrace.getName();
-		metricRegistry.timer(getTimerMetricName(requestName)).update(requestTrace.getExecutionTimeNanos(), NANOSECONDS);
-		metricRegistry.timer(getTimerMetricName("All")).update(requestTrace.getExecutionTimeNanos(), NANOSECONDS);
+	private void trackMetrics(Span span) {
+		String requestName = span.getOperationName();
+		metricRegistry.timer(getTimerMetricName(requestName)).update(span.getDuration(), MICROSECONDS);
+		metricRegistry.timer(getTimerMetricName("All")).update(span.getDuration(), MICROSECONDS);
 
 		if (requestMonitorPlugin.isCollectCpuTime()) {
-			metricRegistry.timer(responseTimeCpuTemplate.build(requestName)).update(requestTrace.getExecutionTimeCpuNanos(), NANOSECONDS);
-			metricRegistry.timer(responseTimeCpuTemplate.build("All")).update(requestTrace.getExecutionTimeCpuNanos(), NANOSECONDS);
+			metricRegistry.timer(responseTimeCpuTemplate.build(requestName)).update((Long) span.getTags().get("duration_cpu"), MICROSECONDS);
+			metricRegistry.timer(responseTimeCpuTemplate.build("All")).update((Long) span.getTags().get("duration_cpu"), MICROSECONDS);
 		}
 
-		if (requestTrace.isError()) {
+		if (Boolean.TRUE.equals(span.getTags().get(Tags.ERROR.getKey()))) {
 			metricRegistry.meter(getErrorMetricName(requestName)).mark();
 			metricRegistry.meter(getErrorMetricName("All")).mark();
 		}

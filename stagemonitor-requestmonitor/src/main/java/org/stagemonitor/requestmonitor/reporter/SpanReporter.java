@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 
@@ -50,13 +51,19 @@ public abstract class SpanReporter implements StagemonitorSPI {
 
 	public static class InitArguments {
 		private final Configuration configuration;
+		private final Metric2Registry metricRegistry;
 
-		public InitArguments(Configuration configuration) {
+		public InitArguments(Configuration configuration, Metric2Registry metricRegistry) {
 			this.configuration = configuration;
+			this.metricRegistry = metricRegistry;
 		}
 
 		public Configuration getConfiguration() {
 			return configuration;
+		}
+
+		public Metric2Registry getMetricRegistry() {
+			return metricRegistry;
 		}
 	}
 

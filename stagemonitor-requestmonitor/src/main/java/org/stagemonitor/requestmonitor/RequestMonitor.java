@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -20,7 +21,7 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -191,6 +192,7 @@ public class RequestMonitor {
 		if (info.requestTrace != null) {
 			info.requestTrace.setException(e);
 		}
+		SpanTags.setException(info.getSpan(), e, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {
@@ -237,6 +239,7 @@ public class RequestMonitor {
 				callTreeMeter.mark();
 				final CallStackElement root = Profiler.activateProfiling("total");
 				info.requestTrace.setCallStack(root);
+				info.callTree = root;
 			}
 		} catch (RuntimeException e) {
 			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
@@ -268,18 +271,19 @@ public class RequestMonitor {
 			requestTrace.setExecutionTimeNanos(executionTime);
 			requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
 			requestTrace.setExecutionTimeCpuNanos(cpuTime);
+			span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
 			monitoredRequest.onPostExecute(info);
 			anonymizeUserNameAndIp(requestTrace);
 
-			if (requestTrace.getCallStack() != null) {
+			final CallStackElement callTree = info.getCallTree();
+			if (callTree != null) {
 				Profiler.stop();
-				requestTrace.getCallStack().setSignature(requestTrace.getName());
-				final CallStackElement callTree = requestTrace.getCallStack();
+				callTree.setSignature(requestTrace.getName());
 				final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
 				if (minExecutionTimeMultiplier > 0d) {
 					callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
 				}
-				Spans.setCallTree(span, callTree);
+				SpanTags.setCallTree(span, callTree);
 			}
 		}
 		span.finish();
@@ -355,6 +359,12 @@ public class RequestMonitor {
 		return isCurrentThreadCpuTimeSupported ? threadMXBean.getCurrentThreadCpuTime() : 0L;
 	}
 
+	void onInit(StagemonitorPlugin.InitArguments initArguments) {
+		for (SpanReporter spanReporter : spanReporters) {
+			spanReporter.init(new SpanReporter.InitArguments(configuration, initArguments.getMetricRegistry()));
+		}
+	}
+
 	public class RequestInformation<T extends RequestTrace> {
 		T requestTrace = null;
 		private Span span;
@@ -368,6 +378,7 @@ public class RequestMonitor {
 		private RequestInformation<T> child;
 		private Future<?> requestTraceReporterFuture;
 		private Map<String, Object> requestAttributes = new HashMap<String, Object>();
+		public CallStackElement callTree;
 
 		/**
 		 * If the request has no name it means that it should not be monitored.
@@ -523,6 +534,10 @@ public class RequestMonitor {
 		public Object getRequestAttribute(String key) {
 			return requestAttributes.get(key);
 		}
+
+		public CallStackElement getCallTree() {
+			return callTree;
+		}
 	}
 
 	private boolean isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestInformation<?> requestInformation) {
@@ -602,7 +617,7 @@ public class RequestMonitor {
 	 */
 	public void addReporter(SpanReporter spanReporter) {
 		spanReporters.add(0, spanReporter);
-		spanReporter.init(new SpanReporter.InitArguments(configuration));
+		spanReporter.init(new SpanReporter.InitArguments(configuration, metricRegistry));
 	}
 
 	public <T extends SpanReporter> T getReporter(Class<T> reporterClass) {

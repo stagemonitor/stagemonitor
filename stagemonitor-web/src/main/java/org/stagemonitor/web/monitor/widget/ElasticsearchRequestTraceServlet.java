@@ -1,18 +1,18 @@
 package org.stagemonitor.web.monitor.widget;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.StringUtils;
+
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class ElasticsearchRequestTraceServlet extends HttpServlet {
 
@@ -40,7 +40,7 @@ public class ElasticsearchRequestTraceServlet extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 
 		IOUtils.write(elasticsearchClient
-				.getJson("/stagemonitor-requests*/_search?q=id:" + requestTraceId.replaceAll("[^a-zA-Z0-9\\-]", ""))
+				.getJson("/stagemonitor-spans-*/_search?q=id:" + requestTraceId.replaceAll("[^a-zA-Z0-9\\-]", ""))
 				.get("hits")
 				.get("hits")
 				.elements()

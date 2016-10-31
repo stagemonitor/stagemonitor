@@ -23,8 +23,6 @@ import io.opentracing.NoopTracer;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
 /**
  * A request trace is a data structure containing all the important information about a request.
  *
@@ -230,7 +228,6 @@ public class RequestTrace {
 		PrintWriter pw = new PrintWriter(sw, true);
 		throwable.printStackTrace(pw);
 		exceptionStackTrace = sw.getBuffer().toString();
-		span.setTag("exception.stackTrace", exceptionStackTrace);
 	}
 
 	public void setUsername(String username) {
@@ -347,7 +344,6 @@ public class RequestTrace {
 	}
 
 	public void setExecutionTimeCpuNanos(long executionTimeCpuNanos) {
-		span.setTag("duration_cpu", NANOSECONDS.toMicros(executionTimeCpu));
 		this.executionTimeCpuNanos = executionTimeCpuNanos;
 	}
 

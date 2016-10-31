@@ -24,6 +24,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -109,6 +110,17 @@ public class ConnectionMonitoringTransformerTest {
 			connection.prepareStatement("INSERT INTO STAGEMONITOR (FOO) VALUES (1)").execute();
 		}
 		requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
+		// make sure call trees are recorded
+		requestMonitor.addReporter(new SpanReporter() {
+			@Override
+			public void report(ReportArguments reportArguments) throws Exception {
+			}
+
+			@Override
+			public boolean isActive(IsActiveArguments isActiveArguments) {
+				return true;
+			}
+		});
 		configuration = Stagemonitor.getConfiguration();
 		testDao = new TestDao(dataSource);
 	}
@@ -168,7 +180,7 @@ public class ConnectionMonitoringTransformerTest {
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()));
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").tag("method", "SELECT").build()));
-		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
+		final CallStackElement callStack = requestInformation.getCallTree();
 		assertEquals("testRecordSqlPreparedStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executePreparedStatement()",
 				callStack.getChildren().get(0).getChildren().get(0).getSignature());

@@ -12,7 +12,7 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +57,7 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 		span = tracer.buildSpan("Report Me").withStartTimestamp(1).start();
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMs) + 1);
-		Spans.setCallTree(span, CallStackElement.createRoot("test"));
+		SpanTags.setCallTree(span, CallStackElement.createRoot("test"));
 		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
 		return (Span) span;
 	}

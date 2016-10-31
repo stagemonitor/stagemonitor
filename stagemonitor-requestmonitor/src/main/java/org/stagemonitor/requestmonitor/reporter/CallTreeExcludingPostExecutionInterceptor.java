@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.Spans;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +12,7 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
-		if (!context.getInternalSpan().getTags().containsKey(Spans.CALL_TREE_JSON)) {
+		if (!context.getInternalSpan().getTags().containsKey(SpanTags.CALL_TREE_JSON)) {
 			context.getSpan().setTag(CONTAINS_CALL_TREE, false);
 			return;
 		} else {
@@ -30,7 +30,7 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 	}
 
 	private void exclude(PostExecutionInterceptorContext context) {
-		context.addExcludedProperties(Spans.CALL_TREE_ASCII, Spans.CALL_TREE_JSON)
+		context.addExcludedProperties(SpanTags.CALL_TREE_ASCII, SpanTags.CALL_TREE_JSON)
 				.getSpan().setTag(CONTAINS_CALL_TREE, false);
 	}
 }

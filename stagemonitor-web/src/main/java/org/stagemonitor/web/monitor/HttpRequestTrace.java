@@ -185,7 +185,6 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	public void setReferringSite(String referringSite) {
-		span.setTag("http.referrer_site", getReferringSite());
 		this.referringSite = referringSite;
 	}
 

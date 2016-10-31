@@ -1,5 +1,7 @@
 package org.stagemonitor.web.monitor;
 
+import com.uber.jaeger.Span;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,18 +11,17 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
 
-import static java.util.Arrays.asList;
+import io.opentracing.tag.Tags;
+
 import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -64,33 +65,29 @@ public class MonitoredHttpRequestTest {
 		request.addParameter("pwd", "secret");
 		request.addParameter("creditCard", "123456789");
 		request.addHeader("Cookie", "foobar");
-		request.addHeader("accept", "application/json");
+		request.addHeader("Accept", "application/json");
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final HttpRequestTrace requestTrace = monitoredHttpRequest.createRequestTrace();
-		assertNull(requestTrace.getParameters());
-		assertEquals("/test.js", requestTrace.getUrl());
-		assertEquals("GET *.js", requestTrace.getName());
-		assertEquals("GET", requestTrace.getMethod());
-		assertEquals("GET", requestTrace.getMethod());
-		assertNotNull(requestTrace.getId());
-		assertNotNull(requestTrace.getTimestamp());
-		assertTrue("Timestamp should be in format yyyy-MM-dd'T'HH:mm:ss.SSSZ", requestTrace.getTimestamp().contains("T"));
+		final Span span = SpanTags.getInternalSpan(monitoredHttpRequest.createSpan());
+		assertEquals("/test.js", span.getTags().get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET *.js", span.getOperationName());
+		assertEquals("GET", span.getTags().get("http.method"));
+		assertNotNull(span.context().getSpanID());
+		assertNotNull(span.getStart());
 
-		assertEquals(new HashSet<String>(asList("accept")), requestTrace.getHeaders().keySet());
-		assertFalse(requestTrace.getHeaders().containsKey("cookie"));
-		assertFalse(requestTrace.getHeaders().containsKey("Cookie"));
+		assertEquals("application/json", span.getTags().get(SpanTags.HTTP_HEADERS_PREFIX + "accept"));
+		assertFalse(span.getTags().containsKey(SpanTags.HTTP_HEADERS_PREFIX + "cookie"));
+		assertFalse(span.getTags().containsKey(SpanTags.HTTP_HEADERS_PREFIX + "Cookie"));
 
 		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
-		when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
-		when(requestInformation.getRequestName()).thenReturn(requestTrace.getName());
+		when(requestInformation.getSpan()).thenReturn(span);
+		when(requestInformation.getRequestName()).thenReturn(span.getOperationName());
 		monitoredHttpRequest.onPostExecute(requestInformation);
-		final Map<String, String> parameters = requestTrace.getParameters();
-		assertEquals("bar", parameters.get("foo"));
-		assertEquals("blubb", parameters.get("bla"));
-		assertEquals("XXXX", parameters.get("pwd"));
-		assertEquals("XXXX", parameters.get("creditCard"));
+		assertEquals("bar", span.getTags().get(SpanTags.PARAMETERS_PREFIX + "foo"));
+		assertEquals("blubb", span.getTags().get(SpanTags.PARAMETERS_PREFIX + "bla"));
+		assertEquals("XXXX", span.getTags().get(SpanTags.PARAMETERS_PREFIX + "pwd"));
+		assertEquals("XXXX", span.getTags().get(SpanTags.PARAMETERS_PREFIX + "creditCard"));
 	}
 
 	@Test
@@ -100,8 +97,8 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final HttpRequestTrace requestTrace = monitoredHttpRequest.createRequestTrace();
-		assertEquals("www.github.com", requestTrace.getReferringSite());
+		final Span span = SpanTags.getInternalSpan(monitoredHttpRequest.createSpan());
+		assertEquals("www.github.com", span.getTags().get("http.referring_site"));
 	}
 
 	@Test
@@ -112,8 +109,8 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final HttpRequestTrace requestTrace = monitoredHttpRequest.createRequestTrace();
-		assertNull(requestTrace.getReferringSite());
+		final Span span = SpanTags.getInternalSpan(monitoredHttpRequest.createSpan());
+		assertNull(span.getTags().get("http.referring_site"));
 	}
 
 	private MonitoredHttpRequest createMonitoredHttpRequest(MockHttpServletRequest request) throws IOException {

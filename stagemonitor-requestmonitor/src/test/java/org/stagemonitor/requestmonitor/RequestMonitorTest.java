@@ -73,7 +73,7 @@ public class RequestMonitorTest {
 		doReturn(true).when(requestMonitorPlugin).isProfilerActive();
 		final Tracer tracer = new Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
-//		doReturn(tracer).when(requestMonitorPlugin.getTracer());
+		when(requestMonitorPlugin.isLogCallStacks()).thenReturn(true);
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyReportNRequestsPerMinuteToElasticsearch();
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
 		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));

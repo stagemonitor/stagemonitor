@@ -4,13 +4,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporterIntegrationTest;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.web.WebPlugin;
 
 import java.util.Collections;
+
+import io.opentracing.Span;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -30,16 +31,16 @@ public class ElasticsearchRequestTraceServletTest extends ElasticsearchRequestTr
 
 	@Test
 	public void testRequestTraceServlet() throws Exception {
-		final RequestTrace requestTrace = new RequestTrace("1", new MeasurementSession("ElasticsearchRequestTraceServletTest", "test", "test"), requestMonitorPlugin);
-		requestTrace.setParameters(Collections.singletonMap("attr.Color", "Blue"));
-		reporter.report(new SpanReporter.ReportArguments(requestTrace, null));
+		final Span span = new MonitoredMethodRequest(configuration, "Test#test", null, Collections.singletonMap("attr.Color", "Blue")).createSpan();
+		reporter.report(new SpanReporter.ReportArguments(null, span));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final MockHttpServletRequest req = new MockHttpServletRequest();
-		req.addParameter("id", "1");
+		final String spanId = String.format("%x", ((com.uber.jaeger.Span) span).context().getSpanID());
+		req.addParameter("id", spanId);
 		final MockHttpServletResponse resp = new MockHttpServletResponse();
 		elasticsearchRequestTraceServlet.doGet(req, resp);
-		assertTrue(resp.getContentAsString().contains("\"id\":\"1\""));
+		assertTrue(resp.getContentAsString().contains("\"id\":\"" + spanId + "\""));
 		assertFalse(resp.getContentAsString().contains("_index"));
 	}
 }

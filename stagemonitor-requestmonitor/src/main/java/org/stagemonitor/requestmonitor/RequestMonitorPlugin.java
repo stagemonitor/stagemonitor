@@ -366,6 +366,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
 		tracer = new com.uber.jaeger.Tracer.Builder(initArguments.getMeasurementSession().getApplicationName(), new CompositeReporter(new LoggingReporter()), new ConstSampler(true)).build();
+		getRequestMonitor().onInit(initArguments);
 	}
 
 	@Override
