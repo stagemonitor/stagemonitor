@@ -1,17 +1,21 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.uber.jaeger.Tracer;
+import com.uber.jaeger.reporters.NoopReporter;
+import com.uber.jaeger.samplers.ConstSampler;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
 
 import java.util.Collections;
+
+import io.opentracing.Span;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -19,9 +23,10 @@ import static org.mockito.Mockito.when;
 
 public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractElasticsearchTest {
 
-	protected ElasticsearchRequestTraceReporter reporter;
+	protected ElasticsearchSpanReporter reporter;
 	protected RequestMonitorPlugin requestMonitorPlugin;
 	protected Configuration configuration;
+	private Tracer tracer;
 
 	@Before
 	public void setUp() throws Exception {
@@ -32,22 +37,28 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
-		reporter = new ElasticsearchRequestTraceReporter();
+		reporter = new ElasticsearchSpanReporter();
 		reporter.init(new SpanReporter.InitArguments(configuration));
+		tracer = new Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true)).build();
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}
 
 	@Test
 	public void reportRequestTrace() throws Exception {
-		final RequestTrace requestTrace = new RequestTrace("1", new MeasurementSession("ERTRIT", "test", "test"), requestMonitorPlugin);
-		requestTrace.setParameters(Collections.singletonMap("attr.Color", "Blue"));
-		requestTrace.addCustomProperty("foo.bar", "baz");
-		reporter.report(new SpanReporter.ReportArguments(requestTrace, null));
+		final MonitoredMethodRequest monitoredMethodRequest = new MonitoredMethodRequest(configuration, "Test#test", null, Collections.singletonMap("attr.Color", "Blue"));
+		final Span span = monitoredMethodRequest.createSpan();
+		span.setTag("foo.bar", "baz");
+		span.finish();
+		reporter.report(new SpanReporter.ReportArguments(null, span));
 		elasticsearchClient.waitForCompletion();
 		refresh();
-		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-requests*/_search").get("hits");
+		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
 		assertEquals(1, hits.get("total").intValue());
 		final JsonNode requestTraceJson = hits.get("hits").elements().next().get("_source");
-		assertEquals("Blue", requestTraceJson.get("parameters").get("attr_(dot)_Color").asText());
+		// TODO revisit that. Ideal would be a nested parameters object
+		// but this does not seem to work with Span tags. Maybe use logs?
+		assertEquals("Blue", requestTraceJson.get("parameter_attr_(dot)_Color").asText());
 		assertEquals("baz", requestTraceJson.get("foo_(dot)_bar").asText());
 	}
+
 }

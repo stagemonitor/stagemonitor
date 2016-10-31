@@ -22,6 +22,7 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 
@@ -127,7 +128,8 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 
 					gen.writeStringField("name", span.getOperationName());
 					gen.writeNumberField("duration", span.getDuration());
-					gen.writeNumberField("@timestamp", span.getStart());
+					gen.writeNumberField("duration_ms", TimeUnit.MICROSECONDS.toMillis(span.getDuration()));
+					gen.writeNumberField("@timestamp", TimeUnit.MICROSECONDS.toMillis(span.getStart()));
 					gen.writeStringField("id", String.format("%x", span.context().getSpanID()));
 					gen.writeStringField("trace_id", String.format("%x", span.context().getTraceID()));
 					gen.writeStringField("parent_id", String.format("%x", span.context().getSpanID()));

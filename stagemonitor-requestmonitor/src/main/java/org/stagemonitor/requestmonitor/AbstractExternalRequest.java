@@ -3,6 +3,7 @@ package org.stagemonitor.requestmonitor;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.core.instrument.CallerUtil;
+import org.stagemonitor.requestmonitor.utils.Spans;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
@@ -36,7 +37,7 @@ public abstract class AbstractExternalRequest implements MonitoredRequest<Reques
 			span = tracer.buildSpan(callerSignature).start();
 		}
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
-		span.setTag("type", getType());
+		Spans.setOperationType(span, getType());
 		return span;
 	}
 

@@ -3,6 +3,7 @@ package org.stagemonitor.requestmonitor;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.utils.Spans;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -16,7 +17,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 
 	private final String methodSignature;
 	private final MethodExecution methodExecution;
-	private final Map<String, Object> parameters;
+	private final Map<String, String> safeParameters;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 
 	public MonitoredMethodRequest(Configuration configuration, String methodSignature, MethodExecution methodExecution) {
@@ -27,7 +28,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 		this.requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		this.methodSignature = methodSignature;
 		this.methodExecution = methodExecution;
-		this.parameters = parameters;
+		this.safeParameters = getSafeParameterMap(parameters);
 	}
 
 	@Override
@@ -39,14 +40,21 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	public RequestTrace createRequestTrace() {
 		RequestTrace requestTrace = new RequestTrace(UUID.randomUUID().toString());
 		requestTrace.setName(methodSignature);
-		if (parameters != null && parameters.size() > 0) {
-			Map<String, String> params = new LinkedHashMap<String, String>();
-			for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-				params.put(entry.getKey(), String.valueOf(entry.getValue()));
-			}
-			requestTrace.setParameters(RequestMonitorPlugin.getSafeParameterMap(params, requestMonitorPlugin.getConfidentialParameters()));
+		if (safeParameters != null && safeParameters.size() > 0) {
+			requestTrace.setParameters(safeParameters);
 		}
 		return requestTrace;
+	}
+
+	private Map<String, String> getSafeParameterMap(Map<String, Object> parameters) {
+		if (parameters == null) {
+			return null;
+		}
+		Map<String, String> params = new LinkedHashMap<String, String>();
+		for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+			params.put(entry.getKey(), String.valueOf(entry.getValue()));
+		}
+		return RequestMonitorPlugin.getSafeParameterMap(params, requestMonitorPlugin.getConfidentialParameters());
 	}
 
 	@Override
@@ -59,6 +67,8 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 			span = tracer.buildSpan(methodSignature).start();
 		}
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+		Spans.setParameters(span, safeParameters);
+		Spans.setOperationType(span, "method_invocation");
 		return span;
 	}
 

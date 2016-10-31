@@ -5,6 +5,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.requestmonitor.utils.Spans;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,7 +38,7 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 	@Override
 	public void report(ReportArguments reportArguments) {
 		final Span span = reportArguments.getSpan();
-		if (isExternalRequest(span)) {
+		if (Spans.isExternalRequest(span)) {
 			trackExternalRequestMetrics((com.uber.jaeger.Span) span);
 		}
 	}
@@ -88,16 +89,6 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 		final String type = externalRequest.getTags().get(EXTERNAL_REQUEST_TYPE).toString();
 		final String method = externalRequest.getTags().get(EXTERNAL_REQUEST_METHOD).toString();
 		return externalRequestTemplate.build(type, signature, method);
-	}
-
-	public static boolean isExternalRequest(Span span) {
-		if (span instanceof com.uber.jaeger.Span) {
-			com.uber.jaeger.Span jaegerSpan = (com.uber.jaeger.Span) span;
-			return jaegerSpan.isRPCClient() &&
-					jaegerSpan.getTags().get(EXTERNAL_REQUEST_TYPE) != null &&
-					jaegerSpan.getTags().get(EXTERNAL_REQUEST_METHOD) != null;
-		}
-		return false;
 	}
 
 	@Override

@@ -15,12 +15,12 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
-import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
+import org.stagemonitor.requestmonitor.utils.Spans;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -279,8 +279,7 @@ public class RequestMonitor {
 				if (minExecutionTimeMultiplier > 0d) {
 					callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
 				}
-				span.setTag("callTreeJson", JsonUtils.toJson(callTree));
-				span.setTag("callTreeAscii", callTree.toString(true));
+				Spans.setCallTree(span, callTree);
 			}
 		}
 		span.finish();

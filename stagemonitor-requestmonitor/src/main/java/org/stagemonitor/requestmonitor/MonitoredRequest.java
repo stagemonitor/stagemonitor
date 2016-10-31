@@ -5,7 +5,7 @@ import io.opentracing.Span;
 public interface MonitoredRequest<T extends RequestTrace> {
 
 	/**
-	 * Optionally, the instance name can be derived from a {@link RequestTrace}.
+	 * Optionally, the instance name can be derived from a request.
 	 * For instance in a HTTP context you could return the domain name.
 	 *
 	 * @return the instance name

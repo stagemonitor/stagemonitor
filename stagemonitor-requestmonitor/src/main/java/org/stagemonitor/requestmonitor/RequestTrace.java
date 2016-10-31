@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.uber.jaeger.utils.Utils;
 
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
@@ -15,10 +14,6 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -174,7 +169,7 @@ public class RequestTrace {
 	public void setParameters(Map<String, String> parameters) {
 		this.parameters = parameters;
 		for (Map.Entry<String, String> entry : parameters.entrySet()) {
-			span.setTag("paremeters." + entry.getKey(), entry.getValue());
+			span.setTag("parameter_" + entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -250,17 +245,6 @@ public class RequestTrace {
 
 	public void setClientIp(String clientIp) {
 		this.clientIp = clientIp;
-		try {
-			final InetAddress inetAddress = InetAddress.getByName(clientIp);
-			if (inetAddress instanceof Inet4Address) {
-				Tags.PEER_HOST_IPV4.set(span, clientIp != null ? Utils.ipToInt(clientIp) : null);
-				span.setTag("peer.ipv4_string", clientIp);
-			} else if (inetAddress instanceof Inet6Address) {
-				Tags.PEER_HOST_IPV6.set(span, clientIp);
-			}
-		} catch (UnknownHostException e) {
-			// ignore
-		}
 	}
 
 	public String getUsername() {

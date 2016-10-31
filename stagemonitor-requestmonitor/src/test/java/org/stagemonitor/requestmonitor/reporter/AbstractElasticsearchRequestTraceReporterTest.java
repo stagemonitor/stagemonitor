@@ -1,22 +1,24 @@
 package org.stagemonitor.requestmonitor.reporter;
 
+import com.uber.jaeger.Span;
 import com.uber.jaeger.reporters.NoopReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.utils.Spans;
 
 import java.util.Collections;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import io.opentracing.Tracer;
+import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -49,12 +51,14 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 		requestTraceLogger = mock(Logger.class);
 	}
 
-	protected RequestTrace createTestRequestTraceWithCallTree(long executionTime) {
-		final RequestTrace requestTrace = new RequestTrace(UUID.randomUUID().toString(), new MeasurementSession("ERTRT", "test", "test"), requestMonitorPlugin);
-		requestTrace.setCallStack(CallStackElement.createRoot("test"));
-		requestTrace.setName("Report Me");
-		requestTrace.setExecutionTime(executionTime);
-		registry.timer(getTimerMetricName(requestTrace.getName())).update(executionTime, TimeUnit.NANOSECONDS);
-		return requestTrace;
+	protected Span createTestSpanWithCallTree(long executionTimeMs) {
+		final Tracer tracer = requestMonitorPlugin.getTracer();
+		final io.opentracing.Span span;
+		span = tracer.buildSpan("Report Me").withStartTimestamp(1).start();
+		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMs) + 1);
+		Spans.setCallTree(span, CallStackElement.createRoot("test"));
+		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
+		return (Span) span;
 	}
 }

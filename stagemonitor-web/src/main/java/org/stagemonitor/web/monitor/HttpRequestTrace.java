@@ -20,6 +20,7 @@ import io.opentracing.tag.Tags;
 /**
  * This class extends the generic request trace with data specific for http requests
  */
+@Deprecated
 public class HttpRequestTrace extends RequestTrace {
 
 	private final UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
@@ -56,16 +57,9 @@ public class HttpRequestTrace extends RequestTrace {
 							MeasurementSession measurementSession, RequestMonitorPlugin requestMonitorPlugin) {
 		super(requestId, measurementSession, requestMonitorPlugin);
 		this.url = url;
-		Tags.HTTP_URL.set(span, url);
 		this.headers = headers;
-		if (headers != null) {
-			for (Map.Entry<String, String> entry : headers.entrySet()) {
-				span.setTag("http.headers." + entry.getKey(), entry.getValue());
-			}
-		}
 		this.connectionId = connectionId;
 		this.method = method;
-		span.setTag("http.method", method);
 		this.showWidgetAllowed = showWidgetAllowed;
 	}
 

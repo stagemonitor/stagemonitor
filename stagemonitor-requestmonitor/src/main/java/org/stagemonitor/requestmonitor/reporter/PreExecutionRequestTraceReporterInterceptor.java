@@ -9,7 +9,7 @@ import org.stagemonitor.core.StagemonitorSPI;
  * The big difference to {@link PostExecutionRequestTraceReporterInterceptor} is that when a request is excluded from
  * reporting by a pre interceptor, the call tree won't be collected for that request.
  * <p/>
- * To add an interceptor, call {@link ElasticsearchRequestTraceReporter#registerPreInterceptor(PreExecutionRequestTraceReporterInterceptor)}
+ * To add an interceptor, call {@link ElasticsearchSpanReporter#registerPreInterceptor(PreExecutionRequestTraceReporterInterceptor)}
  * or place a file under <code>META-INF/services/org.stagemonitor.requestmonitor.reporter.PreExecutionRequestTraceReporterInterceptor</code>
  * and insert the canonical class name of your implementation.
  */

@@ -10,7 +10,7 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporter;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -197,7 +197,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.label("Only log Elasticsearch request trace reports")
 			.description(String.format("If set to true, the spans won't be reported to elasticsearch but instead logged in bulk format. " +
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
-					"different external process to send the spans to elasticsearch.", ElasticsearchRequestTraceReporter.ES_REQUEST_TRACE_LOGGER))
+					"different external process to send the spans to elasticsearch.", ElasticsearchSpanReporter.ES_SPAN_LOGGER))
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();

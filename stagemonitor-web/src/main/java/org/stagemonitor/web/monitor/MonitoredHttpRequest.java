@@ -8,6 +8,7 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.utils.Spans;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -90,6 +91,11 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
 		final Span span = tracer.buildSpan(getRequestName()).asChildOf(spanCtx).start();
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+		Spans.setOperationType(span, "http");
+		Spans.setHttpHeaders(span, getHeaders(httpServletRequest));
+		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
+		span.setTag("http.method", httpServletRequest.getMethod());
+
 		return span;
 	}
 
@@ -180,25 +186,30 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	@Override
 	public void onPostExecute(RequestMonitor.RequestInformation<HttpRequestTrace> info) {
 		HttpRequestTrace request = info.getRequestTrace();
+		final Span span = info.getSpan();
 
 		final String clientIp = getClientIp(httpServletRequest);
 		final String userName = getUserName(request);
 		final String userAgent = httpServletRequest.getHeader("user-agent");
 		final String sessionId = getSessionId();
-		request.setUsername(userName);
-		request.setSessionId(sessionId);
+		span.setTag("username", userName);
+		span.setTag("session_id", sessionId);
 		if (userName != null) {
-			request.setUniqueVisitorId(StringUtils.sha1Hash(userName));
+			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(userName));
 		} else {
-			request.setUniqueVisitorId(StringUtils.sha1Hash(clientIp + sessionId + userAgent));
+			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(clientIp + sessionId + userAgent));
+
 		}
-		request.setClientIp(clientIp);
+		Spans.setClientIp(span, clientIp);
 
 		int status = responseWrapper.getStatus();
 		request.setStatusCode(status);
+		Tags.HTTP_STATUS.set(span, status);
+
 		metricRegistry.meter(throughputMetricNameTemplate.build(info.getRequestName(), Integer.toString(status))).mark();
 		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
 		if (status >= 400) {
+			Tags.ERROR.set(span, true);
 			request.setError(true);
 		}
 
@@ -207,12 +218,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		for (String requestExceptionAttribute : webPlugin.getRequestExceptionAttributes()) {
 			Object exception = httpServletRequest.getAttribute(requestExceptionAttribute);
 			if (exception != null && exception instanceof Exception) {
-				request.setException((Exception) exception);
+				Spans.setException(span, (Exception) exception, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
 				break;
 			}
 		}
-		
-		request.setBytesWritten(responseWrapper.getContentLength());
+
+		span.setTag("bytes_written", responseWrapper.getContentLength());
 
 		// get the parameters after the execution and not on creation, because that could lead to wrong decoded
 		// parameters inside the application
@@ -225,7 +236,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		Set<Pattern> confidentialParams = new HashSet<Pattern>();
 		confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
 		confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
-		request.setParameters(RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
+		Spans.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
 	}
 
 	private String getSessionId() {

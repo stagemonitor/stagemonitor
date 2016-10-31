@@ -41,7 +41,7 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 
 		for (PostExecutionRequestTraceReporterInterceptor interceptor : ServiceLoader.load(
 				PostExecutionRequestTraceReporterInterceptor.class,
-				ElasticsearchRequestTraceReporter.class.getClassLoader())) {
+				AbstractInterceptedSpanReporter.class.getClassLoader())) {
 			postInterceptors.add(interceptor);
 		}
 	}
@@ -53,7 +53,7 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 
 		for (PreExecutionRequestTraceReporterInterceptor interceptor : ServiceLoader.load(
 				PreExecutionRequestTraceReporterInterceptor.class,
-				ElasticsearchRequestTraceReporter.class.getClassLoader())) {
+				AbstractInterceptedSpanReporter.class.getClassLoader())) {
 			preInterceptors.add(interceptor);
 		}
 	}

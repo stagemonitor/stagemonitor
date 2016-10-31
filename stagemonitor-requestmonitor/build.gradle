@@ -1,8 +1,8 @@
 dependencies {
 	compile project(":stagemonitor-core")
-	compile 'io.opentracing:opentracing-impl:0.15.0'
-	compile 'com.uber.jaeger:jaeger-zipkin:0.14.0'
-	compile 'com.uber.jaeger:jaeger-context:0.14.0'
+	compile 'io.opentracing:opentracing-impl:0.16.0'
+	compile 'com.uber.jaeger:jaeger-zipkin:0.15.0'
+	compile 'com.uber.jaeger:jaeger-context:0.15.0'
 	optional "org.elasticsearch:elasticsearch:$esVersion"
 	optional 'javax.ejb:ejb-api:3.0'
 	optional 'org.freemarker:freemarker:2.3.23'
