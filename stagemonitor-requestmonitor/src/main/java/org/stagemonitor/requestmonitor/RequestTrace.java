@@ -10,7 +10,6 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -37,8 +36,6 @@ public class RequestTrace {
 
 	private final String id;
 	private String name;
-	@JsonIgnore
-	private CallStackElement callStack;
 	private long executionTime;
 	private long executionTimeCpu;
 	private boolean error = false;
@@ -96,26 +93,6 @@ public class RequestTrace {
 
 	public String getId() {
 		return id;
-	}
-
-	public CallStackElement getCallStack() {
-		return callStack;
-	}
-
-	public void setCallStack(CallStackElement callStack) {
-		this.callStack = callStack;
-	}
-
-	@JsonProperty("callStack")
-	public String getCallStackAscii() {
-		if (callStack == null) {
-			return null;
-		}
-		return callStack.toString(true);
-	}
-
-	public String getCallStackJson() {
-		return JsonUtils.toJson(callStack);
 	}
 
 	/**
@@ -264,34 +241,6 @@ public class RequestTrace {
 		return JsonUtils.toJson(this, "callStack");
 	}
 
-	@Override
-	public String toString() {
-		return toString(false);
-	}
-
-	public final String toString(boolean asciiArt) {
-		return toString(asciiArt, true);
-	}
-
-	public String toString(boolean asciiArt, boolean callStack) {
-		StringBuilder sb = new StringBuilder(3000);
-		sb.append("id:     ").append(id).append('\n');
-		sb.append("name:   ").append(getName()).append('\n');
-		if (getParameters() != null) {
-			sb.append("params: ").append(getParameters()).append('\n');
-		}
-		if (callStack) {
-			appendCallStack(sb, asciiArt);
-		}
-		return sb.toString();
-	}
-
-	protected void appendCallStack(StringBuilder sb, boolean asciiArt) {
-		if (getCallStack() != null) {
-			sb.append(getCallStack().toString(asciiArt));
-		}
-	}
-
 	public long getMeasurementStart() {
 		return measurementStart;
 	}
@@ -324,16 +273,9 @@ public class RequestTrace {
 		this.uniqueVisitorId = uniqueVisitorId;
 	}
 
-	@Override
-	public void finalize() throws Throwable {
-		super.finalize();
-		callStack.recycle();
-	}
-
 	public void setSpan(Span span) {
 		this.span = span;
 	}
-
 
 	public void setExecutionTimeNanos(long executionTimeNanos) {
 		this.executionTimeNanos = executionTimeNanos;

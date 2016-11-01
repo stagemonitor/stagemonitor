@@ -57,7 +57,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final Span span = mock(Span.class);
 		when(span.getTags()).thenReturn(Collections.singletonMap(SpanTags.HTTP_HEADERS_PREFIX + "dnt", "1"));
 
-		reporter.report(new SpanReporter.ReportArguments(null, span));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null));
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		Assert.assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(null, span)));
@@ -69,7 +69,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final Span span = mock(Span.class);
 		when(span.getTags()).thenReturn(Collections.singletonMap(SpanTags.HTTP_HEADERS_PREFIX + "dnt", "0"));
 
-		reporter.report(new SpanReporter.ReportArguments(null, span));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
 		Assert.assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(null, span)));
@@ -81,7 +81,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final Span span = mock(Span.class);
 		when(span.getTags()).thenReturn(Collections.emptyMap());
 
-		reporter.report(new SpanReporter.ReportArguments(null, span));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
 		Assert.assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(null, span)));
@@ -93,7 +93,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final Span span = mock(Span.class);
 		when(span.getTags()).thenReturn(Collections.singletonMap(SpanTags.HTTP_HEADERS_PREFIX + "dnt", "1"));
 
-		reporter.report(new SpanReporter.ReportArguments(null, span));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
 		Assert.assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(null, span)));

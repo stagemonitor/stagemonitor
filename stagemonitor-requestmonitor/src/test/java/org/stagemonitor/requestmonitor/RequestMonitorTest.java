@@ -162,14 +162,14 @@ public class RequestMonitorTest {
 	public void testProfileThisExecutionDeactive() throws Exception {
 		doReturn(0d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
-		assertNull(monitor.getRequestTrace().getCallStack());
+		assertNull(monitor.getCallTree());
 	}
 
 	@Test
 	public void testProfileThisExecutionAlwaysActive() throws Exception {
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
-		assertNotNull(monitor.getRequestTrace().getCallStack());
+		assertNotNull(monitor.getCallTree());
 	}
 
 	@Test
@@ -178,8 +178,9 @@ public class RequestMonitorTest {
 		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNRequestsPerMinuteToElasticsearch();
 		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNExternalRequestsPerMinute();
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
+		doReturn(false).when(requestMonitorPlugin).isLogCallStacks();
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
-		assertNull(monitor.getRequestTrace().getCallStack());
+		assertNull(monitor.getCallTree());
 	}
 
 	@Test
@@ -199,9 +200,9 @@ public class RequestMonitorTest {
 
 		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
 		if (callStackExpected) {
-			assertNotNull(monitor.getRequestTrace().getCallStack());
+			assertNotNull(monitor.getCallTree());
 		} else {
-			assertNull(monitor.getRequestTrace().getCallStack());
+			assertNull(monitor.getCallTree());
 		}
 	}
 
@@ -219,25 +220,21 @@ public class RequestMonitorTest {
 		SpanCapturingReporter requestTraceCapturingReporter = new SpanCapturingReporter(requestMonitor);
 
 		final ExecutorService executorService = TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor());
-		final Span[] firstSpan = new Span[1];
-		final Span[] asyncSpan = new Span[1];
 
 		requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
-			firstSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
-			return monitorAsyncMethodCall(executorService, asyncSpan);
+			return monitorAsyncMethodCall(executorService);
 		}));
 		executorService.shutdown();
-		RequestTrace firstRequestTrace = requestTraceCapturingReporter.get();
-		RequestTrace asyncRequestTrace = requestTraceCapturingReporter.get();
-		assertEquals("test", firstSpan[0].getOperationName());
-		assertEquals("async", asyncSpan[0].getOperationName());
-		assertEquals(firstSpan[0].context().getSpanID(), asyncSpan[0].context().getParentID());
+		Span firstSpan = requestTraceCapturingReporter.getSpan();
+		Span asyncSpan = requestTraceCapturingReporter.getSpan();
+		assertEquals("test", firstSpan.getOperationName());
+		assertEquals("async", asyncSpan.getOperationName());
+		assertEquals(firstSpan.context().getSpanID(), asyncSpan.context().getParentID());
 	}
 
-	private Object monitorAsyncMethodCall(ExecutorService executorService, final Span[] asyncSpan) {
+	private Object monitorAsyncMethodCall(ExecutorService executorService) {
 		return executorService.submit((Callable<Object>) () ->
 				requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
-					asyncSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
 					return callAsyncMethod();
 				})));
 	}

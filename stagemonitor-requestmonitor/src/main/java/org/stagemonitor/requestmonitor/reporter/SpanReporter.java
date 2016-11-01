@@ -5,6 +5,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
+import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 import io.opentracing.Span;
 
@@ -38,7 +39,7 @@ public abstract class SpanReporter implements StagemonitorSPI {
 
 	/**
 	 * @return <code>true</code>, if this {@link SpanReporter} needs access to the call tree
-	 * ({@link RequestTrace#getCallStack()})
+	 * ({@link org.stagemonitor.requestmonitor.profiler.CallStackElement})
 	 *
 	 * @see #isActive(IsActiveArguments)
 	 */
@@ -91,14 +92,17 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	public static class ReportArguments {
 		private final RequestTrace requestTrace;
 		private final Span span;
+		private final CallStackElement callTree;
 
 		/**
 		 * @param requestTrace the {@link RequestTrace} of the current request
 		 * @param span
+		 * @param callTree
 		 */
-		public ReportArguments(RequestTrace requestTrace, Span span) {
+		public ReportArguments(RequestTrace requestTrace, Span span, CallStackElement callTree) {
 			this.requestTrace = requestTrace;
 			this.span = span;
+			this.callTree = callTree;
 		}
 
 		public RequestTrace getRequestTrace() {
@@ -113,5 +117,8 @@ public abstract class SpanReporter implements StagemonitorSPI {
 			return (com.uber.jaeger.Span) span;
 		}
 
+		public CallStackElement getCallTree() {
+			return callTree;
+		}
 	}
 }

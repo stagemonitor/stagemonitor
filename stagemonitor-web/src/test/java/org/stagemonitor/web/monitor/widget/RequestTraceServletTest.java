@@ -57,7 +57,7 @@ public class RequestTraceServletTest {
 
 	@Test
 	public void testRequestTraceBeforeRequest() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -71,8 +71,8 @@ public class RequestTraceServletTest {
 
 	@Test
 	public void testTwoRequestTraceBeforeRequest() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -119,7 +119,7 @@ public class RequestTraceServletTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
 		waitForResponse(response);
 
 		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
@@ -134,7 +134,7 @@ public class RequestTraceServletTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null));
+		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
 		waitForResponse(response);
 
 		Assert.assertEquals("[]", response.getContentAsString());

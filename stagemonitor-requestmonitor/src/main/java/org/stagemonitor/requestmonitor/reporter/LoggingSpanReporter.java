@@ -6,17 +6,24 @@ import com.uber.jaeger.Span;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.List;
 import java.util.Map;
 
-public class LoggingSpanReporter extends AbstractInterceptedSpanReporter {
+public class LoggingSpanReporter extends SpanReporter {
 
 	private static final Logger logger = LoggerFactory.getLogger(LoggingSpanReporter.class);
+	private RequestMonitorPlugin requestMonitorPlugin;
 
 	@Override
-	protected void doReport(ReportArguments reportArguments, PostExecutionInterceptorContext context) {
+	public void init(InitArguments initArguments) {
+		requestMonitorPlugin = initArguments.getConfiguration().getConfig(RequestMonitorPlugin.class);
+	}
+
+	@Override
+	public void report(ReportArguments reportArguments) {
 		io.opentracing.Span span = reportArguments.getSpan();
 		logger.info("Reporting span");
 		if (span instanceof Span) {
@@ -61,6 +68,6 @@ public class LoggingSpanReporter extends AbstractInterceptedSpanReporter {
 
 	@Override
 	public boolean isActive(IsActiveArguments isActiveArguments) {
-		return super.requestMonitorPlugin.isLogCallStacks() && super.isActive(isActiveArguments);
+		return requestMonitorPlugin.isLogCallStacks();
 	}
 }

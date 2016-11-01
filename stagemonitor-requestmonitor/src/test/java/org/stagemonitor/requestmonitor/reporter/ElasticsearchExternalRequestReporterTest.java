@@ -115,7 +115,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private void report(Span span) {
 		final SpanReporter.IsActiveArguments isActiveArguments = new SpanReporter.IsActiveArguments(null, span);
-		final SpanReporter.ReportArguments reportArguments = new SpanReporter.ReportArguments(null, span);
+		final SpanReporter.ReportArguments reportArguments = new SpanReporter.ReportArguments(null, span, null);
 		if (externalRequestMetricsReporter.isActive(isActiveArguments)) {
 			externalRequestMetricsReporter.report(reportArguments);
 		}

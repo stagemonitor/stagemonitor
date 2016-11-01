@@ -1,5 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
+import com.uber.jaeger.Span;
+
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 
 import java.util.concurrent.BlockingQueue;
@@ -7,7 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class SpanCapturingReporter extends SpanReporter {
-	private final BlockingQueue<RequestTrace> requestTraces = new LinkedBlockingQueue<>();
+	private final BlockingQueue<ReportArguments> requestTraces = new LinkedBlockingQueue<>();
 
 	public SpanCapturingReporter() {
 		RequestMonitor.addRequestTraceReporter(this);
@@ -19,7 +21,7 @@ public class SpanCapturingReporter extends SpanReporter {
 
 	@Override
 	public void report(ReportArguments reportArguments) throws Exception {
-		requestTraces.add(reportArguments.getRequestTrace());
+		requestTraces.add(reportArguments);
 	}
 
 	@Override
@@ -27,7 +29,11 @@ public class SpanCapturingReporter extends SpanReporter {
 		return true;
 	}
 
-	public RequestTrace get() throws InterruptedException {
+	public Span getSpan() throws InterruptedException {
+		return (Span) get().getSpan();
+	}
+
+	public ReportArguments get() throws InterruptedException {
 		return requestTraces.poll(500, TimeUnit.MILLISECONDS);
 	}
 }

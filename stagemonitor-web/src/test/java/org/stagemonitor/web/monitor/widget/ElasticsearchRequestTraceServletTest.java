@@ -32,7 +32,7 @@ public class ElasticsearchRequestTraceServletTest extends ElasticsearchRequestTr
 	@Test
 	public void testRequestTraceServlet() throws Exception {
 		final Span span = new MonitoredMethodRequest(configuration, "Test#test", null, Collections.singletonMap("attr.Color", "Blue")).createSpan();
-		reporter.report(new SpanReporter.ReportArguments(null, span));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final MockHttpServletRequest req = new MockHttpServletRequest();

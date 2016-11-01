@@ -203,7 +203,7 @@ public class ConnectionMonitoringTransformerTest {
 		assertTrue(message, timers.size() > 1);
 		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executeStatement").tag("method", "SELECT").build()).getCount());
 		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()).getCount());
-		final CallStackElement callStack = requestInformation.getRequestTrace().getCallStack();
+		final CallStackElement callStack = requestInformation.getCallTree();
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executeStatement()",
 				callStack.getChildren().get(0).getChildren().get(0).getSignature());

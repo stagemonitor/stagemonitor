@@ -1,5 +1,6 @@
 package org.stagemonitor.web.monitor.jaxrs;
 
+import com.uber.jaeger.Span;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.LoggingReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -18,7 +19,6 @@ import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.SpanCapturingReporter;
 import org.stagemonitor.web.WebPlugin;
 
@@ -84,10 +84,10 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		});
 		requestMonitor.monitor(request);
 
-		RequestTrace requestTrace = requestTraceCapturingReporter.get();
+		Span span = requestTraceCapturingReporter.getSpan();
 
-		assertNotNull(requestTrace);
-		assertEquals("Get Test String", requestTrace.getName());
+		assertNotNull(span);
+		assertEquals("Get Test String", span.getOperationName());
 	}
 
 	@Path("/")

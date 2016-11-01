@@ -56,7 +56,7 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 
 	@Test
 	public void reportSpan() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(null, getSpan(100)));
+		reporter.report(new SpanReporter.ReportArguments(null, getSpan(100), null));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");

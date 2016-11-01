@@ -238,7 +238,6 @@ public class RequestMonitor {
 			if (info.isProfileThisRequest()) {
 				callTreeMeter.mark();
 				final CallStackElement root = Profiler.activateProfiling("total");
-				info.requestTrace.setCallStack(root);
 				info.callTree = root;
 			}
 		} catch (RuntimeException e) {
@@ -336,12 +335,17 @@ public class RequestMonitor {
 
 	private <T extends RequestTrace> void doReport(RequestInformation<T> requestInformation) {
 		for (SpanReporter spanReporter : spanReporters) {
+			final CallStackElement callTree = requestInformation.getCallTree();
 			if (isActive(requestInformation, spanReporter)) {
 				try {
-					spanReporter.report(new SpanReporter.ReportArguments(requestInformation.getRequestTrace(), requestInformation.getSpan()));
+					spanReporter.report(new SpanReporter.ReportArguments(requestInformation.getRequestTrace(),
+							requestInformation.getSpan(), callTree));
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 				}
+			}
+			if (callTree != null) {
+				callTree.recycle();
 			}
 		}
 	}
