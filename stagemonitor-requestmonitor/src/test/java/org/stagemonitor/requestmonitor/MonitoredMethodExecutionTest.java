@@ -10,6 +10,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.Map;
 
@@ -57,10 +58,10 @@ public class MonitoredMethodExecutionTest {
 		testObject.monitored1();
 		assertEquals(1, requestInformation1.getExecutionResult());
 		assertFalse(requestInformation1.isForwarded());
-		assertEquals("monitored1()", requestInformation1.requestTrace.getName());
-		final Map<String, String> parameters = requestInformation1.requestTrace.getParameters();
-		assertEquals(parameters.toString(), "1", parameters.get("arg0"));
-		assertEquals(parameters.toString(), "test", parameters.get("arg1"));
+		assertEquals("monitored1()", requestInformation1.getInternalSpan().getOperationName());
+		final Map<String, Object> tags = requestInformation1.getInternalSpan().getTags();
+		assertEquals(tags.toString(), "1", tags.get(SpanTags.PARAMETERS_PREFIX + "arg0"));
+		assertEquals(tags.toString(), "test", tags.get(SpanTags.PARAMETERS_PREFIX + "arg1"));
 		assertTrue(requestInformation2.isForwarded());
 		assertTrue(requestInformation3.isForwarded());
 

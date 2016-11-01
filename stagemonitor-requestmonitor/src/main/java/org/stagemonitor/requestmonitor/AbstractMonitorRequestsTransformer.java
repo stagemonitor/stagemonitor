@@ -1,5 +1,13 @@
 package org.stagemonitor.requestmonitor;
 
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -8,13 +16,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 
 public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -36,9 +37,8 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 		final MonitoredMethodRequest monitoredRequest = new MonitoredMethodRequest(Stagemonitor.getConfiguration(), requestName, null, params);
 		final RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
 		requestMonitorPlugin.getRequestMonitor().monitorStart(monitoredRequest);
-		final RequestTrace request = RequestMonitor.get().getRequestTrace();
-		if (requestName == null && request != null) {
-			request.setName(getBusinessTransationName(thiz != null ? thiz.getClass().getName() : className, methodName));
+		if (requestName == null) {
+			RequestMonitor.get().getSpan().setOperationName(getBusinessTransationName(thiz != null ? thiz.getClass().getName() : className, methodName));
 		}
 	}
 

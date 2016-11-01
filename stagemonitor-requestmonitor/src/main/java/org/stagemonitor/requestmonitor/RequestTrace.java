@@ -1,7 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,16 +9,10 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 import io.opentracing.NoopTracer;
 import io.opentracing.Span;
-import io.opentracing.tag.Tags;
 
 /**
  * A request trace is a data structure containing all the important information about a request.
@@ -31,68 +23,21 @@ import io.opentracing.tag.Tags;
 @Deprecated
 public class RequestTrace {
 
-	@JsonIgnore
-	private final RequestMonitorPlugin requestMonitorPlugin;
-
-	private final String id;
 	private String name;
-	private long executionTime;
-	private long executionTimeCpu;
-	private boolean error = false;
 	@JsonProperty("@timestamp")
 	private final String timestamp;
-	@JsonIgnore
-	private long timestampEnd;
-	private Map<String, String> parameters;
-	@JsonProperty("measurement_start")
-	private final long measurementStart;
-	private final String application;
-	private final String host;
-	private final String instance;
-	private String exceptionMessage;
-	private String exceptionClass;
-	private String exceptionStackTrace;
 	private String username;
 	private String disclosedUserName;
 	private String clientIp;
-	private String uniqueVisitorId;
-	private Map<String, Object> customProperties = new HashMap<String, Object>();
 	@JsonIgnore
 	protected Span span = new NoopTracer().buildSpan(null).start();
-	@JsonIgnore
-	private long executionTimeNanos;
-	@JsonIgnore
-	private long executionTimeCpuNanos;
 
 	public RequestTrace(String requestId) {
 		this(requestId, Stagemonitor.getMeasurementSession(), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
 	}
 
 	public RequestTrace(String requestId, MeasurementSession measurementSession, RequestMonitorPlugin requestMonitorPlugin) {
-		this.requestMonitorPlugin = requestMonitorPlugin;
-		this.id = requestId != null ? requestId : UUID.randomUUID().toString();
-		this.measurementStart = measurementSession.getStartTimestamp();
-		this.application = measurementSession.getApplicationName();
-		this.host = measurementSession.getHostName();
-		this.instance = measurementSession.getInstanceName();
 		this.timestamp = StringUtils.dateAsIsoString(new Date());
-	}
-
-	public boolean isError() {
-		return error;
-	}
-
-	public void setError(boolean failed) {
-		Tags.ERROR.set(span, failed);
-		this.error = failed;
-	}
-
-	public String getStatus() {
-		return error ? "Error" : "OK";
-	}
-
-	public String getId() {
-		return id;
 	}
 
 	/**
@@ -116,95 +61,8 @@ public class RequestTrace {
 		this.name = name;
 	}
 
-	public long getExecutionTime() {
-		return executionTime;
-	}
-
-	public void setExecutionTime(long executionTime) {
-		this.executionTime = executionTime;
-		timestampEnd = System.currentTimeMillis();
-	}
-
-	public long getExecutionTimeCpu() {
-		return executionTimeCpu;
-	}
-
-	public void setExecutionTimeCpu(long executionTimeCpu) {
-		this.executionTimeCpu = executionTimeCpu;
-	}
-
 	public String getTimestamp() {
 		return timestamp;
-	}
-
-	public Map<String, String> getParameters() {
-		return parameters;
-	}
-
-	public void setParameters(Map<String, String> parameters) {
-		this.parameters = parameters;
-		for (Map.Entry<String, String> entry : parameters.entrySet()) {
-			span.setTag("parameter_" + entry.getKey(), entry.getValue());
-		}
-	}
-
-	public String getApplication() {
-		return application;
-	}
-
-	public String getHost() {
-		return host;
-	}
-
-	public String getInstance() {
-		return instance;
-	}
-
-	public String getExceptionMessage() {
-		return exceptionMessage;
-	}
-
-	public void setExceptionMessage(String exceptionMessage) {
-		this.exceptionMessage = exceptionMessage;
-	}
-
-	public String getExceptionStackTrace() {
-		return exceptionStackTrace;
-	}
-
-	public void setExceptionStackTrace(String exceptionStackTrace) {
-		this.exceptionStackTrace = exceptionStackTrace;
-	}
-
-	public String getExceptionClass() {
-		return exceptionClass;
-	}
-
-	public void setExceptionClass(String exceptionClass) {
-		this.exceptionClass = exceptionClass;
-	}
-
-	public void setException(Exception e) {
-		if (e == null || requestMonitorPlugin.getIgnoreExceptions().contains(e.getClass().getName())) {
-			return;
-		}
-		error = true;
-		Throwable throwable = e;
-		if (requestMonitorPlugin.getUnnestExceptions().contains(throwable.getClass().getName())) {
-			Throwable cause = throwable.getCause();
-			if (cause != null) {
-				throwable = cause;
-			}
-		}
-		exceptionMessage = throwable.getMessage();
-		exceptionClass = throwable.getClass().getCanonicalName();
-		span.setTag("exception.message", throwable.getMessage());
-		span.setTag("exception.class", throwable.getClass().getName());
-
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw, true);
-		throwable.printStackTrace(pw);
-		exceptionStackTrace = sw.getBuffer().toString();
 	}
 
 	public void setUsername(String username) {
@@ -234,62 +92,14 @@ public class RequestTrace {
 	}
 
 	public long getTimestampEnd() {
-		return timestampEnd;
+		return 0;
 	}
 
 	public String toJson() {
 		return JsonUtils.toJson(this, "callStack");
 	}
 
-	public long getMeasurementStart() {
-		return measurementStart;
-	}
-
-	@JsonAnyGetter
-	public Map<String, Object> getCustomProperties() {
-		return customProperties;
-	}
-
-	/**
-	 * Use this method to add a custom property to this request trace.
-	 * <p/>
-	 * You can use these properties in the Kibana dashboard.
-	 *
-	 * @param key   The key, which must not contain dots (.).
-	 * @param value The value, which has to be serializable by jackson.
-	 */
-	@JsonAnySetter
-	public void addCustomProperty(String key, Object value) {
-		span.setTag(key, String.valueOf(value));
-		customProperties.put(key, value);
-	}
-
-	public String getUniqueVisitorId() {
-		return uniqueVisitorId;
-	}
-
-	public void setUniqueVisitorId(String uniqueVisitorId) {
-		span.setTag("tracking.uniqueVisitorId", uniqueVisitorId);
-		this.uniqueVisitorId = uniqueVisitorId;
-	}
-
 	public void setSpan(Span span) {
 		this.span = span;
-	}
-
-	public void setExecutionTimeNanos(long executionTimeNanos) {
-		this.executionTimeNanos = executionTimeNanos;
-	}
-
-	public long getExecutionTimeNanos() {
-		return executionTimeNanos;
-	}
-
-	public void setExecutionTimeCpuNanos(long executionTimeCpuNanos) {
-		this.executionTimeCpuNanos = executionTimeCpuNanos;
-	}
-
-	public long getExecutionTimeCpuNanos() {
-		return executionTimeCpuNanos;
 	}
 }

@@ -129,4 +129,8 @@ public class StringUtils {
 		}
 		return new String(hexChars);
 	}
+
+	public static String toHexString(long l) {
+		return String.format("%x", l);
+	}
 }

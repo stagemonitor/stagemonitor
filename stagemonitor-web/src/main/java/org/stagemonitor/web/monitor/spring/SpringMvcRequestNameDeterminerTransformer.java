@@ -1,12 +1,10 @@
 package org.stagemonitor.web.monitor.spring;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.returns;
-
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Stagemonitor;
@@ -14,6 +12,9 @@ import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.returns;
 
 public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -40,7 +41,7 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 					.getBusinessTransactionNamingStrategy();
 			final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
 			if (requestNameFromHandler != null) {
-				RequestMonitor.get().getRequestTrace().setName(requestNameFromHandler);
+				RequestMonitor.get().getSpan().setOperationName(requestNameFromHandler);
 			}
 		}
 	}

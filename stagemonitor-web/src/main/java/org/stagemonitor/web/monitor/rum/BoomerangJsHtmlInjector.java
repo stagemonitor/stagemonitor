@@ -1,8 +1,10 @@
 package org.stagemonitor.web.monitor.rum;
 
+import com.uber.jaeger.Span;
+
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
 public class BoomerangJsHtmlInjector extends HtmlInjector {
@@ -43,14 +45,14 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 
 	@Override
 	public void injectHtml(HtmlInjector.InjectArguments injectArguments) {
-		if (injectArguments.getRequestInformation() == null || injectArguments.getRequestInformation().getRequestTrace() == null) {
+		if (injectArguments.getRequestInformation() == null || injectArguments.getRequestInformation().getInternalSpan() == null) {
 			return;
 		}
-		final HttpRequestTrace requestTrace = injectArguments.getRequestInformation().getRequestTrace();
+		final Span span = injectArguments.getRequestInformation().getInternalSpan();
 		injectArguments.setContentToInjectBeforeClosingBody(boomerangTemplate
-				.replace("${requestId}", String.valueOf(requestTrace.getId()))
-				.replace("${requestName}", String.valueOf(requestTrace.getName()))
-				.replace("${serverTime}", Long.toString(requestTrace.getExecutionTime())));
+				.replace("${requestId}", StringUtils.toHexString(span.context().getSpanID()))
+				.replace("${requestName}", String.valueOf(span.getOperationName()))
+				.replace("${serverTime}", Long.toString(span.getDuration())));
 	}
 
 }

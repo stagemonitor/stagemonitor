@@ -29,6 +29,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -139,7 +140,7 @@ public class SpringRequestMonitorTest {
 
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getRequestName())).getCount());
 		assertEquals("Test Get Request Name", requestInformation.getRequestName());
-		assertEquals("Test Get Request Name", requestInformation.getRequestTrace().getName());
+		assertEquals("Test Get Request Name", SpanTags.getInternalSpan(requestInformation.getSpan()).getOperationName());
 		assertEquals("/test/requestName", requestInformation.getRequestTrace().getUrl());
 		assertEquals("GET", requestInformation.getRequestTrace().getMethod());
 		Assert.assertNull(requestInformation.getExecutionResult());
@@ -198,7 +199,7 @@ public class SpringRequestMonitorTest {
 		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
 		try {
 			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());
-			assertEquals("Test Get Request Name", RequestMonitor.get().getRequestTrace().getName());
+			assertEquals("Test Get Request Name", SpanTags.getInternalSpan(RequestMonitor.get().getSpan()).getOperationName());
 		} finally {
 			requestMonitor.monitorStop();
 		}

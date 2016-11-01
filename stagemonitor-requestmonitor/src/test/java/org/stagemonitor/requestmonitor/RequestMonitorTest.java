@@ -114,9 +114,9 @@ public class RequestMonitorTest {
 			@Override
 			public Void answer(InvocationOnMock invocation) throws Throwable {
 				RequestMonitor.RequestInformation<?> requestInformation = (RequestMonitor.RequestInformation) invocation.getArguments()[0];
-				assertEquals("java.lang.RuntimeException", requestInformation.getRequestTrace().getExceptionClass());
-				assertEquals("test", requestInformation.getRequestTrace().getExceptionMessage());
-				assertNotNull(requestInformation.getRequestTrace().getExceptionStackTrace());
+				assertEquals("java.lang.RuntimeException", requestInformation.getInternalSpan().getTags().get("exception.class"));
+				assertEquals("test", requestInformation.getInternalSpan().getTags().get("exception.message"));
+				assertNotNull(requestInformation.getInternalSpan().getTags().get("exception.stack_trace"));
 				return null;
 			}
 		}).when(monitoredRequest).onPostExecute(Mockito.<RequestMonitor.RequestInformation<RequestTrace>>any());
@@ -217,24 +217,29 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testExecutorServiceContextPropagation() throws Exception {
-		SpanCapturingReporter requestTraceCapturingReporter = new SpanCapturingReporter(requestMonitor);
+		SpanCapturingReporter spanCapturingReporter = new SpanCapturingReporter(requestMonitor);
 
 		final ExecutorService executorService = TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor());
+		final Span[] firstSpan = new Span[1];
+		final Span[] asyncSpan = new Span[1];
 
 		requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
-			return monitorAsyncMethodCall(executorService);
+			firstSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+			return monitorAsyncMethodCall(executorService, asyncSpan);
 		}));
 		executorService.shutdown();
-		Span firstSpan = requestTraceCapturingReporter.getSpan();
-		Span asyncSpan = requestTraceCapturingReporter.getSpan();
-		assertEquals("test", firstSpan.getOperationName());
-		assertEquals("async", asyncSpan.getOperationName());
-		assertEquals(firstSpan.context().getSpanID(), asyncSpan.context().getParentID());
+		// waiting for completion
+		spanCapturingReporter.get();
+		spanCapturingReporter.get();
+		assertEquals("test", firstSpan[0].getOperationName());
+		assertEquals("async", asyncSpan[0].getOperationName());
+		assertEquals(firstSpan[0].context().getSpanID(), asyncSpan[0].context().getParentID());
 	}
 
-	private Object monitorAsyncMethodCall(ExecutorService executorService) {
+	private Object monitorAsyncMethodCall(ExecutorService executorService, final Span[] asyncSpan) {
 		return executorService.submit((Callable<Object>) () ->
 				requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
+					asyncSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
 					return callAsyncMethod();
 				})));
 	}

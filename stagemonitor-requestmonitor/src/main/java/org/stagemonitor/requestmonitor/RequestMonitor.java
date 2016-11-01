@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.opentracing.NoopTracer;
 import io.opentracing.Span;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -80,6 +81,7 @@ public class RequestMonitor {
 	private final boolean isCurrentThreadCpuTimeSupported = threadMXBean.isCurrentThreadCpuTimeSupported();
 	private Date endOfWarmup;
 	private Meter callTreeMeter = new Meter();
+	private final static Span NOOP_SPAN = new NoopTracer().buildSpan(null).start();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
 		this(configuration, registry, ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader()));
@@ -188,11 +190,7 @@ public class RequestMonitor {
 	}
 
 	public void recordException(Exception e) {
-		final RequestInformation<? extends RequestTrace> info = request.get();
-		if (info.requestTrace != null) {
-			info.requestTrace.setException(e);
-		}
-		SpanTags.setException(info.getSpan(), e, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
+		SpanTags.setException(getSpan(), e, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {
@@ -263,14 +261,10 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void monitorAfterExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		final T requestTrace = info.requestTrace;
 		final Span span = info.span;
-		final long executionTime = System.nanoTime() - info.start;
 		final long cpuTime = getCpuTime() - info.startCpu;
 		if (requestTrace != null) {
-			requestTrace.setExecutionTime(NANOSECONDS.toMillis(executionTime));
-			requestTrace.setExecutionTimeNanos(executionTime);
-			requestTrace.setExecutionTimeCpu(NANOSECONDS.toMillis(cpuTime));
-			requestTrace.setExecutionTimeCpuNanos(cpuTime);
 			span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
+			span.setTag("duration_cpu_ms", NANOSECONDS.toMillis(cpuTime));
 			monitoredRequest.onPostExecute(info);
 			anonymizeUserNameAndIp(requestTrace);
 
@@ -372,7 +366,6 @@ public class RequestMonitor {
 	public class RequestInformation<T extends RequestTrace> {
 		T requestTrace = null;
 		private Span span;
-		private long start = System.nanoTime();
 		private long startCpu = getCpuTime();
 		private Object executionResult = null;
 		private long overhead1;
@@ -503,7 +496,6 @@ public class RequestMonitor {
 		public String toString() {
 			return "RequestInformation{" +
 					"requestTrace=" + requestTrace +
-					", start=" + start +
 					", startCpu=" + startCpu +
 					", forwardedExecution=" + isForwarded() +
 					", executionResult=" + executionResult +
@@ -520,6 +512,10 @@ public class RequestMonitor {
 
 		public Span getSpan() {
 			return span;
+		}
+
+		public com.uber.jaeger.Span getInternalSpan() {
+			return SpanTags.getInternalSpan(span);
 		}
 
 		public void setSpan(Span span) {
@@ -586,6 +582,14 @@ public class RequestMonitor {
 	public RequestTrace getRequestTrace() {
 		final RequestInformation<? extends RequestTrace> requestInformation = request.get();
 		return requestInformation != null ? requestInformation.getRequestTrace() : null;
+	}
+
+	/**
+	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
+	 */
+	public Span getSpan() {
+		final RequestInformation<? extends RequestTrace> requestInformation = request.get();
+		return requestInformation != null ? requestInformation.getSpan() : NOOP_SPAN;
 	}
 
 	/**

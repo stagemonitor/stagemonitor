@@ -79,7 +79,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
 		HttpRequestTrace request = new HttpRequestTrace(requestId, url, headers, method, connectionId, isShowWidgetAllowed);
 
-		request.setReferringSite(getReferringSite());
 		request.setName(getRequestName());
 
 		return request;

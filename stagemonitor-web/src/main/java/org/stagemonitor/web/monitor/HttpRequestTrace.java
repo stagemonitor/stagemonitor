@@ -15,8 +15,6 @@ import org.stagemonitor.web.WebPlugin;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.opentracing.tag.Tags;
-
 /**
  * This class extends the generic request trace with data specific for http requests
  */
@@ -34,17 +32,13 @@ public class HttpRequestTrace extends RequestTrace {
 			};
 
 	private final String url;
-	private Integer statusCode;
 	private final Map<String, String> headers;
 	private final String method;
-	private Integer bytesWritten;
 	private UserAgentInformation userAgent;
-	private String sessionId;
 	@JsonIgnore
 	private final String connectionId;
 	@JsonIgnore
 	private final boolean showWidgetAllowed;
-	private String referringSite;
 
 	public HttpRequestTrace(String requestId, String url, Map<String, String> headers, String method,
 							String connectionId, boolean showWidgetAllowed) {
@@ -115,30 +109,8 @@ public class HttpRequestTrace extends RequestTrace {
 		return url;
 	}
 
-	public Integer getStatusCode() {
-		return statusCode;
-	}
-
-	public void setStatusCode(Integer statusCode) {
-		Tags.HTTP_STATUS.set(span, statusCode);
-		this.statusCode = statusCode;
-	}
-
-	public Map<String, String> getHeaders() {
-		return headers;
-	}
-
 	public String getMethod() {
 		return method;
-	}
-
-	public void setBytesWritten(Integer bytesWritten) {
-		span.setTag("bytesWritten", bytesWritten);
-		this.bytesWritten = bytesWritten;
-	}
-
-	public Integer getBytesWritten() {
-		return bytesWritten;
 	}
 
 	public UserAgentInformation getUserAgent() {
@@ -157,18 +129,6 @@ public class HttpRequestTrace extends RequestTrace {
 	}
 
 	/**
-	 * @return the http session id, <code>null</code> if there is no session associated with the request
-	 */
-	public String getSessionId() {
-		return sessionId;
-	}
-
-	public void setSessionId(String sessionId) {
-		span.setTag("sessionId", sessionId);
-		this.sessionId = sessionId;
-	}
-
-	/**
 	 * The connection id is used to associate ajax requests with a particular browser window in which the
 	 * stagemonitor widget is running.
 	 * <p/>
@@ -182,14 +142,6 @@ public class HttpRequestTrace extends RequestTrace {
 
 	public boolean isShowWidgetAllowed() {
 		return showWidgetAllowed;
-	}
-
-	public void setReferringSite(String referringSite) {
-		this.referringSite = referringSite;
-	}
-
-	public String getReferringSite() {
-		return referringSite;
 	}
 
 }

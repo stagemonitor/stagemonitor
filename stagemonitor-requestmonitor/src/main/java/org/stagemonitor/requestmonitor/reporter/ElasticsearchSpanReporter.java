@@ -130,9 +130,9 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 					gen.writeNumberField("duration", span.getDuration());
 					gen.writeNumberField("duration_ms", TimeUnit.MICROSECONDS.toMillis(span.getDuration()));
 					gen.writeNumberField("@timestamp", TimeUnit.MICROSECONDS.toMillis(span.getStart()));
-					gen.writeStringField("id", String.format("%x", span.context().getSpanID()));
-					gen.writeStringField("trace_id", String.format("%x", span.context().getTraceID()));
-					gen.writeStringField("parent_id", String.format("%x", span.context().getSpanID()));
+					gen.writeStringField("id", StringUtils.toHexString(span.context().getSpanID()));
+					gen.writeStringField("trace_id", StringUtils.toHexString(span.context().getTraceID()));
+					gen.writeStringField("parent_id", StringUtils.toHexString(span.context().getParentID()));
 					gen.writeBooleanField("sampled", span.context().isSampled());
 					gen.writeBooleanField("debug", span.context().isDebug());
 					if (span.getPeer() != null) {
@@ -145,4 +145,5 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 			})));
 		}
 	}
+
 }

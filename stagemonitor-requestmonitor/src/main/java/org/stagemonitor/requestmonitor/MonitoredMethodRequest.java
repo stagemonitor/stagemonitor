@@ -40,9 +40,6 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	public RequestTrace createRequestTrace() {
 		RequestTrace requestTrace = new RequestTrace(UUID.randomUUID().toString());
 		requestTrace.setName(methodSignature);
-		if (safeParameters != null && safeParameters.size() > 0) {
-			requestTrace.setParameters(safeParameters);
-		}
 		return requestTrace;
 	}
 
