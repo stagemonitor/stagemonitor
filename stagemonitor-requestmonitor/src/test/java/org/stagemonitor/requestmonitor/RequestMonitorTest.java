@@ -94,7 +94,7 @@ public class RequestMonitorTest {
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(createMonitoredRequest());
 
 		assertEquals("test", requestInformation.getExecutionResult());
-		assertNull(requestInformation.getRequestTrace());
+		assertNull(requestInformation.getSpan());
 	}
 
 	@Test
@@ -102,7 +102,7 @@ public class RequestMonitorTest {
 		doReturn(2).when(requestMonitorPlugin).getNoOfWarmupRequests();
 		requestMonitor = new RequestMonitor(configuration, registry);
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(createMonitoredRequest());
-		assertNull(requestInformation.getRequestTrace());
+		assertNull(requestInformation.getSpan());
 	}
 
 	@Test

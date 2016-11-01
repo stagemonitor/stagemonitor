@@ -19,6 +19,8 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import io.opentracing.tag.Tags;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -52,8 +54,8 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertTrue(requestInformation2.isForwarded());
 		assertTrue(requestInformation3.isForwarded());
 
-		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
-		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
+		assertEquals("/monitored3", requestInformation3.getInternalSpan().getTags().get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET /monitored3", requestInformation3.getInternalSpan().getOperationName());
 
 		assertNull(metricRegistry.getTimers().get(name("response_time_server").tag("request_name", "GET /monitored1").layer("All").build()));
 		assertNull(metricRegistry.getTimers().get(name("response_time_server").tag("request_name", "GET /monitored2").layer("All").build()));
@@ -67,8 +69,8 @@ public class MonitoredHttpExecutionForwardingTest {
 		assertNull(requestInformation2);
 		assertFalse(requestInformation3.isForwarded());
 
-		assertEquals("/monitored3", requestInformation3.requestTrace.getUrl());
-		assertEquals("GET /monitored3", requestInformation3.requestTrace.getName());
+		assertEquals("/monitored3", requestInformation3.getInternalSpan().getTags().get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET /monitored3", requestInformation3.getInternalSpan().getOperationName());
 
 		assertNull(metricRegistry.getTimers().get(name("response_time_server").tag("request_name", "GET /monitored1").layer("All").build()));
 		assertNull(metricRegistry.getTimers().get(name("response_time_server").tag("request_name", "GET /monitored2").layer("All").build()));

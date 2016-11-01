@@ -78,9 +78,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		final String requestId = (String) httpServletRequest.getAttribute(MDCListener.STAGEMONITOR_REQUEST_ID_ATTR);
 		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
 		HttpRequestTrace request = new HttpRequestTrace(requestId, url, headers, method, connectionId, isShowWidgetAllowed);
-
-		request.setName(getRequestName());
-
 		return request;
 	}
 
