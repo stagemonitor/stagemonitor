@@ -1,9 +1,11 @@
 package org.stagemonitor.web.monitor.widget;
 
+import com.uber.jaeger.Span;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -23,12 +25,12 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 	private static final long MAX_REQUEST_TRACE_BUFFERING_TIME = 60 * 1000;
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private ConcurrentMap<String, ConcurrentLinkedQueue<HttpRequestTrace>> connectionIdToRequestTracesMap =
-			new ConcurrentHashMap<String, ConcurrentLinkedQueue<HttpRequestTrace>>();
+	private ConcurrentMap<String, ConcurrentLinkedQueue<Span>> connectionIdToSpanMap =
+			new ConcurrentHashMap<String, ConcurrentLinkedQueue<Span>>();
 	private ConcurrentMap<String, Object> connectionIdToLockMap = new ConcurrentHashMap<String, Object>();
 
 	/**
-	 * see {@link OldRequestTraceRemover}
+	 * see {@link OldSpanRemover}
 	 */
 	private ScheduledExecutorService oldRequestTracesRemoverPool;
 
@@ -46,13 +48,13 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 			}
 		});
 
-		oldRequestTracesRemoverPool.scheduleAtFixedRate(new OldRequestTraceRemover(),
+		oldRequestTracesRemoverPool.scheduleAtFixedRate(new OldSpanRemover(),
 				MAX_REQUEST_TRACE_BUFFERING_TIME, MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
 	}
 
-	Collection<HttpRequestTrace> getRequestTraces(String connectionId, long requestTimeout) throws IOException {
+	Collection<Span> getSpans(String connectionId, long requestTimeout) throws IOException {
 		if (connectionId != null && !connectionId.trim().isEmpty()) {
-			final ConcurrentLinkedQueue<HttpRequestTrace> traces = connectionIdToRequestTracesMap.remove(connectionId);
+			final ConcurrentLinkedQueue<Span> traces = connectionIdToSpanMap.remove(connectionId);
 			if (traces != null) {
 				logger.debug("picking up buffered requests");
 				return traces;
@@ -64,7 +66,7 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 		}
 	}
 
-	private Collection<HttpRequestTrace> blockingWaitForRequestTrace(String connectionId, Long requestTimeout) throws IOException {
+	private Collection<Span> blockingWaitForRequestTrace(String connectionId, Long requestTimeout) throws IOException {
 		Object lock = new Object();
 		synchronized (lock) {
 			connectionIdToLockMap.put(connectionId, lock);
@@ -75,19 +77,19 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 			} finally {
 				connectionIdToLockMap.remove(connectionId, lock);
 			}
-			return connectionIdToRequestTracesMap.remove(connectionId);
+			return connectionIdToSpanMap.remove(connectionId);
 		}
 	}
 
 	@Override
 	public void report(ReportArguments reportArguments) throws IOException {
-		if (isActive(new IsActiveArguments(reportArguments.getRequestTrace(), reportArguments.getSpan())) && reportArguments.getRequestTrace() instanceof HttpRequestTrace) {
-			HttpRequestTrace httpRequestTrace = (HttpRequestTrace) reportArguments.getRequestTrace();
+		if (isActive(new IsActiveArguments(reportArguments.getRequestTrace(), reportArguments.getSpan(), reportArguments.getRequestAttributes()))) {
+			Span httpSpan = reportArguments.getInternalSpan();
 
-			final String connectionId = httpRequestTrace.getConnectionId();
+			final String connectionId = (String) reportArguments.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
-				logger.debug("report {} ({})", reportArguments.getRequestTrace().getName(), reportArguments.getRequestTrace().getTimestamp());
-				bufferRequestTrace(connectionId, httpRequestTrace);
+				logger.debug("report {}", reportArguments.getSpan());
+				bufferRequestTrace(connectionId, httpSpan);
 
 				final Object lock = connectionIdToLockMap.remove(connectionId);
 				if (lock != null) {
@@ -99,38 +101,33 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 		}
 	}
 
-	private void bufferRequestTrace(String connectionId, HttpRequestTrace requestTrace) {
-		logger.debug("bufferRequestTrace {} ({})", requestTrace.getName(), requestTrace.getTimestamp());
-		ConcurrentLinkedQueue<HttpRequestTrace> httpRequestTraces = new ConcurrentLinkedQueue<HttpRequestTrace>();
-		httpRequestTraces.add(requestTrace);
+	private void bufferRequestTrace(String connectionId, Span span) {
+		logger.debug("bufferRequestTrace {}", span);
+		ConcurrentLinkedQueue<Span> httpRequestTraces = new ConcurrentLinkedQueue<Span>();
+		httpRequestTraces.add(span);
 
-		final ConcurrentLinkedQueue<HttpRequestTrace> alreadyAssociatedValue = connectionIdToRequestTracesMap
+		final ConcurrentLinkedQueue<Span> alreadyAssociatedValue = connectionIdToSpanMap
 				.putIfAbsent(connectionId, httpRequestTraces);
 		if (alreadyAssociatedValue != null) {
-			alreadyAssociatedValue.add(requestTrace);
+			alreadyAssociatedValue.add(span);
 		}
 	}
 
 
 	@Override
 	public boolean isActive(IsActiveArguments isActiveArguments) {
-		if (isActiveArguments.getRequestTrace() instanceof HttpRequestTrace) {
-			return ((HttpRequestTrace) isActiveArguments.getRequestTrace()).isShowWidgetAllowed();
-		} else {
-			logger.warn("RequestTrace is not instanceof HttpRequestTrace: {}", isActiveArguments.getRequestTrace());
-			return false;
-		}
+		return Boolean.TRUE.equals(isActiveArguments.getRequestAttributes().get(MonitoredHttpRequest.WIDGET_ALLOWED_ATTRIBUTE));
 	}
 
 	/**
-	 * Clears old request traces that are buffered in {@link #connectionIdToRequestTracesMap} but are never picked up
+	 * Clears old request traces that are buffered in {@link #connectionIdToSpanMap} but are never picked up
 	 * to prevent a memory leak
 	 */
-	private class OldRequestTraceRemover implements Runnable {
+	private class OldSpanRemover implements Runnable {
 		@Override
 		public void run() {
-			for (Map.Entry<String, ConcurrentLinkedQueue<HttpRequestTrace>> entry : connectionIdToRequestTracesMap.entrySet()) {
-				final ConcurrentLinkedQueue<HttpRequestTrace> httpRequestTraces = entry.getValue();
+			for (Map.Entry<String, ConcurrentLinkedQueue<Span>> entry : connectionIdToSpanMap.entrySet()) {
+				final ConcurrentLinkedQueue<Span> httpRequestTraces = entry.getValue();
 				removeOldRequestTraces(httpRequestTraces);
 				if (httpRequestTraces.isEmpty()) {
 					removeOrphanEntry(entry);
@@ -138,19 +135,19 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 			}
 		}
 
-		private void removeOldRequestTraces(ConcurrentLinkedQueue<HttpRequestTrace> httpRequestTraces) {
-			for (Iterator<HttpRequestTrace> iterator = httpRequestTraces.iterator(); iterator.hasNext(); ) {
-				HttpRequestTrace httpRequestTrace = iterator.next();
-				final long timeInBuffer = System.currentTimeMillis() - httpRequestTrace.getTimestampEnd();
+		private void removeOldRequestTraces(ConcurrentLinkedQueue<Span> httpRequestTraces) {
+			for (Iterator<Span> iterator = httpRequestTraces.iterator(); iterator.hasNext(); ) {
+				Span httpSpan = iterator.next();
+				final long timeInBuffer = System.currentTimeMillis() - TimeUnit.MICROSECONDS.toMillis(httpSpan.getDuration());
 				if (timeInBuffer > MAX_REQUEST_TRACE_BUFFERING_TIME) {
 					iterator.remove();
 				}
 			}
 		}
 
-		private void removeOrphanEntry(Map.Entry<String, ConcurrentLinkedQueue<HttpRequestTrace>> entry) {
+		private void removeOrphanEntry(Map.Entry<String, ConcurrentLinkedQueue<Span>> entry) {
 			// to eliminate race conditions remove only if queue is still empty
-			connectionIdToRequestTracesMap.remove(entry.getKey(), new ConcurrentLinkedQueue<HttpRequestTrace>());
+			connectionIdToSpanMap.remove(entry.getKey(), new ConcurrentLinkedQueue<Span>());
 		}
 	}
 

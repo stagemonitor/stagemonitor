@@ -17,14 +17,13 @@ import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.core.util.TimeUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 import org.stagemonitor.requestmonitor.utils.SpanTags;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -77,8 +76,6 @@ public class RequestMonitor {
 	private Metric2Registry metricRegistry;
 	private CorePlugin corePlugin;
 	private RequestMonitorPlugin requestMonitorPlugin;
-	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-	private final boolean isCurrentThreadCpuTimeSupported = threadMXBean.isCurrentThreadCpuTimeSupported();
 	private Date endOfWarmup;
 	private Meter callTreeMeter = new Meter();
 	private final static Span NOOP_SPAN = new NoopTracer().buildSpan(null).start();
@@ -261,7 +258,7 @@ public class RequestMonitor {
 	private <T extends RequestTrace> void monitorAfterExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
 		final T requestTrace = info.requestTrace;
 		final Span span = info.span;
-		final long cpuTime = getCpuTime() - info.startCpu;
+		final long cpuTime = TimeUtils.getCpuTime() - info.startCpu;
 		if (requestTrace != null) {
 			span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
 			span.setTag("duration_cpu_ms", NANOSECONDS.toMillis(cpuTime));
@@ -333,7 +330,7 @@ public class RequestMonitor {
 			if (isActive(requestInformation, spanReporter)) {
 				try {
 					spanReporter.report(new SpanReporter.ReportArguments(requestInformation.getRequestTrace(),
-							requestInformation.getSpan(), callTree));
+							requestInformation.getSpan(), callTree, requestInformation.requestAttributes));
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 				}
@@ -353,10 +350,6 @@ public class RequestMonitor {
 		}
 	}
 
-	private long getCpuTime() {
-		return isCurrentThreadCpuTimeSupported ? threadMXBean.getCurrentThreadCpuTime() : 0L;
-	}
-
 	void onInit(StagemonitorPlugin.InitArguments initArguments) {
 		for (SpanReporter spanReporter : spanReporters) {
 			spanReporter.init(new SpanReporter.InitArguments(configuration, initArguments.getMetricRegistry()));
@@ -364,9 +357,9 @@ public class RequestMonitor {
 	}
 
 	public class RequestInformation<T extends RequestTrace> {
-		T requestTrace = null;
+		private T requestTrace = null;
 		private Span span;
-		private long startCpu = getCpuTime();
+		private long startCpu = TimeUtils.getCpuTime();
 		private Object executionResult = null;
 		private long overhead1;
 		private MonitoredRequest monitoredRequest;
@@ -375,7 +368,7 @@ public class RequestMonitor {
 		private RequestInformation<T> child;
 		private Future<?> requestTraceReporterFuture;
 		private Map<String, Object> requestAttributes = new HashMap<String, Object>();
-		public CallStackElement callTree;
+		private CallStackElement callTree;
 
 		/**
 		 * If the request has no name it means that it should not be monitored.
@@ -448,8 +441,7 @@ public class RequestMonitor {
 		}
 
 		private boolean isProfileThisRequest() {
-			if (requestTrace == null) {
-				// TODO don't profile client spans
+			if (span == null || getInternalSpan().isRPCClient()) {
 				return false;
 			}
 			double callTreeRateLimit = requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute();
@@ -561,7 +553,7 @@ public class RequestMonitor {
 		if (activeFromAttribute != null) {
 			return activeFromAttribute;
 		}
-		final boolean active = spanReporter.isActive(new SpanReporter.IsActiveArguments(requestInformation.requestTrace, requestInformation.span));
+		final boolean active = spanReporter.isActive(new SpanReporter.IsActiveArguments(requestInformation.requestTrace, requestInformation.span, requestInformation.requestAttributes));
 		requestInformation.addRequestAttribute(requestAttributeActive, active);
 		return active;
 	}

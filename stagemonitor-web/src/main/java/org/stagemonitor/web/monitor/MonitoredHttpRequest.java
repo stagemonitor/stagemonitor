@@ -40,6 +40,8 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
 
+	public static final String CONNECTION_ID_ATTRIBUTE = "connectionId";
+	public static final String WIDGET_ALLOWED_ATTRIBUTE = "showWidgetAllowed";
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
@@ -183,6 +185,11 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 
 	@Override
 	public void onPostExecute(RequestMonitor.RequestInformation<HttpRequestTrace> info) {
+		final String connectionId = httpServletRequest.getHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID);
+		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
+		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
+		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, isShowWidgetAllowed);
+
 		final Span span = info.getSpan();
 
 		final String clientIp = getClientIp(httpServletRequest);

@@ -7,6 +7,9 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.opentracing.Span;
 
 public abstract class SpanReporter implements StagemonitorSPI {
@@ -74,10 +77,20 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	public static class IsActiveArguments {
 		private final RequestTrace requestTrace;
 		private final Span span;
+		private final Map<String, Object> requestAttributes;
 
+		/**
+		 * Only to be used in unit tests
+		 */
+		@Deprecated
 		public IsActiveArguments(RequestTrace requestTrace, Span span) {
+			this(requestTrace, span, new HashMap<String, Object>());
+		}
+
+		public IsActiveArguments(RequestTrace requestTrace, Span span, Map<String, Object> requestAttributes) {
 			this.requestTrace = requestTrace;
 			this.span = span;
+			this.requestAttributes = requestAttributes;
 		}
 
 		public RequestTrace getRequestTrace() {
@@ -87,22 +100,36 @@ public abstract class SpanReporter implements StagemonitorSPI {
 		public Span getSpan() {
 			return span;
 		}
+
+		public Map<String, Object> getRequestAttributes() {
+			return requestAttributes;
+		}
 	}
 
 	public static class ReportArguments {
 		private final RequestTrace requestTrace;
 		private final Span span;
 		private final CallStackElement callTree;
+		private final Map<String, Object> requestAttributes;
+
+		/**
+		 * Only to be used in unit tests
+		 */
+		@Deprecated
+		public ReportArguments(RequestTrace requestTrace, Span span, CallStackElement callTree) {
+			this(requestTrace, span, callTree, new HashMap<String, Object>());
+		}
 
 		/**
 		 * @param requestTrace the {@link RequestTrace} of the current request
 		 * @param span
 		 * @param callTree
 		 */
-		public ReportArguments(RequestTrace requestTrace, Span span, CallStackElement callTree) {
+		public ReportArguments(RequestTrace requestTrace, Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
 			this.requestTrace = requestTrace;
 			this.span = span;
 			this.callTree = callTree;
+			this.requestAttributes = requestAttributes;
 		}
 
 		public RequestTrace getRequestTrace() {
@@ -119,6 +146,10 @@ public abstract class SpanReporter implements StagemonitorSPI {
 
 		public CallStackElement getCallTree() {
 			return callTree;
+		}
+
+		public Map<String, Object> getRequestAttributes() {
+			return requestAttributes;
 		}
 	}
 }

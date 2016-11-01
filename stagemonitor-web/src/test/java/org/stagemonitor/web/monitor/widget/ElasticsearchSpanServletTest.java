@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ElasticsearchRequestTraceServletTest extends ElasticsearchRequestTraceReporterIntegrationTest {
+public class ElasticsearchSpanServletTest extends ElasticsearchRequestTraceReporterIntegrationTest {
 
 	private ElasticsearchRequestTraceServlet elasticsearchRequestTraceServlet;
 

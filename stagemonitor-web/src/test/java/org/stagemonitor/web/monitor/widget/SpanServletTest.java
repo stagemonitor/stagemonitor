@@ -1,9 +1,14 @@
 package org.stagemonitor.web.monitor.widget;
 
+import com.uber.jaeger.reporters.NoopReporter;
+import com.uber.jaeger.samplers.ConstSampler;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -12,30 +17,39 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
+import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
+import io.opentracing.Span;
+
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class RequestTraceServletTest {
+public class SpanServletTest {
 
 	private WidgetAjaxRequestTraceReporter reporter;
-	private RequestTraceServlet requestTraceServlet;
-	private HttpRequestTrace httpRequestTrace;
+	private SpanServlet spanServlet;
 	private String connectionId;
 	private WebPlugin webPlugin;
+	private Span span;
+	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 
 	@Before
 	public void setUp() throws Exception {
@@ -45,42 +59,59 @@ public class RequestTraceServletTest {
 
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
+		when(requestMonitorPlugin.getTracer()).thenReturn(new com.uber.jaeger.Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true)).build());
 		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		reporter = new WidgetAjaxRequestTraceReporter();
-		requestTraceServlet = new RequestTraceServlet(configuration, reporter, 1500);
-		requestTraceServlet.init();
+		spanServlet = new SpanServlet(configuration, reporter, 1500);
+		spanServlet.init();
 		connectionId = UUID.randomUUID().toString();
-		httpRequestTrace = new HttpRequestTrace(null, "/test", Collections.emptyMap(), "GET", connectionId, true);
-		httpRequestTrace.setName("test");
+		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test");
+		request.addHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID, connectionId);
+		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration);
+		span = monitoredHttpRequest.createSpan();
+		span.setOperationName("test");
+		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
+		doAnswer(new Answer() {
+			@Override
+			public Object answer(InvocationOnMock invocation) throws Throwable {
+				return requestAttributes.put(invocation.getArgument(0), invocation.getArgument(1));
+			}
+		}).when(requestInformation).addRequestAttribute(anyString(), any());
+		when(requestInformation.getSpan()).thenReturn(span);
+		when(requestInformation.getRequestName()).thenReturn("test");
+
+		monitoredHttpRequest.onPostExecute(requestInformation);
+		// init jackson module
+		new ElasticsearchSpanReporter();
 	}
 
 	@Test
 	public void testRequestTraceBeforeRequest() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		requestTraceServlet.service(request, response);
+		spanServlet.service(request, response);
 
-		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
+		Assert.assertEquals(JsonUtils.toJson(Collections.singletonList(span)), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
 	}
 
 	@Test
 	public void testTwoRequestTraceBeforeRequest() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		requestTraceServlet.service(request, response);
+		spanServlet.service(request, response);
 
-		Assert.assertEquals(Arrays.asList(httpRequestTrace.toJson(), httpRequestTrace.toJson()).toString(), response.getContentAsString());
+		Assert.assertEquals(Arrays.asList(JsonUtils.toJson(span), JsonUtils.toJson(span)).toString(), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
 	}
 
@@ -94,7 +125,7 @@ public class RequestTraceServletTest {
 						synchronized (lock) {
 							lock.notifyAll();
 						}
-						requestTraceServlet.service(request, response);
+						spanServlet.service(request, response);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -119,10 +150,10 @@ public class RequestTraceServletTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
 		waitForResponse(response);
 
-		Assert.assertEquals(JsonUtils.toJson(Arrays.asList(httpRequestTrace)), response.getContentAsString());
+		Assert.assertEquals(JsonUtils.toJson(Collections.singletonList(span)), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
 	}
 
@@ -134,7 +165,7 @@ public class RequestTraceServletTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(new SpanReporter.ReportArguments(httpRequestTrace, null, null));
+		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
 		waitForResponse(response);
 
 		Assert.assertEquals("[]", response.getContentAsString());
@@ -145,7 +176,7 @@ public class RequestTraceServletTest {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		requestTraceServlet.service(request, response);
+		spanServlet.service(request, response);
 
 		Assert.assertEquals(400, response.getStatus());
 	}
@@ -156,7 +187,7 @@ public class RequestTraceServletTest {
 		request.addParameter("connectionId", "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		requestTraceServlet.service(request, response);
+		spanServlet.service(request, response);
 
 		Assert.assertEquals(400, response.getStatus());
 	}
@@ -170,10 +201,9 @@ public class RequestTraceServletTest {
 
 		Configuration configuration = mock(Configuration.class);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		new MockFilterChain(requestTraceServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
+		new MockFilterChain(spanServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 
 		Assert.assertEquals(404, response.getStatus());
-		final HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
-		Assert.assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(requestTrace, null)));
+		Assert.assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(null, mock(Span.class))));
 	}
 }

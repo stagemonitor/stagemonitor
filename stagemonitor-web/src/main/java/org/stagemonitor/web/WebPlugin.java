@@ -1,25 +1,5 @@
 package org.stagemonitor.web;
 
-import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
-import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletRegistration;
-import javax.servlet.http.HttpServletRequest;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -40,9 +20,29 @@ import org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
 import org.stagemonitor.web.monitor.rum.RumServlet;
 import org.stagemonitor.web.monitor.servlet.StagemonitorFileServlet;
-import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
+import org.stagemonitor.web.monitor.widget.SpanServlet;
 import org.stagemonitor.web.monitor.widget.WidgetServlet;
 import org.stagemonitor.web.session.SessionCounter;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletRegistration;
+import javax.servlet.http.HttpServletRequest;
+
+import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
+import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
 
 public class WebPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
 
@@ -379,7 +379,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
 				.addMapping("/stagemonitor");
 
-		final ServletRegistration.Dynamic requestTraceServlet = ctx.addServlet(RequestTraceServlet.class.getSimpleName(), new RequestTraceServlet());
+		final ServletRegistration.Dynamic requestTraceServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), new SpanServlet());
 		requestTraceServlet.addMapping("/stagemonitor/request-traces");
 		requestTraceServlet.setAsyncSupported(true);
 
