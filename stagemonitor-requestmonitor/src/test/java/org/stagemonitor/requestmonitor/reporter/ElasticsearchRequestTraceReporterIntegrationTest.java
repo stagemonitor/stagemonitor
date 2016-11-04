@@ -50,7 +50,7 @@ public class ElasticsearchRequestTraceReporterIntegrationTest extends AbstractEl
 		final Span span = monitoredMethodRequest.createSpan();
 		span.setTag("foo.bar", "baz");
 		span.finish();
-		reporter.report(new SpanReporter.ReportArguments(null, span, null));
+		reporter.report(new SpanReporter.ReportArguments(span, null));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");

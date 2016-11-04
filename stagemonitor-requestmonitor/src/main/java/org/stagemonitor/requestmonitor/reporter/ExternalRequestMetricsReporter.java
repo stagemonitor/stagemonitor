@@ -4,7 +4,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.concurrent.TimeUnit;
@@ -61,7 +60,7 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 	}
 
 	// TODO test!
-	private <T extends RequestTrace> void trackExternalRequestMetrics(String requestName, com.uber.jaeger.Span externalRequest) {
+	private void trackExternalRequestMetrics(String requestName, com.uber.jaeger.Span externalRequest) {
 		final Metric2Registry metricRegistry = corePlugin.getMetricRegistry();
 		final String type = externalRequest.getTags().get("type").toString();
 		if (externalRequest.getDuration() > 0) {

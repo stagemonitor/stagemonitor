@@ -25,9 +25,9 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MonitoredMethodExecutionTest {
 
-	private RequestMonitor.RequestInformation<RequestTrace> requestInformation1;
-	private RequestMonitor.RequestInformation<RequestTrace> requestInformation2;
-	private RequestMonitor.RequestInformation<RequestTrace> requestInformation3;
+	private RequestMonitor.RequestInformation requestInformation1;
+	private RequestMonitor.RequestInformation requestInformation2;
+	private RequestMonitor.RequestInformation requestInformation3;
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
 	private Configuration configuration;

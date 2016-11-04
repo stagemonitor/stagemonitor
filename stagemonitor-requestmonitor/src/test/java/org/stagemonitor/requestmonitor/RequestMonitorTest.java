@@ -107,19 +107,19 @@ public class RequestMonitorTest {
 
 	@Test
 	public void testRecordException() throws Exception {
-		final MonitoredRequest<RequestTrace> monitoredRequest = createMonitoredRequest();
+		final MonitoredRequest monitoredRequest = createMonitoredRequest();
 		doThrow(new RuntimeException("test")).when(monitoredRequest).execute();
 
 		doAnswer(new Answer<Void>() {
 			@Override
 			public Void answer(InvocationOnMock invocation) throws Throwable {
-				RequestMonitor.RequestInformation<?> requestInformation = (RequestMonitor.RequestInformation) invocation.getArguments()[0];
+				RequestMonitor.RequestInformation requestInformation = (RequestMonitor.RequestInformation) invocation.getArguments()[0];
 				assertEquals("java.lang.RuntimeException", requestInformation.getInternalSpan().getTags().get("exception.class"));
 				assertEquals("test", requestInformation.getInternalSpan().getTags().get("exception.message"));
 				assertNotNull(requestInformation.getInternalSpan().getTags().get("exception.stack_trace"));
 				return null;
 			}
-		}).when(monitoredRequest).onPostExecute(Mockito.<RequestMonitor.RequestInformation<RequestTrace>>any());
+		}).when(monitoredRequest).onPostExecute(Mockito.<RequestMonitor.RequestInformation>any());
 
 		try {
 			requestMonitor.monitor(monitoredRequest);
@@ -149,7 +149,7 @@ public class RequestMonitorTest {
 		verify(registry, times(active ? 1 : 0)).timer(name("internal_overhead_request_monitor").build());
 	}
 
-	private MonitoredRequest<RequestTrace> createMonitoredRequest() throws Exception {
+	private MonitoredRequest createMonitoredRequest() throws Exception {
 		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", new MonitoredMethodRequest.MethodExecution() {
 			@Override
 			public Object execute() throws Exception {
@@ -161,14 +161,14 @@ public class RequestMonitorTest {
 	@Test
 	public void testProfileThisExecutionDeactive() throws Exception {
 		doReturn(0d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
+		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getCallTree());
 	}
 
 	@Test
 	public void testProfileThisExecutionAlwaysActive() throws Exception {
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
+		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNotNull(monitor.getCallTree());
 	}
 
@@ -179,7 +179,7 @@ public class RequestMonitorTest {
 		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNExternalRequestsPerMinute();
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
 		doReturn(false).when(requestMonitorPlugin).isLogCallStacks();
-		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
+		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getCallTree());
 	}
 
@@ -198,7 +198,7 @@ public class RequestMonitorTest {
 		doReturn(callTreeRate).when(callTreeMeter).getOneMinuteRate();
 		requestMonitor.setCallTreeMeter(callTreeMeter);
 
-		final RequestMonitor.RequestInformation<RequestTrace> monitor = requestMonitor.monitor(createMonitoredRequest());
+		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		if (callStackExpected) {
 			assertNotNull(monitor.getCallTree());
 		} else {
@@ -209,7 +209,7 @@ public class RequestMonitorTest {
 	@Test
 	@Ignore
 	public void testGetInstanceNameFromExecution() throws Exception {
-		final MonitoredRequest<RequestTrace> monitoredRequest = createMonitoredRequest();
+		final MonitoredRequest monitoredRequest = createMonitoredRequest();
 		doReturn("testInstance").when(monitoredRequest).getInstanceName();
 		requestMonitor.monitor(monitoredRequest);
 		assertEquals("testInstance", Stagemonitor.getMeasurementSession().getInstanceName());

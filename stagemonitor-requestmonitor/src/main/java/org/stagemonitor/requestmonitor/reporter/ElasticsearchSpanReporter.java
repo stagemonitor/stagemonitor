@@ -1,7 +1,6 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.Module;
@@ -109,10 +108,13 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 			context.addSerializers(new SimpleSerializers(Collections.<JsonSerializer<?>>singletonList(new StdSerializer<com.uber.jaeger.Span>(Span.class) {
 
 				@Override
-				public void serialize(com.uber.jaeger.Span span, JsonGenerator gen, SerializerProvider serializers) throws IOException, JsonProcessingException {
+				public void serialize(com.uber.jaeger.Span span, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 					gen.writeStartObject();
-					for (Map.Entry<String, Object> entry : span.getTags().entrySet()) {
-						gen.writeObjectField(entry.getKey(), entry.getValue());
+					for (Map.Entry<String, Object> entry : convertDottedKeysIntoNestedObject(span).entrySet()) {
+						final Object value = entry.getValue();
+						if (value != null) {
+							gen.writeObjectField(entry.getKey(), value);
+						}
 					}
 					if (span.getLogs() != null) {
 						gen.writeArrayFieldStart("logs");
@@ -129,20 +131,27 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 					gen.writeStringField("name", span.getOperationName());
 					gen.writeNumberField("duration", span.getDuration());
 					gen.writeNumberField("duration_ms", TimeUnit.MICROSECONDS.toMillis(span.getDuration()));
-					gen.writeNumberField("@timestamp", TimeUnit.MICROSECONDS.toMillis(span.getStart()));
+					gen.writeStringField("@timestamp", StringUtils.timestampAsIsoString(TimeUnit.MICROSECONDS.toMillis(span.getStart())));
 					gen.writeStringField("id", StringUtils.toHexString(span.context().getSpanID()));
 					gen.writeStringField("trace_id", StringUtils.toHexString(span.context().getTraceID()));
 					gen.writeStringField("parent_id", StringUtils.toHexString(span.context().getParentID()));
 					gen.writeBooleanField("sampled", span.context().isSampled());
 					gen.writeBooleanField("debug", span.context().isDebug());
 					if (span.getPeer() != null) {
-						gen.writeStringField("peer.service", span.getPeer().getService_name());
-						gen.writeNumberField("peer.port", span.getPeer().getPort());
-						gen.writeNumberField("peer.ipv4", span.getPeer().getIpv4());
+						gen.writeObjectFieldStart("peer");
+						gen.writeStringField("service", span.getPeer().getService_name());
+						gen.writeNumberField("port", span.getPeer().getPort());
+						gen.writeNumberField("ipv4", span.getPeer().getIpv4());
+						gen.writeEndObject();
 					}
 					gen.writeEndObject();
 				}
 			})));
+		}
+
+		private Map<String, Object> convertDottedKeysIntoNestedObject(Span span) {
+			// TODO
+			return span.getTags();
 		}
 	}
 

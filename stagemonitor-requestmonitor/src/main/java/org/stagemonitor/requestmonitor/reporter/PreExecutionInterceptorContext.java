@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestTrace;
 
 import io.opentracing.Span;
 
@@ -15,7 +14,6 @@ public class PreExecutionInterceptorContext {
 	private static final Logger logger = LoggerFactory.getLogger(PreExecutionInterceptorContext.class);
 
 	private final Configuration configuration;
-	private final RequestTrace requestTrace;
 	private final Span span;
 	private final Meter internalRequestReportingRate;
 	private final Meter externalRequestReportingRate;
@@ -23,9 +21,8 @@ public class PreExecutionInterceptorContext {
 	private boolean mustReport = false;
 	private boolean report = true;
 
-	PreExecutionInterceptorContext(Configuration configuration, RequestTrace requestTrace, Span span, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
+	PreExecutionInterceptorContext(Configuration configuration, Span span, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
-		this.requestTrace = requestTrace;
 		this.span = span;
 		this.externalRequestReportingRate = externalRequestReportingRate;
 		this.internalRequestReportingRate = internalRequestReportingRate;
@@ -45,10 +42,6 @@ public class PreExecutionInterceptorContext {
 			report = false;
 		}
 		return this;
-	}
-
-	public RequestTrace getRequestTrace() {
-		return requestTrace;
 	}
 
 	public Span getSpan() {

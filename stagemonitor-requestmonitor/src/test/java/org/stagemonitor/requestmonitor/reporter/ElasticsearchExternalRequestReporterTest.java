@@ -52,7 +52,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		report(getSpan());
 
 		verify(elasticsearchClient).index(startsWith("stagemonitor-spans-"), eq("spans"), any());
-		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(null, getSpan())));
+		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(getSpan())));
 		verifyTimerCreated(1);
 	}
 
@@ -65,7 +65,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(requestTraceLogger, times(0)).info(anyString());
-		assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(null, getSpan())));
+		assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(getSpan())));
 		verifyTimerCreated(1);
 	}
 
@@ -75,7 +75,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
 		verify(requestTraceLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
-		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(null, getSpan())));
+		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(getSpan())));
 		verifyTimerCreated(1);
 	}
 
@@ -114,8 +114,8 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private void report(Span span) {
-		final SpanReporter.IsActiveArguments isActiveArguments = new SpanReporter.IsActiveArguments(null, span);
-		final SpanReporter.ReportArguments reportArguments = new SpanReporter.ReportArguments(null, span, null);
+		final SpanReporter.IsActiveArguments isActiveArguments = new SpanReporter.IsActiveArguments(span);
+		final SpanReporter.ReportArguments reportArguments = new SpanReporter.ReportArguments(span, null);
 		if (externalRequestMetricsReporter.isActive(isActiveArguments)) {
 			externalRequestMetricsReporter.report(reportArguments);
 		}

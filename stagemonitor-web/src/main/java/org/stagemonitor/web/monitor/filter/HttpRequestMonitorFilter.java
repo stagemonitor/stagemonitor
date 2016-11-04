@@ -1,6 +1,18 @@
 package org.stagemonitor.web.monitor.filter;
 
-import static javax.servlet.DispatcherType.FORWARD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.DefaultMonitoredHttpRequestFactory;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
+import org.stagemonitor.web.monitor.MonitoredHttpRequestFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,20 +31,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.DefaultMonitoredHttpRequestFactory;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
-import org.stagemonitor.web.monitor.MonitoredHttpRequest;
-import org.stagemonitor.web.monitor.MonitoredHttpRequestFactory;
+import static javax.servlet.DispatcherType.FORWARD;
 
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
@@ -117,7 +116,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 
 		try {
-			final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = monitorRequest(filterChain, request, responseWrapper);
+			final RequestMonitor.RequestInformation requestInformation = monitorRequest(filterChain, request, responseWrapper);
 			if (isInjectContentToHtml(request)) {
 				injectHtml(response, request, httpServletResponseBufferWrapper, requestInformation);
 			}
@@ -152,14 +151,14 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		return request.getRequestURI().startsWith(request.getContextPath() + "/stagemonitor");
 	}
 
-	protected RequestMonitor.RequestInformation<HttpRequestTrace> monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
+	protected RequestMonitor.RequestInformation monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
 		final MonitoredHttpRequest monitoredRequest = monitoredHttpRequestFactory.createMonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
 		return requestMonitor.monitor(monitoredRequest);
 	}
 
 	protected void injectHtml(HttpServletResponse response, HttpServletRequest httpServletRequest,
 							  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
-							  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+							  RequestMonitor.RequestInformation requestInformation) throws IOException {
 		logger.debug("injectHtml: contentType={}", httpServletResponseBufferWrapper.getContentType());
 		if (httpServletResponseBufferWrapper.getContentType() != null
 				&& httpServletResponseBufferWrapper.getContentType().contains("text/html")
@@ -176,7 +175,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 	private void injectHtmlToOutputStream(HttpServletResponse response, HttpServletRequest httpServletRequest,
 										  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
-										  RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+										  RequestMonitor.RequestInformation requestInformation) throws IOException {
 
 		logger.debug("injectHtmlToOutputStream - encoding={}", response.getCharacterEncoding());
 		String content = new String(httpServletResponseBufferWrapper.getOutputStream().getOutput().toByteArray(),
@@ -193,7 +192,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 	}
 
-	private void injectHtmlToWriter(ServletResponse response, HttpServletRequest httpServletRequest, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) throws IOException {
+	private void injectHtmlToWriter(ServletResponse response, HttpServletRequest httpServletRequest, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper, RequestMonitor.RequestInformation requestInformation) throws IOException {
 		logger.debug("injectHtmlToWriter - encoding={}", response.getCharacterEncoding());
 		httpServletRequest.setAttribute("stagemonitorInjected", true);
 		String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
@@ -201,7 +200,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		response.getWriter().write(content);
 	}
 
-	private String getContetToInject(HttpServletRequest httpServletRequest, RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation, String content) {
+	private String getContetToInject(HttpServletRequest httpServletRequest, RequestMonitor.RequestInformation requestInformation, String content) {
 		for (HtmlInjector htmlInjector : htmlInjectors) {
 			if (htmlInjector.isActive(new HtmlInjector.IsActiveArguments(httpServletRequest))) {
 				final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(requestInformation);

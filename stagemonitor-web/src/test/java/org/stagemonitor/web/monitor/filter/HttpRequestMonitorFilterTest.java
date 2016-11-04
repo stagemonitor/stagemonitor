@@ -56,10 +56,10 @@ public class HttpRequestMonitorFilterTest {
 	@Before
 	public void before() throws Exception {
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
-		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<RequestMonitor.RequestInformation<?>>() {
+		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<RequestMonitor.RequestInformation>() {
 			@Override
-			public RequestMonitor.RequestInformation<?> answer(InvocationOnMock invocation) throws Throwable {
-				MonitoredRequest<?> request = (MonitoredRequest<?>) invocation.getArguments()[0];
+			public RequestMonitor.RequestInformation answer(InvocationOnMock invocation) throws Throwable {
+				MonitoredRequest request = (MonitoredRequest) invocation.getArguments()[0];
 				request.execute();
 				when(span.getOperationName()).thenReturn("testName");
 				when(span.context()).thenReturn(new SpanContext(1, 2, 0, (byte) 0));

@@ -13,7 +13,6 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -49,7 +48,7 @@ public class BoomerangJsHtmlInjectorTest {
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		injector.init(new HtmlInjector.InitArguments(configuration, new MockServletContext()));
 
-		final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = mock(RequestMonitor.RequestInformation.class);
+		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
 		final com.uber.jaeger.Span span = (com.uber.jaeger.Span) new MonitoredHttpRequest(new MockHttpServletRequest("GET", "/index.html"),
 				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration).createSpan();
 		when(requestInformation.getInternalSpan()).thenReturn(span);

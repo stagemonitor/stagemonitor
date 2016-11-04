@@ -10,7 +10,6 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.utils.SpanTags;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.WidgetAjaxRequestTraceReporter;
 import org.stagemonitor.web.opentracing.HttpServletRequestTextMapExtractAdapter;
@@ -38,18 +37,21 @@ import io.opentracing.tag.Tags;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> {
+public class MonitoredHttpRequest extends MonitoredRequest {
 
 	public static final String CONNECTION_ID_ATTRIBUTE = "connectionId";
 	public static final String WIDGET_ALLOWED_ATTRIBUTE = "showWidgetAllowed";
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
-	private final Configuration configuration;
 	protected final WebPlugin webPlugin;
 	private final Metric2Registry metricRegistry;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("request_name", "http_code");
+	private final String userAgenHeader;
+	private final String connectionId;
+	private final boolean widgetAndStagemonitorEndpointsAllowed;
+	private final String clientIp;
 
 	public MonitoredHttpRequest(HttpServletRequest httpServletRequest,
 								StatusExposingByteCountingServletResponse responseWrapper,
@@ -57,30 +59,18 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
 		this.responseWrapper = responseWrapper;
-		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.metricRegistry = Stagemonitor.getMetric2Registry();
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
+		userAgenHeader = httpServletRequest.getHeader("user-agent");
+		connectionId = httpServletRequest.getHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID);
+		widgetAndStagemonitorEndpointsAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
+		clientIp = getClientIp(httpServletRequest);
 	}
 
 	@Override
 	public String getInstanceName() {
 		return httpServletRequest.getServerName();
-	}
-
-	@Override
-	public HttpRequestTrace createRequestTrace() {
-		Map<String, String> headers = null;
-		if (webPlugin.isCollectHttpHeaders()) {
-			headers = getHeaders(httpServletRequest);
-		}
-		final String url = httpServletRequest.getRequestURI();
-		final String method = httpServletRequest.getMethod();
-		final String connectionId = httpServletRequest.getHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID);
-		final String requestId = (String) httpServletRequest.getAttribute(MDCListener.STAGEMONITOR_REQUEST_ID_ATTR);
-		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
-		HttpRequestTrace request = new HttpRequestTrace(requestId, url, headers, method, connectionId, isShowWidgetAllowed);
-		return request;
 	}
 
 	@Override
@@ -90,11 +80,12 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		final Span span = tracer.buildSpan(getRequestName()).asChildOf(spanCtx).start();
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 		SpanTags.setOperationType(span, "http");
-		SpanTags.setHttpHeaders(span, getHeaders(httpServletRequest));
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
 		span.setTag("http.method", httpServletRequest.getMethod());
 		span.setTag("http.referring_site", getReferringSite());
-
+		if (webPlugin.isCollectHttpHeaders()) {
+			SpanTags.setHttpHeaders(span, getHeaders(httpServletRequest));
+		}
 
 		return span;
 	}
@@ -184,36 +175,8 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	@Override
-	public void onPostExecute(RequestMonitor.RequestInformation<HttpRequestTrace> info) {
-		final String connectionId = httpServletRequest.getHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID);
-		final boolean isShowWidgetAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
-		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
-		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, isShowWidgetAllowed);
-
+	public void onPostExecute(RequestMonitor.RequestInformation info) {
 		final Span span = info.getSpan();
-
-		final String clientIp = getClientIp(httpServletRequest);
-		final String userName = getUserName(SpanTags.getInternalSpan(span));
-		final String userAgent = httpServletRequest.getHeader("user-agent");
-		final String sessionId = getSessionId();
-		span.setTag(SpanTags.USERNAME, userName);
-		span.setTag("session_id", sessionId);
-		if (userName != null) {
-			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(userName));
-		} else {
-			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(clientIp + sessionId + userAgent));
-
-		}
-		SpanTags.setClientIp(span, clientIp);
-
-		int status = responseWrapper.getStatus();
-		Tags.HTTP_STATUS.set(span, status);
-
-		metricRegistry.meter(throughputMetricNameTemplate.build(info.getRequestName(), Integer.toString(status))).mark();
-		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
-		if (status >= 400) {
-			Tags.ERROR.set(span, true);
-		}
 
 		// Search the configured exception attributes that may have been set
 		// by the servlet container/framework. Use the first exception found (if any)
@@ -224,8 +187,6 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 				break;
 			}
 		}
-
-		span.setTag("bytes_written", responseWrapper.getContentLength());
 
 		// get the parameters after the execution and not on creation, because that could lead to wrong decoded
 		// parameters inside the application
@@ -239,6 +200,36 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 		confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
 		confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
 		SpanTags.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
+	}
+
+	@Override
+	public void onBeforeReport(RequestMonitor.RequestInformation requestInformation) {
+		final String connectionId = this.connectionId;
+		requestInformation.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
+		requestInformation.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
+
+		final Span span = requestInformation.getSpan();
+
+		final String userName = getUserName(SpanTags.getInternalSpan(span));
+		final String sessionId = getSessionId();
+		span.setTag(SpanTags.USERNAME, userName);
+		span.setTag("session_id", sessionId);
+		if (userName != null) {
+			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(userName));
+		} else {
+			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(clientIp + sessionId + userAgenHeader));
+		}
+		SpanTags.setClientIp(span, clientIp);
+
+		int status = responseWrapper.getStatus();
+		Tags.HTTP_STATUS.set(span, status);
+
+		metricRegistry.meter(throughputMetricNameTemplate.build(requestInformation.getRequestName(), Integer.toString(status))).mark();
+		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
+		if (status >= 400) {
+			Tags.ERROR.set(span, true);
+		}
+		span.setTag("bytes_written", responseWrapper.getContentLength());
 	}
 
 	private String getSessionId() {

@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import io.opentracing.Span;
 
-public interface MonitoredRequest<T extends RequestTrace> {
+public abstract class MonitoredRequest {
 
 	/**
 	 * Optionally, the instance name can be derived from a request.
@@ -10,11 +10,13 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	 *
 	 * @return the instance name
 	 */
-	String getInstanceName();
+	public String getInstanceName() {
+		return null;
+	}
 
 	/**
-	 * Creates a instance of {@link RequestTrace} that represents the current request, e.g. a HTTP request.
-	 * If <code>null</code> is returned, or the {@link RequestTrace#name} is empty, the execution context
+	 * Creates a instance of {@link Span} that represents the current request, e.g. a HTTP request.
+	 * If <code>null</code> is returned, or the {@link Span#setOperationName(String)} is empty, the execution context
 	 * will not be monitored.
 	 * <p/>
 	 * Any exception thrown by this method will be propagated (not ignored). Sometimes, methods that are required to
@@ -22,13 +24,11 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	 * exceptions (for example, if the maximum number of parameters is exceeded). These exceptions have to be
 	 * propagated and not swallowed.
 	 * <p/>
-	 * So be careful, that no exceptions are thrown due to the implementation of this method.
+	 * So be careful, that no exceptions are thrown in to the implementation of this method.
 	 *
-	 * @return the {@link RequestTrace}
+	 * @return the {@link Span}
 	 */
-	T createRequestTrace();
-
-	Span createSpan();
+	public abstract Span createSpan();
 
 	/**
 	 * Executing this method triggers the execution of the execution context.
@@ -36,14 +36,27 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	 * @return the result of the execution
 	 * @throws Exception
 	 */
-	Object execute() throws Exception;
+	public abstract Object execute() throws Exception;
 
 	/**
-	 * Implement this method to do actions after the execution context
+	 * Implement this method to do actions after the execution context.
+	 *
+	 * This method is executed synchronously and will block the request
 	 *
 	 * @param requestInformation the execution context
 	 */
-	void onPostExecute(RequestMonitor.RequestInformation<T> requestInformation);
+	public void onPostExecute(RequestMonitor.RequestInformation requestInformation) {
+	}
+
+	/**
+	 * Implement this method to do actions before {@link Span} is reported.
+	 *
+	 * This method is executed asynchronously and will not the request.
+	 *
+	 * @param requestInformation the execution context
+	 */
+	public void onBeforeReport(RequestMonitor.RequestInformation requestInformation) {
+	}
 
 	/**
 	 * If the current execution context triggers another one, the first one is called the forwarding execution and the
@@ -53,5 +66,5 @@ public interface MonitoredRequest<T extends RequestTrace> {
 	 *
 	 * @return true, if only the forwarded , false, if only the forwarding execution shall be monitored.
 	 */
-	boolean isMonitorForwardedExecutions();
+	public abstract boolean isMonitorForwardedExecutions();
 }

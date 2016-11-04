@@ -83,7 +83,7 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 
 	@Override
 	public void report(ReportArguments reportArguments) throws IOException {
-		if (isActive(new IsActiveArguments(reportArguments.getRequestTrace(), reportArguments.getSpan(), reportArguments.getRequestAttributes()))) {
+		if (isActive(new IsActiveArguments(reportArguments.getSpan(), reportArguments.getRequestAttributes()))) {
 			Span httpSpan = reportArguments.getInternalSpan();
 
 			final String connectionId = (String) reportArguments.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);

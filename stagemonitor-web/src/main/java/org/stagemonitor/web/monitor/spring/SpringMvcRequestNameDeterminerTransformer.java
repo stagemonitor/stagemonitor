@@ -1,5 +1,7 @@
 package org.stagemonitor.web.monitor.spring;
 
+import com.uber.jaeger.context.TracingUtils;
+
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -36,7 +38,7 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	}
 
 	public static void setRequestNameByHandler(Object handler) {
-		if (RequestMonitor.get().getRequestTrace() != null) {
+		if (!TracingUtils.getTraceContext().isEmpty()) {
 			final BusinessTransactionNamingStrategy namingStrategy = Stagemonitor.getPlugin(RequestMonitorPlugin.class)
 					.getBusinessTransactionNamingStrategy();
 			final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);

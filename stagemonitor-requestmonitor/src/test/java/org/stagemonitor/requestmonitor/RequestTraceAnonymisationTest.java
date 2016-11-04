@@ -1,28 +1,31 @@
 package org.stagemonitor.requestmonitor;
 
+import com.uber.jaeger.Span;
+import com.uber.jaeger.Tracer;
+import com.uber.jaeger.reporters.NoopReporter;
+import com.uber.jaeger.samplers.ConstSampler;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
+
+import java.util.Collections;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-
 public class RequestTraceAnonymisationTest {
 
-	private MeasurementSession measurementSession;
 	private RequestMonitorPlugin requestMonitorPlugin;
 	private RequestMonitor requestMonitor;
 
 	@Before
 	public void setUp() throws Exception {
-		measurementSession = new MeasurementSession("RequestTraceAnonymisationTest", "test", "test");
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		final Configuration configuration = mock(Configuration.class);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
@@ -40,11 +43,11 @@ public class RequestTraceAnonymisationTest {
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		when(requestMonitorPlugin.isAnonymizeIPs()).thenReturn(true);
 
-		final RequestTrace requestTrace = createRequestTrace();
+		final Span span = createSpan();
 
-		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", requestTrace.getUsername());
-		assertNull(requestTrace.getDisclosedUserName());
-		assertEquals("123.123.123.0", requestTrace.getClientIp());
+		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", span.getTags().get("username"));
+		assertNull(span.getTags().get("username_disclosed"));
+		assertEquals("123.123.123.0", span.getTags().get(SpanTags.IPV4_STRING));
 	}
 
 	@Test
@@ -52,11 +55,11 @@ public class RequestTraceAnonymisationTest {
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(false);
 		when(requestMonitorPlugin.isAnonymizeIPs()).thenReturn(true);
 
-		final RequestTrace requestTrace = createRequestTrace();
+		final Span span = createSpan();
 
-		assertEquals("test", requestTrace.getUsername());
-		assertNull(requestTrace.getDisclosedUserName());
-		assertEquals("123.123.123.0", requestTrace.getClientIp());
+		assertEquals("test", span.getTags().get("username"));
+		assertNull(span.getTags().get("username_disclosed"));
+		assertEquals("123.123.123.0", span.getTags().get(SpanTags.IPV4_STRING));
 	}
 
 	@Test
@@ -65,11 +68,11 @@ public class RequestTraceAnonymisationTest {
 		when(requestMonitorPlugin.isAnonymizeIPs()).thenReturn(true);
 		when(requestMonitorPlugin.getDiscloseUsers()).thenReturn(Collections.singleton("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"));
 
-		final RequestTrace requestTrace = createRequestTrace();
+		final Span span = createSpan();
 
-		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", requestTrace.getUsername());
-		assertEquals("test", requestTrace.getDisclosedUserName());
-		assertEquals("123.123.123.123", requestTrace.getClientIp());
+		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", span.getTags().get("username"));
+		assertEquals("test", span.getTags().get("username_disclosed"));
+		assertEquals("123.123.123.123", span.getTags().get(SpanTags.IPV4_STRING));
 	}
 
 	@Test
@@ -78,11 +81,11 @@ public class RequestTraceAnonymisationTest {
 		when(requestMonitorPlugin.isAnonymizeIPs()).thenReturn(true);
 		when(requestMonitorPlugin.getDiscloseUsers()).thenReturn(Collections.singleton("test"));
 
-		final RequestTrace requestTrace = createRequestTrace();
+		final Span span = createSpan();
 
-		assertEquals("test", requestTrace.getUsername());
-		assertEquals("test", requestTrace.getDisclosedUserName());
-		assertEquals("123.123.123.123", requestTrace.getClientIp());
+		assertEquals("test", span.getTags().get("username"));
+		assertEquals("test", span.getTags().get("username_disclosed"));
+		assertEquals("123.123.123.123", span.getTags().get(SpanTags.IPV4_STRING));
 	}
 
 	@Test
@@ -90,11 +93,11 @@ public class RequestTraceAnonymisationTest {
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		when(requestMonitorPlugin.isAnonymizeIPs()).thenReturn(true);
 
-		final RequestTrace requestTrace = createRequestTrace(null, null);
+		final Span span = createSpan(null, null);
 
-		assertNull(requestTrace.getUsername());
-		assertNull(requestTrace.getDisclosedUserName());
-		assertNull(requestTrace.getClientIp());
+		assertNull(span.getTags().get("username"));
+		assertNull(span.getTags().get("username_disclosed"));
+		assertNull(span.getTags().get(SpanTags.IPV4_STRING));
 	}
 
 	@Test
@@ -102,11 +105,11 @@ public class RequestTraceAnonymisationTest {
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		when(requestMonitorPlugin.isAnonymizeIPs()).thenReturn(true);
 
-		final RequestTrace requestTrace = createRequestTrace(null, "123.123.123.123");
+		final Span span = createSpan(null, "123.123.123.123");
 
-		assertNull(requestTrace.getUsername());
-		assertNull(requestTrace.getDisclosedUserName());
-		assertEquals("123.123.123.0", requestTrace.getClientIp());
+		assertNull(span.getTags().get("username"));
+		assertNull(span.getTags().get("username_disclosed"));
+		assertEquals("123.123.123.0", span.getTags().get(SpanTags.IPV4_STRING));
 	}
 
 	@Test
@@ -114,11 +117,11 @@ public class RequestTraceAnonymisationTest {
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		when(requestMonitorPlugin.isAnonymizeIPs()).thenReturn(true);
 
-		final RequestTrace requestTrace = createRequestTrace("test", null);
+		final Span span = createSpan("test", null);
 
-		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", requestTrace.getUsername());
-		assertNull(requestTrace.getDisclosedUserName());
-		assertNull(requestTrace.getClientIp());
+		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", span.getTags().get("username"));
+		assertNull(span.getTags().get("username_disclosed"));
+		assertNull(span.getTags().get(SpanTags.IPV4_STRING));
 	}
 
 	@Test
@@ -126,23 +129,26 @@ public class RequestTraceAnonymisationTest {
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(false);
 		when(requestMonitorPlugin.isAnonymizeIPs()).thenReturn(false);
 
-		final RequestTrace requestTrace = createRequestTrace();
+		final Span span = createSpan();
 
-		assertEquals("test", requestTrace.getUsername());
-		assertNull(requestTrace.getDisclosedUserName());
-		assertEquals("123.123.123.123", requestTrace.getClientIp());
+		assertEquals("test", span.getTags().get("username"));
+		assertNull(span.getTags().get("username_disclosed"));
+		assertEquals("123.123.123.123", span.getTags().get(SpanTags.IPV4_STRING));
 	}
 
-	private RequestTrace createRequestTrace() {
-		return createRequestTrace("test", "123.123.123.123");
+	private Span createSpan() {
+		return createSpan("test", "123.123.123.123");
 	}
 
-	private RequestTrace createRequestTrace(String username, String ip) {
-		final RequestTrace requestTrace = new RequestTrace("1", measurementSession, requestMonitorPlugin);
-		requestTrace.setUsername(username);
-		requestTrace.setClientIp(ip);
-		requestMonitor.anonymizeUserNameAndIp(requestTrace);
-		return requestTrace;
+	private Span createSpan(String username, String ip) {
+		final Span span = (Span) new Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true))
+				.build()
+				.buildSpan("Test Operation")
+				.start();
+		span.setTag(SpanTags.USERNAME, username);
+		SpanTags.setClientIp(span, ip);
+		requestMonitor.anonymizeUserNameAndIp(span);
+		return span;
 	}
 
 }

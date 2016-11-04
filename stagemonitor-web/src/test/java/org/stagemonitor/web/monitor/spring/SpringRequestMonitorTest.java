@@ -31,7 +31,6 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.utils.SpanTags;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
@@ -138,7 +137,7 @@ public class SpringRequestMonitorTest {
 
 		MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(mvcRequest);
 
-		final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
+		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getRequestName())).getCount());
 		assertEquals("Test Get Request Name", requestInformation.getRequestName());
@@ -156,7 +155,7 @@ public class SpringRequestMonitorTest {
 
 		final MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonMvcRequest);
 
-		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
+		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals("GET *.js", requestInformation.getRequestName());
 		assertEquals("GET *.js", requestInformation.getInternalSpan().getOperationName());
@@ -172,14 +171,14 @@ public class SpringRequestMonitorTest {
 
 		final MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonMvcRequest);
 
-		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
+		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertNull(requestInformation.getInternalSpan().getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
 		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
 	}
 
-	private RequestMonitor.RequestInformation<HttpRequestTrace> anyRequestInformation() {
+	private RequestMonitor.RequestInformation anyRequestInformation() {
 		return any();
 	}
 

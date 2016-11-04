@@ -1,13 +1,14 @@
 package org.stagemonitor.web.logging;
 
-import java.util.UUID;
-import javax.servlet.ServletRequestEvent;
-import javax.servlet.ServletRequestListener;
-
 import org.slf4j.MDC;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+
+import java.util.UUID;
+
+import javax.servlet.ServletRequestEvent;
+import javax.servlet.ServletRequestListener;
 
 /**
  * This class adds the {@link MDC} properties requestId, application, host and instance.
@@ -15,6 +16,7 @@ import org.stagemonitor.core.Stagemonitor;
  * If you are using logback or log4j, you can append this to your pattern to append the properties to each log entry:
  * <code>R:[%X{requestId}] A:[%X{application}] H:[%X{host}] I:[%X{instance}]</code>
  */
+// TODO id can only be set after the creation of the span
 public class MDCListener implements ServletRequestListener {
 
 	public static final String STAGEMONITOR_REQUEST_ID_ATTR = "stagemonitor-request-id";

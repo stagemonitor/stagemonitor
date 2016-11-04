@@ -7,13 +7,12 @@ import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
-public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
+public class MonitoredMethodRequest extends MonitoredRequest {
 
 	private final String methodSignature;
 	private final MethodExecution methodExecution;
@@ -34,13 +33,6 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	@Override
 	public String getInstanceName() {
 		return null;
-	}
-
-	@Override
-	public RequestTrace createRequestTrace() {
-		RequestTrace requestTrace = new RequestTrace(UUID.randomUUID().toString());
-		requestTrace.setName(methodSignature);
-		return requestTrace;
 	}
 
 	private Map<String, String> getSafeParameterMap(Map<String, Object> parameters) {
@@ -75,7 +67,7 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 	}
 
 	@Override
-	public void onPostExecute(RequestMonitor.RequestInformation<RequestTrace> requestTrace) {
+	public void onPostExecute(RequestMonitor.RequestInformation requestTrace) {
 	}
 
 	/**

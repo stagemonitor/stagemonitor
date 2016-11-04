@@ -9,20 +9,12 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
-public abstract class AbstractExternalRequest implements MonitoredRequest<RequestTrace> {
+public abstract class AbstractExternalRequest extends MonitoredRequest {
 
 	private final RequestMonitorPlugin requestMonitorPlugin;
 
 	protected AbstractExternalRequest(RequestMonitorPlugin requestMonitorPlugin) {
 		this.requestMonitorPlugin = requestMonitorPlugin;
-	}
-
-	public String getInstanceName() {
-		return null;
-	}
-
-	public RequestTrace createRequestTrace() {
-		return null;
 	}
 
 	public Span createSpan() {
@@ -50,9 +42,5 @@ public abstract class AbstractExternalRequest implements MonitoredRequest<Reques
 	@Override
 	public Object execute() throws Exception {
 		return null;
-	}
-
-	@Override
-	public void onPostExecute(RequestMonitor.RequestInformation<RequestTrace> requestInformation) {
 	}
 }

@@ -82,13 +82,14 @@ public class SpanServletTest {
 		when(requestInformation.getRequestName()).thenReturn("test");
 
 		monitoredHttpRequest.onPostExecute(requestInformation);
+		monitoredHttpRequest.onBeforeReport(requestInformation);
 		// init jackson module
 		new ElasticsearchSpanReporter();
 	}
 
 	@Test
 	public void testRequestTraceBeforeRequest() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
+		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -102,8 +103,8 @@ public class SpanServletTest {
 
 	@Test
 	public void testTwoRequestTraceBeforeRequest() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
-		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
+		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
+		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -150,7 +151,7 @@ public class SpanServletTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
+		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
 		waitForResponse(response);
 
 		Assert.assertEquals(JsonUtils.toJson(Collections.singletonList(span)), response.getContentAsString());
@@ -165,7 +166,7 @@ public class SpanServletTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(new SpanReporter.ReportArguments(null, span, null, requestAttributes));
+		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
 		waitForResponse(response);
 
 		Assert.assertEquals("[]", response.getContentAsString());
@@ -204,6 +205,6 @@ public class SpanServletTest {
 		new MockFilterChain(spanServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 
 		Assert.assertEquals(404, response.getStatus());
-		Assert.assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(null, mock(Span.class))));
+		Assert.assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(mock(Span.class))));
 	}
 }

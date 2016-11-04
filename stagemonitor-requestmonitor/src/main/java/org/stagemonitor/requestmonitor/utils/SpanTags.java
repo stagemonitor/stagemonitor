@@ -20,21 +20,22 @@ import io.opentracing.tag.Tags;
 
 public class SpanTags {
 
-	private SpanTags() {
-	}
-
+	public static final String IPV4_STRING = "peer.ipv4_string";
 	public static final String CALL_TREE_ASCII = "call_tree_ascii";
 	public static final String CALL_TREE_JSON = "call_tree_json";
 	public static final String HTTP_HEADERS_PREFIX = "http.headers.";
 	public static final String USERNAME = "username";
 	public static final String PARAMETERS_PREFIX = "parameters.";
 
+	private SpanTags() {
+	}
+
 	public static void setClientIp(Span span, String clientIp) {
 		try {
 			final InetAddress inetAddress = InetAddress.getByName(clientIp);
 			if (inetAddress instanceof Inet4Address) {
 				Tags.PEER_HOST_IPV4.set(span, clientIp != null ? Utils.ipToInt(clientIp) : null);
-				span.setTag("peer.ipv4_string", clientIp);
+				span.setTag(IPV4_STRING, clientIp);
 			} else if (inetAddress instanceof Inet6Address) {
 				Tags.PEER_HOST_IPV6.set(span, clientIp);
 			}

@@ -3,7 +3,6 @@ package org.stagemonitor.web.monitor.filter;
 import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -66,17 +65,17 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	}
 
 	public static class InjectArguments {
-		private final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation;
+		private final RequestMonitor.RequestInformation requestInformation;
 		private String contentToInjectBeforeClosingBody;
 
 		/**
 		 * @param requestInformation information about the current request
 		 */
-		public InjectArguments(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
+		public InjectArguments(RequestMonitor.RequestInformation requestInformation) {
 			this.requestInformation = requestInformation;
 		}
 
-		public RequestMonitor.RequestInformation<HttpRequestTrace> getRequestInformation() {
+		public RequestMonitor.RequestInformation getRequestInformation() {
 			return requestInformation;
 		}
 

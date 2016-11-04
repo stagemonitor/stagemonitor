@@ -22,7 +22,6 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 
@@ -167,7 +166,7 @@ public class ConnectionMonitoringTransformerTest {
 
 	@Test
 	public void testRecordSqlPreparedStatement() throws Exception {
-		final RequestMonitor.RequestInformation<RequestTrace> requestInformation = requestMonitor
+		final RequestMonitor.RequestInformation requestInformation = requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlPreparedStatement", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {
@@ -189,7 +188,7 @@ public class ConnectionMonitoringTransformerTest {
 
 	@Test
 	public void testRecordSqlStatement() throws Exception {
-		final RequestMonitor.RequestInformation<RequestTrace> requestInformation = requestMonitor
+		final RequestMonitor.RequestInformation requestInformation = requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlStatement", new MonitoredMethodRequest.MethodExecution() {
 					@Override
 					public Object execute() throws Exception {

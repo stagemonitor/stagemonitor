@@ -8,7 +8,6 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
@@ -30,9 +29,9 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MonitoredHttpExecutionForwardingTest {
 
-	private RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation1;
-	private RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation2;
-	private RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation3;
+	private RequestMonitor.RequestInformation requestInformation1;
+	private RequestMonitor.RequestInformation requestInformation2;
+	private RequestMonitor.RequestInformation requestInformation3;
 	private MonitoredHttpExecutionForwardingTest.TestObject testObject;
 	private Metric2Registry metricRegistry;
 

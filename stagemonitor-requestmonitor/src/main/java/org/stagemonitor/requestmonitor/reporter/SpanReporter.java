@@ -4,7 +4,6 @@ import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestTrace;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 import java.util.HashMap;
@@ -18,7 +17,7 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	}
 
 	/**
-	 * Callback method that is called when a {@link RequestTrace} was created and is ready to be reported
+	 * Callback method that is called when a {@link Span} was created and is ready to be reported
 	 *
 	 * @param reportArguments The parameter object which contains the actual parameters
 	 */
@@ -32,7 +31,7 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	 * <p/>
 	 * If none of the currently registered {@link SpanReporter}s (
 	 * see {@link RequestMonitor#spanReporters}) which {@link #requiresCallTree()}
-	 * is active (see {@link RequestMonitor#isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestTrace)},
+	 * is active (see {@link RequestMonitor#isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestMonitor.RequestInformation)},
 	 * the profiler does not have to be enabled for the current request.
 	 *
 	 * @param isActiveArguments The parameter object which contains the actual parameters
@@ -75,7 +74,6 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	}
 
 	public static class IsActiveArguments {
-		private final RequestTrace requestTrace;
 		private final Span span;
 		private final Map<String, Object> requestAttributes;
 
@@ -83,18 +81,13 @@ public abstract class SpanReporter implements StagemonitorSPI {
 		 * Only to be used in unit tests
 		 */
 		@Deprecated
-		public IsActiveArguments(RequestTrace requestTrace, Span span) {
-			this(requestTrace, span, new HashMap<String, Object>());
+		public IsActiveArguments(Span span) {
+			this(span, new HashMap<String, Object>());
 		}
 
-		public IsActiveArguments(RequestTrace requestTrace, Span span, Map<String, Object> requestAttributes) {
-			this.requestTrace = requestTrace;
+		public IsActiveArguments(Span span, Map<String, Object> requestAttributes) {
 			this.span = span;
 			this.requestAttributes = requestAttributes;
-		}
-
-		public RequestTrace getRequestTrace() {
-			return requestTrace;
 		}
 
 		public Span getSpan() {
@@ -107,7 +100,6 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	}
 
 	public static class ReportArguments {
-		private final RequestTrace requestTrace;
 		private final Span span;
 		private final CallStackElement callTree;
 		private final Map<String, Object> requestAttributes;
@@ -116,24 +108,18 @@ public abstract class SpanReporter implements StagemonitorSPI {
 		 * Only to be used in unit tests
 		 */
 		@Deprecated
-		public ReportArguments(RequestTrace requestTrace, Span span, CallStackElement callTree) {
-			this(requestTrace, span, callTree, new HashMap<String, Object>());
+		public ReportArguments(Span span, CallStackElement callTree) {
+			this(span, callTree, new HashMap<String, Object>());
 		}
 
 		/**
-		 * @param requestTrace the {@link RequestTrace} of the current request
 		 * @param span
 		 * @param callTree
 		 */
-		public ReportArguments(RequestTrace requestTrace, Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
-			this.requestTrace = requestTrace;
+		public ReportArguments(Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
 			this.span = span;
 			this.callTree = callTree;
 			this.requestAttributes = requestAttributes;
-		}
-
-		public RequestTrace getRequestTrace() {
-			return requestTrace;
 		}
 
 		public Span getSpan() {

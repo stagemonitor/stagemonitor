@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.opentracing.NoopTracer;
 import io.opentracing.Span;
+import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -57,7 +58,7 @@ public class RequestMonitor {
 	 * true.
 	 */
 	// TODO remove static keyword. This is currently needed for tests
-	private static ThreadLocal<RequestInformation<? extends RequestTrace>> request = new ThreadLocal<RequestInformation<? extends RequestTrace>>();
+	private static ThreadLocal<RequestInformation> request = new ThreadLocal<RequestInformation>();
 
 	private final List<SpanReporter> spanReporters = new CopyOnWriteArrayList<SpanReporter>();
 
@@ -103,9 +104,9 @@ public class RequestMonitor {
 		}
 	}
 
-	public <T extends RequestTrace> void monitorStart(MonitoredRequest<T> monitoredRequest) {
+	public void monitorStart(MonitoredRequest monitoredRequest) {
 		final long start = System.nanoTime();
-		RequestInformation<T> info = new RequestInformation<T>();
+		RequestInformation info = new RequestInformation();
 		info.monitoredRequest = monitoredRequest;
 		detectForwardedRequest(info);
 		request.set(info);
@@ -134,9 +135,9 @@ public class RequestMonitor {
 		}
 	}
 
-	public <T extends RequestTrace> void monitorStop() {
+	public void monitorStop() {
 		long overhead2 = System.nanoTime();
-		final RequestInformation<T> info = (RequestInformation<T>) request.get();
+		final RequestInformation info = request.get();
 		request.set(info.parent);
 		if (info.getSpan() != null) {
 			TracingUtils.getTraceContext().pop();
@@ -166,16 +167,16 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> void cleanUpAfter(RequestInformation<T> info) {
-		if (info.requestTrace != null) {
+	private void cleanUpAfter(RequestInformation info) {
+		if (info.callTree != null) {
 			Profiler.clearMethodCallParent();
 		}
 	}
 
-	public <T extends RequestTrace> RequestInformation<T> monitor(MonitoredRequest<T> monitoredRequest) throws Exception {
+	public RequestInformation monitor(MonitoredRequest monitoredRequest) throws Exception {
 		try {
 			monitorStart(monitoredRequest);
-			final RequestInformation<T> info = (RequestInformation<T>) request.get();
+			final RequestInformation info = request.get();
 			info.executionResult = monitoredRequest.execute();
 			return info;
 		} catch (Exception e) {
@@ -201,7 +202,7 @@ public class RequestMonitor {
 	 * In case the instance name is not set by configuration, try to read from monitored execution
 	 * (e.g. the domain name from a HTTP request)
 	 */
-	private synchronized void getInstanceNameFromExecution(MonitoredRequest<?> monitoredRequest) {
+	private synchronized void getInstanceNameFromExecution(MonitoredRequest monitoredRequest) {
 		final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
 		if (measurementSession.getInstanceName() == null) {
 			MeasurementSession session = new MeasurementSession(measurementSession.getApplicationName(), measurementSession.getHostName(),
@@ -218,14 +219,10 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> void beforeExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
-		info.requestTrace = monitoredRequest.createRequestTrace();
+	private void beforeExecution(MonitoredRequest monitoredRequest, RequestInformation info) {
 		info.span = monitoredRequest.createSpan();
 		for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
 			info.span.setTag(entry.getKey(), entry.getValue());
-		}
-		if (info.requestTrace != null) {
-			info.requestTrace.setSpan(info.span);
 		}
 		TracingUtils.getTraceContext().push(info.span);
 
@@ -247,28 +244,27 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> void detectForwardedRequest(RequestInformation<T> info) {
+	private void detectForwardedRequest(RequestInformation info) {
 		if (request.get() != null) {
 			// there is already an request set in this thread -> this execution must have been forwarded
-			info.parent = (RequestInformation<T>) request.get();
+			info.parent = request.get();
 			info.parent.child = info;
 		}
 	}
 
-	private <T extends RequestTrace> void monitorAfterExecution(MonitoredRequest<T> monitoredRequest, RequestInformation<T> info) {
-		final T requestTrace = info.requestTrace;
+	private void monitorAfterExecution(MonitoredRequest monitoredRequest, RequestInformation info) {
 		final Span span = info.span;
 		final long cpuTime = TimeUtils.getCpuTime() - info.startCpu;
-		if (requestTrace != null) {
+		if (span != null) {
 			span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
 			span.setTag("duration_cpu_ms", NANOSECONDS.toMillis(cpuTime));
 			monitoredRequest.onPostExecute(info);
-			anonymizeUserNameAndIp(requestTrace);
+			anonymizeUserNameAndIp(info.getInternalSpan());
 
 			final CallStackElement callTree = info.getCallTree();
 			if (callTree != null) {
 				Profiler.stop();
-				callTree.setSignature(requestTrace.getName());
+				callTree.setSignature(info.getRequestName());
 				final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
 				if (minExecutionTimeMultiplier > 0d) {
 					callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
@@ -280,21 +276,32 @@ public class RequestMonitor {
 		info.requestTraceReporterFuture = report(info);
 	}
 
-	void anonymizeUserNameAndIp(RequestTrace requestTrace) {
-		final String username = requestTrace.getUsername();
-		if (requestMonitorPlugin.isPseudonymizeUserNames()) {
-			requestTrace.setUsername(StringUtils.sha1Hash(username));
-		}
-		final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(requestTrace.getUsername());
-		if (disclose) {
-			requestTrace.setDisclosedUserName(username);
-		}
-		if (requestTrace.getClientIp() != null && requestMonitorPlugin.isAnonymizeIPs() && !disclose) {
-			requestTrace.setClientIp(IPAnonymizationUtils.anonymize(requestTrace.getClientIp()));
+	void anonymizeUserNameAndIp(com.uber.jaeger.Span span) {
+		final boolean pseudonymizeUserNames = requestMonitorPlugin.isPseudonymizeUserNames();
+		final boolean anonymizeIPs = requestMonitorPlugin.isAnonymizeIPs();
+		if (pseudonymizeUserNames || anonymizeIPs) {
+			final String username = (String) span.getTags().get(SpanTags.USERNAME);
+			if (pseudonymizeUserNames) {
+				final String hashedUserName = StringUtils.sha1Hash(username);
+				span.setTag(SpanTags.USERNAME, hashedUserName);
+			}
+			final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(span.getTags().get(SpanTags.USERNAME));
+			if (disclose) {
+				span.setTag("username_disclosed", username);
+			}
+			if (anonymizeIPs) {
+				String ip = (String) span.getTags().get(SpanTags.IPV4_STRING);
+				if (ip == null) {
+					ip = (String) span.getTags().get(Tags.PEER_HOST_IPV6.getKey());
+				}
+				if (ip != null && !disclose) {
+					SpanTags.setClientIp(span, IPAnonymizationUtils.anonymize(ip));
+				}
+			}
 		}
 	}
 
-	private <T extends RequestTrace> void removeTimerIfCountIsZero(RequestInformation<T> info) {
+	private void removeTimerIfCountIsZero(RequestInformation info) {
 		final String requestName = info.getRequestName();
 		if (requestName != null) {
 			MetricName timerMetricName = getTimerMetricName(requestName);
@@ -305,7 +312,7 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> Future<?> report(final RequestInformation<T> requestInformation) {
+	private Future<?> report(final RequestInformation requestInformation) {
 		try {
 			if (requestMonitorPlugin.isReportAsync()) {
 				return asyncRequestTraceReporterPool.submit(new Runnable() {
@@ -324,12 +331,13 @@ public class RequestMonitor {
 		}
 	}
 
-	private <T extends RequestTrace> void doReport(RequestInformation<T> requestInformation) {
+	private void doReport(RequestInformation requestInformation) {
+		requestInformation.monitoredRequest.onBeforeReport(requestInformation);
 		for (SpanReporter spanReporter : spanReporters) {
 			final CallStackElement callTree = requestInformation.getCallTree();
 			if (isActive(requestInformation, spanReporter)) {
 				try {
-					spanReporter.report(new SpanReporter.ReportArguments(requestInformation.getRequestTrace(),
+					spanReporter.report(new SpanReporter.ReportArguments(
 							requestInformation.getSpan(), callTree, requestInformation.requestAttributes));
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
@@ -356,16 +364,15 @@ public class RequestMonitor {
 		}
 	}
 
-	public class RequestInformation<T extends RequestTrace> {
-		private T requestTrace = null;
+	public class RequestInformation {
 		private Span span;
 		private long startCpu = TimeUtils.getCpuTime();
 		private Object executionResult = null;
 		private long overhead1;
 		private MonitoredRequest monitoredRequest;
 		private boolean firstRequest;
-		private RequestInformation<T> parent;
-		private RequestInformation<T> child;
+		private RequestInformation parent;
+		private RequestInformation child;
 		private Future<?> requestTraceReporterFuture;
 		private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 		private CallStackElement callTree;
@@ -429,17 +436,6 @@ public class RequestMonitor {
 			return null;
 		}
 
-		/**
-		 * Returns the request trace or <code>null</code>, if
-		 * {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()} is <code>false</code>
-		 *
-		 * @return the request trace or <code>null</code>, if {@link org.stagemonitor.requestmonitor.RequestMonitor#isWarmedUp()}
-		 * is <code>false</code>
-		 */
-		public T getRequestTrace() {
-			return requestTrace;
-		}
-
 		private boolean isProfileThisRequest() {
 			if (span == null || getInternalSpan().isRPCClient()) {
 				return false;
@@ -487,7 +483,7 @@ public class RequestMonitor {
 		@Override
 		public String toString() {
 			return "RequestInformation{" +
-					"requestTrace=" + requestTrace +
+					"span=" + span +
 					", startCpu=" + startCpu +
 					", forwardedExecution=" + isForwarded() +
 					", executionResult=" + executionResult +
@@ -532,7 +528,7 @@ public class RequestMonitor {
 		}
 	}
 
-	private boolean isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestInformation<?> requestInformation) {
+	private boolean isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestInformation requestInformation) {
 		for (SpanReporter reporter : spanReporters) {
 			if (reporter.requiresCallTree() && isActive(requestInformation, reporter)) {
 				return true;
@@ -542,45 +538,27 @@ public class RequestMonitor {
 	}
 
 	/**
-	 * Checks whether the given {@link SpanReporter} is active for the current {@link RequestTrace}. If this method was
+	 * Checks whether the given {@link SpanReporter} is active for the current {@link Span}. If this method was
 	 * already called for a {@link SpanReporter} in the context of the current request it returns the previous result.
 	 * In other words this method makes sure that {@link SpanReporter#isActive(SpanReporter.IsActiveArguments)} is
 	 * called at most once.
 	 */
-	private boolean isActive(RequestInformation<?> requestInformation, SpanReporter spanReporter) {
+	private boolean isActive(RequestInformation requestInformation, SpanReporter spanReporter) {
 		final String requestAttributeActive = ClassUtils.getIdentityString(spanReporter) + ".active";
 		final Boolean activeFromAttribute = (Boolean) requestInformation.getRequestAttribute(requestAttributeActive);
 		if (activeFromAttribute != null) {
 			return activeFromAttribute;
 		}
-		final boolean active = spanReporter.isActive(new SpanReporter.IsActiveArguments(requestInformation.requestTrace, requestInformation.span, requestInformation.requestAttributes));
+		final boolean active = spanReporter.isActive(new SpanReporter.IsActiveArguments(requestInformation.span, requestInformation.requestAttributes));
 		requestInformation.addRequestAttribute(requestAttributeActive, active);
 		return active;
-	}
-
-	/**
-	 * @return the {@link RequestTrace} of the current request
-	 * @deprecated use <code>RequestMonitor.get().getRequestTrace()</code> or <code>RequestMonitor.get().ifRequestPresent(RequestTraceConsumer)</code>
-	 */
-	@Deprecated
-	public static RequestTrace getRequest() {
-		final RequestInformation<? extends RequestTrace> requestInformation = RequestMonitor.get().request.get();
-		return requestInformation != null ? requestInformation.getRequestTrace() : null;
-	}
-
-	/**
-	 * @return the {@link RequestTrace} of the current request (may be <code>null</code>)
-	 */
-	public RequestTrace getRequestTrace() {
-		final RequestInformation<? extends RequestTrace> requestInformation = request.get();
-		return requestInformation != null ? requestInformation.getRequestTrace() : null;
 	}
 
 	/**
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
 	 */
 	public Span getSpan() {
-		final RequestInformation<? extends RequestTrace> requestInformation = request.get();
+		final RequestInformation requestInformation = request.get();
 		return requestInformation != null ? requestInformation.getSpan() : NOOP_SPAN;
 	}
 
@@ -601,7 +579,7 @@ public class RequestMonitor {
 	 * <li>{@link #addReporter(SpanReporter)}</li>
 	 * <li>{@link #addOnBeforeRequestCallback(Runnable)}</li>
 	 * <li>{@link #addOnAfterRequestCallback(Runnable)}</li>
-	 * <li>{@link #getRequestTrace()}</li>
+	 * <li>{@link #getSpan()}</li>
 	 * </ul>
 	 *
 	 * @return the current request monitor
