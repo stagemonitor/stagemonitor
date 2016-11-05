@@ -1,26 +1,28 @@
 package org.stagemonitor.jdbc;
 
-import static net.bytebuddy.matcher.ElementMatchers.not;
-import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
-import static org.stagemonitor.core.instrument.CanLoadClassElementMatcher.canLoadClass;
-
-import java.lang.reflect.Method;
-import java.lang.stagemonitor.dispatcher.Dispatcher;
-import java.security.ProtectionDomain;
-import java.sql.Connection;
-
-import javax.sql.DataSource;
-
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaModule;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+
+import java.lang.reflect.Method;
+import java.security.ProtectionDomain;
+import java.sql.Connection;
+
+import javax.sql.DataSource;
+
+import __redirected.org.stagemonitor.dispatcher.Dispatcher;
+
+import static net.bytebuddy.matcher.ElementMatchers.not;
+import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
+import static org.stagemonitor.core.instrument.CanLoadClassElementMatcher.canLoadClass;
 
 /**
  * When the {@link DataSource} implementation is not loaded by the application {@link ClassLoader}, like it is common

@@ -1,4 +1,4 @@
-package java.lang.stagemonitor.dispatcher;
+package __redirected.org.stagemonitor.dispatcher;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -6,9 +6,11 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * This class is injected into the bootstrap classpath and is used to share objects between classloaders.
  * <p/>
- * The reason why this class is inside the java.lang package is because JBoss' ModuleClassLoader would otherwise not
- * load this class and throw a {@link ClassNotFoundException} when trying to access non java classes from the bootstrap
+ * The reason why this class is inside the __redirected package is because JBoss' ModuleClassLoader would otherwise not
+ * load this class and throw a {@link ClassNotFoundException} when trying to access classes in normal packages from the bootstrap
  * classloader.
+ * <p/>
+ * See also https://github.com/jboss-modules/jboss-modules/blob/master/src/main/java/org/jboss/modules/Module.java#L92
  */
 public class Dispatcher {
 

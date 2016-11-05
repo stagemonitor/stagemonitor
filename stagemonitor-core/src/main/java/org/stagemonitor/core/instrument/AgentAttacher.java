@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.lang.stagemonitor.dispatcher.Dispatcher;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +28,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
+
+import __redirected.org.stagemonitor.dispatcher.Dispatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
@@ -45,7 +46,7 @@ import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.time
 public class AgentAttacher {
 
 	private static final Logger logger = LoggerFactory.getLogger(AgentAttacher.class);
-	private static final String DISPATCHER_CLASS_NAME = "java.lang.stagemonitor.dispatcher.Dispatcher";
+	private static final String DISPATCHER_CLASS_NAME = "__redirected.org.stagemonitor.dispatcher.Dispatcher";
 	private static final String IGNORED_CLASSLOADERS_KEY = AgentAttacher.class.getName() + "hashCodesOfClassLoadersToIgnore";
 	private static final Runnable NOOP_ON_SHUTDOWN_ACTION = new Runnable() {
 		public void run() {
