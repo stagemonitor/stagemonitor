@@ -1,14 +1,5 @@
 package org.stagemonitor.web.reporter;
 
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Collections;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +12,15 @@ import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporte
 import org.stagemonitor.requestmonitor.reporter.RequestTraceReporter;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.HttpRequestTrace;
+
+import java.util.Collections;
+
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class DoNotTrackPostExecutionInterceptorTest {
 
@@ -42,7 +42,9 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.emptyList());
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
-		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
+		elasticsearchClient = mock(ElasticsearchClient.class);
+		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
+		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		reporter = new ElasticsearchRequestTraceReporter();

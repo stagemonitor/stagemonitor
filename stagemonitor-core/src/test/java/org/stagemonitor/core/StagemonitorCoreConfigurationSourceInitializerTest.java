@@ -1,18 +1,19 @@
 package org.stagemonitor.core;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.util.HttpClient;
+
+import java.util.Arrays;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class StagemonitorCoreConfigurationSourceInitializerTest {
 
@@ -25,7 +26,7 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 		when(corePlugin.getElasticsearchConfigurationSourceProfiles()).thenReturn(Arrays.asList("test"));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		ElasticsearchClient elasticsearchClient = new ElasticsearchClient(corePlugin);
+		ElasticsearchClient elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 	}
 

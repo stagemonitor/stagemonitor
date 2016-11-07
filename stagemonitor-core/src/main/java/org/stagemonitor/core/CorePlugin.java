@@ -417,6 +417,18 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("performance")
 			.build();
+	private final ConfigurationOption<Integer> elasticsearchAvailabilityCheckPeriodSec = ConfigurationOption.integerOption()
+			.key("stagemonitor.elasticsearch.availabilityCheckPeriodSec")
+			.dynamic(false)
+			.label("Elasticsearch availability check period (sec)")
+			.description("When set to a value > 0 stagemonitor periodically checks if Elasticsearch is available. " +
+					"When not available, stagemonitor won't try to send request traces to Elasticsearch which would " +
+					"fail anyway. This reduces heap usage as the request traces won't be queued up. " +
+					"It also avoids the logging of warnings when the queue is filled up to the limit (see '" + POOLS_QUEUE_CAPACITY_LIMIT_KEY + "')")
+			.defaultValue(5)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags("elasticsearch", "advanced")
+			.build();
 
 	private MetricsAggregationReporter aggregationReporter;
 
@@ -610,7 +622,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public ElasticsearchClient getElasticsearchClient() {
 		if (elasticsearchClient == null) {
-			elasticsearchClient = new ElasticsearchClient(this);
+			elasticsearchClient = new ElasticsearchClient(this, new HttpClient(), elasticsearchAvailabilityCheckPeriodSec.getValue());
 		}
 		return elasticsearchClient;
 	}
