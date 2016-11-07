@@ -100,7 +100,7 @@ public class HttpClient {
 			if (connection != null) {
 				inputStream = connection.getErrorStream();
 				try {
-					return responseHandler.handleResponse(inputStream, getResponseCode(method, url, connection), e);
+					return responseHandler.handleResponse(inputStream, getResponseCodeIfPossible(connection), e);
 				} catch (IOException e1) {
 					logger.warn("Error sending {} request to url {}: {}", method, url, e.getMessage(), e);
 					logger.warn("Error handling error response for {} request to url {}: {}", method, url, e1.getMessage(), e1);
@@ -120,11 +120,11 @@ public class HttpClient {
 		}
 	}
 
-	private Integer getResponseCode(String method, String url, HttpURLConnection connection) {
+	private Integer getResponseCodeIfPossible(HttpURLConnection connection) {
 		try {
 			return connection.getResponseCode();
 		} catch (IOException e) {
-			logger.warn("Error getting response code for {} request to url {}: {}", method, url, e.getMessage(), e);
+			// don't handle exception twice
 			return null;
 		}
 	}
