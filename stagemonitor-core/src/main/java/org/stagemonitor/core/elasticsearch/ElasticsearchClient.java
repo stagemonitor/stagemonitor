@@ -413,15 +413,17 @@ public class ElasticsearchClient {
 				@Override
 				public Object handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
 					if (e != null) {
-						logger.warn("Elasticsearch is not available. " +
-								"Stagemonitor won't try to send request traces to Elasticsearch until it is available again.");
-						elasticsearchAvailable.set(false);
-					} else {
-						if (!elasticsearchAvailable.get()) {
-							logger.info("Elasticsearch is available again.");
+						if (isElasticsearchAvailable()) {
+							logger.warn("Elasticsearch is not available. " +
+									"Stagemonitor won't try to send request traces to Elasticsearch until it is available again.");
 						}
-						elasticsearchAvailable.set(true);
-					}
+							elasticsearchAvailable.set(false);
+						} else {
+							if (!isElasticsearchAvailable()) {
+								logger.info("Elasticsearch is available again.");
+							}
+							elasticsearchAvailable.set(true);
+						}
 					return null;
 				}
 			});
