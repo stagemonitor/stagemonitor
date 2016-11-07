@@ -39,7 +39,6 @@ public class RequestMonitorTest {
 	private Metric2Registry registry;
 	private RequestMonitor requestMonitor;
 	private Configuration configuration;
-	private ElasticsearchClient elasticsearchClient;
 
 	@Before
 	public void before() {
@@ -54,7 +53,7 @@ public class RequestMonitorTest {
 		doReturn(true).when(corePlugin).isStagemonitorActive();
 		doReturn(1000).when(corePlugin).getThreadPoolQueueCapacityLimit();
 		doReturn(Collections.singletonList("http://mockhost:9200")).when(corePlugin).getElasticsearchUrls();
-		elasticsearchClient = mock(ElasticsearchClient.class);
+		ElasticsearchClient elasticsearchClient = mock(ElasticsearchClient.class);
 		doReturn(true).when(elasticsearchClient).isElasticsearchAvailable();
 		doReturn(elasticsearchClient).when(corePlugin).getElasticsearchClient();
 		doReturn(false).when(corePlugin).isOnlyLogElasticsearchMetricReports();

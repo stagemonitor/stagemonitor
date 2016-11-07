@@ -328,49 +328,65 @@ public class ElasticsearchClient {
 
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
 
+		private static final int MAX_BULK_ERROR_LOG_SIZE = 256;
+		private static final String ERROR_PREFIX = "Error(s) while sending a _bulk request to elasticsearch: {}";
+
 		private static final Logger logger = LoggerFactory.getLogger(BulkErrorReportingResponseHandler.class);
 
 		@Override
 		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
-			if (bulkResponse.get("errors").booleanValue()) {
-				reportBulkErrors(bulkResponse.get("items"));
+			final JsonNode errors = bulkResponse.get("errors");
+			if (errors != null && errors.booleanValue()) {
+				logger.warn(ERROR_PREFIX, reportBulkErrors(bulkResponse.get("items")));
+			} else if (bulkResponse.get("error") != null) {
+				logger.warn(ERROR_PREFIX, bulkResponse);
 			}
 			return null;
 		}
 
-		private void reportBulkErrors(JsonNode items) {
-			final StringBuilder sb = new StringBuilder("Error(s) while sending a _bulk request to elasticsearch:");
+		private String reportBulkErrors(JsonNode items) {
+			final StringBuilder sb = new StringBuilder();
 			for (JsonNode item : items) {
 				JsonNode action = item.get("index");
 				if (action == null) {
 					action = item.get("create");
 				}
-				final JsonNode error = action.get("error");
-				if (error != null) {
-					sb.append("\n - ");
-					final JsonNode reason = error.get("reason");
-					if (reason != null) {
-						sb.append(reason.asText());
-						final String errorType = error.get("type").asText();
-						if (errorType.equals("version_conflict_engine_exception")) {
-							sb.append(": Probably you updated a dashboard in Kibana. ")
-									.append("Please don't override the stagemonitor dashboards. ")
-									.append("If you want to customize a dashboard, save it under a different name. ")
-									.append("Stagemonitor will not override your changes, but that also means that you won't ")
-									.append("be able to use the latest dashboard enhancements :(. ")
-									.append("To resolve this issue, save the updated one under a different name, delete it ")
-									.append("and restart stagemonitor so that the dashboard can be recreated.");
-						} else if ("es_rejected_execution_exception".equals(errorType)) {
-							sb.append(": Consider increasing threadpool.bulk.queue_size. See also stagemonitor's " +
-									"documentation for the Elasticsearch data base.");
+				if (action != null) {
+					final JsonNode error = action.get("error");
+					if (error != null) {
+						sb.append("\n - ");
+						final JsonNode reason = error.get("reason");
+						if (reason != null) {
+							sb.append(reason.asText());
+							final String errorType = error.get("type").asText();
+							if (errorType.equals("version_conflict_engine_exception")) {
+								sb.append(": Probably you updated a dashboard in Kibana. ")
+										.append("Please don't override the stagemonitor dashboards. ")
+										.append("If you want to customize a dashboard, save it under a different name. ")
+										.append("Stagemonitor will not override your changes, but that also means that you won't ")
+										.append("be able to use the latest dashboard enhancements :(. ")
+										.append("To resolve this issue, save the updated one under a different name, delete it ")
+										.append("and restart stagemonitor so that the dashboard can be recreated.");
+							} else if ("es_rejected_execution_exception".equals(errorType)) {
+								sb.append(": Consider increasing threadpool.bulk.queue_size. See also stagemonitor's " +
+										"documentation for the Elasticsearch data base.");
+							}
+						} else {
+							sb.append(error.toString());
 						}
+					}
+				} else {
+					sb.append(' ');
+					final String error = item.toString();
+					if (error.length() > MAX_BULK_ERROR_LOG_SIZE) {
+						sb.append(error.substring(0, MAX_BULK_ERROR_LOG_SIZE)).append("...");
 					} else {
-						sb.append(error.toString());
+						sb.append(error);
 					}
 				}
 			}
-			logger.warn(sb.toString());
+			return sb.toString();
 		}
 
 	}
