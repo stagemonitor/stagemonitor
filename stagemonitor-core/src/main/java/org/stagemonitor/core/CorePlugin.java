@@ -204,6 +204,24 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Integer> numberOfReplicas = ConfigurationOption.integerOption()
+			.key("stagemonitor.elasticsearch.numberOfReplicas")
+			.dynamic(false)
+			.label("Number of ES Replicas")
+			.description("Sets the number of replicas of the Elasticsearch index templates.")
+			.defaultValue(null)
+			.tags(METRICS_STORE, ELASTICSEARCH)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<Integer> numberOfShards = ConfigurationOption.integerOption()
+			.key("stagemonitor.elasticsearch.numberOfShards")
+			.dynamic(false)
+			.label("Number of ES Shards")
+			.description("Sets the number of shards of the Elasticsearch index templates.")
+			.defaultValue(null)
+			.tags(METRICS_STORE, ELASTICSEARCH)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
 	private final ConfigurationOption<String> applicationName = ConfigurationOption.stringOption()
 			.key("stagemonitor.applicationName")
 			.dynamic(false)
@@ -488,8 +506,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		reportToGraphite(legacyMetricRegistry, getGraphiteReportingInterval(), measurementSession);
 		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(),
 				measurementSession);
-		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
-				measurementSession, configuration.getConfig(CorePlugin.class));
+		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(), measurementSession);
 
 		List<ScheduledMetrics2Reporter> onShutdownReporters = new LinkedList<ScheduledMetrics2Reporter>();
 		onShutdownReporters.add(reportToConsole(metric2Registry, getConsoleReportingInterval(), allFilters));
@@ -541,12 +558,12 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
-									   final MeasurementSession measurementSession, CorePlugin corePlugin) {
+									   final MeasurementSession measurementSession) {
 		if (isReportToElasticsearch()) {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("KibanaConfig.bulk");
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrls(), reportingInterval);
-			final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
-					metricsIndexTemplate.getValue(), corePlugin.moveToColdNodesAfterDays.getValue());
+			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
+					metricsIndexTemplate.getValue(), moveToColdNodesAfterDays.getValue(), getNumberOfReplicas(), getNumberOfShards());
 			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
 			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, this)
 					.globalTags(measurementSession.asMap())
@@ -815,5 +832,13 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public boolean isInitAsync() {
 		return initAsync.getValue();
+	}
+
+	public Integer getNumberOfReplicas() {
+		return numberOfReplicas.getValue();
+	}
+
+	public Integer getNumberOfShards() {
+		return numberOfShards.getValue();
 	}
 }

@@ -7,6 +7,8 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -22,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 public class AbstractElasticsearchTest {
 
+	private static final Logger logger = LoggerFactory.getLogger(AbstractElasticsearchTest.class);
 	protected static Node node;
 	protected static Client client;
 	protected static AdminClient adminClient;
@@ -38,6 +41,7 @@ public class AbstractElasticsearchTest {
 			FileUtils.deleteQuietly(esHome);
 			final NodeBuilder nodeBuilder = NodeBuilder.nodeBuilder().local(true);
 			elasticsearchPort = getAvailablePort();
+			logger.info("Elasticsearch port: {}", elasticsearchPort);
 			nodeBuilder.settings()
 					.put("path.home", esHome.getAbsolutePath())
 					.put("name", "junit-es-node")

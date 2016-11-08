@@ -8,9 +8,11 @@ import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.JsonUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -22,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.core.elasticsearch.ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive;
+import static org.stagemonitor.core.elasticsearch.ElasticsearchClient.modifyIndexTemplate;
 
 public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
@@ -58,13 +60,46 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testRequireBoxTypeHotWhenHotColdActive() throws Exception {
-		assertTrue(requireBoxTypeHotIfHotColdAritectureActive("stagemonitor-elasticsearch-metrics-index-template.json", 2).contains("hot"));
+		final String indexTemplate = modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 2, null, 0);
+		assertTrue(indexTemplate.contains("hot"));
+		assertFalse(indexTemplate.contains("number_of_shards"));
+		assertFalse(indexTemplate.contains("number_of_replicas"));
+	}
+
+	@Test
+	public void testSetReplicas() throws Exception {
+		final String indexTemplate = modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, 0, 0);
+		assertFalse(indexTemplate.contains("hot"));
+		assertEquals(0, JsonUtils.getMapper().readTree(indexTemplate).get("settings").get("index").get("number_of_replicas").asInt());
+		assertFalse(indexTemplate.contains("number_of_shards"));
+	}
+
+	@Test
+	public void testSetShards() throws Exception {
+		final String indexTemplate = modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, -1, 1);
+		assertFalse(indexTemplate.contains("hot"));
+		assertEquals(1, JsonUtils.getMapper().readTree(indexTemplate).get("settings").get("index").get("number_of_shards").asInt());
+		assertFalse(indexTemplate.contains("number_of_replicas"));
+	}
+
+	@Test
+	public void modifyIndexTemplateIntegrationTest() throws Exception {
+		elasticsearchClient.sendMappingTemplateAsync(modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, 1, 2), "stagemonitor-elasticsearch-metrics");
+		elasticsearchClient.waitForCompletion();
+		refresh();
+		elasticsearchClient.index("stagemonitor-metrics-test", "metrics", Collections.singletonMap("count", 1));
+		elasticsearchClient.waitForCompletion();
+		refresh();
+		final JsonNode indexSettings = elasticsearchClient.getJson("/stagemonitor-metrics-test/_settings")
+				.get("stagemonitor-metrics-test").get("settings").get("index");
+		assertEquals(indexSettings.toString(),1, indexSettings.get("number_of_replicas").asInt());
+		assertEquals(indexSettings.toString(),2, indexSettings.get("number_of_shards").asInt());
 	}
 
 	@Test
 	public void testDontRequireBoxTypeHotWhenHotColdInactive() throws Exception {
-		assertFalse(requireBoxTypeHotIfHotColdAritectureActive("stagemonitor-elasticsearch-metrics-index-template.json", 0).contains("hot"));
-		assertFalse(requireBoxTypeHotIfHotColdAritectureActive("stagemonitor-elasticsearch-metrics-index-template.json", -1).contains("hot"));
+		assertFalse(modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, 0, 0).contains("hot"));
+		assertFalse(modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", -1, 0, 0).contains("hot"));
 	}
 
 	@Test

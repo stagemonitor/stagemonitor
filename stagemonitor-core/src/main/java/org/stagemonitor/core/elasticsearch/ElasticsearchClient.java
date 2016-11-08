@@ -184,13 +184,19 @@ public class ElasticsearchClient {
 		return sendAsJsonAsync("PUT", "/_template/" + templateName, mappingJson);
 	}
 
-	public static String requireBoxTypeHotIfHotColdAritectureActive(String templatePath, int moveToColdNodesAfterDays) {
+	public static String modifyIndexTemplate(String templatePath, int moveToColdNodesAfterDays, Integer numberOfReplicas, Integer numberOfShards) {
 		final JsonNode json;
 		try {
 			json = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(templatePath));
+			ObjectNode indexSettings = (ObjectNode) json.get("settings").get("index");
 			if (moveToColdNodesAfterDays > 0) {
-				ObjectNode indexSettings = (ObjectNode) json.get("settings").get("index");
 				indexSettings.put("routing.allocation.require.box_type", "hot");
+			}
+			if (numberOfReplicas != null && numberOfReplicas >= 0) {
+				indexSettings.put("number_of_replicas", numberOfReplicas);
+			}
+			if (numberOfShards != null && numberOfShards > 0) {
+				indexSettings.put("number_of_shards", numberOfShards);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
