@@ -52,13 +52,18 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 	}
 
 	protected Span createTestSpanWithCallTree(long executionTimeMs) {
+		final io.opentracing.Span span = createTestSpan(executionTimeMs);
+		SpanTags.setCallTree(span, CallStackElement.createRoot("test"));
+		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
+		return (Span) span;
+	}
+
+	protected io.opentracing.Span createTestSpan(long executionTimeMs) {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final io.opentracing.Span span;
 		span = tracer.buildSpan("Report Me").withStartTimestamp(1).start();
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMs) + 1);
-		SpanTags.setCallTree(span, CallStackElement.createRoot("test"));
-		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
-		return (Span) span;
+		return span;
 	}
 }

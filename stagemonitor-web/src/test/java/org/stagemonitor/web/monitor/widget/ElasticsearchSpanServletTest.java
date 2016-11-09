@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
-import org.stagemonitor.requestmonitor.reporter.ElasticsearchRequestTraceReporterIntegrationTest;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporterIntegrationTest;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.web.WebPlugin;
 
@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ElasticsearchSpanServletTest extends ElasticsearchRequestTraceReporterIntegrationTest {
+public class ElasticsearchSpanServletTest extends ElasticsearchSpanReporterIntegrationTest {
 
 	private ElasticsearchRequestTraceServlet elasticsearchRequestTraceServlet;
 

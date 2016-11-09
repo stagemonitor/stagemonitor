@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
@@ -34,6 +35,61 @@ public class StringUtils {
 
 	public static String splitCamelCase(String s) {
 		return CAMEL_CASE.matcher(s).replaceAll(" ");
+	}
+
+	/**
+	 * Copied from https://github.com/apache/commons-lang/blob/master/src/main/java/org/apache/commons/lang3/StringUtils.java
+	 *
+	 * <p>Splits the provided text into an array, separator specified.
+	 * This is an alternative to using StringTokenizer.</p>
+	 *
+	 * <p>The separator is not included in the returned String array.
+	 * Adjacent separators are treated as one separator.
+	 * For more control over the split use the StrTokenizer class.</p>
+	 *
+	 * <p>A {@code null} input String returns {@code null}.</p>
+	 *
+	 * <pre>
+	 * StringUtils.split(null, *)         = null
+	 * StringUtils.split("", *)           = []
+	 * StringUtils.split("a.b.c", '.')    = ["a", "b", "c"]
+	 * StringUtils.split("a..b.c", '.')   = ["a", "b", "c"]
+	 * StringUtils.split("a:b:c", '.')    = ["a:b:c"]
+	 * StringUtils.split("a b c", ' ')    = ["a", "b", "c"]
+	 * </pre>
+	 *
+	 * @param str  the String to parse, may be null
+	 * @param separatorChar  the character used as the delimiter
+	 * @return an array of parsed Strings, {@code null} if null String input
+	 * @since 2.0
+	 */
+	public static String[] split(final String str, final char separatorChar) {
+		if (str == null) {
+			return null;
+		}
+		final int len = str.length();
+		if (len == 0) {
+			return new String[0];
+		}
+		final List<String> list = new ArrayList<String>();
+		int i = 0, start = 0;
+		boolean match = false;
+		while (i < len) {
+			if (str.charAt(i) == separatorChar) {
+				if (match) {
+					list.add(str.substring(start, i));
+					match = false;
+				}
+				start = ++i;
+				continue;
+			}
+			match = true;
+			i++;
+		}
+		if (match) {
+			list.add(str.substring(start, i));
+		}
+		return list.toArray(new String[list.size()]);
 	}
 
 	public static String dateAsIsoString(Date date) {
@@ -132,5 +188,13 @@ public class StringUtils {
 
 	public static String toHexString(long l) {
 		return String.format("%x", l);
+	}
+
+	public static String deDot(String s) {
+		return s.replace(".", "_(dot)_");
+	}
+
+	public static String reDot(String s) {
+		return s.replace("_(dot)_", ".");
 	}
 }

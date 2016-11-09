@@ -75,7 +75,11 @@ public class AbstractElasticsearchTest {
 	}
 
 	@After
-	public void after() {
+	public final void after() {
+		deleteAll();
+	}
+
+	protected void deleteAll() {
 		node.client().admin().indices().prepareDelete("_all").get();
 	}
 

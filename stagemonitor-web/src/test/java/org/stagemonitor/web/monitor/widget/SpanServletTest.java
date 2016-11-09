@@ -19,6 +19,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
+import org.stagemonitor.requestmonitor.utils.SpanTags;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
@@ -97,7 +98,7 @@ public class SpanServletTest {
 
 		spanServlet.service(request, response);
 
-		Assert.assertEquals(JsonUtils.toJson(Collections.singletonList(span)), response.getContentAsString());
+		Assert.assertEquals(spanAsJsonArray(), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
 	}
 
@@ -112,8 +113,16 @@ public class SpanServletTest {
 
 		spanServlet.service(request, response);
 
-		Assert.assertEquals(Arrays.asList(JsonUtils.toJson(span), JsonUtils.toJson(span)).toString(), response.getContentAsString());
+		Assert.assertEquals(Arrays.asList(spanAsJson(), spanAsJson()).toString(), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
+	}
+
+	private String spanAsJsonArray() {
+		return Collections.singletonList(spanAsJson()).toString();
+	}
+
+	private String spanAsJson() {
+		return JsonUtils.toJson(span, SpanTags.CALL_TREE_ASCII);
 	}
 
 	private void performNonBlockingRequest(final HttpServletRequest request, final MockHttpServletResponse response) throws Exception {
@@ -154,7 +163,7 @@ public class SpanServletTest {
 		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
 		waitForResponse(response);
 
-		Assert.assertEquals(JsonUtils.toJson(Collections.singletonList(span)), response.getContentAsString());
+		Assert.assertEquals(spanAsJsonArray(), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
 	}
 

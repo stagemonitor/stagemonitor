@@ -3,6 +3,7 @@ package org.stagemonitor.requestmonitor.utils;
 import com.uber.jaeger.utils.Utils;
 
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.reporter.ExternalRequestMetricsReporter;
 
@@ -49,7 +50,7 @@ public class SpanTags {
 			return;
 		}
 		for (Map.Entry<String, String> entry : parameters.entrySet()) {
-			span.setTag(PARAMETERS_PREFIX + entry.getKey(), entry.getValue());
+			span.setTag(PARAMETERS_PREFIX + StringUtils.deDot(entry.getKey()), entry.getValue());
 		}
 	}
 

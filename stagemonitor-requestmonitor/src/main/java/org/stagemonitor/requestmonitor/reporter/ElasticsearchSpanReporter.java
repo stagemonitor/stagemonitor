@@ -20,6 +20,8 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -104,13 +106,13 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 		}
 
 		@Override
-		public void setupModule(SetupContext context) {
+		public void setupModule(final SetupContext context) {
 			context.addSerializers(new SimpleSerializers(Collections.<JsonSerializer<?>>singletonList(new StdSerializer<com.uber.jaeger.Span>(Span.class) {
 
 				@Override
 				public void serialize(com.uber.jaeger.Span span, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 					gen.writeStartObject();
-					for (Map.Entry<String, Object> entry : convertDottedKeysIntoNestedObject(span).entrySet()) {
+					for (Map.Entry<String, Object> entry : convertDottedKeysIntoNestedObject(span.getTags()).entrySet()) {
 						final Object value = entry.getValue();
 						if (value != null) {
 							gen.writeObjectField(entry.getKey(), value);
@@ -149,9 +151,47 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 			})));
 		}
 
-		private Map<String, Object> convertDottedKeysIntoNestedObject(Span span) {
-			// TODO
-			return span.getTags();
+		private Map<String, Object> convertDottedKeysIntoNestedObject(Map<String, Object> tags) {
+			Map<String, Object> nestedTags = new HashMap<String, Object>();
+			for (Map.Entry<String, Object> entry : tags.entrySet()) {
+				if (entry.getKey().indexOf('.') >= 0) {
+					doConvertDots(nestedTags, entry);
+				} else {
+					nestedTags.put(entry.getKey(), entry.getValue());
+				}
+			}
+
+			return nestedTags;
+		}
+
+		private void doConvertDots(Map<String, Object> nestedTags, Map.Entry<String, Object> entry) {
+			final String[] pathSegments = StringUtils.split(entry.getKey(), '.');
+			Map<String, Object> path = nestedTags;
+			for (int i = 0; i < pathSegments.length; i++) {
+				String pathSegment = pathSegments[i];
+				if (i + 1 < pathSegments.length) {
+					path = getNewNestedPath(path, pathSegment, entry.getKey());
+				} else {
+					// last
+					path.put(pathSegment, entry.getValue());
+				}
+			}
+		}
+
+		private Map<String, Object> getNewNestedPath(Map<String, Object> path, String pathSegment, String fullPath) {
+			final Map<String, Object> newPath;
+			final Object existingPath = path.get(pathSegment);
+			if (existingPath != null) {
+				if (existingPath instanceof Map) {
+					newPath = (Map<String, Object>) existingPath;
+				} else {
+					throw new IllegalArgumentException("Ambiguous mapping for " + fullPath);
+				}
+			} else {
+				newPath = new LinkedHashMap<String, Object>();
+				path.put(pathSegment, newPath);
+			}
+			return newPath;
 		}
 	}
 
