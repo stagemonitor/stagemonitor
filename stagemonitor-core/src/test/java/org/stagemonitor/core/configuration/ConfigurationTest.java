@@ -1,24 +1,25 @@
 package org.stagemonitor.core.configuration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.Stagemonitor.STAGEMONITOR_PASSWORD;
-
-import java.io.IOException;
-import java.util.Collections;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
+
+import java.io.IOException;
+import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.Stagemonitor.STAGEMONITOR_PASSWORD;
 
 public class ConfigurationTest {
 
@@ -30,6 +31,15 @@ public class ConfigurationTest {
 		configuration = new Configuration(Collections.singletonList(new CorePlugin()),
 				Collections.<ConfigurationSource>singletonList(new SimpleSource()), STAGEMONITOR_PASSWORD);
 		corePlugin = configuration.getConfig(CorePlugin.class);
+	}
+
+	@Test
+	public void testGetConfigSubclass() {
+		final CorePlugin corePluginMock = mock(CorePlugin.class);
+		configuration = new Configuration(Collections.singletonList(corePluginMock),
+				Collections.<ConfigurationSource>singletonList(new SimpleSource()), STAGEMONITOR_PASSWORD);
+		assertSame(corePluginMock, configuration.getConfig(CorePlugin.class));
+		assertNull(configuration.getConfig(new ConfigurationOptionProvider(){}.getClass()));
 	}
 
 	@Test
