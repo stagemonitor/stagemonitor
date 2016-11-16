@@ -1,5 +1,9 @@
 package org.stagemonitor.core.configuration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.configuration.source.ConfigurationSource;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,10 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
 public class Configuration {
 
@@ -114,7 +114,17 @@ public class Configuration {
 	 * @return a {@link ConfigurationOptionProvider} whose {@link ConfigurationOption}s are populated
 	 */
 	public <T extends ConfigurationOptionProvider> T getConfig(Class<T> configClass) {
-		return (T) optionProvidersByClass.get(configClass);
+		final T config = (T) optionProvidersByClass.get(configClass);
+		if (config != null) {
+			return config;
+		} else {
+			for (Class<? extends ConfigurationOptionProvider> storedConfigClass : optionProvidersByClass.keySet()) {
+				if (configClass.isAssignableFrom(storedConfigClass)) {
+					return (T) optionProvidersByClass.get(storedConfigClass);
+				}
+			}
+			return null;
+		}
 	}
 
 	private void add(final ConfigurationOption<?> configurationOption) {
@@ -360,7 +370,7 @@ public class Configuration {
 
 	private void saveToConfigurationSource(String key, String value, String configurationSourceName, ConfigurationOption<?> configurationOption) throws IOException {
 		for (ConfigurationSource configurationSource : configurationSources) {
-			if (configurationSource.getName().equals(configurationSourceName)) {
+			if (configurationSourceName != null && configurationSourceName.equals(configurationSource.getName())) {
 				validateConfigurationSource(configurationSource, configurationOption);
 				configurationSource.save(key, value);
 				reload(key);
