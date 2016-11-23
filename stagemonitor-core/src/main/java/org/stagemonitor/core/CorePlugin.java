@@ -565,15 +565,11 @@ public class CorePlugin extends StagemonitorPlugin {
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
 					metricsIndexTemplate.getValue(), moveToColdNodesAfterDays.getValue(), getNumberOfReplicas(), getNumberOfShards());
 			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
-			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, this)
-					.globalTags(measurementSession.asMap())
-					.build();
-
-			reporter.start(reportingInterval, TimeUnit.SECONDS);
-			reporters.add(reporter);
 			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
 					moveToColdNodesAfterDays.getValue(), deleteElasticsearchMetricsAfterDays.getValue());
-		} else if (isOnlyLogElasticsearchMetricReports()) {
+		}
+
+		if (isReportToElasticsearch() || isOnlyLogElasticsearchMetricReports()) {
 			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, this)
 					.globalTags(measurementSession.asMap())
 					.build();
@@ -847,5 +843,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public Integer getNumberOfShards() {
 		return numberOfShards.getValue();
+	}
+
+	List<Closeable> getReporters() {
+		return reporters;
 	}
 }

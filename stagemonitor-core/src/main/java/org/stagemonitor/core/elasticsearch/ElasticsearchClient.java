@@ -64,8 +64,8 @@ public class ElasticsearchClient {
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetric2Registry());
 		}
 		this.httpClient = httpClient;
-		//don't start the check availability thread if we're only logging data
-		if (!corePlugin.isOnlyLogElasticsearchMetricReports() && esAvailabilityCheckIntervalSec > 0) {
+
+		if (esAvailabilityCheckIntervalSec > 0) {
 			final long period = TimeUnit.SECONDS.toMillis(esAvailabilityCheckIntervalSec);
 			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin), period, period);
 		}
