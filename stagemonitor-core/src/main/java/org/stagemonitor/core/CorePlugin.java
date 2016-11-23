@@ -499,7 +499,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		if (!excludedMetricsPatterns.isEmpty()) {
 			regexFilter = MetricNameFilter.excludePatterns(excludedMetricsPatterns);
 		}
-		
+
 		Metric2Filter allFilters = new AndMetric2Filter(regexFilter, new MetricsWithCountFilter());
 		MetricRegistry legacyMetricRegistry = metric2Registry.getMetricRegistry();
 
@@ -573,6 +573,13 @@ public class CorePlugin extends StagemonitorPlugin {
 			reporters.add(reporter);
 			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
 					moveToColdNodesAfterDays.getValue(), deleteElasticsearchMetricsAfterDays.getValue());
+		} else if (isOnlyLogElasticsearchMetricReports()) {
+			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, this)
+					.globalTags(measurementSession.asMap())
+					.build();
+
+			reporter.start(reportingInterval, TimeUnit.SECONDS);
+			reporters.add(reporter);
 		} else {
 			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrls(), reportingInterval);
 		}

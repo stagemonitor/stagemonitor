@@ -62,7 +62,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Histogram> histograms,
 							  final Map<MetricName, Meter> meters,
 							  final Map<MetricName, Timer> timers) {
-		if (!elasticsearchClient.isElasticsearchAvailable()) {
+		if (!elasticsearchClient.isElasticsearchAvailable() && !corePlugin.isOnlyLogElasticsearchMetricReports()) {
 			return;
 		}
 		long timestamp = clock.getTime();
