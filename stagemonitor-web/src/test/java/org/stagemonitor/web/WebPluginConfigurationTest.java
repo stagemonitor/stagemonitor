@@ -1,22 +1,20 @@
 package org.stagemonitor.web;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.configuration.Configuration;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
+import static org.junit.Assert.assertEquals;
 
 public class WebPluginConfigurationTest {
 
@@ -24,10 +22,7 @@ public class WebPluginConfigurationTest {
 
 	@Before
 	public void before() throws Exception {
-		Configuration configuration = new Configuration(StagemonitorPlugin.class);
-		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerOptionProvider", ConfigurationOptionProvider.class);
-		registerPluginConfiguration.setAccessible(true);
-		registerPluginConfiguration.invoke(configuration, new WebPlugin());
+		Configuration configuration = new Configuration(Collections.singletonList(new WebPlugin()), Collections.emptyList(), "");
 		config = configuration.getConfig(WebPlugin.class);
 	}
 

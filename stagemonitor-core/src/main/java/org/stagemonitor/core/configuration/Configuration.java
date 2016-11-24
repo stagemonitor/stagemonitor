@@ -23,6 +23,7 @@ public class Configuration {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final String updateConfigPasswordKey;
 	private final List<ConfigurationSource> configurationSources = new CopyOnWriteArrayList<ConfigurationSource>();
+	private final boolean failOnMissingRequiredValues;
 
 	private Map<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider> optionProvidersByClass = new HashMap<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider>();
 	private Map<String, ConfigurationOption<?>> configurationOptionsByKey = new LinkedHashMap<String, ConfigurationOption<?>>();
@@ -83,19 +84,26 @@ public class Configuration {
 	 */
 	public Configuration(Iterable<? extends ConfigurationOptionProvider> optionProviders,
 						 List<ConfigurationSource> configSources, String updateConfigPasswordKey) {
+		this(optionProviders, configSources, updateConfigPasswordKey, false);
+	}
+
+	/**
+	 * @param optionProviders         the option providers
+	 * @param configSources           the configuration sources
+	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
+	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
+	 */
+	public Configuration(Iterable<? extends ConfigurationOptionProvider> optionProviders,
+						 List<ConfigurationSource> configSources, String updateConfigPasswordKey, boolean failOnMissingRequiredValues) {
 		this.updateConfigPasswordKey = updateConfigPasswordKey;
+		this.failOnMissingRequiredValues = failOnMissingRequiredValues;
 		configurationSources.addAll(configSources);
 		registerConfigurationOptions(optionProviders);
 	}
 
 	private void registerConfigurationOptions(Iterable<? extends ConfigurationOptionProvider> optionProviders) {
 		for (ConfigurationOptionProvider configurationOptionProvider : optionProviders) {
-			try {
-				registerOptionProvider(configurationOptionProvider);
-			} catch (RuntimeException e) {
-				logger.warn("Error while initializing configuration options for " +
-						configurationOptionProvider.getClass() + " (this exception is ignored)", e);
-			}
+			registerOptionProvider(configurationOptionProvider);
 		}
 	}
 
@@ -128,9 +136,13 @@ public class Configuration {
 	}
 
 	private void add(final ConfigurationOption<?> configurationOption) {
-		configurationOption.setConfigurationSources(configurationSources);
 		configurationOption.setConfiguration(this);
+		configurationOption.setConfigurationSources(configurationSources);
 
+		if (configurationOptionsByKey.containsKey(configurationOption.getKey())) {
+			throw new IllegalArgumentException(String.format("The configuration key %s is registered twice. Once for %s and once for %s.",
+					configurationOption.getKey(), configurationOptionsByKey.get(configurationOption.getKey()).getLabel(), configurationOption.getLabel()));
+		}
 		configurationOptionsByKey.put(configurationOption.getKey(), configurationOption);
 		addConfigurationOptionByCategory(configurationOption.getConfigurationCategory(), configurationOption);
 	}
@@ -406,6 +418,10 @@ public class Configuration {
 	 */
 	public void close() {
 		configurationReloader.shutdown();
+	}
+
+	boolean isFailOnMissingRequiredValues() {
+		return failOnMissingRequiredValues;
 	}
 
 }
