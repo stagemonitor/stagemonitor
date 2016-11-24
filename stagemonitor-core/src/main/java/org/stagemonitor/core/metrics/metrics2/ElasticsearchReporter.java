@@ -62,14 +62,16 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Histogram> histograms,
 							  final Map<MetricName, Meter> meters,
 							  final Map<MetricName, Timer> timers) {
-		if (!elasticsearchClient.isElasticsearchAvailable()) {
-			return;
-		}
+
 		long timestamp = clock.getTime();
 
 		final Timer.Context time = registry.timer(reportingTimeMetricName).time();
 		final MetricsOutputStreamHandler metricsOutputStreamHandler = new MetricsOutputStreamHandler(gauges, counters, histograms, meters, timers, timestamp);
 		if (!corePlugin.isOnlyLogElasticsearchMetricReports()) {
+			if (!elasticsearchClient.isElasticsearchAvailable()) {
+				return;
+			}
+
 			httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null,
 					metricsOutputStreamHandler, new ElasticsearchClient.BulkErrorReportingResponseHandler());
 		} else {
