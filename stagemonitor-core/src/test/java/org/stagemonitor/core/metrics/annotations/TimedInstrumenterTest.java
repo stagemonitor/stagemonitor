@@ -1,11 +1,8 @@
 package org.stagemonitor.core.metrics.annotations;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.annotation.Timed;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,6 +10,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class TimedInstrumenterTest {
 

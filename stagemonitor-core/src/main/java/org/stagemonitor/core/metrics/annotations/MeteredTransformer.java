@@ -49,7 +49,8 @@ public class MeteredTransformer extends StagemonitorByteBuddyTransformer {
 
 	public static class MeteredSignatureDynamicValue extends MetricAnnotationSignatureDynamicValue<MeteredSignature> {
 
-		protected NamingParameters getNamingParameters(MethodDescription.InDefinedShape instrumentedMethod) {
+		@Override
+		protected NamingParameters getNamingParameters(MethodDescription instrumentedMethod) {
 			final Metered metered = instrumentedMethod.getDeclaredAnnotations().ofType(Metered.class).loadSilent();
 			return new NamingParameters(metered.name(), metered.absolute());
 		}

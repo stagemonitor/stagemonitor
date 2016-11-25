@@ -1,12 +1,10 @@
 package org.stagemonitor.web.monitor.spring;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.returns;
-
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Stagemonitor;
@@ -14,6 +12,9 @@ import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.returns;
 
 public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -30,7 +31,7 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	// method signatures mus not contain HandlerExecutionChain as this type is optional and introspecting the class
 	// with reflection would fail then
 	@Advice.OnMethodExit
-	public static void afterGetHandler(@Advice.BoxedReturn Object handler) {
+	public static void afterGetHandler(@Advice.Return Object handler) {
 		SpringMvcRequestNameDeterminerTransformer.setRequestNameByHandler(handler);
 	}
 

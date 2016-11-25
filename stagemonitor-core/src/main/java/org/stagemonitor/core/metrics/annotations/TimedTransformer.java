@@ -78,7 +78,8 @@ public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 
 	public static class TimedSignatureDynamicValue extends MetricAnnotationSignatureDynamicValue<TimedSignature> {
 
-		protected NamingParameters getNamingParameters(MethodDescription.InDefinedShape instrumentedMethod) {
+		@Override
+		protected NamingParameters getNamingParameters(MethodDescription instrumentedMethod) {
 			if (instrumentedMethod.getDeclaredAnnotations().isAnnotationPresent(Timed.class)) {
 				final Timed timed = instrumentedMethod.getDeclaredAnnotations().ofType(Timed.class).loadSilent();
 				return new NamingParameters(timed.name(), timed.absolute());
