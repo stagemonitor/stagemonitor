@@ -6,6 +6,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
+import org.stagemonitor.core.util.JsonUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -196,14 +197,9 @@ public class ConfigurationTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testDuplicateLabel() throws Exception {
-		final ConfigurationOptionProvider optionProvider = new ConfigurationOptionProvider() {
-			@Override
-			public List<ConfigurationOption<?>> getConfigurationOptions() {
-				return Arrays.asList(
-						ConfigurationOption.stringOption().key("foo").description("Foo").build(),
-						ConfigurationOption.stringOption().key("foo").label("Bar").build());
-			}
-		};
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(
+				ConfigurationOption.stringOption().key("foo").description("Foo").build(),
+				ConfigurationOption.stringOption().key("foo").label("Bar").build());
 		new Configuration(Collections.singletonList(optionProvider), Collections.emptyList(), "");
 	}
 
@@ -226,12 +222,7 @@ public class ConfigurationTest {
 					}
 				}).build();
 
-		final ConfigurationOptionProvider optionProvider = new ConfigurationOptionProvider() {
-			@Override
-			public List<ConfigurationOption<?>> getConfigurationOptions() {
-				return Collections.singletonList(configurationOption);
-			}
-		};
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
 		final SimpleSource configurationSource = new SimpleSource("test");
 		final Configuration config = new Configuration(Collections.singletonList(optionProvider), Collections.singletonList(configurationSource), "");
 		config.save("foo", "new", "test");
@@ -242,12 +233,7 @@ public class ConfigurationTest {
 	public void testFailOnRequiredValueMissing() throws Exception {
 		final ConfigurationOption<String> configurationOption = ConfigurationOption.stringOption().key("foo").required().build();
 
-		final ConfigurationOptionProvider optionProvider = new ConfigurationOptionProvider() {
-			@Override
-			public List<ConfigurationOption<?>> getConfigurationOptions() {
-				return Collections.singletonList(configurationOption);
-			}
-		};
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
 		new Configuration(Collections.singletonList(optionProvider), Collections.emptyList(), "", true);
 	}
 
@@ -266,12 +252,7 @@ public class ConfigurationTest {
 				})
 				.build();
 
-		final ConfigurationOptionProvider optionProvider = new ConfigurationOptionProvider() {
-			@Override
-			public List<ConfigurationOption<?>> getConfigurationOptions() {
-				return Collections.singletonList(configurationOption);
-			}
-		};
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
 		final SimpleSource configurationSource = new SimpleSource("test");
 		final Configuration config = new Configuration(Collections.singletonList(optionProvider), Collections.singletonList(configurationSource), "");
 		try {
@@ -303,4 +284,29 @@ public class ConfigurationTest {
 		}
 	}
 
+	@Test
+	public void testToJsonDoesNotThrowException() throws Exception {
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(
+				ConfigurationOption.stringOption().key("foo").description("Foo").configurationCategory("Foos").build());
+		final Configuration configuration = new Configuration(Collections.singletonList(optionProvider), Collections.emptyList(), "");
+		JsonUtils.getMapper().writeValueAsString(configuration.getConfigurationOptionsByCategory());
+	}
+
+	private static class TestConfigurationOptionProvider extends ConfigurationOptionProvider {
+
+		private final List<ConfigurationOption<?>> configurationOptions;
+
+		public static ConfigurationOptionProvider of(ConfigurationOption<?>... configurationOptions) {
+			return new TestConfigurationOptionProvider(configurationOptions);
+		}
+
+		private TestConfigurationOptionProvider(ConfigurationOption<?>... configurationOptions) {
+			this.configurationOptions = Arrays.asList(configurationOptions);
+		}
+
+		@Override
+        public List<ConfigurationOption<?>> getConfigurationOptions() {
+			return configurationOptions;
+        }
+	}
 }

@@ -49,6 +49,7 @@ public class ConfigurationOption<T> {
 	private final boolean required;
 	private final String defaultValueAsString;
 	private final String configurationCategory;
+	@JsonIgnore
 	private final ValueConverter<T> valueConverter;
 	private final Class<? super T> valueType;
 	private String valueAsString;
