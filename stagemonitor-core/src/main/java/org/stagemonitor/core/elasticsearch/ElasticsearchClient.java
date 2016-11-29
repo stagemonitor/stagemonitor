@@ -416,7 +416,7 @@ public class ElasticsearchClient {
 			if (StringUtils.isEmpty(elasticsearchUrl)) {
 				return;
 			}
-			httpClient.send("HEAD", elasticsearchUrl, null, null, new HttpClient.ResponseHandler<Object>() {
+			httpClient.send("HEAD", elasticsearchUrl + "/", null, null, new HttpClient.ResponseHandler<Object>() {
 				@Override
 				public Object handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
 					if (e != null) {
