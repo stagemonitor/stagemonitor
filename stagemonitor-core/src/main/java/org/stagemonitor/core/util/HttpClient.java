@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,12 @@ public class HttpClient {
 		HttpURLConnection connection = null;
 		InputStream inputStream = null;
 		try {
-			connection = (HttpURLConnection) new URL(url).openConnection();
+			URL parsedUrl = new URL(url);
+			connection = (HttpURLConnection) parsedUrl.openConnection();
+			if (parsedUrl.getUserInfo() != null) {
+				String basicAuth = "Basic " + new String(Base64.getEncoder().encode(parsedUrl.getUserInfo().getBytes()));
+				connection.setRequestProperty("Authorization", basicAuth);
+			}
 			connection.setDoOutput(true);
 			connection.setRequestMethod(method);
 			connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(CONNECT_TIMEOUT_SEC));
