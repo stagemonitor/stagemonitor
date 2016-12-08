@@ -10,11 +10,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import sun.misc.BASE64Encoder;
 
 // TODO create HttpRequest POJO
 // method, url, headers, outputStreamHandler, responseHandler
@@ -82,7 +83,8 @@ public class HttpClient {
 			URL parsedUrl = new URL(url);
 			connection = (HttpURLConnection) parsedUrl.openConnection();
 			if (parsedUrl.getUserInfo() != null) {
-				String basicAuth = "Basic " + new String(Base64.getEncoder().encode(parsedUrl.getUserInfo().getBytes()));
+				BASE64Encoder encoder = new BASE64Encoder();
+				String basicAuth = "Basic " + encoder.encode(parsedUrl.getUserInfo().getBytes());
 				connection.setRequestProperty("Authorization", basicAuth);
 			}
 			connection.setDoOutput(true);
