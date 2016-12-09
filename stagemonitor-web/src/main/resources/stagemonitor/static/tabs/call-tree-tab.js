@@ -11,9 +11,9 @@ function renderCallTree() {
 
 		var $stagemonitorHome = $("#stagemonitor-home");
 		var $callStackTab = $("#call-stack-tab");
-		if (stagemonitor.callTree && stagemonitor.callTree.callStackJson !== undefined) {
+		if (stagemonitor.callTree && stagemonitor.callTree.call_tree_json !== undefined) {
 			$callStackTab.show();
-			var callTree = JSON.parse(stagemonitor.callTree.callStackJson);
+			var callTree = JSON.parse(stagemonitor.callTree.call_tree_json);
 			calculateQueryCount(callTree);
 			var callTreeRows = [];
 			processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);

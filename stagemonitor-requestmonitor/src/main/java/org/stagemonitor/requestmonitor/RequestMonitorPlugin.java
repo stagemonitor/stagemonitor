@@ -10,7 +10,9 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
+import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -249,16 +251,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.tags("security-relevant")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<String> requestIndexTemplate = ConfigurationOption.stringOption()
-			.key("stagemonitor.requestmonitor.elasticsearch.requestIndexTemplate")
-			.dynamic(false)
-			.label("ES Request Index Template")
-			.description("The classpath location of the index template that is used for the stagemonitor-requests-* indices. " +
-					"By specifying the location to your own template, you can fully customize the index template.")
-			.defaultValue("stagemonitor-elasticsearch-request-index-template.json")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.tags("elasticsearch")
-			.build();
 	private final ConfigurationOption<String> spanIndexTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.spanIndexTemplate")
 			.dynamic(false)
@@ -266,16 +258,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.description("The classpath location of the index template that is used for the stagemonitor-spans-* indices. " +
 					"By specifying the location to your own template, you can fully customize the index template.")
 			.defaultValue("stagemonitor-elasticsearch-span-index-template.json")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.tags("elasticsearch")
-			.build();
-	private final ConfigurationOption<String> externalRequestsIndexTemplate = ConfigurationOption.stringOption()
-			.key("stagemonitor.requestmonitor.elasticsearch.externalRequestsIndexTemplate")
-			.dynamic(false)
-			.label("ES External Requests Index Template")
-			.description("The classpath location of the index template that is used for the stagemonitor-external-requests-* indices. " +
-					"By specifying the location to your own template, you can fully customize the index template.")
-			.defaultValue("stagemonitor-elasticsearch-external-requests-index-template.json")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("elasticsearch")
 			.build();
@@ -331,20 +313,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
+		JsonUtils.getMapper().registerModule(new SpanJsonModule());
+
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 
-		final String requestsMappingJson = ElasticsearchClient.modifyIndexTemplate(
-				requestIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
-		elasticsearchClient.sendMappingTemplateAsync(requestsMappingJson, "stagemonitor-requests");
 		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
 				spanIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
 		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
-
-		final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
-				externalRequestsIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
-		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-external-requests");
 
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
@@ -360,8 +337,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/WebAnalytics.bulk");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/ExternalRequests.bulk");
 
-			elasticsearchClient.scheduleIndexManagement("stagemonitor-requests-",
-					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}

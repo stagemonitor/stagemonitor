@@ -143,7 +143,7 @@ public class SpringRequestMonitorTest {
 		assertEquals("Test Get Request Name", requestInformation.getRequestName());
 		assertEquals("Test Get Request Name", SpanTags.getInternalSpan(requestInformation.getSpan()).getOperationName());
 		assertEquals("/test/requestName", requestInformation.getInternalSpan().getTags().get(Tags.HTTP_URL.getKey()));
-		assertEquals("GET", requestInformation.getInternalSpan().getTags().get("http.method"));
+		assertEquals("GET", requestInformation.getInternalSpan().getTags().get("method"));
 		Assert.assertNull(requestInformation.getExecutionResult());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());

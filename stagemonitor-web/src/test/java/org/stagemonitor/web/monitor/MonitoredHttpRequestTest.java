@@ -72,7 +72,7 @@ public class MonitoredHttpRequestTest {
 		final Span span = SpanTags.getInternalSpan(monitoredHttpRequest.createSpan());
 		assertEquals("/test.js", span.getTags().get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET *.js", span.getOperationName());
-		assertEquals("GET", span.getTags().get("http.method"));
+		assertEquals("GET", span.getTags().get("method"));
 		assertNotNull(span.context().getSpanID());
 		assertNotNull(span.getStart());
 

@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.opentracing.NoopTracer;
+import io.opentracing.NoopTracerFactory;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
@@ -79,7 +79,7 @@ public class RequestMonitor {
 	private RequestMonitorPlugin requestMonitorPlugin;
 	private Date endOfWarmup;
 	private Meter callTreeMeter = new Meter();
-	private final static Span NOOP_SPAN = new NoopTracer().buildSpan(null).start();
+	private final static Span NOOP_SPAN = NoopTracerFactory.create().buildSpan(null).start();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
 		this(configuration, registry, ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader()));

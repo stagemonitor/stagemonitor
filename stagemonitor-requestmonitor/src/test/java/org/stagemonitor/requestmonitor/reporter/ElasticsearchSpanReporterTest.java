@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
 import org.stagemonitor.requestmonitor.utils.SpanTags;
 
 import static org.junit.Assert.assertEquals;
@@ -36,6 +37,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 		super.setUp();
 		reporter = new ElasticsearchSpanReporter(requestTraceLogger);
 		reporter.init(new SpanReporter.InitArguments(configuration, registry));
+		JsonUtils.getMapper().registerModule(new SpanJsonModule());
 	}
 
 	@Test

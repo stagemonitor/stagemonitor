@@ -34,7 +34,7 @@
         }
       ],
       "_all":                  { "enabled": false },
-      "_source" :              { "excludes" : ["callStackJson"] },
+      "_source" :              { "excludes" : ["call_tree_json"] },
       "properties": {
         "@timestamp":          {"type": "date",    "doc_values": true},
         "measurement_start":   {"type": "date",    "doc_values": true},

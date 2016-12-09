@@ -81,7 +81,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 		SpanTags.setOperationType(span, "http");
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
-		span.setTag("http.method", httpServletRequest.getMethod());
+		span.setTag("method", httpServletRequest.getMethod());
 		span.setTag("http.referring_site", getReferringSite());
 		if (webPlugin.isCollectHttpHeaders()) {
 			SpanTags.setHttpHeaders(span, getHeaders(httpServletRequest));
@@ -226,9 +226,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		metricRegistry.meter(throughputMetricNameTemplate.build(requestInformation.getRequestName(), Integer.toString(status))).mark();
 		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
-		if (status >= 400) {
-			Tags.ERROR.set(span, true);
-		}
+		Tags.ERROR.set(span, status >= 400);
 		span.setTag("bytes_written", responseWrapper.getContentLength());
 	}
 

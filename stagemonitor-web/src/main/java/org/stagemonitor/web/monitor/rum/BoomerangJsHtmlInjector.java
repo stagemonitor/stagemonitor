@@ -7,6 +7,8 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
+import java.util.concurrent.TimeUnit;
+
 public class BoomerangJsHtmlInjector extends HtmlInjector {
 
 	public static final String BOOMERANG_FILENAME = "boomerang-56c823668fc.min.js";
@@ -52,7 +54,7 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 		injectArguments.setContentToInjectBeforeClosingBody(boomerangTemplate
 				.replace("${requestId}", StringUtils.toHexString(span.context().getSpanID()))
 				.replace("${requestName}", String.valueOf(span.getOperationName()))
-				.replace("${serverTime}", Long.toString(span.getDuration())));
+				.replace("${serverTime}", Long.toString(TimeUnit.MICROSECONDS.toMillis(span.getDuration()))));
 	}
 
 }
