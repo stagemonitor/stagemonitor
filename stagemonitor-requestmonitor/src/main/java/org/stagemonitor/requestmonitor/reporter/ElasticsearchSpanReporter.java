@@ -57,9 +57,8 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 
 	@Override
 	public boolean isActive(IsActiveArguments isActiveArguments) {
-		final boolean urlAvailable = !corePlugin.getElasticsearchUrls().isEmpty();
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
-		return (urlAvailable || logOnly) && super.isActive(isActiveArguments);
+		return (elasticsearchClient.isElasticsearchAvailable() || logOnly) && super.isActive(isActiveArguments);
 	}
 
 	/**

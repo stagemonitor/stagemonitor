@@ -41,7 +41,14 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 		}
 		Map<String, String> params = new LinkedHashMap<String, String>();
 		for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-			params.put(entry.getKey(), String.valueOf(entry.getValue()));
+			String valueAsString;
+			try {
+				valueAsString = String.valueOf(entry.getValue());
+			}
+			catch (Exception e) {
+				valueAsString = "[unavailable (" + e.getMessage() + ")]";
+			}
+			params.put(entry.getKey(), valueAsString);
 		}
 		return RequestMonitorPlugin.getSafeParameterMap(params, requestMonitorPlugin.getConfidentialParameters());
 	}

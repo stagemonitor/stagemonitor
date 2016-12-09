@@ -353,7 +353,7 @@
 
 				$checkModal.on('click', ".add-tag-filter", function () {
 					var check = getCheckFromForm();
-					check.target.tags = check.target.tags || {};
+					check.target.tags = check.target.tags || {};
 					check.target.tags[""] = "";
 					renderCheckModal($("#check-modal-label").html(), check);
 				});
@@ -384,7 +384,7 @@
 					var check = $("#check-form").serializeObject();
 
 					check.target = check.target || {};
-					check.target.tags = check.target.tags || {};
+					check.target.tags = check.target.tags || {};
 					var tagKeys = check.target.tagKeys || [];
 					var tagValues = check.target.tagValues || [];
 					for (var i = 0; i < tagKeys.length; i++) {

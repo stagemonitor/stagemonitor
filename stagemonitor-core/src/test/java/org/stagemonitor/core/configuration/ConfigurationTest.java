@@ -1,24 +1,29 @@
 package org.stagemonitor.core.configuration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.Stagemonitor.STAGEMONITOR_PASSWORD;
-
-import java.io.IOException;
-import java.util.Collections;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
+import org.stagemonitor.core.util.JsonUtils;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.Stagemonitor.STAGEMONITOR_PASSWORD;
 
 public class ConfigurationTest {
 
@@ -30,6 +35,15 @@ public class ConfigurationTest {
 		configuration = new Configuration(Collections.singletonList(new CorePlugin()),
 				Collections.<ConfigurationSource>singletonList(new SimpleSource()), STAGEMONITOR_PASSWORD);
 		corePlugin = configuration.getConfig(CorePlugin.class);
+	}
+
+	@Test
+	public void testGetConfigSubclass() {
+		final CorePlugin corePluginMock = mock(CorePlugin.class);
+		configuration = new Configuration(Collections.singletonList(corePluginMock),
+				Collections.<ConfigurationSource>singletonList(new SimpleSource()), STAGEMONITOR_PASSWORD);
+		assertSame(corePluginMock, configuration.getConfig(CorePlugin.class));
+		assertNull(configuration.getConfig(new ConfigurationOptionProvider(){}.getClass()));
 	}
 
 	@Test
@@ -179,5 +193,120 @@ public class ConfigurationTest {
 	public void testIsPasswordSetFalse() throws Exception {
 		Configuration configuration = new Configuration("pwd");
 		assertFalse(configuration.isPasswordSet());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testDuplicateLabel() throws Exception {
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(
+				ConfigurationOption.stringOption().key("foo").description("Foo").build(),
+				ConfigurationOption.stringOption().key("foo").label("Bar").build());
+		new Configuration(Collections.singletonList(optionProvider), Collections.emptyList(), "");
+	}
+
+	@Test
+	public void testOnConfigurationChanged() throws Exception {
+		AtomicBoolean changeListenerFired = new AtomicBoolean(false);
+		final ConfigurationOption<String> configurationOption = ConfigurationOption.stringOption()
+				.key("foo")
+				.dynamic(true)
+				.defaultValue("old")
+				.addChangeListener(new ConfigurationOption.ChangeListener<String>() {
+					@Override
+					public void onChange(ConfigurationOption<String> configurationOption, String oldValue, String newValue) {
+						assertEquals("foo", configurationOption.getKey());
+						assertEquals("old", oldValue);
+						assertEquals("new", newValue);
+						changeListenerFired.set(true);
+						throw new RuntimeException("This is an expected test exception. " +
+								"It is thrown to test whether Configuration can cope with change listeners that throw an exception.");
+					}
+				}).build();
+
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
+		final SimpleSource configurationSource = new SimpleSource("test");
+		final Configuration config = new Configuration(Collections.singletonList(optionProvider), Collections.singletonList(configurationSource), "");
+		config.save("foo", "new", "test");
+		assertTrue(changeListenerFired.get());
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void testFailOnRequiredValueMissing() throws Exception {
+		final ConfigurationOption<String> configurationOption = ConfigurationOption.stringOption().key("foo").required().build();
+
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
+		new Configuration(Collections.singletonList(optionProvider), Collections.emptyList(), "", true);
+	}
+
+	@Test
+	public void testValidateConfigurationOption() throws Exception {
+		final ConfigurationOption<Boolean> configurationOption = ConfigurationOption.booleanOption()
+				.key("foo")
+				.defaultValue(true)
+				.addValidator(new ConfigurationOption.Validator<Boolean>() {
+					@Override
+					public void assertValid(Boolean value) {
+						if (!value) {
+							throw new IllegalArgumentException("Validation failed");
+						}
+					}
+				})
+				.build();
+
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
+		final SimpleSource configurationSource = new SimpleSource("test");
+		final Configuration config = new Configuration(Collections.singletonList(optionProvider), Collections.singletonList(configurationSource), "");
+		try {
+			config.save("foo", "false", "test");
+			fail();
+		} catch (IllegalArgumentException e) {
+			assertEquals("Validation failed", e.getMessage());
+		}
+	}
+
+	@Test
+	public void testValidateDefaultConfigurationOption() throws Exception {
+		try {
+			ConfigurationOption.booleanOption()
+					.key("foo")
+					.defaultValue(false)
+					.addValidator(new ConfigurationOption.Validator<Boolean>() {
+						@Override
+						public void assertValid(Boolean value) {
+							if (!value) {
+								throw new IllegalArgumentException("Validation failed");
+							}
+						}
+					})
+					.build();
+			fail();
+		} catch (IllegalArgumentException e) {
+			assertEquals("Validation failed", e.getMessage());
+		}
+	}
+
+	@Test
+	public void testToJsonDoesNotThrowException() throws Exception {
+		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(
+				ConfigurationOption.stringOption().key("foo").description("Foo").configurationCategory("Foos").build());
+		final Configuration configuration = new Configuration(Collections.singletonList(optionProvider), Collections.emptyList(), "");
+		JsonUtils.getMapper().writeValueAsString(configuration.getConfigurationOptionsByCategory());
+	}
+
+	private static class TestConfigurationOptionProvider extends ConfigurationOptionProvider {
+
+		private final List<ConfigurationOption<?>> configurationOptions;
+
+		public static ConfigurationOptionProvider of(ConfigurationOption<?>... configurationOptions) {
+			return new TestConfigurationOptionProvider(configurationOptions);
+		}
+
+		private TestConfigurationOptionProvider(ConfigurationOption<?>... configurationOptions) {
+			this.configurationOptions = Arrays.asList(configurationOptions);
+		}
+
+		@Override
+        public List<ConfigurationOption<?>> getConfigurationOptions() {
+			return configurationOptions;
+        }
 	}
 }

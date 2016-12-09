@@ -69,7 +69,7 @@ var tableRenderer = (function () {
 			for (var i = 0; i < metrics.length; i++) {
 				var metric = metrics[i];
 				if (utils.matches(metric, column.metricMatcher)) {
-					var rowName = metric.tags[column.groupBy] || utils.metricAsString(metric, column.metric);
+					var rowName = metric.tags[column.groupBy] || utils.metricAsString(metric, column.metric);
 					dataByRowName[rowName] = dataByRowName[rowName] || {};
 					dataByRowName[rowName].name = rowName;
 					var value = metric.values[column.metric];

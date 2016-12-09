@@ -1,16 +1,8 @@
 package org.stagemonitor.core.configuration;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.converter.BooleanValueConverter;
@@ -25,6 +17,16 @@ import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.configuration.converter.ValueConverter;
 import org.stagemonitor.core.configuration.source.ConfigurationSource;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Represents a configuration option
@@ -42,8 +44,12 @@ public class ConfigurationOption<T> {
 	private final String description;
 	private final T defaultValue;
 	private final List<String> tags;
+	private final List<Validator<T>> validators;
+	private final List<ChangeListener<T>> changeListeners;
+	private final boolean required;
 	private final String defaultValueAsString;
 	private final String configurationCategory;
+	@JsonIgnore
 	private final ValueConverter<T> valueConverter;
 	private final Class<? super T> valueType;
 	private String valueAsString;
@@ -176,7 +182,8 @@ public class ConfigurationOption<T> {
 
 	private ConfigurationOption(boolean dynamic, boolean sensitive, String key, String label, String description,
 								T defaultValue, String configurationCategory, ValueConverter<T> valueConverter,
-								Class<? super T> valueType, List<String> tags) {
+								Class<? super T> valueType, List<String> tags, boolean required,
+								List<ChangeListener<T>> changeListeners, List<Validator<T>> validators) {
 		this.dynamic = dynamic;
 		this.key = key;
 		this.label = label;
@@ -188,6 +195,9 @@ public class ConfigurationOption<T> {
 		this.valueConverter = valueConverter;
 		this.valueType = valueType;
 		this.sensitive = sensitive;
+		this.required = required;
+		this.changeListeners = changeListeners;
+		this.validators = validators;
 		setToDefault();
 	}
 
@@ -273,7 +283,7 @@ public class ConfigurationOption<T> {
 	 */
 	@JsonIgnore
 	public T get() {
-		return value;
+		return getValue();
 	}
 
 	void setConfigurationSources(List<ConfigurationSource> configurationSources) {
@@ -322,6 +332,10 @@ public class ConfigurationOption<T> {
 		return valueType.getSimpleName();
 	}
 
+	public ValueConverter<T> getValueConverter() {
+		return valueConverter;
+	}
+
 	/**
 	 * If there was a error while trying to set value from a {@link ConfigurationSource}, this error message contains
 	 * information about the error.
@@ -339,29 +353,40 @@ public class ConfigurationOption<T> {
 	}
 
 	private void loadValue() {
-		String newValue = null;
+		String newValueAsString = null;
+		String newConfigurationSourceName = null;
 		for (ConfigurationSource configurationSource : configurationSources) {
-			newValue = configurationSource.getValue(key);
-			nameOfCurrentConfigurationSource = configurationSource.getName();
-			if (newValue != null) {
+			newValueAsString = configurationSource.getValue(key);
+			newConfigurationSourceName = configurationSource.getName();
+			if (newValueAsString != null) {
 				break;
 			}
 		}
-		if (newValue == null || !trySetValue(newValue)) {
+		if (newValueAsString == null || !trySetValue(newValueAsString, newConfigurationSourceName)) {
 			setToDefault();
 		}
 	}
 
-	private boolean trySetValue(String newValue) {
-		newValue = newValue.trim();
-		if (hasChanges(newValue)) {
-			this.valueAsString = newValue;
+	private boolean trySetValue(String newValueAsString, String newConfigurationSourceName) {
+		newValueAsString = newValueAsString.trim();
+		T oldValue = getValue();
+		if (hasChanges(newValueAsString)) {
 			try {
-				value = valueConverter.convert(newValue);
+				final T newValue = valueConverter.convert(newValueAsString);
+				setValue(newValue, newValueAsString, newConfigurationSourceName);
 				errorMessage = null;
+				if (isInitialized()) {
+					for (ChangeListener<T> changeListener : changeListeners) {
+						try {
+							changeListener.onChange(this, oldValue, getValue());
+						} catch (RuntimeException e) {
+							logger.warn(e.getMessage() + " (this exception is ignored)", e);
+						}
+					}
+				}
 				return true;
 			} catch (IllegalArgumentException e) {
-				errorMessage = "Error in " + nameOfCurrentConfigurationSource + ": " + e.getMessage();
+				errorMessage = "Error in " + newConfigurationSourceName + ": " + e.getMessage();
 				logger.warn(errorMessage + " Default value '" + defaultValueAsString + "' for '" + key + "' will be applied.");
 				return false;
 			}
@@ -371,9 +396,23 @@ public class ConfigurationOption<T> {
 	}
 
 	private void setToDefault() {
-		valueAsString = defaultValueAsString;
-		value = defaultValue;
-		nameOfCurrentConfigurationSource = "Default Value";
+		final String msg = "Missing required value for configuration option " + key;
+		if (isInitialized() && required && defaultValue == null) {
+			handleMissingRequiredValue(msg);
+		}
+		setValue(defaultValue, defaultValueAsString, "Default Value");
+	}
+
+	private boolean isInitialized() {
+		return configuration != null;
+	}
+
+	private void handleMissingRequiredValue(String msg) {
+		if (configuration.isFailOnMissingRequiredValues()) {
+			throw new IllegalStateException(msg);
+		} else {
+			logger.warn(msg);
+		}
 	}
 
 	private boolean hasChanges(String property) {
@@ -383,11 +422,14 @@ public class ConfigurationOption<T> {
 	/**
 	 * Throws a {@link IllegalArgumentException} if the value is not valid
 	 *
-	 * @param value the configuration value as string
+	 * @param valueAsString the configuration value as string
 	 * @throws IllegalArgumentException if there was a error while converting the value
 	 */
-	public void assertValid(String value) throws IllegalArgumentException {
-		valueConverter.convert(value);
+	public void assertValid(String valueAsString) throws IllegalArgumentException {
+		final T value = valueConverter.convert(valueAsString);
+		for (Validator<T> validator : validators) {
+			validator.assertValid(value);
+		}
 	}
 
 	/**
@@ -406,6 +448,38 @@ public class ConfigurationOption<T> {
 		configuration.save(key, newValueAsString, configurationSourceName);
 	}
 
+	private void setValue(T value, String valueAsString, String nameOfCurrentConfigurationSource) {
+		for (Validator<T> validator : validators) {
+			validator.assertValid(value);
+		}
+
+		this.value = value;
+		this.valueAsString = valueAsString;
+		this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
+	}
+
+	/**
+	 * Notifies about configuration changes
+	 */
+	public interface ChangeListener<T> {
+		/**
+		 *
+		 * @param configurationOption the configuration option which has just changed its value
+		 * @param oldValue the old value
+		 * @param newValue the new value
+		 */
+		void onChange(ConfigurationOption<T> configurationOption, T oldValue, T newValue);
+	}
+
+	public interface Validator<T> {
+		/**
+		 * Validates a value
+		 * @param value the value to be validated
+		 * @throws IllegalArgumentException if the value is invalid
+		 */
+		void assertValid(T value);
+	}
+
 	public static class ConfigurationOptionBuilder<T> {
 		private boolean dynamic = false;
 		private boolean sensitive = false;
@@ -417,6 +491,9 @@ public class ConfigurationOption<T> {
 		private ValueConverter<T> valueConverter;
 		private Class<? super T> valueType;
 		private String[] tags = new String[0];
+		private boolean required = false;
+		private List<ChangeListener<T>> changeListeners = new ArrayList<ChangeListener<T>>();
+		private List<Validator<T>> validators = new ArrayList<Validator<T>>();
 
 		private ConfigurationOptionBuilder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 			this.valueConverter = valueConverter;
@@ -425,7 +502,7 @@ public class ConfigurationOption<T> {
 
 		public ConfigurationOption<T> build() {
 			return new ConfigurationOption<T>(dynamic, sensitive, key, label, description, defaultValue, configurationCategory,
-					valueConverter, valueType, Arrays.asList(tags));
+					valueConverter, valueType, Arrays.asList(tags), required, Collections.unmodifiableList(changeListeners), Collections.unmodifiableList(validators));
 		}
 
 		public ConfigurationOptionBuilder<T> dynamic(boolean dynamic) {
@@ -475,5 +552,30 @@ public class ConfigurationOption<T> {
 			this.sensitive = true;
 			return this;
 		}
+
+		/**
+		 * Marks this option as required.
+		 * <p/>
+		 * When a required option does not have a value the behavior depends on
+		 * {@link Configuration#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised,
+		 * which can potentially prevent the application form starting or a warning gets logged.
+		 *
+		 * @return <code>this</code>, for chaining.
+		 */
+		public ConfigurationOptionBuilder<T> required() {
+			this.required = true;
+			return this;
+		}
+
+		public ConfigurationOptionBuilder<T> addChangeListener(ChangeListener<T> changeListener) {
+			this.changeListeners.add(changeListener);
+			return this;
+		}
+
+		public ConfigurationOptionBuilder<T> addValidator(Validator<T> validator) {
+			this.validators.add(validator);
+			return this;
+		}
+
 	}
 }

@@ -1,17 +1,16 @@
 package org.stagemonitor.requestmonitor;
 
-import static org.junit.Assert.assertEquals;
-
-import java.lang.reflect.Method;
-
 import com.codahale.metrics.SharedMetricRegistries;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
+
+import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
 
 public class RequestMonitorPluginConfigurationTest {
 
@@ -21,10 +20,7 @@ public class RequestMonitorPluginConfigurationTest {
 	public void before() throws Exception {
 		Stagemonitor.reset();
 		SharedMetricRegistries.clear();
-		Configuration configuration = new Configuration(StagemonitorPlugin.class);
-		Method registerPluginConfiguration = Configuration.class.getDeclaredMethod("registerOptionProvider", ConfigurationOptionProvider.class);
-		registerPluginConfiguration.setAccessible(true);
-		registerPluginConfiguration.invoke(configuration, new RequestMonitorPlugin());
+		Configuration configuration = new Configuration(Collections.singletonList(new RequestMonitorPlugin()), Collections.emptyList(), "");
 		config = configuration.getConfig(RequestMonitorPlugin.class);
 	}
 

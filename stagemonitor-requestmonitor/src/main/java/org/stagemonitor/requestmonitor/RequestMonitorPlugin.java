@@ -335,15 +335,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 
-		final String requestsMappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
-				requestIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
+		final String requestsMappingJson = ElasticsearchClient.modifyIndexTemplate(
+				requestIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
 		elasticsearchClient.sendMappingTemplateAsync(requestsMappingJson, "stagemonitor-requests");
-		final String spanMappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
-				spanIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
+		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
+				spanIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
 		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
 
-		final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
-				externalRequestsIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays());
+		final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
+				externalRequestsIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
 		elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-external-requests");
 
 		if (corePlugin.isReportToGraphite()) {

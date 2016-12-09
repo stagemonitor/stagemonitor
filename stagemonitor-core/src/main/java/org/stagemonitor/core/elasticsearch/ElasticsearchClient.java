@@ -38,6 +38,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.stagemonitor.core.util.StringUtils.slugify;
 
@@ -47,11 +49,12 @@ public class ElasticsearchClient {
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
 	private final CorePlugin corePlugin;
+	private final AtomicBoolean elasticsearchAvailable = new AtomicBoolean(true);
 
 	private final ThreadPoolExecutor asyncESPool;
 	private Timer timer;
 
-	public ElasticsearchClient(CorePlugin corePlugin) {
+	public ElasticsearchClient(final CorePlugin corePlugin, final HttpClient httpClient, int esAvailabilityCheckIntervalSec) {
 		this.corePlugin = corePlugin;
 		asyncESPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-elasticsearch", corePlugin.getThreadPoolQueueCapacityLimit());
@@ -60,7 +63,12 @@ public class ElasticsearchClient {
 			JavaThreadPoolMetricsCollectorImpl pooledResource = new JavaThreadPoolMetricsCollectorImpl(asyncESPool, "internal.asyncESPool");
 			PooledResourceMetricsRegisterer.registerPooledResource(pooledResource, Stagemonitor.getMetric2Registry());
 		}
-		this.httpClient = new HttpClient();
+		this.httpClient = httpClient;
+
+		if (esAvailabilityCheckIntervalSec > 0) {
+			final long period = TimeUnit.SECONDS.toMillis(esAvailabilityCheckIntervalSec);
+			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin), period, period);
+		}
 	}
 
 	public JsonNode getJson(final String path) throws IOException {
@@ -97,13 +105,16 @@ public class ElasticsearchClient {
 	}
 
 	public int sendAsJson(final String method, final String path, final Object requestBody) {
-		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
+		if (!isElasticsearchAvailable()) {
 			return -1;
 		}
 		return httpClient.sendAsJson(method, corePlugin.getElasticsearchUrl() + path, requestBody);
 	}
 
 	public void index(final String index, final String type, final Object document) {
+		if (!isElasticsearchAvailable()) {
+			return;
+		}
 		final ObjectNode json = JsonUtils.toObjectNode(document);
 		removeDisallowedCharsFromPropertyNames(json);
 
@@ -134,7 +145,7 @@ public class ElasticsearchClient {
 	}
 
 	private Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
-		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
+		if (isElasticsearchAvailable()) {
 			try {
 				return asyncESPool.submit(new Runnable() {
 					@Override
@@ -158,7 +169,7 @@ public class ElasticsearchClient {
 	}
 
 	public Future<?> sendDashboardAsync(String path, String dashboardPath) {
-		if (StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl())) {
+		if (isElasticsearchAvailable()) {
 			try {
 				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
 				final String titleSlug = slugify(dashboard.get(TITLE).asText());
@@ -174,13 +185,19 @@ public class ElasticsearchClient {
 		return sendAsJsonAsync("PUT", "/_template/" + templateName, mappingJson);
 	}
 
-	public static String requireBoxTypeHotIfHotColdAritectureActive(String templatePath, int moveToColdNodesAfterDays) {
+	public static String modifyIndexTemplate(String templatePath, int moveToColdNodesAfterDays, Integer numberOfReplicas, Integer numberOfShards) {
 		final JsonNode json;
 		try {
 			json = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(templatePath));
+			ObjectNode indexSettings = (ObjectNode) json.get("settings").get("index");
 			if (moveToColdNodesAfterDays > 0) {
-				ObjectNode indexSettings = (ObjectNode) json.get("settings").get("index");
 				indexSettings.put("routing.allocation.require.box_type", "hot");
+			}
+			if (numberOfReplicas != null && numberOfReplicas >= 0) {
+				indexSettings.put("number_of_replicas", numberOfReplicas);
+			}
+			if (numberOfShards != null && numberOfShards > 0) {
+				indexSettings.put("number_of_shards", numberOfShards);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -212,7 +229,7 @@ public class ElasticsearchClient {
 	}
 
 	public void sendBulk(String endpoint, HttpClient.OutputStreamHandler outputStreamHandler) {
-		if (StringUtils.isEmpty(corePlugin.getElasticsearchUrl())) {
+		if (!isElasticsearchAvailable()) {
 			return;
 		}
 		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", null, outputStreamHandler, new BulkErrorReportingResponseHandler());
@@ -227,21 +244,19 @@ public class ElasticsearchClient {
 	}
 
 	public void updateIndexSettings(String indexPattern, Map<String, ?> settings) {
-		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
-		if (StringUtils.isEmpty(elasticsearchUrl)) {
+		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		final String url = elasticsearchUrl + "/" + indexPattern + "/_settings?ignore_unavailable=true";
+		final String url = corePlugin.getElasticsearchUrl() + "/" + indexPattern + "/_settings?ignore_unavailable=true";
 		logger.info("Updating index settings {}\n{}", url, settings);
 		httpClient.sendAsJson("PUT", url, settings);
 	}
 
 	private void execute(String method, String path, String logMessage) {
-		final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
-		if (StringUtils.isEmpty(elasticsearchUrl)) {
+		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		final String url = elasticsearchUrl + "/" + path;
+		final String url = corePlugin.getElasticsearchUrl() + "/" + path;
 		logger.info(logMessage, url);
 		try {
 			httpClient.send(method, url);
@@ -308,58 +323,117 @@ public class ElasticsearchClient {
 	}
 
 	public static String getBulkHeader(String action, String index, String type) {
-		return "{\""+action+"\":" +
+		return "{\"" + action + "\":" +
 				"{\"_index\":\"" + index + "\"," +
 				"\"_type\":\"" + type + "\"}" +
 				"}\n";
 	}
 
+	public boolean isElasticsearchAvailable() {
+		return !corePlugin.getElasticsearchUrls().isEmpty() && elasticsearchAvailable.get();
+	}
+
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
+
+		private static final int MAX_BULK_ERROR_LOG_SIZE = 256;
+		private static final String ERROR_PREFIX = "Error(s) while sending a _bulk request to elasticsearch: {}";
 
 		private static final Logger logger = LoggerFactory.getLogger(BulkErrorReportingResponseHandler.class);
 
 		@Override
-		public Void handleResponse(InputStream is, Integer statusCode) throws IOException {
+		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
-			if (bulkResponse.get("errors").booleanValue()) {
-				reportBulkErrors(bulkResponse.get("items"));
+			final JsonNode errors = bulkResponse.get("errors");
+			if (errors != null && errors.booleanValue()) {
+				logger.warn(ERROR_PREFIX, reportBulkErrors(bulkResponse.get("items")));
+			} else if (bulkResponse.get("error") != null) {
+				logger.warn(ERROR_PREFIX, bulkResponse);
 			}
 			return null;
 		}
 
-		private void reportBulkErrors(JsonNode items) {
-			final StringBuilder sb = new StringBuilder("Error(s) while sending a _bulk request to elasticsearch:");
+		private String reportBulkErrors(JsonNode items) {
+			final StringBuilder sb = new StringBuilder();
 			for (JsonNode item : items) {
 				JsonNode action = item.get("index");
 				if (action == null) {
 					action = item.get("create");
 				}
-				final JsonNode error = action.get("error");
-				if (error != null) {
-					sb.append("\n - ");
-					final JsonNode reason = error.get("reason");
-					if (reason != null) {
-						sb.append(reason.asText());
-						final String errorType = error.get("type").asText();
-						if (errorType.equals("version_conflict_engine_exception")) {
-							sb.append(": Probably you updated a dashboard in Kibana. ")
-									.append("Please don't override the stagemonitor dashboards. ")
-									.append("If you want to customize a dashboard, save it under a different name. ")
-									.append("Stagemonitor will not override your changes, but that also means that you won't ")
-									.append("be able to use the latest dashboard enhancements :(. ")
-									.append("To resolve this issue, save the updated one under a different name, delete it ")
-									.append("and restart stagemonitor so that the dashboard can be recreated.");
-						} else if ("es_rejected_execution_exception".equals(errorType)) {
-							sb.append(": Consider increasing threadpool.bulk.queue_size. See also stagemonitor's " +
-									"documentation for the Elasticsearch data base.");
+				if (action != null) {
+					final JsonNode error = action.get("error");
+					if (error != null) {
+						sb.append("\n - ");
+						final JsonNode reason = error.get("reason");
+						if (reason != null) {
+							sb.append(reason.asText());
+							final String errorType = error.get("type").asText();
+							if (errorType.equals("version_conflict_engine_exception")) {
+								sb.append(": Probably you updated a dashboard in Kibana. ")
+										.append("Please don't override the stagemonitor dashboards. ")
+										.append("If you want to customize a dashboard, save it under a different name. ")
+										.append("Stagemonitor will not override your changes, but that also means that you won't ")
+										.append("be able to use the latest dashboard enhancements :(. ")
+										.append("To resolve this issue, save the updated one under a different name, delete it ")
+										.append("and restart stagemonitor so that the dashboard can be recreated.");
+							} else if ("es_rejected_execution_exception".equals(errorType)) {
+								sb.append(": Consider increasing threadpool.bulk.queue_size. See also stagemonitor's " +
+										"documentation for the Elasticsearch data base.");
+							}
+						} else {
+							sb.append(error.toString());
 						}
+					}
+				} else {
+					sb.append(' ');
+					final String error = item.toString();
+					if (error.length() > MAX_BULK_ERROR_LOG_SIZE) {
+						sb.append(error.substring(0, MAX_BULK_ERROR_LOG_SIZE)).append("...");
 					} else {
-						sb.append(error.toString());
+						sb.append(error);
 					}
 				}
 			}
-			logger.warn(sb.toString());
+			return sb.toString();
 		}
 
+	}
+
+	private class CheckEsAvailability extends TimerTask {
+		private final HttpClient httpClient;
+		private final CorePlugin corePlugin;
+
+		public CheckEsAvailability(HttpClient httpClient, CorePlugin corePlugin) {
+			this.httpClient = httpClient;
+			this.corePlugin = corePlugin;
+		}
+
+		@Override
+		public void run() {
+			// TODO actually, the availability check has to be performed for each URL as multiple ES urls can be configured
+			// in the future, detect all available nodes in the cluster: http://{oneOfTheProvidedUrls}/_nodes/box_type:hot/none
+			// -> response.nodes*.http_address
+			final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
+			if (StringUtils.isEmpty(elasticsearchUrl)) {
+				return;
+			}
+			httpClient.send("HEAD", elasticsearchUrl + "/", null, null, new HttpClient.ResponseHandler<Object>() {
+				@Override
+				public Object handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
+					if (e != null) {
+						if (isElasticsearchAvailable()) {
+							logger.warn("Elasticsearch is not available. " +
+									"Stagemonitor won't try to send request traces to Elasticsearch until it is available again.");
+						}
+							elasticsearchAvailable.set(false);
+						} else {
+							if (!isElasticsearchAvailable()) {
+								logger.info("Elasticsearch is available again.");
+							}
+							elasticsearchAvailable.set(true);
+						}
+					return null;
+				}
+			});
+		}
 	}
 }

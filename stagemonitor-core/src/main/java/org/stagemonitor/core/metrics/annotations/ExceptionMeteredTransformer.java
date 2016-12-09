@@ -6,6 +6,8 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import org.stagemonitor.core.Stagemonitor;
@@ -55,7 +57,8 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 
 	public static class ExceptionMeteredSignatureDynamicValue extends MetricAnnotationSignatureDynamicValue<ExceptionMeteredSignature> {
 
-		protected NamingParameters getNamingParameters(MethodDescription.InDefinedShape instrumentedMethod) {
+		@Override
+		protected NamingParameters getNamingParameters(MethodDescription instrumentedMethod) {
 			final ExceptionMetered exceptionMetered = instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent();
 			return new NamingParameters(exceptionMetered.name(), exceptionMetered.absolute());
 		}
@@ -73,10 +76,12 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 
 	public static class MeterExceptionsForDynamicValue extends StagemonitorDynamicValue<MeterExceptionsFor> {
 		@Override
-		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
-							  ParameterDescription.InDefinedShape target,
-							  AnnotationDescription.Loadable<MeterExceptionsFor> annotation, boolean initialized) {
-			return instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent().cause();
+		protected Object doResolve(TypeDescription instrumentedType,
+								   MethodDescription instrumentedMethod,
+								   ParameterDescription.InDefinedShape target,
+								   AnnotationDescription.Loadable<MeterExceptionsFor> annotation,
+								   Assigner assigner, boolean initialized) {
+			return new TypeDescription.ForLoadedType(instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent().cause());
 		}
 
 		@Override

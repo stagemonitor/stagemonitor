@@ -46,6 +46,7 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
+		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
 		registry = new Metric2Registry();
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		requestTraceLogger = mock(Logger.class);

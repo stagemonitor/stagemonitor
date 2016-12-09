@@ -4,6 +4,8 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
@@ -25,7 +27,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 	}
 
 	@Advice.OnMethodEnter(inline = false)
-	public static void monitorStart(@ParameterNames String parameterNames, @Advice.BoxedArguments Object[] args,
+	public static void monitorStart(@ParameterNames String parameterNames, @Advice.AllArguments Object[] args,
 									@RequestName String requestName, @Advice.Origin("#t") String className,
 									@Advice.Origin("#m") String methodName, @Advice.This(optional = true) Object thiz) {
 		final String[] paramNames = parameterNames.split(",");
@@ -74,15 +76,16 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 		}
 
 		@Override
-		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
-							  ParameterDescription.InDefinedShape target,
-							  AnnotationDescription.Loadable<RequestName> annotation,
-							  boolean initialized) {
+		protected Object doResolve(TypeDescription instrumentedType,
+								   MethodDescription instrumentedMethod,
+								   ParameterDescription.InDefinedShape target,
+								   AnnotationDescription.Loadable<RequestName> annotation,
+								   Assigner assigner, boolean initialized) {
 			return getRequestName(instrumentedMethod);
 		}
 	}
 
-	public static String getRequestName(MethodDescription.InDefinedShape instrumentedMethod) {
+	public static String getRequestName(MethodDescription instrumentedMethod) {
 		final AnnotationDescription.Loadable<MonitorRequests> monitorRequestsLoadable = instrumentedMethod
 				.getDeclaredAnnotations()
 				.ofType(MonitorRequests.class);
@@ -95,7 +98,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 				return null;
 			}
 		}
-		return getBusinessTransationName(instrumentedMethod.getDeclaringType().getName(), instrumentedMethod.getName());
+		return getBusinessTransationName(instrumentedMethod.getDeclaringType().getTypeName(), instrumentedMethod.getName());
 	}
 
 	private static String getBusinessTransationName(String className, String methodName) {
@@ -109,7 +112,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 	public @interface ParameterNames {
 	}
 
-	public static class ParameterNamesDynamicValue extends StagemonitorDynamicValue<ParameterNames> {
+	public static class ParameterNamesDynamicValue extends StagemonitorDynamicValue<ParameterNames>{
 
 		@Override
 		public Class<ParameterNames> getAnnotationClass() {
@@ -117,16 +120,18 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 		}
 
 		@Override
-		public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
-							  ParameterDescription.InDefinedShape target,
-							  AnnotationDescription.Loadable<ParameterNames> annotation,
-							  boolean initialized) {
+		protected Object doResolve(TypeDescription instrumentedType,
+								   MethodDescription instrumentedMethod,
+								   ParameterDescription.InDefinedShape target,
+								   AnnotationDescription.Loadable<ParameterNames> annotation,
+								   Assigner assigner, boolean initialized) {
 			StringBuilder params = new StringBuilder();
-			for (ParameterDescription.InDefinedShape param : instrumentedMethod.getParameters()) {
+			for (ParameterDescription param : instrumentedMethod.getParameters()) {
 				params.append(param.getName()).append(',');
 			}
 			return params.toString();
 		}
+
 	}
 
 }

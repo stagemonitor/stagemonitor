@@ -33,7 +33,7 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	// method signatures mus not contain HandlerExecutionChain as this type is optional and introspecting the class
 	// with reflection would fail then
 	@Advice.OnMethodExit
-	public static void afterGetHandler(@Advice.BoxedReturn Object handler) {
+	public static void afterGetHandler(@Advice.Return Object handler) {
 		SpringMvcRequestNameDeterminerTransformer.setRequestNameByHandler(handler);
 	}
 

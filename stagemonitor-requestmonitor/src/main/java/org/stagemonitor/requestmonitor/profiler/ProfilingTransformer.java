@@ -1,6 +1,15 @@
 package org.stagemonitor.requestmonitor.profiler;
 
-import static org.stagemonitor.core.instrument.StagemonitorClassNameMatcher.isInsideMonitoredProject;
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
+
+import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,14 +18,7 @@ import java.lang.annotation.Target;
 import java.util.Collections;
 import java.util.List;
 
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.ElementMatchers;
-import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import static org.stagemonitor.core.instrument.StagemonitorClassNameMatcher.isInsideMonitoredProject;
 
 public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -67,7 +69,7 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	public @interface ProfilerSignature {
 	}
 
-	public static class ProfilerDynamicValue extends StagemonitorByteBuddyTransformer.StagemonitorDynamicValue<ProfilerSignature> {
+	public static class ProfilerDynamicValue extends StagemonitorDynamicValue<ProfilerSignature> {
 
 		@Override
 		public Class<ProfilerSignature> getAnnotationClass() {
@@ -75,16 +77,17 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 		}
 
 		@Override
-		public Object resolve(MethodDescription.InDefinedShape method,
-							  ParameterDescription.InDefinedShape target,
-							  AnnotationDescription.Loadable<ProfilerSignature> annotation,
-							  boolean initialized) {
+		protected Object doResolve(TypeDescription instrumentedType,
+								   MethodDescription method,
+								   ParameterDescription.InDefinedShape target,
+								   AnnotationDescription.Loadable<ProfilerSignature> annotation,
+								   Assigner assigner, boolean initialized) {
 			final String returnType = method.getReturnType().asErasure().getSimpleName();
-			final String className = method.getDeclaringType().getName();
+			final String className = method.getDeclaringType().getTypeName();
 			return String.format("%s %s.%s(%s)", returnType, className, method.getName(), getSignature(method));
 		}
 
-		public String getSignature(MethodDescription.InDefinedShape instrumentedMethod) {
+		public String getSignature(MethodDescription instrumentedMethod) {
 			StringBuilder stringBuilder = new StringBuilder();
 			boolean comma = false;
 			for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {

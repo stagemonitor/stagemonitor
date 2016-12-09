@@ -31,7 +31,7 @@ public class ElasticsearchAlerter extends Alerter {
 
 	@Override
 	public boolean isAvailable() {
-		return StringUtils.isNotEmpty(corePlugin.getElasticsearchUrl());
+		return !corePlugin.getElasticsearchUrls().isEmpty();
 	}
 
 	@Override

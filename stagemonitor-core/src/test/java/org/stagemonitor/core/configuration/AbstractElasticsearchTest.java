@@ -7,9 +7,12 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.util.HttpClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 public class AbstractElasticsearchTest {
 
+	private static final Logger logger = LoggerFactory.getLogger(AbstractElasticsearchTest.class);
 	protected static Node node;
 	protected static Client client;
 	protected static AdminClient adminClient;
@@ -37,6 +41,7 @@ public class AbstractElasticsearchTest {
 			FileUtils.deleteQuietly(esHome);
 			final NodeBuilder nodeBuilder = NodeBuilder.nodeBuilder().local(true);
 			elasticsearchPort = getAvailablePort();
+			logger.info("Elasticsearch port: {}", elasticsearchPort);
 			nodeBuilder.settings()
 					.put("path.home", esHome.getAbsolutePath())
 					.put("name", "junit-es-node")
@@ -53,7 +58,7 @@ public class AbstractElasticsearchTest {
 			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
 			when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(elasticsearchUrl));
 			when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-			elasticsearchClient = new ElasticsearchClient(corePlugin);
+			elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1);
 
 			node = nodeBuilder.node();
 			node.client().admin().cluster().prepareHealth().setWaitForGreenStatus().get();

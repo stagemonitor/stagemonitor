@@ -39,6 +39,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	private final HttpClient httpClient;
 	private final JsonFactory jfactory = new JsonFactory();
 	private final Metric2RegistryModule metric2RegistryModule;
+	private final ElasticsearchClient elasticsearchClient;
 
 	public static ElasticsearchReporter.Builder forRegistry(Metric2Registry registry, CorePlugin corePlugin) {
 		return new Builder(registry, corePlugin);
@@ -52,6 +53,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 		this.jfactory.setCodec(JsonUtils.getMapper());
 		this.metric2RegistryModule = new Metric2RegistryModule(builder.getRateUnit(), builder.getDurationUnit());
 		this.corePlugin = builder.getCorePlugin();
+		this.elasticsearchClient = corePlugin.getElasticsearchClient();
 	}
 
 	@Override
@@ -60,11 +62,16 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Histogram> histograms,
 							  final Map<MetricName, Meter> meters,
 							  final Map<MetricName, Timer> timers) {
+
 		long timestamp = clock.getTime();
 
 		final Timer.Context time = registry.timer(reportingTimeMetricName).time();
 		final MetricsOutputStreamHandler metricsOutputStreamHandler = new MetricsOutputStreamHandler(gauges, counters, histograms, meters, timers, timestamp);
 		if (!corePlugin.isOnlyLogElasticsearchMetricReports()) {
+			if (!elasticsearchClient.isElasticsearchAvailable()) {
+				return;
+			}
+
 			httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", null,
 					metricsOutputStreamHandler, new ElasticsearchClient.BulkErrorReportingResponseHandler());
 		} else {

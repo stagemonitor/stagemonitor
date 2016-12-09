@@ -43,7 +43,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-
 public class RequestMonitorTest {
 
 	private CorePlugin corePlugin;
@@ -66,7 +65,9 @@ public class RequestMonitorTest {
 		doReturn(1000).when(corePlugin).getThreadPoolQueueCapacityLimit();
 		doReturn(new Metric2Registry()).when(corePlugin).getMetricRegistry();
 		doReturn(Collections.singletonList("http://mockhost:9200")).when(corePlugin).getElasticsearchUrls();
-		doReturn(mock(ElasticsearchClient.class)).when(corePlugin).getElasticsearchClient();
+		ElasticsearchClient elasticsearchClient = mock(ElasticsearchClient.class);
+		doReturn(true).when(elasticsearchClient).isElasticsearchAvailable();
+		doReturn(elasticsearchClient).when(corePlugin).getElasticsearchClient();
 		doReturn(false).when(corePlugin).isOnlyLogElasticsearchMetricReports();
 
 		doReturn(true).when(requestMonitorPlugin).isCollectRequestStats();

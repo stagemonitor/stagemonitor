@@ -14,6 +14,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricNameFilter;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
@@ -75,6 +76,9 @@ public class ElasticsearchReporterTest {
 		metricsLogger = mock(Logger.class);
 		corePlugin = mock(CorePlugin.class);
 		registry = new Metric2Registry();
+		final ElasticsearchClient elasticsearchClient = mock(ElasticsearchClient.class);
+		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
+		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		elasticsearchReporter = ElasticsearchReporter.forRegistry(registry, corePlugin)
 				.convertDurationsTo(DURATION_UNIT)
 				.globalTags(singletonMap("app", "test"))

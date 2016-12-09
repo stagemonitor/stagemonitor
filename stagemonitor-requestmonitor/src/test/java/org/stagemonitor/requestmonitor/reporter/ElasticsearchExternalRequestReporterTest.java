@@ -59,7 +59,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	@Test
 	public void doNotReportRequestTrace() throws Exception {
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(false);
-		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.emptyList());
+		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(false);
 		when(corePlugin.getElasticsearchUrl()).thenReturn(null);
 		report(getSpan());
 

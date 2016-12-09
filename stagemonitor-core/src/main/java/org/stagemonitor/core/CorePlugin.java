@@ -204,6 +204,24 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
+	private final ConfigurationOption<Integer> numberOfReplicas = ConfigurationOption.integerOption()
+			.key("stagemonitor.elasticsearch.numberOfReplicas")
+			.dynamic(false)
+			.label("Number of ES Replicas")
+			.description("Sets the number of replicas of the Elasticsearch index templates.")
+			.defaultValue(null)
+			.tags(METRICS_STORE, ELASTICSEARCH)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
+	private final ConfigurationOption<Integer> numberOfShards = ConfigurationOption.integerOption()
+			.key("stagemonitor.elasticsearch.numberOfShards")
+			.dynamic(false)
+			.label("Number of ES Shards")
+			.description("Sets the number of shards of the Elasticsearch index templates.")
+			.defaultValue(null)
+			.tags(METRICS_STORE, ELASTICSEARCH)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.build();
 	private final ConfigurationOption<String> applicationName = ConfigurationOption.stringOption()
 			.key("stagemonitor.applicationName")
 			.dynamic(false)
@@ -405,6 +423,18 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.build();
+	private final ConfigurationOption<Integer> elasticsearchAvailabilityCheckPeriodSec = ConfigurationOption.integerOption()
+			.key("stagemonitor.elasticsearch.availabilityCheckPeriodSec")
+			.dynamic(false)
+			.label("Elasticsearch availability check period (sec)")
+			.description("When set to a value > 0 stagemonitor periodically checks if Elasticsearch is available. " +
+					"When not available, stagemonitor won't try to send request traces to Elasticsearch which would " +
+					"fail anyway. This reduces heap usage as the request traces won't be queued up. " +
+					"It also avoids the logging of warnings when the queue is filled up to the limit (see '" + POOLS_QUEUE_CAPACITY_LIMIT_KEY + "')")
+			.defaultValue(5)
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags("elasticsearch", "advanced")
+			.build();
 
 	private MetricsAggregationReporter aggregationReporter;
 
@@ -459,15 +489,14 @@ public class CorePlugin extends StagemonitorPlugin {
 		if (!excludedMetricsPatterns.isEmpty()) {
 			regexFilter = MetricNameFilter.excludePatterns(excludedMetricsPatterns);
 		}
-		
+
 		Metric2Filter allFilters = new AndMetric2Filter(regexFilter, new MetricsWithCountFilter());
 		MetricRegistry legacyMetricRegistry = metric2Registry.getMetricRegistry();
 
 		reportToGraphite(legacyMetricRegistry, getGraphiteReportingInterval(), measurementSession);
 		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(),
 				measurementSession);
-		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(),
-				measurementSession, configuration.getConfig(CorePlugin.class));
+		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(), measurementSession);
 
 		List<ScheduledMetrics2Reporter> onShutdownReporters = new LinkedList<ScheduledMetrics2Reporter>();
 		onShutdownReporters.add(reportToConsole(metric2Registry, getConsoleReportingInterval(), allFilters));
@@ -519,21 +548,24 @@ public class CorePlugin extends StagemonitorPlugin {
 	}
 
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
-									   final MeasurementSession measurementSession, CorePlugin corePlugin) {
+									   final MeasurementSession measurementSession) {
 		if (isReportToElasticsearch()) {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("KibanaConfig.bulk");
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrls(), reportingInterval);
-			final String mappingJson = ElasticsearchClient.requireBoxTypeHotIfHotColdAritectureActive(
-					metricsIndexTemplate.getValue(), corePlugin.moveToColdNodesAfterDays.getValue());
+			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
+					metricsIndexTemplate.getValue(), moveToColdNodesAfterDays.getValue(), getNumberOfReplicas(), getNumberOfShards());
 			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
+			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
+					moveToColdNodesAfterDays.getValue(), deleteElasticsearchMetricsAfterDays.getValue());
+		}
+
+		if (isReportToElasticsearch() || isOnlyLogElasticsearchMetricReports()) {
 			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, this)
 					.globalTags(measurementSession.asMap())
 					.build();
 
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
-			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
-					moveToColdNodesAfterDays.getValue(), deleteElasticsearchMetricsAfterDays.getValue());
 		} else {
 			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrls(), reportingInterval);
 		}
@@ -600,7 +632,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public ElasticsearchClient getElasticsearchClient() {
 		if (elasticsearchClient == null) {
-			elasticsearchClient = new ElasticsearchClient(this);
+			elasticsearchClient = new ElasticsearchClient(this, new HttpClient(), elasticsearchAvailabilityCheckPeriodSec.getValue());
 		}
 		return elasticsearchClient;
 	}
@@ -793,5 +825,17 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public boolean isInitialized() {
 		return initialized;
+	}
+
+	public Integer getNumberOfReplicas() {
+		return numberOfReplicas.getValue();
+	}
+
+	public Integer getNumberOfShards() {
+		return numberOfShards.getValue();
+	}
+
+	List<Closeable> getReporters() {
+		return reporters;
 	}
 }

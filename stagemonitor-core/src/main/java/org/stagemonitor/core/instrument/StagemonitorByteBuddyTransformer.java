@@ -1,5 +1,25 @@
 package org.stagemonitor.core.instrument;
 
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.JavaModule;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
+
+import java.lang.annotation.Annotation;
+import java.security.ProtectionDomain;
+import java.util.Collections;
+import java.util.List;
+
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -13,25 +33,6 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
 import static org.stagemonitor.core.instrument.StagemonitorClassNameMatcher.isInsideMonitoredProject;
 import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
-
-import java.lang.annotation.Annotation;
-import java.security.ProtectionDomain;
-import java.util.Collections;
-import java.util.List;
-
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.asm.AsmVisitorWrapper;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.JavaModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
 
 public abstract class StagemonitorByteBuddyTransformer {
 
@@ -142,7 +143,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return getClass();
 	}
 
-	public abstract static class StagemonitorDynamicValue<T extends Annotation> implements Advice.DynamicValue<T> {
+	public static abstract class StagemonitorDynamicValue<T extends Annotation> extends Advice.DynamicValue.ForFixedValue<T> {
 		public abstract Class<T> getAnnotationClass();
 	}
 
