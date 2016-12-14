@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.xml.bind.DatatypeConverter;
+
 // TODO create HttpRequest POJO
 // method, url, headers, outputStreamHandler, responseHandler
 // builder methods logErrors(int... excludedStatusCodes)
@@ -78,7 +80,12 @@ public class HttpClient {
 		HttpURLConnection connection = null;
 		InputStream inputStream = null;
 		try {
-			connection = (HttpURLConnection) new URL(url).openConnection();
+			URL parsedUrl = new URL(url);
+			connection = (HttpURLConnection) parsedUrl.openConnection();
+			if (parsedUrl.getUserInfo() != null) {
+				String basicAuth = "Basic " + DatatypeConverter.printBase64Binary(parsedUrl.getUserInfo().getBytes());
+				connection.setRequestProperty("Authorization", basicAuth);
+			}
 			connection.setDoOutput(true);
 			connection.setRequestMethod(method);
 			connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(CONNECT_TIMEOUT_SEC));
