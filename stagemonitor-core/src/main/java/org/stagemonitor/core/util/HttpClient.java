@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import sun.misc.BASE64Encoder;
+import javax.xml.bind.DatatypeConverter;
 
 // TODO create HttpRequest POJO
 // method, url, headers, outputStreamHandler, responseHandler
@@ -83,8 +83,7 @@ public class HttpClient {
 			URL parsedUrl = new URL(url);
 			connection = (HttpURLConnection) parsedUrl.openConnection();
 			if (parsedUrl.getUserInfo() != null) {
-				BASE64Encoder encoder = new BASE64Encoder();
-				String basicAuth = "Basic " + encoder.encode(parsedUrl.getUserInfo().getBytes());
+				String basicAuth = "Basic " + DatatypeConverter.printBase64Binary(parsedUrl.getUserInfo().getBytes());
 				connection.setRequestProperty("Authorization", basicAuth);
 			}
 			connection.setDoOutput(true);
