@@ -258,7 +258,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.elasticsearch.url")
 			.dynamic(true)
 			.label("Elasticsearch URL")
-			.description("A comma separated list of the Elasticsearch URLs that store the request traces and metrics.")
+			.description("A comma separated list of the Elasticsearch URLs that store the request traces and metrics. " +
+					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com.")
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(ELASTICSEARCH)
