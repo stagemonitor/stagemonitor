@@ -39,10 +39,10 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 	private void registerPreInterceptors() {
 		this.preInterceptors.add(new RateLimitingPreExecutionInterceptor());
 
-		for (PostExecutionRequestTraceReporterInterceptor interceptor : ServiceLoader.load(
-				PostExecutionRequestTraceReporterInterceptor.class,
+		for (PreExecutionRequestTraceReporterInterceptor interceptor : ServiceLoader.load(
+				PreExecutionRequestTraceReporterInterceptor.class,
 				AbstractInterceptedSpanReporter.class.getClassLoader())) {
-			postInterceptors.add(interceptor);
+			preInterceptors.add(interceptor);
 		}
 	}
 

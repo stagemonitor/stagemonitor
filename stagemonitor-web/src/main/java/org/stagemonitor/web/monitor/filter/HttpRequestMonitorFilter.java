@@ -204,7 +204,11 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		for (HtmlInjector htmlInjector : htmlInjectors) {
 			if (htmlInjector.isActive(new HtmlInjector.IsActiveArguments(httpServletRequest))) {
 				final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(requestInformation);
-				htmlInjector.injectHtml(injectArguments);
+				try {
+					htmlInjector.injectHtml(injectArguments);
+				} catch (Exception e) {
+					logger.warn(e.getMessage() + "(this exception was suppressed)", e);
+				}
 				content = injectBeforeClosingBody(content, injectArguments);
 			}
 		}

@@ -8,17 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTraceReporterInterceptor {
 
-	private static final String CONTAINS_CALL_TREE = "contains_call_tree";
-
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
-		if (!context.getInternalSpan().getTags().containsKey(SpanTags.CALL_TREE_JSON)) {
-			context.getSpan().setTag(CONTAINS_CALL_TREE, false);
-			return;
-		} else {
-			context.getSpan().setTag(CONTAINS_CALL_TREE, true);
-		}
-
 		final double percentileLimit = context
 				.getConfig(RequestMonitorPlugin.class)
 				.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests();
@@ -30,7 +21,6 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 	}
 
 	private void exclude(PostExecutionInterceptorContext context) {
-		context.addExcludedProperties(SpanTags.CALL_TREE_ASCII, SpanTags.CALL_TREE_JSON)
-				.getSpan().setTag(CONTAINS_CALL_TREE, false);
+		context.addExcludedProperties(SpanTags.CALL_TREE_ASCII, SpanTags.CALL_TREE_JSON);
 	}
 }

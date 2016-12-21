@@ -80,28 +80,27 @@ public class SpanJsonModule extends Module {
 
 	private Map<String, Object> convertDottedKeysIntoNestedObject(Map<String, Object> tags) {
 		Map<String, Object> nestedTags = new HashMap<String, Object>();
-		// TODO throws ConcurrentModificationException
-		for (Map.Entry<String, Object> entry : new HashSet<Map.Entry<String, Object>>(tags.entrySet())) {
-			if (entry.getKey().indexOf('.') >= 0) {
-				doConvertDots(nestedTags, entry);
+		for (String key : new HashSet<String>(tags.keySet())) {
+			if (key.indexOf('.') >= 0) {
+				doConvertDots(nestedTags, key, tags.get(key));
 			} else {
-				nestedTags.put(entry.getKey(), entry.getValue());
+				nestedTags.put(key, tags.get(key));
 			}
 		}
 
 		return nestedTags;
 	}
 
-	private void doConvertDots(Map<String, Object> nestedTags, Map.Entry<String, Object> entry) {
-		final String[] pathSegments = StringUtils.split(entry.getKey(), '.');
+	private void doConvertDots(Map<String, Object> nestedTags, String key, Object value) {
+		final String[] pathSegments = StringUtils.split(key, '.');
 		Map<String, Object> path = nestedTags;
 		for (int i = 0; i < pathSegments.length; i++) {
 			String pathSegment = pathSegments[i];
 			if (i + 1 < pathSegments.length) {
-				path = getNewNestedPath(path, pathSegment, entry.getKey());
+				path = getNewNestedPath(path, pathSegment, key);
 			} else {
 				// last
-				path.put(pathSegment, entry.getValue());
+				path.put(pathSegment, value);
 			}
 		}
 	}

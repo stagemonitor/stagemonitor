@@ -79,6 +79,7 @@ public class RequestMonitor {
 	private RequestMonitorPlugin requestMonitorPlugin;
 	private Date endOfWarmup;
 	private Meter callTreeMeter = new Meter();
+	private volatile boolean initialized;
 	private final static Span NOOP_SPAN = NoopTracerFactory.create().buildSpan(null).start();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
@@ -90,7 +91,7 @@ public class RequestMonitor {
 	}
 
 	private RequestMonitor(Configuration configuration, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin,
-						   Iterable<SpanReporter> requestTraceReporters) {
+						   Iterable<SpanReporter> spanReporters) {
 		this.configuration = configuration;
 		this.metricRegistry = registry;
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
@@ -99,7 +100,7 @@ public class RequestMonitor {
 		this.endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
 		this.asyncRequestTraceReporterPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit());
-		for (SpanReporter spanReporter : requestTraceReporters) {
+		for (SpanReporter spanReporter : spanReporters) {
 			addReporter(spanReporter);
 		}
 	}
@@ -362,6 +363,7 @@ public class RequestMonitor {
 		for (SpanReporter spanReporter : spanReporters) {
 			spanReporter.init(new SpanReporter.InitArguments(configuration, initArguments.getMetricRegistry()));
 		}
+		initialized = true;
 	}
 
 	public class RequestInformation {
@@ -595,7 +597,10 @@ public class RequestMonitor {
 	 */
 	public void addReporter(SpanReporter spanReporter) {
 		spanReporters.add(0, spanReporter);
-		spanReporter.init(new SpanReporter.InitArguments(configuration, metricRegistry));
+		if (initialized) {
+			spanReporter.init(new SpanReporter.InitArguments(configuration, metricRegistry));
+		}
+		// otherwise reporters will be initialized #onInit
 	}
 
 	public <T extends SpanReporter> T getReporter(Class<T> reporterClass) {
