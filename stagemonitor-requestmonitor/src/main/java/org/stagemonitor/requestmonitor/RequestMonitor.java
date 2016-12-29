@@ -159,7 +159,7 @@ public class RequestMonitor {
 
 		for (Runnable onAfterRequestCallback : onAfterRequestCallbacks) {
 			try {
-				onAfterRequestCallback.run();
+				new Thread(onAfterRequestCallback).start();
 			} catch (RuntimeException e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}
@@ -234,7 +234,7 @@ public class RequestMonitor {
 		}
 		for (Runnable onBeforeRequestCallback : onBeforeRequestCallbacks) {
 			try {
-				onBeforeRequestCallback.run();
+				new Thread(onBeforeRequestCallback).start();
 			} catch (RuntimeException e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}

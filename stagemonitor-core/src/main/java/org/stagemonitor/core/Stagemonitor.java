@@ -164,7 +164,7 @@ public final class Stagemonitor {
 		measurementSession.setEndTimestamp(System.currentTimeMillis());
 		for (Runnable onShutdownAction : onShutdownActions) {
 			try {
-				onShutdownAction.run();
+				new Thread(onShutdownAction).start();
 			} catch (RuntimeException e) {
 				logger.warn(e.getMessage(), e);
 			}
