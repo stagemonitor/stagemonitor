@@ -41,6 +41,8 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 	public static final String CONNECTION_ID_ATTRIBUTE = "connectionId";
 	public static final String WIDGET_ALLOWED_ATTRIBUTE = "showWidgetAllowed";
+	// has to be static so that the cache is shared between different requests
+	private static UserAgentParser userAgentParser;
 	protected final HttpServletRequest httpServletRequest;
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
@@ -203,8 +205,8 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	}
 
 	@Override
+	@SuppressWarnings("squid:S2696")
 	public void onBeforeReport(RequestMonitor.RequestInformation requestInformation) {
-		final String connectionId = this.connectionId;
 		requestInformation.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
 		requestInformation.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
 
@@ -228,6 +230,13 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
 		Tags.ERROR.set(span, status >= 400);
 		span.setTag("bytes_written", responseWrapper.getContentLength());
+		if (webPlugin.isParseUserAgent()) {
+			// this is safe even though userAgentParser is static because onBeforeReport is not executed concurrently
+			if (userAgentParser == null) {
+				userAgentParser = new UserAgentParser();
+			}
+			userAgentParser.setUserAgentInformation(span, userAgenHeader);
+		}
 	}
 
 	private String getSessionId() {

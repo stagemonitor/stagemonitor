@@ -85,8 +85,12 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.dynamic(true)
 			.label("Analyze user agent")
 			.description("Whether or not the user-agent header should be parsed and analyzed to get information " +
-					"about the browser, device type and operating system.")
-			.defaultValue(true)
+					"about the browser, device type and operating system. If you want to enable this option, you have " +
+					"to add a dependency on net.sf.uadetector:uadetector-resources:2014.10. As this library is no longer " +
+					"maintained, it is however recommended to use the Elasticsearch ingest user agent plugin. See " +
+					"https://www.elastic.co/guide/en/elasticsearch/plugins/master/ingest-user-agent.html")
+			.defaultValue(false)
+			.tags("deprecated")
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private ConfigurationOption<Collection<String>> excludeHeaders = ConfigurationOption.lowerStringsOption()

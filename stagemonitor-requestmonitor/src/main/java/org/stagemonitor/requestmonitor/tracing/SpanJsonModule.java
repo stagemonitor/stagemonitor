@@ -78,6 +78,29 @@ public class SpanJsonModule extends Module {
 		})));
 	}
 
+	/**
+	 * As Elasticsearch can't cope with dots in field names, we have to convert them into nested objects.
+	 * That way, we can use the dotted notation in aggregations again.
+	 *
+	 * Example:
+	 * <pre>
+	 *     {
+	 *         "dotted.path.foo": "bar"
+	 *     }
+	 *
+	 *     will be converted to
+	 *
+	 *     {
+	 *         "dotted": {
+	 *             "path": {
+	 *                 "foo": "bar"
+	 *             }
+	 *         }
+	 *     }
+	 * </pre>
+	 * @param tags the span tags to convert
+	 * @return the span tags as nested objects
+	 */
 	private Map<String, Object> convertDottedKeysIntoNestedObject(Map<String, Object> tags) {
 		Map<String, Object> nestedTags = new HashMap<String, Object>();
 		for (String key : new HashSet<String>(tags.keySet())) {

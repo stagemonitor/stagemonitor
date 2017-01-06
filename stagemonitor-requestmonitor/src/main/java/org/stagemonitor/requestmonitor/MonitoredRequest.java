@@ -51,7 +51,8 @@ public abstract class MonitoredRequest {
 	/**
 	 * Implement this method to do actions before {@link Span} is reported.
 	 *
-	 * This method is executed asynchronously and will not the request.
+	 * This method is executed asynchronously and will not block the request. However, this method will not be executed
+	 * concurrently.
 	 *
 	 * @param requestInformation the execution context
 	 */
