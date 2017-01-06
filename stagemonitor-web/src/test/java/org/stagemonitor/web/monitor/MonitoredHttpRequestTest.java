@@ -30,7 +30,7 @@ public class MonitoredHttpRequestTest {
 	@Before
 	public void setUp() throws Exception {
 		Stagemonitor.reset();
-		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance")).get();
+		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance"));
 	}
 
 	@After

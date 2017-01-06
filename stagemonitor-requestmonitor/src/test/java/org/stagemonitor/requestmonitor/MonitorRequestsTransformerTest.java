@@ -46,7 +46,7 @@ public class MonitorRequestsTransformerTest {
 		testClassLevelAnnotationClass = new TestClassLevelAnnotationClass();
 		metricRegistry.removeMatching(Metric2Filter.ALL);
 		Stagemonitor.setMeasurementSession(new MeasurementSession("MonitorRequestsTransformerTest", "test", "test"));
-		Stagemonitor.startMonitoring().get();
+		Stagemonitor.startMonitoring();
 		requestTraceCapturingReporter = new SpanCapturingReporter();
 	}
 

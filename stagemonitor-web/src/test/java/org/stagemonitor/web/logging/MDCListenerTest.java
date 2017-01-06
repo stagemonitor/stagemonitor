@@ -1,15 +1,7 @@
 package org.stagemonitor.web.logging;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestEvent;
-
 import com.codahale.metrics.SharedMetricRegistries;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,6 +10,15 @@ import org.slf4j.MDC;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletRequestEvent;
+
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class MDCListenerTest {
 
@@ -42,7 +43,7 @@ public class MDCListenerTest {
 
 	@Test
 	public void testMDCInstanceAlreadySet() throws Exception {
-		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", "testInstance")).get();
+		Stagemonitor.startMonitoring(new MeasurementSession("MDCListenerTest", "testHost", "testInstance"));
 		when(corePlugin.getMeasurementSession()).thenReturn(new MeasurementSession("MDCListenerTest", "testHost", "testInstance"));
 		final ServletRequestEvent requestEvent = mock(ServletRequestEvent.class);
 		final ServletRequest request = mock(ServletRequest.class);

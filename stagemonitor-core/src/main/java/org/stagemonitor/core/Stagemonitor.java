@@ -53,7 +53,7 @@ public final class Stagemonitor {
 		// intentionally left blank
 	}
 
-	public synchronized static void setMeasurementSession(MeasurementSession measurementSession) {
+	public static synchronized void setMeasurementSession(MeasurementSession measurementSession) {
 		if (!getPlugin(CorePlugin.class).isStagemonitorActive()) {
 			logger.info("stagemonitor is deactivated");
 			disabled = true;
@@ -64,18 +64,16 @@ public final class Stagemonitor {
 		Stagemonitor.measurementSession = measurementSession;
 	}
 
-	// TODO void
-	public static Future<?> startMonitoring() {
+	public static void startMonitoring() {
 		doStartMonitoring();
-		return new CompletedFuture<Void>(null);
 	}
 
-	public synchronized static Future<?> startMonitoring(MeasurementSession measurementSession) {
+	public static synchronized void startMonitoring(MeasurementSession measurementSession) {
 		setMeasurementSession(measurementSession);
-		return startMonitoring();
+		startMonitoring();
 	}
 
-	private synchronized static void doStartMonitoring() {
+	private static synchronized void doStartMonitoring() {
 		if (started) {
 			return;
 		}

@@ -84,7 +84,7 @@ public class SpringRequestMonitorTest {
 		Stagemonitor.reset();
 		registry.removeMatching(Metric2Filter.ALL);
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
-		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance")).get();
+		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance"));
 		getRequestNameHandlerMapping = createHandlerMapping(mvcRequest, TestController.class.getMethod("testGetRequestName"));
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
