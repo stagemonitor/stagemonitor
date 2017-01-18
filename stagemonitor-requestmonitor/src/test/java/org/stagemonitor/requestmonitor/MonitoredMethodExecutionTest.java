@@ -50,7 +50,8 @@ public class MonitoredMethodExecutionTest {
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 
 		requestInformation1 = requestInformation2 = requestInformation3 = null;
-		testObject = new TestObject(new RequestMonitor(configuration, registry));
+		final RequestMonitor requestMonitor = new RequestMonitor(configuration, registry);
+		testObject = new TestObject(requestMonitor);
 	}
 
 	@Test

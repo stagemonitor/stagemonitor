@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 public class SpanJsonModule extends Module {
 
+	private static final double MICROSECONDS_OF_MILLISECOND = TimeUnit.MILLISECONDS.toMicros(1);
+
 	@Override
 	public String getModuleName() {
 		return "stagemonitor-spans";
@@ -59,7 +61,7 @@ public class SpanJsonModule extends Module {
 
 				gen.writeStringField("name", span.getOperationName());
 				gen.writeNumberField("duration", span.getDuration());
-				gen.writeNumberField("duration_ms", TimeUnit.MICROSECONDS.toMillis(span.getDuration()));
+				gen.writeNumberField("duration_ms", span.getDuration() / MICROSECONDS_OF_MILLISECOND);
 				gen.writeStringField("@timestamp", StringUtils.timestampAsIsoString(TimeUnit.MICROSECONDS.toMillis(span.getStart())));
 				gen.writeStringField("id", StringUtils.toHexString(span.context().getSpanID()));
 				gen.writeStringField("trace_id", StringUtils.toHexString(span.context().getTraceID()));
@@ -103,6 +105,7 @@ public class SpanJsonModule extends Module {
 	 */
 	private Map<String, Object> convertDottedKeysIntoNestedObject(Map<String, Object> tags) {
 		Map<String, Object> nestedTags = new HashMap<String, Object>();
+		// TODO throws ConcurrentModificationException
 		for (String key : new HashSet<String>(tags.keySet())) {
 			if (key.indexOf('.') >= 0) {
 				doConvertDots(nestedTags, key, tags.get(key));

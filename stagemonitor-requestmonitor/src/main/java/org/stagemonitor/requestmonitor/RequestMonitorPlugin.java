@@ -327,21 +327,19 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/RequestDashboard.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Metrics.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchExternalRequestsDashboard.json");
 		}
 		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/StagemonitorRequestsIndexPattern.bulk");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/RequestAnalysis.bulk");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/WebAnalytics.bulk");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/ExternalRequests.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Analysis.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk");
 
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
 		tracer = new com.uber.jaeger.Tracer.Builder(initArguments.getMeasurementSession().getApplicationName(), new CompositeReporter(new LoggingReporter()), new ConstSampler(true)).build();
-		getRequestMonitor().onInit(initArguments);
 	}
 
 	@Override

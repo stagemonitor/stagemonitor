@@ -1,7 +1,6 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.uber.jaeger.Span;
 
 import org.junit.Assert;
@@ -14,10 +13,8 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
 import org.stagemonitor.requestmonitor.utils.SpanTags;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.isA;
@@ -109,7 +106,6 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 		JsonNode span = requestTraceCaptor.getValue();
 		assertFalse(span.has(SpanTags.CALL_TREE_ASCII));
 		assertFalse(span.has(SpanTags.CALL_TREE_JSON));
-		assertFalse(span.get("contains_call_tree").booleanValue());
 	}
 
 	@Test
@@ -122,8 +118,6 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 
 		ArgumentCaptor<Span> requestTraceCaptor = ArgumentCaptor.forClass(Span.class);
 		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), requestTraceCaptor.capture());
-		Span span = requestTraceCaptor.getValue();
-		assertTrue((Boolean) span.getTags().get("contains_call_tree"));
 	}
 
 	@Test
@@ -158,38 +152,5 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 		assertTrue((Boolean) requestTraceCaptor.getValue().getTags().get("serviceLoaderWorks"));
 	}
 
-	@Test
-	public void testNestDottedTagKeys() {
-		final io.opentracing.Span span = createTestSpan(1);
-		span.setTag("a.b.c.d1", "1");
-		span.setTag("a.b.c.d2", "2");
-		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
-		System.out.println(jsonSpan);
-		assertEquals("1", jsonSpan.get("a").get("b").get("c").get("d1").asText());
-		assertEquals("2", jsonSpan.get("a").get("b").get("c").get("d2").asText());
-	}
-
-	@Test
-	public void testSampledTag() {
-		final io.opentracing.Span span = createTestSpan(1);
-		span.setTag("duration", "foo");
-		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
-		System.out.println(jsonSpan);
-		assertEquals(1000, jsonSpan.get("duration").intValue());
-	}
-
-	@Test
-	public void testAmbiguousMapping() {
-		final io.opentracing.Span span = createTestSpan(1);
-		span.setTag("a", "1");
-		span.setTag("a.b", "2");
-		try {
-			System.out.println(JsonUtils.toObjectNode(span));
-			fail();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-			assertTrue(e.getMessage().startsWith("Ambiguous mapping for"));
-		}
-	}
 
 }

@@ -359,13 +359,6 @@ public class RequestMonitor {
 		}
 	}
 
-	void onInit(StagemonitorPlugin.InitArguments initArguments) {
-		for (SpanReporter spanReporter : spanReporters) {
-			spanReporter.init(new SpanReporter.InitArguments(configuration, initArguments.getMetricRegistry()));
-		}
-		initialized = true;
-	}
-
 	public class RequestInformation {
 		private Span span;
 		private long startCpu = TimeUtils.getCpuTime();
@@ -597,10 +590,7 @@ public class RequestMonitor {
 	 */
 	public void addReporter(SpanReporter spanReporter) {
 		spanReporters.add(0, spanReporter);
-		if (initialized) {
-			spanReporter.init(new SpanReporter.InitArguments(configuration, metricRegistry));
-		}
-		// otherwise reporters will be initialized #onInit
+        spanReporter.init(new SpanReporter.InitArguments(configuration, metricRegistry));
 	}
 
 	public <T extends SpanReporter> T getReporter(Class<T> reporterClass) {
