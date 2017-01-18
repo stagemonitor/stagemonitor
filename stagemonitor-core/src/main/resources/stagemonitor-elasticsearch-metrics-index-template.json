@@ -13,34 +13,34 @@
           "strings": {
             "match": "*",
             "match_mapping_type": "string",
-            "mapping":   { "type": "string",  "doc_values": true, "index": "not_analyzed" }
+            "mapping":   { "type": "keyword" }
           }
         }
       ],
       "_all":            { "enabled": false },
       "_source":         { "enabled": false },
       "properties": {
-        "@timestamp":    { "type": "date",    "doc_values": true, "format": "epoch_millis" },
-        "measurement_start": { "type": "date","doc_values": true, "format": "epoch_millis" },
-        "count":         { "type": "integer", "doc_values": true, "index": "no" },
-        "m1_rate":       { "type": "float",   "doc_values": true, "index": "no" },
-        "m5_rate":       { "type": "float",   "doc_values": true, "index": "no" },
-        "m15_rate":      { "type": "float",   "doc_values": true, "index": "no" },
-        "max":           { "type": "float",   "doc_values": true, "index": "no" },
-        "mean_rate":     { "type": "float",   "doc_values": true, "index": "no" },
-        "median":        { "type": "float",   "doc_values": true, "index": "no" },
-        "min":           { "type": "float",   "doc_values": true, "index": "no" },
-        "p25":           { "type": "float",   "doc_values": true, "index": "no" },
-        "p50":           { "type": "float",   "doc_values": true, "index": "no" },
-        "p75":           { "type": "float",   "doc_values": true, "index": "no" },
-        "p95":           { "type": "float",   "doc_values": true, "index": "no" },
-        "p98":           { "type": "float",   "doc_values": true, "index": "no" },
-        "p99":           { "type": "float",   "doc_values": true, "index": "no" },
-        "p999":          { "type": "float",   "doc_values": true, "index": "no" },
-        "std":           { "type": "float",   "doc_values": true, "index": "no" },
-        "value":         { "type": "float",   "doc_values": true, "index": "no" },
-        "value_boolean": { "type": "boolean", "doc_values": true, "index": "no" },
-        "value_string":  { "type": "string",  "doc_values": true, "index": "no" }
+        "@timestamp":    { "type": "date"    , "format": "epoch_millis" },
+        "measurement_start": { "type": "date", "format": "epoch_millis" },
+        "count":         { "type": "integer" , "index": "no" },
+        "m1_rate":       { "type": "float"   , "index": "no" },
+        "m5_rate":       { "type": "float"   , "index": "no" },
+        "m15_rate":      { "type": "float"   , "index": "no" },
+        "max":           { "type": "float"   , "index": "no" },
+        "mean_rate":     { "type": "float"   , "index": "no" },
+        "median":        { "type": "float"   , "index": "no" },
+        "min":           { "type": "float"   , "index": "no" },
+        "p25":           { "type": "float"   , "index": "no" },
+        "p50":           { "type": "float"   , "index": "no" },
+        "p75":           { "type": "float"   , "index": "no" },
+        "p95":           { "type": "float"   , "index": "no" },
+        "p98":           { "type": "float"   , "index": "no" },
+        "p99":           { "type": "float"   , "index": "no" },
+        "p999":          { "type": "float"   , "index": "no" },
+        "std":           { "type": "float"   , "index": "no" },
+        "value":         { "type": "float"   , "index": "no" },
+        "value_boolean": { "type": "boolean" , "index": "no" },
+        "value_string":  { "type": "string"  , "index": "no" }
       }
     }
   }

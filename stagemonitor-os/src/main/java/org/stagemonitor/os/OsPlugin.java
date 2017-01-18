@@ -1,9 +1,5 @@
 package org.stagemonitor.os;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.NetRoute;
 import org.hyperic.sigar.Sigar;
@@ -22,6 +18,10 @@ import org.stagemonitor.os.metrics.FileSystemMetricSet;
 import org.stagemonitor.os.metrics.MemoryMetricSet;
 import org.stagemonitor.os.metrics.NetworkMetricSet;
 import org.stagemonitor.os.metrics.SwapMetricSet;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class OsPlugin extends StagemonitorPlugin  {
 
@@ -44,7 +44,7 @@ public class OsPlugin extends StagemonitorPlugin  {
 		if (corePlugin.isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchHostDashboard.json");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/HostDashboard.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Host.bulk");
 		}
 
 		if (sigar == null) {

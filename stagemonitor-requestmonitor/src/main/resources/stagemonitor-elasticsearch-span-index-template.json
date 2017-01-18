@@ -15,7 +15,7 @@
             "match" : "*",
             "match_mapping_type" : "string",
             "mapping" : {
-              "type": "string", "index" : "not_analyzed", "ignore_above" : 256, "doc_values": true}
+              "type": "keyword", "ignore_above" : 256 }
             }
         },
         {
@@ -23,34 +23,39 @@
             "match" : "*",
             "match_mapping_type" : "integer",
             "mapping" : {
-              "type": "integer", "doc_values": true}
+              "type": "integer" }
             }
         },
         {
-          "user_agent": {
+          "parameters": {
             "path_match": "parameters.*",
-            "mapping": { "type": "string", "index": "not_analyzed", "doc_values": true }
+            "mapping": { "type": "keyword" }
           }
         }
       ],
       "_all":                  { "enabled": false },
       "_source" :              { "excludes" : ["call_tree_json"] },
       "properties": {
-        "@timestamp":          {"type": "date",    "doc_values": true},
-        "measurement_start":   {"type": "date",    "doc_values": true},
-        "callTreeAscii":       {"type": "string",  "index": "no", "doc_values": false},
-        "callTreeJson":        {"type": "string",  "index": "no", "store": "yes", "doc_values": false},
-        "exceptionClass":      {"type": "string",  "index": "not_analyzed", "doc_values": true},
-        "exceptionMessage":    {"type": "string",  "index": "not_analyzed", "doc_values": true},
-        "exceptionStackTrace": {"type": "string",  "index": "no", "store": "yes", "doc_values": true},
-        "name":                {"type": "string",  "analyzer": "standard",
-                                 "fields": { "raw": {"type": "string", "index": "not_analyzed", "doc_values": true}}},
-        "url":                 {"type": "string",  "analyzer": "standard",
-                                 "fields": { "raw": {"type": "string", "index": "not_analyzed", "doc_values": true}}},
+        "@timestamp":          {"type": "date" },
+        "measurement_start":   {"type": "date" },
+        "call_tree_ascii":     {"type": "keyword",  "index": "no", "doc_values": false },
+        "call_tree_json":      {"type": "keyword",  "index": "no", "store": "yes", "doc_values": false },
+        "exception":           {"type": "object", "properties": {
+            "classType":       {"type": "keyword" },
+            "message":         {"type": "keyword" },
+            "stackTrace":      {"type": "keyword",  "index": "no", "store": "yes", "doc_values": false }
+          }
+        },
+        "name":                {"type": "text",  "analyzer": "standard",
+                                 "fields": { "raw": {"type": "keyword" }}},
+        "http":                {"type": "object", "properties": {
+            "url":                 {"type": "text",  "analyzer": "standard", "fields": { "raw": {"type": "keyword" }}}
+          }
+        },
         "externalRequestStats":{"type": "nested", "properties": {
-            "requestType":       {"type": "string",  "index": "not_analyzed", "doc_values": true},
-            "executionCount":    {"type": "integer", "doc_values": true},
-            "executionTime":     {"type": "double", "doc_values": true}
+            "requestType":       {"type": "keyword" },
+            "executionCount":    {"type": "integer" },
+            "executionTime":     {"type": "double" }
           }
         }
       }
