@@ -16,7 +16,7 @@ public class HttpClientTest {
 	}
 
 	@Test
-	public void testCopy() throws IOException {
+	public void testNoNullPointerExceptionOnSend() throws IOException {
 		try {
 			httpClient.send("POST", "incorrect-url", null, null);
 		} catch (NullPointerException t) {
