@@ -26,12 +26,11 @@ import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static javax.servlet.DispatcherType.FORWARD;
+import static javax.servlet.DispatcherType.REQUEST;
 
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
@@ -93,15 +92,11 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	public final void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
 		if (corePlugin.isStagemonitorActive() && !isInternalRequest(request) &&
-				onlyMonitorForwardedRequestsIfConfigured(request)) {
+				request.getDispatcherType() == REQUEST) {
 			doMonitor(request, response, filterChain);
 		} else {
 			filterChain.doFilter(request, response);
 		}
-	}
-
-	private boolean onlyMonitorForwardedRequestsIfConfigured(ServletRequest request) {
-		return request.getDispatcherType() != FORWARD || webPlugin.isMonitorOnlyForwardedRequests();
 	}
 
 	private void doMonitor(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -230,7 +225,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private String injectBeforeClosingBody(String unmodifiedContent, HtmlInjector.InjectArguments injectArguments) {
 		final int lastClosingBodyIndex = unmodifiedContent.lastIndexOf("</body>");
 		final String modifiedContent;
-		if (lastClosingBodyIndex > -1) {
+		if (injectArguments.getContentToInjectBeforeClosingBody() != null && lastClosingBodyIndex > -1) {
 			final StringBuilder modifiedContentStringBuilder = new StringBuilder(unmodifiedContent.length() + injectArguments.getContentToInjectBeforeClosingBody().length());
 			modifiedContentStringBuilder.append(unmodifiedContent.substring(0, lastClosingBodyIndex));
 			modifiedContentStringBuilder.append(injectArguments.getContentToInjectBeforeClosingBody());

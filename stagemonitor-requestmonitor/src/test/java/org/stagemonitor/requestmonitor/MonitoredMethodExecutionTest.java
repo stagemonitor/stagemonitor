@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.utils.SpanTags;
@@ -15,10 +16,8 @@ import org.stagemonitor.requestmonitor.utils.SpanTags;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -44,6 +43,7 @@ public class MonitoredMethodExecutionTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
+		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 
 		final Tracer tracer = new Tracer.Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
@@ -58,17 +58,14 @@ public class MonitoredMethodExecutionTest {
 	public void testDoubleForwarding() throws Exception {
 		testObject.monitored1();
 		assertEquals(1, requestInformation1.getExecutionResult());
-		assertFalse(requestInformation1.isForwarded());
 		assertEquals("monitored1()", requestInformation1.getInternalSpan().getOperationName());
 		final Map<String, Object> tags = requestInformation1.getInternalSpan().getTags();
 		assertEquals(tags.toString(), "1", tags.get(SpanTags.PARAMETERS_PREFIX + "arg0"));
 		assertEquals(tags.toString(), "test", tags.get(SpanTags.PARAMETERS_PREFIX + "arg1"));
-		assertTrue(requestInformation2.isForwarded());
-		assertTrue(requestInformation3.isForwarded());
 
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
-		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
-		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored3()").layer("All").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored3()").layer("All").build()));
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "notMonitored()").layer("All").build()));
 	}
 

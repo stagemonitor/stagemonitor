@@ -25,6 +25,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -92,6 +93,7 @@ public class SpringRequestMonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
+		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 		final Tracer tracer = new Tracer.Builder("SpringRequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();

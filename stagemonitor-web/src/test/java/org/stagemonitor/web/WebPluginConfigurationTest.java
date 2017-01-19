@@ -54,7 +54,6 @@ public class WebPluginConfigurationTest {
 
 		assertEquals(true, config.isRealUserMonitoringEnabled());
 		assertEquals(false, config.isCollectPageLoadTimesPerRequest());
-		assertEquals(false, config.isMonitorOnlyForwardedRequests());
 		assertEquals(false, config.isMonitorOnlySpringMvcRequests());
 
 	}

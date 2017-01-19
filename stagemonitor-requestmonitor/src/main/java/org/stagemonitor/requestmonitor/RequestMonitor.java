@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -49,14 +48,6 @@ public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
 
-	/**
-	 * Helps to detect, if this request is the 'real' one or just the forwarding one. Example: /a is forwarding the
-	 * request to /b. /a is the forwarding request /b is the real or forwarded request. Only /b will be measured, /a
-	 * will be ignored.
-	 * <p/>
-	 * To enable this behaviour in a web environment, make sure to set stagemonitor.web.monitorOnlyForwardedRequests to
-	 * true.
-	 */
 	// TODO remove static keyword. This is currently needed for tests
 	private static ThreadLocal<RequestInformation> request = new ThreadLocal<RequestInformation>();
 
@@ -79,7 +70,6 @@ public class RequestMonitor {
 	private RequestMonitorPlugin requestMonitorPlugin;
 	private Date endOfWarmup;
 	private Meter callTreeMeter = new Meter();
-	private volatile boolean initialized;
 	private final static Span NOOP_SPAN = NoopTracerFactory.create().buildSpan(null).start();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
@@ -247,31 +237,27 @@ public class RequestMonitor {
 
 	private void detectForwardedRequest(RequestInformation info) {
 		if (request.get() != null) {
-			// there is already an request set in this thread -> this execution must have been forwarded
 			info.parent = request.get();
-			info.parent.child = info;
 		}
 	}
 
 	private void monitorAfterExecution(MonitoredRequest monitoredRequest, RequestInformation info) {
 		final Span span = info.span;
 		final long cpuTime = TimeUtils.getCpuTime() - info.startCpu;
-		if (span != null) {
-			span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
-			span.setTag("duration_cpu_ms", NANOSECONDS.toMillis(cpuTime));
-			monitoredRequest.onPostExecute(info);
-			anonymizeUserNameAndIp(info.getInternalSpan());
+		span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
+		span.setTag("duration_cpu_ms", NANOSECONDS.toMillis(cpuTime));
+		monitoredRequest.onPostExecute(info);
+		anonymizeUserNameAndIp(info.getInternalSpan());
 
-			final CallStackElement callTree = info.getCallTree();
-			if (callTree != null) {
-				Profiler.stop();
-				callTree.setSignature(info.getRequestName());
-				final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
-				if (minExecutionTimeMultiplier > 0d) {
-					callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
-				}
-				SpanTags.setCallTree(span, callTree);
+		final CallStackElement callTree = info.getCallTree();
+		if (callTree != null) {
+			Profiler.stop();
+			callTree.setSignature(info.getRequestName());
+			final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
+			if (minExecutionTimeMultiplier > 0d) {
+				callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
 			}
+			SpanTags.setCallTree(span, callTree);
 		}
 		span.finish();
 		info.requestTraceReporterFuture = report(info);
@@ -367,7 +353,6 @@ public class RequestMonitor {
 		private MonitoredRequest monitoredRequest;
 		private boolean firstRequest;
 		private RequestInformation parent;
-		private RequestInformation child;
 		private Future<?> requestTraceReporterFuture;
 		private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 		private CallStackElement callTree;
@@ -397,30 +382,6 @@ public class RequestMonitor {
 				return false;
 			}
 
-			if (isForwarded() && isForwarding()) {
-				logger.debug(msg, "this request is both forwarded and forwarding");
-				return false;
-			}
-			if (isForwarded()) {
-				if (monitoredRequest.isMonitorForwardedExecutions()) {
-					return true;
-				} else {
-					if (logger.isDebugEnabled()) {
-						logger.debug(msg, "this is a forwarded request and monitoring forwarded requests is disabled for " + monitoredRequest.getClass().getSimpleName());
-					}
-					return false;
-				}
-			}
-			if (isForwarding()) {
-				if (!monitoredRequest.isMonitorForwardedExecutions()) {
-					return true;
-				} else {
-					if (logger.isDebugEnabled()) {
-						logger.debug(msg, "this is a forwarding request and monitoring forwarding requests is disabled for " + monitoredRequest.getClass().getSimpleName());
-					}
-					return false;
-				}
-			}
 			return true;
 		}
 
@@ -452,25 +413,6 @@ public class RequestMonitor {
 			return true;
 		}
 
-		/**
-		 * A forwarding request is one that forwards a request to another execution.
-		 * <p/>
-		 * Examples:
-		 * <p/>
-		 * - web environment: request to /a makes a
-		 * {@link javax.servlet.RequestDispatcher#forward(ServletRequest, ServletResponse)} to /b.
-		 * /a is the forwarding execution, /b is the forwarded execution
-		 * <p/>
-		 * - plain method calls: monitored method a() calls monitored method b()
-		 * (monitored means monitored by {@link RequestMonitor}).
-		 * Method a() is the forwarding execution, Method b() is the forwarded execution.
-		 *
-		 * @return true, if this request is a forwarding request, false otherwise
-		 */
-		private boolean isForwarding() {
-			return child != null;
-		}
-
 		public Object getExecutionResult() {
 			return executionResult;
 		}
@@ -480,13 +422,8 @@ public class RequestMonitor {
 			return "RequestInformation{" +
 					"span=" + span +
 					", startCpu=" + startCpu +
-					", forwardedExecution=" + isForwarded() +
 					", executionResult=" + executionResult +
 					'}';
-		}
-
-		public boolean isForwarded() {
-			return parent != null;
 		}
 
 		public Future<?> getRequestTraceReporterFuture() {

@@ -169,16 +169,6 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"/HEARTBEAT/"))
 			.configurationCategory(WEB_PLUGIN)
 			.build();
-	private final ConfigurationOption<Boolean> monitorOnlyForwardedRequests = ConfigurationOption.booleanOption()
-			.key("stagemonitor.web.monitorOnlyForwardedRequests")
-			.dynamic(true)
-			.label("Monitor only forwarded requests")
-			.description("Sometimes you only want to monitor forwarded requests, for example if you have a rewrite " +
-					"filter that translates a external URI (/a) to a internal URI (/b). If only /b should be monitored," +
-					"set the value to true.")
-			.defaultValue(false)
-			.configurationCategory(WEB_PLUGIN)
-			.build();
 	private final ConfigurationOption<String> metricsServletAllowedOrigin = ConfigurationOption.stringOption()
 			.key("stagemonitor.web.metricsServlet.allowedOrigin")
 			.dynamic(true)
@@ -311,10 +301,6 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		return excludedRequestPaths.getValue();
 	}
 
-	public boolean isMonitorOnlyForwardedRequests() {
-		return monitorOnlyForwardedRequests.getValue();
-	}
-
 	public String getMetricsServletAllowedOrigin() {
 		return metricsServletAllowedOrigin.getValue();
 	}
@@ -396,7 +382,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		securityFilter.setAsyncSupported(true);
 
 		final FilterRegistration.Dynamic monitorFilter = ctx.addFilter(HttpRequestMonitorFilter.class.getSimpleName(), new HttpRequestMonitorFilter());
-		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), false, "/*");
+		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/*");
 		monitorFilter.setAsyncSupported(true);
 
 		ctx.addListener(MDCListener.class);

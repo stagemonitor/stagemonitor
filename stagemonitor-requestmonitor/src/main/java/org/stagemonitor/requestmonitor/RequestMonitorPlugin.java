@@ -332,7 +332,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchExternalRequestsDashboard.json");
 		}
 		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/StagemonitorRequestsIndexPattern.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/stagemonitor-spans-kibana-index-pattern.bulk");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Analysis.bulk");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk");
 
