@@ -186,7 +186,7 @@ public class ThresholdMonitoringReporterTest {
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getOldStatus());
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getNewStatus());
 		assertEquals(2, storedIncident.getCheckResults().size());
-		assertEquals(1, storedIncident.getVersion());
+		assertEquals(2, storedIncident.getVersion());
 		boolean containsTestHost = false;
 		boolean containsTestHost2 = false;
 		for (CheckResults checkResults : storedIncident.getCheckResults()) {
@@ -210,7 +210,7 @@ public class ThresholdMonitoringReporterTest {
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getOldStatus());
 		assertEquals(CheckResult.Status.CRITICAL, storedIncident.getNewStatus());
 		assertEquals(1, storedIncident.getCheckResults().size());
-		assertEquals(2, storedIncident.getVersion());
+		assertEquals(3, storedIncident.getVersion());
 	}
 
 	public static Check createCheckCheckingMean(int alertAfterXFailures, long meanMs) {

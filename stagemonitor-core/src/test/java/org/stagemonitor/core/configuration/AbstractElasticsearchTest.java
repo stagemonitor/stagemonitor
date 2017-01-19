@@ -3,8 +3,11 @@ package org.stagemonitor.core.configuration;
 import org.apache.commons.io.FileUtils;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.node.internal.InternalSettingsPreparer;
+import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.transport.Netty4Plugin;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
@@ -17,6 +20,7 @@ import org.stagemonitor.core.util.HttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Collection;
 import java.util.Collections;
 
 import static org.mockito.Mockito.mock;
@@ -34,25 +38,22 @@ public class AbstractElasticsearchTest {
 	protected static CorePlugin corePlugin;
 
 	@BeforeClass
-	public static void beforeClass() throws IOException {
+	public static void beforeClass() throws Exception {
 		Stagemonitor.init();
 		if (node == null) {
 			final File esHome = new File("build/elasticsearch");
 			FileUtils.deleteQuietly(esHome);
-			final NodeBuilder nodeBuilder = NodeBuilder.nodeBuilder().local(true);
 			elasticsearchPort = getAvailablePort();
 			logger.info("Elasticsearch port: {}", elasticsearchPort);
-			nodeBuilder.settings()
+			final Settings settings = Settings.builder()
 					.put("path.home", esHome.getAbsolutePath())
-					.put("name", "junit-es-node")
-					.put("node.http.enabled", "false")
+					.put("node.name", "junit-es-node")
 					.put("http.port", elasticsearchPort)
 					.put("path.logs", "build/elasticsearch/logs")
 					.put("path.data", "build/elasticsearch/data")
-					.put("index.store.fs.memory.enabled", "true")
-					.put("index.number_of_shards", "1")
-					.put("index.number_of_replicas", "0")
-					.put("discovery.zen.ping.multicast.enabled", "false");
+					.put("transport.type", "local")
+					.put("http.type", "netty4")
+					.build();
 			elasticsearchUrl = "http://localhost:" + elasticsearchPort;
 			AbstractElasticsearchTest.corePlugin = mock(CorePlugin.class);
 			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
@@ -60,13 +61,20 @@ public class AbstractElasticsearchTest {
 			when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 			elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1);
 
-			node = nodeBuilder.node();
+			node = new TestNode(settings, Collections.singletonList(Netty4Plugin.class));
+			node.start();
 			node.client().admin().cluster().prepareHealth().setWaitForGreenStatus().get();
 
 			client = node.client();
 			adminClient = client.admin();
 			adminClient.cluster().prepareHealth()
 					.setWaitForYellowStatus().execute().actionGet();
+		}
+	}
+
+	private static class TestNode extends Node {
+		public TestNode(Settings preparedSettings, Collection<Class<? extends Plugin>> classpathPlugins) {
+			super(InternalSettingsPreparer.prepareEnvironment(preparedSettings, null), classpathPlugins);
 		}
 	}
 

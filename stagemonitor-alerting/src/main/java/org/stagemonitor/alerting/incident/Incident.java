@@ -1,7 +1,13 @@
 package org.stagemonitor.alerting.incident;
 
-import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
-import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.stagemonitor.alerting.check.Check;
+import org.stagemonitor.alerting.check.CheckResult;
+import org.stagemonitor.core.MeasurementSession;
 
 import java.util.Collection;
 import java.util.Date;
@@ -12,18 +18,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.stagemonitor.alerting.check.Check;
-import org.stagemonitor.alerting.check.CheckResult;
-import org.stagemonitor.core.MeasurementSession;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = ANY, setterVisibility = NONE)
 public class Incident {
 
-	private int version;
+	private int version = 1;
 	private Date firstFailureAt;
 	private Date resolvedAt;
 	private CheckResult.Status oldStatus;

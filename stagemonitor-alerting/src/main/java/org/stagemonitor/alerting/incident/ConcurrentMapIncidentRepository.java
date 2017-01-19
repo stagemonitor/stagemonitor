@@ -43,6 +43,9 @@ public class ConcurrentMapIncidentRepository implements IncidentRepository {
 
 	@Override
 	public boolean createIncident(Incident incident) {
+		if (incident.getVersion() != 1) {
+			throw new IllegalArgumentException("Tried to create an incident with version not equal to 1: " + incident.getVersion());
+		}
 		final Incident previousIncident = incidentsByCheckId.putIfAbsent(incident.getCheckId(), incident);
 		return previousIncident == null;
 	}
@@ -51,6 +54,11 @@ public class ConcurrentMapIncidentRepository implements IncidentRepository {
 	public boolean updateIncident(Incident incident) {
 		return incidentsByCheckId.replace(incident.getCheckId(), incident.getIncidentWithPreviousVersion(),
 				incident);
+	}
+
+	@Override
+	public void clear() {
+		incidentsByCheckId.clear();
 	}
 
 }

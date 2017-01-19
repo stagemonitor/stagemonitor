@@ -1,83 +1,89 @@
 package org.stagemonitor.alerting.incident;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Arrays;
-import java.util.Collection;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.stagemonitor.alerting.ThresholdMonitoringReporterTest;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.util.JsonUtils;
 
-public class IncidentRepositoryTest extends AbstractElasticsearchTest {
+import java.util.Arrays;
 
-	private Collection<IncidentRepository> incidentRepositorys;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+@RunWith(Parameterized.class)
+public class IncidentRepositoryTest<T extends IncidentRepository> extends AbstractElasticsearchTest {
+
+	private final T incidentRepository;
+
+	public IncidentRepositoryTest(T incidentRepository, Class<T> clazz) {
+		this.incidentRepository = incidentRepository;
+		if (incidentRepository instanceof ElasticsearchIncidentRepository) {
+			final ElasticsearchIncidentRepository elasticsearchIncidentRepository = (ElasticsearchIncidentRepository) incidentRepository;
+			elasticsearchIncidentRepository.setElasticsearchClient(elasticsearchClient);
+		}
+	}
 
 	@Before
 	public void setUp() throws Exception {
-		incidentRepositorys = Arrays.asList(new ElasticsearchIncidentRepository(elasticsearchClient), new ConcurrentMapIncidentRepository());
+		incidentRepository.clear();
+	}
+
+	@Parameterized.Parameters(name = "{index}: {1}")
+	public static Iterable<Object[]> data() {
+		return Arrays.asList(new Object[][]{
+				{new ElasticsearchIncidentRepository(elasticsearchClient), ElasticsearchIncidentRepository.class},
+				{new ConcurrentMapIncidentRepository(), ConcurrentMapIncidentRepository.class}
+		});
 	}
 
 	@Test
 	public void testSaveAndGet() throws Exception {
-		for (IncidentRepository incidentRepository : incidentRepositorys) {
-			Incident incident = createIncidentWithVersion("id1", 1);
-			assertTrue(incidentRepository.createIncident(incident));
-			refresh();
-			assertIncidentEquals(incidentRepository.getIncidentByCheckId(incident.getCheckId()), incident);
-			assertIncidentEquals(incidentRepository.getAllIncidents().iterator().next(), incident);
-		}
+		Incident incident = createIncidentWithVersion("id1", 1);
+		assertTrue(incidentRepository.createIncident(incident));
+		refresh();
+		assertIncidentEquals(incidentRepository.getIncidentByCheckId(incident.getCheckId()), incident);
+		assertIncidentEquals(incidentRepository.getAllIncidents().iterator().next(), incident);
 	}
 
 	@Test
 	public void testGetNotPresent() throws Exception {
-		for (IncidentRepository incidentRepository : incidentRepositorys) {
-			assertNull(incidentRepository.getIncidentByCheckId("testGetNotPresent"));
-			assertTrue(incidentRepository.getAllIncidents().isEmpty());
-		}
+		assertNull(incidentRepository.getIncidentByCheckId("testGetNotPresent"));
+		assertTrue(incidentRepository.getAllIncidents().isEmpty());
 	}
 
 	@Test
 	public void testAlreadyCreated() {
-		for (IncidentRepository incidentRepository : incidentRepositorys) {
-			assertTrue(incidentRepository.createIncident(createIncidentWithVersion("id1", 2)));
-			assertFalse(incidentRepository.createIncident(createIncidentWithVersion("id1", 3)));
-		}
+		assertTrue(incidentRepository.createIncident(createIncidentWithVersion("id1", 1)));
+		assertFalse(incidentRepository.createIncident(createIncidentWithVersion("id1", 1)));
 	}
 
 	@Test
 	public void testWrongVersion() {
-		for (IncidentRepository incidentRepository : incidentRepositorys) {
-			assertTrue(incidentRepository.createIncident(createIncidentWithVersion("id1", 2)));
-			assertFalse(incidentRepository.updateIncident(createIncidentWithVersion("id1", 2)));
-			assertTrue(incidentRepository.updateIncident(createIncidentWithVersion("id1", 3)));
-		}
+		assertTrue(incidentRepository.createIncident(createIncidentWithVersion("id1", 1)));
+		assertFalse(incidentRepository.updateIncident(createIncidentWithVersion("id1", 1)));
+		assertTrue(incidentRepository.updateIncident(createIncidentWithVersion("id1", 2)));
 	}
 
 	@Test
 	public void testDelete() throws Exception {
-		for (IncidentRepository incidentRepository : incidentRepositorys) {
-			assertTrue(incidentRepository.createIncident(createIncidentWithVersion("id1", 2)));
-			assertTrue(incidentRepository.deleteIncident(createIncidentWithVersion("id1", 3)));
-			assertNull(incidentRepository.getIncidentByCheckId("id1"));
-			assertTrue(incidentRepository.getAllIncidents().isEmpty());
-		}
+		assertTrue(incidentRepository.createIncident(createIncidentWithVersion("id1", 1)));
+		assertTrue(incidentRepository.deleteIncident(createIncidentWithVersion("id1", 2)));
+		assertNull(incidentRepository.getIncidentByCheckId("id1"));
+		assertTrue(incidentRepository.getAllIncidents().isEmpty());
 	}
 
 	@Test
 	public void testDeleteWrongVersion() throws Exception {
-		for (IncidentRepository incidentRepository : incidentRepositorys) {
-			assertTrue(incidentRepository.createIncident(createIncidentWithVersion("id1", 2)));
-			assertFalse(incidentRepository.deleteIncident(createIncidentWithVersion("id1", 2)));
-			assertFalse(incidentRepository.deleteIncident(createIncidentWithVersion("id1", 1)));
-		}
+		assertTrue(incidentRepository.createIncident(createIncidentWithVersion("id1", 1)));
+		assertFalse(incidentRepository.deleteIncident(createIncidentWithVersion("id1", 1)));
+		assertFalse(incidentRepository.deleteIncident(createIncidentWithVersion("id1", 0)));
 	}
 
 	private void assertIncidentEquals(Incident expected, Incident actual) {

@@ -13,6 +13,7 @@ dependencies {
 	testCompile project(':stagemonitor-requestmonitor').sourceSets.test.output
 	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
 	testCompile 'org.springframework:spring-test:4.1.0.RELEASE'
+	testCompile "org.elasticsearch.client:transport:$esVersion"
 
 }
 
