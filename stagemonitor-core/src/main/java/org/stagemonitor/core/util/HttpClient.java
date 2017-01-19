@@ -71,7 +71,8 @@ public class HttpClient {
 	}
 
 	public int send(final String method, final String url, final Map<String, String> headerFields, OutputStreamHandler outputStreamHandler) {
-		return send(method, url, headerFields, outputStreamHandler, new ErrorLoggingResponseHandler(url));
+		Integer result = send(method, url, headerFields, outputStreamHandler, new ErrorLoggingResponseHandler(url));
+		return result == null ? -1 : result;
 	}
 
 	public <T> T send(final String method, final String url, final Map<String, String> headerFields,
