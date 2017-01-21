@@ -30,7 +30,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -143,7 +143,7 @@ public class SpringRequestMonitorTest {
 
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getRequestName())).getCount());
 		assertEquals("Test Get Request Name", requestInformation.getRequestName());
-		assertEquals("Test Get Request Name", SpanTags.getInternalSpan(requestInformation.getSpan()).getOperationName());
+		assertEquals("Test Get Request Name", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
 		assertEquals("/test/requestName", requestInformation.getInternalSpan().getTags().get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET", requestInformation.getInternalSpan().getTags().get("method"));
 		Assert.assertNull(requestInformation.getExecutionResult());
@@ -202,7 +202,7 @@ public class SpringRequestMonitorTest {
 		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
 		try {
 			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());
-			assertEquals("Test Get Request Name", SpanTags.getInternalSpan(RequestMonitor.get().getSpan()).getOperationName());
+			assertEquals("Test Get Request Name", SpanUtils.getInternalSpan(RequestMonitor.get().getSpan()).getOperationName());
 		} finally {
 			requestMonitor.monitorStop();
 		}

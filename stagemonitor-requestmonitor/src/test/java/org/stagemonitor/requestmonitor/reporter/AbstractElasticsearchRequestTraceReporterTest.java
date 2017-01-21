@@ -12,7 +12,7 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -54,9 +54,9 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 
 	protected Span createTestSpanWithCallTree(long executionTimeMs) {
 		final io.opentracing.Span span = createTestSpan(executionTimeMs);
-		SpanTags.setCallTree(span, CallStackElement.createRoot("test"));
+		SpanUtils.setCallTree(span, CallStackElement.createRoot("test"));
 		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
-		return (Span) span;
+		return SpanUtils.getInternalSpan(span);
 	}
 
 	protected io.opentracing.Span createTestSpan(long executionTimeMs) {

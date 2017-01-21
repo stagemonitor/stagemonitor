@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collections;
 
@@ -47,7 +47,7 @@ public class RequestTraceAnonymisationTest {
 
 		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", span.getTags().get("username"));
 		assertNull(span.getTags().get("username_disclosed"));
-		assertEquals("123.123.123.0", span.getTags().get(SpanTags.IPV4_STRING));
+		assertEquals("123.123.123.0", span.getTags().get(SpanUtils.IPV4_STRING));
 	}
 
 	@Test
@@ -59,7 +59,7 @@ public class RequestTraceAnonymisationTest {
 
 		assertEquals("test", span.getTags().get("username"));
 		assertNull(span.getTags().get("username_disclosed"));
-		assertEquals("123.123.123.0", span.getTags().get(SpanTags.IPV4_STRING));
+		assertEquals("123.123.123.0", span.getTags().get(SpanUtils.IPV4_STRING));
 	}
 
 	@Test
@@ -72,7 +72,7 @@ public class RequestTraceAnonymisationTest {
 
 		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", span.getTags().get("username"));
 		assertEquals("test", span.getTags().get("username_disclosed"));
-		assertEquals("123.123.123.123", span.getTags().get(SpanTags.IPV4_STRING));
+		assertEquals("123.123.123.123", span.getTags().get(SpanUtils.IPV4_STRING));
 	}
 
 	@Test
@@ -85,7 +85,7 @@ public class RequestTraceAnonymisationTest {
 
 		assertEquals("test", span.getTags().get("username"));
 		assertEquals("test", span.getTags().get("username_disclosed"));
-		assertEquals("123.123.123.123", span.getTags().get(SpanTags.IPV4_STRING));
+		assertEquals("123.123.123.123", span.getTags().get(SpanUtils.IPV4_STRING));
 	}
 
 	@Test
@@ -97,7 +97,7 @@ public class RequestTraceAnonymisationTest {
 
 		assertNull(span.getTags().get("username"));
 		assertNull(span.getTags().get("username_disclosed"));
-		assertNull(span.getTags().get(SpanTags.IPV4_STRING));
+		assertNull(span.getTags().get(SpanUtils.IPV4_STRING));
 	}
 
 	@Test
@@ -109,7 +109,7 @@ public class RequestTraceAnonymisationTest {
 
 		assertNull(span.getTags().get("username"));
 		assertNull(span.getTags().get("username_disclosed"));
-		assertEquals("123.123.123.0", span.getTags().get(SpanTags.IPV4_STRING));
+		assertEquals("123.123.123.0", span.getTags().get(SpanUtils.IPV4_STRING));
 	}
 
 	@Test
@@ -121,7 +121,7 @@ public class RequestTraceAnonymisationTest {
 
 		assertEquals("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3", span.getTags().get("username"));
 		assertNull(span.getTags().get("username_disclosed"));
-		assertNull(span.getTags().get(SpanTags.IPV4_STRING));
+		assertNull(span.getTags().get(SpanUtils.IPV4_STRING));
 	}
 
 	@Test
@@ -133,7 +133,7 @@ public class RequestTraceAnonymisationTest {
 
 		assertEquals("test", span.getTags().get("username"));
 		assertNull(span.getTags().get("username_disclosed"));
-		assertEquals("123.123.123.123", span.getTags().get(SpanTags.IPV4_STRING));
+		assertEquals("123.123.123.123", span.getTags().get(SpanUtils.IPV4_STRING));
 	}
 
 	private Span createSpan() {
@@ -141,12 +141,12 @@ public class RequestTraceAnonymisationTest {
 	}
 
 	private Span createSpan(String username, String ip) {
-		final Span span = (Span) new Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true))
+		final Span span = SpanUtils.getInternalSpan(new Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true))
 				.build()
 				.buildSpan("Test Operation")
-				.start();
-		span.setTag(SpanTags.USERNAME, username);
-		SpanTags.setClientIp(span, ip);
+				.start());
+		span.setTag(SpanUtils.USERNAME, username);
+		SpanUtils.setClientIp(span, ip);
 		requestMonitor.anonymizeUserNameAndIp(span);
 		return span;
 	}

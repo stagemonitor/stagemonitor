@@ -19,7 +19,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
@@ -122,7 +122,7 @@ public class SpanServletTest {
 	}
 
 	private String spanAsJson() {
-		return JsonUtils.toJson(span, SpanTags.CALL_TREE_ASCII);
+		return JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII);
 	}
 
 	private void performNonBlockingRequest(final HttpServletRequest request, final MockHttpServletResponse response) throws Exception {

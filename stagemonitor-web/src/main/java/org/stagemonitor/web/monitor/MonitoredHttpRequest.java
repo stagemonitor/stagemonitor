@@ -8,7 +8,7 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.WidgetAjaxRequestTraceReporter;
@@ -81,12 +81,12 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
 		final Span span = tracer.buildSpan(getRequestName()).asChildOf(spanCtx).start();
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
-		SpanTags.setOperationType(span, "http");
+		SpanUtils.setOperationType(span, "http");
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
 		span.setTag("method", httpServletRequest.getMethod());
 		span.setTag("http.referring_site", getReferringSite());
 		if (webPlugin.isCollectHttpHeaders()) {
-			SpanTags.setHttpHeaders(span, getHeaders(httpServletRequest));
+			SpanUtils.setHttpHeaders(span, getHeaders(httpServletRequest));
 		}
 
 		return span;
@@ -185,7 +185,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		for (String requestExceptionAttribute : webPlugin.getRequestExceptionAttributes()) {
 			Object exception = httpServletRequest.getAttribute(requestExceptionAttribute);
 			if (exception != null && exception instanceof Exception) {
-				SpanTags.setException(span, (Exception) exception, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
+				SpanUtils.setException(span, (Exception) exception, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
 				break;
 			}
 		}
@@ -201,7 +201,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		Set<Pattern> confidentialParams = new HashSet<Pattern>();
 		confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
 		confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
-		SpanTags.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
+		SpanUtils.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
 	}
 
 	@Override
@@ -212,16 +212,16 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		final Span span = requestInformation.getSpan();
 
-		final String userName = getUserName(SpanTags.getInternalSpan(span));
+		final String userName = getUserName(SpanUtils.getInternalSpan(span));
 		final String sessionId = getSessionId();
-		span.setTag(SpanTags.USERNAME, userName);
+		span.setTag(SpanUtils.USERNAME, userName);
 		span.setTag("session_id", sessionId);
 		if (userName != null) {
 			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(userName));
 		} else {
 			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(clientIp + sessionId + userAgenHeader));
 		}
-		SpanTags.setClientIp(span, clientIp);
+		SpanUtils.setClientIp(span, clientIp);
 
 		int status = responseWrapper.getStatus();
 		Tags.HTTP_STATUS.set(span, status);
@@ -245,7 +245,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	}
 
 	private String getUserName(com.uber.jaeger.Span span) {
-		final Object username = span.getTags().get(SpanTags.USERNAME);
+		final Object username = span.getTags().get(SpanUtils.USERNAME);
 		if (username != null) {
 			return username.toString();
 		}

@@ -24,6 +24,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collections;
 import java.util.concurrent.Callable;
@@ -225,7 +226,7 @@ public class RequestMonitorTest {
 		final Span[] asyncSpan = new Span[1];
 
 		requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
-			firstSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+			firstSpan[0] = SpanUtils.getInternalSpan(TracingUtils.getTraceContext().getCurrentSpan());
 			return monitorAsyncMethodCall(executorService, asyncSpan);
 		}));
 		executorService.shutdown();
@@ -240,7 +241,7 @@ public class RequestMonitorTest {
 	private Object monitorAsyncMethodCall(ExecutorService executorService, final Span[] asyncSpan) {
 		return executorService.submit((Callable<Object>) () ->
 				requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
-					asyncSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+					asyncSpan[0] = SpanUtils.getInternalSpan(TracingUtils.getTraceContext().getCurrentSpan());
 					return callAsyncMethod();
 				})));
 	}

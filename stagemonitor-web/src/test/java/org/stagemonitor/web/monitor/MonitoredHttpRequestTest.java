@@ -11,7 +11,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.io.IOException;
@@ -69,25 +69,25 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = SpanTags.getInternalSpan(monitoredHttpRequest.createSpan());
+		final Span span = SpanUtils.getInternalSpan(monitoredHttpRequest.createSpan());
 		assertEquals("/test.js", span.getTags().get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET *.js", span.getOperationName());
 		assertEquals("GET", span.getTags().get("method"));
 		assertNotNull(span.context().getSpanID());
 		assertNotNull(span.getStart());
 
-		assertEquals("application/json", span.getTags().get(SpanTags.HTTP_HEADERS_PREFIX + "accept"));
-		assertFalse(span.getTags().containsKey(SpanTags.HTTP_HEADERS_PREFIX + "cookie"));
-		assertFalse(span.getTags().containsKey(SpanTags.HTTP_HEADERS_PREFIX + "Cookie"));
+		assertEquals("application/json", span.getTags().get(SpanUtils.HTTP_HEADERS_PREFIX + "accept"));
+		assertFalse(span.getTags().containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "cookie"));
+		assertFalse(span.getTags().containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "Cookie"));
 
 		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
 		when(requestInformation.getSpan()).thenReturn(span);
 		when(requestInformation.getRequestName()).thenReturn(span.getOperationName());
 		monitoredHttpRequest.onPostExecute(requestInformation);
-		assertEquals("bar", span.getTags().get(SpanTags.PARAMETERS_PREFIX + "foo"));
-		assertEquals("blubb", span.getTags().get(SpanTags.PARAMETERS_PREFIX + "bla"));
-		assertEquals("XXXX", span.getTags().get(SpanTags.PARAMETERS_PREFIX + "pwd"));
-		assertEquals("XXXX", span.getTags().get(SpanTags.PARAMETERS_PREFIX + "creditCard"));
+		assertEquals("bar", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "foo"));
+		assertEquals("blubb", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "bla"));
+		assertEquals("XXXX", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
+		assertEquals("XXXX", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
 	}
 
 	@Test
@@ -97,7 +97,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = SpanTags.getInternalSpan(monitoredHttpRequest.createSpan());
+		final Span span = SpanUtils.getInternalSpan(monitoredHttpRequest.createSpan());
 		assertEquals("www.github.com", span.getTags().get("http.referring_site"));
 	}
 
@@ -109,7 +109,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = SpanTags.getInternalSpan(monitoredHttpRequest.createSpan());
+		final Span span = SpanUtils.getInternalSpan(monitoredHttpRequest.createSpan());
 		assertNull(span.getTags().get("http.referring_site"));
 	}
 

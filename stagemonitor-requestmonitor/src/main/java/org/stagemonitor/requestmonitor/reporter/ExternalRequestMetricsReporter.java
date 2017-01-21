@@ -4,7 +4,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,8 +37,8 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 	@Override
 	public void report(ReportArguments reportArguments) {
 		final Span span = reportArguments.getSpan();
-		if (SpanTags.isExternalRequest(span)) {
-			trackExternalRequestMetrics((com.uber.jaeger.Span) span);
+		if (SpanUtils.isExternalRequest(span)) {
+			trackExternalRequestMetrics(SpanUtils.getInternalSpan(span));
 		}
 	}
 

@@ -3,6 +3,7 @@ package org.stagemonitor.requestmonitor;
 import com.uber.jaeger.Span;
 
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -30,7 +31,7 @@ public class SpanCapturingReporter extends SpanReporter {
 	}
 
 	public Span getSpan() throws InterruptedException {
-		return (Span) get().getSpan();
+		return SpanUtils.getInternalSpan(get().getSpan());
 	}
 
 	public ReportArguments get() throws InterruptedException {

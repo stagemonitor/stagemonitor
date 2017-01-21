@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +21,6 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 	}
 
 	private void exclude(PostExecutionInterceptorContext context) {
-		context.addExcludedProperties(SpanTags.CALL_TREE_ASCII, SpanTags.CALL_TREE_JSON);
+		context.addExcludedProperties(SpanUtils.CALL_TREE_ASCII, SpanUtils.CALL_TREE_JSON);
 	}
 }

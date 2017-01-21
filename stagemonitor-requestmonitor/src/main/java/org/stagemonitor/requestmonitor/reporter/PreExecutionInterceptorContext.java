@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import io.opentracing.Span;
 
@@ -47,8 +48,9 @@ public class PreExecutionInterceptorContext {
 	public Span getSpan() {
 		return span;
 	}
+
 	public com.uber.jaeger.Span getInternalSpan() {
-		return (com.uber.jaeger.Span) span;
+		return SpanUtils.getInternalSpan(span);
 	}
 
 	public Meter getExternalRequestReportingRate() {

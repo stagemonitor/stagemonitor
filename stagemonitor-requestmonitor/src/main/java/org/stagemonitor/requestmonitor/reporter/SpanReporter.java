@@ -5,6 +5,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -127,7 +128,7 @@ public abstract class SpanReporter implements StagemonitorSPI {
 		}
 
 		public com.uber.jaeger.Span getInternalSpan() {
-			return (com.uber.jaeger.Span) span;
+			return SpanUtils.getInternalSpan(span);
 		}
 
 		public CallStackElement getCallTree() {

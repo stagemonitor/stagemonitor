@@ -19,7 +19,7 @@ import java.util.Map;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
-public class SpanTags {
+public class SpanUtils {
 
 	public static final String IPV4_STRING = "peer.ipv4_string";
 	public static final String CALL_TREE_ASCII = "call_tree_ascii";
@@ -28,7 +28,7 @@ public class SpanTags {
 	public static final String USERNAME = "username";
 	public static final String PARAMETERS_PREFIX = "parameters.";
 
-	private SpanTags() {
+	private SpanUtils() {
 	}
 
 	public static void setClientIp(Span span, String clientIp) {

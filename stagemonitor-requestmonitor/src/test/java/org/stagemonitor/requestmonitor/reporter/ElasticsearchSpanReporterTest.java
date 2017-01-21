@@ -11,7 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -104,8 +104,8 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 		ArgumentCaptor<JsonNode> requestTraceCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), requestTraceCaptor.capture());
 		JsonNode span = requestTraceCaptor.getValue();
-		assertFalse(span.has(SpanTags.CALL_TREE_ASCII));
-		assertFalse(span.has(SpanTags.CALL_TREE_JSON));
+		assertFalse(span.has(SpanUtils.CALL_TREE_ASCII));
+		assertFalse(span.has(SpanUtils.CALL_TREE_JSON));
 	}
 
 	@Test

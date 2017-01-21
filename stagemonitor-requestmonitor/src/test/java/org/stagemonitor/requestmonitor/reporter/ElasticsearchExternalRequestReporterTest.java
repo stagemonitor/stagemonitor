@@ -1,15 +1,15 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import com.codahale.metrics.Timer;
+import com.uber.jaeger.Span;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
@@ -141,9 +141,9 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private Span getSpan(long executionTimeMillis) {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
-		final Span span = tracer.buildSpan("External Request").withStartTimestamp(1).start();
+		final Span span = SpanUtils.getInternalSpan(tracer.buildSpan("External Request").withStartTimestamp(1).start());
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
-		SpanTags.setOperationType(span, "jdbc");
+		SpanUtils.setOperationType(span, "jdbc");
 		span.setTag("method", "SELECT");
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis) + 1);
 		return span;
@@ -151,11 +151,11 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private void verifyTimerCreated(int count) {
 		final Span span = getSpan();
-		final Timer timer = registry.getTimers().get(getExternalRequestTimerName((com.uber.jaeger.Span) span));
+		final Timer timer = registry.getTimers().get(getExternalRequestTimerName(span));
 		assertNotNull(registry.getTimers().keySet().toString(), timer);
 		assertEquals(count, timer.getCount());
 
-		final Timer allTimer = registry.getTimers().get(getExternalRequestTimerName((com.uber.jaeger.Span) span, "All"));
+		final Timer allTimer = registry.getTimers().get(getExternalRequestTimerName(span, "All"));
 		assertNotNull(allTimer);
 		assertEquals(count, allTimer.getCount());
 	}

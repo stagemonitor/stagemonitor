@@ -21,7 +21,7 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -179,7 +179,7 @@ public class RequestMonitor {
 	}
 
 	public void recordException(Exception e) {
-		SpanTags.setException(getSpan(), e, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
+		SpanUtils.setException(getSpan(), e, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {
@@ -257,7 +257,7 @@ public class RequestMonitor {
 			if (minExecutionTimeMultiplier > 0d) {
 				callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
 			}
-			SpanTags.setCallTree(span, callTree);
+			SpanUtils.setCallTree(span, callTree);
 		}
 		span.finish();
 		info.requestTraceReporterFuture = report(info);
@@ -267,22 +267,22 @@ public class RequestMonitor {
 		final boolean pseudonymizeUserNames = requestMonitorPlugin.isPseudonymizeUserNames();
 		final boolean anonymizeIPs = requestMonitorPlugin.isAnonymizeIPs();
 		if (pseudonymizeUserNames || anonymizeIPs) {
-			final String username = (String) span.getTags().get(SpanTags.USERNAME);
+			final String username = (String) span.getTags().get(SpanUtils.USERNAME);
 			if (pseudonymizeUserNames) {
 				final String hashedUserName = StringUtils.sha1Hash(username);
-				span.setTag(SpanTags.USERNAME, hashedUserName);
+				span.setTag(SpanUtils.USERNAME, hashedUserName);
 			}
-			final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(span.getTags().get(SpanTags.USERNAME));
+			final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(span.getTags().get(SpanUtils.USERNAME));
 			if (disclose) {
 				span.setTag("username_disclosed", username);
 			}
 			if (anonymizeIPs) {
-				String ip = (String) span.getTags().get(SpanTags.IPV4_STRING);
+				String ip = (String) span.getTags().get(SpanUtils.IPV4_STRING);
 				if (ip == null) {
 					ip = (String) span.getTags().get(Tags.PEER_HOST_IPV6.getKey());
 				}
 				if (ip != null && !disclose) {
-					SpanTags.setClientIp(span, IPAnonymizationUtils.anonymize(ip));
+					SpanUtils.setClientIp(span, IPAnonymizationUtils.anonymize(ip));
 				}
 			}
 		}
@@ -386,8 +386,8 @@ public class RequestMonitor {
 		}
 
 		public String getRequestName() {
-			if (span instanceof com.uber.jaeger.Span) {
-				return ((com.uber.jaeger.Span) span).getOperationName();
+			if (span != null) {
+				return getInternalSpan().getOperationName();
 			}
 			return null;
 		}
@@ -435,7 +435,7 @@ public class RequestMonitor {
 		}
 
 		public com.uber.jaeger.Span getInternalSpan() {
-			return SpanTags.getInternalSpan(span);
+			return SpanUtils.getInternalSpan(span);
 		}
 
 		public void setSpan(Span span) {

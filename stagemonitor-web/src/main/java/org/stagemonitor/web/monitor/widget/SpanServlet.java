@@ -9,7 +9,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public class SpanServlet extends HttpServlet {
 		final ArrayList<String> jsonResponse = new ArrayList<String>(spans.size());
 		for (Span span : spans) {
 			logger.debug("writeRequestTracesToResponse {}", span);
-			jsonResponse.add(JsonUtils.toJson(span, SpanTags.CALL_TREE_ASCII));
+			jsonResponse.add(JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII));
 		}
 		response.getWriter().print(jsonResponse.toString());
 		response.getWriter().close();

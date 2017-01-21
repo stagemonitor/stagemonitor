@@ -14,7 +14,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,10 +59,10 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		final SpanReporter.ReportArguments reportArguments = requestTraceCapturingReporter.get();
-		final Span span = (Span) reportArguments.getSpan();
+		final Span span = SpanUtils.getInternalSpan(reportArguments.getSpan());
 		new LoggingSpanReporter().report(reportArguments);
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(reportArguments.getInternalSpan().getTags(), SpanTags.PARAMETERS_PREFIX).iterator().next());
+		assertEquals("1", getTagsStartingWith(reportArguments.getInternalSpan().getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", span.getOperationName());
 		assertEquals(1, reportArguments.getCallTree().getChildren().size());
 		final String signature = reportArguments.getCallTree().getChildren().get(0).getSignature();
@@ -182,7 +182,7 @@ public class MonitorRequestsTransformerTest {
 		final SpanReporter.ReportArguments reportArguments = requestTraceCapturingReporter.get();
 
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(reportArguments.getInternalSpan().getTags(), SpanTags.PARAMETERS_PREFIX).iterator().next());
+		assertEquals("1", getTagsStartingWith(reportArguments.getInternalSpan().getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", reportArguments.getInternalSpan().getOperationName());
 		assertEquals(1, reportArguments.getCallTree().getChildren().size());
 		final String signature = reportArguments.getCallTree().getChildren().get(0).getSignature();

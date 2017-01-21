@@ -2,7 +2,7 @@ package org.stagemonitor.web.reporter;
 
 import org.stagemonitor.requestmonitor.reporter.PostExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.reporter.PostExecutionRequestTraceReporterInterceptor;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 
 /**
@@ -17,7 +17,7 @@ public class DoNotTrackPostExecutionInterceptor extends PostExecutionRequestTrac
 		if (!context.getConfig(WebPlugin.class).isHonorDoNotTrackHeader()) {
 			return;
 		}
-		if ("1".equals(context.getInternalSpan().getTags().get(SpanTags.HTTP_HEADERS_PREFIX + "dnt"))) {
+		if ("1".equals(context.getInternalSpan().getTags().get(SpanUtils.HTTP_HEADERS_PREFIX + "dnt"))) {
 			context.shouldNotReport(getClass());
 		}
 	}

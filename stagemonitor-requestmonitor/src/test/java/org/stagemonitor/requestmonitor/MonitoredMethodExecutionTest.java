@@ -11,7 +11,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.utils.SpanTags;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Map;
 
@@ -60,8 +60,8 @@ public class MonitoredMethodExecutionTest {
 		assertEquals(1, requestInformation1.getExecutionResult());
 		assertEquals("monitored1()", requestInformation1.getInternalSpan().getOperationName());
 		final Map<String, Object> tags = requestInformation1.getInternalSpan().getTags();
-		assertEquals(tags.toString(), "1", tags.get(SpanTags.PARAMETERS_PREFIX + "arg0"));
-		assertEquals(tags.toString(), "test", tags.get(SpanTags.PARAMETERS_PREFIX + "arg1"));
+		assertEquals(tags.toString(), "1", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg0"));
+		assertEquals(tags.toString(), "test", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg1"));
 
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
