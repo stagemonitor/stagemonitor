@@ -15,7 +15,6 @@ import org.stagemonitor.core.util.StringUtils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +40,13 @@ public class SpanJsonModule extends Module {
 			@Override
 			public void serialize(Span span, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 				gen.writeStartObject();
-				for (Map.Entry<String, Object> entry : convertDottedKeysIntoNestedObject(span.getTags()).entrySet()) {
+				final Map<String, Object> nestedTags;
+				// synchronizing on the span avoids ConcurrentModificationExceptions
+				// in case other threads are for example adding tags while the span is converted to JSON
+				synchronized (span) {
+					nestedTags = convertDottedKeysIntoNestedObject(span.getTags());
+				}
+				for (Map.Entry<String, Object> entry : nestedTags.entrySet()) {
 					final Object value = entry.getValue();
 					if (value != null) {
 						gen.writeObjectField(entry.getKey(), value);
@@ -105,12 +110,11 @@ public class SpanJsonModule extends Module {
 	 */
 	private Map<String, Object> convertDottedKeysIntoNestedObject(Map<String, Object> tags) {
 		Map<String, Object> nestedTags = new HashMap<String, Object>();
-		// TODO throws ConcurrentModificationException
-		for (String key : new HashSet<String>(tags.keySet())) {
-			if (key.indexOf('.') >= 0) {
-				doConvertDots(nestedTags, key, tags.get(key));
+		for (Map.Entry<String, Object> entry : tags.entrySet()) {
+			if (entry.getKey().indexOf('.') >= 0) {
+				doConvertDots(nestedTags, entry.getKey(), entry.getValue());
 			} else {
-				nestedTags.put(key, tags.get(key));
+				nestedTags.put(entry.getKey(), entry.getValue());
 			}
 		}
 
