@@ -104,23 +104,37 @@ public abstract class SpanReporter implements StagemonitorSPI {
 		private final Span span;
 		private final CallStackElement callTree;
 		private final Map<String, Object> requestAttributes;
+		private final String operationName;
+		private final long duration;
 
 		/**
 		 * Only to be used in unit tests
 		 */
 		@Deprecated
 		public ReportArguments(Span span, CallStackElement callTree) {
-			this(span, callTree, new HashMap<String, Object>());
+			this(span, callTree, new HashMap<String, Object>(), SpanUtils.getInternalSpan(span).getOperationName(), SpanUtils.getInternalSpan(span).getDuration());
+		}
+
+		/**
+		 * Only to be used in unit tests
+		 */
+		@Deprecated
+		public ReportArguments(Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
+			this(span, callTree, requestAttributes, SpanUtils.getInternalSpan(span).getOperationName(), SpanUtils.getInternalSpan(span).getDuration());
 		}
 
 		/**
 		 * @param span
 		 * @param callTree
+		 * @param operationName
+		 * @param duration
 		 */
-		public ReportArguments(Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
+		public ReportArguments(Span span, CallStackElement callTree, Map<String, Object> requestAttributes, String operationName, long duration) {
 			this.span = span;
 			this.callTree = callTree;
 			this.requestAttributes = requestAttributes;
+			this.operationName = operationName;
+			this.duration = duration;
 		}
 
 		public Span getSpan() {
@@ -137,6 +151,14 @@ public abstract class SpanReporter implements StagemonitorSPI {
 
 		public Map<String, Object> getRequestAttributes() {
 			return requestAttributes;
+		}
+
+		public String getOperationName() {
+			return operationName;
+		}
+
+		public long getDuration() {
+			return duration;
 		}
 	}
 }

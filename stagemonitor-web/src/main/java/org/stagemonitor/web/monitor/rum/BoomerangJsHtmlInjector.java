@@ -3,7 +3,6 @@ package org.stagemonitor.web.monitor.rum;
 import com.uber.jaeger.Span;
 
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
@@ -32,7 +31,6 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 				beaconUrl +
 				"      log: null\n" +
 				"   });\n" +
-				"   BOOMR.addVar(\"requestId\", \"${requestId}\");\n" +
 				"   BOOMR.addVar(\"requestName\", \"${requestName}\");\n" +
 				"   BOOMR.addVar(\"serverTime\", ${serverTime});\n" +
 				"</script>";
@@ -52,7 +50,6 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 		}
 		final Span span = injectArguments.getRequestInformation().getInternalSpan();
 		injectArguments.setContentToInjectBeforeClosingBody(boomerangTemplate
-				.replace("${requestId}", StringUtils.toHexString(span.context().getSpanID()))
 				.replace("${requestName}", String.valueOf(span.getOperationName()))
 				.replace("${serverTime}", Long.toString(TimeUnit.MICROSECONDS.toMillis(span.getDuration()))));
 	}

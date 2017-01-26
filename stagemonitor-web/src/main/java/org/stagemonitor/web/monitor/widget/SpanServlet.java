@@ -1,12 +1,11 @@
 package org.stagemonitor.web.monitor.widget;
 
-import com.uber.jaeger.Span;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.Pair;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -52,7 +51,7 @@ public class SpanServlet extends HttpServlet {
 		}
 	}
 
-	private void writeRequestTracesToResponse(HttpServletResponse response, Collection<Span> spans)
+	private void writeRequestTracesToResponse(HttpServletResponse response, Collection<Pair<Long, io.opentracing.Span>> spans)
 			throws IOException {
 		if (spans == null) {
 			spans = Collections.emptyList();
@@ -64,9 +63,9 @@ public class SpanServlet extends HttpServlet {
 		response.setCharacterEncoding("UTF-8");
 
 		final ArrayList<String> jsonResponse = new ArrayList<String>(spans.size());
-		for (Span span : spans) {
-			logger.debug("writeRequestTracesToResponse {}", span);
-			jsonResponse.add(JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII));
+		for (Pair<Long, io.opentracing.Span> spanPair : spans) {
+			logger.debug("writeRequestTracesToResponse {}", spanPair);
+			jsonResponse.add(JsonUtils.toJson(spanPair.getB(), SpanUtils.CALL_TREE_ASCII));
 		}
 		response.getWriter().print(jsonResponse.toString());
 		response.getWriter().close();

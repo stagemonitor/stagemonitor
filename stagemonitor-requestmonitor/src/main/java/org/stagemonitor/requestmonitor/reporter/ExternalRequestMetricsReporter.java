@@ -1,5 +1,7 @@
 package org.stagemonitor.requestmonitor.reporter;
 
+import com.uber.jaeger.Span;
+
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -8,11 +10,10 @@ import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.concurrent.TimeUnit;
 
-import io.opentracing.Span;
-
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
+// TODO remove. External request metrics are tracked by ExternalRequestMetricsSpanInterceptor
 public class ExternalRequestMetricsReporter extends SpanReporter {
 
 	public static final String EXTERNAL_REQUEST_TYPE = "type";
@@ -36,9 +37,9 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 
 	@Override
 	public void report(ReportArguments reportArguments) {
-		final Span span = reportArguments.getSpan();
+		final Span span = reportArguments.getInternalSpan();
 		if (SpanUtils.isExternalRequest(span)) {
-			trackExternalRequestMetrics(SpanUtils.getInternalSpan(span));
+			trackExternalRequestMetrics(span);
 		}
 	}
 

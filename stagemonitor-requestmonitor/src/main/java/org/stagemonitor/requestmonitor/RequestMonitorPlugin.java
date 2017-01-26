@@ -12,12 +12,16 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
+import org.stagemonitor.requestmonitor.tracing.ExternalRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
+import org.stagemonitor.requestmonitor.tracing.SpanWrappingTracer;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -312,7 +316,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	}
 
 	@Override
-	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
+	public void initializePlugin(final StagemonitorPlugin.InitArguments initArguments) {
 		JsonUtils.getMapper().registerModule(new SpanJsonModule());
 
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
@@ -339,7 +343,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
-		tracer = new com.uber.jaeger.Tracer.Builder(initArguments.getMeasurementSession().getApplicationName(), new CompositeReporter(new LoggingReporter()), new ConstSampler(true)).build();
+
+		final com.uber.jaeger.Tracer tracerDelegate = new com.uber.jaeger.Tracer.Builder(initArguments.getMeasurementSession().getApplicationName(), new CompositeReporter(new LoggingReporter()), new ConstSampler(true)).build();
+		tracer = new SpanWrappingTracer(tracerDelegate) {
+			@Override
+			protected List<SpanInterceptor> createSpanInterceptors(String operationName) {
+				return Collections.<SpanInterceptor>singletonList(
+						new ExternalRequestMetricsSpanInterceptor(operationName, corePlugin, RequestMonitorPlugin.this));
+			}
+		};
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import org.stagemonitor.core.util.TimeUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
+import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
@@ -36,7 +37,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.opentracing.NoopTracerFactory;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
@@ -70,7 +70,6 @@ public class RequestMonitor {
 	private RequestMonitorPlugin requestMonitorPlugin;
 	private Date endOfWarmup;
 	private Meter callTreeMeter = new Meter();
-	private final static Span NOOP_SPAN = NoopTracerFactory.create().buildSpan(null).start();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
 		this(configuration, registry, ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader()));
@@ -325,7 +324,7 @@ public class RequestMonitor {
 			if (isActive(requestInformation, spanReporter)) {
 				try {
 					spanReporter.report(new SpanReporter.ReportArguments(
-							requestInformation.getSpan(), callTree, requestInformation.requestAttributes));
+							requestInformation.getSpan(), callTree, requestInformation.requestAttributes, requestInformation.getRequestName(), requestInformation.getInternalSpan().getDuration()));
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 				}
@@ -491,7 +490,7 @@ public class RequestMonitor {
 	 */
 	public Span getSpan() {
 		final RequestInformation requestInformation = request.get();
-		return requestInformation != null ? requestInformation.getSpan() : NOOP_SPAN;
+		return requestInformation != null ? requestInformation.getSpan() : NoopSpan.INSTANCE;
 	}
 
 	/**

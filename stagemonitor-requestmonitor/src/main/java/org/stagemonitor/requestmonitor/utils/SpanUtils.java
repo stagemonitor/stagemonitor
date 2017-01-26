@@ -96,7 +96,7 @@ public class SpanUtils {
 		return (com.uber.jaeger.Span) span;
 	}
 
-	public static boolean isExternalRequest(Span span) {
+	public static boolean isExternalRequest(com.uber.jaeger.Span span) {
 		com.uber.jaeger.Span jaegerSpan = getInternalSpan(span);
 		return jaegerSpan.isRPCClient() &&
 				jaegerSpan.getTags().get(ExternalRequestMetricsReporter.EXTERNAL_REQUEST_TYPE) != null &&

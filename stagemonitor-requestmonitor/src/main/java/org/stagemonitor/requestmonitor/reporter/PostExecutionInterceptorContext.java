@@ -10,16 +10,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import io.opentracing.Span;
-
 import static org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsReporter.getTimerMetricName;
 
 public class PostExecutionInterceptorContext extends PreExecutionInterceptorContext {
 
 	private final Collection<String> excludedProperties = new LinkedList<String>();
+	private final SpanReporter.ReportArguments reportArguments;
 
-	PostExecutionInterceptorContext(Configuration configuration, Span span, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
-		super(configuration, span, internalRequestReportingRate, externalRequestReportingRate, metricRegistry);
+	PostExecutionInterceptorContext(Configuration configuration, SpanReporter.ReportArguments reportArguments, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
+		super(configuration, reportArguments.getSpan(), internalRequestReportingRate, externalRequestReportingRate, metricRegistry);
+		this.reportArguments = reportArguments;
 	}
 
 	public PostExecutionInterceptorContext addExcludedProperty(String properties) {
@@ -55,4 +55,7 @@ public class PostExecutionInterceptorContext extends PreExecutionInterceptorCont
 		return getMetricRegistry().timer(getTimerMetricName(getInternalSpan().getOperationName()));
 	}
 
+	public SpanReporter.ReportArguments getReportArguments() {
+		return reportArguments;
+	}
 }

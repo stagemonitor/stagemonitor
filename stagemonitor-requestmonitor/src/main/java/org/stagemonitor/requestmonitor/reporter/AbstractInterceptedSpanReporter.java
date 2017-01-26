@@ -61,7 +61,7 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 	@Override
 	public void report(ReportArguments reportArguments) {
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration,
-				reportArguments.getSpan(), internalRequestReportingRate, externalRequestReportingRate, corePlugin.getMetricRegistry());
+				reportArguments, internalRequestReportingRate, externalRequestReportingRate, corePlugin.getMetricRegistry());
 		for (PostExecutionRequestTraceReporterInterceptor interceptor : postInterceptors) {
 			try {
 				interceptor.interceptReport(context);
