@@ -16,18 +16,21 @@ public class BasicSpanInterceptor implements SpanInterceptor {
 		this.operationName = operationName;
 	}
 
-	public void onSetTag(String key, String value) {
+	public String onSetTag(String key, String value) {
 		if (key.equals(Tags.SPAN_KIND.getKey())) {
 			isClient = Tags.SPAN_KIND_CLIENT.equals(value);
 			isServer = Tags.SPAN_KIND_SERVER.equals(value);
 			isRPC = isClient || isServer;
 		}
+		return value;
 	}
 
-	public void onSetTag(String key, boolean value) {
+	public boolean onSetTag(String key, boolean value) {
+		return value;
 	}
 
-	public void onSetTag(String key, Number value) {
+	public Number onSetTag(String key, Number value) {
+		return value;
 	}
 
 	public void onSetOperationName(String operationName) {

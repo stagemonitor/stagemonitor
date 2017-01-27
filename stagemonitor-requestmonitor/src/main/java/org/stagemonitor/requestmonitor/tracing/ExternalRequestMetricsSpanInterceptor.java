@@ -38,8 +38,8 @@ public class ExternalRequestMetricsSpanInterceptor extends BasicSpanInterceptor 
 	}
 
 	@Override
-	public void onSetTag(String key, String value) {
-		super.onSetTag(key, value);
+	public String onSetTag(String key, String value) {
+		value = super.onSetTag(key, value);
 		if (EXTERNAL_REQUEST_TYPE.equals(key)) {
 			type = value;
 		} else if (EXTERNAL_REQUEST_METHOD.equals(key)) {
@@ -47,6 +47,7 @@ public class ExternalRequestMetricsSpanInterceptor extends BasicSpanInterceptor 
 		} else if (EXTERNAL_REQUEST_PARENT_NAME.equals(key)) {
 			parentName = value;
 		}
+		return value;
 	}
 
 	@Override

@@ -43,21 +43,21 @@ public class SpanWrapper implements Span {
 
 	public Span setTag(String key, String value) {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onSetTag(key, value);
+			value = spanInterceptor.onSetTag(key, value);
 		}
 		return delegate.setTag(key, value);
 	}
 
 	public Span setTag(String key, boolean value) {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onSetTag(key, value);
+			value = spanInterceptor.onSetTag(key, value);
 		}
 		return delegate.setTag(key, value);
 	}
 
 	public Span setTag(String key, Number value) {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onSetTag(key, value);
+			value = spanInterceptor.onSetTag(key, value);
 		}
 		return delegate.setTag(key, value);
 	}

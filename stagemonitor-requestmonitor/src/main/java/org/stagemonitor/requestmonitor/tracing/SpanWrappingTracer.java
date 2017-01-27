@@ -65,21 +65,21 @@ public class SpanWrappingTracer implements Tracer {
 
 		public SpanBuilder withTag(String key, String value) {
 			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				spanInterceptor.onSetTag(key, value);
+				value = spanInterceptor.onSetTag(key, value);
 			}
 			return delegate.withTag(key, value);
 		}
 
 		public SpanBuilder withTag(String key, boolean value) {
 			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				spanInterceptor.onSetTag(key, value);
+				value = spanInterceptor.onSetTag(key, value);
 			}
 			return delegate.withTag(key, value);
 		}
 
 		public SpanBuilder withTag(String key, Number value) {
 			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				spanInterceptor.onSetTag(key, value);
+				value = spanInterceptor.onSetTag(key, value);
 			}
 			return delegate.withTag(key, value);
 		}

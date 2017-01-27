@@ -2,11 +2,11 @@ package org.stagemonitor.requestmonitor.tracing;
 
 public interface SpanInterceptor {
 
-	void onSetTag(String key, String value);
+	String onSetTag(String key, String value);
 
-	void onSetTag(String key, boolean value);
+	boolean onSetTag(String key, boolean value);
 
-	void onSetTag(String key, Number value);
+	Number onSetTag(String key, Number value);
 
 	void onSetOperationName(String operationName);
 
