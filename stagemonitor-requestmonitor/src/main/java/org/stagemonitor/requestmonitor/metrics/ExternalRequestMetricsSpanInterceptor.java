@@ -2,7 +2,6 @@ package org.stagemonitor.requestmonitor.metrics;
 
 import com.codahale.metrics.Timer;
 
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
@@ -19,7 +18,7 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpanInterceptor {
 
-	private final CorePlugin corePlugin;
+	private final Metric2Registry metricRegistry;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 
 	public static final String EXTERNAL_REQUEST_TYPE = "type";
@@ -35,8 +34,8 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 	private String type;
 	private String method;
 
-	public ExternalRequestMetricsSpanInterceptor(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin) {
-		this.corePlugin = corePlugin;
+	public ExternalRequestMetricsSpanInterceptor(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
+		this.metricRegistry = metricRegistry;
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
@@ -55,11 +54,9 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 	public void onFinish(Span span, String operationName, long durationNanos) {
 		super.onFinish(span, operationName, durationNanos);
 		if (isClient && StringUtils.isNotEmpty(type) && StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(method)) {
-			corePlugin.getMetricRegistry()
-					.timer(externalRequestTemplate.build(type, "All", method))
+			metricRegistry.timer(externalRequestTemplate.build(type, "All", method))
 					.update(durationNanos, TimeUnit.NANOSECONDS);
-			final Timer timer = corePlugin.getMetricRegistry()
-					.timer(externalRequestTemplate.build(type, operationName, method));
+			final Timer timer = metricRegistry.timer(externalRequestTemplate.build(type, operationName, method));
 			requestMonitorPlugin.getRequestMonitor().getRequestInformation().setTimerForThisRequest(timer);
 			timer.update(durationNanos, TimeUnit.NANOSECONDS);
 			final RequestMonitor.RequestInformation parent = requestMonitorPlugin.getRequestMonitor().getRequestInformation().getParent();
@@ -74,7 +71,6 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 	 * tracks the external requests grouped by the parent request name
 	 */
 	private void trackExternalRequestMetricsOfParent(String requestName, long durationNanos) {
-		final Metric2Registry metricRegistry = corePlugin.getMetricRegistry();
 		if (durationNanos > 0) {
 			if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
 				metricRegistry.timer(responseTimeExternalRequestLayerTemplate

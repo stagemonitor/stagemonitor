@@ -14,6 +14,7 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
+import org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
@@ -360,7 +361,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			protected List<SpanInterceptor> createSpanInterceptors() {
 				List<SpanInterceptor> interceptors = new ArrayList<SpanInterceptor>();
 				interceptors.add(requestInformationSettingSpanInterceptor);
-				interceptors.add(new ExternalRequestMetricsSpanInterceptor(corePlugin, RequestMonitorPlugin.this));
+				interceptors.add(new ExternalRequestMetricsSpanInterceptor(corePlugin.getMetricRegistry(), RequestMonitorPlugin.this));
+				interceptors.add(new ServerRequestMetricsSpanInterceptor(corePlugin.getMetricRegistry(), RequestMonitorPlugin.this));
 				if (anonymizeIPs.getValue() || pseudonymizeUserName.getValue()) {
 					interceptors.add(new AnonymizingSpanInterceptor(RequestMonitorPlugin.this));
 				}

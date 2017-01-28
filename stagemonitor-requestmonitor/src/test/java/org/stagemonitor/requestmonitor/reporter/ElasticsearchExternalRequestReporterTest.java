@@ -146,7 +146,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private Span getSpan(long executionTimeMillis) {
 		final Span span = new SpanWrapper(mock(Span.class), "External Request", 1,
-				Collections.singletonList(new ExternalRequestMetricsSpanInterceptor(corePlugin, requestMonitorPlugin)));
+				Collections.singletonList(new ExternalRequestMetricsSpanInterceptor(registry, requestMonitorPlugin)));
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 		SpanUtils.setOperationType(span, "jdbc");
 		span.setTag("method", "SELECT");

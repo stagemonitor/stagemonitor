@@ -20,7 +20,7 @@ import org.stagemonitor.core.metrics.annotations.TimedTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
 import org.stagemonitor.requestmonitor.MonitorRequests;
-import org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsReporter;
+import org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsSpanInterceptor;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -71,9 +71,9 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 		if (declaredAnnotations.isAnnotationPresent(MonitorRequests.class)) {
 			timerNames.timerName = AbstractMonitorRequestsTransformer.getRequestName(methodDescription);
 			if (timerNames.timerName != null) {
-				timerNames.timerMetricName = ServerRequestMetricsReporter.getTimerMetricName(timerNames.timerName);
+				timerNames.timerMetricName = ServerRequestMetricsSpanInterceptor.getTimerMetricName(timerNames.timerName);
 				timerNames.errorRequestName = timerNames.timerName;
-				timerNames.errorMetricName = ServerRequestMetricsReporter.getErrorMetricName(timerNames.timerName);
+				timerNames.errorMetricName = ServerRequestMetricsSpanInterceptor.getErrorMetricName(timerNames.timerName);
 			}
 		} else {
 			if (declaredAnnotations.isAnnotationPresent(Timed.class)) {
