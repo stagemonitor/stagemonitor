@@ -1,12 +1,15 @@
-package org.stagemonitor.requestmonitor.tracing;
+package org.stagemonitor.requestmonitor.metrics;
 
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.tracing.wrapper.BasicSpanInterceptor;
 
 import java.util.concurrent.TimeUnit;
+
+import io.opentracing.Span;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -51,8 +54,8 @@ public class ExternalRequestMetricsSpanInterceptor extends BasicSpanInterceptor 
 	}
 
 	@Override
-	public void onFinish(long endTimestampNanos) {
-		super.onFinish(endTimestampNanos);
+	public void onFinish(Span span, long endTimestampNanos) {
+		super.onFinish(span, endTimestampNanos);
 		if (isClient && StringUtils.isNotEmpty(type) && StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(method)) {
 			corePlugin.getMetricRegistry()
 					.timer(externalRequestTemplate.build(type, "All", method))

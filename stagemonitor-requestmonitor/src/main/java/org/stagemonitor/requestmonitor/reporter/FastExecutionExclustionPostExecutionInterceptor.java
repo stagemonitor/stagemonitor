@@ -27,6 +27,7 @@ public class FastExecutionExclustionPostExecutionInterceptor extends PostExecuti
 				return;
 			}
 
+//			context.getTimerForThisRequest()
 			Timer timer = context.getConfig(CorePlugin.class).getMetricRegistry().timer(getExternalRequestTimerName(internalSpan));
 			final double percentageThreshold = requestMonitorPlugin.getExcludeExternalRequestsWhenFasterThanXPercent();
 			if (!MetricUtils.isFasterThanXPercentOfAllRequests(durationNs, percentageThreshold, timer)) {

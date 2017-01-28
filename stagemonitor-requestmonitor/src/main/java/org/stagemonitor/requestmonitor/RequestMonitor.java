@@ -15,13 +15,11 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
-import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.core.util.TimeUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
-import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Date;
@@ -38,7 +36,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.opentracing.Span;
-import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -246,7 +243,6 @@ public class RequestMonitor {
 		span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
 		span.setTag("duration_cpu_ms", NANOSECONDS.toMillis(cpuTime));
 		monitoredRequest.onPostExecute(info);
-		anonymizeUserNameAndIp(info.getInternalSpan());
 
 		final CallStackElement callTree = info.getCallTree();
 		if (callTree != null) {
@@ -260,31 +256,6 @@ public class RequestMonitor {
 		}
 		span.finish();
 		info.requestTraceReporterFuture = report(info);
-	}
-
-	void anonymizeUserNameAndIp(com.uber.jaeger.Span span) {
-		final boolean pseudonymizeUserNames = requestMonitorPlugin.isPseudonymizeUserNames();
-		final boolean anonymizeIPs = requestMonitorPlugin.isAnonymizeIPs();
-		if (pseudonymizeUserNames || anonymizeIPs) {
-			final String username = (String) span.getTags().get(SpanUtils.USERNAME);
-			if (pseudonymizeUserNames) {
-				final String hashedUserName = StringUtils.sha1Hash(username);
-				span.setTag(SpanUtils.USERNAME, hashedUserName);
-			}
-			final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(span.getTags().get(SpanUtils.USERNAME));
-			if (disclose) {
-				span.setTag("username_disclosed", username);
-			}
-			if (anonymizeIPs) {
-				String ip = (String) span.getTags().get(SpanUtils.IPV4_STRING);
-				if (ip == null) {
-					ip = (String) span.getTags().get(Tags.PEER_HOST_IPV6.getKey());
-				}
-				if (ip != null && !disclose) {
-					SpanUtils.setClientIp(span, IPAnonymizationUtils.anonymize(ip));
-				}
-			}
-		}
 	}
 
 	private void removeTimerIfCountIsZero(RequestInformation info) {
@@ -433,6 +404,7 @@ public class RequestMonitor {
 			return span;
 		}
 
+		@Deprecated
 		public com.uber.jaeger.Span getInternalSpan() {
 			return SpanUtils.getInternalSpan(span);
 		}
@@ -456,6 +428,10 @@ public class RequestMonitor {
 
 		public CallStackElement getCallTree() {
 			return callTree;
+		}
+
+		public long getDuration() {
+			return getInternalSpan().getDuration();
 		}
 	}
 

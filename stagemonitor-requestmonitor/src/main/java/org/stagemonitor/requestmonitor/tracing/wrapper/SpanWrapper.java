@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.tracing;
+package org.stagemonitor.requestmonitor.tracing.wrapper;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -22,21 +22,21 @@ public class SpanWrapper implements Span {
 
 	public void close() {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(System.nanoTime());
+			spanInterceptor.onFinish(delegate, System.nanoTime());
 		}
 		delegate.close();
 	}
 
 	public void finish() {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(System.nanoTime());
+			spanInterceptor.onFinish(delegate, System.nanoTime());
 		}
 		delegate.finish();
 	}
 
 	public void finish(long finishMicros) {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(TimeUnit.MICROSECONDS.toNanos(finishMicros));
+			spanInterceptor.onFinish(delegate, TimeUnit.MICROSECONDS.toNanos(finishMicros));
 		}
 		delegate.finish(finishMicros);
 	}
@@ -85,4 +85,7 @@ public class SpanWrapper implements Span {
 		return delegate.setOperationName(operationName);
 	}
 
+	public Span getDelegate() {
+		return delegate;
+	}
 }

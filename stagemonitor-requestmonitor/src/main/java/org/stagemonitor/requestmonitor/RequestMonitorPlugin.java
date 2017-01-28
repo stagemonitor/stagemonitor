@@ -11,12 +11,14 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.tracing.ExternalRequestMetricsSpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.SpanInterceptor;
+import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
-import org.stagemonitor.requestmonitor.tracing.SpanWrappingTracer;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -348,8 +350,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		tracer = new SpanWrappingTracer(tracerDelegate) {
 			@Override
 			protected List<SpanInterceptor> createSpanInterceptors(String operationName) {
-				return Collections.<SpanInterceptor>singletonList(
-						new ExternalRequestMetricsSpanInterceptor(operationName, corePlugin, RequestMonitorPlugin.this));
+				List<SpanInterceptor> spanInterceptors = new ArrayList<SpanInterceptor>();
+				spanInterceptors.add(new ExternalRequestMetricsSpanInterceptor(operationName, corePlugin, RequestMonitorPlugin.this));
+				if (anonymizeIPs.getValue() || pseudonymizeUserName.getValue()) {
+					spanInterceptors.add(new AnonymizingSpanInterceptor(RequestMonitorPlugin.this));
+				}
+				return spanInterceptors;
 			}
 		};
 	}

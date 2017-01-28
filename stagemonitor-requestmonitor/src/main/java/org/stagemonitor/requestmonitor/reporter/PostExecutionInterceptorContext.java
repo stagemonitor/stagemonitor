@@ -52,7 +52,11 @@ public class PostExecutionInterceptorContext extends PreExecutionInterceptorCont
 	 * @return the timer for the current request
 	 */
 	public Timer getTimerForThisRequest() {
-		return getMetricRegistry().timer(getTimerMetricName(getInternalSpan().getOperationName()));
+		if (reportArguments.getInternalSpan().isRPCClient()) {
+			return getMetricRegistry().timer(ExternalRequestMetricsReporter.getExternalRequestTimerName(getInternalSpan(), reportArguments.getOperationName()));
+		} else {
+			return getMetricRegistry().timer(getTimerMetricName(reportArguments.getOperationName()));
+		}
 	}
 
 	public SpanReporter.ReportArguments getReportArguments() {

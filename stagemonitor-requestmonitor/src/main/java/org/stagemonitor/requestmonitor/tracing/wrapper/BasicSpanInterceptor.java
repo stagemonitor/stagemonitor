@@ -1,8 +1,9 @@
-package org.stagemonitor.requestmonitor.tracing;
+package org.stagemonitor.requestmonitor.tracing.wrapper;
 
+import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
-public class BasicSpanInterceptor implements SpanInterceptor {
+public class BasicSpanInterceptor extends SpanInterceptor {
 
 	protected String operationName;
 	protected long startTimestampNanos;
@@ -41,7 +42,7 @@ public class BasicSpanInterceptor implements SpanInterceptor {
 		this.startTimestampNanos = startTimestampNanos;
 	}
 
-	public void onFinish(long endTimestampNanos) {
+	public void onFinish(Span span, long endTimestampNanos) {
 		durationNanos = endTimestampNanos - startTimestampNanos;
 	}
 }
