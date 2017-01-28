@@ -6,18 +6,13 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collections;
-import java.util.List;
 
 import io.opentracing.Span;
-import io.opentracing.Tracer;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -148,17 +143,7 @@ public class RequestTraceAnonymisationTest {
 	}
 
 	private Span createSpan(String username, String ip) {
-		final Tracer mockTracer = mock(Tracer.class);
-		final io.opentracing.Tracer.SpanBuilder mockSpanBuilder = mock(io.opentracing.Tracer.SpanBuilder.class);
-		when(mockTracer.buildSpan(any())).thenReturn(mockSpanBuilder);
-		when(mockSpanBuilder.start()).thenReturn(mock(io.opentracing.Span.class));
-		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(mockTracer) {
-			@Override
-			protected List<SpanInterceptor> createSpanInterceptors(String operationName) {
-				return Collections.singletonList(new AnonymizingSpanInterceptor(requestMonitorPlugin));
-			}
-		};
-		final Span span = spanWrappingTracer.buildSpan("Test Operation").start();
+		final Span span = new SpanWrapper(mock(Span.class), Collections.singletonList(new AnonymizingSpanInterceptor(requestMonitorPlugin)));
 		span.setTag(SpanUtils.USERNAME, username);
 		SpanUtils.setClientIp(span, ip);
 		final Span mockSpan = ((SpanWrapper) span).getDelegate();
