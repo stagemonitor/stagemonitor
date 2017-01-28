@@ -141,11 +141,11 @@ public class SpringRequestMonitorTest {
 
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
-		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getRequestName())).getCount());
-		assertEquals("Test Get Request Name", requestInformation.getRequestName());
+		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
+		assertEquals("Test Get Request Name", requestInformation.getOperationName());
 		assertEquals("Test Get Request Name", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
-		assertEquals("/test/requestName", requestInformation.getInternalSpan().getTags().get(Tags.HTTP_URL.getKey()));
-		assertEquals("GET", requestInformation.getInternalSpan().getTags().get("method"));
+		assertEquals("/test/requestName", SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET", SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get("method"));
 		Assert.assertNull(requestInformation.getExecutionResult());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
@@ -159,10 +159,10 @@ public class SpringRequestMonitorTest {
 
 		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
-		assertEquals("GET *.js", requestInformation.getRequestName());
-		assertEquals("GET *.js", requestInformation.getInternalSpan().getOperationName());
+		assertEquals("GET *.js", requestInformation.getOperationName());
+		assertEquals("GET *.js", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getRequestName())).getCount());
+		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(1)).getRequestName();
 	}
@@ -175,7 +175,7 @@ public class SpringRequestMonitorTest {
 
 		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
-		assertNull(requestInformation.getInternalSpan().getOperationName());
+		assertNull(SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
 		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
 	}

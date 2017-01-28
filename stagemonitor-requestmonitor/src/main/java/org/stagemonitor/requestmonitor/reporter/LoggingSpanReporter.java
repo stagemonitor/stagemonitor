@@ -6,6 +6,7 @@ import com.uber.jaeger.Span;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
@@ -23,8 +24,8 @@ public class LoggingSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(ReportArguments reportArguments) {
-		Span span = reportArguments.getInternalSpan();
+	public void report(RequestMonitor.RequestInformation requestInformation) {
+		Span span = SpanUtils.getInternalSpan(requestInformation.getSpan());
 		logger.info("Reporting span");
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n###########################\n");
@@ -64,7 +65,7 @@ public class LoggingSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
+	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 		return requestMonitorPlugin.isLogCallStacks();
 	}
 }

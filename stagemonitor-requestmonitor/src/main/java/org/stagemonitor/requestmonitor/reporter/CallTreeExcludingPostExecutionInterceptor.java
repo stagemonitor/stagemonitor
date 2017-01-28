@@ -4,8 +4,6 @@ import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
-import java.util.concurrent.TimeUnit;
-
 class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTraceReporterInterceptor {
 
 	@Override
@@ -14,8 +12,7 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 				.getConfig(RequestMonitorPlugin.class)
 				.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests();
 
-		final long executionTimeNanos = TimeUnit.MICROSECONDS.toNanos(context.getInternalSpan().getDuration());
-		if (!MetricUtils.isFasterThanXPercentOfAllRequests(executionTimeNanos, percentileLimit, context.getTimerForThisRequest())) {
+		if (!MetricUtils.isFasterThanXPercentOfAllRequests(context.getRequestInformation().getDuration(), percentileLimit, context.getRequestInformation().getTimerForThisRequest())) {
 			exclude(context);
 		}
 	}

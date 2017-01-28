@@ -12,8 +12,10 @@ import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,7 +55,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		final Span span = monitoredMethodRequest.createSpan();
 		span.setTag("foo.bar", "baz");
 		span.finish();
-		reporter.report(new SpanReporter.ReportArguments(span, null));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");

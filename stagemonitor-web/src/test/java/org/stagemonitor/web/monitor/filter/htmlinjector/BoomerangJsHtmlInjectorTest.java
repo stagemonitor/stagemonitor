@@ -55,7 +55,7 @@ public class BoomerangJsHtmlInjectorTest {
 						new MockHttpServletRequest("GET", "/index.html"),
 						mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration)
 						.createSpan());
-		when(requestInformation.getInternalSpan()).thenReturn(span);
+		when(SpanUtils.getInternalSpan(requestInformation.getSpan())).thenReturn(span);
 
 		final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(requestInformation);
 		injector.injectHtml(injectArguments);

@@ -1,10 +1,9 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import com.uber.jaeger.Span;
-
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
@@ -36,10 +35,9 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(ReportArguments reportArguments) {
-		final Span span = reportArguments.getInternalSpan();
-		if (SpanUtils.isExternalRequest(span)) {
-			trackExternalRequestMetrics(span);
+	public void report(RequestMonitor.RequestInformation requestInformation) {
+		if (requestInformation.isExternalRequest()) {
+			trackExternalRequestMetrics(SpanUtils.getInternalSpan(requestInformation.getSpan()));
 		}
 	}
 
@@ -92,7 +90,7 @@ public class ExternalRequestMetricsReporter extends SpanReporter {
 	}
 
 	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
+	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 		return true;
 	}
 

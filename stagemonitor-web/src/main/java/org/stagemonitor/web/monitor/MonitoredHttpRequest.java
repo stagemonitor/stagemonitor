@@ -8,6 +8,7 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -77,6 +78,10 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 	@Override
 	public Span createSpan() {
+		if (webPlugin.isHonorDoNotTrackHeader() && "1".equals(httpServletRequest.getHeader("dnt"))) {
+			return NoopSpan.INSTANCE;
+		}
+
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
 		final Span span = tracer.buildSpan(getRequestName()).asChildOf(spanCtx).start();
@@ -212,7 +217,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		final Span span = requestInformation.getSpan();
 
-		final String userName = getUserName(SpanUtils.getInternalSpan(span));
+		final String userName = getUserName();
 		final String sessionId = getSessionId();
 		span.setTag(SpanUtils.USERNAME, userName);
 		span.setTag("session_id", sessionId);
@@ -226,7 +231,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		int status = responseWrapper.getStatus();
 		Tags.HTTP_STATUS.set(span, status);
 
-		metricRegistry.meter(throughputMetricNameTemplate.build(requestInformation.getRequestName(), Integer.toString(status))).mark();
+		metricRegistry.meter(throughputMetricNameTemplate.build(requestInformation.getOperationName(), Integer.toString(status))).mark();
 		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
 		Tags.ERROR.set(span, status >= 400);
 		span.setTag("bytes_written", responseWrapper.getContentLength());
@@ -244,11 +249,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		return session != null ? session.getId() : null;
 	}
 
-	private String getUserName(com.uber.jaeger.Span span) {
-		final Object username = span.getTags().get(SpanUtils.USERNAME);
-		if (username != null) {
-			return username.toString();
-		}
+	private String getUserName() {
 		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
 		return userPrincipal != null ? userPrincipal.getName() : null;
 	}

@@ -49,7 +49,7 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 			return;
 		}
 		injectArguments.setContentToInjectBeforeClosingBody(boomerangTemplate
-				.replace("${requestName}", String.valueOf(requestInformation.getRequestName()))
+				.replace("${requestName}", String.valueOf(requestInformation.getOperationName()))
 				.replace("${serverTime}", Long.toString(TimeUnit.MICROSECONDS.toMillis(requestInformation.getDuration()))));
 	}
 

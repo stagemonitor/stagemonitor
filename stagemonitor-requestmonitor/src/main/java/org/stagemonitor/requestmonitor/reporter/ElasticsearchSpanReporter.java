@@ -6,6 +6,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
@@ -23,24 +24,24 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 	}
 
 	@Override
-	protected void doReport(ReportArguments reportArguments, PostExecutionInterceptorContext context) {
+	protected void doReport(RequestMonitor.RequestInformation requestInformation, PostExecutionInterceptorContext context) {
 		final String index = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 		final String type = "spans";
 		if (requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
-			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", index, type) + JsonUtils.toJson(reportArguments.getSpan()));
+			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", index, type) + JsonUtils.toJson(requestInformation.getSpan()));
 		} else {
 			if (context.getExcludedProperties().isEmpty()) {
-				elasticsearchClient.index(index, type, reportArguments.getSpan());
+				elasticsearchClient.index(index, type, requestInformation.getSpan());
 			} else {
-				elasticsearchClient.index(index, type, JsonUtils.toObjectNode(reportArguments.getSpan()).remove(context.getExcludedProperties()));
+				elasticsearchClient.index(index, type, JsonUtils.toObjectNode(requestInformation.getSpan()).remove(context.getExcludedProperties()));
 			}
 		}
 	}
 
 	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
+	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
-		return (elasticsearchClient.isElasticsearchAvailable() || logOnly) && super.isActive(isActiveArguments);
+		return (elasticsearchClient.isElasticsearchAvailable() || logOnly) && super.isActive(requestInformation);
 	}
 
 	/**

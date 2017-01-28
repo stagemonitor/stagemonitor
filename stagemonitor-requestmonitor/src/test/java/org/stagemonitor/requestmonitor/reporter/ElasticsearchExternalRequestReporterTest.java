@@ -5,6 +5,7 @@ import com.uber.jaeger.Span;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collections;
@@ -52,7 +53,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		report(getSpan());
 
 		verify(elasticsearchClient).index(startsWith("stagemonitor-spans-"), eq("spans"), any());
-		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(getSpan())));
+		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(getSpan(), null)));
 		verifyTimerCreated(1);
 	}
 
@@ -65,7 +66,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(requestTraceLogger, times(0)).info(anyString());
-		assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(getSpan())));
+		assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(getSpan(), null)));
 		verifyTimerCreated(1);
 	}
 
@@ -75,7 +76,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
 		verify(requestTraceLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
-		assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(getSpan())));
+		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(getSpan(), null)));
 		verifyTimerCreated(1);
 	}
 
@@ -114,12 +115,12 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private void report(Span span) {
-		final SpanReporter.IsActiveArguments isActiveArguments = new SpanReporter.IsActiveArguments(span);
-		final SpanReporter.ReportArguments reportArguments = new SpanReporter.ReportArguments(span, null);
-		if (externalRequestMetricsReporter.isActive(isActiveArguments)) {
+		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(span, null);
+		final RequestMonitor.RequestInformation reportArguments = RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap());
+		if (externalRequestMetricsReporter.isActive(requestInformation)) {
 			externalRequestMetricsReporter.report(reportArguments);
 		}
-		if (reporter.isActive(isActiveArguments)) {
+		if (reporter.isActive(requestInformation)) {
 			reporter.report(reportArguments);
 		}
 	}

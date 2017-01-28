@@ -5,7 +5,6 @@ import com.uber.jaeger.utils.Utils;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.reporter.ExternalRequestMetricsReporter;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -97,10 +96,4 @@ public class SpanUtils {
 		return (com.uber.jaeger.Span) span;
 	}
 
-	public static boolean isExternalRequest(com.uber.jaeger.Span span) {
-		com.uber.jaeger.Span jaegerSpan = getInternalSpan(span);
-		return jaegerSpan.isRPCClient() &&
-				jaegerSpan.getTags().get(ExternalRequestMetricsReporter.EXTERNAL_REQUEST_TYPE) != null &&
-				jaegerSpan.getTags().get(ExternalRequestMetricsReporter.EXTERNAL_REQUEST_METHOD) != null;
-	}
 }

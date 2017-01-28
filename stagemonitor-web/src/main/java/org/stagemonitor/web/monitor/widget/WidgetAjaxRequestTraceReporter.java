@@ -4,6 +4,7 @@ package org.stagemonitor.web.monitor.widget;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.Pair;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 
@@ -84,14 +85,13 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(ReportArguments reportArguments) throws IOException {
-		if (isActive(new IsActiveArguments(reportArguments.getSpan(), reportArguments.getRequestAttributes()))) {
-			Span httpSpan = reportArguments.getInternalSpan();
+	public void report(RequestMonitor.RequestInformation requestInformation) throws IOException {
+		if (isActive(RequestMonitor.RequestInformation.of(requestInformation.getSpan(), null, requestInformation.getRequestAttributes()))) {
 
-			final String connectionId = (String) reportArguments.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
+			final String connectionId = (String) requestInformation.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
-				logger.debug("report {}", reportArguments.getSpan());
-				bufferRequestTrace(connectionId, httpSpan);
+				logger.debug("report {}", requestInformation.getSpan());
+				bufferRequestTrace(connectionId, requestInformation.getSpan());
 
 				final Object lock = connectionIdToLockMap.remove(connectionId);
 				if (lock != null) {
@@ -117,8 +117,8 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 
 
 	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
-		return Boolean.TRUE.equals(isActiveArguments.getRequestAttributes().get(MonitoredHttpRequest.WIDGET_ALLOWED_ATTRIBUTE));
+	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
+		return Boolean.TRUE.equals(requestInformation.getRequestAttributes().get(MonitoredHttpRequest.WIDGET_ALLOWED_ATTRIBUTE));
 	}
 
 	/**

@@ -116,9 +116,9 @@ public class RequestMonitorTest {
 			@Override
 			public Void answer(InvocationOnMock invocation) throws Throwable {
 				RequestMonitor.RequestInformation requestInformation = (RequestMonitor.RequestInformation) invocation.getArguments()[0];
-				assertEquals("java.lang.RuntimeException", requestInformation.getInternalSpan().getTags().get("exception.class"));
-				assertEquals("test", requestInformation.getInternalSpan().getTags().get("exception.message"));
-				assertNotNull(requestInformation.getInternalSpan().getTags().get("exception.stack_trace"));
+				assertEquals("java.lang.RuntimeException", SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get("exception.class"));
+				assertEquals("test", SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get("exception.message"));
+				assertNotNull(SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get("exception.stack_trace"));
 				return null;
 			}
 		}).when(monitoredRequest).onPostExecute(Mockito.<RequestMonitor.RequestInformation>any());

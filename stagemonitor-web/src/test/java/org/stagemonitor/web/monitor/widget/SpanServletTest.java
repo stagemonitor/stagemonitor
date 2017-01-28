@@ -18,7 +18,6 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -80,7 +79,7 @@ public class SpanServletTest {
 			}
 		}).when(requestInformation).addRequestAttribute(anyString(), any());
 		when(requestInformation.getSpan()).thenReturn(span);
-		when(requestInformation.getRequestName()).thenReturn("test");
+		when(requestInformation.getOperationName()).thenReturn("test");
 
 		monitoredHttpRequest.onPostExecute(requestInformation);
 		monitoredHttpRequest.onBeforeReport(requestInformation);
@@ -90,7 +89,7 @@ public class SpanServletTest {
 
 	@Test
 	public void testRequestTraceBeforeRequest() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, requestAttributes));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -104,8 +103,8 @@ public class SpanServletTest {
 
 	@Test
 	public void testTwoRequestTraceBeforeRequest() throws Exception {
-		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
-		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, requestAttributes));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, requestAttributes));
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
 		request.addParameter("connectionId", connectionId);
@@ -160,7 +159,7 @@ public class SpanServletTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, requestAttributes));
 		waitForResponse(response);
 
 		Assert.assertEquals(spanAsJsonArray(), response.getContentAsString());
@@ -175,7 +174,7 @@ public class SpanServletTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(new SpanReporter.ReportArguments(span, null, requestAttributes));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, requestAttributes));
 		waitForResponse(response);
 
 		Assert.assertEquals("[]", response.getContentAsString());
@@ -214,6 +213,6 @@ public class SpanServletTest {
 		new MockFilterChain(spanServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 
 		Assert.assertEquals(404, response.getStatus());
-		Assert.assertFalse(reporter.isActive(new SpanReporter.IsActiveArguments(mock(Span.class))));
+		Assert.assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(mock(Span.class), null)));
 	}
 }

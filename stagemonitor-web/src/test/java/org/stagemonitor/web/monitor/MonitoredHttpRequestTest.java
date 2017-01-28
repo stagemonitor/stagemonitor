@@ -82,7 +82,7 @@ public class MonitoredHttpRequestTest {
 
 		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
 		when(requestInformation.getSpan()).thenReturn(span);
-		when(requestInformation.getRequestName()).thenReturn(span.getOperationName());
+		when(requestInformation.getOperationName()).thenReturn(span.getOperationName());
 		monitoredHttpRequest.onPostExecute(requestInformation);
 		assertEquals("bar", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "foo"));
 		assertEquals("blubb", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "bla"));

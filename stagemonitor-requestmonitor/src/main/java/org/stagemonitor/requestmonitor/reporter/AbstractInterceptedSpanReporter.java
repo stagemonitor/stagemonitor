@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 import java.util.Collection;
@@ -49,7 +50,7 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 	private void registerPostInterceptors() {
 		this.postInterceptors.add(new NameFilteringPostExecutionInterceptor());
 		this.postInterceptors.add(new CallTreeExcludingPostExecutionInterceptor());
-		this.postInterceptors.add(new FastExecutionExclustionPostExecutionInterceptor());
+		this.postInterceptors.add(new FastExternalSpanExcludingPostExecutionInterceptor());
 
 		for (PostExecutionRequestTraceReporterInterceptor interceptor : ServiceLoader.load(
 				PostExecutionRequestTraceReporterInterceptor.class,
@@ -59,9 +60,9 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(ReportArguments reportArguments) {
+	public void report(RequestMonitor.RequestInformation requestInformation) {
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration,
-				reportArguments, internalRequestReportingRate, externalRequestReportingRate, corePlugin.getMetricRegistry());
+				requestInformation, internalRequestReportingRate, externalRequestReportingRate, corePlugin.getMetricRegistry());
 		for (PostExecutionRequestTraceReporterInterceptor interceptor : postInterceptors) {
 			try {
 				interceptor.interceptReport(context);
@@ -70,21 +71,21 @@ public abstract class AbstractInterceptedSpanReporter extends SpanReporter {
 			}
 		}
 		if (context.isReport()) {
-			if (reportArguments.getInternalSpan().isRPCClient()) {
+			if (requestInformation.isExternalRequest()) {
 				externalRequestReportingRate.mark();
 			} else {
 				internalRequestReportingRate.mark();
 			}
-			doReport(reportArguments, context);
+			doReport(requestInformation, context);
 		}
 	}
 
-	protected abstract void doReport(ReportArguments reportArguments, PostExecutionInterceptorContext context);
+	protected abstract void doReport(RequestMonitor.RequestInformation requestInformation, PostExecutionInterceptorContext context);
 
 	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
+	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration,
-				isActiveArguments.getSpan(), internalRequestReportingRate, externalRequestReportingRate, corePlugin.getMetricRegistry());
+				requestInformation, internalRequestReportingRate, externalRequestReportingRate, corePlugin.getMetricRegistry());
 		for (PreExecutionRequestTraceReporterInterceptor interceptor : preInterceptors) {
 			try {
 				interceptor.interceptReport(context);

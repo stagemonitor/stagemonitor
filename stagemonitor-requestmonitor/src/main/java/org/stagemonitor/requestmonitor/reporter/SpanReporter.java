@@ -4,11 +4,6 @@ import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import io.opentracing.Span;
 
@@ -20,9 +15,9 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	/**
 	 * Callback method that is called when a {@link Span} was created and is ready to be reported
 	 *
-	 * @param reportArguments The parameter object which contains the actual parameters
+	 * @param requestInformation The object which contains all information about the request
 	 */
-	public abstract void report(ReportArguments reportArguments) throws Exception;
+	public abstract void report(RequestMonitor.RequestInformation requestInformation) throws Exception;
 
 	/**
 	 * Whether this {@link SpanReporter} is active
@@ -38,13 +33,13 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	 * @param isActiveArguments The parameter object which contains the actual parameters
 	 * @return <code>true</code>, if this {@link SpanReporter} is active, <code>false</code> otherwise
 	 */
-	public abstract boolean isActive(IsActiveArguments isActiveArguments);
+	public abstract boolean isActive(RequestMonitor.RequestInformation requestInformation);
 
 	/**
 	 * @return <code>true</code>, if this {@link SpanReporter} needs access to the call tree
 	 * ({@link org.stagemonitor.requestmonitor.profiler.CallStackElement})
 	 *
-	 * @see #isActive(IsActiveArguments)
+	 * @see #isActive(RequestMonitor.RequestInformation)
 	 */
 	public boolean requiresCallTree() {
 		return true;
@@ -74,91 +69,4 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	public static class CloseArguments {
 	}
 
-	public static class IsActiveArguments {
-		private final Span span;
-		private final Map<String, Object> requestAttributes;
-
-		/**
-		 * Only to be used in unit tests
-		 */
-		@Deprecated
-		public IsActiveArguments(Span span) {
-			this(span, new HashMap<String, Object>());
-		}
-
-		public IsActiveArguments(Span span, Map<String, Object> requestAttributes) {
-			this.span = span;
-			this.requestAttributes = requestAttributes;
-		}
-
-		public Span getSpan() {
-			return span;
-		}
-
-		public Map<String, Object> getRequestAttributes() {
-			return requestAttributes;
-		}
-	}
-
-	public static class ReportArguments {
-		private final Span span;
-		private final CallStackElement callTree;
-		private final Map<String, Object> requestAttributes;
-		private final String operationName;
-		private final long duration;
-
-		/**
-		 * Only to be used in unit tests
-		 */
-		@Deprecated
-		public ReportArguments(Span span, CallStackElement callTree) {
-			this(span, callTree, new HashMap<String, Object>(), SpanUtils.getInternalSpan(span).getOperationName(), SpanUtils.getInternalSpan(span).getDuration());
-		}
-
-		/**
-		 * Only to be used in unit tests
-		 */
-		@Deprecated
-		public ReportArguments(Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
-			this(span, callTree, requestAttributes, SpanUtils.getInternalSpan(span).getOperationName(), SpanUtils.getInternalSpan(span).getDuration());
-		}
-
-		/**
-		 * @param span
-		 * @param callTree
-		 * @param operationName
-		 * @param duration
-		 */
-		public ReportArguments(Span span, CallStackElement callTree, Map<String, Object> requestAttributes, String operationName, long duration) {
-			this.span = span;
-			this.callTree = callTree;
-			this.requestAttributes = requestAttributes;
-			this.operationName = operationName;
-			this.duration = duration;
-		}
-
-		public Span getSpan() {
-			return span;
-		}
-
-		public com.uber.jaeger.Span getInternalSpan() {
-			return SpanUtils.getInternalSpan(span);
-		}
-
-		public CallStackElement getCallTree() {
-			return callTree;
-		}
-
-		public Map<String, Object> getRequestAttributes() {
-			return requestAttributes;
-		}
-
-		public String getOperationName() {
-			return operationName;
-		}
-
-		public long getDuration() {
-			return duration;
-		}
-	}
 }

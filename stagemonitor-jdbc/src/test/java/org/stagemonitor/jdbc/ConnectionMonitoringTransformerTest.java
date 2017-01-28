@@ -112,11 +112,11 @@ public class ConnectionMonitoringTransformerTest {
 		// make sure call trees are recorded
 		requestMonitor.addReporter(new SpanReporter() {
 			@Override
-			public void report(ReportArguments reportArguments) throws Exception {
+			public void report(RequestMonitor.RequestInformation requestInformation) throws Exception {
 			}
 
 			@Override
-			public boolean isActive(IsActiveArguments isActiveArguments) {
+			public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 				return true;
 			}
 		});

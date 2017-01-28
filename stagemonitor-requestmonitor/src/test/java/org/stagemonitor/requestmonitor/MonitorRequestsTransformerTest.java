@@ -13,7 +13,6 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
-import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.ArrayList;
@@ -58,14 +57,14 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
-		final SpanReporter.ReportArguments reportArguments = requestTraceCapturingReporter.get();
-		final Span span = SpanUtils.getInternalSpan(reportArguments.getSpan());
-		new LoggingSpanReporter().report(reportArguments);
+		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
+		final Span span = SpanUtils.getInternalSpan(requestInformation.getSpan());
+		new LoggingSpanReporter().report(requestInformation);
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(reportArguments.getInternalSpan().getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
+		assertEquals("1", getTagsStartingWith(SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", span.getOperationName());
-		assertEquals(1, reportArguments.getCallTree().getChildren().size());
-		final String signature = reportArguments.getCallTree().getChildren().get(0).getSignature();
+		assertEquals(1, requestInformation.getCallTree().getChildren().size());
+		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass.monitorMe"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
@@ -95,10 +94,10 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorRequestsAnnonymousInnerClass() throws Exception {
 		testClass.monitorAnnonymousInnerClass();
-		final SpanReporter.ReportArguments reportArguments = requestTraceCapturingReporter.get();
-		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", reportArguments.getInternalSpan().getOperationName());
-		assertEquals(1, reportArguments.getCallTree().getChildren().size());
-		final String signature = reportArguments.getCallTree().getChildren().get(0).getSignature();
+		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
+		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
+		assertEquals(1, requestInformation.getCallTree().getChildren().size());
+		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass$1.run"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
@@ -179,13 +178,13 @@ public class MonitorRequestsTransformerTest {
 	public void testClassLevelAnnotationClass() throws Exception {
 		testClassLevelAnnotationClass.monitorMe("1");
 		testClassLevelAnnotationClass.dontMonitorMe();
-		final SpanReporter.ReportArguments reportArguments = requestTraceCapturingReporter.get();
+		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
 
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(reportArguments.getInternalSpan().getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", reportArguments.getInternalSpan().getOperationName());
-		assertEquals(1, reportArguments.getCallTree().getChildren().size());
-		final String signature = reportArguments.getCallTree().getChildren().get(0).getSignature();
+		assertEquals("1", getTagsStartingWith(SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
+		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
+		assertEquals(1, requestInformation.getCallTree().getChildren().size());
+		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe"));
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();

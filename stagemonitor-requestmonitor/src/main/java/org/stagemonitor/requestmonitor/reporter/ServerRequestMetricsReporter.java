@@ -4,7 +4,9 @@ import com.uber.jaeger.Span;
 
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import io.opentracing.tag.Tags;
 
@@ -35,9 +37,9 @@ public class ServerRequestMetricsReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(ReportArguments reportArguments) throws Exception {
-		if (!reportArguments.getInternalSpan().isRPCClient()) {
-			trackMetrics(reportArguments.getInternalSpan());
+	public void report(RequestMonitor.RequestInformation requestInformation) throws Exception {
+		if (!requestInformation.isExternalRequest()) {
+			trackMetrics(SpanUtils.getInternalSpan(requestInformation.getSpan()));
 		}
 	}
 
@@ -66,7 +68,7 @@ public class ServerRequestMetricsReporter extends SpanReporter {
 	}
 
 	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
+	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 		return true;
 	}
 

@@ -1,12 +1,13 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import com.codahale.metrics.Meter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 
 import io.opentracing.Span;
 
@@ -15,16 +16,16 @@ public class PreExecutionInterceptorContext {
 	private static final Logger logger = LoggerFactory.getLogger(PreExecutionInterceptorContext.class);
 
 	private final Configuration configuration;
-	private final Span span;
+	private final RequestMonitor.RequestInformation requestInformation;
 	private final Meter internalRequestReportingRate;
 	private final Meter externalRequestReportingRate;
 	private final Metric2Registry metricRegistry;
 	private boolean mustReport = false;
 	private boolean report = true;
 
-	PreExecutionInterceptorContext(Configuration configuration, Span span, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
+	PreExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
-		this.span = span;
+		this.requestInformation = requestInformation;
 		this.externalRequestReportingRate = externalRequestReportingRate;
 		this.internalRequestReportingRate = internalRequestReportingRate;
 		this.metricRegistry = metricRegistry;
@@ -46,11 +47,7 @@ public class PreExecutionInterceptorContext {
 	}
 
 	public Span getSpan() {
-		return span;
-	}
-
-	public com.uber.jaeger.Span getInternalSpan() {
-		return SpanUtils.getInternalSpan(span);
+		return requestInformation.getSpan();
 	}
 
 	public Meter getExternalRequestReportingRate() {
@@ -71,5 +68,9 @@ public class PreExecutionInterceptorContext {
 
 	public <T extends ConfigurationOptionProvider> T getConfig(Class<T> configClass) {
 		return configuration.getConfig(configClass);
+	}
+
+	public RequestMonitor.RequestInformation getRequestInformation() {
+		return requestInformation;
 	}
 }

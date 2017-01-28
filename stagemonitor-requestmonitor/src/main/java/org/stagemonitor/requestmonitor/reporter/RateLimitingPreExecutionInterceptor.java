@@ -12,7 +12,7 @@ class RateLimitingPreExecutionInterceptor extends PreExecutionRequestTraceReport
 		final RequestMonitorPlugin config = context.getConfig(RequestMonitorPlugin.class);
 		final double maxReportingRate;
 		final Meter rate;
-		if (context.getInternalSpan().isRPCClient()) {
+		if (context.getRequestInformation().isExternalRequest()) {
 			maxReportingRate = config.getOnlyReportNExternalRequestsPerMinute();
 			rate = context.getExternalRequestReportingRate();
 		} else {

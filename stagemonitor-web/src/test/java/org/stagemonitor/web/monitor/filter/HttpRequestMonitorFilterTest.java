@@ -16,6 +16,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
@@ -63,7 +64,7 @@ public class HttpRequestMonitorFilterTest {
 				request.execute();
 				when(span.getOperationName()).thenReturn("testName");
 				when(span.context()).thenReturn(new SpanContext(1, 2, 0, (byte) 0));
-				when(requestInformation.getInternalSpan()).thenReturn(span);
+				when(SpanUtils.getInternalSpan(requestInformation.getSpan())).thenReturn(span);
 				return requestInformation;
 			}
 		});

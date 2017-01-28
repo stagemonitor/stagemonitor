@@ -58,8 +58,8 @@ public class MonitoredMethodExecutionTest {
 	public void testDoubleForwarding() throws Exception {
 		testObject.monitored1();
 		assertEquals(1, requestInformation1.getExecutionResult());
-		assertEquals("monitored1()", requestInformation1.getInternalSpan().getOperationName());
-		final Map<String, Object> tags = requestInformation1.getInternalSpan().getTags();
+		assertEquals("monitored1()", SpanUtils.getInternalSpan(requestInformation1.getSpan()).getOperationName());
+		final Map<String, Object> tags = SpanUtils.getInternalSpan(requestInformation1.getSpan()).getTags();
 		assertEquals(tags.toString(), "1", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg0"));
 		assertEquals(tags.toString(), "test", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg1"));
 

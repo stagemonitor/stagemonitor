@@ -24,7 +24,6 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 		if (!TracingUtils.getTraceContext().isEmpty()) {
 			final Span currentSpan = TracingUtils.getTraceContext().getCurrentSpan();
 			span = tracer.buildSpan(callerSignature).asChildOf(currentSpan).start();
-			span.setTag("parent_name", SpanUtils.getInternalSpan(span).getOperationName());
 		} else {
 			span = tracer.buildSpan(callerSignature).start();
 		}

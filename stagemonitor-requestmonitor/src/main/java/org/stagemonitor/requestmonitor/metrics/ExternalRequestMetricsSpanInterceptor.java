@@ -1,9 +1,12 @@
 package org.stagemonitor.requestmonitor.metrics;
 
+import com.codahale.metrics.Timer;
+
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInterceptor;
 
@@ -21,7 +24,6 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 
 	public static final String EXTERNAL_REQUEST_TYPE = "type";
 	public static final String EXTERNAL_REQUEST_METHOD = "method";
-	public static final String EXTERNAL_REQUEST_PARENT_NAME = "parent_name";
 
 	private static final MetricName.MetricNameTemplate externalRequestRateTemplate = name("external_requests_rate")
 			.templateFor("request_name", "type");
@@ -32,7 +34,6 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 
 	private String type;
 	private String method;
-	private String parentName;
 
 	public ExternalRequestMetricsSpanInterceptor(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin) {
 		this.corePlugin = corePlugin;
@@ -46,8 +47,6 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 			type = value;
 		} else if (EXTERNAL_REQUEST_METHOD.equals(key)) {
 			method = value;
-		} else if (EXTERNAL_REQUEST_PARENT_NAME.equals(key)) {
-			parentName = value;
 		}
 		return value;
 	}
@@ -59,17 +58,22 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 			corePlugin.getMetricRegistry()
 					.timer(externalRequestTemplate.build(type, "All", method))
 					.update(durationNanos, TimeUnit.NANOSECONDS);
-			corePlugin.getMetricRegistry()
-					.timer(externalRequestTemplate.build(type, operationName, method))
-					.update(durationNanos, TimeUnit.NANOSECONDS);
-			if (parentName != null) {
-				trackExternalRequestMetrics(parentName, durationNanos);
+			final Timer timer = corePlugin.getMetricRegistry()
+					.timer(externalRequestTemplate.build(type, operationName, method));
+			requestMonitorPlugin.getRequestMonitor().getRequestInformation().setTimerForThisRequest(timer);
+			timer.update(durationNanos, TimeUnit.NANOSECONDS);
+			final RequestMonitor.RequestInformation parent = requestMonitorPlugin.getRequestMonitor().getRequestInformation().getParent();
+			if (parent != null) {
+				trackExternalRequestMetricsOfParent(parent.getOperationName(), durationNanos);
 			}
 		}
 	}
 
 	// TODO test!
-	private void trackExternalRequestMetrics(String requestName, long durationNanos) {
+	/*
+	 * tracks the external requests grouped by the parent request name
+	 */
+	private void trackExternalRequestMetricsOfParent(String requestName, long durationNanos) {
 		final Metric2Registry metricRegistry = corePlugin.getMetricRegistry();
 		if (durationNanos > 0) {
 			if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
@@ -81,8 +85,7 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 					.build("All", type))
 					.update(durationNanos, NANOSECONDS);
 		}
-		// the difference to ExternalRequestMetricsReporter is that the
-		// external_requests_rate is grouped by the request name, not the dao method name
+
 		metricRegistry.meter(externalRequestRateTemplate
 				.build(requestName, type))
 				.mark();

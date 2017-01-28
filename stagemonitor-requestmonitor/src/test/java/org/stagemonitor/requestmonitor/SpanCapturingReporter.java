@@ -10,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class SpanCapturingReporter extends SpanReporter {
-	private final BlockingQueue<ReportArguments> requestTraces = new LinkedBlockingQueue<>();
+	private final BlockingQueue<RequestMonitor.RequestInformation> requestTraces = new LinkedBlockingQueue<>();
 
 	public SpanCapturingReporter() {
 		RequestMonitor.addRequestTraceReporter(this);
@@ -21,12 +21,12 @@ public class SpanCapturingReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(ReportArguments reportArguments) throws Exception {
-		requestTraces.add(reportArguments);
+	public void report(RequestMonitor.RequestInformation requestInformation) throws Exception {
+		requestTraces.add(requestInformation);
 	}
 
 	@Override
-	public boolean isActive(IsActiveArguments isActiveArguments) {
+	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 		return true;
 	}
 
@@ -34,7 +34,7 @@ public class SpanCapturingReporter extends SpanReporter {
 		return SpanUtils.getInternalSpan(get().getSpan());
 	}
 
-	public ReportArguments get() throws InterruptedException {
+	public RequestMonitor.RequestInformation get() throws InterruptedException {
 		return requestTraces.poll(500, TimeUnit.MILLISECONDS);
 	}
 }

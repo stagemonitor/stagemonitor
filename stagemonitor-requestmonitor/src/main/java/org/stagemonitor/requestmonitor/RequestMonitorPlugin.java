@@ -12,10 +12,10 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
-import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.ArrayList;
@@ -346,16 +346,25 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
 
-		final com.uber.jaeger.Tracer tracerDelegate = new com.uber.jaeger.Tracer.Builder(initArguments.getMeasurementSession().getApplicationName(), new CompositeReporter(new LoggingReporter()), new ConstSampler(true)).build();
-		tracer = new SpanWrappingTracer(tracerDelegate) {
+		final com.uber.jaeger.Tracer tracerImpl = new com.uber.jaeger.Tracer.Builder(
+				initArguments.getMeasurementSession().getApplicationName(),
+				new CompositeReporter(new LoggingReporter()),
+				new ConstSampler(true))
+				.build();
+
+		final RequestMonitor.RequestInformationSettingSpanInterceptor requestInformationSettingSpanInterceptor =
+				new RequestMonitor.RequestInformationSettingSpanInterceptor(requestMonitor);
+
+		tracer = new SpanWrappingTracer(tracerImpl) {
 			@Override
 			protected List<SpanInterceptor> createSpanInterceptors() {
-				List<SpanInterceptor> spanInterceptors = new ArrayList<SpanInterceptor>();
-				spanInterceptors.add(new ExternalRequestMetricsSpanInterceptor(corePlugin, RequestMonitorPlugin.this));
+				List<SpanInterceptor> interceptors = new ArrayList<SpanInterceptor>();
+				interceptors.add(requestInformationSettingSpanInterceptor);
+				interceptors.add(new ExternalRequestMetricsSpanInterceptor(corePlugin, RequestMonitorPlugin.this));
 				if (anonymizeIPs.getValue() || pseudonymizeUserName.getValue()) {
-					spanInterceptors.add(new AnonymizingSpanInterceptor(RequestMonitorPlugin.this));
+					interceptors.add(new AnonymizingSpanInterceptor(RequestMonitorPlugin.this));
 				}
-				return spanInterceptors;
+				return interceptors;
 			}
 		};
 	}

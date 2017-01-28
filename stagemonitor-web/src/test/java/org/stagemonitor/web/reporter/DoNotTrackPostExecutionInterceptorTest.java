@@ -9,6 +9,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
@@ -59,10 +60,10 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final Span span = mock(Span.class);
 		when(span.getTags()).thenReturn(Collections.singletonMap(SpanUtils.HTTP_HEADERS_PREFIX + "dnt", "1"));
 
-		reporter.report(new SpanReporter.ReportArguments(span, null));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
-		Assert.assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(span)));
+		Assert.assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
 	}
 
 	@Test
@@ -71,10 +72,10 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final Span span = mock(Span.class);
 		when(span.getTags()).thenReturn(Collections.singletonMap(SpanUtils.HTTP_HEADERS_PREFIX + "dnt", "0"));
 
-		reporter.report(new SpanReporter.ReportArguments(span, null));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
-		Assert.assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(span)));
+		Assert.assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
 	}
 
 	@Test
@@ -83,10 +84,10 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final Span span = mock(Span.class);
 		when(span.getTags()).thenReturn(Collections.emptyMap());
 
-		reporter.report(new SpanReporter.ReportArguments(span, null));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
-		Assert.assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(span)));
+		Assert.assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
 	}
 
 	@Test
@@ -95,10 +96,10 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final Span span = mock(Span.class);
 		when(span.getTags()).thenReturn(Collections.singletonMap(SpanUtils.HTTP_HEADERS_PREFIX + "dnt", "1"));
 
-		reporter.report(new SpanReporter.ReportArguments(span, null));
+		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
 
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
-		Assert.assertTrue(reporter.isActive(new SpanReporter.IsActiveArguments(span)));
+		Assert.assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
 	}
 
 }
