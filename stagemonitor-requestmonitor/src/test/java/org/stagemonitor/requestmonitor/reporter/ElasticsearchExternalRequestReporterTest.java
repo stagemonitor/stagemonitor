@@ -1,17 +1,20 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import com.codahale.metrics.Timer;
-import com.uber.jaeger.Span;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import io.opentracing.Tracer;
+import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 import static org.junit.Assert.assertEquals;
@@ -21,39 +24,40 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.requestmonitor.reporter.ExternalRequestMetricsReporter.getExternalRequestTimerName;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsearchRequestTraceReporterTest {
 
 	private ElasticsearchSpanReporter reporter;
-	private ExternalRequestMetricsReporter externalRequestMetricsReporter;
 
 	@Override
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
+		JsonUtils.getMapper().registerModule(new SpanJsonModule());
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchSpanReporter(requestTraceLogger);
 		reporter.init(new SpanReporter.InitArguments(configuration, registry));
-		externalRequestMetricsReporter = new ExternalRequestMetricsReporter();
-		externalRequestMetricsReporter.init(new SpanReporter.InitArguments(configuration, registry));
 		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.emptyList());
+		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(requestMonitor.getRequestInformation()).thenReturn(mock(RequestMonitor.RequestInformation.class));
 	}
 
 	@Test
 	public void reportRequestTrace() throws Exception {
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(false);
-		report(getSpan());
+		final Span span = getSpan();
+		report(span);
 
 		verify(elasticsearchClient).index(startsWith("stagemonitor-spans-"), eq("spans"), any());
-		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(getSpan(), null)));
+		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
 		verifyTimerCreated(1);
 	}
 
@@ -62,29 +66,32 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(false);
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(false);
 		when(corePlugin.getElasticsearchUrl()).thenReturn(null);
-		report(getSpan());
+		final Span span = getSpan();
+		report(span);
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(requestTraceLogger, times(0)).info(anyString());
-		assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(getSpan(), null)));
+		assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
 		verifyTimerCreated(1);
 	}
 
 	@Test
 	public void testLogReportRequestTrace() throws Exception {
-		report(getSpan());
+		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
 
-		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), anyObject());
+		final Span span = requestMonitorPlugin.getTracer().buildSpan("test").start();
+		report(span);
+
+		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(requestTraceLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
-		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(getSpan(), null)));
-		verifyTimerCreated(1);
+		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
 	}
 
 	@Test
 	public void reportRequestTraceRateLimited() throws Exception {
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1d);
 		report(getSpan());
-		verify(requestTraceLogger).info(anyString());
+		verify(elasticsearchClient).index(anyString(), anyString(), any());
 		Thread.sleep(5010); // the meter only updates every 5 seconds
 		report(getSpan());
 		verifyNoMoreInteractions(requestTraceLogger);
@@ -96,7 +103,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(requestMonitorPlugin.getExcludeExternalRequestsFasterThan()).thenReturn(100d);
 
 		report(getSpan(100));
-		verify(requestTraceLogger).info(anyString());
+		verify(elasticsearchClient).index(anyString(), anyString(), any());
 
 		report(getSpan(99));
 		verifyNoMoreInteractions(requestTraceLogger);
@@ -108,7 +115,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(requestMonitorPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
 
 		report(getSpan(1000));
-		verify(requestTraceLogger).info(anyString());
+		verify(elasticsearchClient).index(anyString(), anyString(), any());
 		report(getSpan(250));
 		verifyNoMoreInteractions(requestTraceLogger);
 		verifyTimerCreated(2);
@@ -117,9 +124,6 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	private void report(Span span) {
 		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(span, null);
 		final RequestMonitor.RequestInformation reportArguments = RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap());
-		if (externalRequestMetricsReporter.isActive(requestInformation)) {
-			externalRequestMetricsReporter.report(reportArguments);
-		}
 		if (reporter.isActive(requestInformation)) {
 			reporter.report(reportArguments);
 		}
@@ -132,7 +136,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		report(getSpan(250));
 		report(getSpan(1000));
 
-		verify(requestTraceLogger, times(2)).info(anyString());
+		verify(elasticsearchClient, times(2)).index(anyString(), anyString(), any());
 		verifyTimerCreated(2);
 	}
 
@@ -141,8 +145,8 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private Span getSpan(long executionTimeMillis) {
-		final Tracer tracer = requestMonitorPlugin.getTracer();
-		final Span span = SpanUtils.getInternalSpan(tracer.buildSpan("External Request").withStartTimestamp(1).start());
+		final Span span = new SpanWrapper(mock(Span.class), "External Request", 1,
+				Collections.singletonList(new ExternalRequestMetricsSpanInterceptor(corePlugin, requestMonitorPlugin)));
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 		SpanUtils.setOperationType(span, "jdbc");
 		span.setTag("method", "SELECT");
@@ -151,12 +155,19 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private void verifyTimerCreated(int count) {
-		final Span span = getSpan();
-		final Timer timer = registry.getTimers().get(getExternalRequestTimerName(span));
+		final Timer timer = registry.getTimers().get(name("external_request_response_time")
+				.tag("type", "jdbc")
+				.tag("signature", "External Request")
+				.tag("method", "SELECT")
+				.build());
 		assertNotNull(registry.getTimers().keySet().toString(), timer);
 		assertEquals(count, timer.getCount());
 
-		final Timer allTimer = registry.getTimers().get(getExternalRequestTimerName(span, "All"));
+		final Timer allTimer = registry.getTimers().get(name("external_request_response_time")
+				.tag("type", "jdbc")
+				.tag("signature", "All")
+				.tag("method", "SELECT")
+				.build());
 		assertNotNull(allTimer);
 		assertEquals(count, allTimer.getCount());
 	}

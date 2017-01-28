@@ -97,7 +97,7 @@ subprojects {
 
 	dependencies {
 		testCompile 'junit:junit:4.12'
-		testCompile 'org.mockito:mockito-core:2.0.111-beta'
+		testCompile 'org.mockito:mockito-core:2.6.9'
 		testCompile 'ch.qos.logback:logback-classic:1.1.7'
 		testCompile 'org.apache.logging.log4j:log4j-core:2.7'
 		testCompile 'commons-io:commons-io:2.5'

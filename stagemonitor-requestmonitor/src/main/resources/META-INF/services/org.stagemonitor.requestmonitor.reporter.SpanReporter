@@ -1,4 +1,2 @@
 org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter
-org.stagemonitor.requestmonitor.reporter.ExternalRequestMetricsReporter
-org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsReporter
 org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter
