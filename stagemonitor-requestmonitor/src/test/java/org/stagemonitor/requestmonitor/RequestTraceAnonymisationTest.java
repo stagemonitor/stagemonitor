@@ -143,7 +143,7 @@ public class RequestTraceAnonymisationTest {
 	}
 
 	private Span createSpan(String username, String ip) {
-		final Span span = new SpanWrapper(mock(Span.class), Collections.singletonList(new AnonymizingSpanInterceptor(requestMonitorPlugin)));
+		final Span span = new SpanWrapper(mock(Span.class), "", 0, Collections.singletonList(new AnonymizingSpanInterceptor(requestMonitorPlugin)));
 		span.setTag(SpanUtils.USERNAME, username);
 		SpanUtils.setClientIp(span, ip);
 		final Span mockSpan = ((SpanWrapper) span).getDelegate();

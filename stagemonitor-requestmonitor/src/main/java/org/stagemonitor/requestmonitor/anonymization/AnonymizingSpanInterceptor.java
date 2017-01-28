@@ -36,7 +36,7 @@ public class AnonymizingSpanInterceptor extends SpanInterceptor {
 	}
 
 	@Override
-	public void onFinish(Span span, long endTimestampNanos) {
+	public void onFinish(Span span, String operationName, long durationNanos) {
 		String hashedUserName = username;
 		if (pseudonymizeUserNames) {
 			hashedUserName = StringUtils.sha1Hash(username);

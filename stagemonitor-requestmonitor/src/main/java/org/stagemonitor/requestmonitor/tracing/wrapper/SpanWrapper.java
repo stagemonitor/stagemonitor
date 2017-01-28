@@ -9,10 +9,14 @@ import io.opentracing.SpanContext;
 public class SpanWrapper implements Span {
 
 	private final Span delegate;
+	private String operationName;
+	private final long startTimestampNanos;
 	private final List<SpanInterceptor> spanInterceptors;
 
-	public SpanWrapper(Span delegate, List<SpanInterceptor> spanInterceptors) {
+	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, List<SpanInterceptor> spanInterceptors) {
 		this.delegate = delegate;
+		this.operationName = operationName;
+		this.startTimestampNanos = startTimestampNanos;
 		this.spanInterceptors = spanInterceptors;
 	}
 
@@ -21,22 +25,25 @@ public class SpanWrapper implements Span {
 	}
 
 	public void close() {
+		final long durationNanos = System.nanoTime() - startTimestampNanos;
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(delegate, System.nanoTime());
+			spanInterceptor.onFinish(delegate, operationName, durationNanos);
 		}
 		delegate.close();
 	}
 
 	public void finish() {
+		final long durationNanos = System.nanoTime() - startTimestampNanos;
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(delegate, System.nanoTime());
+			spanInterceptor.onFinish(delegate, operationName, durationNanos);
 		}
 		delegate.finish();
 	}
 
 	public void finish(long finishMicros) {
+		final long durationNanos = TimeUnit.MICROSECONDS.toNanos(finishMicros) - startTimestampNanos;
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(delegate, TimeUnit.MICROSECONDS.toNanos(finishMicros));
+			spanInterceptor.onFinish(delegate, operationName, durationNanos);
 		}
 		delegate.finish(finishMicros);
 	}
@@ -79,9 +86,7 @@ public class SpanWrapper implements Span {
 	}
 
 	public Span setOperationName(String operationName) {
-		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onSetOperationName(operationName);
-		}
+		this.operationName = operationName;
 		return delegate.setOperationName(operationName);
 	}
 

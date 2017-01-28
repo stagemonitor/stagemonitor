@@ -20,7 +20,7 @@ public class SpanWrappingTracer implements Tracer {
 
 	@Override
 	public SpanBuilder buildSpan(String operationName) {
-		return new SpanWrappingSpanBuilder(delegate.buildSpan(operationName), createSpanInterceptors(operationName));
+		return new SpanWrappingSpanBuilder(delegate.buildSpan(operationName), operationName, createSpanInterceptors());
 	}
 
 	@Override
@@ -33,16 +33,19 @@ public class SpanWrappingTracer implements Tracer {
 		return delegate.extract(format, carrier);
 	}
 
-	protected List<SpanInterceptor> createSpanInterceptors(String operationName) {
+	protected List<SpanInterceptor> createSpanInterceptors() {
 		return Collections.emptyList();
 	}
 
 	class SpanWrappingSpanBuilder implements SpanBuilder {
 
+		private final String operationName;
 		private final SpanBuilder delegate;
 		private final List<SpanInterceptor> spanInterceptors;
+		private long startTimestampNanos;
 
-		SpanWrappingSpanBuilder(SpanBuilder delegate, List<SpanInterceptor> spanInterceptors) {
+		SpanWrappingSpanBuilder(SpanBuilder delegate, String operationName, List<SpanInterceptor> spanInterceptors) {
+			this.operationName = operationName;
 			this.delegate = delegate;
 			this.spanInterceptors = spanInterceptors;
 		}
@@ -85,17 +88,13 @@ public class SpanWrappingTracer implements Tracer {
 		}
 
 		public SpanBuilder withStartTimestamp(long microseconds) {
-			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				spanInterceptor.onSetStartTimestamp(TimeUnit.MICROSECONDS.toNanos(microseconds));
-			}
+			startTimestampNanos = TimeUnit.MICROSECONDS.toNanos(microseconds);
 			return delegate.withStartTimestamp(microseconds);
 		}
 
 		public Span start() {
-			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				spanInterceptor.onSetStartTimestamp(System.nanoTime());
-			}
-			return new SpanWrapper(delegate.start(), spanInterceptors);
+			startTimestampNanos = System.nanoTime();
+			return new SpanWrapper(delegate.start(), operationName, startTimestampNanos, spanInterceptors);
 		}
 	}
 }

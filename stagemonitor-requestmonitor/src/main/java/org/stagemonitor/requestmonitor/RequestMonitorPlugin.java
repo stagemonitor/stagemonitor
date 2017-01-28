@@ -349,9 +349,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final com.uber.jaeger.Tracer tracerDelegate = new com.uber.jaeger.Tracer.Builder(initArguments.getMeasurementSession().getApplicationName(), new CompositeReporter(new LoggingReporter()), new ConstSampler(true)).build();
 		tracer = new SpanWrappingTracer(tracerDelegate) {
 			@Override
-			protected List<SpanInterceptor> createSpanInterceptors(String operationName) {
+			protected List<SpanInterceptor> createSpanInterceptors() {
 				List<SpanInterceptor> spanInterceptors = new ArrayList<SpanInterceptor>();
-				spanInterceptors.add(new ExternalRequestMetricsSpanInterceptor(operationName, corePlugin, RequestMonitorPlugin.this));
+				spanInterceptors.add(new ExternalRequestMetricsSpanInterceptor(corePlugin, RequestMonitorPlugin.this));
 				if (anonymizeIPs.getValue() || pseudonymizeUserName.getValue()) {
 					spanInterceptors.add(new AnonymizingSpanInterceptor(RequestMonitorPlugin.this));
 				}

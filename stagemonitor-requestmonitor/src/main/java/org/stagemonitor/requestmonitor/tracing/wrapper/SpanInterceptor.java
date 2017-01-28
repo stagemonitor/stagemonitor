@@ -16,12 +16,6 @@ public abstract class SpanInterceptor {
 		return value;
 	}
 
-	public void onSetOperationName(String operationName) {
-	}
-
-	public void onSetStartTimestamp(long startTimestampNanos) {
-	}
-
-	public void onFinish(Span span, long endTimestampNanos) {
+	public void onFinish(Span span, String operationName, long durationNanos) {
 	}
 }

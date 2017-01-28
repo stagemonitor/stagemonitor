@@ -5,7 +5,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.tracing.wrapper.BasicSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInterceptor;
 
 import java.util.concurrent.TimeUnit;
 
@@ -14,7 +14,7 @@ import io.opentracing.Span;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class ExternalRequestMetricsSpanInterceptor extends BasicSpanInterceptor {
+public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpanInterceptor {
 
 	private final CorePlugin corePlugin;
 	private final RequestMonitorPlugin requestMonitorPlugin;
@@ -34,8 +34,7 @@ public class ExternalRequestMetricsSpanInterceptor extends BasicSpanInterceptor 
 	private String method;
 	private String parentName;
 
-	public ExternalRequestMetricsSpanInterceptor(String operationName, CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin) {
-		super(operationName);
+	public ExternalRequestMetricsSpanInterceptor(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin) {
 		this.corePlugin = corePlugin;
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
@@ -54,8 +53,8 @@ public class ExternalRequestMetricsSpanInterceptor extends BasicSpanInterceptor 
 	}
 
 	@Override
-	public void onFinish(Span span, long endTimestampNanos) {
-		super.onFinish(span, endTimestampNanos);
+	public void onFinish(Span span, String operationName, long durationNanos) {
+		super.onFinish(span, operationName, durationNanos);
 		if (isClient && StringUtils.isNotEmpty(type) && StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(method)) {
 			corePlugin.getMetricRegistry()
 					.timer(externalRequestTemplate.build(type, "All", method))
