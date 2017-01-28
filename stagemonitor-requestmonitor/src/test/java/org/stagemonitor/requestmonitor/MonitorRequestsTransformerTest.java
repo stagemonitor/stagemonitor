@@ -58,10 +58,10 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
-		final Span span = SpanUtils.getInternalSpan(requestInformation.getSpan());
+		final Span span = (Span) requestInformation.getSpan();
 		new LoggingSpanReporter().report(requestInformation);
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
+		assertEquals("1", getTagsStartingWith(((Span) requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", span.getOperationName());
 		assertEquals(1, requestInformation.getCallTree().getChildren().size());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
@@ -95,7 +95,7 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequestsAnnonymousInnerClass() throws Exception {
 		testClass.monitorAnnonymousInnerClass();
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
-		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
+		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", ((Span) requestInformation.getSpan()).getOperationName());
 		assertEquals(1, requestInformation.getCallTree().getChildren().size());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass$1.run"));
@@ -181,8 +181,8 @@ public class MonitorRequestsTransformerTest {
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
 
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
+		assertEquals("1", getTagsStartingWith(((Span) requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
+		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", ((Span) requestInformation.getSpan()).getOperationName());
 		assertEquals(1, requestInformation.getCallTree().getChildren().size());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe"));

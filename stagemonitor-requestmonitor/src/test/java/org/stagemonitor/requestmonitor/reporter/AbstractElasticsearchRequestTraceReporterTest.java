@@ -56,7 +56,7 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 		final io.opentracing.Span span = createTestSpan(executionTimeMs);
 		SpanUtils.setCallTree(span, CallStackElement.createRoot("test"));
 		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
-		return SpanUtils.getInternalSpan(span);
+		return (Span) span;
 	}
 
 	protected io.opentracing.Span createTestSpan(long executionTimeMs) {

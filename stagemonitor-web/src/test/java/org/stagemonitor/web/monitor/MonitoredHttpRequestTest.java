@@ -69,7 +69,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = SpanUtils.getInternalSpan(monitoredHttpRequest.createSpan());
+		final Span span = (Span) monitoredHttpRequest.createSpan();
 		assertEquals("/test.js", span.getTags().get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET *.js", span.getOperationName());
 		assertEquals("GET", span.getTags().get("method"));
@@ -97,7 +97,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = SpanUtils.getInternalSpan(monitoredHttpRequest.createSpan());
+		final Span span = (Span) monitoredHttpRequest.createSpan();
 		assertEquals("www.github.com", span.getTags().get("http.referring_site"));
 	}
 
@@ -109,7 +109,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = SpanUtils.getInternalSpan(monitoredHttpRequest.createSpan());
+		final Span span = (Span) monitoredHttpRequest.createSpan();
 		assertNull(span.getTags().get("http.referring_site"));
 	}
 

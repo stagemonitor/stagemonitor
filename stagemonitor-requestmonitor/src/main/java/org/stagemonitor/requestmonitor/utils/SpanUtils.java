@@ -90,10 +90,4 @@ public class SpanUtils {
 			}
 		}
 	}
-
-	@Deprecated
-	public static com.uber.jaeger.Span getInternalSpan(Span span) {
-		return (com.uber.jaeger.Span) span;
-	}
-
 }

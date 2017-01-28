@@ -25,7 +25,11 @@ public class LoggingSpanReporter extends SpanReporter {
 
 	@Override
 	public void report(RequestMonitor.RequestInformation requestInformation) {
-		Span span = SpanUtils.getInternalSpan(requestInformation.getSpan());
+		if (!(requestInformation.getSpan() instanceof Span)) {
+			logger.info("{}", requestInformation.getSpan());
+			return;
+		}
+		Span span = (Span) requestInformation.getSpan();
 		logger.info("Reporting span");
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n###########################\n");

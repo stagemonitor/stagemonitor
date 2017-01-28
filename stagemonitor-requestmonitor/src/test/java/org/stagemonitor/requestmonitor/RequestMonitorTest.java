@@ -24,7 +24,6 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collections;
 import java.util.concurrent.Callable;
@@ -116,9 +115,9 @@ public class RequestMonitorTest {
 			@Override
 			public Void answer(InvocationOnMock invocation) throws Throwable {
 				RequestMonitor.RequestInformation requestInformation = (RequestMonitor.RequestInformation) invocation.getArguments()[0];
-				assertEquals("java.lang.RuntimeException", SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get("exception.class"));
-				assertEquals("test", SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get("exception.message"));
-				assertNotNull(SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get("exception.stack_trace"));
+				assertEquals("java.lang.RuntimeException", ((Span) requestInformation.getSpan()).getTags().get("exception.class"));
+				assertEquals("test", ((Span) requestInformation.getSpan()).getTags().get("exception.message"));
+				assertNotNull(((Span) requestInformation.getSpan()).getTags().get("exception.stack_trace"));
 				return null;
 			}
 		}).when(monitoredRequest).onPostExecute(Mockito.<RequestMonitor.RequestInformation>any());
@@ -226,7 +225,7 @@ public class RequestMonitorTest {
 		final Span[] asyncSpan = new Span[1];
 
 		requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
-			firstSpan[0] = SpanUtils.getInternalSpan(TracingUtils.getTraceContext().getCurrentSpan());
+			firstSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
 			return monitorAsyncMethodCall(executorService, asyncSpan);
 		}));
 		executorService.shutdown();
@@ -241,7 +240,7 @@ public class RequestMonitorTest {
 	private Object monitorAsyncMethodCall(ExecutorService executorService, final Span[] asyncSpan) {
 		return executorService.submit((Callable<Object>) () ->
 				requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
-					asyncSpan[0] = SpanUtils.getInternalSpan(TracingUtils.getTraceContext().getCurrentSpan());
+					asyncSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
 					return callAsyncMethod();
 				})));
 	}

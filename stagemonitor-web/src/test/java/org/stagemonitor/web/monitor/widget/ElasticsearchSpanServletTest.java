@@ -7,7 +7,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporterIntegrationTest;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 
 import java.util.Collections;
@@ -37,7 +36,7 @@ public class ElasticsearchSpanServletTest extends ElasticsearchSpanReporterInteg
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final MockHttpServletRequest req = new MockHttpServletRequest();
-		final String spanId = String.format("%x", SpanUtils.getInternalSpan(span).context().getSpanID());
+		final String spanId = String.format("%x", ((com.uber.jaeger.Span) span).context().getSpanID());
 		req.addParameter("id", spanId);
 		final MockHttpServletResponse resp = new MockHttpServletResponse();
 		elasticsearchRequestTraceServlet.doGet(req, resp);

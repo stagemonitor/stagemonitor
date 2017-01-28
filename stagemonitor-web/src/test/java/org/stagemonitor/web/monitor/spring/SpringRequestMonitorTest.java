@@ -30,7 +30,6 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -143,9 +142,9 @@ public class SpringRequestMonitorTest {
 
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
 		assertEquals("Test Get Request Name", requestInformation.getOperationName());
-		assertEquals("Test Get Request Name", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
-		assertEquals("/test/requestName", SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get(Tags.HTTP_URL.getKey()));
-		assertEquals("GET", SpanUtils.getInternalSpan(requestInformation.getSpan()).getTags().get("method"));
+		assertEquals("Test Get Request Name", ((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
+		assertEquals("/test/requestName", ((com.uber.jaeger.Span) requestInformation.getSpan()).getTags().get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET", ((com.uber.jaeger.Span) requestInformation.getSpan()).getTags().get("method"));
 		Assert.assertNull(requestInformation.getExecutionResult());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
@@ -160,7 +159,7 @@ public class SpringRequestMonitorTest {
 		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals("GET *.js", requestInformation.getOperationName());
-		assertEquals("GET *.js", SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
+		assertEquals("GET *.js", ((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
@@ -175,7 +174,7 @@ public class SpringRequestMonitorTest {
 
 		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
-		assertNull(SpanUtils.getInternalSpan(requestInformation.getSpan()).getOperationName());
+		assertNull(((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
 		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
 	}
@@ -202,7 +201,7 @@ public class SpringRequestMonitorTest {
 		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
 		try {
 			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());
-			assertEquals("Test Get Request Name", SpanUtils.getInternalSpan(RequestMonitor.get().getSpan()).getOperationName());
+			assertEquals("Test Get Request Name", ((com.uber.jaeger.Span) RequestMonitor.get().getSpan()).getOperationName());
 		} finally {
 			requestMonitor.monitorStop();
 		}
