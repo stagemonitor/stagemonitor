@@ -128,7 +128,6 @@ public class RequestMonitor {
 	public void monitorStop() {
 		long overhead2 = System.nanoTime();
 		final RequestInformation info = getRequestInformation();
-		request.set(info.parent);
 		if (info.getSpan() != null) {
 			TracingUtils.getTraceContext().pop();
 			info.getSpan().finish();
@@ -159,6 +158,7 @@ public class RequestMonitor {
 	}
 
 	private void cleanUpAfter(RequestInformation info) {
+		request.set(info.parent);
 		if (info.callTree != null) {
 			Profiler.clearMethodCallParent();
 		}

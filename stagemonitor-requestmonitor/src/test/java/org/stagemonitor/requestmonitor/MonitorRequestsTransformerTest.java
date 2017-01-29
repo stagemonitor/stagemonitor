@@ -95,7 +95,7 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequestsAnnonymousInnerClass() throws Exception {
 		testClass.monitorAnnonymousInnerClass();
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
-		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", ((Span) requestInformation.getSpan()).getOperationName());
+		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", requestInformation.getOperationName());
 		assertEquals(1, requestInformation.getCallTree().getChildren().size());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass$1.run"));
@@ -107,21 +107,21 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorRequestsResolvedAtRuntime() throws Exception {
 		testClass.resolveNameAtRuntime();
-		final String operationName = requestTraceCapturingReporter.getSpan().getOperationName();
+		final String operationName = requestTraceCapturingReporter.get().getOperationName();
 		assertEquals("MonitorRequestsTransformerTest$TestSubClass#resolveNameAtRuntime", operationName);
 	}
 
 	@Test
 	public void testMonitorStaticMethod() throws Exception {
 		TestClass.monitorStaticMethod();
-		final String operationName = requestTraceCapturingReporter.getSpan().getOperationName();
+		final String operationName = requestTraceCapturingReporter.get().getOperationName();
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorStaticMethod", operationName);
 	}
 
 	@Test
 	public void testMonitorRequestsCustomName() throws Exception {
 		testClass.doFancyStuff();
-		final String operationName = requestTraceCapturingReporter.getSpan().getOperationName();
+		final String operationName = requestTraceCapturingReporter.get().getOperationName();
 		assertEquals("My Cool Method", operationName);
 	}
 
@@ -135,6 +135,7 @@ public class MonitorRequestsTransformerTest {
 	}
 
 	private static class TestClass extends AbstractTestClass {
+		@MonitorRequests
 		public int monitorMe(int i) throws Exception {
 			return i;
 		}
@@ -182,7 +183,7 @@ public class MonitorRequestsTransformerTest {
 
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(((Span) requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", ((Span) requestInformation.getSpan()).getOperationName());
+		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", requestInformation.getOperationName());
 		assertEquals(1, requestInformation.getCallTree().getChildren().size());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe"));

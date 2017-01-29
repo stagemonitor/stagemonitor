@@ -354,7 +354,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 				.build();
 
 		final RequestMonitor.RequestInformationSettingSpanInterceptor requestInformationSettingSpanInterceptor =
-				new RequestMonitor.RequestInformationSettingSpanInterceptor(requestMonitor);
+				new RequestMonitor.RequestInformationSettingSpanInterceptor(getRequestMonitor());
 
 		tracer = new SpanWrappingTracer(tracerImpl) {
 			@Override
