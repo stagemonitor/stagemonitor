@@ -7,8 +7,8 @@ import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
-import org.stagemonitor.requestmonitor.reporter.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
+import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 

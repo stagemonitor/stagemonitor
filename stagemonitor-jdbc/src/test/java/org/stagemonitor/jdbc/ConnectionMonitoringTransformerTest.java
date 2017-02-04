@@ -134,12 +134,9 @@ public class ConnectionMonitoringTransformerTest {
 	@Test
 	public void monitorGetConnection() throws Exception {
 		requestMonitor
-				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
-					@Override
-					public Object execute() throws Exception {
-						dataSource.getConnection().close();
-						return null;
-					}
+				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", () -> {
+					dataSource.getConnection().close();
+					return null;
 				})).getRequestTraceReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
@@ -154,12 +151,9 @@ public class ConnectionMonitoringTransformerTest {
 			return;
 		}
 		requestMonitor
-				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", new MonitoredMethodRequest.MethodExecution() {
-					@Override
-					public Object execute() throws Exception {
-						dataSource.getConnection("sa", "").close();
-						return null;
-					}
+				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", () -> {
+					dataSource.getConnection("sa", "").close();
+					return null;
 				})).getRequestTraceReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
@@ -192,12 +186,9 @@ public class ConnectionMonitoringTransformerTest {
 	@Test
 	public void testRecordSqlStatement() throws Exception {
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor
-				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlStatement", new MonitoredMethodRequest.MethodExecution() {
-					@Override
-					public Object execute() throws Exception {
-						testDao.executeStatement();
-						return null;
-					}
+				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlStatement", () -> {
+					testDao.executeStatement();
+					return null;
 				}));
 		requestInformation.getRequestTraceReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
@@ -208,8 +199,8 @@ public class ConnectionMonitoringTransformerTest {
 		final CallStackElement callStack = requestInformation.getCallTree();
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executeStatement()",
-				callStack.getChildren().get(0).getChildren().get(0).getSignature());
-		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getChildren().get(0).getSignature());
+				callStack.getChildren().get(0).getSignature());
+		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getSignature());
 	}
 
 	public static class TestDao {

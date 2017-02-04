@@ -1,9 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import com.uber.jaeger.reporters.CompositeReporter;
-import com.uber.jaeger.reporters.LoggingReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
@@ -16,7 +12,8 @@ import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.reporter.jaeger.SpanJsonModule;
+import org.stagemonitor.requestmonitor.tracing.TracerFactory;
+import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
@@ -26,6 +23,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
@@ -314,7 +312,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	private static RequestMonitor requestMonitor;
 
-	private Tracer tracer;
+	private SpanWrappingTracer tracer;
 	private final List<Callable<SpanInterceptor>> spanInterceptorSuppliers = new CopyOnWriteArrayList<Callable<SpanInterceptor>>();
 
 	public Tracer getTracer() {
@@ -350,28 +348,23 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
 		}
 
-		final com.uber.jaeger.Tracer tracerImpl = new com.uber.jaeger.Tracer.Builder(
-				initArguments.getMeasurementSession().getApplicationName(),
-				new CompositeReporter(new LoggingReporter()),
-				new ConstSampler(true))
-				.build();
-
-
 		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
 		final RequestMonitorPlugin requestMonitorPlugin = this;
 
-		tracer = getSpanWrappingTracer(tracerImpl, metricRegistry, requestMonitorPlugin, getRequestMonitor(), spanInterceptorSuppliers);
+		final Tracer tracer = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator().next().getTracer(initArguments);
+		this.tracer = getSpanWrappingTracer(tracer, metricRegistry, requestMonitorPlugin, getRequestMonitor(), spanInterceptorSuppliers);
 	}
 
 	public static SpanWrappingTracer getSpanWrappingTracer(final Tracer delegate, final Metric2Registry metricRegistry,
 														   final RequestMonitorPlugin requestMonitorPlugin,
 														   final RequestMonitor requestMonitor,
 														   List<Callable<SpanInterceptor>> spanInterceptorSuppliers) {
-		spanInterceptorSuppliers.add(new RequestMonitor.RequestInformationSettingSpanInterceptor(requestMonitor));
-		spanInterceptorSuppliers.add(ExternalRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
-		spanInterceptorSuppliers.add(ServerRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
-		spanInterceptorSuppliers.add(AnonymizingSpanInterceptor.asCallable(requestMonitorPlugin));
-		return new SpanWrappingTracer(delegate, spanInterceptorSuppliers);
+		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate, spanInterceptorSuppliers);
+		spanWrappingTracer.addSpanInterceptor(new RequestMonitor.RequestInformationSettingSpanInterceptor(requestMonitor));
+		spanWrappingTracer.addSpanInterceptor(ExternalRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(ServerRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(AnonymizingSpanInterceptor.asCallable(requestMonitorPlugin));
+		return spanWrappingTracer;
 	}
 
 	@Override
@@ -520,6 +513,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	}
 
 	public void addSpanInterceptor(Callable<SpanInterceptor> spanInterceptorSupplier) {
-		spanInterceptorSuppliers.add(spanInterceptorSupplier);
+		tracer.addSpanInterceptor(spanInterceptorSupplier);
 	}
 }

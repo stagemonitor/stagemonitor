@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.reporter.jaeger;
+package org.stagemonitor.requestmonitor.tracing.jaeger;
 
 
 import com.uber.jaeger.LogData;

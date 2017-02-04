@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.reporter.jaeger;
+package org.stagemonitor.requestmonitor.tracing.jaeger;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.Version;

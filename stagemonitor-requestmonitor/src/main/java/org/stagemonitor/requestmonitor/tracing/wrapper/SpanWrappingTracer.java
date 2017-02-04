@@ -48,6 +48,10 @@ public class SpanWrappingTracer implements Tracer {
 		return spanInterceptors;
 	}
 
+	public void addSpanInterceptor(Callable<SpanInterceptor> spanInterceptorSupplier) {
+		spanInterceptorSuppliers.add(spanInterceptorSupplier);
+	}
+
 	class SpanWrappingSpanBuilder implements SpanBuilder {
 
 		private final String operationName;

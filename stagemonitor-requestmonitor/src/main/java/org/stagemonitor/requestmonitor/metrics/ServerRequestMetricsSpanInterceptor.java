@@ -12,6 +12,7 @@ import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInte
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
@@ -78,6 +79,7 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 		if (isServer && StringUtils.isNotEmpty(operationName)) {
 			final long cpuTime = trackCpuTime(span);
 			trackMetrics(operationName, durationNanos, cpuTime);
+			trackExternalRequestMetricsOfParent(span, operationName);
 		}
 	}
 
@@ -105,30 +107,33 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 			metricRegistry.meter(getErrorMetricName(operationName)).mark();
 			metricRegistry.meter(getErrorMetricName("All")).mark();
 		}
-		trackExternalRequestMetricsOfParent(operationName, requestInformation);
 	}
 
 	/*
 	 * tracks the external requests grouped by the parent request name
 	 */
-	private void trackExternalRequestMetricsOfParent(String operationName, RequestMonitor.RequestInformation requestInformation) {
+	private void trackExternalRequestMetricsOfParent(Span span, String operationName) {
+		final RequestMonitor.RequestInformation requestInformation = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
 		for (RequestMonitor.RequestInformation.ExternalRequestStats externalRequestStats : requestInformation.getExternalRequestStats()) {
 			long durationNanos = externalRequestStats.getExecutionTimeNanos();
+			final String requestType = externalRequestStats.getRequestType();
+			span.setTag("external_requests." + requestType + ".duration_ms", TimeUnit.NANOSECONDS.toMillis(durationNanos));
+			span.setTag("external_requests." + requestType + ".count", externalRequestStats.getExecutionCount());
 
 			if (durationNanos > 0) {
 				if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
 					metricRegistry.timer(responseTimeExternalRequestLayerTemplate
-							.build(operationName, externalRequestStats.getRequestType()))
+							.build(operationName, requestType))
 							.update(durationNanos, NANOSECONDS);
 				}
 				metricRegistry.timer(responseTimeExternalRequestLayerTemplate
-						.build("All", externalRequestStats.getRequestType()))
+						.build("All", requestType))
 						.update(durationNanos, NANOSECONDS);
 			}
 
 			metricRegistry.meter(externalRequestRateTemplate
-					.build(operationName, externalRequestStats.getRequestType()))
-					.mark();
+					.build(operationName, requestType))
+					.mark(externalRequestStats.getExecutionCount());
 		}
 	}
 
