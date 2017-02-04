@@ -58,7 +58,6 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 
 	@Override
 	public void onFinish(Span span, String operationName, long durationNanos) {
-		super.onFinish(span, operationName, durationNanos);
 		if (isClient && StringUtils.isNotEmpty(type) && StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(method)) {
 			metricRegistry.timer(externalRequestTemplate.build(type, "All", method))
 					.update(durationNanos, TimeUnit.NANOSECONDS);
