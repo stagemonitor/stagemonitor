@@ -11,7 +11,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
+import org.stagemonitor.requestmonitor.reporter.jaeger.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.ArrayList;

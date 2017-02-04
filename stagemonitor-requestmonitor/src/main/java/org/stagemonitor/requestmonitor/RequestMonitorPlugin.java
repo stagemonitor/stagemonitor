@@ -14,9 +14,9 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsSpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
+import org.stagemonitor.requestmonitor.reporter.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 

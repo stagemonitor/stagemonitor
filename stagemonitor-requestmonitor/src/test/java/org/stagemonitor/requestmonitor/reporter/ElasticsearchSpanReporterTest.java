@@ -10,7 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
+import org.stagemonitor.requestmonitor.reporter.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import io.opentracing.Span;

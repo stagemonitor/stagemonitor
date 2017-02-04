@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.reporter;
+package org.stagemonitor.requestmonitor.reporter.jaeger;
 
 
 import com.uber.jaeger.LogData;
@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.List;

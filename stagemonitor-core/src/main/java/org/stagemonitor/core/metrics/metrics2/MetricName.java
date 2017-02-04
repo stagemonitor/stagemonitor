@@ -249,9 +249,6 @@ public class MetricName {
 		 * @return <code>this</code> for chaining
 		 */
 		public Builder tag(String key, String value) {
-			if (key == null || value == null) {
-				throw new IllegalArgumentException(String.format("Null key (%s) or value (%s) not allowed!", key, value));
-			}
 			this.tags.put(key, value);
 			return this;
 		}

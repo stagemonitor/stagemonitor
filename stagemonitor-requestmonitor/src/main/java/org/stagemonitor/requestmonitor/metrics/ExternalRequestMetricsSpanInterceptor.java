@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
 
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpanInterceptor {
@@ -26,10 +25,6 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 	public static final String EXTERNAL_REQUEST_TYPE = "type";
 	public static final String EXTERNAL_REQUEST_METHOD = "method";
 
-	private static final MetricName.MetricNameTemplate externalRequestRateTemplate = name("external_requests_rate")
-			.templateFor("request_name", "type");
-	private static final MetricName.MetricNameTemplate responseTimeExternalRequestLayerTemplate = name("response_time_server")
-			.templateFor("request_name", "layer");
 	private static final MetricName.MetricNameTemplate externalRequestTemplate = name("external_request_response_time")
 			.templateFor("type", "signature", "method");
 
@@ -70,32 +65,15 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 			final Timer timer = metricRegistry.timer(externalRequestTemplate.build(type, operationName, method));
 			requestMonitorPlugin.getRequestMonitor().getRequestInformation().setTimerForThisRequest(timer);
 			timer.update(durationNanos, TimeUnit.NANOSECONDS);
-			final RequestMonitor.RequestInformation parent = requestMonitorPlugin.getRequestMonitor().getRequestInformation().getParent();
+
+			final RequestMonitor.RequestInformation parent = requestMonitorPlugin
+					.getRequestMonitor()
+					.getRequestInformation()
+					.getParent();
 			if (parent != null) {
-				trackExternalRequestMetricsOfParent(parent.getOperationName(), durationNanos);
+				parent.addExternalRequest(type, durationNanos);
 			}
 		}
-	}
-
-	// TODO test!
-	/*
-	 * tracks the external requests grouped by the parent request name
-	 */
-	private void trackExternalRequestMetricsOfParent(String requestName, long durationNanos) {
-		if (durationNanos > 0) {
-			if (requestMonitorPlugin.isCollectDbTimePerRequest()) {
-				metricRegistry.timer(responseTimeExternalRequestLayerTemplate
-						.build(requestName, type))
-						.update(durationNanos, NANOSECONDS);
-			}
-			metricRegistry.timer(responseTimeExternalRequestLayerTemplate
-					.build("All", type))
-					.update(durationNanos, NANOSECONDS);
-		}
-
-		metricRegistry.meter(externalRequestRateTemplate
-				.build(requestName, type))
-				.mark();
 	}
 
 }

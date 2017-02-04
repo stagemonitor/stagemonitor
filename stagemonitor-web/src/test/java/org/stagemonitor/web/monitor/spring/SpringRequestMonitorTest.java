@@ -56,7 +56,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
-import static org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
+import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
 
 public class SpringRequestMonitorTest {
 

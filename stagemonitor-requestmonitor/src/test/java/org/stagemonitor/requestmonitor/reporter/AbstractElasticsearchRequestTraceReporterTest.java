@@ -26,7 +26,7 @@ import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
+import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
 
 public class AbstractElasticsearchRequestTraceReporterTest {
 	protected ElasticsearchClient elasticsearchClient;

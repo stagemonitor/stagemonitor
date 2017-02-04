@@ -20,7 +20,7 @@ import org.stagemonitor.core.metrics.annotations.TimedTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
 import org.stagemonitor.requestmonitor.MonitorRequests;
-import org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor;
 
 import java.io.IOException;
 import java.util.LinkedList;

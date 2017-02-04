@@ -1,6 +1,7 @@
 package org.stagemonitor.jdbc;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Timer;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
@@ -179,6 +180,8 @@ public class ConnectionMonitoringTransformerTest {
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()));
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").tag("method", "SELECT").build()));
+		final Map<MetricName, Meter> meters = metric2Registry.getMeters();
+		assertNotNull(meters.keySet().toString(), meters.get(name("external_requests_rate").tag("request_name", "testRecordSqlPreparedStatement").tag("type", "jdbc").build()));
 		final CallStackElement callStack = requestInformation.getCallTree();
 		assertEquals("testRecordSqlPreparedStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executePreparedStatement()",

@@ -1,5 +1,7 @@
 package org.stagemonitor.requestmonitor.tracing.wrapper;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -97,6 +99,7 @@ public class SpanWrapper implements Span {
 		return this;
 	}
 
+	@JsonValue
 	public Span getDelegate() {
 		return delegate;
 	}

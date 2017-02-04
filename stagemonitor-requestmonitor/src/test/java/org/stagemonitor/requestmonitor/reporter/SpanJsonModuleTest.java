@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
+import org.stagemonitor.requestmonitor.reporter.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import static org.junit.Assert.assertEquals;

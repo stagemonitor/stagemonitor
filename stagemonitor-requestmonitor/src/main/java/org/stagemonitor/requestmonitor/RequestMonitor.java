@@ -23,6 +23,7 @@ import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,7 +44,7 @@ import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-import static org.stagemonitor.requestmonitor.reporter.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
+import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
 
 public class RequestMonitor {
 
@@ -366,7 +367,7 @@ public class RequestMonitor {
 		private long duration;
 		private boolean externalRequest;
 		private Timer timerForThisRequest;
-
+		private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 
 		public static RequestInformation of(Span span) {
 			final RequestInformation requestInformation = new RequestInformation();
@@ -493,6 +494,59 @@ public class RequestMonitor {
 		public void setParent(RequestInformation parent) {
 			this.parent = parent;
 		}
+
+		public void addExternalRequest(String requestType, long executionTimeNanos) {
+			final ExternalRequestStats stats = this.externalRequestStats.get(requestType);
+			if (stats == null) {
+				externalRequestStats.put(requestType, new ExternalRequestStats(requestType, executionTimeNanos));
+			} else {
+				stats.add(executionTimeNanos);
+			}
+		}
+
+		public Collection<ExternalRequestStats> getExternalRequestStats() {
+			return externalRequestStats.values();
+		}
+
+		public static class ExternalRequestStats {
+
+			private final double MS_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
+
+			private final String requestType;
+			private int executionCount = 1;
+			private long executionTimeNanos;
+
+			ExternalRequestStats(String requestType, long executionTimeNanos) {
+				this.requestType = requestType;
+				this.executionTimeNanos = executionTimeNanos;
+			}
+
+			public double getExecutionTimeMs() {
+				return executionTimeNanos / MS_IN_NANOS;
+			}
+
+			public long getExecutionTimeNanos() {
+				return executionTimeNanos;
+			}
+
+			public int getExecutionCount() {
+				return executionCount;
+			}
+
+			public String getRequestType() {
+				return requestType;
+			}
+
+			public void add(long executionTimeNanos) {
+				executionCount++;
+				this.executionTimeNanos += executionTimeNanos;
+			}
+
+			public void incrementExecutionTime(long additionalExecutionTime) {
+				executionTimeNanos += additionalExecutionTime;
+			}
+		}
+
 	}
 
 	static class RequestInformationSettingSpanInterceptor extends SpanInterceptor implements Callable<SpanInterceptor> {
@@ -527,6 +581,7 @@ public class RequestMonitor {
 			// this interceptor is stateless
 			return this;
 		}
+
 	}
 
 	private boolean isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestInformation requestInformation) {
