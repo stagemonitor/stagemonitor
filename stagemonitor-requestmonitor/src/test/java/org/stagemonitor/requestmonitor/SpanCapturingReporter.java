@@ -1,7 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import com.uber.jaeger.Span;
-
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 
 import java.util.concurrent.BlockingQueue;
@@ -27,10 +25,6 @@ public class SpanCapturingReporter extends SpanReporter {
 	@Override
 	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 		return true;
-	}
-
-	public Span getSpan() throws InterruptedException {
-		return (Span) get().getSpan();
 	}
 
 	public RequestMonitor.RequestInformation get() throws InterruptedException {

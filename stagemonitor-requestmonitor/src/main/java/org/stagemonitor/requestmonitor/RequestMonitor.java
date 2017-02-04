@@ -1,6 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
 import com.uber.jaeger.context.TracingUtils;
 
@@ -15,7 +16,6 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
-import org.stagemonitor.core.util.TimeUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -98,7 +99,7 @@ public class RequestMonitor {
 		final long start = System.nanoTime();
 		RequestInformation info = new RequestInformation();
 		info.monitoredRequest = monitoredRequest;
-		detectForwardedRequest(info);
+		info.setParent(request.get());
 		request.set(info);
 		try {
 			if (!corePlugin.isStagemonitorActive()) {
@@ -129,8 +130,8 @@ public class RequestMonitor {
 		long overhead2 = System.nanoTime();
 		final RequestInformation info = getRequestInformation();
 		if (info.getSpan() != null) {
-			TracingUtils.getTraceContext().pop();
 			info.getSpan().finish();
+			TracingUtils.getTraceContext().pop();
 		}
 		if (monitorThisRequest() && info.hasRequestName()) {
 			try {
@@ -158,7 +159,7 @@ public class RequestMonitor {
 	}
 
 	private void cleanUpAfter(RequestInformation info) {
-		request.set(info.parent);
+		request.set(info.getParent());
 		if (info.callTree != null) {
 			Profiler.clearMethodCallParent();
 		}
@@ -235,17 +236,8 @@ public class RequestMonitor {
 		}
 	}
 
-	private void detectForwardedRequest(RequestInformation info) {
-		if (getRequestInformation() != null) {
-			info.parent = getRequestInformation();
-		}
-	}
-
 	private void monitorAfterExecution(MonitoredRequest monitoredRequest, RequestInformation info) {
 		final Span span = info.span;
-		final long cpuTime = TimeUtils.getCpuTime() - info.startCpu;
-		span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
-		span.setTag("duration_cpu_ms", NANOSECONDS.toMillis(cpuTime));
 		monitoredRequest.onPostExecute(info);
 
 		final CallStackElement callTree = info.getCallTree();
@@ -265,8 +257,8 @@ public class RequestMonitor {
 		final String requestName = info.getOperationName();
 		if (requestName != null) {
 			MetricName timerMetricName = getTimerMetricName(requestName);
-			final Timer timer = metricRegistry.getTimers().get(timerMetricName);
-			if (timer != null && timer.getCount() == 0) {
+			final Metric timer = metricRegistry.getMetrics().get(timerMetricName);
+			if (timer instanceof Timer && ((Timer) timer).getCount() == 0) {
 				metricRegistry.remove(timerMetricName);
 			}
 		}
@@ -308,7 +300,7 @@ public class RequestMonitor {
 		}
 	}
 
-	public boolean isWarmedUp() {
+	private boolean isWarmedUp() {
 		if (!warmedUp.get()) {
 			warmedUp.set(warmupRequests < noOfRequests.incrementAndGet() && new Date(System.currentTimeMillis() + 1).after(endOfWarmup));
 			return warmedUp.get();
@@ -362,7 +354,6 @@ public class RequestMonitor {
 
 	public static class RequestInformation {
 		private Span span;
-		private long startCpu = TimeUtils.getCpuTime();
 		private Object executionResult = null;
 		private long overhead1;
 		private MonitoredRequest monitoredRequest;
@@ -375,6 +366,20 @@ public class RequestMonitor {
 		private long duration;
 		private boolean externalRequest;
 		private Timer timerForThisRequest;
+
+
+		public static RequestInformation of(Span span) {
+			final RequestInformation requestInformation = new RequestInformation();
+			requestInformation.setSpan(span);
+			return requestInformation;
+		}
+
+		public static RequestInformation of(Span span, String operationName) {
+			final RequestInformation requestInformation = new RequestInformation();
+			requestInformation.setSpan(span);
+			requestInformation.setOperationName(operationName);
+			return requestInformation;
+		}
 
 		public static RequestInformation of(Span span, CallStackElement callTree) {
 			return of(span, callTree, Collections.<String, Object>emptyMap());
@@ -412,7 +417,6 @@ public class RequestMonitor {
 		public String toString() {
 			return "RequestInformation{" +
 					"span=" + span +
-					", startCpu=" + startCpu +
 					", executionResult=" + executionResult +
 					'}';
 		}
@@ -485,9 +489,13 @@ public class RequestMonitor {
 		public RequestInformation getParent() {
 			return parent;
 		}
+
+		public void setParent(RequestInformation parent) {
+			this.parent = parent;
+		}
 	}
 
-	static class RequestInformationSettingSpanInterceptor extends SpanInterceptor {
+	static class RequestInformationSettingSpanInterceptor extends SpanInterceptor implements Callable<SpanInterceptor> {
 		private final RequestMonitor requestMonitor;
 
 		RequestInformationSettingSpanInterceptor(RequestMonitor requestMonitor) {
@@ -512,6 +520,12 @@ public class RequestMonitor {
 				info.setOperationName(operationName);
 				info.setDuration(durationNanos);
 			}
+		}
+
+		@Override
+		public SpanInterceptor call() throws Exception {
+			// this interceptor is stateless
+			return this;
 		}
 	}
 
@@ -546,7 +560,11 @@ public class RequestMonitor {
 	 */
 	public Span getSpan() {
 		final RequestInformation requestInformation = getRequestInformation();
-		return requestInformation != null ? requestInformation.getSpan() : NoopSpan.INSTANCE;
+		if (requestInformation != null) {
+			return requestInformation.getSpan() != null ? requestInformation.getSpan() : NoopSpan.INSTANCE;
+		} else {
+			return NoopSpan.INSTANCE;
+		}
 	}
 
 	/**

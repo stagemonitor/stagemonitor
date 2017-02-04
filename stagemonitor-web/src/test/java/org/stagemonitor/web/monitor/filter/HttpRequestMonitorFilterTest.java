@@ -1,8 +1,5 @@
 package org.stagemonitor.web.monitor.filter;
 
-import com.uber.jaeger.Span;
-import com.uber.jaeger.SpanContext;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +29,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.opentracing.Span;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -49,7 +48,6 @@ public class HttpRequestMonitorFilterTest {
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 	private RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
-	private Span span = mock(Span.class);
 	private HttpRequestMonitorFilter httpRequestMonitorFilter;
 	private String testHtml = "<html><body></body></html>";
 
@@ -61,9 +59,8 @@ public class HttpRequestMonitorFilterTest {
 			public RequestMonitor.RequestInformation answer(InvocationOnMock invocation) throws Throwable {
 				MonitoredRequest request = (MonitoredRequest) invocation.getArguments()[0];
 				request.execute();
-				when(span.getOperationName()).thenReturn("testName");
-				when(span.context()).thenReturn(new SpanContext(1, 2, 0, (byte) 0));
-				when((Span) requestInformation.getSpan()).thenReturn(span);
+				when(requestInformation.getOperationName()).thenReturn("testName");
+				when(requestInformation.getSpan()).thenReturn(mock(Span.class));
 				return requestInformation;
 			}
 		});
@@ -208,7 +205,6 @@ public class HttpRequestMonitorFilterTest {
 				"      beacon_url: '/stagemonitor/public/rum',\n" +
 				"      log: null\n" +
 				"   });\n" +
-				"   BOOMR.addVar(\"requestId\", \"2\");\n" +
 				"   BOOMR.addVar(\"requestName\", \"testName\");\n" +
 				"   BOOMR.addVar(\"serverTime\", 0);\n" +
 				"</script></body></html>", servletResponse.getContentAsString());

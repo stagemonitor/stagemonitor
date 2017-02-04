@@ -10,6 +10,7 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
@@ -19,13 +20,14 @@ import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
 import io.opentracing.Tracer;
@@ -313,6 +315,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	private static RequestMonitor requestMonitor;
 
 	private Tracer tracer;
+	private final List<Callable<SpanInterceptor>> spanInterceptorSuppliers = new CopyOnWriteArrayList<Callable<SpanInterceptor>>();
 
 	public Tracer getTracer() {
 		return tracer;
@@ -353,22 +356,22 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 				new ConstSampler(true))
 				.build();
 
-		final RequestMonitor.RequestInformationSettingSpanInterceptor requestInformationSettingSpanInterceptor =
-				new RequestMonitor.RequestInformationSettingSpanInterceptor(getRequestMonitor());
 
-		tracer = new SpanWrappingTracer(tracerImpl) {
-			@Override
-			protected List<SpanInterceptor> createSpanInterceptors() {
-				List<SpanInterceptor> interceptors = new ArrayList<SpanInterceptor>();
-				interceptors.add(requestInformationSettingSpanInterceptor);
-				interceptors.add(new ExternalRequestMetricsSpanInterceptor(corePlugin.getMetricRegistry(), RequestMonitorPlugin.this));
-				interceptors.add(new ServerRequestMetricsSpanInterceptor(corePlugin.getMetricRegistry(), RequestMonitorPlugin.this));
-				if (anonymizeIPs.getValue() || pseudonymizeUserName.getValue()) {
-					interceptors.add(new AnonymizingSpanInterceptor(RequestMonitorPlugin.this));
-				}
-				return interceptors;
-			}
-		};
+		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
+		final RequestMonitorPlugin requestMonitorPlugin = this;
+
+		tracer = getSpanWrappingTracer(tracerImpl, metricRegistry, requestMonitorPlugin, getRequestMonitor(), spanInterceptorSuppliers);
+	}
+
+	public static SpanWrappingTracer getSpanWrappingTracer(final Tracer delegate, final Metric2Registry metricRegistry,
+														   final RequestMonitorPlugin requestMonitorPlugin,
+														   final RequestMonitor requestMonitor,
+														   List<Callable<SpanInterceptor>> spanInterceptorSuppliers) {
+		spanInterceptorSuppliers.add(new RequestMonitor.RequestInformationSettingSpanInterceptor(requestMonitor));
+		spanInterceptorSuppliers.add(ExternalRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
+		spanInterceptorSuppliers.add(ServerRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
+		spanInterceptorSuppliers.add(AnonymizingSpanInterceptor.asCallable(requestMonitorPlugin));
+		return new SpanWrappingTracer(delegate, spanInterceptorSuppliers);
 	}
 
 	@Override
@@ -514,5 +517,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isReportAsync() {
 		return reportSpansAsync.getValue();
+	}
+
+	public void addSpanInterceptor(Callable<SpanInterceptor> spanInterceptorSupplier) {
+		spanInterceptorSuppliers.add(spanInterceptorSupplier);
 	}
 }

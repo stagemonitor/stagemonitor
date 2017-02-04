@@ -1,8 +1,9 @@
 package org.stagemonitor.requestmonitor.tracing.wrapper;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
@@ -13,9 +14,11 @@ import io.opentracing.propagation.Format;
 public class SpanWrappingTracer implements Tracer {
 
 	private final Tracer delegate;
+	private final List<Callable<SpanInterceptor>> spanInterceptorSuppliers;
 
-	public SpanWrappingTracer(Tracer delegate) {
+	public SpanWrappingTracer(Tracer delegate, List<Callable<SpanInterceptor>> spanInterceptorSuppliers) {
 		this.delegate = delegate;
+		this.spanInterceptorSuppliers = spanInterceptorSuppliers;
 	}
 
 	@Override
@@ -34,14 +37,22 @@ public class SpanWrappingTracer implements Tracer {
 	}
 
 	protected List<SpanInterceptor> createSpanInterceptors() {
-		return Collections.emptyList();
+		List<SpanInterceptor> spanInterceptors = new ArrayList<SpanInterceptor>(spanInterceptorSuppliers.size());
+		for (Callable<SpanInterceptor> spanInterceptorSupplier : spanInterceptorSuppliers) {
+			try {
+				spanInterceptors.add(spanInterceptorSupplier.call());
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return spanInterceptors;
 	}
 
 	class SpanWrappingSpanBuilder implements SpanBuilder {
 
 		private final String operationName;
-		private final SpanBuilder delegate;
 		private final List<SpanInterceptor> spanInterceptors;
+		private SpanBuilder delegate;
 		private long startTimestampNanos;
 
 		SpanWrappingSpanBuilder(SpanBuilder delegate, String operationName, List<SpanInterceptor> spanInterceptors) {
@@ -55,45 +66,57 @@ public class SpanWrappingTracer implements Tracer {
 		}
 
 		public SpanBuilder asChildOf(SpanContext parent) {
-			return delegate.asChildOf(parent);
+			delegate = delegate.asChildOf(parent);
+			return this;
 		}
 
 		public SpanBuilder asChildOf(Span parent) {
-			return delegate.asChildOf(parent);
+			delegate = delegate.asChildOf(parent);
+			return this;
 		}
 
 		public SpanBuilder addReference(String referenceType, SpanContext referencedContext) {
-			return delegate.addReference(referenceType, referencedContext);
+			delegate = delegate.addReference(referenceType, referencedContext);
+			return this;
 		}
 
 		public SpanBuilder withTag(String key, String value) {
 			for (SpanInterceptor spanInterceptor : spanInterceptors) {
 				value = spanInterceptor.onSetTag(key, value);
 			}
-			return delegate.withTag(key, value);
+			delegate = delegate.withTag(key, value);
+			return this;
 		}
 
 		public SpanBuilder withTag(String key, boolean value) {
 			for (SpanInterceptor spanInterceptor : spanInterceptors) {
 				value = spanInterceptor.onSetTag(key, value);
 			}
-			return delegate.withTag(key, value);
+			delegate = delegate.withTag(key, value);
+			return this;
 		}
 
 		public SpanBuilder withTag(String key, Number value) {
 			for (SpanInterceptor spanInterceptor : spanInterceptors) {
 				value = spanInterceptor.onSetTag(key, value);
 			}
-			return delegate.withTag(key, value);
+			delegate = delegate.withTag(key, value);
+			return this;
 		}
 
 		public SpanBuilder withStartTimestamp(long microseconds) {
 			startTimestampNanos = TimeUnit.MICROSECONDS.toNanos(microseconds);
-			return delegate.withStartTimestamp(microseconds);
+			delegate = delegate.withStartTimestamp(microseconds);
+			return this;
 		}
 
 		public Span start() {
-			startTimestampNanos = System.nanoTime();
+			if (startTimestampNanos == 0) {
+				startTimestampNanos = System.nanoTime();
+			}
+			for (SpanInterceptor spanInterceptor : spanInterceptors) {
+				spanInterceptor.onStart();
+			}
 			return new SpanWrapper(delegate.start(), operationName, startTimestampNanos, spanInterceptors);
 		}
 	}

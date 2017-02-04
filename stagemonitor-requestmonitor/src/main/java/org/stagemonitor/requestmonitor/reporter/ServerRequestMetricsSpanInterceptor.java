@@ -1,10 +1,18 @@
 package org.stagemonitor.requestmonitor.reporter;
 
+import com.codahale.metrics.Timer;
+
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.core.util.TimeUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 
+import java.util.concurrent.Callable;
+
+import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
@@ -20,7 +28,6 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 			.tag("request_name", "")
 			.layer("All")
 			.templateFor("request_name");
-	private static final String DURATION_CPU = "duration_cpu";
 	private static MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time_server")
 			.tag("request_name", "")
 			.layer("All")
@@ -29,7 +36,7 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 	private final Metric2Registry metricRegistry;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 
-	private Number durationCpu;
+	private long startCpu;
 	private boolean error;
 
 	public ServerRequestMetricsSpanInterceptor(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
@@ -37,12 +44,19 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
+
+	public static Callable<SpanInterceptor> asCallable(final Metric2Registry metricRegistry, final RequestMonitorPlugin requestMonitorPlugin) {
+		return new Callable<SpanInterceptor>() {
+			@Override
+			public SpanInterceptor call() throws Exception {
+				return new ServerRequestMetricsSpanInterceptor(metricRegistry, requestMonitorPlugin);
+			}
+		};
+	}
+
 	@Override
-	public Number onSetTag(String key, Number value) {
-		if (DURATION_CPU.equals(key)) {
-			durationCpu = value;
-		}
-		return value;
+	public void onStart() {
+		startCpu = TimeUtils.getCpuTime();
 	}
 
 	@Override
@@ -54,19 +68,30 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 	}
 
 	@Override
-	public void onFinish(io.opentracing.Span span, String operationName, long durationNanos) {
-		if (isServer) {
-			trackMetrics(operationName, durationNanos);
+	public void onFinish(Span span, String operationName, long durationNanos) {
+		if (isServer && StringUtils.isNotEmpty(operationName)) {
+			final long cpuTime = trackCpuTime(span);
+			trackMetrics(operationName, durationNanos, cpuTime);
 		}
 	}
 
-	private void trackMetrics(String operationName, long durationNanos) {
-		metricRegistry.timer(getTimerMetricName(operationName)).update(durationNanos, NANOSECONDS);
+	private long trackCpuTime(Span span) {
+		final long cpuTime = TimeUtils.getCpuTime() - startCpu;
+		span.setTag("duration_cpu", NANOSECONDS.toMicros(cpuTime));
+		span.setTag("duration_cpu_ms", NANOSECONDS.toMillis(cpuTime));
+		return cpuTime;
+	}
+
+	private void trackMetrics(String operationName, long durationNanos, long cpuTime) {
+		final Timer timer = metricRegistry.timer(getTimerMetricName(operationName));
+		timer.update(durationNanos, NANOSECONDS);
+		requestMonitorPlugin.getRequestMonitor().getRequestInformation().setTimerForThisRequest(timer);
+
 		metricRegistry.timer(getTimerMetricName("All")).update(durationNanos, NANOSECONDS);
 
 		if (requestMonitorPlugin.isCollectCpuTime()) {
-			metricRegistry.timer(responseTimeCpuTemplate.build(operationName)).update(durationCpu.longValue(), MICROSECONDS);
-			metricRegistry.timer(responseTimeCpuTemplate.build("All")).update(durationCpu.longValue(), MICROSECONDS);
+			metricRegistry.timer(responseTimeCpuTemplate.build(operationName)).update(cpuTime, MICROSECONDS);
+			metricRegistry.timer(responseTimeCpuTemplate.build("All")).update(cpuTime, MICROSECONDS);
 		}
 
 		if (error) {

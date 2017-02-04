@@ -1,9 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import com.uber.jaeger.Tracer;
-import com.uber.jaeger.reporters.LoggingReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
@@ -13,6 +9,7 @@ import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -30,6 +27,7 @@ public class MonitoredMethodExecutionTest {
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
 	private Configuration configuration;
+	private Map<String, Object> tags;
 
 	@Before
 	public void clearState() {
@@ -46,11 +44,14 @@ public class MonitoredMethodExecutionTest {
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 
-		final Tracer tracer = new Tracer.Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
-
 		requestInformation1 = requestInformation2 = requestInformation3 = null;
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, registry);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+
+		tags = new HashMap<>();
+		when(requestMonitorPlugin.getTracer()).thenReturn(RequestMonitorPlugin
+				.getSpanWrappingTracer(new MockTracer(), registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags)));
+
 		testObject = new TestObject(requestMonitor);
 	}
 
@@ -58,8 +59,7 @@ public class MonitoredMethodExecutionTest {
 	public void testDoubleForwarding() throws Exception {
 		testObject.monitored1();
 		assertEquals(1, requestInformation1.getExecutionResult());
-		assertEquals("monitored1()", ((com.uber.jaeger.Span) requestInformation1.getSpan()).getOperationName());
-		final Map<String, Object> tags = ((com.uber.jaeger.Span) requestInformation1.getSpan()).getTags();
+		assertEquals("monitored1()", requestInformation1.getOperationName());
 		assertEquals(tags.toString(), "1", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg0"));
 		assertEquals(tags.toString(), "test", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg1"));
 
@@ -125,4 +125,5 @@ public class MonitoredMethodExecutionTest {
 			return 1;
 		}
 	}
+
 }

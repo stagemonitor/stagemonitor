@@ -33,7 +33,7 @@ public class RemoteEjbMonitorTransformerTest {
 
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
 		assertNotNull(requestInformation.getSpan());
-		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl#foo", ((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl#foo", requestInformation.getOperationName());
 		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl"));
@@ -45,7 +45,7 @@ public class RemoteEjbMonitorTransformerTest {
 
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
 		assertNotNull(requestInformation.getSpan());
-		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#bar", ((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#bar", requestInformation.getOperationName());
 		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl"));
@@ -57,7 +57,7 @@ public class RemoteEjbMonitorTransformerTest {
 
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
 		assertNotNull(requestInformation.getSpan());
-		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#foo", ((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#foo", requestInformation.getOperationName());
 		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl"));
@@ -89,7 +89,7 @@ public class RemoteEjbMonitorTransformerTest {
 		void foo();
 	}
 
-	private interface RemoteInterface extends SuperInterface {
+	interface RemoteInterface extends SuperInterface {
 	}
 
 	@Remote(RemoteInterface.class)

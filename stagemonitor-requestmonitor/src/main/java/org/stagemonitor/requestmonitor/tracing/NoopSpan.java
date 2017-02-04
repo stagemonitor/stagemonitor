@@ -6,7 +6,7 @@ import java.util.Map;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 
-public final class NoopSpan implements Span {
+public class NoopSpan implements Span {
 
 	public static final Span INSTANCE = new NoopSpan();
 

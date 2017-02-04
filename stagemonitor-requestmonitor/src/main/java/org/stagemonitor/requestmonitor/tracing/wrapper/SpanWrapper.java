@@ -8,7 +8,7 @@ import io.opentracing.SpanContext;
 
 public class SpanWrapper implements Span {
 
-	private final Span delegate;
+	private Span delegate;
 	private String operationName;
 	private final long startTimestampNanos;
 	private final List<SpanInterceptor> spanInterceptors;
@@ -52,33 +52,39 @@ public class SpanWrapper implements Span {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
 			value = spanInterceptor.onSetTag(key, value);
 		}
-		return delegate.setTag(key, value);
+		delegate = delegate.setTag(key, value);
+		return this;
 	}
 
 	public Span setTag(String key, boolean value) {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
 			value = spanInterceptor.onSetTag(key, value);
 		}
-		return delegate.setTag(key, value);
+		delegate = delegate.setTag(key, value);
+		return this;
 	}
 
 	public Span setTag(String key, Number value) {
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
 			value = spanInterceptor.onSetTag(key, value);
 		}
-		return delegate.setTag(key, value);
+		delegate = delegate.setTag(key, value);
+		return this;
 	}
 
 	public Span log(String eventName, Object payload) {
-		return delegate.log(eventName, payload);
+		delegate = delegate.log(eventName, payload);
+		return this;
 	}
 
 	public Span log(long timestampMicroseconds, String eventName, Object payload) {
-		return delegate.log(timestampMicroseconds, eventName, payload);
+		delegate = delegate.log(timestampMicroseconds, eventName, payload);
+		return this;
 	}
 
 	public Span setBaggageItem(String key, String value) {
-		return delegate.setBaggageItem(key, value);
+		delegate = delegate.setBaggageItem(key, value);
+		return this;
 	}
 
 	public String getBaggageItem(String key) {
@@ -87,10 +93,25 @@ public class SpanWrapper implements Span {
 
 	public Span setOperationName(String operationName) {
 		this.operationName = operationName;
-		return delegate.setOperationName(operationName);
+		delegate = delegate.setOperationName(operationName);
+		return this;
 	}
 
 	public Span getDelegate() {
 		return delegate;
+	}
+
+	public String getOperationName() {
+		return operationName;
+	}
+
+	public <T extends Span> T unwrap(Class<T> delegateClass) {
+		if (delegateClass.isInstance(delegate)) {
+			return (T) delegate;
+		} else if (delegate instanceof SpanWrapper) {
+			return ((SpanWrapper) delegate).unwrap(delegateClass);
+		} else {
+			return null;
+		}
 	}
 }

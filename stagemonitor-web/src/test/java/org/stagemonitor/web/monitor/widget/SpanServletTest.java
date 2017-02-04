@@ -213,6 +213,6 @@ public class SpanServletTest {
 		new MockFilterChain(spanServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 
 		Assert.assertEquals(404, response.getStatus());
-		Assert.assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(mock(Span.class), null)));
+		Assert.assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(mock(Span.class))));
 	}
 }

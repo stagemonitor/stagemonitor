@@ -6,6 +6,8 @@ import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
+import java.util.concurrent.Callable;
+
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
@@ -16,15 +18,30 @@ public class AnonymizingSpanInterceptor extends SpanInterceptor {
 	public String ip;
 	private final boolean pseudonymizeUserNames;
 	private final boolean anonymizeIPs;
+	private final boolean active;
 
 	public AnonymizingSpanInterceptor(RequestMonitorPlugin requestMonitorPlugin) {
 		this.requestMonitorPlugin = requestMonitorPlugin;
 		pseudonymizeUserNames = requestMonitorPlugin.isPseudonymizeUserNames();
 		anonymizeIPs = requestMonitorPlugin.isAnonymizeIPs();
+		active = anonymizeIPs || pseudonymizeUserNames;
+	}
+
+
+	public static Callable<SpanInterceptor> asCallable(final RequestMonitorPlugin requestMonitorPlugin) {
+		return new Callable<SpanInterceptor>() {
+			@Override
+			public SpanInterceptor call() throws Exception {
+				return new AnonymizingSpanInterceptor(requestMonitorPlugin);
+			}
+		};
 	}
 
 	@Override
 	public String onSetTag(String key, String value) {
+		if (!active) {
+			return super.onSetTag(key, value);
+		}
 		if (SpanUtils.USERNAME.equals(key)) {
 			username = value;
 		} else if (SpanUtils.IPV4_STRING.equals(key)) {
@@ -37,6 +54,9 @@ public class AnonymizingSpanInterceptor extends SpanInterceptor {
 
 	@Override
 	public void onFinish(Span span, String operationName, long durationNanos) {
+		if (!active) {
+			return;
+		}
 		String hashedUserName = username;
 		if (pseudonymizeUserNames) {
 			hashedUserName = StringUtils.sha1Hash(username);

@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -57,7 +58,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		report(span);
 
 		verify(elasticsearchClient).index(startsWith("stagemonitor-spans-"), eq("spans"), any());
-		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
+		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
 		verifyTimerCreated(1);
 	}
 
@@ -71,7 +72,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(requestTraceLogger, times(0)).info(anyString());
-		assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
+		assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
 		verifyTimerCreated(1);
 	}
 
@@ -84,7 +85,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(requestTraceLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
-		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
+		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
 	}
 
 	@Test
@@ -122,7 +123,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private void report(Span span) {
-		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(span, null);
+		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(span);
 		final RequestMonitor.RequestInformation reportArguments = RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap());
 		if (reporter.isActive(requestInformation)) {
 			reporter.report(reportArguments);
@@ -145,7 +146,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private Span getSpan(long executionTimeMillis) {
-		final Span span = new SpanWrapper(mock(Span.class), "External Request", 1,
+		final Span span = new SpanWrapper(NoopSpan.INSTANCE, "External Request", 1,
 				Collections.singletonList(new ExternalRequestMetricsSpanInterceptor(registry, requestMonitorPlugin)));
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 		SpanUtils.setOperationType(span, "jdbc");

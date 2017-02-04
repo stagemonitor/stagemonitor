@@ -3,8 +3,6 @@ package org.stagemonitor.requestmonitor;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.uber.jaeger.Span;
-import com.uber.jaeger.Tracer;
-import com.uber.jaeger.Tracer.Builder;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.reporters.LoggingReporter;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -24,11 +22,17 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import io.opentracing.Tracer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -50,6 +54,7 @@ public class RequestMonitorTest {
 	private Metric2Registry registry;
 	private RequestMonitor requestMonitor;
 	private Configuration configuration;
+	private Map<String, Object> tags = new HashMap<>();
 
 	@Before
 	public void before() {
@@ -72,14 +77,19 @@ public class RequestMonitorTest {
 
 		doReturn(true).when(requestMonitorPlugin).isCollectRequestStats();
 		doReturn(true).when(requestMonitorPlugin).isProfilerActive();
-		final Tracer tracer = new Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
-		when(requestMonitorPlugin.isLogCallStacks()).thenReturn(true);
+
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyReportNRequestsPerMinuteToElasticsearch();
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
 		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));
 		requestMonitor = new RequestMonitor(configuration, registry);
 		requestMonitor.addReporter(new LoggingSpanReporter());
+		when(requestMonitorPlugin.isLogCallStacks()).thenReturn(true);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+
+		final Tracer jaegerTracer = new com.uber.jaeger.Tracer.Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
+		final Tracer tracer = RequestMonitorPlugin.getSpanWrappingTracer(jaegerTracer, registry,
+				requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags));
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}
 
 	@After
@@ -115,9 +125,10 @@ public class RequestMonitorTest {
 			@Override
 			public Void answer(InvocationOnMock invocation) throws Throwable {
 				RequestMonitor.RequestInformation requestInformation = (RequestMonitor.RequestInformation) invocation.getArguments()[0];
-				assertEquals("java.lang.RuntimeException", ((Span) requestInformation.getSpan()).getTags().get("exception.class"));
-				assertEquals("test", ((Span) requestInformation.getSpan()).getTags().get("exception.message"));
-				assertNotNull(((Span) requestInformation.getSpan()).getTags().get("exception.stack_trace"));
+				assertNotNull(requestInformation.getSpan());
+				assertEquals("java.lang.RuntimeException", tags.get("exception.class"));
+				assertEquals("test", tags.get("exception.message"));
+				assertNotNull(tags.get("exception.stack_trace"));
 				return null;
 			}
 		}).when(monitoredRequest).onPostExecute(Mockito.<RequestMonitor.RequestInformation>any());
@@ -151,12 +162,7 @@ public class RequestMonitorTest {
 	}
 
 	private MonitoredRequest createMonitoredRequest() throws Exception {
-		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", new MonitoredMethodRequest.MethodExecution() {
-			@Override
-			public Object execute() throws Exception {
-				return "test";
-			}
-		}));
+		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", () -> "test"));
 	}
 
 	@Test
@@ -221,26 +227,29 @@ public class RequestMonitorTest {
 		SpanCapturingReporter spanCapturingReporter = new SpanCapturingReporter(requestMonitor);
 
 		final ExecutorService executorService = TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor());
-		final Span[] firstSpan = new Span[1];
-		final Span[] asyncSpan = new Span[1];
+		final RequestMonitor.RequestInformation[] asyncSpan = new RequestMonitor.RequestInformation[1];
 
-		requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
-			firstSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+		final RequestMonitor.RequestInformation testInfo = requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
+			assertNotNull(TracingUtils.getTraceContext().getCurrentSpan());
 			return monitorAsyncMethodCall(executorService, asyncSpan);
 		}));
 		executorService.shutdown();
 		// waiting for completion
 		spanCapturingReporter.get();
 		spanCapturingReporter.get();
-		assertEquals("test", firstSpan[0].getOperationName());
+		((Future<?>) testInfo.getExecutionResult()).get();
+		assertEquals("test", testInfo.getOperationName());
 		assertEquals("async", asyncSpan[0].getOperationName());
-		assertEquals(firstSpan[0].context().getSpanID(), asyncSpan[0].context().getParentID());
+
+		final long spanID = ((SpanWrapper) testInfo.getSpan()).unwrap(Span.class).context().getSpanID();
+		final long parentID = ((SpanWrapper) asyncSpan[0].getSpan()).unwrap(Span.class).context().getParentID();
+		assertEquals(spanID, parentID);
 	}
 
-	private Object monitorAsyncMethodCall(ExecutorService executorService, final Span[] asyncSpan) {
+	private Future<?> monitorAsyncMethodCall(ExecutorService executorService, final RequestMonitor.RequestInformation[] asyncSpan) {
 		return executorService.submit((Callable<Object>) () ->
-				requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
-					asyncSpan[0] = (Span) TracingUtils.getTraceContext().getCurrentSpan();
+				asyncSpan[0] = requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
+					assertNotNull(TracingUtils.getTraceContext().getCurrentSpan());
 					return callAsyncMethod();
 				})));
 	}

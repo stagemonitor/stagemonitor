@@ -1,28 +1,28 @@
 package org.stagemonitor.web.reporter;
 
-import com.uber.jaeger.Span;
-
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
+import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.util.Collections;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import javax.servlet.FilterChain;
+
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DoNotTrackPostExecutionInterceptorTest {
@@ -30,10 +30,11 @@ public class DoNotTrackPostExecutionInterceptorTest {
 	private ElasticsearchSpanReporter reporter;
 	private ElasticsearchClient elasticsearchClient;
 	private WebPlugin webPlugin;
+	private Configuration configuration;
 
 	@Before
 	public void setUp() throws Exception {
-		Configuration configuration = mock(Configuration.class);
+		configuration = mock(Configuration.class);
 		CorePlugin corePlugin = mock(CorePlugin.class);
 		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		this.webPlugin = mock(WebPlugin.class);
@@ -52,54 +53,50 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(new SpanReporter.InitArguments(configuration, mock(Metric2Registry.class)));
+		when(requestMonitorPlugin.getTracer()).thenReturn(new MockTracer());
 	}
 
 	@Test
 	public void testHonorDoNotTrack() throws Exception {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
-		final Span span = mock(Span.class);
-		when(span.getTags()).thenReturn(Collections.singletonMap(SpanUtils.HTTP_HEADERS_PREFIX + "dnt", "1"));
+		final MockHttpServletRequest request = new MockHttpServletRequest();
+		request.addHeader("dnt", "1");
+		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+				mock(FilterChain.class), configuration).createSpan();
 
-		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
-
-		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
-		Assert.assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
+		assertSame(NoopSpan.INSTANCE, span);
 	}
 
 	@Test
 	public void testDoNotTrackDisabled() throws Exception {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
-		final Span span = mock(Span.class);
-		when(span.getTags()).thenReturn(Collections.singletonMap(SpanUtils.HTTP_HEADERS_PREFIX + "dnt", "0"));
+		final MockHttpServletRequest request = new MockHttpServletRequest();
+		request.addHeader("dnt", "0");
+		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+				mock(FilterChain.class), configuration).createSpan();
 
-		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
-
-		verify(elasticsearchClient).index(anyString(), anyString(), any());
-		Assert.assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
+		assertNotSame(NoopSpan.INSTANCE, span);
 	}
 
 	@Test
 	public void testNoDoNotTrackHeader() throws Exception {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
-		final Span span = mock(Span.class);
-		when(span.getTags()).thenReturn(Collections.emptyMap());
+		final MockHttpServletRequest request = new MockHttpServletRequest();
+		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+				mock(FilterChain.class), configuration).createSpan();
 
-		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
-
-		verify(elasticsearchClient).index(anyString(), anyString(), any());
-		Assert.assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
+		assertNotSame(NoopSpan.INSTANCE, span);
 	}
 
 	@Test
 	public void testDontHonorDoNotTrack() throws Exception {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(false);
-		final Span span = mock(Span.class);
-		when(span.getTags()).thenReturn(Collections.singletonMap(SpanUtils.HTTP_HEADERS_PREFIX + "dnt", "1"));
+		final MockHttpServletRequest request = new MockHttpServletRequest();
+		request.addHeader("dnt", "1");
+		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+				mock(FilterChain.class), configuration).createSpan();
 
-		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
-
-		verify(elasticsearchClient).index(anyString(), anyString(), any());
-		Assert.assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span, null)));
+		assertNotSame(NoopSpan.INSTANCE, span);
 	}
 
 }

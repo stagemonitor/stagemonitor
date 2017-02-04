@@ -1,10 +1,5 @@
 package org.stagemonitor.web.monitor.jaxrs;
 
-import com.uber.jaeger.Span;
-import com.uber.jaeger.Tracer;
-import com.uber.jaeger.reporters.LoggingReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -15,6 +10,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -22,6 +18,7 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanCapturingReporter;
 import org.stagemonitor.web.WebPlugin;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.regex.Pattern;
 
@@ -67,27 +64,24 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
-		final Tracer tracer = new Tracer.Builder("JaxRsRequestNameDeterminerTransformerTest", new LoggingReporter(), new ConstSampler(true)).build();
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
 		requestMonitor.addReporter(requestTraceCapturingReporter);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(requestMonitorPlugin.getTracer()).thenReturn(RequestMonitorPlugin.getSpanWrappingTracer(new MockTracer(),
+				registry, requestMonitorPlugin, requestMonitor, new ArrayList<>()));
 	}
 
 	@Test
 	public void testSetNameForRestCalls() throws Exception {
-		final MonitoredRequest request = new MonitoredMethodRequest(configuration, "override me", new MonitoredMethodRequest.MethodExecution() {
-			@Override
-			public Object execute() throws Exception {
-				return resource.getTestString();
-			}
-		});
+		final MonitoredRequest request = new MonitoredMethodRequest(configuration, "override me", () -> resource.getTestString());
 		requestMonitor.monitor(request);
 
-		Span span = requestTraceCapturingReporter.getSpan();
+		final RequestMonitor.RequestInformation info = requestTraceCapturingReporter.get();
 
-		assertNotNull(span);
-		assertEquals("Get Test String", span.getOperationName());
+		assertNotNull(info.getSpan());
+		assertEquals("Get Test String", info.getOperationName());
 	}
 
 	@Path("/")

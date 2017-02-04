@@ -1,36 +1,65 @@
 package org.stagemonitor.web.monitor;
 
-import com.uber.jaeger.Span;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
+import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MonitoredHttpRequestTest {
 
+	private Configuration configuration;
+	private Map<String, Object> tags = new HashMap<>();
+	private String operationName;
+
 	@Before
 	public void setUp() throws Exception {
-		Stagemonitor.reset();
-		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance"));
+		configuration = mock(Configuration.class);
+		final RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		final WebPlugin webPlugin = new WebPlugin();
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
+		final List<Callable<SpanInterceptor>> spanInterceptorSuppliers = TagRecordingSpanInterceptor.asList(tags);
+		spanInterceptorSuppliers.add(new Callable<SpanInterceptor>() {
+			@Override
+			public SpanInterceptor call() throws Exception {
+				return new SpanInterceptor() {
+					@Override
+					public void onFinish(Span span, String operationName, long durationNanos) {
+						MonitoredHttpRequestTest.this.operationName = operationName;
+					}
+				};
+			}
+		});
+		when(requestMonitorPlugin.getTracer()).thenReturn(new SpanWrappingTracer(new MockTracer(),
+				spanInterceptorSuppliers));
 	}
 
 	@After
@@ -69,25 +98,23 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = (Span) monitoredHttpRequest.createSpan();
-		assertEquals("/test.js", span.getTags().get(Tags.HTTP_URL.getKey()));
-		assertEquals("GET *.js", span.getOperationName());
-		assertEquals("GET", span.getTags().get("method"));
-		assertNotNull(span.context().getSpanID());
-		assertNotNull(span.getStart());
+		final Span span = monitoredHttpRequest.createSpan();
+		span.finish();
+		assertEquals("/test.js", tags.get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET *.js", operationName);
+		assertEquals("GET", tags.get("method"));
 
-		assertEquals("application/json", span.getTags().get(SpanUtils.HTTP_HEADERS_PREFIX + "accept"));
-		assertFalse(span.getTags().containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "cookie"));
-		assertFalse(span.getTags().containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "Cookie"));
+		assertEquals("application/json", tags.get(SpanUtils.HTTP_HEADERS_PREFIX + "accept"));
+		assertFalse(tags.containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "cookie"));
+		assertFalse(tags.containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "Cookie"));
 
 		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
 		when(requestInformation.getSpan()).thenReturn(span);
-		when(requestInformation.getOperationName()).thenReturn(span.getOperationName());
 		monitoredHttpRequest.onPostExecute(requestInformation);
-		assertEquals("bar", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "foo"));
-		assertEquals("blubb", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "bla"));
-		assertEquals("XXXX", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
-		assertEquals("XXXX", span.getTags().get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
+		assertEquals("bar", tags.get(SpanUtils.PARAMETERS_PREFIX + "foo"));
+		assertEquals("blubb", tags.get(SpanUtils.PARAMETERS_PREFIX + "bla"));
+		assertEquals("XXXX", tags.get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
+		assertEquals("XXXX", tags.get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
 	}
 
 	@Test
@@ -97,8 +124,8 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = (Span) monitoredHttpRequest.createSpan();
-		assertEquals("www.github.com", span.getTags().get("http.referring_site"));
+		monitoredHttpRequest.createSpan();
+		assertEquals("www.github.com", tags.get("http.referring_site"));
 	}
 
 	@Test
@@ -109,8 +136,8 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = (Span) monitoredHttpRequest.createSpan();
-		assertNull(span.getTags().get("http.referring_site"));
+		monitoredHttpRequest.createSpan();
+		assertNull(tags.get("http.referring_site"));
 	}
 
 	private MonitoredHttpRequest createMonitoredHttpRequest(MockHttpServletRequest request) throws IOException {
@@ -118,6 +145,6 @@ public class MonitoredHttpRequestTest {
 				request,
 				new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 				new MockFilterChain(),
-				Stagemonitor.getConfiguration());
+				configuration);
 	}
 }

@@ -1,7 +1,6 @@
 package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Timer;
-import com.uber.jaeger.Span;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -16,6 +15,7 @@ import org.stagemonitor.requestmonitor.reporter.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +32,7 @@ public class MonitorRequestsTransformerTest {
 	private TestClassLevelAnnotationClass testClassLevelAnnotationClass;
 	private Metric2Registry metricRegistry;
 	private SpanCapturingReporter requestTraceCapturingReporter;
+	private Map<String, Object> tags;
 
 	@BeforeClass
 	public static void attachProfiler() {
@@ -47,6 +48,8 @@ public class MonitorRequestsTransformerTest {
 		Stagemonitor.setMeasurementSession(new MeasurementSession("MonitorRequestsTransformerTest", "test", "test"));
 		Stagemonitor.startMonitoring();
 		requestTraceCapturingReporter = new SpanCapturingReporter();
+		tags = new HashMap<>();
+		Stagemonitor.getPlugin(RequestMonitorPlugin.class).addSpanInterceptor(new TagRecordingSpanInterceptor(tags));
 	}
 
 	@AfterClass
@@ -58,11 +61,10 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
-		final Span span = (Span) requestInformation.getSpan();
 		new LoggingSpanReporter().report(requestInformation);
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(((Span) requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", span.getOperationName());
+		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
+		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", requestInformation.getOperationName());
 		assertEquals(1, requestInformation.getCallTree().getChildren().size());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass.monitorMe"));
@@ -85,7 +87,7 @@ public class MonitorRequestsTransformerTest {
 		} catch (NullPointerException e) {
 			// expected
 		}
-		assertEquals(NullPointerException.class.getName(), requestTraceCapturingReporter.getSpan().getTags().get("exception.class"));
+		assertEquals(NullPointerException.class.getName(), tags.get("exception.class"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass#monitorThrowException").layer("All").build()));
@@ -182,7 +184,7 @@ public class MonitorRequestsTransformerTest {
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
 
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(((Span) requestInformation.getSpan()).getTags(), SpanUtils.PARAMETERS_PREFIX).iterator().next());
+		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", requestInformation.getOperationName());
 		assertEquals(1, requestInformation.getCallTree().getChildren().size());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();

@@ -1,13 +1,8 @@
 package org.stagemonitor.web.monitor.spring;
 
-import com.uber.jaeger.Tracer;
-import com.uber.jaeger.reporters.LoggingReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -28,8 +23,10 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -37,6 +34,8 @@ import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResp
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
@@ -71,6 +70,7 @@ public class SpringRequestMonitorTest {
 	private Metric2Registry registry = new Metric2Registry();
 	private HandlerMapping getRequestNameHandlerMapping;
 	private DispatcherServlet dispatcherServlet;
+	private Map<String, Object> tags = new HashMap<>();
 
 	// the purpose of this class is to obtain a instance to a Method,
 	// because Method objects can't be mocked as they are final
@@ -95,8 +95,7 @@ public class SpringRequestMonitorTest {
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
-		final Tracer tracer = new Tracer.Builder("SpringRequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
 
@@ -111,6 +110,10 @@ public class SpringRequestMonitorTest {
 		final HandlerAdapter handlerAdapter = mock(HandlerAdapter.class);
 		when(handlerAdapter.supports(any())).thenReturn(true);
 		handlerAdapters.set(dispatcherServlet, Collections.singletonList(handlerAdapter));
+
+		when(requestMonitorPlugin.getTracer()).thenReturn(RequestMonitorPlugin.getSpanWrappingTracer(new MockTracer(),
+				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags)));
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 	}
 
 	private HandlerMapping createHandlerMapping(MockHttpServletRequest request, Method requestMappingMethod) throws Exception {
@@ -122,13 +125,8 @@ public class SpringRequestMonitorTest {
 		when(handlerMethod.getMethod()).thenReturn(requestMappingMethod);
 		doReturn(TestController.class).when(handlerMethod).getBeanType();
 		when(handlerExecutionChain.getHandler()).thenReturn(handlerMethod);
-		when(requestMappingHandlerMapping.getHandler(ArgumentMatchers.argThat(new ArgumentMatcher<HttpServletRequest>() {
-			@Override
-			public boolean matches(HttpServletRequest item) {
-				return item.getRequestURI().equals("/test/requestName");
-			}
-
-		}))).thenReturn(handlerExecutionChain);
+		when(requestMappingHandlerMapping.getHandler(ArgumentMatchers.argThat(item ->
+				item.getRequestURI().equals("/test/requestName")))).thenReturn(handlerExecutionChain);
 		return requestMappingHandlerMapping;
 	}
 
@@ -140,11 +138,11 @@ public class SpringRequestMonitorTest {
 
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
+		assertEquals("Test Get Request Name", requestInformation.getOperationName());
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
 		assertEquals("Test Get Request Name", requestInformation.getOperationName());
-		assertEquals("Test Get Request Name", ((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
-		assertEquals("/test/requestName", ((com.uber.jaeger.Span) requestInformation.getSpan()).getTags().get(Tags.HTTP_URL.getKey()));
-		assertEquals("GET", ((com.uber.jaeger.Span) requestInformation.getSpan()).getTags().get("method"));
+		assertEquals("/test/requestName", tags.get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET", tags.get("method"));
 		Assert.assertNull(requestInformation.getExecutionResult());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
@@ -159,7 +157,7 @@ public class SpringRequestMonitorTest {
 		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
 		assertEquals("GET *.js", requestInformation.getOperationName());
-		assertEquals("GET *.js", ((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
+		assertEquals("GET *.js", requestInformation.getOperationName());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
@@ -174,7 +172,7 @@ public class SpringRequestMonitorTest {
 
 		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
 
-		assertNull(((com.uber.jaeger.Span) requestInformation.getSpan()).getOperationName());
+		assertNull(requestInformation.getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
 		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
 	}
@@ -199,11 +197,13 @@ public class SpringRequestMonitorTest {
 	@Test
 	public void testGetRequestNameFromHandler() throws Exception {
 		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
+		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.get().getRequestInformation();
+		assertNotNull(requestInformation);
 		try {
 			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());
-			assertEquals("Test Get Request Name", ((com.uber.jaeger.Span) RequestMonitor.get().getSpan()).getOperationName());
 		} finally {
 			requestMonitor.monitorStop();
 		}
+		assertEquals("Test Get Request Name", requestInformation.getOperationName());
 	}
 }

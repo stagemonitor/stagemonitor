@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
@@ -17,6 +18,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -143,7 +145,7 @@ public class RequestTraceAnonymisationTest {
 	}
 
 	private Span createSpan(String username, String ip) {
-		final Span span = new SpanWrapper(mock(Span.class), "", 0, Collections.singletonList(new AnonymizingSpanInterceptor(requestMonitorPlugin)));
+		final Span span = new SpanWrapper(spy(NoopSpan.INSTANCE), "", 0, Collections.singletonList(new AnonymizingSpanInterceptor(requestMonitorPlugin)));
 		span.setTag(SpanUtils.USERNAME, username);
 		SpanUtils.setClientIp(span, ip);
 		final Span mockSpan = ((SpanWrapper) span).getDelegate();

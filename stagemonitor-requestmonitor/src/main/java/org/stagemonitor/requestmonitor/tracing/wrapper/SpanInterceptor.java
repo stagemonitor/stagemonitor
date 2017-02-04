@@ -4,6 +4,9 @@ import io.opentracing.Span;
 
 public abstract class SpanInterceptor {
 
+	public void onStart() {
+	}
+
 	public String onSetTag(String key, String value) {
 		return value;
 	}

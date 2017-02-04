@@ -8,7 +8,9 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
@@ -37,6 +39,15 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 	public ExternalRequestMetricsSpanInterceptor(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
 		this.metricRegistry = metricRegistry;
 		this.requestMonitorPlugin = requestMonitorPlugin;
+	}
+
+	public static Callable<SpanInterceptor> asCallable(final Metric2Registry metricRegistry, final RequestMonitorPlugin requestMonitorPlugin) {
+		return new Callable<SpanInterceptor>() {
+			@Override
+			public SpanInterceptor call() throws Exception {
+				return new ExternalRequestMetricsSpanInterceptor(metricRegistry, requestMonitorPlugin);
+			}
+		};
 	}
 
 	@Override

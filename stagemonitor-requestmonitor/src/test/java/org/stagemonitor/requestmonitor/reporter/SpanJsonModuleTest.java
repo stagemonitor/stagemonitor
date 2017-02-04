@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.tracing.SpanJsonModule;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +27,7 @@ public class SpanJsonModuleTest extends AbstractElasticsearchRequestTraceReporte
 
 	@Test
 	public void testNestDottedTagKeys() {
-		final io.opentracing.Span span = createTestSpan(1);
+		final io.opentracing.Span span = ((SpanWrapper) createTestSpan(1).getSpan()).getDelegate();
 		span.setTag("a.b.c.d1", "1");
 		span.setTag("a.b.c.d2", "2");
 		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
@@ -37,7 +38,7 @@ public class SpanJsonModuleTest extends AbstractElasticsearchRequestTraceReporte
 
 	@Test
 	public void testSampledTag() {
-		final io.opentracing.Span span = createTestSpan(1);
+		final io.opentracing.Span span = ((SpanWrapper) createTestSpan(1).getSpan()).getDelegate();
 		span.setTag("duration", "foo");
 		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
 		System.out.println(jsonSpan);
@@ -46,7 +47,7 @@ public class SpanJsonModuleTest extends AbstractElasticsearchRequestTraceReporte
 
 	@Test
 	public void testAmbiguousMapping() {
-		final io.opentracing.Span span = createTestSpan(1);
+		final io.opentracing.Span span = ((SpanWrapper) createTestSpan(1).getSpan()).getDelegate();
 		span.setTag("a", "1");
 		span.setTag("a.b", "2");
 		try {
