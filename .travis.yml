@@ -15,7 +15,7 @@ script:
 after_success:
   - ./gradlew cobertura coveralls
 after_failure:
-  - cat /home/travis/build/stagemonitor/stagemonitor/stagemonitor-alerting/hs_err_*.log
+  - cat /home/travis/build/stagemonitor/stagemonitor/stagemonitor-*/hs_err_*.log
 
 cache:
   directories:

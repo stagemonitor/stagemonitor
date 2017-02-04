@@ -53,7 +53,7 @@ ext {
 	metricsVersion = '3.1.2'
 	slf4jVersion = '1.7.21'
 	jacksonVersion = '2.7.4'
-	esVersion = '5.1.2'
+	esVersion = '5.1.1'
 	byteBuddyVersion = '1.5.7'
 	getProjectsToRelease = this.&getProjectsToRelease
 }
