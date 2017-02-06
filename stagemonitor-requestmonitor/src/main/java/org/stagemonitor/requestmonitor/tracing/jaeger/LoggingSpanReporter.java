@@ -3,34 +3,30 @@ package org.stagemonitor.requestmonitor.tracing.jaeger;
 
 import com.uber.jaeger.LogData;
 import com.uber.jaeger.Span;
+import com.uber.jaeger.reporters.Reporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.List;
 import java.util.Map;
 
-public class LoggingSpanReporter extends SpanReporter {
+public class LoggingSpanReporter implements Reporter {
 
 	private static final Logger logger = LoggerFactory.getLogger(LoggingSpanReporter.class);
-	private RequestMonitorPlugin requestMonitorPlugin;
+	private final RequestMonitorPlugin requestMonitorPlugin;
 
-	@Override
-	public void init(InitArguments initArguments) {
-		requestMonitorPlugin = initArguments.getConfiguration().getConfig(RequestMonitorPlugin.class);
+	public LoggingSpanReporter(RequestMonitorPlugin requestMonitorPlugin) {
+		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
 	@Override
-	public void report(RequestMonitor.RequestInformation requestInformation) {
-		if (!(requestInformation.getSpan() instanceof Span)) {
-			logger.info("{}", requestInformation.getSpan());
+	public void report(Span span) {
+		if (!requestMonitorPlugin.isLogCallStacks()) {
 			return;
 		}
-		Span span = (Span) requestInformation.getSpan();
 		logger.info("Reporting span");
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n###########################\n");
@@ -70,7 +66,6 @@ public class LoggingSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
-		return requestMonitorPlugin.isLogCallStacks();
+	public void close() {
 	}
 }

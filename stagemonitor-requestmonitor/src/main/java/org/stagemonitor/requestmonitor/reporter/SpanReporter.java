@@ -5,9 +5,11 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 
+import java.io.Closeable;
+
 import io.opentracing.Span;
 
-public abstract class SpanReporter implements StagemonitorSPI {
+public abstract class SpanReporter implements StagemonitorSPI, Closeable {
 
 	public void init(InitArguments initArguments) {
 	}
@@ -24,28 +26,14 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	 * <p/>
 	 * This method is called at most once from {@link RequestMonitor} for one request.
 	 * That means that the result from the first evaluation is final.
-	 * <p/>
-	 * If none of the currently registered {@link SpanReporter}s (
-	 * see {@link RequestMonitor#spanReporters}) which {@link #requiresCallTree()}
-	 * is active (see {@link RequestMonitor#isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestMonitor.RequestInformation)},
-	 * the profiler does not have to be enabled for the current request.
 	 *
-	 * @param isActiveArguments The parameter object which contains the actual parameters
+	 * @param requestInformation The parameter object which contains the actual parameters
 	 * @return <code>true</code>, if this {@link SpanReporter} is active, <code>false</code> otherwise
 	 */
 	public abstract boolean isActive(RequestMonitor.RequestInformation requestInformation);
 
-	/**
-	 * @return <code>true</code>, if this {@link SpanReporter} needs access to the call tree
-	 * ({@link org.stagemonitor.requestmonitor.profiler.CallStackElement})
-	 *
-	 * @see #isActive(RequestMonitor.RequestInformation)
-	 */
-	public boolean requiresCallTree() {
-		return true;
-	}
-
-	public void close(CloseArguments initArguments) {
+	@Override
+	public void close() {
 	}
 
 	public static class InitArguments {
@@ -64,9 +52,6 @@ public abstract class SpanReporter implements StagemonitorSPI {
 		public Metric2Registry getMetricRegistry() {
 			return metricRegistry;
 		}
-	}
-
-	public static class CloseArguments {
 	}
 
 }

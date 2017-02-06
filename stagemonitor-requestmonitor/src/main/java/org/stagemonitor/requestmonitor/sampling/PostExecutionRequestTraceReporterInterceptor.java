@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.reporter;
+package org.stagemonitor.requestmonitor.sampling;
 
 import org.stagemonitor.core.StagemonitorSPI;
 
@@ -8,7 +8,7 @@ import org.stagemonitor.core.StagemonitorSPI;
  * The post interceptor is executed after the complete request trace has been collected and right before it should be
  * reported to elasticsearch.
  * <p/>
- * To add an interceptor, call {@link ElasticsearchSpanReporter#registerPostInterceptor(PostExecutionRequestTraceReporterInterceptor)}
+ * To add an interceptor, call <code>Stagemonitor.getPlugin(RequestMonitorPlugin.class).registerPostInterceptor(PostExecutionRequestTraceReporterInterceptor)</code>
  * or place a file under <code>META-INF/services/org.stagemonitor.requestmonitor.reporter.PostExecutionRequestTraceReporterInterceptor</code>
  * and insert the canonical class name of your implementation.
  */

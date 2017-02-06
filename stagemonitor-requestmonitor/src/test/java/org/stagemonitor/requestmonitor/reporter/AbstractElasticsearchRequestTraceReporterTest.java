@@ -1,19 +1,18 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-import com.uber.jaeger.reporters.NoopReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,26 +58,25 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 		tags = new HashMap<>();
 		requestMonitor = mock(RequestMonitor.class);
 		when(requestMonitor.getRequestInformation()).thenReturn(requestInformation);
-		final com.uber.jaeger.Tracer jaegerTracer = new com.uber.jaeger.Tracer
-				.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true)).build();
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
-		when(requestMonitorPlugin.getTracer()).thenReturn(RequestMonitorPlugin.getSpanWrappingTracer(jaegerTracer,
-				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags)));
+		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
+				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
+				new SamplePriorityDeterminingSpanInterceptor(configuration, registry));
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}
 
-	protected RequestMonitor.RequestInformation createTestSpanWithCallTree(long executionTimeMs) {
-		final RequestMonitor.RequestInformation info = createTestSpan(executionTimeMs);
-		SpanUtils.setCallTree(info.getSpan(), CallStackElement.createRoot("test"));
-		info.setCallTree(CallStackElement.createRoot("test"));
+	protected RequestMonitor.RequestInformation createTestSpanWithCallTree(long executionTimeMs, String operationName) {
+		final RequestMonitor.RequestInformation info = createTestSpan(executionTimeMs, CallStackElement.createRoot("test"), operationName);
 		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
 		return info;
 	}
 
-	protected RequestMonitor.RequestInformation createTestSpan(long executionTimeMs) {
+	private RequestMonitor.RequestInformation createTestSpan(long executionTimeMs, CallStackElement callTree, String operationName) {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final Span span;
-		span = tracer.buildSpan("Report Me").withStartTimestamp(1).start();
-		RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(span, "Report Me");
+		span = tracer.buildSpan(operationName).withStartTimestamp(1).start();
+		RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(span, operationName);
+		requestInformation.setCallTree(callTree);
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 		when(requestMonitor.getRequestInformation()).thenReturn(requestInformation);
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMs) + 1);

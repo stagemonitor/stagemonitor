@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.reporter;
+package org.stagemonitor.requestmonitor.sampling;
 
 import com.codahale.metrics.Meter;
 

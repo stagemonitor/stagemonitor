@@ -10,7 +10,7 @@ public class SpanCapturingReporter extends SpanReporter {
 	private final BlockingQueue<RequestMonitor.RequestInformation> requestTraces = new LinkedBlockingQueue<>();
 
 	public SpanCapturingReporter() {
-		RequestMonitor.addRequestTraceReporter(this);
+		RequestMonitor.addSpanReporter(this);
 	}
 
 	public SpanCapturingReporter(RequestMonitor requestMonitor) {

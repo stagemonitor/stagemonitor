@@ -118,10 +118,11 @@ public class SpanWrappingTracer implements Tracer {
 			if (startTimestampNanos == 0) {
 				startTimestampNanos = System.nanoTime();
 			}
+			final Span span = delegate.start();
 			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				spanInterceptor.onStart();
+				spanInterceptor.onStart(span);
 			}
-			return new SpanWrapper(delegate.start(), operationName, startTimestampNanos, spanInterceptors);
+			return new SpanWrapper(span, operationName, startTimestampNanos, spanInterceptors);
 		}
 	}
 }

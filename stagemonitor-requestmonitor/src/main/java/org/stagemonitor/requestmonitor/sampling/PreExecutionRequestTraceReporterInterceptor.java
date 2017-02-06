@@ -1,6 +1,7 @@
-package org.stagemonitor.requestmonitor.reporter;
+package org.stagemonitor.requestmonitor.sampling;
 
 import org.stagemonitor.core.StagemonitorSPI;
+import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 
 /**
  * Allows implementers omit reporting a request trace to Elasticsearch

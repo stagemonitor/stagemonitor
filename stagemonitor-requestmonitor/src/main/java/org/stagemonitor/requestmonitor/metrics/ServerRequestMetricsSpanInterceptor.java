@@ -62,7 +62,7 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 	}
 
 	@Override
-	public void onStart() {
+	public void onStart(Span span) {
 		startCpu = TimeUtils.getCpuTime();
 	}
 

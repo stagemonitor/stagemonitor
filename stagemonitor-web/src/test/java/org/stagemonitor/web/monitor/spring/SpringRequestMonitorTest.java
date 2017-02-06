@@ -5,8 +5,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
@@ -27,6 +25,8 @@ import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -44,13 +44,14 @@ import javax.servlet.http.HttpServletRequest;
 import io.opentracing.tag.Tags;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -111,8 +112,10 @@ public class SpringRequestMonitorTest {
 		when(handlerAdapter.supports(any())).thenReturn(true);
 		handlerAdapters.set(dispatcherServlet, Collections.singletonList(handlerAdapter));
 
-		when(requestMonitorPlugin.getTracer()).thenReturn(RequestMonitorPlugin.getSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags)));
+		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
+				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
+				new SamplePriorityDeterminingSpanInterceptor(configuration, registry));
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 	}
 
@@ -162,6 +165,7 @@ public class SpringRequestMonitorTest {
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(1)).getRequestName();
+		assertTrue(requestInformation.getPostExecutionInterceptorContext().isReport());
 	}
 
 	@Test
@@ -174,7 +178,7 @@ public class SpringRequestMonitorTest {
 
 		assertNull(requestInformation.getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
+		assertFalse(requestInformation.getPostExecutionInterceptorContext().isReport());
 	}
 
 	private RequestMonitor.RequestInformation anyRequestInformation() {
@@ -184,12 +188,9 @@ public class SpringRequestMonitorTest {
 	private MonitoredHttpRequest createMonitoredHttpRequest(HttpServletRequest request) throws Exception {
 		final StatusExposingByteCountingServletResponse response = mock(StatusExposingByteCountingServletResponse.class);
 		final FilterChain filterChain = mock(FilterChain.class);
-		doAnswer(new Answer() {
-			@Override
-			public Object answer(InvocationOnMock invocation) throws Throwable {
-				dispatcherServlet.service(request, response);
-				return null;
-			}
+		doAnswer(invocation -> {
+			dispatcherServlet.service(request, response);
+			return null;
 		}).when(filterChain).doFilter(any(), any());
 		return Mockito.spy(new MonitoredHttpRequest(request, response, filterChain, configuration));
 	}

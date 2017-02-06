@@ -19,6 +19,8 @@ import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
+import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -128,15 +130,20 @@ public class RequestMonitor {
 	}
 
 	public void monitorStop() {
-		long overhead2 = System.nanoTime();
 		final RequestInformation info = getRequestInformation();
-		if (info.getSpan() != null) {
-			info.getSpan().finish();
+		if (!corePlugin.isStagemonitorActive()) {
+			cleanUpAfter(info);
+			return;
+		}
+		long overhead2 = System.nanoTime();
+		info.monitoredRequest.onPostExecute(info);
+		info.getSpan().finish();
+		if (!TracingUtils.getTraceContext().isEmpty()) {
 			TracingUtils.getTraceContext().pop();
 		}
-		if (monitorThisRequest() && info.hasRequestName()) {
+		if (monitorThisRequest() && info.getPostExecutionInterceptorContext().isReport()) {
 			try {
-				monitorAfterExecution(info.monitoredRequest, info);
+				info.requestTraceReporterFuture = report(info);
 			} catch (Exception e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}
@@ -222,8 +229,7 @@ public class RequestMonitor {
 		try {
 			if (isProfileThisRequest(info)) {
 				callTreeMeter.mark();
-				final CallStackElement root = Profiler.activateProfiling("total");
-				info.callTree = root;
+				info.callTree = Profiler.activateProfiling("total");
 			}
 		} catch (RuntimeException e) {
 			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
@@ -235,23 +241,6 @@ public class RequestMonitor {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}
 		}
-	}
-
-	private void monitorAfterExecution(MonitoredRequest monitoredRequest, RequestInformation info) {
-		final Span span = info.span;
-		monitoredRequest.onPostExecute(info);
-
-		final CallStackElement callTree = info.getCallTree();
-		if (callTree != null) {
-			Profiler.stop();
-			callTree.setSignature(info.getOperationName());
-			final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
-			if (minExecutionTimeMultiplier > 0d) {
-				callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
-			}
-			SpanUtils.setCallTree(span, callTree);
-		}
-		info.requestTraceReporterFuture = report(info);
 	}
 
 	private void removeTimerIfCountIsZero(RequestInformation info) {
@@ -343,18 +332,22 @@ public class RequestMonitor {
 		} else if (callTreeRateLimit <= 0) {
 			logger.debug("Not profiling this request because stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch <= 0");
 			return false;
-		} else if (!isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(requestInformation)) {
-			logger.debug("Not profiling this request because no RequestTraceReporter is active {}", spanReporters);
+		} else if (!isAnySpanReporterActive(requestInformation)) {
+			// TODO what if no span reporter is active but for example the jaeger zikin reporter is active?
+			logger.debug("Not profiling this request because no SpanReporter is active {}", spanReporters);
 			return false;
 		} else if (callTreeRateLimit < 1000000d && callTreeMeter.getOneMinuteRate() >= callTreeRateLimit) {
 			logger.debug("Not profiling this request because more than {} call trees per minute where created", callTreeRateLimit);
+			return false;
+		} else if (!requestInformation.getPreExecutionInterceptorContext().isReport()) {
+			logger.debug("Not profiling this request because this request is not sampled", callTreeRateLimit);
 			return false;
 		}
 		return true;
 	}
 
 	public static class RequestInformation {
-		private Span span;
+		private Span span = NoopSpan.INSTANCE;
 		private Object executionResult = null;
 		private long overhead1;
 		private MonitoredRequest monitoredRequest;
@@ -368,6 +361,8 @@ public class RequestMonitor {
 		private boolean externalRequest;
 		private Timer timerForThisRequest;
 		private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
+		private PostExecutionInterceptorContext postExecutionInterceptorContext;
+		private PreExecutionInterceptorContext preExecutionInterceptorContext;
 
 		public static RequestInformation of(Span span) {
 			final RequestInformation requestInformation = new RequestInformation();
@@ -508,6 +503,22 @@ public class RequestMonitor {
 			return externalRequestStats.values();
 		}
 
+		public void setPostExecutionInterceptorContext(PostExecutionInterceptorContext postExecutionInterceptorContext) {
+			this.postExecutionInterceptorContext = postExecutionInterceptorContext;
+		}
+
+		public PostExecutionInterceptorContext getPostExecutionInterceptorContext() {
+			return postExecutionInterceptorContext;
+		}
+
+		public void setPreExecutionInterceptorContext(PreExecutionInterceptorContext preExecutionInterceptorContext) {
+			this.preExecutionInterceptorContext = preExecutionInterceptorContext;
+		}
+
+		public PreExecutionInterceptorContext getPreExecutionInterceptorContext() {
+			return preExecutionInterceptorContext;
+		}
+
 		public static class ExternalRequestStats {
 
 			private final double MS_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
@@ -584,9 +595,9 @@ public class RequestMonitor {
 
 	}
 
-	private boolean isAnyRequestTraceReporterActiveWhichNeedsTheCallTree(RequestInformation requestInformation) {
+	private boolean isAnySpanReporterActive(RequestInformation requestInformation) {
 		for (SpanReporter reporter : spanReporters) {
-			if (reporter.requiresCallTree() && isActive(requestInformation, reporter)) {
+			if (isActive(requestInformation, reporter)) {
 				return true;
 			}
 		}
@@ -627,7 +638,7 @@ public class RequestMonitor {
 	 *
 	 * @param spanReporter the {@link SpanReporter} to add
 	 */
-	public static void addRequestTraceReporter(SpanReporter spanReporter) {
+	public static void addSpanReporter(SpanReporter spanReporter) {
 		get().addReporter(spanReporter);
 	}
 
@@ -655,16 +666,7 @@ public class RequestMonitor {
 	 */
 	public void addReporter(SpanReporter spanReporter) {
 		spanReporters.add(0, spanReporter);
-        spanReporter.init(new SpanReporter.InitArguments(configuration, metricRegistry));
-	}
-
-	public <T extends SpanReporter> T getReporter(Class<T> reporterClass) {
-		for (SpanReporter spanReporter : spanReporters) {
-			if (spanReporter.getClass() == reporterClass) {
-				return (T) spanReporter;
-			}
-		}
-		return null;
+		spanReporter.init(new SpanReporter.InitArguments(configuration, metricRegistry));
 	}
 
 	/**

@@ -11,7 +11,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.ArrayList;
@@ -61,7 +60,6 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
-		new LoggingSpanReporter().report(requestInformation);
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", requestInformation.getOperationName());

@@ -86,7 +86,7 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 
 	@Override
 	public void report(RequestMonitor.RequestInformation requestInformation) throws IOException {
-		if (isActive(RequestMonitor.RequestInformation.of(requestInformation.getSpan(), null, requestInformation.getRequestAttributes()))) {
+		if (isActive(requestInformation)) {
 
 			final String connectionId = (String) requestInformation.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
 			if (connectionId != null && !connectionId.trim().isEmpty()) {

@@ -16,6 +16,8 @@ import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanCapturingReporter;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
 
 import java.util.ArrayList;
@@ -69,8 +71,10 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		requestMonitor = new RequestMonitor(configuration, registry);
 		requestMonitor.addReporter(requestTraceCapturingReporter);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
-		when(requestMonitorPlugin.getTracer()).thenReturn(RequestMonitorPlugin.getSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, requestMonitor, new ArrayList<>()));
+		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
+				registry, requestMonitorPlugin, requestMonitor, new ArrayList<>(),
+				new SamplePriorityDeterminingSpanInterceptor(configuration, registry));
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}
 
 	@Test

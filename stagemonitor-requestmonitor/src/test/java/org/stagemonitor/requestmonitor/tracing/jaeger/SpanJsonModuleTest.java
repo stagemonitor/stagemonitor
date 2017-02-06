@@ -1,33 +1,32 @@
-package org.stagemonitor.requestmonitor.reporter;
+package org.stagemonitor.requestmonitor.tracing.jaeger;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.uber.jaeger.Tracer;
+import com.uber.jaeger.reporters.NoopReporter;
+import com.uber.jaeger.samplers.ConstSampler;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
+
+import java.util.concurrent.TimeUnit;
+
+import io.opentracing.Span;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class SpanJsonModuleTest extends AbstractElasticsearchRequestTraceReporterTest {
+public class SpanJsonModuleTest {
 
-	private ElasticsearchSpanReporter reporter;
-
-	@Override
 	@Before
 	public void setUp() throws Exception {
-		super.setUp();
-		reporter = new ElasticsearchSpanReporter(requestTraceLogger);
-		reporter.init(new SpanReporter.InitArguments(configuration, registry));
 		JsonUtils.getMapper().registerModule(new SpanJsonModule());
 	}
 
 	@Test
 	public void testNestDottedTagKeys() {
-		final io.opentracing.Span span = ((SpanWrapper) createTestSpan(1).getSpan()).getDelegate();
+		final Span span = createTestSpan(1);
 		span.setTag("a.b.c.d1", "1");
 		span.setTag("a.b.c.d2", "2");
 		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
@@ -38,7 +37,7 @@ public class SpanJsonModuleTest extends AbstractElasticsearchRequestTraceReporte
 
 	@Test
 	public void testSampledTag() {
-		final io.opentracing.Span span = ((SpanWrapper) createTestSpan(1).getSpan()).getDelegate();
+		final Span span = createTestSpan(1);
 		span.setTag("duration", "foo");
 		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
 		System.out.println(jsonSpan);
@@ -47,7 +46,7 @@ public class SpanJsonModuleTest extends AbstractElasticsearchRequestTraceReporte
 
 	@Test
 	public void testAmbiguousMapping() {
-		final io.opentracing.Span span = ((SpanWrapper) createTestSpan(1).getSpan()).getDelegate();
+		final Span span = createTestSpan(1);
 		span.setTag("a", "1");
 		span.setTag("a.b", "2");
 		try {
@@ -57,6 +56,17 @@ public class SpanJsonModuleTest extends AbstractElasticsearchRequestTraceReporte
 			e.printStackTrace();
 			assertTrue(e.getMessage().startsWith("Ambiguous mapping for"));
 		}
+	}
+
+	private Span createTestSpan(int durationMs) {
+		final Span span = new Tracer
+				.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true))
+				.build()
+				.buildSpan("test")
+				.withStartTimestamp(1)
+				.start();
+		span.finish(TimeUnit.MILLISECONDS.toMicros(durationMs) + 1);
+		return span;
 	}
 
 }

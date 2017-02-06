@@ -10,6 +10,9 @@ public class NoopSpan implements Span {
 
 	public static final Span INSTANCE = new NoopSpan();
 
+	private NoopSpan() {
+	}
+
 	@Override
 	public SpanContext context() {
 		return NoopSpanContext.INSTANCE;

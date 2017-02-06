@@ -2,18 +2,23 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
-public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
+public class ElasticsearchSpanReporter extends SpanReporter {
 
 	public static final String ES_SPAN_LOGGER = "ElasticsearchSpanReporter";
 
 	private final Logger requestTraceLogger;
+
+	protected CorePlugin corePlugin;
+	protected RequestMonitorPlugin requestMonitorPlugin;
+	protected ElasticsearchClient elasticsearchClient;
+	private static final String SPANS_TYPE = "spans";
 
 	public ElasticsearchSpanReporter() {
 		this(LoggerFactory.getLogger(ES_SPAN_LOGGER));
@@ -24,55 +29,26 @@ public class ElasticsearchSpanReporter extends AbstractInterceptedSpanReporter {
 	}
 
 	@Override
-	protected void doReport(RequestMonitor.RequestInformation requestInformation, PostExecutionInterceptorContext context) {
-		final String index = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
-		final String type = "spans";
+	public void init(InitArguments initArguments) {
+		corePlugin = initArguments.getConfiguration().getConfig(CorePlugin.class);
+		requestMonitorPlugin = initArguments.getConfiguration().getConfig(RequestMonitorPlugin.class);
+		elasticsearchClient = corePlugin.getElasticsearchClient();
+	}
+
+	@Override
+	public void report(RequestMonitor.RequestInformation requestInformation) {
+		final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 		if (requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
-			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", index, type) + JsonUtils.toJson(requestInformation.getSpan()));
+			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(requestInformation.getSpan()));
 		} else {
-			if (context.getExcludedProperties().isEmpty()) {
-				elasticsearchClient.index(index, type, requestInformation.getSpan());
-			} else {
-				elasticsearchClient.index(index, type, JsonUtils.toObjectNode(requestInformation.getSpan()).remove(context.getExcludedProperties()));
-			}
+			elasticsearchClient.index(spansIndex, SPANS_TYPE, requestInformation.getSpan());
 		}
 	}
 
 	@Override
 	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
-		return (elasticsearchClient.isElasticsearchAvailable() || logOnly) && super.isActive(requestInformation);
-	}
-
-	/**
-	 * Add an {@link PreExecutionRequestTraceReporterInterceptor} to the interceptor list
-	 *
-	 * @param interceptor the interceptor that should be executed before measurement starts
-	 */
-	public static void registerPreInterceptor(PreExecutionRequestTraceReporterInterceptor interceptor) {
-		final ElasticsearchSpanReporter thiz = getElasticsearchSpanReporter();
-		if (thiz != null) {
-			thiz.preInterceptors.add(interceptor);
-		}
-	}
-
-	/**
-	 * Add an {@link PostExecutionRequestTraceReporterInterceptor} to the interceptor list
-	 *
-	 * @param interceptor the interceptor that should be executed before each report
-	 */
-	public static void registerPostInterceptor(PostExecutionRequestTraceReporterInterceptor interceptor) {
-		final ElasticsearchSpanReporter thiz = getElasticsearchSpanReporter();
-		if (thiz != null) {
-			thiz.postInterceptors.add(interceptor);
-		}
-	}
-
-	private static ElasticsearchSpanReporter getElasticsearchSpanReporter() {
-		return Stagemonitor
-				.getPlugin(RequestMonitorPlugin.class)
-				.getRequestMonitor()
-				.getReporter(ElasticsearchSpanReporter.class);
+		return (elasticsearchClient.isElasticsearchAvailable() || logOnly);
 	}
 
 }

@@ -12,6 +12,9 @@ import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
+import org.stagemonitor.requestmonitor.sampling.PostExecutionRequestTraceReporterInterceptor;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionRequestTraceReporterInterceptor;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
@@ -142,7 +145,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Business Transaction naming strategy")
 			.description("Defines how to name a business transaction that was detected by a method call. " +
-					"For example a Spring-MVC controller method or a method that is annotated with @"+MonitorRequests.class.getSimpleName()+". " +
+					"For example a Spring-MVC controller method or a method that is annotated with @" + MonitorRequests.class.getSimpleName() + ". " +
 					BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE + ": Say Hello " +
 					BusinessTransactionNamingStrategy.CLASS_NAME_DOT_METHOD_NAME + ": HelloController.sayHello " +
 					BusinessTransactionNamingStrategy.CLASS_NAME_HASH_METHOD_NAME + ": HelloController#sayHello ")
@@ -183,6 +186,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.tags("privacy")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	// TODO rename property keys -> remove elasticsearch
 	private final ConfigurationOption<Collection<String>> onlyReportRequestsWithNameToElasticsearch = ConfigurationOption.stringsOption()
 			.key("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
 			.dynamic(true)
@@ -314,6 +318,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	private SpanWrappingTracer tracer;
 	private final List<Callable<SpanInterceptor>> spanInterceptorSuppliers = new CopyOnWriteArrayList<Callable<SpanInterceptor>>();
+	private SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor;
 
 	public Tracer getTracer() {
 		return tracer;
@@ -352,18 +357,22 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final RequestMonitorPlugin requestMonitorPlugin = this;
 
 		final Tracer tracer = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator().next().getTracer(initArguments);
-		this.tracer = getSpanWrappingTracer(tracer, metricRegistry, requestMonitorPlugin, getRequestMonitor(), spanInterceptorSuppliers);
+		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanInterceptor(initArguments.getConfiguration(), metricRegistry);
+		this.tracer = createSpanWrappingTracer(tracer, metricRegistry, requestMonitorPlugin, getRequestMonitor(),
+				spanInterceptorSuppliers, samplePriorityDeterminingSpanInterceptor);
 	}
 
-	public static SpanWrappingTracer getSpanWrappingTracer(final Tracer delegate, final Metric2Registry metricRegistry,
-														   final RequestMonitorPlugin requestMonitorPlugin,
-														   final RequestMonitor requestMonitor,
-														   List<Callable<SpanInterceptor>> spanInterceptorSuppliers) {
+	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, final Metric2Registry metricRegistry,
+															  final RequestMonitorPlugin requestMonitorPlugin,
+															  final RequestMonitor requestMonitor,
+															  final List<Callable<SpanInterceptor>> spanInterceptorSuppliers,
+															  final SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor) {
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate, spanInterceptorSuppliers);
 		spanWrappingTracer.addSpanInterceptor(new RequestMonitor.RequestInformationSettingSpanInterceptor(requestMonitor));
 		spanWrappingTracer.addSpanInterceptor(ExternalRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(ServerRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(AnonymizingSpanInterceptor.asCallable(requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
 		return spanWrappingTracer;
 	}
 
@@ -514,5 +523,23 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public void addSpanInterceptor(Callable<SpanInterceptor> spanInterceptorSupplier) {
 		tracer.addSpanInterceptor(spanInterceptorSupplier);
+	}
+
+	/**
+	 * Add an {@link PreExecutionRequestTraceReporterInterceptor} to the interceptor list
+	 *
+	 * @param interceptor the interceptor that should be executed before measurement starts
+	 */
+	public void registerPreInterceptor(PreExecutionRequestTraceReporterInterceptor interceptor) {
+		samplePriorityDeterminingSpanInterceptor.addPreInterceptor(interceptor);
+	}
+
+	/**
+	 * Add an {@link PostExecutionRequestTraceReporterInterceptor} to the interceptor list
+	 *
+	 * @param interceptor the interceptor that should be executed before each report
+	 */
+	public void registerPostInterceptor(PostExecutionRequestTraceReporterInterceptor interceptor) {
+		samplePriorityDeterminingSpanInterceptor.addPostInterceptor(interceptor);
 	}
 }

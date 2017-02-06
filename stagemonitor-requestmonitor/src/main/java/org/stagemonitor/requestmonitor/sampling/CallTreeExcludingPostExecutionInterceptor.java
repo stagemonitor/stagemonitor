@@ -1,8 +1,7 @@
-package org.stagemonitor.requestmonitor.reporter;
+package org.stagemonitor.requestmonitor.sampling;
 
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTraceReporterInterceptor {
 
@@ -18,6 +17,6 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 	}
 
 	private void exclude(PostExecutionInterceptorContext context) {
-		context.addExcludedProperties(SpanUtils.CALL_TREE_ASCII, SpanUtils.CALL_TREE_JSON);
+		context.excludeCallTree();
 	}
 }

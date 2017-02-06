@@ -4,7 +4,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.context.TracingUtils;
-import com.uber.jaeger.reporters.LoggingReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 
 import org.junit.After;
@@ -21,6 +20,8 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
@@ -37,6 +38,7 @@ import io.opentracing.Tracer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -82,13 +84,14 @@ public class RequestMonitorTest {
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
 		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));
 		requestMonitor = new RequestMonitor(configuration, registry);
-		requestMonitor.addReporter(new LoggingSpanReporter());
 		when(requestMonitorPlugin.isLogCallStacks()).thenReturn(true);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 
-		final Tracer jaegerTracer = new com.uber.jaeger.Tracer.Builder("RequestMonitorTest", new LoggingReporter(), new ConstSampler(true)).build();
-		final Tracer tracer = RequestMonitorPlugin.getSpanWrappingTracer(jaegerTracer, registry,
-				requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags));
+		final Tracer jaegerTracer = new com.uber.jaeger.Tracer.Builder("RequestMonitorTest",
+				new LoggingSpanReporter(requestMonitorPlugin), new ConstSampler(true)).build();
+		final Tracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(jaegerTracer, registry,
+				requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
+				new SamplePriorityDeterminingSpanInterceptor(configuration, registry));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}
 
@@ -105,7 +108,7 @@ public class RequestMonitorTest {
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(createMonitoredRequest());
 
 		assertEquals("test", requestInformation.getExecutionResult());
-		assertNull(requestInformation.getSpan());
+		assertSame(NoopSpan.INSTANCE, requestInformation.getSpan());
 	}
 
 	@Test
@@ -113,7 +116,7 @@ public class RequestMonitorTest {
 		doReturn(2).when(requestMonitorPlugin).getNoOfWarmupRequests();
 		requestMonitor = new RequestMonitor(configuration, registry);
 		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(createMonitoredRequest());
-		assertNull(requestInformation.getSpan());
+		assertSame(NoopSpan.INSTANCE, requestInformation.getSpan());
 	}
 
 	@Test

@@ -1,2 +1,1 @@
 org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter
-org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter

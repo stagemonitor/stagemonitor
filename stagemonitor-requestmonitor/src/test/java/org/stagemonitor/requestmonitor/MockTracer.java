@@ -8,6 +8,9 @@ import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -20,6 +23,10 @@ public class MockTracer implements Tracer {
 		when(spanBuilder.start()).thenReturn(mockSpan);
 		when(spanBuilder.asChildOf(any(SpanContext.class))).thenReturn(spanBuilder);
 		when(spanBuilder.asChildOf(any(Span.class))).thenReturn(spanBuilder);
+		when(spanBuilder.withStartTimestamp(anyLong())).thenReturn(spanBuilder);
+		when(spanBuilder.withTag(any(), anyString())).thenReturn(spanBuilder);
+		when(spanBuilder.withTag(any(), any(Number.class))).thenReturn(spanBuilder);
+		when(spanBuilder.withTag(any(), anyBoolean())).thenReturn(spanBuilder);
 		return spanBuilder;
 	}
 
