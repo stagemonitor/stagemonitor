@@ -1,13 +1,17 @@
 package org.stagemonitor.core.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.configuration.source.PropertyFileConfigurationSource;
+
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 public class IOUtils {
 
@@ -83,5 +87,16 @@ public class IOUtils {
 		final ByteArrayOutputStream output = new ByteArrayOutputStream();
 		copy(inputStream, output);
 		return output.toByteArray();
+	}
+
+	public static File getFile(String classPathLocation) throws IOException, URISyntaxException {
+		URL resource = PropertyFileConfigurationSource.class.getClassLoader().getResource(classPathLocation);
+		if (resource == null) {
+			resource = new URL("file://" + classPathLocation);
+		}
+		if (!"file".equals(resource.getProtocol())) {
+			throw new IOException("Saving to property files inside a war, ear or jar is not possible.");
+		}
+		return new File(resource.toURI());
 	}
 }
