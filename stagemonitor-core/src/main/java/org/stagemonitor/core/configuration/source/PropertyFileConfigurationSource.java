@@ -10,12 +10,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.util.Properties;
 
 /**
  * Loads a properties file from classpath. Falls back to loading from file system.
- *
  */
 public final class PropertyFileConfigurationSource extends AbstractConfigurationSource {
 
@@ -126,17 +124,16 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 
 	@Override
 	public void save(String key, String value) throws IOException {
-		synchronized (this) {
-			properties.put(key, value);
-			try {
-				File file = IOUtils.getFile(location);
+		if (file != null) {
+			synchronized (this) {
+				properties.put(key, value);
 				final FileOutputStream out = new FileOutputStream(file);
 				properties.store(out, null);
 				out.flush();
 				out.close();
-			} catch (URISyntaxException e) {
-				throw new IOException(e);
 			}
+		} else {
+			throw new IOException(location + " is not writeable");
 		}
 	}
 
