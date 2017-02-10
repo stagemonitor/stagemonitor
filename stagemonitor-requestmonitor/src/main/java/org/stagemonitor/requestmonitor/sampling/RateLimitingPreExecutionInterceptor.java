@@ -16,7 +16,7 @@ class RateLimitingPreExecutionInterceptor extends PreExecutionSpanReporterInterc
 			maxReportingRate = config.getOnlyReportNExternalRequestsPerMinute();
 			rate = context.getExternalRequestReportingRate();
 		} else {
-			maxReportingRate = config.getOnlyReportNSpansPerMinuteTo();
+			maxReportingRate = config.getOnlyReportNSpansPerMinute();
 			rate = context.getInternalRequestReportingRate();
 		}
 		if (MetricUtils.isRateLimitExceeded(maxReportingRate, rate)) {

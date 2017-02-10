@@ -186,20 +186,21 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.tags("privacy")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	// TODO rename property keys -> remove elasticsearch
-	private final ConfigurationOption<Collection<String>> onlyReportRequestsWithNameToElasticsearch = ConfigurationOption.stringsOption()
-			.key("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
+	private final ConfigurationOption<Collection<String>> onlyReportSpansWithName = ConfigurationOption.stringsOption()
+			.key("stagemonitor.requestmonitor.onlyReportSpansWithName")
+			.aliasKeys("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
 			.dynamic(true)
 			.label("Only report these operation names")
 			.description("Limits the reporting of spans to operations with a certain name.")
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Double> onlyReportNSpansPerMinuteTo = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
+	private final ConfigurationOption<Double> onlyReportNSpansPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.onlyReportNSpansPerMinute")
+			.aliasKeys("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
-			.label("Only report N requests per minute to ES")
-			.description("Limits the rate at which spans are reported to Elasticsearch. " +
+			.label("Only report N requests per minute")
+			.description("Limits the rate at which spans are reported. " +
 					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
 			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
@@ -215,12 +216,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Double> excludeCallTreeFromReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
+			.key("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromReportWhenFasterThanXPercentOfRequests")
+			.aliasKeys("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
 			.dynamic(true)
-			.label("Exclude the Call Tree from Elasticsearch reports on x% of the fastest requests")
-			.description("Exclude the Call Tree from Elasticsearch report when the request was faster faster than x " +
+			.label("Exclude the Call Tree from reports on x% of the fastest requests")
+			.description("Exclude the Call Tree from report when the request was faster faster than x " +
 					"percent of requests with the same request name. This helps to reduce the network and disk overhead " +
-					"as uninteresting Call Trees (those which are comparatively fast) are excluded." +
+					"as uninteresting Call Trees (those which are comparatively fast) are excluded. " +
 					"Example: set to 1 to always exclude the Call Tree and to 0 to always include it. " +
 					"With a setting of 0.85, the Call Tree will only be reported for the slowest 25% of the requests.")
 			.defaultValue(0d)
@@ -276,8 +278,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
 			.dynamic(true)
 			.label("Only report N external requests per minute to ES")
-			.description("Limits the rate at which external spans are reported to Elasticsearch. " +
-					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
+			.description("Limits the rate at which external spans are reported. " +
+					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report.")
 			.defaultValue(0d)
 			.tags("external-requests")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
@@ -286,7 +288,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsWhenFasterThanXPercent")
 			.dynamic(true)
 			.label("Exclude external requests from reporting on x% of the fastest external requests")
-			.description("Exclude the external request from Elasticsearch report when the request was faster faster than x " +
+			.description("Exclude the external request from reporting when the request was faster faster than x " +
 					"percent of external requests with the same initiator (executedBy). This helps to reduce the network and disk overhead " +
 					"as uninteresting external requests (those which are comparatively fast) are excluded." +
 					"Example: set to 1 to always exclude the external request and to 0 to always include it. " +
@@ -299,7 +301,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsFasterThan")
 			.dynamic(true)
 			.label("Exclude external requests from reporting when faster than x ms")
-			.description("Exclude the external request from Elasticsearch report when the request was faster faster than x ms.")
+			.description("Exclude the external request from reporting when the request was faster faster than x ms.")
 			.defaultValue(0d)
 			.tags("external-requests")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
@@ -451,12 +453,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return discloseUsers.getValue();
 	}
 
-	public Collection<String> getOnlyReportRequestsWithNameToElasticsearch() {
-		return onlyReportRequestsWithNameToElasticsearch.getValue();
+	public Collection<String> getOnlyReportSpansWithName() {
+		return onlyReportSpansWithName.getValue();
 	}
 
-	public double getOnlyReportNSpansPerMinuteTo() {
-		return onlyReportNSpansPerMinuteTo.getValue();
+	public double getOnlyReportNSpansPerMinute() {
+		return onlyReportNSpansPerMinute.getValue();
 	}
 
 	public boolean isOnlyLogElasticsearchSpanReports() {

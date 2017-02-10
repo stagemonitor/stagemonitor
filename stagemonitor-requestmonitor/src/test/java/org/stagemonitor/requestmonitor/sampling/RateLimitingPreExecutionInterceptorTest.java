@@ -36,7 +36,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 		externalRequestReportingRate = mock(Meter.class);
 		context = new PreExecutionInterceptorContext(configuration, requestInformation, internalRequestReportingRate,
 				externalRequestReportingRate, mock(Metric2Registry.class));
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(0d);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(0d);
 	}
 
 	@Test
@@ -51,7 +51,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	public void testAlwaysReportServerSpan() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(false);
 		when(internalRequestReportingRate.getOneMinuteRate()).thenReturn(10_000_000.0 / 60);
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(1_000_000.0);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1_000_000.0);
 
 		interceptor.interceptReport(context);
 
@@ -62,7 +62,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	public void testRateNotExceededServerSpan() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(false);
 		when(internalRequestReportingRate.getOneMinuteRate()).thenReturn(10.0 / 60);
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(10.0);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(10.0);
 
 		interceptor.interceptReport(context);
 
@@ -73,7 +73,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	public void testRateExceededServerSpan() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(false);
 		when(internalRequestReportingRate.getOneMinuteRate()).thenReturn(10.1 / 60);
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(10.0);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(10.0);
 
 		interceptor.interceptReport(context);
 

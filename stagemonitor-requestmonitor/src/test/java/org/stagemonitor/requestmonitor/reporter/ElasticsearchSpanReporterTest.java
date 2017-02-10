@@ -72,7 +72,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 	@Test
 	@Ignore
 	public void testElasticsearchReportingRateLimited() throws Exception {
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(1d);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1d);
 		final Span span = mock(Span.class);
 
 		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span)));

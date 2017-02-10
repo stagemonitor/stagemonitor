@@ -80,7 +80,7 @@ public class RequestMonitorTest {
 		doReturn(true).when(requestMonitorPlugin).isCollectRequestStats();
 		doReturn(true).when(requestMonitorPlugin).isProfilerActive();
 
-		doReturn(1000000d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinuteTo();
+		doReturn(1000000d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinute();
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
 		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));
 		requestMonitor = new RequestMonitor(configuration, registry);
@@ -185,7 +185,7 @@ public class RequestMonitorTest {
 	@Test
 	public void testDontActivateProfilerWhenNoSpanReporterIsActive() throws Exception {
 		// don't profile if no one is interested in the result
-		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinuteTo();
+		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinute();
 		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNExternalRequestsPerMinute();
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
 		doReturn(false).when(requestMonitorPlugin).isLogCallStacks();

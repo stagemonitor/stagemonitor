@@ -64,7 +64,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		when(corePlugin.getApplicationName()).thenReturn("JaxRsRequestNameDeterminerTransformerTest");
 		when(corePlugin.getInstanceName()).thenReturn("test");
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
