@@ -454,7 +454,7 @@ public class RequestMonitor {
 			this.duration = duration;
 		}
 
-		public long getDuration() {
+		public long getDurationNanos() {
 			return duration;
 		}
 

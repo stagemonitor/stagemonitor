@@ -14,8 +14,8 @@ public class FastExternalSpanExcludingPostExecutionInterceptor extends PostExecu
 		if (context.getRequestInformation().isExternalRequest()) {
 			final RequestMonitorPlugin requestMonitorPlugin = context.getConfig(RequestMonitorPlugin.class);
 			final double thresholdMs = requestMonitorPlugin.getExcludeExternalRequestsFasterThan();
-			final long durationMs = TimeUnit.MICROSECONDS.toMillis(context.getRequestInformation().getDuration());
-			final long durationNs = TimeUnit.MICROSECONDS.toNanos(context.getRequestInformation().getDuration());
+			final long durationNs = context.getRequestInformation().getDurationNanos();
+			final long durationMs = TimeUnit.NANOSECONDS.toMillis(context.getRequestInformation().getDurationNanos());
 			if (durationMs < thresholdMs) {
 				context.shouldNotReport(getClass());
 				return;

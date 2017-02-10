@@ -11,7 +11,7 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionRequestTrac
 				.getConfig(RequestMonitorPlugin.class)
 				.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests();
 
-		if (!MetricUtils.isFasterThanXPercentOfAllRequests(context.getRequestInformation().getDuration(), percentileLimit, context.getRequestInformation().getTimerForThisRequest())) {
+		if (!MetricUtils.isFasterThanXPercentOfAllRequests(context.getRequestInformation().getDurationNanos(), percentileLimit, context.getRequestInformation().getTimerForThisRequest())) {
 			exclude(context);
 		}
 	}
