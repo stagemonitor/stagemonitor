@@ -213,8 +213,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.label("Request Exception Attributes")
 			.description("Defines the list of attribute names to check on the HttpServletRequest when searching for an exception. \n\n" +
 			             "Stagemonitor searches this list in order to see if any of these attributes are set on the request with " +
-					     "an Exception object and then records that information on the request trace. If your web framework " +
-			             "sets a different attribute outside of the defaults, you can add that attribute to this list to properly " +
+					"an Exception object and then records that information on the span. If your web framework " +
+					"sets a different attribute outside of the defaults, you can add that attribute to this list to properly " +
 					     "record the exception on the trace.")
 			.defaultValue(new LinkedHashSet<String>() {{
 				add("javax.servlet.error.exception");
@@ -228,7 +228,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.dynamic(true)
 			.label("Honor do not track header")
 			.description("When set to true, requests that include the dnt header won't be reported. " +
-					"Depending on your use case you might not be required to stop reporting request traces even " +
+					"Depending on your use case you might not be required to stop reporting spans even " +
 					"if dnt is set. See https://tools.ietf.org/html/draft-mayer-do-not-track-00#section-9.3")
 			.defaultValue(false)
 			.tags("privacy")
@@ -369,9 +369,9 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
 				.addMapping("/stagemonitor");
 
-		final ServletRegistration.Dynamic requestTraceServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), new SpanServlet());
-		requestTraceServlet.addMapping("/stagemonitor/request-traces");
-		requestTraceServlet.setAsyncSupported(true);
+		final ServletRegistration.Dynamic spanServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), new SpanServlet());
+		spanServlet.addMapping("/stagemonitor/spans");
+		spanServlet.setAsyncSupported(true);
 
 
 		final FilterRegistration.Dynamic securityFilter = ctx.addFilter(StagemonitorSecurityFilter.class.getSimpleName(), new StagemonitorSecurityFilter());

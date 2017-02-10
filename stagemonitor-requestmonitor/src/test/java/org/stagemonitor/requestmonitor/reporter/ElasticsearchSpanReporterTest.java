@@ -26,7 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestTraceReporterTest {
+public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanReporterTest {
 
 	private ElasticsearchSpanReporter reporter;
 
@@ -34,13 +34,13 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		reporter = new ElasticsearchSpanReporter(requestTraceLogger);
+		reporter = new ElasticsearchSpanReporter(spanLogger);
 		reporter.init(new SpanReporter.InitArguments(configuration, registry));
 		JsonUtils.getMapper().registerModule(new SpanJsonModule());
 	}
 
 	@Test
-	public void testReportRequestTrace() throws Exception {
+	public void testReportSpan() throws Exception {
 		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(mock(Span.class), "Report Me");
 		reporter.report(requestInformation);
 
@@ -49,19 +49,19 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 	}
 
 	@Test
-	public void testLogReportRequestTrace() throws Exception {
-		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
+	public void testLogReportSpan() throws Exception {
+		when(requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(true);
 		final RequestMonitor.RequestInformation requestInformation = createTestSpanWithCallTree(1000, "Report Me");
 
 		reporter.report(requestInformation);
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
-		verify(requestTraceLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "\",\"_type\":\"spans\"}}\n"));
+		verify(spanLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "\",\"_type\":\"spans\"}}\n"));
 		assertTrue(reporter.isActive(requestInformation));
 	}
 
 	@Test
-	public void testReportRequestTraceDontReport() throws Exception {
+	public void testReportSpanDontReport() throws Exception {
 		final RequestMonitor.RequestInformation info = createTestSpanWithCallTree(1, "Regular Foo");
 
 		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(info.getSpan())));
@@ -72,7 +72,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 	@Test
 	@Ignore
 	public void testElasticsearchReportingRateLimited() throws Exception {
-		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1d);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(1d);
 		final Span span = mock(Span.class);
 
 		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
@@ -83,30 +83,30 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 
 	@Test
 	public void testElasticsearchExcludeCallTree() throws Exception {
-		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(1d);
+		when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(1d);
 
 		reporter.report(createTestSpanWithCallTree(1000, "Report Me"));
 		reporter.report(createTestSpanWithCallTree(500, "Report Me"));
 		reporter.report(createTestSpanWithCallTree(250, "Report Me"));
 
-		ArgumentCaptor<SpanWrapper> requestTraceCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
-		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), requestTraceCaptor.capture());
-		SpanWrapper span = requestTraceCaptor.getValue();
+		ArgumentCaptor<SpanWrapper> spanCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
+		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), spanCaptor.capture());
+		SpanWrapper span = spanCaptor.getValue();
 		verify(span.getDelegate(), times(0)).setTag(eq(SpanUtils.CALL_TREE_ASCII), anyString());
 		verify(span.getDelegate(), times(0)).setTag(eq(SpanUtils.CALL_TREE_JSON), anyString());
 	}
 
 	@Test
 	public void testElasticsearchDontExcludeCallTree() throws Exception {
-		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
+		when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
 
 		reporter.report(createTestSpanWithCallTree(250, "Report Me"));
 		reporter.report(createTestSpanWithCallTree(500, "Report Me"));
 		reporter.report(createTestSpanWithCallTree(1000, "Report Me"));
 
-		ArgumentCaptor<SpanWrapper> requestTraceCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
-		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), requestTraceCaptor.capture());
-		verifyContainsCallTree(requestTraceCaptor.getValue(), true);
+		ArgumentCaptor<SpanWrapper> spanCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
+		verify(elasticsearchClient, times(3)).index(anyString(), anyString(), spanCaptor.capture());
+		verifyContainsCallTree(spanCaptor.getValue(), true);
 	}
 
 	private void verifyContainsCallTree(SpanWrapper span, boolean contains) {
@@ -116,7 +116,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 
 	@Test
 	public void testElasticsearchExcludeFastCallTree() throws Exception {
-		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
+		when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
 		requestInformation = createTestSpanWithCallTree(1000, "Report Me");
 		reporter.report(requestInformation);
@@ -132,7 +132,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 
 	@Test
 	public void testElasticsearchDontExcludeSlowCallTree() throws Exception {
-		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
+		when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
 		reporter.report(createTestSpanWithCallTree(250, "Report Me"));
 		reporter.report(createTestSpanWithCallTree(1000, "Report Me"));
@@ -142,13 +142,13 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchRequestT
 
 	@Test
 	public void testInterceptorServiceLoader() throws Exception {
-		when(requestMonitorPlugin.getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
+		when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
 
 		reporter.report(createTestSpanWithCallTree(250, "Report Me"));
 
-		ArgumentCaptor<SpanWrapper> requestTraceCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
-		verify(elasticsearchClient).index(anyString(), anyString(), requestTraceCaptor.capture());
-		SpanWrapper span = requestTraceCaptor.getValue();
+		ArgumentCaptor<SpanWrapper> spanCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
+		verify(elasticsearchClient).index(anyString(), anyString(), spanCaptor.capture());
+		SpanWrapper span = spanCaptor.getValue();
 		verify(span.getDelegate()).setTag("serviceLoaderWorks", true);
 	}
 

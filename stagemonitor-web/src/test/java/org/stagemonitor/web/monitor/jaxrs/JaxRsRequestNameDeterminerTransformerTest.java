@@ -36,7 +36,7 @@ import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.
 public class JaxRsRequestNameDeterminerTransformerTest {
 
 	private TestResource resource = new TestResource();
-	private SpanCapturingReporter requestTraceCapturingReporter = new SpanCapturingReporter();
+	private SpanCapturingReporter spanCapturingReporter = new SpanCapturingReporter();
 
 	@BeforeClass
 	@AfterClass
@@ -64,12 +64,12 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		when(corePlugin.getApplicationName()).thenReturn("JaxRsRequestNameDeterminerTransformerTest");
 		when(corePlugin.getInstanceName()).thenReturn("test");
 		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
-		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
-		requestMonitor.addReporter(requestTraceCapturingReporter);
+		requestMonitor.addReporter(spanCapturingReporter);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
 				registry, requestMonitorPlugin, requestMonitor, new ArrayList<>(),
@@ -82,7 +82,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		final MonitoredRequest request = new MonitoredMethodRequest(configuration, "override me", () -> resource.getTestString());
 		requestMonitor.monitor(request);
 
-		final RequestMonitor.RequestInformation info = requestTraceCapturingReporter.get();
+		final RequestMonitor.RequestInformation info = spanCapturingReporter.get();
 
 		assertNotNull(info.getSpan());
 		assertEquals("Get Test String", info.getOperationName());

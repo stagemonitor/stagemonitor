@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
 
-public class WidgetAjaxRequestTraceReporter extends SpanReporter {
+public class WidgetAjaxSpanReporter extends SpanReporter {
 
 	public static final String CONNECTION_ID = "x-stagemonitor-connection-id";
 	private static final long MAX_REQUEST_TRACE_BUFFERING_TIME = 60 * 1000;
@@ -35,13 +35,13 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 	/**
 	 * see {@link OldSpanRemover}
 	 */
-	private ScheduledExecutorService oldRequestTracesRemoverPool;
+	private ScheduledExecutorService oldSpanRemoverPool;
 
-	public WidgetAjaxRequestTraceReporter() {
+	public WidgetAjaxSpanReporter() {
 	}
 
 	public void init() {
-		oldRequestTracesRemoverPool = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+		oldSpanRemoverPool = Executors.newScheduledThreadPool(1, new ThreadFactory() {
 			@Override
 			public Thread newThread(Runnable r) {
 				Thread thread = new Thread(r);
@@ -51,7 +51,7 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 			}
 		});
 
-		oldRequestTracesRemoverPool.scheduleAtFixedRate(new OldSpanRemover(),
+		oldSpanRemoverPool.scheduleAtFixedRate(new OldSpanRemover(),
 				MAX_REQUEST_TRACE_BUFFERING_TIME, MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
 	}
 
@@ -62,14 +62,14 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 				logger.debug("picking up buffered requests");
 				return traces;
 			} else {
-				return blockingWaitForRequestTrace(connectionId, requestTimeout);
+				return blockingWaitForSpan(connectionId, requestTimeout);
 			}
 		} else {
 			throw new IllegalArgumentException("connectionId is empty");
 		}
 	}
 
-	private ConcurrentLinkedQueue<Pair<Long, Span>> blockingWaitForRequestTrace(String connectionId, Long requestTimeout) throws IOException {
+	private ConcurrentLinkedQueue<Pair<Long, Span>> blockingWaitForSpan(String connectionId, Long requestTimeout) throws IOException {
 		Object lock = new Object();
 		synchronized (lock) {
 			connectionIdToLockMap.put(connectionId, lock);
@@ -91,7 +91,7 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 			final String connectionId = (String) requestInformation.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
 				logger.debug("report {}", requestInformation.getSpan());
-				bufferRequestTrace(connectionId, requestInformation.getSpan());
+				bufferSpan(connectionId, requestInformation.getSpan());
 
 				final Object lock = connectionIdToLockMap.remove(connectionId);
 				if (lock != null) {
@@ -103,13 +103,13 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 		}
 	}
 
-	private void bufferRequestTrace(String connectionId, Span span) {
-		logger.debug("bufferRequestTrace {}", span);
-		ConcurrentLinkedQueue<Pair<Long, Span>> httpRequestTraces = new ConcurrentLinkedQueue<Pair<Long, Span>>();
-		httpRequestTraces.add(Pair.of(System.currentTimeMillis(), span));
+	private void bufferSpan(String connectionId, Span span) {
+		logger.debug("bufferSpan {}", span);
+		ConcurrentLinkedQueue<Pair<Long, Span>> httpSpans = new ConcurrentLinkedQueue<Pair<Long, Span>>();
+		httpSpans.add(Pair.of(System.currentTimeMillis(), span));
 
 		final ConcurrentLinkedQueue<Pair<Long, Span>> alreadyAssociatedValue = connectionIdToSpanMap
-				.putIfAbsent(connectionId, httpRequestTraces);
+				.putIfAbsent(connectionId, httpSpans);
 		if (alreadyAssociatedValue != null) {
 			alreadyAssociatedValue.add(Pair.of(System.currentTimeMillis(), span));
 		}
@@ -122,7 +122,7 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 	}
 
 	/**
-	 * Clears old request traces that are buffered in {@link #connectionIdToSpanMap} but are never picked up
+	 * Clears old {@link Span}s that are buffered in {@link #connectionIdToSpanMap} but are never picked up
 	 * to prevent a memory leak
 	 */
 	private class OldSpanRemover implements Runnable {
@@ -130,15 +130,15 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 		public void run() {
 			for (Map.Entry<String, ConcurrentLinkedQueue<Pair<Long, Span>>> entry : connectionIdToSpanMap.entrySet()) {
 				final ConcurrentLinkedQueue<Pair<Long, Span>> httpSpans = entry.getValue();
-				removeOldRequestTraces(httpSpans);
+				removeOldSpans(httpSpans);
 				if (httpSpans.isEmpty()) {
 					removeOrphanEntry(entry);
 				}
 			}
 		}
 
-		private void removeOldRequestTraces(ConcurrentLinkedQueue<Pair<Long, Span>> httpRequestTraces) {
-			for (Iterator<Pair<Long, Span>> iterator = httpRequestTraces.iterator(); iterator.hasNext(); ) {
+		private void removeOldSpans(ConcurrentLinkedQueue<Pair<Long, Span>> httpSpans) {
+			for (Iterator<Pair<Long, Span>> iterator = httpSpans.iterator(); iterator.hasNext(); ) {
 				Pair<Long, Span> httpSpan = iterator.next();
 				final long timeInBuffer = System.currentTimeMillis() - httpSpan.getA();
 				if (timeInBuffer > MAX_REQUEST_TRACE_BUFFERING_TIME) {
@@ -154,6 +154,6 @@ public class WidgetAjaxRequestTraceReporter extends SpanReporter {
 	}
 
 	public void close() {
-		oldRequestTracesRemoverPool.shutdown();
+		oldSpanRemoverPool.shutdown();
 	}
 }

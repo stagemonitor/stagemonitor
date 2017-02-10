@@ -12,7 +12,7 @@ import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
-import org.stagemonitor.web.monitor.widget.WidgetAjaxRequestTraceReporter;
+import org.stagemonitor.web.monitor.widget.WidgetAjaxSpanReporter;
 import org.stagemonitor.web.opentracing.HttpServletRequestTextMapExtractAdapter;
 
 import java.net.URI;
@@ -66,7 +66,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		this.metricRegistry = Stagemonitor.getMetric2Registry();
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		userAgenHeader = httpServletRequest.getHeader("user-agent");
-		connectionId = httpServletRequest.getHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID);
+		connectionId = httpServletRequest.getHeader(WidgetAjaxSpanReporter.CONNECTION_ID);
 		widgetAndStagemonitorEndpointsAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
 		clientIp = getClientIp(httpServletRequest);
 	}

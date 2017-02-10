@@ -7,7 +7,7 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 import java.util.concurrent.TimeUnit;
 
-public class FastExternalSpanExcludingPostExecutionInterceptor extends PostExecutionRequestTraceReporterInterceptor {
+public class FastExternalSpanExcludingPostExecutionInterceptor extends PostExecutionSpanReporterInterceptor {
 
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {

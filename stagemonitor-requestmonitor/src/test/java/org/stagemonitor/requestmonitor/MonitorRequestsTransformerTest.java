@@ -30,7 +30,7 @@ public class MonitorRequestsTransformerTest {
 	private TestClass testClass;
 	private TestClassLevelAnnotationClass testClassLevelAnnotationClass;
 	private Metric2Registry metricRegistry;
-	private SpanCapturingReporter requestTraceCapturingReporter;
+	private SpanCapturingReporter spanCapturingReporter;
 	private Map<String, Object> tags;
 
 	@BeforeClass
@@ -46,7 +46,7 @@ public class MonitorRequestsTransformerTest {
 		metricRegistry.removeMatching(Metric2Filter.ALL);
 		Stagemonitor.setMeasurementSession(new MeasurementSession("MonitorRequestsTransformerTest", "test", "test"));
 		Stagemonitor.startMonitoring();
-		requestTraceCapturingReporter = new SpanCapturingReporter();
+		spanCapturingReporter = new SpanCapturingReporter();
 		tags = new HashMap<>();
 		Stagemonitor.getPlugin(RequestMonitorPlugin.class).addSpanInterceptor(new TagRecordingSpanInterceptor(tags));
 	}
@@ -59,7 +59,7 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
-		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
+		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", requestInformation.getOperationName());
@@ -74,7 +74,7 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testDontMonitorAnySuperMethod() throws Exception {
 		testClass.dontMonitorMe();
-		assertNull(requestTraceCapturingReporter.get());
+		assertNull(spanCapturingReporter.get());
 	}
 
 	@Test
@@ -94,7 +94,7 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorRequestsAnnonymousInnerClass() throws Exception {
 		testClass.monitorAnnonymousInnerClass();
-		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
+		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
 		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", requestInformation.getOperationName());
 		assertEquals(1, requestInformation.getCallTree().getChildren().size());
 		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
@@ -107,21 +107,21 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorRequestsResolvedAtRuntime() throws Exception {
 		testClass.resolveNameAtRuntime();
-		final String operationName = requestTraceCapturingReporter.get().getOperationName();
+		final String operationName = spanCapturingReporter.get().getOperationName();
 		assertEquals("MonitorRequestsTransformerTest$TestSubClass#resolveNameAtRuntime", operationName);
 	}
 
 	@Test
 	public void testMonitorStaticMethod() throws Exception {
 		TestClass.monitorStaticMethod();
-		final String operationName = requestTraceCapturingReporter.get().getOperationName();
+		final String operationName = spanCapturingReporter.get().getOperationName();
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorStaticMethod", operationName);
 	}
 
 	@Test
 	public void testMonitorRequestsCustomName() throws Exception {
 		testClass.doFancyStuff();
-		final String operationName = requestTraceCapturingReporter.get().getOperationName();
+		final String operationName = spanCapturingReporter.get().getOperationName();
 		assertEquals("My Cool Method", operationName);
 	}
 
@@ -179,7 +179,7 @@ public class MonitorRequestsTransformerTest {
 	public void testClassLevelAnnotationClass() throws Exception {
 		testClassLevelAnnotationClass.monitorMe("1");
 		testClassLevelAnnotationClass.dontMonitorMe();
-		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
+		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
 
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());

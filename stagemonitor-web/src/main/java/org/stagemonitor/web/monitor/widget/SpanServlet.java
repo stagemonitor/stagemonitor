@@ -28,30 +28,30 @@ public class SpanServlet extends HttpServlet {
 
 	private final RequestMonitor requestMonitor;
 	private final long requestTimeout;
-	private WidgetAjaxRequestTraceReporter widgetAjaxRequestTraceReporter;
+	private WidgetAjaxSpanReporter widgetAjaxSpanReporter;
 
 	public SpanServlet() {
-		this(Stagemonitor.getConfiguration(), new WidgetAjaxRequestTraceReporter(), DEFAULT_REQUEST_TIMEOUT);
+		this(Stagemonitor.getConfiguration(), new WidgetAjaxSpanReporter(), DEFAULT_REQUEST_TIMEOUT);
 	}
 
-	public SpanServlet(Configuration configuration, WidgetAjaxRequestTraceReporter reporter, long requestTimeout) {
-		this.widgetAjaxRequestTraceReporter = reporter;
+	public SpanServlet(Configuration configuration, WidgetAjaxSpanReporter reporter, long requestTimeout) {
+		this.widgetAjaxSpanReporter = reporter;
 		this.requestTimeout = requestTimeout;
 		this.requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
-		requestMonitor.addReporter(widgetAjaxRequestTraceReporter);
+		requestMonitor.addReporter(widgetAjaxSpanReporter);
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		final String connectionId = req.getParameter("connectionId");
 		if (connectionId != null && !connectionId.trim().isEmpty()) {
-			writeRequestTracesToResponse(resp, widgetAjaxRequestTraceReporter.getSpans(connectionId, requestTimeout));
+			writeSpansToResponse(resp, widgetAjaxSpanReporter.getSpans(connectionId, requestTimeout));
 		} else {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 		}
 	}
 
-	private void writeRequestTracesToResponse(HttpServletResponse response, Collection<Pair<Long, io.opentracing.Span>> spans)
+	private void writeSpansToResponse(HttpServletResponse response, Collection<Pair<Long, io.opentracing.Span>> spans)
 			throws IOException {
 		if (spans == null) {
 			spans = Collections.emptyList();
@@ -64,7 +64,7 @@ public class SpanServlet extends HttpServlet {
 
 		final ArrayList<String> jsonResponse = new ArrayList<String>(spans.size());
 		for (Pair<Long, io.opentracing.Span> spanPair : spans) {
-			logger.debug("writeRequestTracesToResponse {}", spanPair);
+			logger.debug("writeSpansToResponse {}", spanPair);
 			jsonResponse.add(JsonUtils.toJson(spanPair.getB(), SpanUtils.CALL_TREE_ASCII));
 		}
 		response.getWriter().print(jsonResponse.toString());
@@ -73,6 +73,6 @@ public class SpanServlet extends HttpServlet {
 
 	@Override
 	public void destroy() {
-		widgetAjaxRequestTraceReporter.close();
+		widgetAjaxSpanReporter.close();
 	}
 }

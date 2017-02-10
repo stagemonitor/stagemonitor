@@ -20,17 +20,17 @@ import static org.mockito.Mockito.when;
 
 public class ElasticsearchSpanServletTest extends ElasticsearchSpanReporterIntegrationTest {
 
-	private ElasticsearchRequestTraceServlet elasticsearchRequestTraceServlet;
+	private ElasticsearchSpanServlet elasticsearchSpanServlet;
 
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(mock(WebPlugin.class));
-		elasticsearchRequestTraceServlet = new ElasticsearchRequestTraceServlet(configuration);
+		elasticsearchSpanServlet = new ElasticsearchSpanServlet(configuration);
 	}
 
 	@Test
-	public void testRequestTraceServlet() throws Exception {
+	public void testSpanServlet() throws Exception {
 		final Span span = new MonitoredMethodRequest(configuration, "Test#test", null, Collections.singletonMap("attr.Color", "Blue")).createSpan();
 		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
 		elasticsearchClient.waitForCompletion();
@@ -39,7 +39,7 @@ public class ElasticsearchSpanServletTest extends ElasticsearchSpanReporterInteg
 		final String spanId = String.format("%x", ((com.uber.jaeger.Span) span).context().getSpanID());
 		req.addParameter("id", spanId);
 		final MockHttpServletResponse resp = new MockHttpServletResponse();
-		elasticsearchRequestTraceServlet.doGet(req, resp);
+		elasticsearchSpanServlet.doGet(req, resp);
 		assertTrue(resp.getContentAsString().contains("\"id\":\"" + spanId + "\""));
 		assertFalse(resp.getContentAsString().contains("_index"));
 	}

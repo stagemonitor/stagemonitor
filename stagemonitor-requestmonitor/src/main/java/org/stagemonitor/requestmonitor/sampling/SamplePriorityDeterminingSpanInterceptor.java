@@ -25,10 +25,10 @@ import io.opentracing.tag.Tags;
 public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareSpanInterceptor implements Callable<SpanInterceptor> {
 
 	private static final Logger logger = LoggerFactory.getLogger(SamplePriorityDeterminingSpanInterceptor.class);
-	private final Collection<PreExecutionRequestTraceReporterInterceptor> preInterceptors =
-			new CopyOnWriteArrayList<PreExecutionRequestTraceReporterInterceptor>();
-	private final Collection<PostExecutionRequestTraceReporterInterceptor> postInterceptors =
-			new CopyOnWriteArrayList<PostExecutionRequestTraceReporterInterceptor>();
+	private final Collection<PreExecutionSpanReporterInterceptor> preInterceptors =
+			new CopyOnWriteArrayList<PreExecutionSpanReporterInterceptor>();
+	private final Collection<PostExecutionSpanReporterInterceptor> postInterceptors =
+			new CopyOnWriteArrayList<PostExecutionSpanReporterInterceptor>();
 	private final Configuration configuration;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final Metric2Registry metricRegistry;
@@ -46,8 +46,8 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 	private void registerPreInterceptors() {
 		this.preInterceptors.add(new RateLimitingPreExecutionInterceptor());
 
-		for (PreExecutionRequestTraceReporterInterceptor interceptor : ServiceLoader.load(
-				PreExecutionRequestTraceReporterInterceptor.class,
+		for (PreExecutionSpanReporterInterceptor interceptor : ServiceLoader.load(
+				PreExecutionSpanReporterInterceptor.class,
 				SamplePriorityDeterminingSpanInterceptor.class.getClassLoader())) {
 			preInterceptors.add(interceptor);
 		}
@@ -58,8 +58,8 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		this.postInterceptors.add(new CallTreeExcludingPostExecutionInterceptor());
 		this.postInterceptors.add(new FastExternalSpanExcludingPostExecutionInterceptor());
 
-		for (PostExecutionRequestTraceReporterInterceptor interceptor : ServiceLoader.load(
-				PostExecutionRequestTraceReporterInterceptor.class,
+		for (PostExecutionSpanReporterInterceptor interceptor : ServiceLoader.load(
+				PostExecutionSpanReporterInterceptor.class,
 				SamplePriorityDeterminingSpanInterceptor.class.getClassLoader())) {
 			postInterceptors.add(interceptor);
 		}
@@ -71,7 +71,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration,
 				requestInformation, internalRequestReportingRate,
 				externalRequestReportingRate, metricRegistry);
-		for (PreExecutionRequestTraceReporterInterceptor interceptor : preInterceptors) {
+		for (PreExecutionSpanReporterInterceptor interceptor : preInterceptors) {
 			try {
 				interceptor.interceptReport(context);
 			} catch (Exception e) {
@@ -90,7 +90,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		final RequestMonitor.RequestInformation info = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, info,
 				internalRequestReportingRate, externalRequestReportingRate, metricRegistry);
-		for (PostExecutionRequestTraceReporterInterceptor interceptor : postInterceptors) {
+		for (PostExecutionSpanReporterInterceptor interceptor : postInterceptors) {
 			try {
 				interceptor.interceptReport(context);
 			} catch (Exception e) {
@@ -130,11 +130,11 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		return this;
 	}
 
-	public void addPreInterceptor(PreExecutionRequestTraceReporterInterceptor interceptor) {
+	public void addPreInterceptor(PreExecutionSpanReporterInterceptor interceptor) {
 		preInterceptors.add(interceptor);
 	}
 
-	public void addPostInterceptor(PostExecutionRequestTraceReporterInterceptor interceptor) {
+	public void addPostInterceptor(PostExecutionSpanReporterInterceptor interceptor) {
 		postInterceptors.add(interceptor);
 	}
 }

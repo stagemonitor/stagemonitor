@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 
 public class SpanServletTest {
 
-	private WidgetAjaxRequestTraceReporter reporter;
+	private WidgetAjaxSpanReporter reporter;
 	private SpanServlet spanServlet;
 	private String connectionId;
 	private WebPlugin webPlugin;
@@ -62,12 +62,12 @@ public class SpanServletTest {
 		when(requestMonitorPlugin.getTracer()).thenReturn(new com.uber.jaeger.Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true)).build());
 		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		reporter = new WidgetAjaxRequestTraceReporter();
+		reporter = new WidgetAjaxSpanReporter();
 		spanServlet = new SpanServlet(configuration, reporter, 1500);
 		spanServlet.init();
 		connectionId = UUID.randomUUID().toString();
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test");
-		request.addHeader(WidgetAjaxRequestTraceReporter.CONNECTION_ID, connectionId);
+		request.addHeader(WidgetAjaxSpanReporter.CONNECTION_ID, connectionId);
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration);
 		span = monitoredHttpRequest.createSpan();
 		span.setOperationName("test");
@@ -88,10 +88,10 @@ public class SpanServletTest {
 	}
 
 	@Test
-	public void testRequestTraceBeforeRequest() throws Exception {
+	public void testSpanBeforeRequest() throws Exception {
 		reporter.report(RequestMonitor.RequestInformation.of(span, null, requestAttributes));
 
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", connectionId);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -102,11 +102,11 @@ public class SpanServletTest {
 	}
 
 	@Test
-	public void testTwoRequestTraceBeforeRequest() throws Exception {
+	public void testTwoSpanBeforeRequest() throws Exception {
 		reporter.report(RequestMonitor.RequestInformation.of(span, null, requestAttributes));
 		reporter.report(RequestMonitor.RequestInformation.of(span, null, requestAttributes));
 
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", connectionId);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -152,8 +152,8 @@ public class SpanServletTest {
 	}
 
 	@Test
-	public void testRequestTraceAfterRequest() throws Exception {
-		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
+	public void testSpanAfterRequest() throws Exception {
+		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", connectionId);
 		request.setAsyncSupported(false);
 		final MockHttpServletResponse response = new MockHttpServletResponse();
@@ -167,8 +167,8 @@ public class SpanServletTest {
 	}
 
 	@Test
-	public void testRequestTraceAfterRequestDifferentConnection() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
+	public void testSpanAfterRequestDifferentConnection() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", UUID.randomUUID().toString());
 		request.setAsyncSupported(true);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -182,7 +182,7 @@ public class SpanServletTest {
 
 	@Test
 	public void testMissingConnectionId() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
 		spanServlet.service(request, response);
@@ -192,7 +192,7 @@ public class SpanServletTest {
 
 	@Test
 	public void testInvalidConnectionId() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -203,7 +203,7 @@ public class SpanServletTest {
 
 	@Test
 	public void testWidgetDeactivated() throws Exception {
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/request-traces");
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		Mockito.when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(eq(request), any(Configuration.class))).thenReturn(Boolean.FALSE);

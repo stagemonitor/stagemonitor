@@ -7,7 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class SpanCapturingReporter extends SpanReporter {
-	private final BlockingQueue<RequestMonitor.RequestInformation> requestTraces = new LinkedBlockingQueue<>();
+	private final BlockingQueue<RequestMonitor.RequestInformation> spans = new LinkedBlockingQueue<>();
 
 	public SpanCapturingReporter() {
 		RequestMonitor.addSpanReporter(this);
@@ -19,7 +19,7 @@ public class SpanCapturingReporter extends SpanReporter {
 
 	@Override
 	public void report(RequestMonitor.RequestInformation requestInformation) throws Exception {
-		requestTraces.add(requestInformation);
+		spans.add(requestInformation);
 	}
 
 	@Override
@@ -28,6 +28,6 @@ public class SpanCapturingReporter extends SpanReporter {
 	}
 
 	public RequestMonitor.RequestInformation get() throws InterruptedException {
-		return requestTraces.poll(500, TimeUnit.MILLISECONDS);
+		return spans.poll(500, TimeUnit.MILLISECONDS);
 	}
 }

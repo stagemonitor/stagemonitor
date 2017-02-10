@@ -32,14 +32,14 @@ public class PreExecutionInterceptorContext {
 	}
 
 	public PreExecutionInterceptorContext mustReport(Class<?> interceptorClass) {
-		logger.debug("Must report current request trace (requested by {})", interceptorClass);
+		logger.debug("Must report current span (requested by {})", interceptorClass);
 		mustReport = true;
 		report = true;
 		return this;
 	}
 
 	public PreExecutionInterceptorContext shouldNotReport(Class<?> interceptorClass) {
-		logger.debug("Should not report current request trace (requested by {})", interceptorClass);
+		logger.debug("Should not report current span (requested by {})", interceptorClass);
 		if (!mustReport) {
 			report = false;
 		}

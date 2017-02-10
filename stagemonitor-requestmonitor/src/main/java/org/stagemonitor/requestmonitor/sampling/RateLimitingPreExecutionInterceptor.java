@@ -5,7 +5,7 @@ import com.codahale.metrics.Meter;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
-class RateLimitingPreExecutionInterceptor extends PreExecutionRequestTraceReporterInterceptor {
+class RateLimitingPreExecutionInterceptor extends PreExecutionSpanReporterInterceptor {
 
 	@Override
 	public void interceptReport(PreExecutionInterceptorContext context) {
@@ -16,7 +16,7 @@ class RateLimitingPreExecutionInterceptor extends PreExecutionRequestTraceReport
 			maxReportingRate = config.getOnlyReportNExternalRequestsPerMinute();
 			rate = context.getExternalRequestReportingRate();
 		} else {
-			maxReportingRate = config.getOnlyReportNRequestsPerMinuteToElasticsearch();
+			maxReportingRate = config.getOnlyReportNSpansPerMinuteTo();
 			rate = context.getInternalRequestReportingRate();
 		}
 		if (MetricUtils.isRateLimitExceeded(maxReportingRate, rate)) {

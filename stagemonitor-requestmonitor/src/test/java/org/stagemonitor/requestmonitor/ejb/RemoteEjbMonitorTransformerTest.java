@@ -19,7 +19,7 @@ public class RemoteEjbMonitorTransformerTest {
 
 	private RemoteInterface remote = new RemoteInterfaceImpl();
 	private RemoteInterfaceWithRemoteAnnotation remoteAlt = new RemoteInterfaceWithRemoteAnnotationImpl();
-	private SpanCapturingReporter requestTraceCapturingReporter = new SpanCapturingReporter();
+	private SpanCapturingReporter spanCapturingReporter = new SpanCapturingReporter();
 
 	@BeforeClass
 	@AfterClass
@@ -31,7 +31,7 @@ public class RemoteEjbMonitorTransformerTest {
 	public void testMonitorRemoteCalls() throws Exception {
 		remote.foo();
 
-		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
+		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
 		assertNotNull(requestInformation.getSpan());
 		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl#foo", requestInformation.getOperationName());
 		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
@@ -43,7 +43,7 @@ public class RemoteEjbMonitorTransformerTest {
 	public void testMonitorRemoteCallsAlternateHierarchy() throws Exception {
 		remoteAlt.bar();
 
-		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
+		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
 		assertNotNull(requestInformation.getSpan());
 		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#bar", requestInformation.getOperationName());
 		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
@@ -55,7 +55,7 @@ public class RemoteEjbMonitorTransformerTest {
 	public void testMonitorRemoteCallsSuperInterface() throws Exception {
 		remoteAlt.foo();
 
-		final RequestMonitor.RequestInformation requestInformation = requestTraceCapturingReporter.get();
+		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
 		assertNotNull(requestInformation.getSpan());
 		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#foo", requestInformation.getOperationName());
 		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
@@ -68,21 +68,21 @@ public class RemoteEjbMonitorTransformerTest {
 	public void testExcludeGeneratedClasses() throws Exception {
 		// classes which contain $$ are usually generated classes
 		new $$ExcludeGeneratedClasses().bar();
-		assertNull(requestTraceCapturingReporter.get());
+		assertNull(spanCapturingReporter.get());
 	}
 
 	@Test
 	public void testDontMonitorToString() throws Exception {
 		remote.toString();
 
-		assertNull(requestTraceCapturingReporter.get());
+		assertNull(spanCapturingReporter.get());
 	}
 
 	@Test
 	public void testDontMonitorNonRemoteEjb() throws Exception {
 		new NoRemoteEJB().foo();
 
-		assertNull(requestTraceCapturingReporter.get());
+		assertNull(spanCapturingReporter.get());
 	}
 
 	private interface SuperInterface {

@@ -38,7 +38,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
-		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(1000000d);
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(new SpanReporter.InitArguments(configuration, mock(Metric2Registry.class)));
@@ -46,7 +46,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 	}
 
 	@Test
-	public void reportRequestTrace() throws Exception {
+	public void reportSpan() throws Exception {
 		final Map<String, Object> parameters = new HashMap<String, Object>();
 		parameters.put("attr.Color", "Blue");
 		parameters.put("attr", "bla");
@@ -60,10 +60,10 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
 		assertEquals(1, hits.get("total").intValue());
-		final JsonNode requestTraceJson = hits.get("hits").elements().next().get("_source");
-		assertEquals("baz", requestTraceJson.get("foo").get("bar").asText());
-		assertEquals("bar", requestTraceJson.get("parameters").get("foo").asText());
-		assertEquals("Blue", requestTraceJson.get("parameters").get("attr_(dot)_Color").asText());
+		final JsonNode spanJson = hits.get("hits").elements().next().get("_source");
+		assertEquals("baz", spanJson.get("foo").get("bar").asText());
+		assertEquals("bar", spanJson.get("parameters").get("foo").asText());
+		assertEquals("Blue", spanJson.get("parameters").get("attr_(dot)_Color").asText());
 	}
 
 }

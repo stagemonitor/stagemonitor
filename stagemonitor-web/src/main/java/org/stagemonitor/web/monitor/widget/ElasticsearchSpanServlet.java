@@ -14,22 +14,22 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class ElasticsearchRequestTraceServlet extends HttpServlet {
+public class ElasticsearchSpanServlet extends HttpServlet {
 
 	private final ElasticsearchClient elasticsearchClient;
 
-	public ElasticsearchRequestTraceServlet() {
+	public ElasticsearchSpanServlet() {
 		this(Stagemonitor.getConfiguration());
 	}
 
-	public ElasticsearchRequestTraceServlet(Configuration configuration) {
+	public ElasticsearchSpanServlet(Configuration configuration) {
 		elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		final String requestTraceId = req.getParameter("id");
-		if (StringUtils.isEmpty(requestTraceId)) {
+		final String spanId = req.getParameter("id");
+		if (StringUtils.isEmpty(spanId)) {
 			throw new IllegalArgumentException("Parameter id is missing");
 		}
 
@@ -40,7 +40,7 @@ public class ElasticsearchRequestTraceServlet extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 
 		IOUtils.write(elasticsearchClient
-				.getJson("/stagemonitor-spans-*/_search?q=id:" + requestTraceId.replaceAll("[^a-zA-Z0-9\\-]", ""))
+				.getJson("/stagemonitor-spans-*/_search?q=id:" + spanId.replaceAll("[^a-zA-Z0-9\\-]", ""))
 				.get("hits")
 				.get("hits")
 				.elements()

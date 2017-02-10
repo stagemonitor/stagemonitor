@@ -74,7 +74,7 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public void onPostExecute(RequestMonitor.RequestInformation requestTrace) {
+	public void onPostExecute(RequestMonitor.RequestInformation requestInformation) {
 	}
 
 	/**

@@ -258,7 +258,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.elasticsearch.url")
 			.dynamic(true)
 			.label("Elasticsearch URL")
-			.description("A comma separated list of the Elasticsearch URLs that store the request traces and metrics. " +
+			.description("A comma separated list of the Elasticsearch URLs that store spans and metrics. " +
 					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com.")
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
@@ -407,7 +407,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Thread Pool Queue Capacity Limit")
 			.description("Sets a limit to the number of pending tasks in the ExecutorServices stagemonitor uses. " +
-					"These are thread pools that are used for example to report request traces to elasticsearch. " +
+					"These are thread pools that are used for example to report spans to elasticsearch. " +
 					"If elasticsearch is unreachable or your application encounters a spike in incoming requests this limit could be reached. " +
 					"It is used to prevent the queue from growing indefinitely. ")
 			.defaultValue(1000)
@@ -429,8 +429,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Elasticsearch availability check period (sec)")
 			.description("When set to a value > 0 stagemonitor periodically checks if Elasticsearch is available. " +
-					"When not available, stagemonitor won't try to send request traces to Elasticsearch which would " +
-					"fail anyway. This reduces heap usage as the request traces won't be queued up. " +
+					"When not available, stagemonitor won't try send documents to Elasticsearch which would " +
+					"fail anyway. This reduces heap usage as the documents won't be queued up. " +
 					"It also avoids the logging of warnings when the queue is filled up to the limit (see '" + POOLS_QUEUE_CAPACITY_LIMIT_KEY + "')")
 			.defaultValue(5)
 			.configurationCategory(CORE_PLUGIN_NAME)

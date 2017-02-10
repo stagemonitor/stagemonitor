@@ -422,7 +422,7 @@ public class ElasticsearchClient {
 					if (e != null) {
 						if (isElasticsearchAvailable()) {
 							logger.warn("Elasticsearch is not available. " +
-									"Stagemonitor won't try to send request traces to Elasticsearch until it is available again.");
+									"Stagemonitor won't try to send documents to Elasticsearch until it is available again.");
 						}
 							elasticsearchAvailable.set(false);
 						} else {

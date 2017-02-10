@@ -23,7 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class RequestTraceAnonymisationTest {
+public class AnonymisationTest {
 
 	private RequestMonitorPlugin requestMonitorPlugin;
 

@@ -27,10 +27,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
 
-public class AbstractElasticsearchRequestTraceReporterTest {
+public class AbstractElasticsearchSpanReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
 	protected RequestMonitorPlugin requestMonitorPlugin;
-	protected Logger requestTraceLogger;
+	protected Logger spanLogger;
 	protected Metric2Registry registry;
 	protected Configuration configuration;
 	protected CorePlugin corePlugin;
@@ -46,7 +46,7 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
-		when(requestMonitorPlugin.getOnlyReportNRequestsPerMinuteToElasticsearch()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinuteTo()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.singleton("Report Me"));
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
@@ -54,7 +54,7 @@ public class AbstractElasticsearchRequestTraceReporterTest {
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
 		registry = new Metric2Registry();
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
-		requestTraceLogger = mock(Logger.class);
+		spanLogger = mock(Logger.class);
 		tags = new HashMap<>();
 		requestMonitor = mock(RequestMonitor.class);
 		when(requestMonitor.getRequestInformation()).thenReturn(requestInformation);

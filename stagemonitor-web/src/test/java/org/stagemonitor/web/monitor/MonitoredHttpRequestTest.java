@@ -87,7 +87,7 @@ public class MonitoredHttpRequestTest {
 	}
 
 	@Test
-	public void testCreateRequestTrace() throws Exception {
+	public void testCreateSpan() throws Exception {
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
 		request.addParameter("foo", "bar");
 		request.addParameter("bla", "blubb");

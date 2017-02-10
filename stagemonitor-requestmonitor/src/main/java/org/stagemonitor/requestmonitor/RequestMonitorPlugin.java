@@ -12,8 +12,8 @@ import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.sampling.PostExecutionRequestTraceReporterInterceptor;
-import org.stagemonitor.requestmonitor.sampling.PreExecutionRequestTraceReporterInterceptor;
+import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanReporterInterceptor;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanReporterInterceptor;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
@@ -122,12 +122,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Integer> deleteRequestTracesAfterDays = ConfigurationOption.integerOption()
+	private final ConfigurationOption<Integer> deleteSpansAfterDays = ConfigurationOption.integerOption()
 			.key("stagemonitor.requestmonitor.deleteRequestTracesAfterDays")
 			.dynamic(true)
-			.label("Delete request traces after (days)")
-			.description("When set, call stacks will be deleted automatically after the specified days. " +
-					"Set to a negative value to never delete request traces.")
+			.label("Delete spans after (days)")
+			.description("When set, spans will be deleted automatically after the specified days. " +
+					"Set to a negative value to never delete spans.")
 			.defaultValue(7)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
@@ -190,12 +190,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	private final ConfigurationOption<Collection<String>> onlyReportRequestsWithNameToElasticsearch = ConfigurationOption.stringsOption()
 			.key("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
 			.dynamic(true)
-			.label("Only report request traces with name to ES")
-			.description("Limits the reporting of request traces to Elasticsearch to requests with a certain name.")
+			.label("Only report these operation names")
+			.description("Limits the reporting of spans to operations with a certain name.")
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Double> onlyReportNRequestsPerMinuteToElasticsearch = ConfigurationOption.doubleOption()
+	private final ConfigurationOption<Double> onlyReportNSpansPerMinuteTo = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
 			.label("Only report N requests per minute to ES")
@@ -204,7 +204,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(1000000d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Boolean> onlyLogElasticsearchRequestTraceReports = ConfigurationOption.booleanOption()
+	private final ConfigurationOption<Boolean> onlyLogElasticsearchSpanReports = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.onlyLogElasticsearchRequestTraceReports")
 			.dynamic(true)
 			.label("Only log Elasticsearch request trace reports")
@@ -214,7 +214,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Double> excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
+	private final ConfigurationOption<Double> excludeCallTreeFromReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
 			.dynamic(true)
 			.label("Exclude the Call Tree from Elasticsearch reports on x% of the fastest requests")
@@ -240,8 +240,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.requestmonitor.ignoreExeptions")
 			.dynamic(true)
 			.label("Ignore Exceptions")
-			.description("The class names of exception to ignore. These exceptions won't show up in the request trace " +
-					"and won't cause the error flag of the request trace to be set to true.")
+			.description("The class names of exception to ignore. These exceptions won't show up in the span " +
+					"and won't cause the error flag of the span to be set to true.")
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
@@ -350,7 +350,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk");
 
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
-					corePlugin.getMoveToColdNodesAfterDays(), deleteRequestTracesAfterDays.getValue());
+					corePlugin.getMoveToColdNodesAfterDays(), deleteSpansAfterDays.getValue());
 		}
 
 		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
@@ -455,16 +455,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return onlyReportRequestsWithNameToElasticsearch.getValue();
 	}
 
-	public double getOnlyReportNRequestsPerMinuteToElasticsearch() {
-		return onlyReportNRequestsPerMinuteToElasticsearch.getValue();
+	public double getOnlyReportNSpansPerMinuteTo() {
+		return onlyReportNSpansPerMinuteTo.getValue();
 	}
 
-	public boolean isOnlyLogElasticsearchRequestTraceReports() {
-		return onlyLogElasticsearchRequestTraceReports.getValue();
+	public boolean isOnlyLogElasticsearchSpanReports() {
+		return onlyLogElasticsearchSpanReports.getValue();
 	}
 
-	public double getExcludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests() {
-		return excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests.getValue();
+	public double getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests() {
+		return excludeCallTreeFromReportWhenFasterThanXPercentOfRequests.getValue();
 	}
 
 	public Collection<String> getUnnestExceptions() {
@@ -526,20 +526,20 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	}
 
 	/**
-	 * Add an {@link PreExecutionRequestTraceReporterInterceptor} to the interceptor list
+	 * Add an {@link PreExecutionSpanReporterInterceptor} to the interceptor list
 	 *
 	 * @param interceptor the interceptor that should be executed before measurement starts
 	 */
-	public void registerPreInterceptor(PreExecutionRequestTraceReporterInterceptor interceptor) {
+	public void registerPreInterceptor(PreExecutionSpanReporterInterceptor interceptor) {
 		samplePriorityDeterminingSpanInterceptor.addPreInterceptor(interceptor);
 	}
 
 	/**
-	 * Add an {@link PostExecutionRequestTraceReporterInterceptor} to the interceptor list
+	 * Add an {@link PostExecutionSpanReporterInterceptor} to the interceptor list
 	 *
 	 * @param interceptor the interceptor that should be executed before each report
 	 */
-	public void registerPostInterceptor(PostExecutionRequestTraceReporterInterceptor interceptor) {
+	public void registerPostInterceptor(PostExecutionSpanReporterInterceptor interceptor) {
 		samplePriorityDeterminingSpanInterceptor.addPostInterceptor(interceptor);
 	}
 }

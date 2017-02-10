@@ -13,7 +13,7 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 
 	public static final String ES_SPAN_LOGGER = "ElasticsearchSpanReporter";
 
-	private final Logger requestTraceLogger;
+	private final Logger spanLogger;
 
 	protected CorePlugin corePlugin;
 	protected RequestMonitorPlugin requestMonitorPlugin;
@@ -24,8 +24,8 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		this(LoggerFactory.getLogger(ES_SPAN_LOGGER));
 	}
 
-	ElasticsearchSpanReporter(Logger requestTraceLogger) {
-		this.requestTraceLogger = requestTraceLogger;
+	ElasticsearchSpanReporter(Logger spanLogger) {
+		this.spanLogger = spanLogger;
 	}
 
 	@Override
@@ -38,8 +38,8 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 	@Override
 	public void report(RequestMonitor.RequestInformation requestInformation) {
 		final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
-		if (requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()) {
-			requestTraceLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(requestInformation.getSpan()));
+		if (requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()) {
+			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(requestInformation.getSpan()));
 		} else {
 			elasticsearchClient.index(spansIndex, SPANS_TYPE, requestInformation.getSpan());
 		}
@@ -47,7 +47,7 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 
 	@Override
 	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
-		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports();
+		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchSpanReports();
 		return (elasticsearchClient.isElasticsearchAvailable() || logOnly);
 	}
 

@@ -137,7 +137,7 @@ public class ConnectionMonitoringTransformerTest {
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", () -> {
 					dataSource.getConnection().close();
 					return null;
-				})).getRequestTraceReporterFuture().get();
+				})).getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
 	}
@@ -154,7 +154,7 @@ public class ConnectionMonitoringTransformerTest {
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", () -> {
 					dataSource.getConnection("sa", "").close();
 					return null;
-				})).getRequestTraceReporterFuture().get();
+				})).getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
 	}
@@ -169,7 +169,7 @@ public class ConnectionMonitoringTransformerTest {
 						return null;
 					}
 				}));
-		requestInformation.getRequestTraceReporterFuture().get();
+		requestInformation.getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()));
@@ -190,7 +190,7 @@ public class ConnectionMonitoringTransformerTest {
 					testDao.executeStatement();
 					return null;
 				}));
-		requestInformation.getRequestTraceReporterFuture().get();
+		requestInformation.getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		final String message = timers.keySet().toString();
 		assertTrue(message, timers.size() > 1);

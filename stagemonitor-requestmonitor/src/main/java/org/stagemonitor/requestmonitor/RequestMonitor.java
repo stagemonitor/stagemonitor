@@ -63,7 +63,7 @@ public class RequestMonitor {
 
 	private final MetricName internalOverheadMetricName = name("internal_overhead_request_monitor").build();
 
-	private ExecutorService asyncRequestTraceReporterPool;
+	private ExecutorService asyncSpanReporterPool;
 
 	private int warmupRequests = 0;
 	private AtomicBoolean warmedUp = new AtomicBoolean(false);
@@ -79,8 +79,8 @@ public class RequestMonitor {
 		this(configuration, registry, ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader()));
 	}
 
-	public RequestMonitor(Configuration configuration, Metric2Registry registry, Iterable<SpanReporter> requestTraceReporters) {
-		this(configuration, registry, configuration.getConfig(RequestMonitorPlugin.class), requestTraceReporters);
+	public RequestMonitor(Configuration configuration, Metric2Registry registry, Iterable<SpanReporter> spanReporters) {
+		this(configuration, registry, configuration.getConfig(RequestMonitorPlugin.class), spanReporters);
 	}
 
 	private RequestMonitor(Configuration configuration, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin,
@@ -91,7 +91,7 @@ public class RequestMonitor {
 		this.requestMonitorPlugin = requestMonitorPlugin;
 		this.warmupRequests = requestMonitorPlugin.getNoOfWarmupRequests();
 		this.endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
-		this.asyncRequestTraceReporterPool = ExecutorUtils
+		this.asyncSpanReporterPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit());
 		for (SpanReporter spanReporter : spanReporters) {
 			addReporter(spanReporter);
@@ -143,7 +143,7 @@ public class RequestMonitor {
 		}
 		if (monitorThisRequest() && info.getPostExecutionInterceptorContext().isReport()) {
 			try {
-				info.requestTraceReporterFuture = report(info);
+				info.spanReporterFuture = report(info);
 			} catch (Exception e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}
@@ -257,7 +257,7 @@ public class RequestMonitor {
 	private Future<?> report(final RequestInformation requestInformation) {
 		try {
 			if (requestMonitorPlugin.isReportAsync()) {
-				return asyncRequestTraceReporterPool.submit(new Runnable() {
+				return asyncSpanReporterPool.submit(new Runnable() {
 					@Override
 					public void run() {
 						doReport(requestInformation);
@@ -353,7 +353,7 @@ public class RequestMonitor {
 		private MonitoredRequest monitoredRequest;
 		private boolean firstRequest;
 		private RequestInformation parent;
-		private Future<?> requestTraceReporterFuture;
+		private Future<?> spanReporterFuture;
 		private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 		private CallStackElement callTree;
 		private String operationName;
@@ -391,16 +391,6 @@ public class RequestMonitor {
 			return requestInformation;
 		}
 
-		/**
-		 * If the request has no name it means that it should not be monitored.
-		 *
-		 * @return <code>true</code>, if the request trace has a name, <code>false</code> otherwise
-		 */
-		private boolean hasRequestName() {
-			final String requestName = getOperationName();
-			return requestName != null && !requestName.isEmpty();
-		}
-
 		public String getOperationName() {
 			return operationName;
 		}
@@ -417,8 +407,8 @@ public class RequestMonitor {
 					'}';
 		}
 
-		public Future<?> getRequestTraceReporterFuture() {
-			return requestTraceReporterFuture;
+		public Future<?> getSpanReporterFuture() {
+			return spanReporterFuture;
 		}
 
 		public Span getSpan() {
@@ -673,7 +663,7 @@ public class RequestMonitor {
 	 * Shuts down the internal thread pool
 	 */
 	public void close() {
-		asyncRequestTraceReporterPool.shutdown();
+		asyncSpanReporterPool.shutdown();
 		request.remove();
 	}
 

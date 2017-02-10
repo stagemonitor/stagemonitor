@@ -24,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends AbstractElasticsearchTest {
+public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractElasticsearchTest {
 
 	protected ElasticsearchSpanReporter reporter;
 	protected RequestMonitorPlugin requestMonitorPlugin;
@@ -45,7 +45,7 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 		final String mappingTemplate = IOUtils.getResourceAsString("stagemonitor-elasticsearch-span-index-template.json");
 		elasticsearchClient.sendMappingTemplateAsync(mappingTemplate, "stagemonitor-spans");
 		elasticsearchClient.waitForCompletion();
-		tracer = new com.uber.jaeger.Tracer.Builder("ElasticsearchExternalRequestTraceReporterIntegrationTest", new LoggingReporter(), new ConstSampler(true)).build();
+		tracer = new com.uber.jaeger.Tracer.Builder("ElasticsearchExternalSpanReporterIntegrationTest", new LoggingReporter(), new ConstSampler(true)).build();
 
 	}
 
@@ -63,17 +63,17 @@ public class ElasticsearchExternalRequestTraceReporterIntegrationTest extends Ab
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
 		assertEquals(1, hits.get("total").intValue());
-		final JsonNode requestTraceJson = hits.get("hits").elements().next().get("_source");
-		assertEquals("jdbc", requestTraceJson.get("type").asText());
-		assertEquals("SELECT", requestTraceJson.get("method").asText());
-		assertEquals(100000, requestTraceJson.get("duration").asInt());
-		assertEquals("SELECT * from STAGEMONITOR where 1 < 2", requestTraceJson.get("request").asText());
-		assertEquals("ElasticsearchExternalRequestTraceReporterIntegrationTest#test", requestTraceJson.get("name").asText());
+		final JsonNode spanJson = hits.get("hits").elements().next().get("_source");
+		assertEquals("jdbc", spanJson.get("type").asText());
+		assertEquals("SELECT", spanJson.get("method").asText());
+		assertEquals(100000, spanJson.get("duration").asInt());
+		assertEquals("SELECT * from STAGEMONITOR where 1 < 2", spanJson.get("request").asText());
+		assertEquals("ElasticsearchExternalSpanReporterIntegrationTest#test", spanJson.get("name").asText());
 	}
 
 	private Span getSpan(long executionTimeMillis) {
 		final Span span = tracer
-				.buildSpan("ElasticsearchExternalRequestTraceReporterIntegrationTest#test")
+				.buildSpan("ElasticsearchExternalSpanReporterIntegrationTest#test")
 				.withStartTimestamp(1)
 				.start();
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);

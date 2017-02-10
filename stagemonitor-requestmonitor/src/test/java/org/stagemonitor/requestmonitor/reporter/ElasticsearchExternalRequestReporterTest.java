@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsearchRequestTraceReporterTest {
+public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsearchSpanReporterTest {
 
 	private ElasticsearchSpanReporter reporter;
 
@@ -43,7 +43,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		super.setUp();
 		JsonUtils.getMapper().registerModule(new SpanJsonModule());
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1000000d);
-		reporter = new ElasticsearchSpanReporter(requestTraceLogger);
+		reporter = new ElasticsearchSpanReporter(spanLogger);
 		reporter.init(new SpanReporter.InitArguments(configuration, registry));
 		when(requestMonitorPlugin.getOnlyReportRequestsWithNameToElasticsearch()).thenReturn(Collections.emptyList());
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
@@ -52,8 +52,8 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	@Test
-	public void reportRequestTrace() throws Exception {
-		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(false);
+	public void reportSpan() throws Exception {
+		when(requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(false);
 		final Span span = getSpan();
 		report(span);
 
@@ -63,39 +63,39 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	@Test
-	public void doNotReportRequestTrace() throws Exception {
-		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(false);
+	public void doNotReportSpan() throws Exception {
+		when(requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(false);
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(false);
 		when(corePlugin.getElasticsearchUrl()).thenReturn(null);
 		final Span span = getSpan();
 		report(span);
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
-		verify(requestTraceLogger, times(0)).info(anyString());
+		verify(spanLogger, times(0)).info(anyString());
 		assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
 		verifyTimerCreated(1);
 	}
 
 	@Test
-	public void testLogReportRequestTrace() throws Exception {
-		when(requestMonitorPlugin.isOnlyLogElasticsearchRequestTraceReports()).thenReturn(true);
+	public void testLogReportSpan() throws Exception {
+		when(requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(true);
 
 		final Span span = requestMonitorPlugin.getTracer().buildSpan("test").start();
 		report(span);
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
-		verify(requestTraceLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
+		verify(spanLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
 		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
 	}
 
 	@Test
-	public void reportRequestTraceRateLimited() throws Exception {
+	public void reportSpanRateLimited() throws Exception {
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1d);
 		report(getSpan());
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
 		Thread.sleep(5010); // the meter only updates every 5 seconds
 		report(getSpan());
-		verifyNoMoreInteractions(requestTraceLogger);
+		verifyNoMoreInteractions(spanLogger);
 		verifyTimerCreated(2);
 	}
 
@@ -107,7 +107,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
 
 		report(getSpan(99));
-		verifyNoMoreInteractions(requestTraceLogger);
+		verifyNoMoreInteractions(spanLogger);
 		verifyTimerCreated(2);
 	}
 
@@ -118,7 +118,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		report(getSpan(1000));
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
 		report(getSpan(250));
-		verifyNoMoreInteractions(requestTraceLogger);
+		verifyNoMoreInteractions(spanLogger);
 		verifyTimerCreated(2);
 	}
 
