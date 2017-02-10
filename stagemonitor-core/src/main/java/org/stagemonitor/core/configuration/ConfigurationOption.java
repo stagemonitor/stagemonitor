@@ -40,6 +40,8 @@ public class ConfigurationOption<T> {
 	private final boolean dynamic;
 	private final boolean sensitive;
 	private final String key;
+	private final List<String> aliasKeys;
+	private final List<String> allKeys;
 	private final String label;
 	private final String description;
 	private final T defaultValue;
@@ -183,9 +185,11 @@ public class ConfigurationOption<T> {
 	private ConfigurationOption(boolean dynamic, boolean sensitive, String key, String label, String description,
 								T defaultValue, String configurationCategory, ValueConverter<T> valueConverter,
 								Class<? super T> valueType, List<String> tags, boolean required,
-								List<ChangeListener<T>> changeListeners, List<Validator<T>> validators) {
+								List<ChangeListener<T>> changeListeners, List<Validator<T>> validators,
+								List<String> aliasKeys) {
 		this.dynamic = dynamic;
 		this.key = key;
+		this.aliasKeys = aliasKeys;
 		this.label = label;
 		this.description = description;
 		this.defaultValue = defaultValue;
@@ -199,6 +203,10 @@ public class ConfigurationOption<T> {
 		this.changeListeners = changeListeners;
 		this.validators = validators;
 		setToDefault();
+		final ArrayList<String> tempAllKeys = new ArrayList<String>(aliasKeys.size() + 1);
+		tempAllKeys.add(key);
+		tempAllKeys.addAll(aliasKeys);
+		this.allKeys = Collections.unmodifiableList(tempAllKeys);
 	}
 
 	/**
@@ -217,6 +225,15 @@ public class ConfigurationOption<T> {
 	 */
 	public String getKey() {
 		return key;
+	}
+
+	/**
+	 * Returns the alternate keys of the configuration option that can for example be used in a properties file
+	 *
+	 * @return the alternate config keys
+	 */
+	public List<String> getAliasKeys() {
+		return Collections.unmodifiableList(aliasKeys);
 	}
 
 	/**
@@ -353,21 +370,35 @@ public class ConfigurationOption<T> {
 	}
 
 	private void loadValue() {
-		String newValueAsString = null;
-		String newConfigurationSourceName = null;
-		for (ConfigurationSource configurationSource : configurationSources) {
-			newValueAsString = configurationSource.getValue(key);
-			newConfigurationSourceName = configurationSource.getName();
-			if (newValueAsString != null) {
+		boolean success = false;
+		for (String key : allKeys) {
+			ConfigValueInfo configValueInfo = loadValueFromSources(key);
+			success = trySetValue(configValueInfo);
+			if (success) {
 				break;
 			}
 		}
-		if (newValueAsString == null || !trySetValue(newValueAsString, newConfigurationSourceName)) {
+		if (!success) {
 			setToDefault();
 		}
 	}
 
-	private boolean trySetValue(String newValueAsString, String newConfigurationSourceName) {
+	private ConfigValueInfo loadValueFromSources(String key) {
+		for (ConfigurationSource configurationSource : configurationSources) {
+			String newValueAsString = configurationSource.getValue(key);
+			if (newValueAsString != null) {
+				return new ConfigValueInfo(newValueAsString, configurationSource.getName());
+			}
+		}
+		return new ConfigValueInfo();
+	}
+
+	private boolean trySetValue(ConfigValueInfo configValueInfo) {
+		final String newConfigurationSourceName = configValueInfo.getNewConfigurationSourceName();
+		String newValueAsString = configValueInfo.getNewValueAsString();
+		if (newValueAsString == null) {
+			return false;
+		}
 		newValueAsString = newValueAsString.trim();
 		T oldValue = getValue();
 		if (hasChanges(newValueAsString)) {
@@ -494,6 +525,7 @@ public class ConfigurationOption<T> {
 		private boolean required = false;
 		private List<ChangeListener<T>> changeListeners = new ArrayList<ChangeListener<T>>();
 		private List<Validator<T>> validators = new ArrayList<Validator<T>>();
+		private String[] aliasKeys = new String[0];;
 
 		private ConfigurationOptionBuilder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 			this.valueConverter = valueConverter;
@@ -502,7 +534,10 @@ public class ConfigurationOption<T> {
 
 		public ConfigurationOption<T> build() {
 			return new ConfigurationOption<T>(dynamic, sensitive, key, label, description, defaultValue, configurationCategory,
-					valueConverter, valueType, Arrays.asList(tags), required, Collections.unmodifiableList(changeListeners), Collections.unmodifiableList(validators));
+					valueConverter, valueType, Arrays.asList(tags), required,
+					Collections.unmodifiableList(changeListeners),
+					Collections.unmodifiableList(validators),
+					Arrays.asList(aliasKeys));
 		}
 
 		public ConfigurationOptionBuilder<T> dynamic(boolean dynamic) {
@@ -512,6 +547,16 @@ public class ConfigurationOption<T> {
 
 		public ConfigurationOptionBuilder<T> key(String key) {
 			this.key = key;
+			return this;
+		}
+
+		/**
+		 * Sets alternate keys of the configuration option which act as an alias for the primary {@link #key(String)}
+		 *
+		 * @return <code>this</code>, for chaining.
+		 */
+		public ConfigurationOptionBuilder<T> aliasKeys(String... aliasKeys) {
+			this.aliasKeys = aliasKeys;
 			return this;
 		}
 
@@ -577,5 +622,26 @@ public class ConfigurationOption<T> {
 			return this;
 		}
 
+	}
+
+	private static class ConfigValueInfo {
+		private String newValueAsString;
+		private String newConfigurationSourceName;
+
+		private ConfigValueInfo() {
+		}
+
+		private ConfigValueInfo(String newValueAsString, String newConfigurationSourceName) {
+			this.newValueAsString = newValueAsString;
+			this.newConfigurationSourceName = newConfigurationSourceName;
+		}
+
+		private String getNewValueAsString() {
+			return newValueAsString;
+		}
+
+		private String getNewConfigurationSourceName() {
+			return newConfigurationSourceName;
+		}
 	}
 }
