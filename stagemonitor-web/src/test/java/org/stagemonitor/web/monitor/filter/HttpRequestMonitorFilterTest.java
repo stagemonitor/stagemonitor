@@ -1,5 +1,7 @@
 package org.stagemonitor.web.monitor.filter;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -63,6 +65,17 @@ public class HttpRequestMonitorFilterTest {
 				when(requestTrace.getName()).thenReturn("testName");
 				when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
 				return requestInformation;
+			}
+		});
+		when(requestMonitor.monitorAsync(any(MonitoredRequest.class))).then(new Answer<ListenableFuture<RequestMonitor.RequestInformation<?>>>() {
+			@Override
+			public ListenableFuture<RequestMonitor.RequestInformation<?>> answer(InvocationOnMock invocation) throws Throwable {
+				MonitoredRequest<?> request = (MonitoredRequest<?>) invocation.getArguments()[0];
+				request.execute();
+				when(requestTrace.toJson()).thenReturn("");
+				when(requestTrace.getName()).thenReturn("testName");
+				when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
+				return Futures.immediateFuture(requestInformation);
 			}
 		});
 

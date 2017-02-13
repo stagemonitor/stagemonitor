@@ -1,5 +1,9 @@
 package org.stagemonitor.web.monitor;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import java.io.IOException;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -23,8 +27,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -162,6 +169,44 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 	}
 
 	@Override
+	public ListenableFuture<Object> executeAsync() {
+		try {
+			filterChain.doFilter(httpServletRequest, responseWrapper);
+		} catch (Exception e) {
+			return Futures.immediateFailedFuture(e);
+		}
+
+		// This request started an async response, hook into it so we know when
+		// it finishes
+		if (httpServletRequest.isAsyncStarted()) {
+			final SettableFuture<Object> future = SettableFuture.create();
+			httpServletRequest.getAsyncContext().addListener(new AsyncListener() {
+				@Override
+				public void onComplete(AsyncEvent ae) throws IOException {
+					future.set(null);
+				}
+
+				@Override
+				public void onTimeout(AsyncEvent ae) throws IOException {
+					future.set(null);
+				}
+
+				@Override
+				public void onError(AsyncEvent ae) throws IOException {
+					future.setException(ae.getThrowable());
+				}
+
+				@Override
+				public void onStartAsync(AsyncEvent ae) throws IOException {
+				}
+			});
+			return future;
+		} else {
+			return Futures.immediateFuture(null);
+		}
+	}
+
+	@Override
 	public void onPostExecute(RequestMonitor.RequestInformation<HttpRequestTrace> info) {
 		HttpRequestTrace request = info.getRequestTrace();
 
@@ -195,7 +240,7 @@ public class MonitoredHttpRequest implements MonitoredRequest<HttpRequestTrace> 
 				break;
 			}
 		}
-		
+
 		request.setBytesWritten(responseWrapper.getContentLength());
 
 		// get the parameters after the execution and not on creation, because that could lead to wrong decoded
