@@ -6,6 +6,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.scheduling.annotation.Async;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
@@ -69,6 +70,19 @@ public class MonitorRequestsTransformerTest {
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass#monitorMe").layer("All").build()));
+	}
+
+	@Test
+	public void testMonitorAsyncMethods() throws Exception {
+		testClass.asyncMethod();
+		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
+		assertEquals("MonitorRequestsTransformerTest$TestClass#asyncMethod", requestInformation.getOperationName());
+		assertEquals(1, requestInformation.getCallTree().getChildren().size());
+		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
+		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass.asyncMethod"));
+
+		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass#asyncMethod").layer("All").build()));
 	}
 
 	@Test
@@ -169,6 +183,10 @@ public class MonitorRequestsTransformerTest {
 		@MonitorRequests
 		public int monitorThrowException() throws Exception {
 			throw null;
+		}
+
+		@Async
+		public void asyncMethod() {
 		}
 	}
 

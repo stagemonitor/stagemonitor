@@ -10,7 +10,6 @@ import org.stagemonitor.core.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.CompletedFuture;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
 
 public final class Stagemonitor {
 
@@ -85,8 +83,8 @@ public final class Stagemonitor {
 				logger.warn("Error while trying to start monitoring. (this exception is ignored)", e);
 			}
 		} else {
-			logger.warn("Measurement Session is not initialized: {}", measurementSession);
-			logger.warn("make sure the properties 'stagemonitor.instanceName' and 'stagemonitor.applicationName' " +
+			logger.debug("Measurement Session is not initialized: {}", measurementSession);
+			logger.debug("make sure the properties 'stagemonitor.instanceName' and 'stagemonitor.applicationName' " +
 					"are set and stagemonitor.properties is available in the classpath");
 		}
 	}
