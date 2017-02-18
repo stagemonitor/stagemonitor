@@ -98,7 +98,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = monitoredHttpRequest.createSpan();
+		final Span span = monitoredHttpRequest.createSpan(mock(RequestMonitor.RequestInformation.class));
 		span.finish();
 		assertEquals("/test.js", tags.get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET *.js", operationName);
@@ -124,7 +124,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan();
+		monitoredHttpRequest.createSpan(mock(RequestMonitor.RequestInformation.class));
 		assertEquals("www.github.com", tags.get("http.referring_site"));
 	}
 
@@ -136,7 +136,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan();
+		monitoredHttpRequest.createSpan(mock(RequestMonitor.RequestInformation.class));
 		assertNull(tags.get("http.referring_site"));
 	}
 

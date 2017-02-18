@@ -3,7 +3,6 @@ package org.stagemonitor.requestmonitor;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.core.instrument.CallerUtil;
-import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import io.opentracing.Span;
@@ -18,7 +17,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
-	public Span createSpan() {
+	public Span createSpan(RequestMonitor.RequestInformation info) {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final String callerSignature = CallerUtil.getCallerSignature();
 		final Span span;
@@ -26,10 +25,14 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 			final Span currentSpan = TracingUtils.getTraceContext().getCurrentSpan();
 			span = tracer.buildSpan(callerSignature)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-					.asChildOf(currentSpan).start();
+					.asChildOf(currentSpan)
+					.start();
 		} else {
 			// client spans should not be root spans
-			span = NoopSpan.INSTANCE;
+			span = tracer.buildSpan(callerSignature)
+					.withTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0)
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
+					.start();
 		}
 		SpanUtils.setOperationType(span, getType());
 		return span;

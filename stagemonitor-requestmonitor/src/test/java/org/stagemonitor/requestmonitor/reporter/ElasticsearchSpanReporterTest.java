@@ -65,7 +65,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		final RequestMonitor.RequestInformation info = createTestSpanWithCallTree(1, "Regular Foo");
 
 		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(info.getSpan())));
-		assertFalse(info.getPostExecutionInterceptorContext().isReport());
+		assertFalse(info.isReport());
 		verify(((SpanWrapper) info.getSpan()).getDelegate()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 	}
 

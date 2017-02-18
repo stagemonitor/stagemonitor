@@ -54,7 +54,7 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public Span createSpan() {
+	public Span createSpan(RequestMonitor.RequestInformation info) {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final Span span;
 		if (!TracingUtils.getTraceContext().isEmpty()) {

@@ -27,8 +27,9 @@ public abstract class MonitoredRequest {
 	 * So be careful, that no exceptions are thrown in to the implementation of this method.
 	 *
 	 * @return the {@link Span}
+	 * @param requestInformation
 	 */
-	public abstract Span createSpan();
+	public abstract Span createSpan(RequestMonitor.RequestInformation requestInformation);
 
 	/**
 	 * Executing this method triggers the execution of the execution context.

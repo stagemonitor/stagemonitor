@@ -24,9 +24,21 @@ public class MockTracer implements Tracer {
 		when(spanBuilder.asChildOf(any(SpanContext.class))).thenReturn(spanBuilder);
 		when(spanBuilder.asChildOf(any(Span.class))).thenReturn(spanBuilder);
 		when(spanBuilder.withStartTimestamp(anyLong())).thenReturn(spanBuilder);
-		when(spanBuilder.withTag(any(), anyString())).thenReturn(spanBuilder);
-		when(spanBuilder.withTag(any(), any(Number.class))).thenReturn(spanBuilder);
-		when(spanBuilder.withTag(any(), anyBoolean())).thenReturn(spanBuilder);
+		when(spanBuilder.withTag(any(), anyString()))
+				.then(invocation -> {
+					mockSpan.setTag(invocation.getArgument(0), invocation.<String>getArgument(1));
+					return spanBuilder;
+				});
+		when(spanBuilder.withTag(any(), any(Number.class)))
+				.then(invocation -> {
+					mockSpan.setTag(invocation.getArgument(0), invocation.<Number>getArgument(1));
+					return spanBuilder;
+				});
+		when(spanBuilder.withTag(any(), anyBoolean()))
+				.then(invocation -> {
+					mockSpan.setTag(invocation.getArgument(0), invocation.<Boolean>getArgument(1));
+					return spanBuilder;
+				});
 		return spanBuilder;
 	}
 

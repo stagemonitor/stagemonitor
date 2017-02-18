@@ -52,7 +52,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		parameters.put("attr", "bla");
 		parameters.put("foo", "bar");
 		final MonitoredMethodRequest monitoredMethodRequest = new MonitoredMethodRequest(configuration, "Test#test", null, parameters);
-		final Span span = monitoredMethodRequest.createSpan();
+		final Span span = monitoredMethodRequest.createSpan(mock(RequestMonitor.RequestInformation.class));
 		span.setTag("foo.bar", "baz");
 		span.finish();
 		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));

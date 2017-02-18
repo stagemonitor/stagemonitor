@@ -342,6 +342,10 @@ public class ElasticsearchClient {
 
 		@Override
 		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
+			if (is == null) {
+				logger.warn(e.getMessage(), e);
+				return null;
+			}
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
 			final JsonNode errors = bulkResponse.get("errors");
 			if (errors != null && errors.booleanValue()) {

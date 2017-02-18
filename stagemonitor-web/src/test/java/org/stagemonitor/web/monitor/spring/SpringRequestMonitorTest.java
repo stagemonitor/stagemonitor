@@ -95,6 +95,7 @@ public class SpringRequestMonitorTest {
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
+		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1_000_000.0);
 
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
@@ -164,7 +165,7 @@ public class SpringRequestMonitorTest {
 		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(1)).getRequestName();
-		assertTrue(requestInformation.getPostExecutionInterceptorContext().isReport());
+		assertTrue(requestInformation.isReport());
 	}
 
 	@Test
@@ -177,7 +178,7 @@ public class SpringRequestMonitorTest {
 
 		assertNull(requestInformation.getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		assertFalse(requestInformation.getPostExecutionInterceptorContext().isReport());
+		assertFalse(requestInformation.isReport());
 	}
 
 	private RequestMonitor.RequestInformation anyRequestInformation() {

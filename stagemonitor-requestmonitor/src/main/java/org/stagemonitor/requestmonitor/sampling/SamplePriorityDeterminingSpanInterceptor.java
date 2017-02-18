@@ -68,6 +68,9 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 	@Override
 	public void onStart(Span span) {
 		final RequestMonitor.RequestInformation requestInformation = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
+		if (!requestInformation.isReport()) {
+			return;
+		}
 		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration,
 				requestInformation, internalRequestReportingRate,
 				externalRequestReportingRate, metricRegistry);
@@ -81,6 +84,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		requestInformation.setPreExecutionInterceptorContext(context);
 
 		if (!context.isReport()) {
+			requestInformation.setReport(false);
 			Tags.SAMPLING_PRIORITY.set(span, (short) 0);
 		}
 	}
@@ -88,7 +92,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 	@Override
 	public void onFinish(Span span, String operationName, long durationNanos) {
 		final RequestMonitor.RequestInformation info = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
-		if (!info.getPreExecutionInterceptorContext().isReport()) {
+		if (!info.isReport()) {
 			return;
 		}
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, info,
@@ -109,6 +113,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 				internalRequestReportingRate.mark();
 			}
 		} else {
+			info.setReport(false);
 			Tags.SAMPLING_PRIORITY.set(span, (short) 0);
 		}
 	}

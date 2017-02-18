@@ -2,7 +2,7 @@ var rootRequestTrace;
 var noOfRequestTraces = 0;
 listenForAjaxRequestTraces = function (rootRequest, connectionId) {
 	rootRequestTrace = rootRequest;
-	$.getJSON(stagemonitor.baseUrl + "/stagemonitor/request-traces", {"connectionId": connectionId}, function (requestTraces) {
+	$.getJSON(stagemonitor.baseUrl + "/stagemonitor/spans", {"connectionId": connectionId}, function (requestTraces) {
 			if (requestTraces) {
 				for (var i = 0; i < requestTraces.length; i++) {
 					addAjaxRequestTrace(requestTraces[i]);
@@ -18,9 +18,9 @@ $(document).ready(function () {
 		"columns": [
 			{ "data": "@timestamp" },
 			{ "data": "name" },
-			{ "data": "url" },
-			{ "data": "executionTime" },
-			{ "data": "statusCode" },
+			{"data": "http.url"},
+			{"data": "duration_ms"},
+			{"data": "http.status_code"},
 			{ "data": "method" }
 		]
 	});

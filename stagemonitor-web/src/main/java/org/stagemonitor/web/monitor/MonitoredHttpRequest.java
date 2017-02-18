@@ -8,7 +8,6 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -77,16 +76,23 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public Span createSpan() {
+	public Span createSpan(RequestMonitor.RequestInformation info) {
+		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
+		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
+		boolean sample = true;
 		if (webPlugin.isHonorDoNotTrackHeader() && "1".equals(httpServletRequest.getHeader("dnt"))) {
-			return NoopSpan.INSTANCE;
+			sample = false;
 		}
 
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
-		final Span span = tracer.buildSpan(getRequestName())
+		Tracer.SpanBuilder spanBuilder = tracer.buildSpan(getRequestName())
 				.asChildOf(spanCtx)
-				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
+		if (!sample) {
+			spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
+		}
+		final Span span = spanBuilder
 				.start();
 		SpanUtils.setOperationType(span, "http");
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
@@ -214,9 +220,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	@Override
 	@SuppressWarnings("squid:S2696")
 	public void onBeforeReport(RequestMonitor.RequestInformation requestInformation) {
-		requestInformation.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
-		requestInformation.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
-
+		// TODO move to SpanInterceptor.onFinish()
 		final Span span = requestInformation.getSpan();
 
 		final String userName = getUserName();

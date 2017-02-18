@@ -220,7 +220,7 @@ public class RequestMonitor {
 	}
 
 	private void beforeExecution(MonitoredRequest monitoredRequest, RequestInformation info) {
-		info.span = monitoredRequest.createSpan();
+		info.span = monitoredRequest.createSpan(info);
 		for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
 			info.span.setTag(entry.getKey(), entry.getValue());
 		}
@@ -335,7 +335,7 @@ public class RequestMonitor {
 		} else if (callTreeRateLimit < 1000000d && callTreeMeter.getOneMinuteRate() >= callTreeRateLimit) {
 			logger.debug("Not profiling this request because more than {} call trees per minute where created", callTreeRateLimit);
 			return false;
-		} else if (!requestInformation.getPreExecutionInterceptorContext().isReport()) {
+		} else if (!requestInformation.isReport()) {
 			logger.debug("Not profiling this request because this request is not sampled", callTreeRateLimit);
 			return false;
 		}
@@ -360,6 +360,7 @@ public class RequestMonitor {
 		private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 		private PostExecutionInterceptorContext postExecutionInterceptorContext;
 		private PreExecutionInterceptorContext preExecutionInterceptorContext;
+		private boolean report = true;
 
 		public static RequestInformation of(Span span) {
 			final RequestInformation requestInformation = new RequestInformation();
@@ -510,12 +511,12 @@ public class RequestMonitor {
 			this.preExecutionInterceptorContext = preExecutionInterceptorContext;
 		}
 
-		public PreExecutionInterceptorContext getPreExecutionInterceptorContext() {
-			return preExecutionInterceptorContext;
+		public boolean isReport() {
+			return report;
 		}
 
-		public boolean isReport() {
-			return preExecutionInterceptorContext.isReport() && postExecutionInterceptorContext.isReport();
+		public void setReport(boolean report) {
+			this.report = report;
 		}
 
 		public static class ExternalRequestStats {
@@ -573,6 +574,17 @@ public class RequestMonitor {
 				if (key.equals(Tags.SPAN_KIND.getKey())) {
 					info.setExternalRequest(Tags.SPAN_KIND_CLIENT.equals(value));
 					info.setServerRequest(Tags.SPAN_KIND_SERVER.equals(value));
+				}
+			}
+			return value;
+		}
+
+		@Override
+		public Number onSetTag(String key, Number value) {
+			final RequestInformation info = requestMonitor.getRequestInformation();
+			if (info != null) {
+				if (Tags.SAMPLING_PRIORITY.getKey().equals(key)) {
+					info.setReport(value.shortValue() > 0);
 				}
 			}
 			return value;
