@@ -58,11 +58,15 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final Span span;
 		if (!TracingUtils.getTraceContext().isEmpty()) {
-			span = tracer.buildSpan(methodSignature).asChildOf(TracingUtils.getTraceContext().getCurrentSpan()).start();
+			span = tracer.buildSpan(methodSignature)
+					.asChildOf(TracingUtils.getTraceContext().getCurrentSpan())
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+					.start();
 		} else {
-			span = tracer.buildSpan(methodSignature).start();
+			span = tracer.buildSpan(methodSignature)
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+					.start();
 		}
-		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
 		SpanUtils.setParameters(span, safeParameters);
 		SpanUtils.setOperationType(span, "method_invocation");
 		return span;

@@ -35,7 +35,7 @@ public class AbstractElasticsearchSpanReporterTest {
 	protected Configuration configuration;
 	protected CorePlugin corePlugin;
 	protected Map<String, Object> tags;
-	protected RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
+	protected RequestMonitor.RequestInformation requestInformation = new RequestMonitor.RequestInformation();
 	private RequestMonitor requestMonitor;
 
 	@Before
@@ -74,11 +74,12 @@ public class AbstractElasticsearchSpanReporterTest {
 	private RequestMonitor.RequestInformation createTestSpan(long executionTimeMs, CallStackElement callTree, String operationName) {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final Span span;
-		span = tracer.buildSpan(operationName).withStartTimestamp(1).start();
-		RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(span, operationName);
+		span = tracer.buildSpan(operationName)
+				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+				.withStartTimestamp(1)
+				.start();
+		requestInformation.setSpan(span);
 		requestInformation.setCallTree(callTree);
-		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
-		when(requestMonitor.getRequestInformation()).thenReturn(requestInformation);
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMs) + 1);
 		return requestInformation;
 	}

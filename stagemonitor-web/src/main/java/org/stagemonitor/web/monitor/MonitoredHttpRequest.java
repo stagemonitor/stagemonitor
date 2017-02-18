@@ -84,8 +84,10 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
-		final Span span = tracer.buildSpan(getRequestName()).asChildOf(spanCtx).start();
-		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_SERVER);
+		final Span span = tracer.buildSpan(getRequestName())
+				.asChildOf(spanCtx)
+				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+				.start();
 		SpanUtils.setOperationType(span, "http");
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
 		span.setTag("method", httpServletRequest.getMethod());

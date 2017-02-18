@@ -21,10 +21,12 @@ public class MethodLevelMonitorRequestsTransformer extends AbstractMonitorReques
 	public MethodLevelMonitorRequestsTransformer() {
 		asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Async"));
 		asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("javax.ejb.Asynchronous"));
-		asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Scheduled"));
-		asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Schedules"));
-		asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("javax.ejb.Schedule"));
-		asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("javax.ejb.Schedules"));
+		if (configuration.getConfig(RequestMonitorPlugin.class).isMonitorScheduledTasks()) {
+			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Scheduled"));
+			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Schedules"));
+			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("javax.ejb.Schedule"));
+			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("javax.ejb.Schedules"));
+		}
 		asyncCallAnnotations.remove(null);
 	}
 

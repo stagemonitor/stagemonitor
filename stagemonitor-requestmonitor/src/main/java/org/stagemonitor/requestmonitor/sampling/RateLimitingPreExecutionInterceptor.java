@@ -1,8 +1,7 @@
 package org.stagemonitor.requestmonitor.sampling;
 
-import com.codahale.metrics.Meter;
-
 import org.stagemonitor.core.metrics.MetricUtils;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 class RateLimitingPreExecutionInterceptor extends PreExecutionSpanReporterInterceptor {
@@ -10,19 +9,16 @@ class RateLimitingPreExecutionInterceptor extends PreExecutionSpanReporterInterc
 	@Override
 	public void interceptReport(PreExecutionInterceptorContext context) {
 		final RequestMonitorPlugin config = context.getConfig(RequestMonitorPlugin.class);
-		final double maxReportingRate;
-		final Meter rate;
-		if (context.getRequestInformation().isExternalRequest()) {
-			maxReportingRate = config.getOnlyReportNExternalRequestsPerMinute();
-			rate = context.getExternalRequestReportingRate();
-		} else {
-			maxReportingRate = config.getOnlyReportNSpansPerMinute();
-			rate = context.getInternalRequestReportingRate();
+		final RequestMonitor.RequestInformation requestInformation = context.getRequestInformation();
+		boolean rateExceeded = false;
+		if (requestInformation.isExternalRequest()) {
+			rateExceeded = MetricUtils.isRateLimitExceeded(config.getOnlyReportNExternalRequestsPerMinute(), context.getExternalRequestReportingRate());
+		} else if (requestInformation.isServerRequest()) {
+			rateExceeded = MetricUtils.isRateLimitExceeded(config.getOnlyReportNSpansPerMinute(), context.getInternalRequestReportingRate());
 		}
-		if (MetricUtils.isRateLimitExceeded(maxReportingRate, rate)) {
+		if (rateExceeded) {
 			context.shouldNotReport(getClass());
 		}
-
 	}
 
 }

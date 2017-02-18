@@ -74,9 +74,9 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 	private Span getSpan(long executionTimeMillis) {
 		final Span span = tracer
 				.buildSpan("ElasticsearchExternalSpanReporterIntegrationTest#test")
+				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
 				.withStartTimestamp(1)
 				.start();
-		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 		span.setTag("type", "jdbc");
 		span.setTag("method", "SELECT");
 		span.setTag("request", "SELECT * from STAGEMONITOR where 1 < 2");

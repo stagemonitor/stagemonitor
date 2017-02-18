@@ -88,6 +88,9 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 	@Override
 	public void onFinish(Span span, String operationName, long durationNanos) {
 		final RequestMonitor.RequestInformation info = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
+		if (!info.getPreExecutionInterceptorContext().isReport()) {
+			return;
+		}
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, info,
 				internalRequestReportingRate, externalRequestReportingRate, metricRegistry);
 		for (PostExecutionSpanReporterInterceptor interceptor : postInterceptors) {

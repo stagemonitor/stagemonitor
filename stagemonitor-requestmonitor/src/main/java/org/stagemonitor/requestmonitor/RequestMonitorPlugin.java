@@ -186,25 +186,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.tags("privacy")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Collection<String>> onlyReportSpansWithName = ConfigurationOption.stringsOption()
-			.key("stagemonitor.requestmonitor.onlyReportSpansWithName")
-			.aliasKeys("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
-			.dynamic(true)
-			.label("Only report these operation names")
-			.description("Limits the reporting of spans to operations with a certain name.")
-			.defaultValue(Collections.<String>emptySet())
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Double> onlyReportNSpansPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.onlyReportNSpansPerMinute")
-			.aliasKeys("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
-			.dynamic(true)
-			.label("Only report N requests per minute")
-			.description("Limits the rate at which spans are reported. " +
-					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
-			.defaultValue(1000000d)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchSpanReports = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.onlyLogElasticsearchRequestTraceReports")
 			.dynamic(true)
@@ -213,19 +194,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
 					"different external process to send the spans to elasticsearch.", ElasticsearchSpanReporter.ES_SPAN_LOGGER))
 			.defaultValue(false)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Double> excludeCallTreeFromReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromReportWhenFasterThanXPercentOfRequests")
-			.aliasKeys("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
-			.dynamic(true)
-			.label("Exclude the Call Tree from reports on x% of the fastest requests")
-			.description("Exclude the Call Tree from report when the request was faster faster than x " +
-					"percent of requests with the same request name. This helps to reduce the network and disk overhead " +
-					"as uninteresting Call Trees (those which are comparatively fast) are excluded. " +
-					"Example: set to 1 to always exclude the Call Tree and to 0 to always include it. " +
-					"With a setting of 0.85, the Call Tree will only be reported for the slowest 25% of the requests.")
-			.defaultValue(0d)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Collection<String>> unnestExceptions = ConfigurationOption.stringsOption()
@@ -274,14 +242,68 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("elasticsearch")
 			.build();
+	private final ConfigurationOption<Boolean> reportSpansAsync = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.report.async")
+			.dynamic(true)
+			.label("Report Async")
+			.description("Set to true to report collected spans asynchronously. It's recommended to always set this to " +
+					"true. Otherwise the performance of your requests will suffer as spans are reported in band.")
+			.defaultValue(true)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Boolean> monitorScheduledTasks = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.monitorScheduledTasks")
+			.dynamic(false)
+			.label("Monitor scheduled tasks")
+			.description("Set to true trace EJB (@Schedule) and Spring (@Scheduled) scheduled tasks.")
+			.defaultValue(false)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+
+	/* Sampling */
+	private final ConfigurationOption<Collection<String>> onlyReportSpansWithName = ConfigurationOption.stringsOption()
+			.key("stagemonitor.requestmonitor.sampling.onlyReportSpansWithName")
+			.aliasKeys("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
+			.dynamic(true)
+			.label("Only report these operation names")
+			.description("Limits the reporting of spans to operations with a certain name.")
+			.defaultValue(Collections.<String>emptySet())
+			.tags("sampling")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> onlyReportNSpansPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.sampling.onlyReportNServerSpansPerMinute")
+			.aliasKeys("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
+			.dynamic(true)
+			.label("Only report N requests per minute")
+			.description("Limits the rate at which spans are reported. " +
+					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
+			.defaultValue(1000000d)
+			.tags("sampling")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> excludeCallTreeFromReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.sampling.excludeCallTreeFromReportWhenFasterThanXPercentOfRequests")
+			.aliasKeys("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
+			.dynamic(true)
+			.label("Exclude the Call Tree from reports on x% of the fastest requests")
+			.description("Exclude the Call Tree from report when the request was faster faster than x " +
+					"percent of requests with the same request name. This helps to reduce the network and disk overhead " +
+					"as uninteresting Call Trees (those which are comparatively fast) are excluded. " +
+					"Example: set to 1 to always exclude the Call Tree and to 0 to always include it. " +
+					"With a setting of 0.85, the Call Tree will only be reported for the slowest 25% of the requests.")
+			.defaultValue(0d)
+			.tags("sampling")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
 	private final ConfigurationOption<Double> onlyReportNExternalRequestsPerMinute = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
 			.dynamic(true)
-			.label("Only report N external requests per minute to ES")
+			.label("Only report N external requests per minute")
 			.description("Limits the rate at which external spans are reported. " +
 					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report.")
 			.defaultValue(0d)
-			.tags("external-requests")
+			.tags("external-requests", "sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Double> excludeExternalRequestsWhenFasterThanXPercent = ConfigurationOption.doubleOption()
@@ -294,7 +316,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"Example: set to 1 to always exclude the external request and to 0 to always include it. " +
 					"With a setting of 0.85, the external request will only be reported for the slowest 25% of the requests.")
 			.defaultValue(0d)
-			.tags("external-requests")
+			.tags("external-requests", "sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Double> excludeExternalRequestsFasterThan = ConfigurationOption.doubleOption()
@@ -303,16 +325,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.label("Exclude external requests from reporting when faster than x ms")
 			.description("Exclude the external request from reporting when the request was faster faster than x ms.")
 			.defaultValue(0d)
-			.tags("external-requests")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Boolean> reportSpansAsync = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.report.async")
-			.dynamic(true)
-			.label("Report Async")
-			.description("Set to true to report collected spans asynchronously. It's recommended to always set this to " +
-					"true. Otherwise the performance of your requests will suffer as spans are reported in band.")
-			.defaultValue(true)
+			.tags("external-requests", "sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 
@@ -543,5 +556,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	 */
 	public void registerPostInterceptor(PostExecutionSpanReporterInterceptor interceptor) {
 		samplePriorityDeterminingSpanInterceptor.addPostInterceptor(interceptor);
+	}
+
+	public boolean isMonitorScheduledTasks() {
+		return monitorScheduledTasks.getValue();
 	}
 }

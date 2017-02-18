@@ -42,6 +42,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Test
 	public void testNeverReportServerSpan() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(false);
+		when(requestInformation.isServerRequest()).thenReturn(true);
 		when(internalRequestReportingRate.getOneMinuteRate()).thenReturn(0.0);
 		interceptor.interceptReport(context);
 		assertFalse(context.isReport());
@@ -50,6 +51,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Test
 	public void testAlwaysReportServerSpan() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(false);
+		when(requestInformation.isServerRequest()).thenReturn(true);
 		when(internalRequestReportingRate.getOneMinuteRate()).thenReturn(10_000_000.0 / 60);
 		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1_000_000.0);
 
@@ -61,6 +63,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Test
 	public void testRateNotExceededServerSpan() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(false);
+		when(requestInformation.isServerRequest()).thenReturn(true);
 		when(internalRequestReportingRate.getOneMinuteRate()).thenReturn(10.0 / 60);
 		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(10.0);
 
@@ -72,6 +75,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Test
 	public void testRateExceededServerSpan() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(false);
+		when(requestInformation.isServerRequest()).thenReturn(true);
 		when(internalRequestReportingRate.getOneMinuteRate()).thenReturn(10.1 / 60);
 		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(10.0);
 
@@ -83,6 +87,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Test
 	public void testNeverReportExternalRequest() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(true);
+		when(requestInformation.isServerRequest()).thenReturn(false);
 		when(externalRequestReportingRate.getOneMinuteRate()).thenReturn(0.0);
 		interceptor.interceptReport(context);
 		assertFalse(context.isReport());
@@ -91,6 +96,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Test
 	public void testAlwaysReportExternalRequest() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(true);
+		when(requestInformation.isServerRequest()).thenReturn(false);
 		when(externalRequestReportingRate.getOneMinuteRate()).thenReturn(10_000_000.0 / 60);
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1_000_000.0);
 
@@ -102,6 +108,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Test
 	public void testRateNotExceededExternalRequest() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(true);
+		when(requestInformation.isServerRequest()).thenReturn(false);
 		when(externalRequestReportingRate.getOneMinuteRate()).thenReturn(10.0 / 60);
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(10.0);
 
@@ -113,6 +120,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Test
 	public void testRateExceededExternalRequest() throws Exception {
 		when(requestInformation.isExternalRequest()).thenReturn(true);
+		when(requestInformation.isServerRequest()).thenReturn(false);
 		when(externalRequestReportingRate.getOneMinuteRate()).thenReturn(10.1 / 60);
 		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(10.0);
 

@@ -141,7 +141,7 @@ public class RequestMonitor {
 		if (!TracingUtils.getTraceContext().isEmpty()) {
 			TracingUtils.getTraceContext().pop();
 		}
-		if (monitorThisRequest() && info.getPostExecutionInterceptorContext().isReport()) {
+		if (monitorThisRequest() && info.isReport()) {
 			try {
 				info.spanReporterFuture = report(info);
 			} catch (Exception e) {
@@ -359,6 +359,7 @@ public class RequestMonitor {
 		private String operationName;
 		private long duration;
 		private boolean externalRequest;
+		private boolean serverRequest;
 		private Timer timerForThisRequest;
 		private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 		private PostExecutionInterceptorContext postExecutionInterceptorContext;
@@ -456,6 +457,14 @@ public class RequestMonitor {
 			return externalRequest;
 		}
 
+		public void setServerRequest(boolean serverRequest) {
+			this.serverRequest = serverRequest;
+		}
+
+		public boolean isServerRequest() {
+			return serverRequest;
+		}
+
 		public void setCallTree(CallStackElement callTree) {
 			this.callTree = callTree;
 		}
@@ -507,6 +516,10 @@ public class RequestMonitor {
 
 		public PreExecutionInterceptorContext getPreExecutionInterceptorContext() {
 			return preExecutionInterceptorContext;
+		}
+
+		public boolean isReport() {
+			return preExecutionInterceptorContext.isReport() && postExecutionInterceptorContext.isReport();
 		}
 
 		public static class ExternalRequestStats {
@@ -563,6 +576,7 @@ public class RequestMonitor {
 			if (info != null) {
 				if (key.equals(Tags.SPAN_KIND.getKey())) {
 					info.setExternalRequest(Tags.SPAN_KIND_CLIENT.equals(value));
+					info.setServerRequest(Tags.SPAN_KIND_SERVER.equals(value));
 				}
 			}
 			return value;

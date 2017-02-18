@@ -1,33 +1,20 @@
 package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.Timer;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.samplers.ConstSampler;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,66 +26,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class RequestMonitorTest {
+public class RequestMonitorTest extends AbstractRequestMonitorTest {
 
-	private CorePlugin corePlugin;
-	private RequestMonitorPlugin requestMonitorPlugin;
-	private Metric2Registry registry;
-	private RequestMonitor requestMonitor;
-	private Configuration configuration;
-	private Map<String, Object> tags = new HashMap<>();
-
-	@Before
-	public void before() {
-		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		configuration = mock(Configuration.class);
-		corePlugin = mock(CorePlugin.class);
-		registry = mock(Metric2Registry.class);
-
-		doReturn(corePlugin).when(configuration).getConfig(CorePlugin.class);
-		doReturn(requestMonitorPlugin).when(configuration).getConfig(RequestMonitorPlugin.class);
-
-		doReturn(true).when(corePlugin).isStagemonitorActive();
-		doReturn(1000).when(corePlugin).getThreadPoolQueueCapacityLimit();
-		doReturn(new Metric2Registry()).when(corePlugin).getMetricRegistry();
-		doReturn(Collections.singletonList("http://mockhost:9200")).when(corePlugin).getElasticsearchUrls();
-		ElasticsearchClient elasticsearchClient = mock(ElasticsearchClient.class);
-		doReturn(true).when(elasticsearchClient).isElasticsearchAvailable();
-		doReturn(elasticsearchClient).when(corePlugin).getElasticsearchClient();
-		doReturn(false).when(corePlugin).isOnlyLogElasticsearchMetricReports();
-
-		doReturn(true).when(requestMonitorPlugin).isCollectRequestStats();
-		doReturn(true).when(requestMonitorPlugin).isProfilerActive();
-
-		doReturn(1000000d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinute();
-		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
-		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));
-		requestMonitor = new RequestMonitor(configuration, registry);
-		when(requestMonitorPlugin.isLogCallStacks()).thenReturn(true);
-		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
-
-		final Tracer jaegerTracer = new com.uber.jaeger.Tracer.Builder("RequestMonitorTest",
+	protected Tracer getTracer() {
+		return new com.uber.jaeger.Tracer.Builder("RequestMonitorTest",
 				new LoggingSpanReporter(requestMonitorPlugin), new ConstSampler(true)).build();
-		final Tracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(jaegerTracer, registry,
-				requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
-				new SamplePriorityDeterminingSpanInterceptor(configuration, registry));
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
-	}
-
-	@After
-	public void after() {
-		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
-		Stagemonitor.reset();
 	}
 
 	@Test
@@ -244,9 +184,7 @@ public class RequestMonitorTest {
 		assertEquals("test", testInfo.getOperationName());
 		assertEquals("async", asyncSpan[0].getOperationName());
 
-		final long spanID = ((SpanWrapper) testInfo.getSpan()).unwrap(Span.class).context().getSpanID();
-		final long parentID = ((SpanWrapper) asyncSpan[0].getSpan()).unwrap(Span.class).context().getParentID();
-		assertEquals(spanID, parentID);
+		assertEquals(((SpanWrapper) testInfo.getSpan()).unwrap(Span.class).context(), ((SpanWrapper) asyncSpan[0].getSpan()).unwrap(Span.class).context());
 	}
 
 	private Future<?> monitorAsyncMethodCall(ExecutorService executorService, final RequestMonitor.RequestInformation[] asyncSpan) {
