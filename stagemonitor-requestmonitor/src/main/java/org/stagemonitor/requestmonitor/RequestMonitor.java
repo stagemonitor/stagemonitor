@@ -309,10 +309,6 @@ public class RequestMonitor {
 			logger.debug(msg, "stagemonitor has not been started yet");
 			return false;
 		}
-		if (!requestMonitorPlugin.isCollectRequestStats()) {
-			logger.debug(msg, "the collection of request stats is disabled");
-			return false;
-		}
 		if (!isWarmedUp()) {
 			logger.debug(msg, "the application is not warmed up");
 			return false;

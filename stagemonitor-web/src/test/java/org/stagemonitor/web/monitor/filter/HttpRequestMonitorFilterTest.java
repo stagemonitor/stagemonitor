@@ -71,7 +71,6 @@ public class HttpRequestMonitorFilterTest {
 		when(webPlugin.isWidgetEnabled()).thenReturn(true);
 		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(true);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		when(corePlugin.getApplicationName()).thenReturn("testApplication");

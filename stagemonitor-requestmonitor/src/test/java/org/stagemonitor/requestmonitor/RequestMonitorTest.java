@@ -128,7 +128,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinute();
 		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNExternalRequestsPerMinute();
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		doReturn(false).when(requestMonitorPlugin).isLogCallStacks();
+		doReturn(false).when(requestMonitorPlugin).isLogSpans();
 		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getCallTree());
 	}

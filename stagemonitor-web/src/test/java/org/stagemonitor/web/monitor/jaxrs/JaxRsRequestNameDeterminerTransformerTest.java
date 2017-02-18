@@ -63,7 +63,6 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(corePlugin.getApplicationName()).thenReturn("JaxRsRequestNameDeterminerTransformerTest");
 		when(corePlugin.getInstanceName()).thenReturn("test");
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 

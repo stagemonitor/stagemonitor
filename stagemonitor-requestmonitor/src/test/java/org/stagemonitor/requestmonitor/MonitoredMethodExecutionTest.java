@@ -44,7 +44,6 @@ public class MonitoredMethodExecutionTest {
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 
 		requestInformation1 = requestInformation2 = requestInformation3 = null;
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, registry);

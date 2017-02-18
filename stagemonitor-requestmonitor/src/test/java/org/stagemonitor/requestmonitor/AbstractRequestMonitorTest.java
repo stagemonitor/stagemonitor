@@ -54,14 +54,13 @@ public abstract class AbstractRequestMonitorTest {
 		doReturn(elasticsearchClient).when(corePlugin).getElasticsearchClient();
 		doReturn(false).when(corePlugin).isOnlyLogElasticsearchMetricReports();
 
-		doReturn(true).when(requestMonitorPlugin).isCollectRequestStats();
 		doReturn(true).when(requestMonitorPlugin).isProfilerActive();
 
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinute();
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
 		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));
 		requestMonitor = new RequestMonitor(configuration, registry);
-		when(requestMonitorPlugin.isLogCallStacks()).thenReturn(true);
+		when(requestMonitorPlugin.isLogSpans()).thenReturn(true);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 
 		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanInterceptor(configuration, registry);

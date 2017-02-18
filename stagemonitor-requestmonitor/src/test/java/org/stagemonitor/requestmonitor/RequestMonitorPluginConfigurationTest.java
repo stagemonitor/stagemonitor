@@ -34,10 +34,9 @@ public class RequestMonitorPluginConfigurationTest {
 	public void testDefaultValues() {
 		assertEquals(0, config.getNoOfWarmupRequests());
 		assertEquals(0, config.getNoOfWarmupRequests());
-		assertEquals(true, config.isCollectRequestStats());
 		assertEquals(false, config.isCollectCpuTime());
 
 		assertEquals(1000000d, config.getOnlyCollectNCallTreesPerMinute(), 0);
-		assertEquals(false, config.isLogCallStacks());
+		assertEquals(false, config.isLogSpans());
 	}
 }

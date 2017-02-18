@@ -94,7 +94,6 @@ public class SpringRequestMonitorTest {
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));

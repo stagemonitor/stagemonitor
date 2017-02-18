@@ -52,83 +52,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(0)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Boolean> collectRequestStats = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.collectRequestStats")
-			.dynamic(true)
-			.label("Collect request stats")
-			.description("Whether or not metrics about requests (Call Stacks, response times, errors status codes) should be collected.")
-			.defaultValue(true)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+
+	/* What/how to monitor */
 	private final ConfigurationOption<Boolean> collectCpuTime = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.cpuTime")
 			.dynamic(true)
 			.label("Collect CPU time")
-			.description("Whether or not a timer for the cpu time of executions should be created.")
+			.description("Whether or not a timer for the cpu time of executions should be created. " +
+					"This is useful if you want to know which use cases are responsible for the most CPU usage. " +
+					"Be aware that setting this to true almost doubles the amount of timers created.")
 			.defaultValue(false)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Boolean> profilerActive = ConfigurationOption.booleanOption()
-			.key("stagemonitor.profiler.active")
-			.dynamic(false)
-			.label("Activate Profiler")
-			.description("Whether or not the call tree profiler should be active.")
-			.defaultValue(true)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Long> minExecutionTimeNanos = ConfigurationOption.longOption()
-			.key("stagemonitor.profiler.minExecutionTimeNanos")
-			.dynamic(false)
-			.label("Min execution time (nanos)")
-			.description("Don't show methods that executed faster than this value in the call tree (1 ms = 1,000,000 ns).")
-			.defaultValue(100000L)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Double> minExecutionTimePercent = ConfigurationOption.doubleOption()
-			.key("stagemonitor.profiler.minExecutionTimePercent")
-			.dynamic(true)
-			.label("Min execution time (%)")
-			.description("Don't show methods that executed faster than this value in the call tree (0.5 or 0,5 means 0.5%).")
-			.defaultValue(0.5)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Boolean> profilerObjectPooling = ConfigurationOption.booleanOption()
-			.key("stagemonitor.profiler.objectPooling")
-			.dynamic(false)
-			.label("Activate Profiler Object Pooling")
-			.description("Activates the experimental object pooling feature for the profiler. When enabled, instances of " +
-					"CallStackElement are not garbage collected but put into an object pool when not needed anymore. " +
-					"When we need a new instance of CallStackElement, it is not created with `new CallStackElement()` " +
-					"but taken from the pool instead. This aims to reduce heap usage and garbage collections caused by " +
-					"stagemonitor.")
-			.defaultValue(false)
-			.tags("experimental")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Double> onlyCollectNCallTreesPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.onlyCollectNCallTreesPerMinute")
-			.dynamic(true)
-			.label("Only report N call trees per minute")
-			.description("Limits the rate at which call trees are collected. " +
-					"Set to a value below 1 to deactivate call tree recording and to 1000000 or higher to always collect.")
-			.defaultValue(1000000d)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Boolean> logCallStacks = ConfigurationOption.booleanOption()
-			.key("stagemonitor.profiler.logCallStacks")
-			.dynamic(true)
-			.label("Log call tree")
-			.description("Whether or not call stacks should be logged.")
-			.defaultValue(false)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Integer> deleteSpansAfterDays = ConfigurationOption.integerOption()
-			.key("stagemonitor.requestmonitor.deleteRequestTracesAfterDays")
-			.dynamic(true)
-			.label("Delete spans after (days)")
-			.description("When set, spans will be deleted automatically after the specified days. " +
-					"Set to a negative value to never delete spans.")
-			.defaultValue(7)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
@@ -152,6 +85,85 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Boolean> monitorScheduledTasks = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.monitorScheduledTasks")
+			.dynamic(false)
+			.label("Monitor scheduled tasks")
+			.description("Set to true trace EJB (@Schedule) and Spring (@Scheduled) scheduled tasks.")
+			.defaultValue(false)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
+			.key("stagemonitor.requestmonitor.params.confidential.regex")
+			.dynamic(true)
+			.label("Confidential parameters (regex)")
+			.description("A list of request parameter name patterns that should not be collected.\n" +
+					"In the context of a HTTP request, a request parameter is either a query string or a application/x-www-form-urlencoded request " +
+					"body (POST form content). In the context of a method invocation monitored with @MonitorRequests," +
+					"this refers to the parameter name of the monitored method. Note that you have to compile your classes" +
+					"with 'vars' debug information.")
+			.defaultValue(Arrays.asList(
+					Pattern.compile("(?i).*pass.*"),
+					Pattern.compile("(?i).*credit.*"),
+					Pattern.compile("(?i).*pwd.*"),
+					Pattern.compile("(?i)pw")))
+			.tags("security-relevant")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+
+	/* Profiler */
+	private final ConfigurationOption<Boolean> profilerActive = ConfigurationOption.booleanOption()
+			.key("stagemonitor.profiler.active")
+			.dynamic(false)
+			.label("Activate Profiler")
+			.description("Whether or not the call tree profiler should be active.")
+			.defaultValue(true)
+			.tags("profiler")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Long> minExecutionTimeNanos = ConfigurationOption.longOption()
+			.key("stagemonitor.profiler.minExecutionTimeNanos")
+			.dynamic(false)
+			.label("Min execution time (nanos)")
+			.description("Don't show methods that executed faster than this value in the call tree (1 ms = 1,000,000 ns).")
+			.defaultValue(100000L)
+			.tags("profiler")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> minExecutionTimePercent = ConfigurationOption.doubleOption()
+			.key("stagemonitor.profiler.minExecutionTimePercent")
+			.dynamic(true)
+			.label("Min execution time (%)")
+			.description("Don't show methods that executed faster than this value in the call tree (0.5 or 0,5 means 0.5%).")
+			.defaultValue(0.5)
+			.tags("profiler")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Boolean> profilerObjectPooling = ConfigurationOption.booleanOption()
+			.key("stagemonitor.profiler.objectPooling")
+			.dynamic(false)
+			.label("Activate Profiler Object Pooling")
+			.description("Activates the experimental object pooling feature for the profiler. When enabled, instances of " +
+					"CallStackElement are not garbage collected but put into an object pool when not needed anymore. " +
+					"When we need a new instance of CallStackElement, it is not created with `new CallStackElement()` " +
+					"but taken from the pool instead. This aims to reduce heap usage and garbage collections caused by " +
+					"stagemonitor.")
+			.defaultValue(false)
+			.tags("profiler", "experimental")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Double> onlyCollectNCallTreesPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.onlyCollectNCallTreesPerMinute")
+			.dynamic(true)
+			.label("Only report N call trees per minute")
+			.description("Limits the rate at which call trees are collected. " +
+					"Set to a value below 1 to deactivate call tree recording and to 1000000 or higher to always collect.")
+			.defaultValue(1000000d)
+			.tags("profiler", "sampling")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+
+	/* Privacy */
 	private final ConfigurationOption<Boolean> anonymizeIPs = ConfigurationOption.booleanOption()
 			.key("stagemonitor.anonymizeIPs")
 			.dynamic(true)
@@ -186,6 +198,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.tags("privacy")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+
+	/* Reporting */
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchSpanReports = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.onlyLogElasticsearchRequestTraceReports")
 			.dynamic(true)
@@ -194,8 +208,30 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
 					"different external process to send the spans to elasticsearch.", ElasticsearchSpanReporter.ES_SPAN_LOGGER))
 			.defaultValue(false)
+			.tags("reporting")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
+	private final ConfigurationOption<Boolean> logSpans = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.reporting.log")
+			.dynamic(true)
+			.label("Log spans")
+			.description("Whether or not spans should be logged.")
+			.defaultValue(false)
+			.tags("reporting")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.build();
+	private final ConfigurationOption<Boolean> reportSpansAsync = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.report.async")
+			.dynamic(true)
+			.label("Report Async")
+			.description("Set to true to report collected spans asynchronously. It's recommended to always set this to " +
+					"true. Otherwise the performance of your requests will suffer as spans are reported in band.")
+			.defaultValue(true)
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.tags("reporting")
+			.build();
+
+	/* Exceptions */
 	private final ConfigurationOption<Collection<String>> unnestExceptions = ConfigurationOption.stringsOption()
 			.key("stagemonitor.requestmonitor.unnestExeptions")
 			.dynamic(true)
@@ -215,23 +251,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
-	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
-			.key("stagemonitor.requestmonitor.params.confidential.regex")
-			.dynamic(true)
-			.label("Confidential parameters (regex)")
-			.description("A list of request parameter name patterns that should not be collected.\n" +
-					"In the context of a HTTP request, a request parameter is either a query string or a application/x-www-form-urlencoded request " +
-					"body (POST form content). In the context of a method invocation monitored with @MonitorRequests," +
-					"this refers to the parameter name of the monitored method. Note that you have to compile your classes" +
-					"with 'vars' debug information.")
-			.defaultValue(Arrays.asList(
-					Pattern.compile("(?i).*pass.*"),
-					Pattern.compile("(?i).*credit.*"),
-					Pattern.compile("(?i).*pwd.*"),
-					Pattern.compile("(?i)pw")))
-			.tags("security-relevant")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+
+	/* Storage */
 	private final ConfigurationOption<String> spanIndexTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.requestmonitor.elasticsearch.spanIndexTemplate")
 			.dynamic(false)
@@ -242,21 +263,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("elasticsearch")
 			.build();
-	private final ConfigurationOption<Boolean> reportSpansAsync = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.report.async")
+	private final ConfigurationOption<Integer> deleteSpansAfterDays = ConfigurationOption.integerOption()
+			.key("stagemonitor.requestmonitor.deleteRequestTracesAfterDays")
 			.dynamic(true)
-			.label("Report Async")
-			.description("Set to true to report collected spans asynchronously. It's recommended to always set this to " +
-					"true. Otherwise the performance of your requests will suffer as spans are reported in band.")
-			.defaultValue(true)
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Boolean> monitorScheduledTasks = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.monitorScheduledTasks")
-			.dynamic(false)
-			.label("Monitor scheduled tasks")
-			.description("Set to true trace EJB (@Schedule) and Spring (@Scheduled) scheduled tasks.")
-			.defaultValue(false)
+			.label("Delete spans after (days)")
+			.description("When set, spans will be deleted automatically after the specified days. " +
+					"Set to a negative value to never delete spans.")
+			.defaultValue(7)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.build();
 
@@ -411,10 +424,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return warmupSeconds.getValue();
 	}
 
-	public boolean isCollectRequestStats() {
-		return collectRequestStats.getValue();
-	}
-
 	public boolean isCollectCpuTime() {
 		return collectCpuTime.getValue();
 	}
@@ -427,8 +436,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return onlyCollectNCallTreesPerMinute.getValue();
 	}
 
-	public boolean isLogCallStacks() {
-		return logCallStacks.getValue();
+	public boolean isLogSpans() {
+		return logSpans.getValue();
 	}
 
 	public boolean isCollectDbTimePerRequest() {

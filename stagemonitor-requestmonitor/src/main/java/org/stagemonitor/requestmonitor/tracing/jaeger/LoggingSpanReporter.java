@@ -24,7 +24,7 @@ public class LoggingSpanReporter implements Reporter {
 
 	@Override
 	public void report(Span span) {
-		if (!requestMonitorPlugin.isLogCallStacks()) {
+		if (!requestMonitorPlugin.isLogSpans()) {
 			return;
 		}
 		logger.info("Reporting span");
