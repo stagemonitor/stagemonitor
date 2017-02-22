@@ -212,7 +212,7 @@ public class ConfigurationTest {
 				.defaultValue("old")
 				.addChangeListener(new ConfigurationOption.ChangeListener<String>() {
 					@Override
-					public void onChange(ConfigurationOption<String> configurationOption, String oldValue, String newValue) {
+					public void onChange(ConfigurationOption<?> configurationOption, String oldValue, String newValue) {
 						assertEquals("foo", configurationOption.getKey());
 						assertEquals("old", oldValue);
 						assertEquals("new", newValue);

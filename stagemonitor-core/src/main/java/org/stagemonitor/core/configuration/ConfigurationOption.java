@@ -12,6 +12,7 @@ import org.stagemonitor.core.configuration.converter.IntegerValueConverter;
 import org.stagemonitor.core.configuration.converter.JsonValueConverter;
 import org.stagemonitor.core.configuration.converter.LongValueConverter;
 import org.stagemonitor.core.configuration.converter.MapValueConverter;
+import org.stagemonitor.core.configuration.converter.OptionalValueConverter;
 import org.stagemonitor.core.configuration.converter.RegexValueConverter;
 import org.stagemonitor.core.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.configuration.converter.StringValueConverter;
@@ -25,7 +26,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -489,6 +492,15 @@ public class ConfigurationOption<T> {
 		this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
 	}
 
+	public Supplier<T> asSupplier() {
+		return new Supplier<T>() {
+			@Override
+			public T get() {
+				return getValue();
+			}
+		};
+	}
+
 	/**
 	 * Notifies about configuration changes
 	 */
@@ -499,7 +511,21 @@ public class ConfigurationOption<T> {
 		 * @param oldValue the old value
 		 * @param newValue the new value
 		 */
-		void onChange(ConfigurationOption<T> configurationOption, T oldValue, T newValue);
+		void onChange(ConfigurationOption<?> configurationOption, T oldValue, T newValue);
+
+		class OptionalChangeListenerAdapter<T> implements ChangeListener<Optional<T>> {
+
+			private final ChangeListener<T> changeListener;
+
+			public OptionalChangeListenerAdapter(ChangeListener<T> changeListener) {
+				this.changeListener = changeListener;
+			}
+
+			@Override
+			public void onChange(ConfigurationOption<?> configurationOption, Optional<T> oldValue, Optional<T> newValue) {
+				changeListener.onChange(configurationOption, oldValue.orElse(null), newValue.orElse(null));
+			}
+		}
 	}
 
 	public interface Validator<T> {
@@ -509,6 +535,19 @@ public class ConfigurationOption<T> {
 		 * @throws IllegalArgumentException if the value is invalid
 		 */
 		void assertValid(T value);
+
+		class OptionalValidatorAdapter<T> implements Validator<Optional<T>> {
+			private final Validator<T> validator;
+
+			public OptionalValidatorAdapter(Validator<T> validator) {
+				this.validator = validator;
+			}
+
+			@Override
+			public void assertValid(Optional<T> value) {
+				validator.assertValid(value.orElse(null));
+			}
+		}
 	}
 
 	public static class ConfigurationOptionBuilder<T> {
@@ -525,19 +564,75 @@ public class ConfigurationOption<T> {
 		private boolean required = false;
 		private List<ChangeListener<T>> changeListeners = new ArrayList<ChangeListener<T>>();
 		private List<Validator<T>> validators = new ArrayList<Validator<T>>();
-		private String[] aliasKeys = new String[0];;
+		private String[] aliasKeys = new String[0];
 
 		private ConfigurationOptionBuilder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 			this.valueConverter = valueConverter;
 			this.valueType = valueType;
 		}
 
+		/**
+		 * @return use {@link #buildRequired()}, {@link #buildWithDefault(Object)} or {@link #buildOptional()}
+		 */
+		@Deprecated
 		public ConfigurationOption<T> build() {
 			return new ConfigurationOption<T>(dynamic, sensitive, key, label, description, defaultValue, configurationCategory,
 					valueConverter, valueType, Arrays.asList(tags), required,
 					Collections.unmodifiableList(changeListeners),
 					Collections.unmodifiableList(validators),
 					Arrays.asList(aliasKeys));
+		}
+
+		/**
+		 * Builds the option and marks it as required.
+		 * <p/>
+		 * Use this method if you don't want to provide a default value but setting a value is still required. You
+		 * will have to make sure to provide a value is present on startup.
+		 * <p/>
+		 * When a required option does not have a value the behavior depends on
+		 * {@link Configuration#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised,
+		 * which can potentially prevent the application form starting or a warning gets logged.
+		 */
+		public ConfigurationOption<T> buildRequired() {
+			this.required = true;
+			return build();
+		}
+
+		/**
+		 * Builds the option with a default value so that {@link ConfigurationOption#getValue()} will never return
+		 * <code>null</code>
+		 *
+		 * @param defaultValue The default value which has to be non-<code>null</code>
+		 * @throws IllegalArgumentException When <code>null</code> was provided
+		 */
+		public ConfigurationOption<T> buildWithDefault(T defaultValue) {
+			if (defaultValue == null) {
+				throw new IllegalArgumentException("Default value must not be null");
+			}
+			this.required = true;
+			this.defaultValue = defaultValue;
+			return build();
+		}
+
+		/**
+		 * Builds the option and marks it as not required
+		 * <p/>
+		 * Use this method if setting this option is not required and to express that it may be null
+		 */
+		public ConfigurationOption<Optional<T>> buildOptional() {
+			required = false;
+			final List<ChangeListener<Optional<T>>> optionalChangeListeners = new ArrayList<ChangeListener<Optional<T>>>(changeListeners.size());
+			for (ChangeListener<T> changeListener : changeListeners) {
+				optionalChangeListeners.add(new ChangeListener.OptionalChangeListenerAdapter<T>(changeListener));
+			}
+			final List<Validator<Optional<T>>> optionalValidators = new ArrayList<Validator<Optional<T>>>(validators.size());
+			for (Validator<T> validator : validators) {
+				optionalValidators.add(new Validator.OptionalValidatorAdapter<T>(validator));
+			}
+			return new ConfigurationOption<Optional<T>>(dynamic, sensitive, key, label, description,
+					Optional.ofNullable(defaultValue), configurationCategory,
+					new OptionalValueConverter<T>(valueConverter), Optional.class, Arrays.asList(this.tags), required,
+					optionalChangeListeners, optionalValidators, Arrays.asList(aliasKeys));
 		}
 
 		public ConfigurationOptionBuilder<T> dynamic(boolean dynamic) {
@@ -570,6 +665,10 @@ public class ConfigurationOption<T> {
 			return this;
 		}
 
+		/**
+		 * @deprecated use {@link #buildWithDefault(Object)}
+		 */
+		@Deprecated
 		public ConfigurationOptionBuilder<T> defaultValue(T defaultValue) {
 			this.defaultValue = defaultValue;
 			return this;
@@ -606,7 +705,9 @@ public class ConfigurationOption<T> {
 		 * which can potentially prevent the application form starting or a warning gets logged.
 		 *
 		 * @return <code>this</code>, for chaining.
+		 * @deprecated use {@link #buildRequired()}
 		 */
+		@Deprecated
 		public ConfigurationOptionBuilder<T> required() {
 			this.required = true;
 			return this;
