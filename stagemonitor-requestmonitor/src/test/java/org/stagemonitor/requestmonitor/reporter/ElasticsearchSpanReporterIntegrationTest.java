@@ -11,6 +11,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -58,10 +59,15 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		span.finish();
 		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
 		elasticsearchClient.waitForCompletion();
+		validateSpanJson(JsonUtils.getMapper().valueToTree(span));
+
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
 		assertEquals(1, hits.get("total").intValue());
-		final JsonNode spanJson = hits.get("hits").elements().next().get("_source");
+		validateSpanJson(hits.get("hits").elements().next().get("_source"));
+	}
+
+	private void validateSpanJson(JsonNode spanJson) {
 		assertNotNull(spanJson.toString(), spanJson.get("foo"));
 		assertEquals(spanJson.toString(), "baz", spanJson.get("foo").get("bar").asText());
 		assertNotNull(spanJson.toString(), spanJson.get("parameters"));
