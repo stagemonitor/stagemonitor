@@ -22,6 +22,7 @@ import java.util.Map;
 import io.opentracing.Span;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -61,9 +62,11 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
 		assertEquals(1, hits.get("total").intValue());
 		final JsonNode spanJson = hits.get("hits").elements().next().get("_source");
-		assertEquals("baz", spanJson.get("foo").get("bar").asText());
-		assertEquals("bar", spanJson.get("parameters").get("foo").asText());
-		assertEquals("Blue", spanJson.get("parameters").get("attr_(dot)_Color").asText());
+		assertNotNull(spanJson.toString(), spanJson.get("foo"));
+		assertEquals(spanJson.toString(), "baz", spanJson.get("foo").get("bar").asText());
+		assertNotNull(spanJson.toString(), spanJson.get("parameters"));
+		assertEquals(spanJson.toString(), "bar", spanJson.get("parameters").get("foo").asText());
+		assertEquals(spanJson.toString(), "Blue", spanJson.get("parameters").get("attr_(dot)_Color").asText());
 	}
 
 }
