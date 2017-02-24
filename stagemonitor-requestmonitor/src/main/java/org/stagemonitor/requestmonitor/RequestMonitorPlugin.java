@@ -510,7 +510,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			if (paramExcluded) {
 				params.put(entry.getKey(), "XXXX");
 			} else {
-				params.put(entry.getKey(), entry.getValue());
+				final String value = String.valueOf(entry.getValue());
+				params.put(entry.getKey(), value.substring(0, Math.min(255, value.length())));
 			}
 		}
 		return params;
