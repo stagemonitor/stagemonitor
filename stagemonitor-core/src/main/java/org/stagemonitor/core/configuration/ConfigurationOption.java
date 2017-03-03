@@ -492,6 +492,9 @@ public class ConfigurationOption<T> {
 		this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
 	}
 
+	/**
+	 * @throws NoClassDefFoundError When not using Java 8+
+	 */
 	public Supplier<T> asSupplier() {
 		return new Supplier<T>() {
 			@Override
@@ -572,7 +575,13 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * @return use {@link #buildRequired()}, {@link #buildWithDefault(Object)} or {@link #buildOptional()}
+		 * Be aware that when using this method you might have to deal with <code>null</code> values when calling {@link
+		 * #getValue()}.
+		 * <p/> That's why this method is deprecated
+		 *
+		 * @deprecated use {@link #buildRequired()}, {@link #buildWithDefault(Object)} or {@link #buildOptional()}. The
+		 * only valid use of this method is if {@link #buildOptional()} would be the semantically correct option but you
+		 * are not using Java 8+.
 		 */
 		@Deprecated
 		public ConfigurationOption<T> build() {
@@ -617,7 +626,9 @@ public class ConfigurationOption<T> {
 		/**
 		 * Builds the option and marks it as not required
 		 * <p/>
-		 * Use this method if setting this option is not required and to express that it may be null
+		 * Use this method if setting this option is not required and to express that it may be <code>null</code>.
+		 *
+		 * @throws NoClassDefFoundError When not using Java 8+
 		 */
 		public ConfigurationOption<Optional<T>> buildOptional() {
 			required = false;
