@@ -48,6 +48,10 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
 
+/**
+ * @deprecated we should try to do everything with {@link SpanInterceptor}s
+ */
+@Deprecated
 public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);

@@ -16,6 +16,7 @@ import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanReporterInterce
 import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanReporterInterceptor;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
+import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
@@ -397,10 +398,11 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 															  final SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor) {
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate, spanInterceptorSuppliers);
 		spanWrappingTracer.addSpanInterceptor(new RequestMonitor.RequestInformationSettingSpanInterceptor(requestMonitor));
+		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
 		spanWrappingTracer.addSpanInterceptor(ExternalRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(ServerRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(AnonymizingSpanInterceptor.asCallable(requestMonitorPlugin));
-		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
+		spanWrappingTracer.addSpanInterceptor(new MDCSpanInterceptor());
 		return spanWrappingTracer;
 	}
 

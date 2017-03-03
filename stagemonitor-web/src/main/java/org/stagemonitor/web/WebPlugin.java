@@ -13,7 +13,6 @@ import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
-import org.stagemonitor.web.logging.MDCListener;
 import org.stagemonitor.web.metrics.StagemonitorMetricsServlet;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter;
@@ -385,7 +384,6 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/*");
 		monitorFilter.setAsyncSupported(true);
 
-		ctx.addListener(MDCListener.class);
 		try {
 			ctx.addListener(SessionCounter.class);
 		} catch (IllegalArgumentException e) {
