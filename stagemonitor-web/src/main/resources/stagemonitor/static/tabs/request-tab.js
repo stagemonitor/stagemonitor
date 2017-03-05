@@ -22,17 +22,10 @@ function renderRequestTab(requestTrace) {
 	function processRequestsMetrics(requestData) {
 		var exceededThreshold = function (key, value) {
 			switch (key) {
-				case "externalRequestStats": {
-					var executionCountDB = 0;
-					for (var i = 0; i < value.length; i++) {
-						var externalRequestStats = value[i];
-						if (externalRequestStats.requestType == "jdbc") {
-							executionCountDB = externalRequestStats.executionCount;
-						}
-					}
-					return executionCountDB > localStorage.getItem("widget-settings-db-count-threshold");
+				case "external_requests.jdbc.count": {
+					return value > localStorage.getItem("widget-settings-db-count-threshold");
 				}
-				case "executionTime":
+				case "duration_ms":
 					return value > localStorage.getItem("widget-settings-execution-threshold-milliseconds");
 				case "error":
 					return value && localStorage.getItem("widget-settings-notify-on-error") != "false";
