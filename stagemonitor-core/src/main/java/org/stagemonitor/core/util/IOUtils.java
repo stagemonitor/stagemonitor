@@ -84,6 +84,9 @@ public class IOUtils {
 	}
 
 	public static byte[] readToBytes(InputStream inputStream) throws IOException {
+		if (inputStream == null) {
+			return new byte[0];
+		}
 		final ByteArrayOutputStream output = new ByteArrayOutputStream();
 		copy(inputStream, output);
 		return output.toByteArray();
