@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
@@ -46,7 +47,9 @@ public class AbstractElasticsearchSpanReporterTest {
 
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(requestMonitorPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.singleton("Report Me"));
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));

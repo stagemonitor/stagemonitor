@@ -39,7 +39,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
-		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(new SpanReporter.InitArguments(configuration, mock(Metric2Registry.class)));
 		final String mappingTemplate = IOUtils.getResourceAsString("stagemonitor-elasticsearch-span-index-template.json");

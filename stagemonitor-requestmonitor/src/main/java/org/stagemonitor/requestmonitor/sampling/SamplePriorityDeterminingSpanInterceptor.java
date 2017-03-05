@@ -1,7 +1,5 @@
 package org.stagemonitor.requestmonitor.sampling;
 
-import com.codahale.metrics.Meter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
@@ -32,8 +30,6 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 	private final Configuration configuration;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final Metric2Registry metricRegistry;
-	private final Meter internalRequestReportingRate = new Meter();
-	private final Meter externalRequestReportingRate = new Meter();
 
 	public SamplePriorityDeterminingSpanInterceptor(Configuration configuration, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
@@ -44,7 +40,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 	}
 
 	private void registerPreInterceptors() {
-		this.preInterceptors.add(new RateLimitingPreExecutionInterceptor());
+		this.preInterceptors.add(new RateLimitingPreExecutionInterceptor(requestMonitorPlugin));
 
 		for (PreExecutionSpanReporterInterceptor interceptor : ServiceLoader.load(
 				PreExecutionSpanReporterInterceptor.class,
@@ -71,9 +67,9 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		if (!requestInformation.isReport()) {
 			return;
 		}
+
 		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration,
-				requestInformation, internalRequestReportingRate,
-				externalRequestReportingRate, metricRegistry);
+				requestInformation, metricRegistry);
 		for (PreExecutionSpanReporterInterceptor interceptor : preInterceptors) {
 			try {
 				interceptor.interceptReport(context);
@@ -95,8 +91,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		if (!info.isReport()) {
 			return;
 		}
-		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, info,
-				internalRequestReportingRate, externalRequestReportingRate, metricRegistry);
+		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, info, metricRegistry);
 		for (PostExecutionSpanReporterInterceptor interceptor : postInterceptors) {
 			try {
 				interceptor.interceptReport(context);
@@ -106,13 +101,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		}
 		info.setPostExecutionInterceptorContext(context);
 		handleCallTree(info, span, context.isExcludeCallTree(), operationName);
-		if (context.isReport()) {
-			if (isClient) {
-				externalRequestReportingRate.mark();
-			} else {
-				internalRequestReportingRate.mark();
-			}
-		} else {
+		if (!context.isReport()) {
 			info.setReport(false);
 			Tags.SAMPLING_PRIORITY.set(span, (short) 0);
 		}

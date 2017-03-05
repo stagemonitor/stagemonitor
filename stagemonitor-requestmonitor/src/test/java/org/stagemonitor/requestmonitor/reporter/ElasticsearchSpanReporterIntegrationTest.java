@@ -45,7 +45,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(new SpanReporter.InitArguments(configuration, mock(Metric2Registry.class)));

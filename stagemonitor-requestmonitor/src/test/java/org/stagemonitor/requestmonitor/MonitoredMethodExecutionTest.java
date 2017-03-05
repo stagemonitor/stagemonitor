@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -35,6 +36,9 @@ public class MonitoredMethodExecutionTest {
 	public void clearState() {
 		CorePlugin corePlugin = mock(CorePlugin.class);
 		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+
 		configuration = mock(Configuration.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);

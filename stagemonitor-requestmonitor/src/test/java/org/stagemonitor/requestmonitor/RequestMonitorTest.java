@@ -13,6 +13,7 @@ import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.concurrent.Callable;
@@ -127,8 +128,12 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	@Test
 	public void testDontActivateProfilerWhenNoSpanReporterIsActive() throws Exception {
 		// don't profile if no one is interested in the result
-		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinute();
-		doReturn(0d).when(requestMonitorPlugin).getOnlyReportNExternalRequestsPerMinute();
+		tracer.addSpanInterceptor(() -> new SpanInterceptor() {
+			@Override
+			public void onStart(io.opentracing.Span span) {
+				requestMonitor.getRequestInformation().setReport(false);
+			}
+		});
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
 		doReturn(false).when(requestMonitorPlugin).isLogSpans();
 		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
@@ -203,7 +208,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 
 	@Test
 	public void testDontMonitorClientRootSpans() throws Exception {
-		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1_000_000.0);
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1_000_000.0);
 
 		requestMonitor.monitorStart(new AbstractExternalRequest(requestMonitorPlugin) {
 			@Override

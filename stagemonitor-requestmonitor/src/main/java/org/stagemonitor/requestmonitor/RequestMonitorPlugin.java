@@ -42,17 +42,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Number of warmup requests")
 			.description("the minimum number of requests that have to be issued against the application before metrics are collected")
-			.defaultValue(0)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(0);
 	private final ConfigurationOption<Integer> warmupSeconds = ConfigurationOption.integerOption()
 			.key("stagemonitor.requestmonitor.warmupSeconds")
 			.dynamic(false)
 			.label("Number of warmup seconds")
 			.description("A timespan in seconds after the start of the server where no metrics are collected.")
-			.defaultValue(0)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(0);
 
 	/* What/how to monitor */
 	private final ConfigurationOption<Boolean> collectCpuTime = ConfigurationOption.booleanOption()
@@ -62,18 +60,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.description("Whether or not a timer for the cpu time of executions should be created. " +
 					"This is useful if you want to know which use cases are responsible for the most CPU usage. " +
 					"Be aware that setting this to true almost doubles the amount of timers created.")
-			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.collectExternalRequestTimePerRequest")
 			.dynamic(true)
 			.label("Collect external request time per request group")
 			.description("Whether or not the execution time of external should be collected per request group\n" +
 					"If set to true, a timer will be created for each request to record the total db time per request.")
-			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<BusinessTransactionNamingStrategy> businessTransactionNamingStrategy = ConfigurationOption.enumOption(BusinessTransactionNamingStrategy.class)
 			.key("stagemonitor.businessTransaction.namingStrategy")
 			.dynamic(false)
@@ -83,17 +79,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE + ": Say Hello " +
 					BusinessTransactionNamingStrategy.CLASS_NAME_DOT_METHOD_NAME + ": HelloController.sayHello " +
 					BusinessTransactionNamingStrategy.CLASS_NAME_HASH_METHOD_NAME + ": HelloController#sayHello ")
-			.defaultValue(BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE);
 	private final ConfigurationOption<Boolean> monitorScheduledTasks = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.monitorScheduledTasks")
 			.dynamic(false)
 			.label("Monitor scheduled tasks")
 			.description("Set to true trace EJB (@Schedule) and Spring (@Scheduled) scheduled tasks.")
-			.defaultValue(false)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
 			.key("stagemonitor.requestmonitor.params.confidential.regex")
 			.dynamic(true)
@@ -103,14 +97,13 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"body (POST form content). In the context of a method invocation monitored with @MonitorRequests," +
 					"this refers to the parameter name of the monitored method. Note that you have to compile your classes" +
 					"with 'vars' debug information.")
-			.defaultValue(Arrays.asList(
+			.tags("security-relevant")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.buildWithDefault(Arrays.asList(
 					Pattern.compile("(?i).*pass.*"),
 					Pattern.compile("(?i).*credit.*"),
 					Pattern.compile("(?i).*pwd.*"),
-					Pattern.compile("(?i)pw")))
-			.tags("security-relevant")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+					Pattern.compile("(?i)pw")));
 
 	/* Profiler */
 	private final ConfigurationOption<Boolean> profilerActive = ConfigurationOption.booleanOption()
@@ -118,28 +111,25 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Activate Profiler")
 			.description("Whether or not the call tree profiler should be active.")
-			.defaultValue(true)
 			.tags("profiler")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Long> minExecutionTimeNanos = ConfigurationOption.longOption()
 			.key("stagemonitor.profiler.minExecutionTimeNanos")
 			.dynamic(false)
 			.label("Min execution time (nanos)")
 			.description("Don't show methods that executed faster than this value in the call tree (1 ms = 1,000,000 ns).")
-			.defaultValue(100000L)
 			.tags("profiler")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(100000L);
 	private final ConfigurationOption<Double> minExecutionTimePercent = ConfigurationOption.doubleOption()
 			.key("stagemonitor.profiler.minExecutionTimePercent")
 			.dynamic(true)
 			.label("Min execution time (%)")
 			.description("Don't show methods that executed faster than this value in the call tree (0.5 or 0,5 means 0.5%).")
-			.defaultValue(0.5)
 			.tags("profiler")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(0.5);
 	private final ConfigurationOption<Boolean> profilerObjectPooling = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.objectPooling")
 			.dynamic(false)
@@ -149,20 +139,18 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"When we need a new instance of CallStackElement, it is not created with `new CallStackElement()` " +
 					"but taken from the pool instead. This aims to reduce heap usage and garbage collections caused by " +
 					"stagemonitor.")
-			.defaultValue(false)
 			.tags("profiler", "experimental")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Double> onlyCollectNCallTreesPerMinute = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.onlyCollectNCallTreesPerMinute")
 			.dynamic(true)
 			.label("Only report N call trees per minute")
 			.description("Limits the rate at which call trees are collected. " +
 					"Set to a value below 1 to deactivate call tree recording and to 1000000 or higher to always collect.")
-			.defaultValue(1000000d)
 			.tags("profiler", "sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(1000000d);
 
 	/* Privacy */
 	private final ConfigurationOption<Boolean> anonymizeIPs = ConfigurationOption.booleanOption()
@@ -172,20 +160,18 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.description("For IPv4 addresses, the last octet is set to zero. " +
 					"If the address is a IPv6 address, the last 80 bits (10 bytes) are set to zero. " +
 					"This is just like Google Analytics handles IP anonymization.")
-			.defaultValue(true)
 			.tags("privacy")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Boolean> pseudonymizeUserName = ConfigurationOption.booleanOption()
 			.key("stagemonitor.pseudonymize.username")
 			.dynamic(true)
 			.label("Pseudonymize Usernames")
 			.description("Stagemonitor collects the user names which may be a privacy issue. " +
 					"If set to true, the user name will be pseudonymized (SHA1 hashed).")
-			.defaultValue(false)
 			.tags("privacy")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<String>> discloseUsers = ConfigurationOption.stringsOption()
 			.key("stagemonitor.disclose.users")
 			.dynamic(true)
@@ -195,10 +181,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"anonymized anymore for these users. " +
 					"If pseudonymizing user names is active you can specify a list of user name pseudonyms to disclose. " +
 					"If not, just use the plain user names to disclose their IP address.")
-			.defaultValue(Collections.<String>emptySet())
 			.tags("privacy")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(Collections.<String>emptySet());
 
 	/* Reporting */
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchSpanReports = ConfigurationOption.booleanOption()
@@ -208,29 +193,26 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.description(String.format("If set to true, the spans won't be reported to elasticsearch but instead logged in bulk format. " +
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
 					"different external process to send the spans to elasticsearch.", ElasticsearchSpanReporter.ES_SPAN_LOGGER))
-			.defaultValue(false)
 			.tags("reporting")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Boolean> logSpans = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.reporting.log")
 			.dynamic(true)
 			.label("Log spans")
 			.description("Whether or not spans should be logged.")
-			.defaultValue(false)
 			.tags("reporting")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Boolean> reportSpansAsync = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.report.async")
 			.dynamic(true)
 			.label("Report Async")
 			.description("Set to true to report collected spans asynchronously. It's recommended to always set this to " +
 					"true. Otherwise the performance of your requests will suffer as spans are reported in band.")
-			.defaultValue(true)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("reporting")
-			.build();
+			.buildWithDefault(true);
 
 	/* Exceptions */
 	private final ConfigurationOption<Collection<String>> unnestExceptions = ConfigurationOption.stringsOption()
@@ -240,18 +222,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.description("Some Exceptions are so called 'nested exceptions' which wrap the actual cause of the exception. " +
 					"A prominent example is Spring's NestedServletException. " +
 					"In those cases it makes sense to unnest the exception to see the actual cause in the request analysis dashboard.")
-			.defaultValue(Collections.singleton("org.springframework.web.util.NestedServletException"))
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(Collections.singleton("org.springframework.web.util.NestedServletException"));
 	private final ConfigurationOption<Collection<String>> ignoreExceptions = ConfigurationOption.stringsOption()
 			.key("stagemonitor.requestmonitor.ignoreExeptions")
 			.dynamic(true)
 			.label("Ignore Exceptions")
 			.description("The class names of exception to ignore. These exceptions won't show up in the span " +
 					"and won't cause the error flag of the span to be set to true.")
-			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(Collections.<String>emptyList());
 
 	/* Storage */
 	private final ConfigurationOption<String> spanIndexTemplate = ConfigurationOption.stringOption()
@@ -260,19 +240,17 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.label("ES Request Span Template")
 			.description("The classpath location of the index template that is used for the stagemonitor-spans-* indices. " +
 					"By specifying the location to your own template, you can fully customize the index template.")
-			.defaultValue("stagemonitor-elasticsearch-span-index-template.json")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.tags("elasticsearch")
-			.build();
+			.buildWithDefault("stagemonitor-elasticsearch-span-index-template.json");
 	private final ConfigurationOption<Integer> deleteSpansAfterDays = ConfigurationOption.integerOption()
 			.key("stagemonitor.requestmonitor.deleteRequestTracesAfterDays")
 			.dynamic(true)
 			.label("Delete spans after (days)")
 			.description("When set, spans will be deleted automatically after the specified days. " +
 					"Set to a negative value to never delete spans.")
-			.defaultValue(7)
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(7);
 
 	/* Sampling */
 	private final ConfigurationOption<Collection<String>> onlyReportSpansWithName = ConfigurationOption.stringsOption()
@@ -281,21 +259,29 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Only report these operation names")
 			.description("Limits the reporting of spans to operations with a certain name.")
-			.defaultValue(Collections.<String>emptySet())
 			.tags("sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Double> onlyReportNSpansPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.sampling.onlyReportNServerSpansPerMinute")
+			.buildWithDefault(Collections.<String>emptySet());
+	private final ConfigurationOption<Double> rateLimitServerSpansPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.sampling.server.rateLimitPerMinute")
 			.aliasKeys("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
-			.label("Only report N requests per minute")
-			.description("Limits the rate at which spans are reported. " +
-					"Set to a value below 1 to deactivate ES reporting and to 1000000 or higher to always report.")
-			.defaultValue(1000000d)
+			.label("Rate limit for server spans per minute")
+			.description("Limits the rate at which spans are collected reported. " +
+					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report.")
 			.tags("sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(1000000d);
+	private final ConfigurationOption<Double> rateLimitClientSpansPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute")
+			.aliasKeys("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
+			.dynamic(true)
+			.label("Rate limit for external requests (client spans) per minute")
+			.description("Limits the rate at which external spans are collected and reported. " +
+					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report.")
+			.tags("external-requests", "sampling")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.buildWithDefault(0d);
 	private final ConfigurationOption<Double> excludeCallTreeFromReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.sampling.excludeCallTreeFromReportWhenFasterThanXPercentOfRequests")
 			.aliasKeys("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
@@ -306,20 +292,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"as uninteresting Call Trees (those which are comparatively fast) are excluded. " +
 					"Example: set to 1 to always exclude the Call Tree and to 0 to always include it. " +
 					"With a setting of 0.85, the Call Tree will only be reported for the slowest 25% of the requests.")
-			.defaultValue(0d)
 			.tags("sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
-	private final ConfigurationOption<Double> onlyReportNExternalRequestsPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
-			.dynamic(true)
-			.label("Only report N external requests per minute")
-			.description("Limits the rate at which external spans are reported. " +
-					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report.")
-			.defaultValue(0d)
-			.tags("external-requests", "sampling")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(0d);
 	private final ConfigurationOption<Double> excludeExternalRequestsWhenFasterThanXPercent = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsWhenFasterThanXPercent")
 			.dynamic(true)
@@ -329,19 +304,17 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"as uninteresting external requests (those which are comparatively fast) are excluded." +
 					"Example: set to 1 to always exclude the external request and to 0 to always include it. " +
 					"With a setting of 0.85, the external request will only be reported for the slowest 25% of the requests.")
-			.defaultValue(0d)
 			.tags("external-requests", "sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(0d);
 	private final ConfigurationOption<Double> excludeExternalRequestsFasterThan = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsFasterThan")
 			.dynamic(true)
 			.label("Exclude external requests from reporting when faster than x ms")
 			.description("Exclude the external request from reporting when the request was faster faster than x ms.")
-			.defaultValue(0d)
 			.tags("external-requests", "sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.build();
+			.buildWithDefault(0d);
 
 	private static RequestMonitor requestMonitor;
 
@@ -481,8 +454,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return onlyReportSpansWithName.getValue();
 	}
 
-	public double getOnlyReportNSpansPerMinute() {
-		return onlyReportNSpansPerMinute.getValue();
+	public double getRateLimitServerSpansPerMinute() {
+		return rateLimitServerSpansPerMinute.getValue();
+	}
+
+	public ConfigurationOption<Double> getRateLimitServerSpansPerMinuteOption() {
+		return rateLimitServerSpansPerMinute;
 	}
 
 	public boolean isOnlyLogElasticsearchSpanReports() {
@@ -532,8 +509,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return ignoreExceptions.getValue();
 	}
 
-	public double getOnlyReportNExternalRequestsPerMinute() {
-		return onlyReportNExternalRequestsPerMinute.getValue();
+	public double getRateLimitClientSpansPerMinute() {
+		return rateLimitClientSpansPerMinute.getValue();
+	}
+
+	public ConfigurationOption<Double> getRateLimitClientSpansPerMinuteOption() {
+		return rateLimitClientSpansPerMinute;
 	}
 
 	public double getExcludeExternalRequestsWhenFasterThanXPercent() {

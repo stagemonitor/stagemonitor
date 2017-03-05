@@ -203,7 +203,7 @@ public class ConfigurationOption<T> {
 		this.valueType = valueType;
 		this.sensitive = sensitive;
 		this.required = required;
-		this.changeListeners = changeListeners;
+		this.changeListeners = new ArrayList<ChangeListener<T>>(changeListeners);
 		this.validators = validators;
 		setToDefault();
 		final ArrayList<String> tempAllKeys = new ArrayList<String>(aliasKeys.size() + 1);
@@ -502,6 +502,14 @@ public class ConfigurationOption<T> {
 				return getValue();
 			}
 		};
+	}
+
+	public void addChangeListener(ChangeListener<T> changeListener) {
+		changeListeners.add(changeListener);
+	}
+
+	public boolean removeChangeListener(ChangeListener<T> changeListener) {
+		return changeListeners.remove(changeListener);
 	}
 
 	/**

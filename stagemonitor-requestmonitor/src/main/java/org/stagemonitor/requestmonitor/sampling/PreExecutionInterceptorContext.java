@@ -1,7 +1,5 @@
 package org.stagemonitor.requestmonitor.sampling;
 
-import com.codahale.metrics.Meter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
@@ -17,17 +15,14 @@ public class PreExecutionInterceptorContext {
 
 	private final Configuration configuration;
 	private final RequestMonitor.RequestInformation requestInformation;
-	private final Meter internalRequestReportingRate;
-	private final Meter externalRequestReportingRate;
 	private final Metric2Registry metricRegistry;
 	private boolean mustReport = false;
 	private boolean report = true;
 
-	PreExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
+
+	PreExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
 		this.requestInformation = requestInformation;
-		this.externalRequestReportingRate = externalRequestReportingRate;
-		this.internalRequestReportingRate = internalRequestReportingRate;
 		this.metricRegistry = metricRegistry;
 	}
 
@@ -48,14 +43,6 @@ public class PreExecutionInterceptorContext {
 
 	public Span getSpan() {
 		return requestInformation.getSpan();
-	}
-
-	public Meter getExternalRequestReportingRate() {
-		return externalRequestReportingRate;
-	}
-
-	public Meter getInternalRequestReportingRate() {
-		return internalRequestReportingRate;
 	}
 
 	public boolean isReport() {

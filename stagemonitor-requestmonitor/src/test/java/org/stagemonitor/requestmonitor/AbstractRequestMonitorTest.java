@@ -8,11 +8,13 @@ import org.junit.Before;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +36,7 @@ public abstract class AbstractRequestMonitorTest {
 	protected Configuration configuration;
 	protected Map<String, Object> tags = new HashMap<>();
 	protected SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor;
+	protected SpanWrappingTracer tracer;
 
 	@Before
 	public void before() {
@@ -56,7 +59,9 @@ public abstract class AbstractRequestMonitorTest {
 
 		doReturn(true).when(requestMonitorPlugin).isProfilerActive();
 
-		doReturn(1000000d).when(requestMonitorPlugin).getOnlyReportNSpansPerMinute();
+		doReturn(1000000d).when(requestMonitorPlugin).getRateLimitServerSpansPerMinute();
+		doReturn(mock(ConfigurationOption.class)).when(requestMonitorPlugin).getRateLimitServerSpansPerMinuteOption();
+		doReturn(mock(ConfigurationOption.class)).when(requestMonitorPlugin).getRateLimitClientSpansPerMinuteOption();
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
 		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));
 		requestMonitor = new RequestMonitor(configuration, registry);
@@ -64,7 +69,7 @@ public abstract class AbstractRequestMonitorTest {
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 
 		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanInterceptor(configuration, registry);
-		final Tracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(getTracer(), registry,
+		tracer = RequestMonitorPlugin.createSpanWrappingTracer(getTracer(), registry,
 				requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
 				samplePriorityDeterminingSpanInterceptor);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);

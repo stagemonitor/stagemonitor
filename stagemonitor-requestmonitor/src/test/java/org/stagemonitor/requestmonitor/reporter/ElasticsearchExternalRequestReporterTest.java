@@ -42,7 +42,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void setUp() throws Exception {
 		super.setUp();
 		JsonUtils.getMapper().registerModule(new SpanJsonModule());
-		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchSpanReporter(spanLogger);
 		reporter.init(new SpanReporter.InitArguments(configuration, registry));
 		when(requestMonitorPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
@@ -90,7 +90,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	@Test
 	public void reportSpanRateLimited() throws Exception {
-		when(requestMonitorPlugin.getOnlyReportNExternalRequestsPerMinute()).thenReturn(1d);
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1d);
 		report(getSpan());
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
 		Thread.sleep(5010); // the meter only updates every 5 seconds

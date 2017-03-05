@@ -18,6 +18,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -95,7 +96,9 @@ public class SpringRequestMonitorTest {
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
-		when(requestMonitorPlugin.getOnlyReportNSpansPerMinute()).thenReturn(1_000_000.0);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1_000_000.0);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);

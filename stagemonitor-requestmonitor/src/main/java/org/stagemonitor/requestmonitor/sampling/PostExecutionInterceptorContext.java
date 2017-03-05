@@ -1,7 +1,5 @@
 package org.stagemonitor.requestmonitor.sampling;
 
-import com.codahale.metrics.Meter;
-
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
@@ -10,8 +8,8 @@ public class PostExecutionInterceptorContext extends PreExecutionInterceptorCont
 
 	private boolean excludeCallTree = false;
 
-	PostExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Meter internalRequestReportingRate, Meter externalRequestReportingRate, Metric2Registry metricRegistry) {
-		super(configuration, requestInformation, internalRequestReportingRate, externalRequestReportingRate, metricRegistry);
+	PostExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Metric2Registry metricRegistry) {
+		super(configuration, requestInformation, metricRegistry);
 	}
 
 	public PreExecutionInterceptorContext mustReport(Class<?> interceptorClass) {
