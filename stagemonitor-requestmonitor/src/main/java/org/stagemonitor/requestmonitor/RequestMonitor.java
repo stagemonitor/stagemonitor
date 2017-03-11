@@ -20,7 +20,6 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
-import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -363,7 +362,6 @@ public class RequestMonitor {
 		private Timer timerForThisRequest;
 		private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 		private PostExecutionInterceptorContext postExecutionInterceptorContext;
-		private PreExecutionInterceptorContext preExecutionInterceptorContext;
 		private boolean report = true;
 
 		public static RequestInformation of(Span span) {
@@ -509,10 +507,6 @@ public class RequestMonitor {
 
 		public PostExecutionInterceptorContext getPostExecutionInterceptorContext() {
 			return postExecutionInterceptorContext;
-		}
-
-		public void setPreExecutionInterceptorContext(PreExecutionInterceptorContext preExecutionInterceptorContext) {
-			this.preExecutionInterceptorContext = preExecutionInterceptorContext;
 		}
 
 		public boolean isReport() {

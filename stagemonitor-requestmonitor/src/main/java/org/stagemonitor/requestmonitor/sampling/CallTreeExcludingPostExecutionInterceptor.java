@@ -3,7 +3,7 @@ package org.stagemonitor.requestmonitor.sampling;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
-class CallTreeExcludingPostExecutionInterceptor extends PostExecutionSpanReporterInterceptor {
+class CallTreeExcludingPostExecutionInterceptor extends PostExecutionSpanInterceptor {
 
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
@@ -12,11 +12,8 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionSpanReporte
 				.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests();
 
 		if (!MetricUtils.isFasterThanXPercentOfAllRequests(context.getRequestInformation().getDurationNanos(), percentileLimit, context.getRequestInformation().getTimerForThisRequest())) {
-			exclude(context);
+			context.excludeCallTree();
 		}
 	}
 
-	private void exclude(PostExecutionInterceptorContext context) {
-		context.excludeCallTree();
-	}
 }

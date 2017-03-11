@@ -19,8 +19,7 @@ public class PreExecutionInterceptorContext {
 	private boolean mustReport = false;
 	private boolean report = true;
 
-
-	PreExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Metric2Registry metricRegistry) {
+	public PreExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
 		this.requestInformation = requestInformation;
 		this.metricRegistry = metricRegistry;

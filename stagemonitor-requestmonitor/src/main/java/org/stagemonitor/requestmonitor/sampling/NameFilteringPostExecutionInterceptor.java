@@ -5,7 +5,7 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 import java.util.Collection;
 
-class NameFilteringPostExecutionInterceptor extends PostExecutionSpanReporterInterceptor {
+class NameFilteringPostExecutionInterceptor extends PostExecutionSpanInterceptor {
 
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {

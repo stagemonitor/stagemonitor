@@ -12,8 +12,8 @@ import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanReporterInterceptor;
-import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanReporterInterceptor;
+import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanInterceptor;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanInterceptor;
@@ -534,20 +534,20 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	}
 
 	/**
-	 * Add an {@link PreExecutionSpanReporterInterceptor} to the interceptor list
+	 * Add an {@link PreExecutionSpanInterceptor} to the interceptor list
 	 *
 	 * @param interceptor the interceptor that should be executed before measurement starts
 	 */
-	public void registerPreInterceptor(PreExecutionSpanReporterInterceptor interceptor) {
+	public void registerPreInterceptor(PreExecutionSpanInterceptor interceptor) {
 		samplePriorityDeterminingSpanInterceptor.addPreInterceptor(interceptor);
 	}
 
 	/**
-	 * Add an {@link PostExecutionSpanReporterInterceptor} to the interceptor list
+	 * Add an {@link PostExecutionSpanInterceptor} to the interceptor list
 	 *
 	 * @param interceptor the interceptor that should be executed before each report
 	 */
-	public void registerPostInterceptor(PostExecutionSpanReporterInterceptor interceptor) {
+	public void registerPostInterceptor(PostExecutionSpanInterceptor interceptor) {
 		samplePriorityDeterminingSpanInterceptor.addPostInterceptor(interceptor);
 	}
 

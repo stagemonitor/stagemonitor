@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.sampling;
+package org.stagemonitor.requestmonitor.tracing.jaeger;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -7,6 +7,7 @@ import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
 
 import java.util.Collections;
 
@@ -33,7 +34,8 @@ public class RateLimitingPreExecutionInterceptorTest {
 		when(requestInformation.isExternalRequest()).thenReturn(false);
 
 		context = new PreExecutionInterceptorContext(configuration, requestInformation, mock(Metric2Registry.class));
-		interceptor = new RateLimitingPreExecutionInterceptor(requestMonitorPlugin);
+		interceptor = new RateLimitingPreExecutionInterceptor();
+		interceptor.init(configuration);
 	}
 
 	@Test

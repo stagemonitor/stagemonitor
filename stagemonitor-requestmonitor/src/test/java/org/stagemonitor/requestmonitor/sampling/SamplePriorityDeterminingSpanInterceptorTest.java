@@ -18,7 +18,7 @@ public class SamplePriorityDeterminingSpanInterceptorTest extends AbstractReques
 		final SpanReporter spanReporter = mock(SpanReporter.class);
 		when(spanReporter.isActive(any())).thenReturn(true);
 		requestMonitor.addReporter(spanReporter);
-		samplePriorityDeterminingSpanInterceptor.addPreInterceptor(new PreExecutionSpanReporterInterceptor() {
+		samplePriorityDeterminingSpanInterceptor.addPreInterceptor(new PreExecutionSpanInterceptor() {
 			@Override
 			public void interceptReport(PreExecutionInterceptorContext context) {
 				context.shouldNotReport(getClass());

@@ -1,17 +1,22 @@
-package org.stagemonitor.requestmonitor.sampling;
+package org.stagemonitor.requestmonitor.tracing.jaeger;
 
 import com.uber.jaeger.utils.RateLimiter;
 
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
 
-class RateLimitingPreExecutionInterceptor extends PreExecutionSpanReporterInterceptor {
+public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterceptor {
 
 	private RateLimiter serverSpanRateLimiter;
 	private RateLimiter clientSpanRateLimiter;
 
-	public RateLimitingPreExecutionInterceptor(RequestMonitorPlugin requestMonitorPlugin) {
+	@Override
+	public void init(Configuration configuration) {
+		RequestMonitorPlugin requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		serverSpanRateLimiter = getRateLimiter(requestMonitorPlugin.getRateLimitServerSpansPerMinute());
 		requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Double>() {
 			@Override

@@ -1,17 +1,21 @@
 package org.stagemonitor.requestmonitor.sampling;
 
 import org.stagemonitor.core.StagemonitorSPI;
+import org.stagemonitor.core.configuration.Configuration;
 
 /**
  * Allows implementers to customize or omit reporting a {@link io.opentracing.Span}
  * <p/>
  * The post interceptor is executed after the operation has been completed and right before the span should be reported.
  * <p/>
- * To add an interceptor, call <code>Stagemonitor.getPlugin(RequestMonitorPlugin.class).registerPostInterceptor(PostExecutionSpanReporterInterceptor)</code>
- * or place a file under <code>META-INF/services/org.stagemonitor.requestmonitor.sampling.PostExecutionSpanReporterInterceptor</code>
+ * To add an interceptor, call <code>Stagemonitor.getPlugin(RequestMonitorPlugin.class).registerPostInterceptor(PostExecutionSpanInterceptor)</code>
+ * or place a file under <code>META-INF/services/org.stagemonitor.requestmonitor.sampling.PostExecutionSpanInterceptor</code>
  * and insert the canonical class name of your implementation.
  */
-public abstract class PostExecutionSpanReporterInterceptor implements StagemonitorSPI {
+public abstract class PostExecutionSpanInterceptor implements StagemonitorSPI {
+
+	public void init(Configuration configuration) {
+	}
 
 	/**
 	 * This method is called before a span gets reported.

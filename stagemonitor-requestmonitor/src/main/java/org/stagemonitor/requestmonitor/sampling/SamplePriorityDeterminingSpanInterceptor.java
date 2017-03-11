@@ -23,10 +23,10 @@ import io.opentracing.tag.Tags;
 public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareSpanInterceptor implements Callable<SpanInterceptor> {
 
 	private static final Logger logger = LoggerFactory.getLogger(SamplePriorityDeterminingSpanInterceptor.class);
-	private final Collection<PreExecutionSpanReporterInterceptor> preInterceptors =
-			new CopyOnWriteArrayList<PreExecutionSpanReporterInterceptor>();
-	private final Collection<PostExecutionSpanReporterInterceptor> postInterceptors =
-			new CopyOnWriteArrayList<PostExecutionSpanReporterInterceptor>();
+	private final Collection<PreExecutionSpanInterceptor> preInterceptors =
+			new CopyOnWriteArrayList<PreExecutionSpanInterceptor>();
+	private final Collection<PostExecutionSpanInterceptor> postInterceptors =
+			new CopyOnWriteArrayList<PostExecutionSpanInterceptor>();
 	private final Configuration configuration;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final Metric2Registry metricRegistry;
@@ -40,24 +40,22 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 	}
 
 	private void registerPreInterceptors() {
-		this.preInterceptors.add(new RateLimitingPreExecutionInterceptor(requestMonitorPlugin));
-
-		for (PreExecutionSpanReporterInterceptor interceptor : ServiceLoader.load(
-				PreExecutionSpanReporterInterceptor.class,
+		for (PreExecutionSpanInterceptor interceptor : ServiceLoader.load(
+				PreExecutionSpanInterceptor.class,
 				SamplePriorityDeterminingSpanInterceptor.class.getClassLoader())) {
-			preInterceptors.add(interceptor);
+			addPreInterceptor(interceptor);
 		}
 	}
 
 	private void registerPostInterceptors() {
-		this.postInterceptors.add(new NameFilteringPostExecutionInterceptor());
-		this.postInterceptors.add(new CallTreeExcludingPostExecutionInterceptor());
-		this.postInterceptors.add(new FastExternalSpanExcludingPostExecutionInterceptor());
+		addPostInterceptor(new NameFilteringPostExecutionInterceptor());
+		addPostInterceptor(new CallTreeExcludingPostExecutionInterceptor());
+		addPostInterceptor(new FastExternalSpanExcludingPostExecutionInterceptor());
 
-		for (PostExecutionSpanReporterInterceptor interceptor : ServiceLoader.load(
-				PostExecutionSpanReporterInterceptor.class,
+		for (PostExecutionSpanInterceptor interceptor : ServiceLoader.load(
+				PostExecutionSpanInterceptor.class,
 				SamplePriorityDeterminingSpanInterceptor.class.getClassLoader())) {
-			postInterceptors.add(interceptor);
+			addPostInterceptor(interceptor);
 		}
 	}
 
@@ -70,14 +68,13 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 
 		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration,
 				requestInformation, metricRegistry);
-		for (PreExecutionSpanReporterInterceptor interceptor : preInterceptors) {
+		for (PreExecutionSpanInterceptor interceptor : preInterceptors) {
 			try {
 				interceptor.interceptReport(context);
 			} catch (Exception e) {
 				logger.warn(e.getMessage(), e);
 			}
 		}
-		requestInformation.setPreExecutionInterceptorContext(context);
 
 		if (!context.isReport()) {
 			requestInformation.setReport(false);
@@ -92,7 +89,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 			return;
 		}
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, info, metricRegistry);
-		for (PostExecutionSpanReporterInterceptor interceptor : postInterceptors) {
+		for (PostExecutionSpanInterceptor interceptor : postInterceptors) {
 			try {
 				interceptor.interceptReport(context);
 			} catch (Exception e) {
@@ -127,11 +124,11 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		return this;
 	}
 
-	public void addPreInterceptor(PreExecutionSpanReporterInterceptor interceptor) {
+	public void addPreInterceptor(PreExecutionSpanInterceptor interceptor) {
 		preInterceptors.add(interceptor);
 	}
 
-	public void addPostInterceptor(PostExecutionSpanReporterInterceptor interceptor) {
+	public void addPostInterceptor(PostExecutionSpanInterceptor interceptor) {
 		postInterceptors.add(interceptor);
 	}
 }
