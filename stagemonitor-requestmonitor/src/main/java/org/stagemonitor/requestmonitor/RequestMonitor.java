@@ -228,7 +228,6 @@ public class RequestMonitor {
 	}
 
 	private void doReport(SpanContextInformation spanContext) {
-		spanContext.getMonitoredRequest().onBeforeReport(spanContext);
 		for (SpanReporter spanReporter : spanReporters) {
 			final CallStackElement callTree = spanContext.getCallTree();
 			if (isActive(spanContext, spanReporter)) {

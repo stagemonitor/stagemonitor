@@ -42,7 +42,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 	public static final String CONNECTION_ID_ATTRIBUTE = "connectionId";
 	public static final String WIDGET_ALLOWED_ATTRIBUTE = "showWidgetAllowed";
-	public static final String HTTP_REQUEST_ATTRIBUTE = "httpRequest";
+	public static final String MONITORED_HTTP_REQUEST_ATTRIBUTE = "MonitoredHttpRequest";
 	// has to be static so that the cache is shared between different requests
 	private static UserAgentParser userAgentParser;
 	protected final HttpServletRequest httpServletRequest;
@@ -51,7 +51,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	protected final WebPlugin webPlugin;
 	private final Metric2Registry metricRegistry;
 	private final RequestMonitorPlugin requestMonitorPlugin;
-	private final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("request_name", "http_code");
+	private static final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("request_name", "http_code");
 	private final String userAgenHeader;
 	private final String connectionId;
 	private final boolean widgetAndStagemonitorEndpointsAllowed;
@@ -81,7 +81,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	public Span createSpan(SpanContextInformation info) {
 		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
 		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
-		info.addRequestAttribute(HTTP_REQUEST_ATTRIBUTE, httpServletRequest);
+		info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
 		boolean sample = true;
 		if (webPlugin.isHonorDoNotTrackHeader() && "1".equals(httpServletRequest.getHeader("dnt"))) {
 			sample = false;
@@ -95,9 +95,8 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		if (!sample) {
 			spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 		}
-		final Span span = spanBuilder
-				.start();
-		SpanUtils.setOperationType(span, "http");
+		final Span span = spanBuilder.start();
+		span.setTag(SpanUtils.OPERATION_TYPE, "http");
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
 		span.setTag("method", httpServletRequest.getMethod());
 		span.setTag("http.referring_site", getReferringSite());
@@ -195,24 +194,68 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		private final WebPlugin webPlugin;
 		private final RequestMonitorPlugin requestMonitorPlugin;
+		private final Metric2Registry metricRegistry;
 
 		public HttpSpanEventListener() {
-			this(Stagemonitor.getPlugin(WebPlugin.class), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
+			this(Stagemonitor.getPlugin(WebPlugin.class), Stagemonitor.getPlugin(RequestMonitorPlugin.class), Stagemonitor.getMetric2Registry());
 		}
 
-		public HttpSpanEventListener(WebPlugin webPlugin, RequestMonitorPlugin requestMonitorPlugin) {
+		public HttpSpanEventListener(WebPlugin webPlugin, RequestMonitorPlugin requestMonitorPlugin, Metric2Registry metricRegistry) {
 			this.webPlugin = webPlugin;
 			this.requestMonitorPlugin = requestMonitorPlugin;
+			this.metricRegistry = metricRegistry;
 		}
 
 		@Override
 		public void onFinish(SpanWrapper span, String operationName, long durationNanos) {
-			final HttpServletRequest httpServletRequest = (HttpServletRequest) requestMonitorPlugin.getRequestMonitor()
-					.getSpanContext().getRequestAttribute(HTTP_REQUEST_ATTRIBUTE);
-			if (httpServletRequest == null) {
+			final MonitoredHttpRequest monitoredHttpRequest = (MonitoredHttpRequest) requestMonitorPlugin.getRequestMonitor()
+					.getSpanContext().getRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE);
+			if (monitoredHttpRequest == null) {
 				return;
 			}
+			trackServletExceptions(span, monitoredHttpRequest.httpServletRequest);
+			setParams(span, monitoredHttpRequest.httpServletRequest);
+			setTrackingInformation(span, monitoredHttpRequest.httpServletRequest, monitoredHttpRequest.clientIp, monitoredHttpRequest.userAgenHeader);
+			setStatus(span, monitoredHttpRequest.responseWrapper.getStatus());
+			trackThroughput(operationName, monitoredHttpRequest.responseWrapper.getStatus());
+			span.setTag("bytes_written", monitoredHttpRequest.responseWrapper.getContentLength());
+			if (webPlugin.isParseUserAgent()) {
+				setUserAgentInformation(span, monitoredHttpRequest.userAgenHeader);
+			}
+		}
 
+		private void setStatus(Span span, int status) {
+			Tags.HTTP_STATUS.set(span, status);
+			Tags.ERROR.set(span, status >= 400);
+		}
+
+		private void trackThroughput(String operationName, int status) {
+			metricRegistry.meter(throughputMetricNameTemplate.build(operationName, Integer.toString(status))).mark();
+			metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
+		}
+
+		private void setUserAgentInformation(Span span, String userAgenHeader) {
+			// this is safe even though userAgentParser is static because onBeforeReport is not executed concurrently
+			if (userAgentParser == null) {
+				userAgentParser = new UserAgentParser();
+			}
+			userAgentParser.setUserAgentInformation(span, userAgenHeader);
+		}
+
+		private void setTrackingInformation(Span span, HttpServletRequest httpServletRequest, String clientIp, String userAgenHeader) {
+			final String userName = getUserName(httpServletRequest);
+			final String sessionId = getSessionId(httpServletRequest);
+			span.setTag(SpanUtils.USERNAME, userName);
+			span.setTag("session_id", sessionId);
+			if (userName != null) {
+				span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(userName));
+			} else {
+				span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(clientIp + sessionId + userAgenHeader));
+			}
+			SpanUtils.setClientIp(span, clientIp);
+		}
+
+		private void trackServletExceptions(Span span, HttpServletRequest httpServletRequest) {
 			// Search the configured exception attributes that may have been set
 			// by the servlet container/framework. Use the first exception found (if any)
 			for (String requestExceptionAttribute : webPlugin.getRequestExceptionAttributes()) {
@@ -222,7 +265,9 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 					break;
 				}
 			}
+		}
 
+		private void setParams(Span span, HttpServletRequest httpServletRequest) {
 			// get the parameters after the execution and not on creation, because that could lead to wrong decoded
 			// parameters inside the application
 			@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
@@ -236,49 +281,17 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
 			SpanUtils.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
 		}
-	}
 
-	@Override
-	@SuppressWarnings("squid:S2696")
-	public void onBeforeReport(SpanContextInformation spanContext) {
-		// TODO move to SpanInterceptor.onFinish()
-		final Span span = spanContext.getSpan();
-
-		final String userName = getUserName();
-		final String sessionId = getSessionId();
-		span.setTag(SpanUtils.USERNAME, userName);
-		span.setTag("session_id", sessionId);
-		if (userName != null) {
-			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(userName));
-		} else {
-			span.setTag("tracking.unique_visitor_id", StringUtils.sha1Hash(clientIp + sessionId + userAgenHeader));
+		private String getSessionId(HttpServletRequest httpServletRequest) {
+			final HttpSession session = httpServletRequest.getSession(false);
+			return session != null ? session.getId() : null;
 		}
-		SpanUtils.setClientIp(span, clientIp);
 
-		int status = responseWrapper.getStatus();
-		Tags.HTTP_STATUS.set(span, status);
-
-		metricRegistry.meter(throughputMetricNameTemplate.build(spanContext.getOperationName(), Integer.toString(status))).mark();
-		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
-		Tags.ERROR.set(span, status >= 400);
-		span.setTag("bytes_written", responseWrapper.getContentLength());
-		if (webPlugin.isParseUserAgent()) {
-			// this is safe even though userAgentParser is static because onBeforeReport is not executed concurrently
-			if (userAgentParser == null) {
-				userAgentParser = new UserAgentParser();
-			}
-			userAgentParser.setUserAgentInformation(span, userAgenHeader);
+		private String getUserName(HttpServletRequest httpServletRequest) {
+			final Principal userPrincipal = httpServletRequest.getUserPrincipal();
+			return userPrincipal != null ? userPrincipal.getName() : null;
 		}
-	}
 
-	private String getSessionId() {
-		final HttpSession session = httpServletRequest.getSession(false);
-		return session != null ? session.getId() : null;
-	}
-
-	private String getUserName() {
-		final Principal userPrincipal = httpServletRequest.getUserPrincipal();
-		return userPrincipal != null ? userPrincipal.getName() : null;
 	}
 
 }

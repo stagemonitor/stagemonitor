@@ -68,7 +68,7 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 					.start();
 		}
 		SpanUtils.setParameters(span, safeParameters);
-		SpanUtils.setOperationType(span, "method_invocation");
+		span.setTag(SpanUtils.OPERATION_TYPE, "method_invocation");
 		return span;
 	}
 

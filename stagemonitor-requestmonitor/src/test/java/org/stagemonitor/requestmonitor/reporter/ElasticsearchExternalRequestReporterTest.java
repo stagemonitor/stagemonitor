@@ -150,7 +150,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		final Span span = new SpanWrapper(NoopSpan.INSTANCE, "External Request", 1,
 				Collections.singletonList(new ExternalRequestMetricsSpanEventListener(registry, requestMonitorPlugin)));
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
-		SpanUtils.setOperationType(span, "jdbc");
+		span.setTag(SpanUtils.OPERATION_TYPE, "jdbc");
 		span.setTag("method", "SELECT");
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis) + 1);
 		return span;

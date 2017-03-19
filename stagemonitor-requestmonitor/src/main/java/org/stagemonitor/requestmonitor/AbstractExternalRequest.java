@@ -34,7 +34,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
 					.start();
 		}
-		SpanUtils.setOperationType(span, getType());
+		span.setTag(SpanUtils.OPERATION_TYPE, getType());
 		return span;
 	}
 

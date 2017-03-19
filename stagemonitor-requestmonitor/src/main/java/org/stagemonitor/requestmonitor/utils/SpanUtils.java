@@ -26,6 +26,7 @@ public class SpanUtils {
 	public static final String HTTP_HEADERS_PREFIX = "http.headers.";
 	public static final String USERNAME = "username";
 	public static final String PARAMETERS_PREFIX = "parameters.";
+	public static final String OPERATION_TYPE = "type";
 
 	private SpanUtils() {
 	}
@@ -77,10 +78,6 @@ public class SpanUtils {
 	public static void setCallTree(Span span, CallStackElement callTree) {
 		span.setTag(CALL_TREE_JSON, JsonUtils.toJson(callTree));
 		span.setTag(CALL_TREE_ASCII, callTree.toString(true));
-	}
-
-	public static void setOperationType(Span span, String type) {
-		span.setTag("type", type);
 	}
 
 	public static void setHttpHeaders(Span span, Map<String, String> headers) {
