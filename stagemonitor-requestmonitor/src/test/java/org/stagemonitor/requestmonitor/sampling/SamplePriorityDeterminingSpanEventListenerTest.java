@@ -11,7 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class SamplePriorityDeterminingSpanInterceptorTest extends AbstractRequestMonitorTest {
+public class SamplePriorityDeterminingSpanEventListenerTest extends AbstractRequestMonitorTest {
 
 	@Test
 	public void testSetSamplePrioInPreInterceptor() throws Exception {

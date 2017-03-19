@@ -49,7 +49,7 @@ public class MonitorRequestsTransformerTest {
 		Stagemonitor.startMonitoring();
 		spanCapturingReporter = new SpanCapturingReporter();
 		tags = new HashMap<>();
-		Stagemonitor.getPlugin(RequestMonitorPlugin.class).addSpanInterceptor(new TagRecordingSpanInterceptor(tags));
+		Stagemonitor.getPlugin(RequestMonitorPlugin.class).addSpanInterceptor(new TagRecordingSpanEventListener(tags));
 	}
 
 	@AfterClass

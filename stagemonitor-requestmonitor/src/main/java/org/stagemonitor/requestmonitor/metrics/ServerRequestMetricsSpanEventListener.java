@@ -8,9 +8,9 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.core.util.TimeUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.concurrent.TimeUnit;
@@ -22,7 +22,7 @@ import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanInterceptor {
+public class ServerRequestMetricsSpanEventListener extends ClientServerAwareSpanEventListener {
 
 	private static final MetricName.MetricNameTemplate responseTimeCpuTemplate = name("response_time_cpu")
 			.tag("request_name", "").layer("All")
@@ -47,7 +47,7 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 	private long startCpu;
 	private boolean error;
 
-	public ServerRequestMetricsSpanInterceptor(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
+	public ServerRequestMetricsSpanEventListener(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
 		this.metricRegistry = metricRegistry;
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
@@ -136,7 +136,7 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 		return timerMetricNameTemplate.build(requestName);
 	}
 
-	public static class Factory implements SpanInterceptorFactory {
+	public static class Factory implements SpanEventListenerFactory {
 		private final Metric2Registry metricRegistry;
 		private final RequestMonitorPlugin requestMonitorPlugin;
 
@@ -146,8 +146,8 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 		}
 
 		@Override
-		public SpanInterceptor create() {
-			return new ServerRequestMetricsSpanInterceptor(metricRegistry, requestMonitorPlugin);
+		public SpanEventListener create() {
+			return new ServerRequestMetricsSpanEventListener(metricRegistry, requestMonitorPlugin);
 		}
 	}
 }

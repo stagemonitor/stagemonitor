@@ -8,16 +8,16 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpanInterceptor {
+public class ExternalRequestMetricsSpanEventListener extends ClientServerAwareSpanEventListener {
 
 	private final Metric2Registry metricRegistry;
 	private final RequestMonitorPlugin requestMonitorPlugin;
@@ -31,12 +31,12 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 	private String type;
 	private String method;
 
-	public ExternalRequestMetricsSpanInterceptor(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
+	public ExternalRequestMetricsSpanEventListener(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
 		this.metricRegistry = metricRegistry;
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
-	public static class Factory implements SpanInterceptorFactory {
+	public static class Factory implements SpanEventListenerFactory {
 
 		private final Metric2Registry metricRegistry;
 		private final RequestMonitorPlugin requestMonitorPlugin;
@@ -51,8 +51,8 @@ public class ExternalRequestMetricsSpanInterceptor extends ClientServerAwareSpan
 		}
 
 		@Override
-		public SpanInterceptor create() {
-			return new ExternalRequestMetricsSpanInterceptor(metricRegistry, requestMonitorPlugin);
+		public SpanEventListener create() {
+			return new ExternalRequestMetricsSpanEventListener(metricRegistry, requestMonitorPlugin);
 		}
 	}
 

@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
@@ -50,11 +50,11 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	 * Using a ThreadLocal ensures that each application invokes its own instance of the ConnectionMonitor and that
 	 * applications which are not monitored by stagemonitor are not influenced
 	 */
-	public static class ConnectionMonitorAddingSpanInterceptor extends StatelessSpanInterceptor {
+	public static class ConnectionMonitorAddingSpanEventListener extends StatelessSpanEventListener {
 
 		private final Method monitorGetConnectionMethod;
 
-		public ConnectionMonitorAddingSpanInterceptor() throws NoSuchMethodException {
+		public ConnectionMonitorAddingSpanEventListener() throws NoSuchMethodException {
 			monitorGetConnectionMethod = ConnectionMonitor.class
 					.getMethod("monitorGetConnection", Connection.class, Object.class, long.class);
 			makeReflectionInvocationFaster(monitorGetConnectionMethod);

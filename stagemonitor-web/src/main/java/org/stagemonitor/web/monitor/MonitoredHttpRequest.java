@@ -40,6 +40,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 	public static final String CONNECTION_ID_ATTRIBUTE = "connectionId";
 	public static final String WIDGET_ALLOWED_ATTRIBUTE = "showWidgetAllowed";
+	public static final String HTTP_REQUEST_ATTRIBUTE = "httpRequest";
 	// has to be static so that the cache is shared between different requests
 	private static UserAgentParser userAgentParser;
 	protected final HttpServletRequest httpServletRequest;
@@ -78,6 +79,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	public Span createSpan(SpanContextInformation info) {
 		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
 		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
+		info.addRequestAttribute(HTTP_REQUEST_ATTRIBUTE, httpServletRequest);
 		boolean sample = true;
 		if (webPlugin.isHonorDoNotTrackHeader() && "1".equals(httpServletRequest.getHeader("dnt"))) {
 			sample = false;

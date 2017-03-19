@@ -25,8 +25,8 @@ import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -58,7 +58,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
-import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
+import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
 
 public class SpringRequestMonitorTest {
 
@@ -116,8 +116,8 @@ public class SpringRequestMonitorTest {
 		handlerAdapters.set(dispatcherServlet, Collections.singletonList(handlerAdapter));
 
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
-				new SamplePriorityDeterminingSpanInterceptor(configuration, registry));
+				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanEventListener.asList(tags),
+				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 	}

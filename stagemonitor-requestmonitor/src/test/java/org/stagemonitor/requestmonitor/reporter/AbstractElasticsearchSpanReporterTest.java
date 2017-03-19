@@ -14,9 +14,9 @@ import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
+import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Collections;
@@ -31,7 +31,7 @@ import io.opentracing.tag.Tags;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
+import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
 
 public class AbstractElasticsearchSpanReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
@@ -68,8 +68,8 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(requestMonitor.getSpanContext()).thenReturn(spanContext);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
-				new SamplePriorityDeterminingSpanInterceptor(configuration, registry));
+				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanEventListener.asList(tags),
+				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}

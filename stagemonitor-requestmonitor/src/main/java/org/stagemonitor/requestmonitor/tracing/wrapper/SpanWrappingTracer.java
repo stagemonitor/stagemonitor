@@ -14,13 +14,13 @@ import io.opentracing.propagation.Format;
 public class SpanWrappingTracer implements Tracer {
 
 	private final Tracer delegate;
-	private final List<SpanInterceptorFactory> spanInterceptorFactories;
+	private final List<SpanEventListenerFactory> spanInterceptorFactories;
 
 	public SpanWrappingTracer(Tracer delegate) {
-		this(delegate, new CopyOnWriteArrayList<SpanInterceptorFactory>());
+		this(delegate, new CopyOnWriteArrayList<SpanEventListenerFactory>());
 	}
 
-	public SpanWrappingTracer(Tracer delegate, List<SpanInterceptorFactory> spanInterceptorFactories) {
+	public SpanWrappingTracer(Tracer delegate, List<SpanEventListenerFactory> spanInterceptorFactories) {
 		this.delegate = delegate;
 		this.spanInterceptorFactories = spanInterceptorFactories;
 	}
@@ -40,29 +40,29 @@ public class SpanWrappingTracer implements Tracer {
 		return delegate.extract(format, carrier);
 	}
 
-	protected List<SpanInterceptor> createSpanInterceptors() {
-		List<SpanInterceptor> spanInterceptors = new ArrayList<SpanInterceptor>(spanInterceptorFactories.size());
-		for (SpanInterceptorFactory spanInterceptorFactory : spanInterceptorFactories) {
-			spanInterceptors.add(spanInterceptorFactory.create());
+	protected List<SpanEventListener> createSpanInterceptors() {
+		List<SpanEventListener> spanEventListeners = new ArrayList<SpanEventListener>(spanInterceptorFactories.size());
+		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
+			spanEventListeners.add(spanEventListenerFactory.create());
 		}
-		return spanInterceptors;
+		return spanEventListeners;
 	}
 
-	public void addSpanInterceptor(SpanInterceptorFactory spanInterceptorFactory) {
-		spanInterceptorFactories.add(spanInterceptorFactory);
+	public void addSpanInterceptor(SpanEventListenerFactory spanEventListenerFactory) {
+		spanInterceptorFactories.add(spanEventListenerFactory);
 	}
 
 	class SpanWrappingSpanBuilder implements SpanBuilder {
 
 		private final String operationName;
-		private final List<SpanInterceptor> spanInterceptors;
+		private final List<SpanEventListener> spanEventListeners;
 		private SpanBuilder delegate;
 		private long startTimestampNanos;
 
-		SpanWrappingSpanBuilder(SpanBuilder delegate, String operationName, List<SpanInterceptor> spanInterceptors) {
+		SpanWrappingSpanBuilder(SpanBuilder delegate, String operationName, List<SpanEventListener> spanEventListeners) {
 			this.operationName = operationName;
 			this.delegate = delegate;
-			this.spanInterceptors = spanInterceptors;
+			this.spanEventListeners = spanEventListeners;
 		}
 
 		public Iterable<Map.Entry<String, String>> baggageItems() {
@@ -85,24 +85,24 @@ public class SpanWrappingTracer implements Tracer {
 		}
 
 		public SpanBuilder withTag(String key, String value) {
-			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				value = spanInterceptor.onSetTag(key, value);
+			for (SpanEventListener spanEventListener : spanEventListeners) {
+				value = spanEventListener.onSetTag(key, value);
 			}
 			delegate = delegate.withTag(key, value);
 			return this;
 		}
 
 		public SpanBuilder withTag(String key, boolean value) {
-			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				value = spanInterceptor.onSetTag(key, value);
+			for (SpanEventListener spanEventListener : spanEventListeners) {
+				value = spanEventListener.onSetTag(key, value);
 			}
 			delegate = delegate.withTag(key, value);
 			return this;
 		}
 
 		public SpanBuilder withTag(String key, Number value) {
-			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				value = spanInterceptor.onSetTag(key, value);
+			for (SpanEventListener spanEventListener : spanEventListeners) {
+				value = spanEventListener.onSetTag(key, value);
 			}
 			delegate = delegate.withTag(key, value);
 			return this;
@@ -118,9 +118,9 @@ public class SpanWrappingTracer implements Tracer {
 			if (startTimestampNanos == 0) {
 				startTimestampNanos = System.nanoTime();
 			}
-			final SpanWrapper spanWrapper = new SpanWrapper(delegate.start(), operationName, startTimestampNanos, spanInterceptors);
-			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				spanInterceptor.onStart(spanWrapper);
+			final SpanWrapper spanWrapper = new SpanWrapper(delegate.start(), operationName, startTimestampNanos, spanEventListeners);
+			for (SpanEventListener spanEventListener : spanEventListeners) {
+				spanEventListener.onStart(spanWrapper);
 			}
 			return spanWrapper;
 		}

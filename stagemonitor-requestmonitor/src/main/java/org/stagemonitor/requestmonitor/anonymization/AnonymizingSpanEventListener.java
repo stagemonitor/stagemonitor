@@ -2,15 +2,15 @@ package org.stagemonitor.requestmonitor.anonymization;
 
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import io.opentracing.tag.Tags;
 
-public class AnonymizingSpanInterceptor extends SpanInterceptor {
+public class AnonymizingSpanEventListener extends SpanEventListener {
 
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	public String username;
@@ -19,7 +19,7 @@ public class AnonymizingSpanInterceptor extends SpanInterceptor {
 	private final boolean anonymizeIPs;
 	private final boolean active;
 
-	public AnonymizingSpanInterceptor(RequestMonitorPlugin requestMonitorPlugin) {
+	public AnonymizingSpanEventListener(RequestMonitorPlugin requestMonitorPlugin) {
 		this.requestMonitorPlugin = requestMonitorPlugin;
 		pseudonymizeUserNames = requestMonitorPlugin.isPseudonymizeUserNames();
 		anonymizeIPs = requestMonitorPlugin.isAnonymizeIPs();
@@ -60,16 +60,16 @@ public class AnonymizingSpanInterceptor extends SpanInterceptor {
 		}
 	}
 
-	public static class MySpanInterceptorFactory implements SpanInterceptorFactory {
+	public static class MySpanEventListenerFactory implements SpanEventListenerFactory {
 		private final RequestMonitorPlugin requestMonitorPlugin;
 
-		public MySpanInterceptorFactory(RequestMonitorPlugin requestMonitorPlugin) {
+		public MySpanEventListenerFactory(RequestMonitorPlugin requestMonitorPlugin) {
 			this.requestMonitorPlugin = requestMonitorPlugin;
 		}
 
 		@Override
-		public SpanInterceptor create() {
-			return new AnonymizingSpanInterceptor(requestMonitorPlugin);
+		public SpanEventListener create() {
+			return new AnonymizingSpanEventListener(requestMonitorPlugin);
 		}
 	}
 }

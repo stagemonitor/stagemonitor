@@ -14,7 +14,7 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Collections;
@@ -37,7 +37,7 @@ public abstract class AbstractRequestMonitorTest {
 	protected RequestMonitor requestMonitor;
 	protected Configuration configuration;
 	protected Map<String, Object> tags = new HashMap<>();
-	protected SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor;
+	protected SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor;
 	protected SpanWrappingTracer tracer;
 
 	@Before
@@ -70,9 +70,9 @@ public abstract class AbstractRequestMonitorTest {
 		when(requestMonitorPlugin.isLogSpans()).thenReturn(true);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 
-		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanInterceptor(configuration, registry);
+		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanEventListener(configuration, registry);
 		tracer = RequestMonitorPlugin.createSpanWrappingTracer(getTracer(), registry,
-				requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
+				requestMonitorPlugin, requestMonitor, TagRecordingSpanEventListener.asList(tags),
 				samplePriorityDeterminingSpanInterceptor);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		assertTrue(TracingUtils.getTraceContext().isEmpty());

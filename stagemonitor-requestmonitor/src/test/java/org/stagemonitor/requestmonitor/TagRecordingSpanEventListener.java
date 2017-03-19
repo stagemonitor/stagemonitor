@@ -1,22 +1,22 @@
 package org.stagemonitor.requestmonitor;
 
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
-import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class TagRecordingSpanInterceptor extends StatelessSpanInterceptor {
+public class TagRecordingSpanEventListener extends StatelessSpanEventListener {
 	private final Map<String, Object> tags;
 
-	public static List<SpanInterceptorFactory> asList(Map<String, Object> tags) {
-		List<SpanInterceptorFactory> list = new ArrayList<>();
-		list.add(new TagRecordingSpanInterceptor(tags));
+	public static List<SpanEventListenerFactory> asList(Map<String, Object> tags) {
+		List<SpanEventListenerFactory> list = new ArrayList<>();
+		list.add(new TagRecordingSpanEventListener(tags));
 		return list;
 	}
 
-	public TagRecordingSpanInterceptor(Map<String, Object> tags) {
+	public TagRecordingSpanEventListener(Map<String, Object> tags) {
 		this.tags = tags;
 	}
 

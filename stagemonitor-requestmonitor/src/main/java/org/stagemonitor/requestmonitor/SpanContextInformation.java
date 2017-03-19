@@ -7,7 +7,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -238,10 +238,10 @@ public class SpanContextInformation {
 		}
 	}
 
-	static class SpanContextSpanInterceptor extends StatelessSpanInterceptor {
+	static class SpanContextSpanEventListener extends StatelessSpanEventListener {
 		private final RequestMonitor requestMonitor;
 
-		SpanContextSpanInterceptor(RequestMonitor requestMonitor) {
+		SpanContextSpanEventListener(RequestMonitor requestMonitor) {
 			this.requestMonitor = requestMonitor;
 		}
 

@@ -11,9 +11,9 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -47,8 +47,8 @@ public class MonitoredHttpRequestTest {
 		final WebPlugin webPlugin = new WebPlugin();
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		final List<SpanInterceptorFactory> spanInterceptorFactories = TagRecordingSpanInterceptor.asList(tags);
-		spanInterceptorFactories.add(() -> new SpanInterceptor() {
+		final List<SpanEventListenerFactory> spanInterceptorFactories = TagRecordingSpanEventListener.asList(tags);
+		spanInterceptorFactories.add(() -> new SpanEventListener() {
 			@Override
 			public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 				MonitoredHttpRequestTest.this.operationName = operationName;

@@ -8,17 +8,17 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
-import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
-import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanEventListener;
+import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventListener;
+import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
-import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Arrays;
@@ -302,7 +302,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	private static RequestMonitor requestMonitor;
 
 	private SpanWrappingTracer tracer;
-	private SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor;
+	private SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor;
 
 	public Tracer getTracer() {
 		return tracer;
@@ -341,8 +341,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final RequestMonitorPlugin requestMonitorPlugin = this;
 
 		final Tracer tracer = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator().next().getTracer(initArguments);
-		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanInterceptor(initArguments.getConfiguration(), metricRegistry);
-		final ServiceLoader<SpanInterceptorFactory> factories = ServiceLoader.load(SpanInterceptorFactory.class, RequestMonitorPlugin.class.getClassLoader());
+		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanEventListener(initArguments.getConfiguration(), metricRegistry);
+		final ServiceLoader<SpanEventListenerFactory> factories = ServiceLoader.load(SpanEventListenerFactory.class, RequestMonitorPlugin.class.getClassLoader());
 		this.tracer = createSpanWrappingTracer(tracer, metricRegistry, requestMonitorPlugin, getRequestMonitor(),
 				factories, samplePriorityDeterminingSpanInterceptor);
 	}
@@ -350,17 +350,17 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, final Metric2Registry metricRegistry,
 															  final RequestMonitorPlugin requestMonitorPlugin,
 															  final RequestMonitor requestMonitor,
-															  final Iterable<SpanInterceptorFactory> spanInterceptorFactories,
-															  final SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor) {
+															  final Iterable<SpanEventListenerFactory> spanInterceptorFactories,
+															  final SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor) {
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
-		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanInterceptor(requestMonitor));
+		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanEventListener(requestMonitor));
 		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
-		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanInterceptor.Factory(metricRegistry, requestMonitorPlugin));
-		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanInterceptor.Factory(metricRegistry, requestMonitorPlugin));
-		spanWrappingTracer.addSpanInterceptor(new AnonymizingSpanInterceptor.MySpanInterceptorFactory(requestMonitorPlugin));
-		spanWrappingTracer.addSpanInterceptor(new MDCSpanInterceptor());
-		for (SpanInterceptorFactory spanInterceptorFactory : spanInterceptorFactories) {
-			spanWrappingTracer.addSpanInterceptor(spanInterceptorFactory);
+		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry, requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanEventListener.Factory(metricRegistry, requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(new AnonymizingSpanEventListener.MySpanEventListenerFactory(requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(new MDCSpanEventListener());
+		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
+			spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
 		}
 		return spanWrappingTracer;
 	}
@@ -507,8 +507,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return reportSpansAsync.getValue();
 	}
 
-	public void addSpanInterceptor(SpanInterceptorFactory spanInterceptorFactory) {
-		tracer.addSpanInterceptor(spanInterceptorFactory);
+	public void addSpanInterceptor(SpanEventListenerFactory spanEventListenerFactory) {
+		tracer.addSpanInterceptor(spanEventListenerFactory);
 	}
 
 	/**

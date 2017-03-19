@@ -3,12 +3,31 @@ package org.stagemonitor.requestmonitor.tracing.wrapper;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 
-public abstract class SpanInterceptor {
+/**
+ * Provides callbacks for interesting events triggered by calling certain {@link Span} and {@link
+ * io.opentracing.Tracer.SpanBuilder} methods.
+ * <p/>
+ * Use Cases:
+ * <ul>
+ * <li>
+ * Tracking of metrics in {@link #onFinish(SpanWrapper, String, long)} based on the operation name, the
+ * duration and possibly some tags which are stored in a class variable.
+ * </li>
+ * <li>
+ * Context propagation: set the current span in {@link #onStart(SpanWrapper)} for example into a {@link ThreadLocal}
+ * {@link java.util.Stack} and pop in in {@link #onFinish(SpanWrapper, String, long)}
+ * </li>
+ * <li>
+ * Populate the {@link org.slf4j.MDC}
+ * </li>
+ * </ul>
+ */
+public abstract class SpanEventListener {
 
 	/**
 	 * Called when a {@link Span} is started ({@link Tracer.SpanBuilder#start()}
 	 * <p/>
-	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanInterceptor}s are called
+	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanEventListener}s are called
 	 * again. If you don't want that, call <code>spanWrapper.getDelegate().setTag(...)</code>.
 	 * <p/>
 	 * Note: tags might be set on the span before it has been started
@@ -60,7 +79,7 @@ public abstract class SpanInterceptor {
 	/**
 	 * Called when {@link Span#finish} has been called
 	 * <p/>
-	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanInterceptor}s are called
+	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanEventListener}s are called
 	 * again. If you don't want that, call <code>spanWrapper.getDelegate().setTag(...)</code>.
 	 *
 	 * @param spanWrapper   the span which has just beed finished

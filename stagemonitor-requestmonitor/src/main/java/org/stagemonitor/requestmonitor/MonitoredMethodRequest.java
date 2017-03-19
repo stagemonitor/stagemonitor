@@ -77,10 +77,6 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 		methodExecution.execute();
 	}
 
-	@Override
-	public void onPostExecute(SpanContextInformation spanContext) {
-	}
-
 	public interface MethodExecution {
 		void execute() throws Exception;
 	}

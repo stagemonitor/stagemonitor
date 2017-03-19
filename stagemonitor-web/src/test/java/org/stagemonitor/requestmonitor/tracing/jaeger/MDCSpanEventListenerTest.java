@@ -20,9 +20,9 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class MDCSpanInterceptorTest {
+public class MDCSpanEventListenerTest {
 
-	private MDCSpanInterceptor mdcSpanInterceptor;
+	private MDCSpanEventListener mdcSpanInterceptor;
 	private CorePlugin corePlugin;
 	private SpanWrapper spanWrapper;
 
@@ -33,7 +33,7 @@ public class MDCSpanInterceptorTest {
 		this.corePlugin = mock(CorePlugin.class);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 
-		mdcSpanInterceptor = new MDCSpanInterceptor(corePlugin);
+		mdcSpanInterceptor = new MDCSpanEventListener(corePlugin);
 		final Span span = mock(Span.class);
 		final SpanContext spanContext = mock(SpanContext.class);
 		when(spanContext.getTraceID()).thenReturn(1L);
@@ -51,9 +51,9 @@ public class MDCSpanInterceptorTest {
 
 	@Test
 	public void testMdc() throws Exception {
-		Stagemonitor.startMonitoring(new MeasurementSession("MDCSpanInterceptorTest", "testHost", "testInstance"));
+		Stagemonitor.startMonitoring(new MeasurementSession("MDCSpanEventListenerTest", "testHost", "testInstance"));
 		when(corePlugin.getMeasurementSession())
-				.thenReturn(new MeasurementSession("MDCSpanInterceptorTest", "testHost", "testInstance"));
+				.thenReturn(new MeasurementSession("MDCSpanEventListenerTest", "testHost", "testInstance"));
 		mdcSpanInterceptor.onStart(spanWrapper);
 
 		assertEquals("1", MDC.get("spanId"));
@@ -62,7 +62,7 @@ public class MDCSpanInterceptorTest {
 
 		mdcSpanInterceptor.onFinish(spanWrapper, null, 0);
 		assertEquals("testHost", MDC.get("host"));
-		assertEquals("MDCSpanInterceptorTest", MDC.get("application"));
+		assertEquals("MDCSpanEventListenerTest", MDC.get("application"));
 		assertEquals("testInstance", MDC.get("instance"));
 		assertNull(MDC.get("spanId"));
 		assertNull(MDC.get("traceId"));
@@ -72,11 +72,11 @@ public class MDCSpanInterceptorTest {
 	@Test
 	public void testMdcStagemonitorNotStarted() throws Exception {
 		when(corePlugin.getMeasurementSession())
-				.thenReturn(new MeasurementSession("MDCSpanInterceptorTest", "testHost", null));
+				.thenReturn(new MeasurementSession("MDCSpanEventListenerTest", "testHost", null));
 
 		mdcSpanInterceptor.onStart(spanWrapper);
 		assertEquals("testHost", MDC.get("host"));
-		assertEquals("MDCSpanInterceptorTest", MDC.get("application"));
+		assertEquals("MDCSpanEventListenerTest", MDC.get("application"));
 		assertNull(MDC.get("instance"));
 		assertNull(MDC.get("spanId"));
 		assertNull(MDC.get("traceId"));
@@ -88,7 +88,7 @@ public class MDCSpanInterceptorTest {
 	public void testMDCStagemonitorDeactivated() throws Exception {
 		when(corePlugin.isStagemonitorActive()).thenReturn(false);
 		when(corePlugin.getMeasurementSession())
-				.thenReturn(new MeasurementSession("MDCSpanInterceptorTest", "testHost", null));
+				.thenReturn(new MeasurementSession("MDCSpanEventListenerTest", "testHost", null));
 
 		mdcSpanInterceptor.onStart(spanWrapper);
 

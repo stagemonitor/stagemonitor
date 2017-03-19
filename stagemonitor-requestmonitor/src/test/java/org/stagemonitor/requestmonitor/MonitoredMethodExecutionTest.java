@@ -11,7 +11,7 @@ import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
@@ -58,8 +58,8 @@ public class MonitoredMethodExecutionTest {
 
 		tags = new HashMap<>();
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(), registry,
-				requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
-				new SamplePriorityDeterminingSpanInterceptor(configuration, registry));
+				requestMonitorPlugin, requestMonitor, TagRecordingSpanEventListener.asList(tags),
+				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 
 		testObject = new TestObject(requestMonitor);

@@ -15,7 +15,7 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.AbstractExternalRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventListener;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import java.sql.Connection;
@@ -95,7 +95,7 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 				if (StringUtils.isNotEmpty(statementInformation.getSql())) {
 					String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
 					Profiler.addIOCall(sql, timeElapsedNanos);
-					span.setTag(ExternalRequestMetricsSpanInterceptor.EXTERNAL_REQUEST_METHOD, sql.substring(0, sql.indexOf(' ')).toUpperCase());
+					span.setTag(ExternalRequestMetricsSpanEventListener.EXTERNAL_REQUEST_METHOD, sql.substring(0, sql.indexOf(' ')).toUpperCase());
 					span.setTag("request", sql);
 				}
 

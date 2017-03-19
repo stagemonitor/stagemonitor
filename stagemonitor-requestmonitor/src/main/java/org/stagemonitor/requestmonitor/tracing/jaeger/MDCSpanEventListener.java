@@ -7,7 +7,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 
 /**
  * This class adds the {@link MDC} properties requestId, application, host and instance.
@@ -15,15 +15,15 @@ import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
  * If you are using logback or log4j, you can append this to your pattern to append the properties to each log entry:
  * <code>trace:[%X{traceId}] span:[%X{spanId}] A:[%X{application}] H:[%X{host}] I:[%X{instance}]</code>
  */
-public class MDCSpanInterceptor extends StatelessSpanInterceptor {
+public class MDCSpanEventListener extends StatelessSpanEventListener {
 
 	private final CorePlugin corePlugin;
 
-	public MDCSpanInterceptor() {
+	public MDCSpanEventListener() {
 		this(Stagemonitor.getPlugin(CorePlugin.class));
 	}
 
-	public MDCSpanInterceptor(CorePlugin corePlugin) {
+	public MDCSpanEventListener(CorePlugin corePlugin) {
 		this.corePlugin = corePlugin;
 	}
 

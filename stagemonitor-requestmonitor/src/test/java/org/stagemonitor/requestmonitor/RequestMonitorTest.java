@@ -12,7 +12,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.concurrent.Callable;
@@ -115,7 +115,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	@Test
 	public void testDontActivateProfilerWhenNoSpanReporterIsActive() throws Exception {
 		// don't profile if no one is interested in the result
-		tracer.addSpanInterceptor(() -> new SpanInterceptor() {
+		tracer.addSpanInterceptor(() -> new SpanEventListener() {
 			@Override
 			public void onStart(SpanWrapper spanWrapper) {
 				requestMonitor.getSpanContext().setReport(false);

@@ -9,7 +9,7 @@ import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collection;
@@ -19,9 +19,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
-public class SamplePriorityDeterminingSpanInterceptor extends StatelessSpanInterceptor {
+public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEventListener {
 
-	private static final Logger logger = LoggerFactory.getLogger(SamplePriorityDeterminingSpanInterceptor.class);
+	private static final Logger logger = LoggerFactory.getLogger(SamplePriorityDeterminingSpanEventListener.class);
 	private final Collection<PreExecutionSpanInterceptor> preInterceptors =
 			new CopyOnWriteArrayList<PreExecutionSpanInterceptor>();
 	private final Collection<PostExecutionSpanInterceptor> postInterceptors =
@@ -30,7 +30,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends StatelessSpanInter
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final Metric2Registry metricRegistry;
 
-	public SamplePriorityDeterminingSpanInterceptor(Configuration configuration, Metric2Registry metricRegistry) {
+	public SamplePriorityDeterminingSpanEventListener(Configuration configuration, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		this.metricRegistry = metricRegistry;
@@ -41,7 +41,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends StatelessSpanInter
 	private void registerPreInterceptors() {
 		for (PreExecutionSpanInterceptor interceptor : ServiceLoader.load(
 				PreExecutionSpanInterceptor.class,
-				SamplePriorityDeterminingSpanInterceptor.class.getClassLoader())) {
+				SamplePriorityDeterminingSpanEventListener.class.getClassLoader())) {
 			addPreInterceptor(interceptor);
 		}
 	}
@@ -53,7 +53,7 @@ public class SamplePriorityDeterminingSpanInterceptor extends StatelessSpanInter
 
 		for (PostExecutionSpanInterceptor interceptor : ServiceLoader.load(
 				PostExecutionSpanInterceptor.class,
-				SamplePriorityDeterminingSpanInterceptor.class.getClassLoader())) {
+				SamplePriorityDeterminingSpanEventListener.class.getClassLoader())) {
 			addPostInterceptor(interceptor);
 		}
 	}

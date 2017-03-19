@@ -13,13 +13,13 @@ public class SpanWrapper implements Span {
 	private Span delegate;
 	private String operationName;
 	private final long startTimestampNanos;
-	private final List<SpanInterceptor> spanInterceptors;
+	private final List<SpanEventListener> spanEventListeners;
 
-	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, List<SpanInterceptor> spanInterceptors) {
+	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, List<SpanEventListener> spanEventListeners) {
 		this.delegate = delegate;
 		this.operationName = operationName;
 		this.startTimestampNanos = startTimestampNanos;
-		this.spanInterceptors = spanInterceptors;
+		this.spanEventListeners = spanEventListeners;
 	}
 
 	public SpanContext context() {
@@ -28,47 +28,47 @@ public class SpanWrapper implements Span {
 
 	public void close() {
 		final long durationNanos = System.nanoTime() - startTimestampNanos;
-		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(this, operationName, durationNanos);
+		for (SpanEventListener spanEventListener : spanEventListeners) {
+			spanEventListener.onFinish(this, operationName, durationNanos);
 		}
 		delegate.close();
 	}
 
 	public void finish() {
 		final long durationNanos = System.nanoTime() - startTimestampNanos;
-		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(this, operationName, durationNanos);
+		for (SpanEventListener spanEventListener : spanEventListeners) {
+			spanEventListener.onFinish(this, operationName, durationNanos);
 		}
 		delegate.finish();
 	}
 
 	public void finish(long finishMicros) {
 		final long durationNanos = TimeUnit.MICROSECONDS.toNanos(finishMicros) - startTimestampNanos;
-		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(this, operationName, durationNanos);
+		for (SpanEventListener spanEventListener : spanEventListeners) {
+			spanEventListener.onFinish(this, operationName, durationNanos);
 		}
 		delegate.finish(finishMicros);
 	}
 
 	public Span setTag(String key, String value) {
-		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			value = spanInterceptor.onSetTag(key, value);
+		for (SpanEventListener spanEventListener : spanEventListeners) {
+			value = spanEventListener.onSetTag(key, value);
 		}
 		delegate = delegate.setTag(key, value);
 		return this;
 	}
 
 	public Span setTag(String key, boolean value) {
-		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			value = spanInterceptor.onSetTag(key, value);
+		for (SpanEventListener spanEventListener : spanEventListeners) {
+			value = spanEventListener.onSetTag(key, value);
 		}
 		delegate = delegate.setTag(key, value);
 		return this;
 	}
 
 	public Span setTag(String key, Number value) {
-		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			value = spanInterceptor.onSetTag(key, value);
+		for (SpanEventListener spanEventListener : spanEventListeners) {
+			value = spanEventListener.onSetTag(key, value);
 		}
 		delegate = delegate.setTag(key, value);
 		return this;

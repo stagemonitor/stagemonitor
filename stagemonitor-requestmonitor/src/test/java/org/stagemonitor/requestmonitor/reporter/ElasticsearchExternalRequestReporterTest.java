@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
+import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
@@ -148,7 +148,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private Span getSpan(long executionTimeMillis) {
 		final Span span = new SpanWrapper(NoopSpan.INSTANCE, "External Request", 1,
-				Collections.singletonList(new ExternalRequestMetricsSpanInterceptor(registry, requestMonitorPlugin)));
+				Collections.singletonList(new ExternalRequestMetricsSpanEventListener(registry, requestMonitorPlugin)));
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 		SpanUtils.setOperationType(span, "jdbc");
 		span.setTag("method", "SELECT");

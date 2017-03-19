@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanInterceptor;
+import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -145,7 +145,7 @@ public class AnonymisationTest {
 	}
 
 	private Span createSpan(String username, String ip) {
-		final Span span = new SpanWrapper(spy(NoopSpan.INSTANCE), "", 0, Collections.singletonList(new AnonymizingSpanInterceptor(requestMonitorPlugin)));
+		final Span span = new SpanWrapper(spy(NoopSpan.INSTANCE), "", 0, Collections.singletonList(new AnonymizingSpanEventListener(requestMonitorPlugin)));
 		span.setTag(SpanUtils.USERNAME, username);
 		SpanUtils.setClientIp(span, ip);
 		final Span mockSpan = ((SpanWrapper) span).getDelegate();
