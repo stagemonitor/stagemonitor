@@ -26,6 +26,7 @@ public class SpanServlet extends HttpServlet {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final long requestTimeout;
+	private final Configuration configuration;
 	private WidgetAjaxSpanReporter widgetAjaxSpanReporter;
 
 	public SpanServlet() {
@@ -33,9 +34,9 @@ public class SpanServlet extends HttpServlet {
 	}
 
 	public SpanServlet(Configuration configuration, WidgetAjaxSpanReporter reporter, long requestTimeout) {
+		this.configuration = configuration;
 		this.widgetAjaxSpanReporter = reporter;
 		this.requestTimeout = requestTimeout;
-		configuration.getConfig(RequestMonitorPlugin.class).addReporter(widgetAjaxSpanReporter);
 	}
 
 	@Override
@@ -71,5 +72,9 @@ public class SpanServlet extends HttpServlet {
 	@Override
 	public void destroy() {
 		widgetAjaxSpanReporter.close();
+	}
+
+	public void onStagemonitorStarted() {
+		configuration.getConfig(RequestMonitorPlugin.class).addReporter(widgetAjaxSpanReporter);
 	}
 }

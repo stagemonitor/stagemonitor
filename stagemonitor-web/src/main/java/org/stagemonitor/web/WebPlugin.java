@@ -233,6 +233,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.tags("privacy")
 			.configurationCategory(WEB_PLUGIN)
 			.build();
+	private SpanServlet spanServlet;
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
@@ -248,6 +249,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		}
+		spanServlet.onStagemonitorStarted();
 	}
 
 	@Override
@@ -368,7 +370,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
 				.addMapping("/stagemonitor");
 
-		final ServletRegistration.Dynamic spanServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), new SpanServlet());
+		this.spanServlet = new SpanServlet();
+		final ServletRegistration.Dynamic spanServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), this.spanServlet);
 		spanServlet.addMapping("/stagemonitor/spans");
 		spanServlet.setAsyncSupported(true);
 
