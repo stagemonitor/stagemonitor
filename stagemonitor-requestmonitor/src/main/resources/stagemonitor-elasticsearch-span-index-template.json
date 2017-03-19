@@ -1,0 +1,64 @@
+{
+  "template": "stagemonitor-spans-*",
+  "order" : 1,
+  "settings" : {
+    "index" : {
+      "refresh_interval" : "5s",
+      "query.default_field": "name"
+    }
+  },
+  "mappings": {
+    "_default_": {
+      "dynamic_templates" : [
+        {
+          "string_fields" : {
+            "match" : "*",
+            "match_mapping_type" : "string",
+            "mapping" : {
+              "type": "keyword", "ignore_above" : 256 }
+            }
+        },
+        {
+          "integer_fields" : {
+            "match" : "*",
+            "match_mapping_type" : "integer",
+            "mapping" : {
+              "type": "integer" }
+            }
+        },
+        {
+          "parameters": {
+            "path_match": "parameters.*",
+            "mapping": { "type": "keyword" }
+          }
+        }
+      ],
+      "_all":                  { "enabled": false },
+      "_source" :              { "excludes" : ["call_tree_json"] },
+      "properties": {
+        "@timestamp":          {"type": "date" },
+        "measurement_start":   {"type": "date" },
+        "call_tree_ascii":     {"type": "keyword",  "index": "no", "doc_values": false },
+        "call_tree_json":      {"type": "keyword",  "index": "no", "store": "yes", "doc_values": false },
+        "exception":           {"type": "object", "properties": {
+            "classType":       {"type": "keyword" },
+            "message":         {"type": "keyword" },
+            "stackTrace":      {"type": "keyword",  "index": "no", "store": "yes", "doc_values": false }
+          }
+        },
+        "name":                {"type": "text",  "analyzer": "standard",
+                                 "fields": { "raw": {"type": "keyword" }}},
+        "http":                {"type": "object", "properties": {
+            "url":                 {"type": "text",  "analyzer": "standard", "fields": { "raw": {"type": "keyword" }}}
+          }
+        },
+        "externalRequestStats":{"type": "nested", "properties": {
+            "requestType":       {"type": "keyword" },
+            "executionCount":    {"type": "integer" },
+            "executionTime":     {"type": "double" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -342,6 +342,10 @@ public class ElasticsearchClient {
 
 		@Override
 		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
+			if (is == null) {
+				logger.warn(e.getMessage(), e);
+				return null;
+			}
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
 			final JsonNode errors = bulkResponse.get("errors");
 			if (errors != null && errors.booleanValue()) {
@@ -422,7 +426,7 @@ public class ElasticsearchClient {
 					if (e != null) {
 						if (isElasticsearchAvailable()) {
 							logger.warn("Elasticsearch is not available. " +
-									"Stagemonitor won't try to send request traces to Elasticsearch until it is available again.");
+									"Stagemonitor won't try to send documents to Elasticsearch until it is available again.");
 						}
 							elasticsearchAvailable.set(false);
 						} else {

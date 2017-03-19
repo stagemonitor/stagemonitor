@@ -14,4 +14,6 @@ public interface IncidentRepository {
 
 	boolean updateIncident(Incident incident);
 
+	void clear();
+
 }

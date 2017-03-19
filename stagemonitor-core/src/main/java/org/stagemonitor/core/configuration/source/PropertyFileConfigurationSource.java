@@ -1,32 +1,37 @@
 package org.stagemonitor.core.configuration.source;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.util.IOUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Properties;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Loads a properties file from classpath. Falls back to loading from file system.
- *
  */
 public final class PropertyFileConfigurationSource extends AbstractConfigurationSource {
 
 	private static final Logger logger = LoggerFactory.getLogger(PropertyFileConfigurationSource.class);
 
-	private Properties properties;
-
 	private final String location;
+	private Properties properties;
+	private File file;
+	private boolean writeable;
 
 	public PropertyFileConfigurationSource(String location) {
 		this.location = location;
+		try {
+			this.file = IOUtils.getFile(location);
+			this.writeable = file.canWrite();
+		} catch (Exception e) {
+			this.writeable = false;
+		}
 		reload();
 	}
 
@@ -114,29 +119,21 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 
 	@Override
 	public boolean isSavingPossible() {
-		return true;
+		return writeable;
 	}
 
 	@Override
 	public void save(String key, String value) throws IOException {
-		synchronized (this) {
-			properties.put(key, value);
-			try {
-				URL resource = getClass().getClassLoader().getResource(location);
-				if (resource == null) {
-					resource = new URL("file://" + location);
-				}
-				if (!"file".equals(resource.getProtocol())) {
-					throw new IOException("Saving to property files inside a war, ear or jar is not possible.");
-				}
-				File file = new File(resource.toURI());
+		if (file != null) {
+			synchronized (this) {
+				properties.put(key, value);
 				final FileOutputStream out = new FileOutputStream(file);
 				properties.store(out, null);
 				out.flush();
 				out.close();
-			} catch (URISyntaxException e) {
-				throw new IOException(e);
 			}
+		} else {
+			throw new IOException(location + " is not writeable");
 		}
 	}
 

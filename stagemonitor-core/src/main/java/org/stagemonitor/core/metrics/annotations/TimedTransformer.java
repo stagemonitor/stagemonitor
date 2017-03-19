@@ -10,17 +10,13 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.core.util.ClassUtils;
 
-import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -31,24 +27,10 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 
 	private final static MetricName.MetricNameTemplate metricNameTemplate = name("timer").templateFor("signature");
-	private final Set<Class<?>> asyncCallAnnotations = new HashSet<Class<?>>();
-
-	public TimedTransformer() {
-		asyncCallAnnotations.add(ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Async"));
-		asyncCallAnnotations.add(ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Scheduled"));
-		asyncCallAnnotations.add(ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Schedules"));
-		asyncCallAnnotations.add(ClassUtils.forNameOrNull("javax.ejb.Asynchronous"));
-		asyncCallAnnotations.add(ClassUtils.forNameOrNull("javax.ejb.Schedule"));
-		asyncCallAnnotations.add(ClassUtils.forNameOrNull("javax.ejb.Schedules"));
-		asyncCallAnnotations.remove(null);
-	}
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
 		ElementMatcher.Junction<MethodDescription.InDefinedShape> matcher = isAnnotatedWith(Timed.class);
-		for (Class<?> annotation : asyncCallAnnotations) {
-			matcher = matcher.or(isAnnotatedWith((Class<? extends Annotation>) annotation));
-		}
 		return matcher;
 	}
 

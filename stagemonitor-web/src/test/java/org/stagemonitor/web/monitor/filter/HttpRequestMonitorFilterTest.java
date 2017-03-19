@@ -1,14 +1,21 @@
 package org.stagemonitor.web.monitor.filter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.springframework.mock.web.MockFilterConfig;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.MonitoredRequest;
+import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
+import org.stagemonitor.web.WebPlugin;
+import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
 import java.io.IOException;
 
@@ -23,22 +30,17 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.springframework.mock.web.MockFilterConfig;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.requestmonitor.MonitoredRequest;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
-import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
+import io.opentracing.Span;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class HttpRequestMonitorFilterTest {
 
@@ -46,23 +48,21 @@ public class HttpRequestMonitorFilterTest {
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-	private RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
-	private HttpRequestTrace requestTrace = mock(HttpRequestTrace.class);
+	private SpanContextInformation spanContext = mock(SpanContextInformation.class);
 	private HttpRequestMonitorFilter httpRequestMonitorFilter;
 	private String testHtml = "<html><body></body></html>";
 
 	@Before
 	public void before() throws Exception {
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
-		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<RequestMonitor.RequestInformation<?>>() {
+		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<SpanContextInformation>() {
 			@Override
-			public RequestMonitor.RequestInformation<?> answer(InvocationOnMock invocation) throws Throwable {
-				MonitoredRequest<?> request = (MonitoredRequest<?>) invocation.getArguments()[0];
+			public SpanContextInformation answer(InvocationOnMock invocation) throws Throwable {
+				MonitoredRequest request = (MonitoredRequest) invocation.getArguments()[0];
 				request.execute();
-				when(requestTrace.toJson()).thenReturn("");
-				when(requestTrace.getName()).thenReturn("testName");
-				when(requestInformation.getRequestTrace()).thenReturn(requestTrace);
-				return requestInformation;
+				when(spanContext.getOperationName()).thenReturn("testName");
+				when(spanContext.getSpan()).thenReturn(mock(Span.class));
+				return spanContext;
 			}
 		});
 
@@ -72,8 +72,7 @@ public class HttpRequestMonitorFilterTest {
 		when(webPlugin.isWidgetEnabled()).thenReturn(true);
 		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(true);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
-		when(requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute()).thenReturn(1000000d);
+		when(requestMonitorPlugin.getProfilerRateLimitPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		when(corePlugin.getApplicationName()).thenReturn("testApplication");
 		when(corePlugin.getInstanceName()).thenReturn("testInstance");
@@ -206,7 +205,6 @@ public class HttpRequestMonitorFilterTest {
 				"      beacon_url: '/stagemonitor/public/rum',\n" +
 				"      log: null\n" +
 				"   });\n" +
-				"   BOOMR.addVar(\"requestId\", \"null\");\n" +
 				"   BOOMR.addVar(\"requestName\", \"testName\");\n" +
 				"   BOOMR.addVar(\"serverTime\", 0);\n" +
 				"</script></body></html>", servletResponse.getContentAsString());

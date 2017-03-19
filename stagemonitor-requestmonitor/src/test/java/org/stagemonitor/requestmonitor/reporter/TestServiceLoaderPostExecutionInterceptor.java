@@ -1,8 +1,11 @@
 package org.stagemonitor.requestmonitor.reporter;
 
-public class TestServiceLoaderPostExecutionInterceptor extends PostExecutionRequestTraceReporterInterceptor {
+import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
+import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanInterceptor;
+
+public class TestServiceLoaderPostExecutionInterceptor extends PostExecutionSpanInterceptor {
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
-		context.addProperty("serviceLoaderWorks", true);
+		context.getSpan().setTag("serviceLoaderWorks", true);
 	}
 }

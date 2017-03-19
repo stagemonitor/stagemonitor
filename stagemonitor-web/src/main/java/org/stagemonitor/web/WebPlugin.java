@@ -1,7 +1,27 @@
 package org.stagemonitor.web;
 
-import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
-import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.StagemonitorPlugin;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.configuration.converter.SetValueConverter;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.web.configuration.ConfigurationServlet;
+import org.stagemonitor.web.metrics.StagemonitorMetricsServlet;
+import org.stagemonitor.web.monitor.MonitoredHttpRequest;
+import org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter;
+import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
+import org.stagemonitor.web.monitor.rum.RumServlet;
+import org.stagemonitor.web.monitor.servlet.StagemonitorFileServlet;
+import org.stagemonitor.web.monitor.widget.SpanServlet;
+import org.stagemonitor.web.monitor.widget.WidgetServlet;
+import org.stagemonitor.web.session.SessionCounter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,29 +40,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletRegistration;
 import javax.servlet.http.HttpServletRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.converter.SetValueConverter;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.web.configuration.ConfigurationServlet;
-import org.stagemonitor.web.logging.MDCListener;
-import org.stagemonitor.web.metrics.StagemonitorMetricsServlet;
-import org.stagemonitor.web.monitor.MonitoredHttpRequest;
-import org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter;
-import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
-import org.stagemonitor.web.monitor.rum.RumServlet;
-import org.stagemonitor.web.monitor.servlet.StagemonitorFileServlet;
-import org.stagemonitor.web.monitor.widget.RequestTraceServlet;
-import org.stagemonitor.web.monitor.widget.WidgetServlet;
-import org.stagemonitor.web.session.SessionCounter;
+import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
+import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
 
 public class WebPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
 
@@ -85,8 +84,12 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.dynamic(true)
 			.label("Analyze user agent")
 			.description("Whether or not the user-agent header should be parsed and analyzed to get information " +
-					"about the browser, device type and operating system.")
-			.defaultValue(true)
+					"about the browser, device type and operating system. If you want to enable this option, you have " +
+					"to add a dependency on net.sf.uadetector:uadetector-resources:2014.10. As this library is no longer " +
+					"maintained, it is however recommended to use the Elasticsearch ingest user agent plugin. See " +
+					"https://www.elastic.co/guide/en/elasticsearch/plugins/master/ingest-user-agent.html")
+			.defaultValue(false)
+			.tags("deprecated")
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private ConfigurationOption<Collection<String>> excludeHeaders = ConfigurationOption.lowerStringsOption()
@@ -165,16 +168,6 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"/HEARTBEAT/"))
 			.configurationCategory(WEB_PLUGIN)
 			.build();
-	private final ConfigurationOption<Boolean> monitorOnlyForwardedRequests = ConfigurationOption.booleanOption()
-			.key("stagemonitor.web.monitorOnlyForwardedRequests")
-			.dynamic(true)
-			.label("Monitor only forwarded requests")
-			.description("Sometimes you only want to monitor forwarded requests, for example if you have a rewrite " +
-					"filter that translates a external URI (/a) to a internal URI (/b). If only /b should be monitored," +
-					"set the value to true.")
-			.defaultValue(false)
-			.configurationCategory(WEB_PLUGIN)
-			.build();
 	private final ConfigurationOption<String> metricsServletAllowedOrigin = ConfigurationOption.stringOption()
 			.key("stagemonitor.web.metricsServlet.allowedOrigin")
 			.dynamic(true)
@@ -219,8 +212,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.label("Request Exception Attributes")
 			.description("Defines the list of attribute names to check on the HttpServletRequest when searching for an exception. \n\n" +
 			             "Stagemonitor searches this list in order to see if any of these attributes are set on the request with " +
-					     "an Exception object and then records that information on the request trace. If your web framework " +
-			             "sets a different attribute outside of the defaults, you can add that attribute to this list to properly " +
+					"an Exception object and then records that information on the span. If your web framework " +
+					"sets a different attribute outside of the defaults, you can add that attribute to this list to properly " +
 					     "record the exception on the trace.")
 			.defaultValue(new LinkedHashSet<String>() {{
 				add("javax.servlet.error.exception");
@@ -234,12 +227,13 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.dynamic(true)
 			.label("Honor do not track header")
 			.description("When set to true, requests that include the dnt header won't be reported. " +
-					"Depending on your use case you might not be required to stop reporting request traces even " +
+					"Depending on your use case you might not be required to stop reporting spans even " +
 					"if dnt is set. See https://tools.ietf.org/html/draft-mayer-do-not-track-00#section-9.3")
 			.defaultValue(false)
 			.tags("privacy")
 			.configurationCategory(WEB_PLUGIN)
 			.build();
+	private SpanServlet spanServlet;
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
@@ -252,9 +246,10 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/ApplicationServer.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		}
+		spanServlet.onStagemonitorStarted();
 	}
 
 	@Override
@@ -305,10 +300,6 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 
 	public Collection<String> getExcludedRequestPaths() {
 		return excludedRequestPaths.getValue();
-	}
-
-	public boolean isMonitorOnlyForwardedRequests() {
-		return monitorOnlyForwardedRequests.getValue();
 	}
 
 	public String getMetricsServletAllowedOrigin() {
@@ -379,9 +370,10 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
 				.addMapping("/stagemonitor");
 
-		final ServletRegistration.Dynamic requestTraceServlet = ctx.addServlet(RequestTraceServlet.class.getSimpleName(), new RequestTraceServlet());
-		requestTraceServlet.addMapping("/stagemonitor/request-traces");
-		requestTraceServlet.setAsyncSupported(true);
+		this.spanServlet = new SpanServlet();
+		final ServletRegistration.Dynamic spanServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), this.spanServlet);
+		spanServlet.addMapping("/stagemonitor/spans");
+		spanServlet.setAsyncSupported(true);
 
 
 		final FilterRegistration.Dynamic securityFilter = ctx.addFilter(StagemonitorSecurityFilter.class.getSimpleName(), new StagemonitorSecurityFilter());
@@ -392,10 +384,9 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		securityFilter.setAsyncSupported(true);
 
 		final FilterRegistration.Dynamic monitorFilter = ctx.addFilter(HttpRequestMonitorFilter.class.getSimpleName(), new HttpRequestMonitorFilter());
-		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD), false, "/*");
+		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/*");
 		monitorFilter.setAsyncSupported(true);
 
-		ctx.addListener(MDCListener.class);
 		try {
 			ctx.addListener(SessionCounter.class);
 		} catch (IllegalArgumentException e) {

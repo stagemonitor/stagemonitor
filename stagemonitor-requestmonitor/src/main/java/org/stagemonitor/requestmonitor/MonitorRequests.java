@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 public @interface MonitorRequests {
 
 	/**
-	 * Customizes the {@link RequestTrace#name}.
+	 * Customizes {@link io.opentracing.Span#setOperationName(String)}.
 	 * <p/>
 	 * If not explicitly, the request name is set according to the {@link RequestMonitorPlugin#businessTransactionNamingStrategy}.
 	 *
@@ -29,7 +29,7 @@ public @interface MonitorRequests {
 	String requestName() default "";
 
 	/**
-	 * If set to true, the {@link RequestTrace#name} will be determined at runtime according to the
+	 * If set to true, {@link io.opentracing.Span#setOperationName(String)} will be determined at runtime
 	 * according to the {@link RequestMonitorPlugin#businessTransactionNamingStrategy}.
 	 * <p/>
 	 * This is a bit slower (nothing to worry about though) but the request is evaluated at runtime which means it

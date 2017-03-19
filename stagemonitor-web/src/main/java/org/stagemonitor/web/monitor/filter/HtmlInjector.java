@@ -1,12 +1,11 @@
 package org.stagemonitor.web.monitor.filter;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-
 import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * An SPI to inject content into all text/html documents
@@ -28,7 +27,7 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	/**
 	 * Implementations can return html snippets that are injected just before the closing body tag.
 	 * <p/>
-	 * <b>Note:</b> {@link org.stagemonitor.requestmonitor.RequestMonitor.RequestInformation#getRequestTrace()} may be null
+	 * <b>Note:</b> {@link SpanContextInformation#getSpan()} ()} may return null
 	 *
 	 * @param injectArguments
 	 * @return the code to inject into html documents just before the closing body tag
@@ -66,18 +65,18 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	}
 
 	public static class InjectArguments {
-		private final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation;
+		private final SpanContextInformation spanContext;
 		private String contentToInjectBeforeClosingBody;
 
 		/**
-		 * @param requestInformation information about the current request
+		 * @param spanContext information about the current request
 		 */
-		public InjectArguments(RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation) {
-			this.requestInformation = requestInformation;
+		public InjectArguments(SpanContextInformation spanContext) {
+			this.spanContext = spanContext;
 		}
 
-		public RequestMonitor.RequestInformation<HttpRequestTrace> getRequestInformation() {
-			return requestInformation;
+		public SpanContextInformation getSpanContext() {
+			return spanContext;
 		}
 
 		public void setContentToInjectBeforeClosingBody(String contentToInject) {

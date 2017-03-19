@@ -32,12 +32,9 @@ public class RequestMonitorPluginConfigurationTest {
 
 	@Test
 	public void testDefaultValues() {
-		assertEquals(0, config.getNoOfWarmupRequests());
-		assertEquals(0, config.getNoOfWarmupRequests());
-		assertEquals(true, config.isCollectRequestStats());
 		assertEquals(false, config.isCollectCpuTime());
 
-		assertEquals(1000000d, config.getOnlyCollectNCallTreesPerMinute(), 0);
-		assertEquals(false, config.isLogCallStacks());
+		assertEquals(1000000d, config.getProfilerRateLimitPerMinute(), 0);
+		assertEquals(false, config.isLogSpans());
 	}
 }

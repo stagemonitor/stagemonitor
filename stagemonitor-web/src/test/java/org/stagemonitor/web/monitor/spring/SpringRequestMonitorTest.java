@@ -1,13 +1,9 @@
 package org.stagemonitor.web.monitor.spring;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
@@ -18,37 +14,52 @@ import org.springframework.web.servlet.HandlerAdapter;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
+import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
+import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 
+import io.opentracing.tag.Tags;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
+import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
 
 public class SpringRequestMonitorTest {
 
@@ -62,6 +73,7 @@ public class SpringRequestMonitorTest {
 	private Metric2Registry registry = new Metric2Registry();
 	private HandlerMapping getRequestNameHandlerMapping;
 	private DispatcherServlet dispatcherServlet;
+	private Map<String, Object> tags = new HashMap<>();
 
 	// the purpose of this class is to obtain a instance to a Method,
 	// because Method objects can't be mocked as they are final
@@ -72,15 +84,24 @@ public class SpringRequestMonitorTest {
 
 	@Before
 	public void before() throws Exception {
-		getRequestNameHandlerMapping = createHandlerMapping(mvcRequest, TestController.class.getMethod("testGetRequestName"));
+		Stagemonitor.reset();
 		registry.removeMatching(Metric2Filter.ALL);
+		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
+		Stagemonitor.startMonitoring(new MeasurementSession("MonitoredHttpRequestTest", "testHost", "testInstance"));
+		getRequestNameHandlerMapping = createHandlerMapping(mvcRequest, TestController.class.getMethod("testGetRequestName"));
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
+		when(corePlugin.getMetricRegistry()).thenReturn(registry);
+		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1_000_000.0);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
 
@@ -95,6 +116,12 @@ public class SpringRequestMonitorTest {
 		final HandlerAdapter handlerAdapter = mock(HandlerAdapter.class);
 		when(handlerAdapter.supports(any())).thenReturn(true);
 		handlerAdapters.set(dispatcherServlet, Collections.singletonList(handlerAdapter));
+
+		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
+				configuration, registry, TagRecordingSpanEventListener.asList(tags),
+				new SamplePriorityDeterminingSpanEventListener(configuration), new ReportingSpanEventListener(configuration));
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 	}
 
 	private HandlerMapping createHandlerMapping(MockHttpServletRequest request, Method requestMappingMethod) throws Exception {
@@ -106,13 +133,8 @@ public class SpringRequestMonitorTest {
 		when(handlerMethod.getMethod()).thenReturn(requestMappingMethod);
 		doReturn(TestController.class).when(handlerMethod).getBeanType();
 		when(handlerExecutionChain.getHandler()).thenReturn(handlerMethod);
-		when(requestMappingHandlerMapping.getHandler(ArgumentMatchers.argThat(new ArgumentMatcher<HttpServletRequest>() {
-			@Override
-			public boolean matches(HttpServletRequest item) {
-				return item.getRequestURI().equals("/test/requestName");
-			}
-
-		}))).thenReturn(handlerExecutionChain);
+		when(requestMappingHandlerMapping.getHandler(ArgumentMatchers.argThat(item ->
+				item.getRequestURI().equals("/test/requestName")))).thenReturn(handlerExecutionChain);
 		return requestMappingHandlerMapping;
 	}
 
@@ -122,16 +144,14 @@ public class SpringRequestMonitorTest {
 
 		MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(mvcRequest);
 
-		final RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
+		final SpanContextInformation spanContext = requestMonitor.monitor(monitoredRequest);
 
-		assertEquals(1, requestInformation.getRequestTimer().getCount());
-		assertEquals("Test Get Request Name", requestInformation.getRequestName());
-		assertEquals("Test Get Request Name", requestInformation.getRequestTrace().getName());
-		assertEquals("/test/requestName", requestInformation.getRequestTrace().getUrl());
-		assertEquals("GET", requestInformation.getRequestTrace().getMethod());
-		Assert.assertNull(requestInformation.getExecutionResult());
+		assertEquals("Test Get Request Name", spanContext.getOperationName());
+		assertEquals(1, registry.timer(getTimerMetricName(spanContext.getOperationName())).getCount());
+		assertEquals("Test Get Request Name", spanContext.getOperationName());
+		assertEquals("/test/requestName", tags.get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET", tags.get("method"));
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
-		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 	}
 
 	@Test
@@ -140,14 +160,14 @@ public class SpringRequestMonitorTest {
 
 		final MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonMvcRequest);
 
-		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
+		SpanContextInformation spanContext = requestMonitor.monitor(monitoredRequest);
 
-		assertEquals("GET *.js", requestInformation.getRequestName());
-		assertEquals("GET *.js", requestInformation.getRequestTrace().getName());
+		assertEquals("GET *.js", spanContext.getOperationName());
+		assertEquals("GET *.js", spanContext.getOperationName());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		assertEquals(1, requestInformation.getRequestTimer().getCount());
-		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
+		assertEquals(1, registry.timer(getTimerMetricName(spanContext.getOperationName())).getCount());
 		verify(monitoredRequest, times(1)).getRequestName();
+		assertTrue(spanContext.isSampled());
 	}
 
 	@Test
@@ -156,26 +176,23 @@ public class SpringRequestMonitorTest {
 
 		final MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonMvcRequest);
 
-		RequestMonitor.RequestInformation<HttpRequestTrace> requestInformation = requestMonitor.monitor(monitoredRequest);
+		SpanContextInformation spanContext = requestMonitor.monitor(monitoredRequest);
 
-		assertNull(requestInformation.getRequestTrace().getName());
+		assertNull(spanContext.getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		verify(monitoredRequest, never()).onPostExecute(anyRequestInformation());
+		assertFalse(spanContext.isSampled());
 	}
 
-	private RequestMonitor.RequestInformation<HttpRequestTrace> anyRequestInformation() {
+	private SpanContextInformation anyRequestInformation() {
 		return any();
 	}
 
 	private MonitoredHttpRequest createMonitoredHttpRequest(HttpServletRequest request) throws Exception {
 		final StatusExposingByteCountingServletResponse response = mock(StatusExposingByteCountingServletResponse.class);
 		final FilterChain filterChain = mock(FilterChain.class);
-		doAnswer(new Answer() {
-			@Override
-			public Object answer(InvocationOnMock invocation) throws Throwable {
-				dispatcherServlet.service(request, response);
-				return null;
-			}
+		doAnswer(invocation -> {
+			dispatcherServlet.service(request, response);
+			return null;
 		}).when(filterChain).doFilter(any(), any());
 		return Mockito.spy(new MonitoredHttpRequest(request, response, filterChain, configuration));
 	}
@@ -183,11 +200,13 @@ public class SpringRequestMonitorTest {
 	@Test
 	public void testGetRequestNameFromHandler() throws Exception {
 		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
+		final SpanContextInformation spanContext = SpanContextInformation.getCurrent();
+		assertNotNull(spanContext);
 		try {
 			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());
-			assertEquals("Test Get Request Name", RequestMonitor.get().getRequestTrace().getName());
 		} finally {
 			requestMonitor.monitorStop();
 		}
+		assertEquals("Test Get Request Name", spanContext.getOperationName());
 	}
 }

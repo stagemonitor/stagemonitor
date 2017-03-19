@@ -13,7 +13,7 @@ dependencies {
 
 	testCompile 'org.eclipse.jetty:jetty-server:9.3.13.v20161014'
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
-	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
+	testCompile "org.elasticsearch.client:transport:$esVersion"
 }
 
 processResources {

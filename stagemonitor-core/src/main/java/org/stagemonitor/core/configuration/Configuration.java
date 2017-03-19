@@ -139,12 +139,20 @@ public class Configuration {
 		configurationOption.setConfiguration(this);
 		configurationOption.setConfigurationSources(configurationSources);
 
-		if (configurationOptionsByKey.containsKey(configurationOption.getKey())) {
-			throw new IllegalArgumentException(String.format("The configuration key %s is registered twice. Once for %s and once for %s.",
-					configurationOption.getKey(), configurationOptionsByKey.get(configurationOption.getKey()).getLabel(), configurationOption.getLabel()));
+		final String key = configurationOption.getKey();
+		addConfigurationOptionByKey(configurationOption, key);
+		for (String alternateKey : configurationOption.getAliasKeys()) {
+			addConfigurationOptionByKey(configurationOption, alternateKey);
 		}
-		configurationOptionsByKey.put(configurationOption.getKey(), configurationOption);
 		addConfigurationOptionByCategory(configurationOption.getConfigurationCategory(), configurationOption);
+	}
+
+	private void addConfigurationOptionByKey(ConfigurationOption<?> configurationOption, String key) {
+		if (configurationOptionsByKey.containsKey(key)) {
+			throw new IllegalArgumentException(String.format("The configuration key %s is registered twice. Once for %s and once for %s.",
+					key, configurationOptionsByKey.get(key).getLabel(), configurationOption.getLabel()));
+		}
+		configurationOptionsByKey.put(key, configurationOption);
 	}
 
 	private void addConfigurationOptionByCategory(String configurationCategory, final ConfigurationOption<?> configurationOption) {

@@ -1,5 +1,7 @@
 package org.stagemonitor.web.monitor.spring;
 
+import com.uber.jaeger.context.TracingUtils;
+
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -10,7 +12,6 @@ import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -36,12 +37,12 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	}
 
 	public static void setRequestNameByHandler(Object handler) {
-		if (RequestMonitor.get().getRequestTrace() != null) {
+		if (!TracingUtils.getTraceContext().isEmpty()) {
 			final BusinessTransactionNamingStrategy namingStrategy = Stagemonitor.getPlugin(RequestMonitorPlugin.class)
 					.getBusinessTransactionNamingStrategy();
 			final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
 			if (requestNameFromHandler != null) {
-				RequestMonitor.get().getRequestTrace().setName(requestNameFromHandler);
+				RequestMonitorPlugin.getSpan().setOperationName(requestNameFromHandler);
 			}
 		}
 	}

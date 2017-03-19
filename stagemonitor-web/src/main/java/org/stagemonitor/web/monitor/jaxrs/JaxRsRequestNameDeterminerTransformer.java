@@ -1,6 +1,14 @@
 package org.stagemonitor.web.monitor.jaxrs;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
+
+import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,15 +20,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
-import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestTrace;
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 
 public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -50,9 +50,6 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 
 	@Advice.OnMethodEnter(inline = false)
 	public static void setRequestName(@AbstractMonitorRequestsTransformer.RequestName String requestName) {
-		final RequestTrace request = RequestMonitor.get().getRequestTrace();
-		if (request != null) {
-			request.setName(requestName);
-		}
+		RequestMonitorPlugin.getSpan().setOperationName(requestName);
 	}
 }

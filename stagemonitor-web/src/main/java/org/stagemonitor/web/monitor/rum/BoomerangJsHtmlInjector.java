@@ -1,9 +1,11 @@
 package org.stagemonitor.web.monitor.rum;
 
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.web.WebPlugin;
-import org.stagemonitor.web.monitor.HttpRequestTrace;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
+
+import java.util.concurrent.TimeUnit;
 
 public class BoomerangJsHtmlInjector extends HtmlInjector {
 
@@ -28,7 +30,6 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 				beaconUrl +
 				"      log: null\n" +
 				"   });\n" +
-				"   BOOMR.addVar(\"requestId\", \"${requestId}\");\n" +
 				"   BOOMR.addVar(\"requestName\", \"${requestName}\");\n" +
 				"   BOOMR.addVar(\"serverTime\", ${serverTime});\n" +
 				"</script>";
@@ -43,14 +44,13 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 
 	@Override
 	public void injectHtml(HtmlInjector.InjectArguments injectArguments) {
-		if (injectArguments.getRequestInformation() == null || injectArguments.getRequestInformation().getRequestTrace() == null) {
+		final SpanContextInformation spanContext = injectArguments.getSpanContext();
+		if (spanContext == null || spanContext.getSpan() == null) {
 			return;
 		}
-		final HttpRequestTrace requestTrace = injectArguments.getRequestInformation().getRequestTrace();
 		injectArguments.setContentToInjectBeforeClosingBody(boomerangTemplate
-				.replace("${requestId}", String.valueOf(requestTrace.getId()))
-				.replace("${requestName}", String.valueOf(requestTrace.getName()))
-				.replace("${serverTime}", Long.toString(requestTrace.getExecutionTime())));
+				.replace("${requestName}", String.valueOf(spanContext.getOperationName()))
+				.replace("${serverTime}", Long.toString(TimeUnit.NANOSECONDS.toMillis(spanContext.getDurationNanos()))));
 	}
 
 }

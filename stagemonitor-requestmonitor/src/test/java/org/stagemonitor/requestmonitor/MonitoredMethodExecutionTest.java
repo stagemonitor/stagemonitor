@@ -1,7 +1,25 @@
 package org.stagemonitor.requestmonitor;
 
+import com.uber.jaeger.context.TracingUtils;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -9,62 +27,68 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-import java.util.Map;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-
 public class MonitoredMethodExecutionTest {
 
-	private RequestMonitor.RequestInformation<RequestTrace> requestInformation1;
-	private RequestMonitor.RequestInformation<RequestTrace> requestInformation2;
-	private RequestMonitor.RequestInformation<RequestTrace> requestInformation3;
+	private SpanContextInformation spanContext1;
+	private SpanContextInformation spanContext2;
+	private SpanContextInformation spanContext3;
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
 	private Configuration configuration;
+	private Map<String, Object> tags;
 
 	@Before
 	public void clearState() {
 		CorePlugin corePlugin = mock(CorePlugin.class);
 		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+
 		configuration = mock(Configuration.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 
-		when(requestMonitorPlugin.getNoOfWarmupRequests()).thenReturn(0);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-		when(requestMonitorPlugin.isCollectRequestStats()).thenReturn(true);
-		requestInformation1 = requestInformation2 = requestInformation3 = null;
-		testObject = new TestObject(new RequestMonitor(configuration, registry));
+		when(corePlugin.getMetricRegistry()).thenReturn(registry);
+		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
+
+		spanContext1 = spanContext2 = spanContext3 = null;
+		final RequestMonitor requestMonitor = new RequestMonitor(configuration, registry);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+
+		tags = new HashMap<>();
+		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(), configuration, registry,
+				TagRecordingSpanEventListener.asList(tags),
+				new SamplePriorityDeterminingSpanEventListener(configuration), new ReportingSpanEventListener(configuration));
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+
+		testObject = new TestObject(requestMonitor);
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 
 	@Test
 	public void testDoubleForwarding() throws Exception {
 		testObject.monitored1();
-		assertEquals(1, requestInformation1.getExecutionResult());
-		assertFalse(requestInformation1.isForwarded());
-		assertEquals("monitored1()", requestInformation1.requestTrace.getName());
-		final Map<String, String> parameters = requestInformation1.requestTrace.getParameters();
-		assertEquals(parameters.toString(), "1", parameters.get("arg0"));
-		assertEquals(parameters.toString(), "test", parameters.get("arg1"));
-		assertTrue(requestInformation2.isForwarded());
-		assertTrue(requestInformation3.isForwarded());
+		assertEquals("monitored1()", spanContext1.getOperationName());
+		assertEquals(tags.toString(), "1", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg0"));
+		assertEquals(tags.toString(), "test", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg1"));
 
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
-		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
-		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored3()").layer("All").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
+		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored3()").layer("All").build()));
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "notMonitored()").layer("All").build()));
 	}
 
 	@Test
 	public void testNormalForwarding() throws Exception {
 		testObject.monitored3();
-		assertEquals(1, requestInformation3.getExecutionResult());
 
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
@@ -79,42 +103,24 @@ public class MonitoredMethodExecutionTest {
 			this.requestMonitor = requestMonitor;
 		}
 
-		private int monitored1() throws Exception {
-			requestInformation1 = requestMonitor.monitor(
-					new MonitoredMethodRequest(configuration, "monitored1()", new MonitoredMethodRequest.MethodExecution() {
-						@Override
-						public Object execute() throws Exception {
-							return monitored2();
-						}
-					}, MetricsReporterTestHelper.<String, Object>map("arg0", 1).add("arg1", "test")));
-			return (Integer) requestInformation1.getExecutionResult();
+		private void monitored1() throws Exception {
+			spanContext1 = requestMonitor.monitor(
+					new MonitoredMethodRequest(configuration, "monitored1()", this::monitored2, MetricsReporterTestHelper.<String, Object>map("arg0", 1).add("arg1", "test")));
 		}
 
-		private int monitored2() throws Exception {
-			requestInformation2 = requestMonitor.monitor(
-					new MonitoredMethodRequest(configuration, "monitored2()", new MonitoredMethodRequest.MethodExecution() {
-						@Override
-						public Object execute() throws Exception {
-							return monitored3();
-						}
-					}));
-			return (Integer) requestInformation2.getExecutionResult();
+		private void monitored2() throws Exception {
+			spanContext2 = requestMonitor.monitor(
+					new MonitoredMethodRequest(configuration, "monitored2()", this::monitored3));
 		}
 
-		private int monitored3() throws Exception {
-			requestInformation3 = requestMonitor.monitor(
-					new MonitoredMethodRequest(configuration, "monitored3()", new MonitoredMethodRequest.MethodExecution() {
-						@Override
-						public Object execute() throws Exception {
-							return notMonitored();
-						}
-					}));
-			System.out.println(requestInformation3);
-			return (Integer) requestInformation3.getExecutionResult();
+		private void monitored3() throws Exception {
+			spanContext3 = requestMonitor.monitor(
+					new MonitoredMethodRequest(configuration, "monitored3()", this::notMonitored));
 		}
 
 		private int notMonitored() {
 			return 1;
 		}
 	}
+
 }

@@ -7,7 +7,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.CompletedFuture;
 
 import java.util.Arrays;
 
@@ -58,8 +57,8 @@ public class StagemonitorTest {
 		Stagemonitor.reset();
 
 		final MeasurementSession measurementSession = new MeasurementSession("StagemonitorTest", "testHost", "testInstance");
-		Stagemonitor.startMonitoring(measurementSession).get();
-		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest2", "testHost2", "testInstance2")).get();
+		Stagemonitor.startMonitoring(measurementSession);
+		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest2", "testHost2", "testInstance2"));
 
 		assertTrue(Stagemonitor.isStarted());
 		assertTrue(Stagemonitor.getMeasurementSession().isInitialized());
@@ -73,7 +72,7 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(false);
 
 		final MeasurementSession measurementSession = new MeasurementSession("StagemonitorTest", "testHost", "testInstance");
-		Stagemonitor.startMonitoring(measurementSession).get();
+		Stagemonitor.startMonitoring(measurementSession);
 
 		assertTrue(Stagemonitor.isDisabled());
 		assertFalse(Stagemonitor.isStarted());
@@ -87,7 +86,7 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getDisabledPlugins()).thenReturn(Arrays.asList("TestExceptionPlugin"));
 
-		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance")).get();
+		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance"));
 
 		verify(logger).info("Initializing plugin {}", "TestPlugin");
 		verify(logger).info("Not initializing disabled plugin {}", "TestExceptionPlugin");
@@ -99,20 +98,9 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 
 		final MeasurementSession measurementSession = new MeasurementSession(null, "testHost", "testInstance");
-		Stagemonitor.startMonitoring(measurementSession).get();
+		Stagemonitor.startMonitoring(measurementSession);
 
 		assertFalse(Stagemonitor.isStarted());
-	}
-
-	@Test
-	public void testNoAsyncInitByDefault() throws Exception {
-		assertTrue(Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance")) instanceof CompletedFuture);
-	}
-
-	@Test
-	public void testAsyncInit() throws Exception {
-		when(corePlugin.isInitAsync()).thenReturn(true);
-		assertFalse(Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance")) instanceof CompletedFuture);
 	}
 
 }

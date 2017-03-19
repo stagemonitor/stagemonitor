@@ -258,7 +258,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.elasticsearch.url")
 			.dynamic(true)
 			.label("Elasticsearch URL")
-			.description("A comma separated list of the Elasticsearch URLs that store the request traces and metrics. " +
+			.description("A comma separated list of the Elasticsearch URLs that store spans and metrics. " +
 					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com.")
 			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
@@ -407,7 +407,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Thread Pool Queue Capacity Limit")
 			.description("Sets a limit to the number of pending tasks in the ExecutorServices stagemonitor uses. " +
-					"These are thread pools that are used for example to report request traces to elasticsearch. " +
+					"These are thread pools that are used for example to report spans to elasticsearch. " +
 					"If elasticsearch is unreachable or your application encounters a spike in incoming requests this limit could be reached. " +
 					"It is used to prevent the queue from growing indefinitely. ")
 			.defaultValue(1000)
@@ -424,25 +424,13 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.build();
-	private final ConfigurationOption<Boolean> initAsync = ConfigurationOption.booleanOption()
-			.key("stagemonitor.init.async")
-			.dynamic(false)
-			.label("Async initialize stagemonitor")
-			.description("When set to true, stagemonitor initializes asynchronously which improves the startup time of the application. " +
-					"In case when `stagemonitor.instanceName` is not set explicitly but should be read from the first " +
-					"request, setting this to true improves the performance of the first request.\n" +
-					"WARNING: On JBoss this might lead to deadlocks on startup. See https://github.com/stagemonitor/stagemonitor/issues/179 for more details.")
-			.defaultValue(false)
-			.configurationCategory(CORE_PLUGIN_NAME)
-			.tags("performance")
-			.build();
 	private final ConfigurationOption<Integer> elasticsearchAvailabilityCheckPeriodSec = ConfigurationOption.integerOption()
 			.key("stagemonitor.elasticsearch.availabilityCheckPeriodSec")
 			.dynamic(false)
 			.label("Elasticsearch availability check period (sec)")
 			.description("When set to a value > 0 stagemonitor periodically checks if Elasticsearch is available. " +
-					"When not available, stagemonitor won't try to send request traces to Elasticsearch which would " +
-					"fail anyway. This reduces heap usage as the request traces won't be queued up. " +
+					"When not available, stagemonitor won't try send documents to Elasticsearch which would " +
+					"fail anyway. This reduces heap usage as the documents won't be queued up. " +
 					"It also avoids the logging of warnings when the queue is filled up to the limit (see '" + POOLS_QUEUE_CAPACITY_LIMIT_KEY + "')")
 			.defaultValue(5)
 			.configurationCategory(CORE_PLUGIN_NAME)
@@ -458,6 +446,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private IndexSelector indexSelector = new IndexSelector(new Clock.UserTimeClock());
 	private Metric2Registry metricRegistry;
 	private AtomicInteger accessesToElasticsearchUrl = new AtomicInteger();
+	private boolean initialized;
 
 	public CorePlugin() {
 	}
@@ -492,6 +481,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchCustomMetricsDashboard.json");
 		}
 		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
+		initialized = true;
 	}
 
 	void registerReporters(Metric2Registry metric2Registry, Configuration configuration, MeasurementSession measurementSession) {
@@ -561,7 +551,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
 									   final MeasurementSession measurementSession) {
 		if (isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("KibanaConfig.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("stagemonitor-metrics-kibana-index-pattern.bulk");
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrls(), reportingInterval);
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
 					metricsIndexTemplate.getValue(), moveToColdNodesAfterDays.getValue(), getNumberOfReplicas(), getNumberOfShards());
@@ -834,8 +824,8 @@ public class CorePlugin extends StagemonitorPlugin {
 		return exportClassesWithName.getValue();
 	}
 
-	public boolean isInitAsync() {
-		return initAsync.getValue();
+	public boolean isInitialized() {
+		return initialized;
 	}
 
 	public Integer getNumberOfReplicas() {

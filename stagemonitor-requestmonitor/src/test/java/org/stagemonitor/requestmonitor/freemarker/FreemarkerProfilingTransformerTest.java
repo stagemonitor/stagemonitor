@@ -1,9 +1,13 @@
 package org.stagemonitor.requestmonitor.freemarker;
 
+import com.uber.jaeger.context.TracingUtils;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
@@ -15,8 +19,19 @@ import java.util.Collections;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class FreemarkerProfilingTransformerTest {
+
+	@Before
+	public void setUp() throws Exception {
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
+	}
 
 	@Test
 	public void testFreemarkerProfiling() throws Exception {

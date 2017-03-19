@@ -22,17 +22,10 @@ function renderRequestTab(requestTrace) {
 	function processRequestsMetrics(requestData) {
 		var exceededThreshold = function (key, value) {
 			switch (key) {
-				case "externalRequestStats": {
-					var executionCountDB = 0;
-					for (var i = 0; i < value.length; i++) {
-						var externalRequestStats = value[i];
-						if (externalRequestStats.requestType == "jdbc") {
-							executionCountDB = externalRequestStats.executionCount;
-						}
-					}
-					return executionCountDB > localStorage.getItem("widget-settings-db-count-threshold");
+				case "external_requests.jdbc.count": {
+					return value > localStorage.getItem("widget-settings-db-count-threshold");
 				}
-				case "executionTime":
+				case "duration_ms":
 					return value > localStorage.getItem("widget-settings-execution-threshold-milliseconds");
 				case "error":
 					return value && localStorage.getItem("widget-settings-notify-on-error") != "false";
@@ -43,12 +36,12 @@ function renderRequestTab(requestTrace) {
 
 		var commonNames = {
 			"name": {name: "Request name", description: "Usecase / Request verb and path"},
-			"executionTime": {name: "Server execution time in ms", description: "The time in ms it took to process the request in the server."},
-			"executionTimeCpu": {name: "Execution time for the CPU", description: "The amount of time in ms it took the CPU to process the request."},
+			"duration_ms": {name: "Server execution time in ms", description: "The time in ms it took to process the request in the server."},
+			"duration_cpu_ms": {name: "Execution time for the CPU", description: "The amount of time in ms it took the CPU to process the request."},
 			"error": {name: "Error", description: "true, if there was an error while processing the request, false otherwise."},
-			"exceptionClass": {name: "Exception class", description: "The class of the thrown exception. (Only present, if there was a exception)"},
-			"exceptionMessage": {name: "Exception message", description: "The message of the thrown exception. (Only present, if there was a exception)"},
-			"exceptionStackTrace": {name: "Exception stack trace", description: ""},
+			"exception.class": {name: "Exception class", description: "The class of the thrown exception. (Only present, if there was a exception)"},
+			"exception.message": {name: "Exception message", description: "The message of the thrown exception. (Only present, if there was a exception)"},
+			"exception.stack_trace": {name: "Exception stack trace", description: ""},
 			"stackTrace": {name: "Stacktrace", descrption: "The full stack trace of the thrown exception. (Only present, if there was a exception)"},
 			"parameters": {name: "Parameters", description: "The query sting of the request. You can obfuscate sensitive parameters.", formatter: function(params) {
 				var value = "";
@@ -58,8 +51,8 @@ function renderRequestTab(requestTrace) {
 				return value.substring(2);
 			}},
 			"clientIp": {name: "Client IP", description: "The IP of the client who initiated the HTTP request."},
-			"url": {name: "URL", description: "The requested URL."},
-			"statusCode": {name: "Status code", description: "The HTTP status code of a request."},
+			"http.url": {name: "URL", description: "The requested URL."},
+			"http.status_code": {name: "Status code", description: "The HTTP status code of a request."},
 			"method": {name: "Method", description: "The HTTP method of the request."},
 			"@timestamp": {name: "Timestamp", description: "The date and time the request entered the server."},
 			"application": {name: "Application name", description: "The name of the application that handled the request. This value is obtained from the display-name of web.xml. Alternatively, you can use the stagemonitor.applicationName property of the stagemonitor.properties configuration file."},
@@ -79,14 +72,25 @@ function renderRequestTab(requestTrace) {
 				return value;
 			}}
 		};
-		var excludedProperties = ["callStackJson", "headers", "userAgent", "pageLoadTime"];
+		var excludedProperties = ["call_tree_json", "http.headers", "user_agent", "pageLoadTime", "jaeger"];
 		var metrics = [];
-		for (var key in requestData) {
-			var isKeyIncluded = excludedProperties.indexOf(key) === -1;
-			if (isKeyIncluded) {
+		var flatRequestData = dotify(requestData);
+		for (var key in flatRequestData) {
+
+			var isKeyIncluded = true;
+			for (var i = 0; i < excludedProperties.length; i++) {
+				var excludedProperty = excludedProperties[i];
+				if (key.startsWith(excludedProperty)) {
+					isKeyIncluded = false;
+					break;
+				}
+			}
+			if (isKeyIncluded && flatRequestData[key] != null) {
 				var nameAndDescription = commonNames[key] || {name: key, description: ""};
-				var valueFormatter = nameAndDescription.formatter || function(val) { return val.toString(); };
-				var thresholdExceeded = exceededThreshold(key, requestData[key]);
+				var valueFormatter = nameAndDescription.formatter || function(val) {
+					return val.toString();
+				};
+				var thresholdExceeded = exceededThreshold(key, flatRequestData[key]);
 				if (thresholdExceeded) {
 					thresholdExceededGlobal = true;
 				}
@@ -95,16 +99,32 @@ function renderRequestTab(requestTrace) {
 					key: key,
 					name: nameAndDescription.name,
 					description: nameAndDescription.description,
-					value: valueFormatter(requestData[key]),
+					value: valueFormatter(flatRequestData[key]),
 					exceededThreshold: thresholdExceeded
 				});
 			}
 		}
 		return {
 			metrics: metrics,
-			userAgent: requestData["userAgent"],
-			headers: requestData["headers"]
+			userAgent: requestData.user_agent,
+			headers: (requestData.http || {}).headers
 		};
+	}
+
+	function dotify(obj) {
+		var res = {};
+		(function recurse(obj, current) {
+			for(var key in obj) {
+				var value = obj[key];
+				var newKey = (current ? current + "." + key : key);  // joined key with dot
+				if(value && typeof value === "object") {
+					recurse(value, newKey);  // it's a nested object, so do it again
+				} else {
+					res[newKey] = value;  // it's not an object, so set the property
+				}
+			}
+		})(obj);
+		return res;
 	}
 
 	stagemonitor.thresholdExceeded |= thresholdExceededGlobal;

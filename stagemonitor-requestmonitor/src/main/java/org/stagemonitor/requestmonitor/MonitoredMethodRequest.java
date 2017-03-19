@@ -1,16 +1,22 @@
 package org.stagemonitor.requestmonitor;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
-public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import io.opentracing.Span;
+import io.opentracing.Tracer;
+import io.opentracing.tag.Tags;
+
+public class MonitoredMethodRequest extends MonitoredRequest {
 
 	private final String methodSignature;
 	private final MethodExecution methodExecution;
-	private final Map<String, Object> parameters;
+	private final Map<String, String> safeParameters;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 
 	public MonitoredMethodRequest(Configuration configuration, String methodSignature, MethodExecution methodExecution) {
@@ -21,71 +27,52 @@ public class MonitoredMethodRequest implements MonitoredRequest<RequestTrace> {
 		this.requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		this.methodSignature = methodSignature;
 		this.methodExecution = methodExecution;
-		this.parameters = parameters;
+		this.safeParameters = getSafeParameterMap(parameters);
 	}
 
-	@Override
-	public String getInstanceName() {
-		return null;
-	}
-
-	@Override
-	public RequestTrace createRequestTrace() {
-		RequestTrace requestTrace = new RequestTrace(UUID.randomUUID().toString());
-		requestTrace.setName(methodSignature);
-		if (parameters != null && parameters.size() > 0) {
-			Map<String, String> params = new LinkedHashMap<String, String>();
-			for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-				String valueAsString;
-				try {
-					valueAsString = String.valueOf(entry.getValue());
-				}
-				catch (Exception e) {
-					valueAsString = "[unavailable (" + e.getMessage() + ")]";
-				}
-				params.put(entry.getKey(), valueAsString);
-			}
-			requestTrace.setParameters(RequestMonitorPlugin.getSafeParameterMap(params, requestMonitorPlugin.getConfidentialParameters()));
+	private Map<String, String> getSafeParameterMap(Map<String, Object> parameters) {
+		if (parameters == null) {
+			return null;
 		}
-		return requestTrace;
+		Map<String, String> params = new LinkedHashMap<String, String>();
+		for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+			String valueAsString;
+			try {
+				valueAsString = String.valueOf(entry.getValue());
+			}
+			catch (Exception e) {
+				valueAsString = "[unavailable (" + e.getMessage() + ")]";
+			}
+			params.put(entry.getKey(), valueAsString);
+		}
+		return RequestMonitorPlugin.getSafeParameterMap(params, requestMonitorPlugin.getConfidentialParameters());
 	}
 
 	@Override
-	public Object execute() throws Exception {
-		return methodExecution.execute();
+	public Span createSpan() {
+		final Tracer tracer = requestMonitorPlugin.getTracer();
+		final Span span;
+		if (!TracingUtils.getTraceContext().isEmpty()) {
+			span = tracer.buildSpan(methodSignature)
+					.asChildOf(TracingUtils.getTraceContext().getCurrentSpan())
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+					.start();
+		} else {
+			span = tracer.buildSpan(methodSignature)
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+					.start();
+		}
+		SpanUtils.setParameters(span, safeParameters);
+		span.setTag(SpanUtils.OPERATION_TYPE, "method_invocation");
+		return span;
 	}
 
 	@Override
-	public void onPostExecute(RequestMonitor.RequestInformation<RequestTrace> requestTrace) {
-	}
-
-	/**
-	 * In a Method execution context, we only want to monitor the topmost monitored (forwarding) method call.
-	 * <p/>
-	 * Example:<br/>
-	 * Suppose, we have three methods: monitored1(), monitored2() and notMonitored().
-	 * <pre><code>
-	 * public void monitored1() {
-	 *     monitored2();
-	 * }
-	 * public void monitored2() {
-	 *     notMonitored();
-	 * }
-	 * public void notMonitored() {}
-	 * </code></pre>
-	 * The first two Methods are monitored with a {@link RequestMonitor}.<br/>
-	 * If method1() is called, we only want to collect metrics for method1() and not for method2().<br/>
-	 * If method2() is called, we want to collect metrics for that method.<br/>
-	 * If notMonitored() is called directly, we don't want to collect metrics.
-	 *
-	 * @return false
-	 */
-	@Override
-	public boolean isMonitorForwardedExecutions() {
-		return false;
+	public void execute() throws Exception {
+		methodExecution.execute();
 	}
 
 	public interface MethodExecution {
-		Object execute() throws Exception;
+		void execute() throws Exception;
 	}
 }

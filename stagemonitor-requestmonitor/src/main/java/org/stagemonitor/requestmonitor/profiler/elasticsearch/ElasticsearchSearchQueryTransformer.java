@@ -1,11 +1,11 @@
 package org.stagemonitor.requestmonitor.profiler.elasticsearch;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+
+import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchType;
@@ -14,13 +14,15 @@ import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 public class ElasticsearchSearchQueryTransformer extends StagemonitorByteBuddyTransformer {
 
-	private static final String SEARCH_REQUEST_BUILDER_CLASSNAME = "org.elasticsearch.action.search.SearchRequestBuilder";
+	private static final String ACTION_REQUEST_BUILDER_CLASSNAME = "org.elasticsearch.action.ActionRequestBuilder";
 
 	@Override
 	public ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
-		return named(SEARCH_REQUEST_BUILDER_CLASSNAME);
+		return named(ACTION_REQUEST_BUILDER_CLASSNAME);
 	}
 
 	@Override
@@ -28,14 +30,16 @@ public class ElasticsearchSearchQueryTransformer extends StagemonitorByteBuddyTr
 		return named("beforeExecute").or(named("doExecute"));
 	}
 
-	@Advice.OnMethodEnter
-	private static void addIOCall(@Advice.This SearchRequestBuilder searchRequestBuilder) {
-		Profiler.addIOCall(ElasticsearchSearchQueryTransformer.getSearchRequestAsString(searchRequestBuilder), 0L);
+	@Advice.OnMethodEnter(inline = false)
+	public static void addIOCall(@Advice.This ActionRequestBuilder actionRequestBuilder) {
+		if (actionRequestBuilder instanceof SearchRequestBuilder) {
+			Profiler.addIOCall(ElasticsearchSearchQueryTransformer.getSearchRequestAsString((SearchRequestBuilder) actionRequestBuilder), 0L);
+		}
 	}
 
 	@Override
 	public boolean isActive() {
-		return ClassUtils.isPresent(SEARCH_REQUEST_BUILDER_CLASSNAME);
+		return ClassUtils.isPresent(ACTION_REQUEST_BUILDER_CLASSNAME);
 	}
 
 	public static String getSearchRequestAsString(SearchRequestBuilder searchRequestBuilder) {

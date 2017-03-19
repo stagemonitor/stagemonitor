@@ -1,11 +1,10 @@
 package org.stagemonitor.jvm;
 
 
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -15,6 +14,8 @@ import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Set;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.metrics.metrics2.MetricNameConverter;
+
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class JvmPlugin extends StagemonitorPlugin {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -65,7 +66,7 @@ public class JvmPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteJvmOverview.json");
 		}
 		if (config.isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/JvmDashboard.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/JVM.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchJvm.json");
 		}
 	}
