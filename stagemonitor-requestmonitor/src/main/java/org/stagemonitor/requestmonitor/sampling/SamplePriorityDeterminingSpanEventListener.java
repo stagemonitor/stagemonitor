@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
@@ -23,12 +22,10 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	private final Collection<PostExecutionSpanInterceptor> postInterceptors =
 			new CopyOnWriteArrayList<PostExecutionSpanInterceptor>();
 	private final Configuration configuration;
-	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final Metric2Registry metricRegistry;
 
 	public SamplePriorityDeterminingSpanEventListener(Configuration configuration, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
-		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		this.metricRegistry = metricRegistry;
 		registerPreInterceptors();
 		registerPostInterceptors();
@@ -56,8 +53,8 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
-		final SpanContextInformation spanContext = requestMonitorPlugin.getRequestMonitor().getSpanContext();
-		if (!spanContext.isReport()) {
+		final SpanContextInformation spanContext = SpanContextInformation.forSpan(spanWrapper);
+		if (!spanContext.isSampled()) {
 			return;
 		}
 
@@ -72,15 +69,15 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 		}
 
 		if (!context.isReport()) {
-			spanContext.setReport(false);
+			spanContext.setSampled(false);
 			Tags.SAMPLING_PRIORITY.set(spanWrapper, (short) 0);
 		}
 	}
 
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-		final SpanContextInformation info = requestMonitorPlugin.getRequestMonitor().getSpanContext();
-		if (!info.isReport()) {
+		final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
+		if (!info.isSampled()) {
 			return;
 		}
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, info, metricRegistry);
@@ -93,7 +90,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 		}
 		info.setPostExecutionInterceptorContext(context);
 		if (!context.isReport()) {
-			info.setReport(false);
+			info.setSampled(false);
 			Tags.SAMPLING_PRIORITY.set(spanWrapper.getDelegate(), (short) 0);
 		}
 	}

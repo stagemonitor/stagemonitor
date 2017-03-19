@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.tracing.wrapper;
 
 import io.opentracing.tag.Tags;
 
-public class ClientServerAwareSpanEventListener extends SpanEventListener {
+public class ClientServerAwareSpanEventListener extends AbstractSpanEventListener {
 
 	protected boolean isClient;
 	protected boolean isRPC;

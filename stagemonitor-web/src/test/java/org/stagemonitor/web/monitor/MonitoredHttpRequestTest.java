@@ -12,9 +12,8 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
@@ -38,21 +37,19 @@ import static org.mockito.Mockito.when;
 
 public class MonitoredHttpRequestTest {
 
-	private SpanContextInformation spanContextInformation;
 	private Configuration configuration;
 	private Map<String, Object> tags = new HashMap<>();
 	private String operationName;
 
 	@Before
 	public void setUp() throws Exception {
-		spanContextInformation = new SpanContextInformation();
 		configuration = mock(Configuration.class);
 		final RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		final WebPlugin webPlugin = new WebPlugin();
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		final List<SpanEventListenerFactory> spanEventListenerFactories = TagRecordingSpanEventListener.asList(tags);
-		spanEventListenerFactories.add(() -> new SpanEventListener() {
+		spanEventListenerFactories.add(() -> new AbstractSpanEventListener() {
 			@Override
 			public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 				MonitoredHttpRequestTest.this.operationName = operationName;
@@ -63,7 +60,6 @@ public class MonitoredHttpRequestTest {
 				spanEventListenerFactories));
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
-		when(requestMonitor.getSpanContext()).thenReturn(spanContextInformation);
 	}
 
 	@After
@@ -96,7 +92,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = monitoredHttpRequest.createSpan(spanContextInformation);
+		final Span span = monitoredHttpRequest.createSpan();
 		span.finish();
 		assertEquals("/test.js", tags.get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET *.js", operationName);
@@ -119,7 +115,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan(spanContextInformation);
+		monitoredHttpRequest.createSpan();
 		assertEquals("www.github.com", tags.get("http.referring_site"));
 	}
 
@@ -131,7 +127,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan(spanContextInformation);
+		monitoredHttpRequest.createSpan();
 		assertNull(tags.get("http.referring_site"));
 	}
 

@@ -42,7 +42,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 
 		final SpanContextInformation spanContext = requestMonitor.monitor(createMonitoredRequest());
 
-		assertNull(spanContext.getSpan());
+		assertNull(spanContext);
 	}
 
 	@Test
@@ -137,7 +137,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 			}
 		});
 
-		assertFalse(requestMonitor.getSpanContext().isReport());
+		assertFalse(SpanContextInformation.getCurrent().isSampled());
 
 		requestMonitor.monitorStop();
 	}

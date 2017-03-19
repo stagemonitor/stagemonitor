@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.jaeger.RateLimitingPreExecutionInterceptor;
@@ -35,7 +36,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
-		final SpanContextInformation contextInfo = requestMonitorPlugin.getRequestMonitor().getSpanContext();
+		final SpanContextInformation contextInfo = SpanContextInformation.forSpan(spanWrapper);
 		if (isProfileThisRequest(contextInfo)) {
 			contextInfo.setCallTree(Profiler.activateProfiling("total"));
 		}
@@ -50,12 +51,12 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 			logger.debug("Not profiling this request because stagemonitor.profiler.active=false");
 			return false;
 		} else if (callTreeRateLimit <= 0) {
-			logger.debug("Not profiling this request because stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch <= 0");
+			logger.debug("Not profiling this request because stagemonitor.profiler.sampling.rateLimitPerMinute <= 0");
 			return false;
 		} else if (rateLimiter != null && rateLimiter.checkCredit(1d)) {
 			logger.debug("Not profiling this request because more than {} call trees per minute where created", callTreeRateLimit);
 			return false;
-		} else if (!spanContext.isReport()) {
+		} else if (!spanContext.isSampled()) {
 			logger.debug("Not profiling this request because this request is not sampled");
 			return false;
 		}
@@ -64,7 +65,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-		final SpanContextInformation contextInfo = requestMonitorPlugin.getRequestMonitor().getSpanContext();
+		final SpanContextInformation contextInfo = SpanContextInformation.forSpan(spanWrapper);
 		if (contextInfo.getCallTree() != null) {
 			try {
 				handleCallTree(contextInfo, spanWrapper.getDelegate(), contextInfo.getPostExecutionInterceptorContext().isExcludeCallTree(), operationName);
@@ -78,7 +79,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 		final CallStackElement callTree = info.getCallTree();
 		if (callTree != null) {
 			Profiler.stop();
-			if (!excludeCallTree && !operationName.isEmpty()) {
+			if (!excludeCallTree && info.isSampled() && StringUtils.isNotEmpty(operationName)) {
 				callTree.setSignature(operationName);
 				final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
 				if (minExecutionTimeMultiplier > 0d) {

@@ -9,7 +9,6 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.web.WebPlugin;
@@ -62,7 +61,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "1");
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration).createSpan(mock(SpanContextInformation.class));
+				mock(FilterChain.class), configuration).createSpan();
 
 		verify(span).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 	}
@@ -73,7 +72,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "0");
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration).createSpan(mock(SpanContextInformation.class));
+				mock(FilterChain.class), configuration).createSpan();
 
 		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 	}
@@ -83,7 +82,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration).createSpan(mock(SpanContextInformation.class));
+				mock(FilterChain.class), configuration).createSpan();
 
 		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 	}
@@ -94,7 +93,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "1");
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration).createSpan(mock(SpanContextInformation.class));
+				mock(FilterChain.class), configuration).createSpan();
 
 		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 	}

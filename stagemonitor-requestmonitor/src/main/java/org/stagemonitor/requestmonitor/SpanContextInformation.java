@@ -1,16 +1,19 @@
 package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Timer;
+import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.instrument.WeakConcurrentMap;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
+import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -20,9 +23,12 @@ import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 public class SpanContextInformation {
+
+	private static final WeakConcurrentMap<Span, SpanContextInformation> spanContextMap = new WeakConcurrentMap
+			.WithInlinedExpunction<Span, SpanContextInformation>();
+
 	private Span span;
 	private long overhead1;
-	private MonitoredRequest monitoredRequest;
 	private SpanContextInformation parent;
 	private Future<?> spanReporterFuture;
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
@@ -34,26 +40,43 @@ public class SpanContextInformation {
 	private Timer timerForThisRequest;
 	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 	private PostExecutionInterceptorContext postExecutionInterceptorContext;
-	private boolean report = true;
+	private boolean sampled = true;
 
-	public static SpanContextInformation of(Span span) {
+	public static SpanContextInformation getCurrent() {
+		final TraceContext traceContext = TracingUtils.getTraceContext();
+		if (traceContext.isEmpty()) {
+			return null;
+		}
+		return forSpan(traceContext.getCurrentSpan());
+	}
+
+	/**
+	 * Gets or creates the {@link SpanContextInformation} for the provided span.
+	 */
+	public static SpanContextInformation forSpan(Span span) {
+		if (span != null) {
+			if (!spanContextMap.containsKey(span)) {
+				spanContextMap.putIfAbsent(span, SpanContextInformation.forUnitTest(span));
+			}
+			return spanContextMap.get(span);
+		}
+		return null;
+	}
+
+	public static SpanContextInformation forUnitTest(Span span) {
 		final SpanContextInformation spanContext = new SpanContextInformation();
 		spanContext.setSpan(span);
 		return spanContext;
 	}
 
-	public static SpanContextInformation of(Span span, String operationName) {
+	public static SpanContextInformation forUnitTest(Span span, String operationName) {
 		final SpanContextInformation spanContext = new SpanContextInformation();
 		spanContext.setSpan(span);
 		spanContext.setOperationName(operationName);
 		return spanContext;
 	}
 
-	public static SpanContextInformation of(Span span, CallStackElement callTree) {
-		return of(span, callTree, Collections.<String, Object>emptyMap());
-	}
-
-	public static SpanContextInformation of(Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
+	public static SpanContextInformation forUnitTest(Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
 		final SpanContextInformation spanContext = new SpanContextInformation();
 		spanContext.setSpan(span);
 		spanContext.setCallTree(callTree);
@@ -169,22 +192,12 @@ public class SpanContextInformation {
 		return postExecutionInterceptorContext;
 	}
 
-	public boolean isReport() {
-		return report;
+	public boolean isSampled() {
+		return sampled;
 	}
 
-	public void setReport(boolean report) {
-		this.report = report;
-	}
-
-	@Deprecated
-	public MonitoredRequest getMonitoredRequest() {
-		return monitoredRequest;
-	}
-
-	@Deprecated
-	public void setMonitoredRequest(MonitoredRequest monitoredRequest) {
-		this.monitoredRequest = monitoredRequest;
+	public void setSampled(boolean sampled) {
+		this.sampled = sampled;
 	}
 
 	void setSpanReporterFuture(Future<?> spanReporterFuture) {
@@ -197,6 +210,14 @@ public class SpanContextInformation {
 
 	void setOverhead1(long overhead1) {
 		this.overhead1 = overhead1;
+	}
+
+	@Override
+	public void finalize() throws Throwable {
+		super.finalize();
+		if (callTree != null) {
+			callTree.recycle();
+		}
 	}
 
 	public static class ExternalRequestStats {
@@ -232,50 +253,63 @@ public class SpanContextInformation {
 			executionCount++;
 			this.executionTimeNanos += executionTimeNanos;
 		}
-
-		public void incrementExecutionTime(long additionalExecutionTime) {
-			executionTimeNanos += additionalExecutionTime;
-		}
 	}
 
-	static class SpanContextSpanEventListener extends StatelessSpanEventListener {
-		private final RequestMonitor requestMonitor;
+	static class SpanContextSpanEventListener extends AbstractSpanEventListener implements SpanEventListenerFactory {
 
-		SpanContextSpanEventListener(RequestMonitor requestMonitor) {
-			this.requestMonitor = requestMonitor;
-		}
+		private SpanContextInformation info;
+		private String spanKind;
+		private Number samplingPriority;
 
 		@Override
 		public void onStart(SpanWrapper spanWrapper) {
+			info = SpanContextInformation.forSpan(spanWrapper);
+			info.setParent(SpanContextInformation.getCurrent());
+
 			TracingUtils.getTraceContext().push(spanWrapper);
-			final SpanContextInformation info = requestMonitor.getSpanContext();
-			if (info != null) {
-				info.setSpan(spanWrapper);
-				for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
-					spanWrapper.setTag(entry.getKey(), entry.getValue());
-				}
+			spanContextMap.put(spanWrapper, info);
+			info.setSpan(spanWrapper);
+			for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
+				spanWrapper.setTag(entry.getKey(), entry.getValue());
+			}
+
+			handleTagsSetBeforeSpanStarted();
+		}
+
+		private void handleTagsSetBeforeSpanStarted() {
+			if (spanKind != null) {
+				onSetTag(Tags.SPAN_KIND.getKey(), spanKind);
+			}
+			if (samplingPriority != null) {
+				onSetTag(Tags.SAMPLING_PRIORITY.getKey(), samplingPriority);
 			}
 		}
 
 		@Override
 		public String onSetTag(String key, String value) {
-			final SpanContextInformation info = requestMonitor.getSpanContext();
 			if (info != null) {
 				if (key.equals(Tags.SPAN_KIND.getKey())) {
 					info.setExternalRequest(Tags.SPAN_KIND_CLIENT.equals(value));
 					info.setServerRequest(Tags.SPAN_KIND_SERVER.equals(value));
 				}
+			} else {
+				// span.kind was set before the span has been started
+				// store in instance variable and set again if a SpanContextInformation is available
+				spanKind = value;
 			}
 			return value;
 		}
 
 		@Override
 		public Number onSetTag(String key, Number value) {
-			final SpanContextInformation info = requestMonitor.getSpanContext();
 			if (info != null) {
 				if (Tags.SAMPLING_PRIORITY.getKey().equals(key)) {
-					info.setReport(value.shortValue() > 0);
+					info.setSampled(value.shortValue() > 0);
 				}
+			} else {
+				// sampling.priority was set before the span has been started
+				// store in instance variable and set again if a SpanContextInformation is available
+				samplingPriority = value;
 			}
 			return value;
 		}
@@ -283,11 +317,14 @@ public class SpanContextInformation {
 		@Override
 		public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 			TracingUtils.getTraceContext().pop();
-			final SpanContextInformation info = requestMonitor.getSpanContext();
-			if (info != null) {
-				info.setOperationName(operationName);
-				info.setDuration(durationNanos);
-			}
+			final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
+			info.setOperationName(operationName);
+			info.setDuration(durationNanos);
+		}
+
+		@Override
+		public SpanEventListener create() {
+			return new SpanContextSpanEventListener();
 		}
 	}
 }

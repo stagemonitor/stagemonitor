@@ -41,7 +41,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testReportSpan() throws Exception {
-		final SpanContextInformation spanContext = SpanContextInformation.of(mock(Span.class), "Report Me");
+		final SpanContextInformation spanContext = SpanContextInformation.forUnitTest(mock(Span.class), "Report Me");
 		reporter.report(spanContext);
 
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
@@ -64,8 +64,8 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 	public void testReportSpanDontReport() throws Exception {
 		final SpanContextInformation info = createTestSpanWithCallTree(1, "Regular Foo");
 
-		assertTrue(reporter.isActive(SpanContextInformation.of(info.getSpan())));
-		assertFalse(info.isReport());
+		assertTrue(reporter.isActive(SpanContextInformation.forUnitTest(info.getSpan())));
+		assertFalse(info.isSampled());
 		verify(((SpanWrapper) info.getSpan()).getDelegate()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 	}
 
@@ -75,10 +75,10 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1d);
 		final Span span = mock(Span.class);
 
-		assertTrue(reporter.isActive(SpanContextInformation.of(span)));
-		reporter.report(SpanContextInformation.of(span, "Regular Foo"));
+		assertTrue(reporter.isActive(SpanContextInformation.forUnitTest(span)));
+		reporter.report(SpanContextInformation.forUnitTest(span, "Regular Foo"));
 		Thread.sleep(5010); // the meter only updates every 5 seconds
-		assertFalse(reporter.isActive(SpanContextInformation.of(span)));
+		assertFalse(reporter.isActive(SpanContextInformation.forUnitTest(span)));
 	}
 
 	@Test
@@ -118,7 +118,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 	public void testElasticsearchExcludeFastCallTree() throws Exception {
 		when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
-		spanContext = createTestSpanWithCallTree(1000, "Report Me");
+		SpanContextInformation spanContext = createTestSpanWithCallTree(1000, "Report Me");
 		reporter.report(spanContext);
 		assertFalse(spanContext.getPostExecutionInterceptorContext().isExcludeCallTree());
 		verifyContainsCallTree((SpanWrapper) spanContext.getSpan(), true);

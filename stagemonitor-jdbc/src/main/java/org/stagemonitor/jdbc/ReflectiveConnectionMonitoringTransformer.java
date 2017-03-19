@@ -62,12 +62,16 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 		@Override
 		public void onStart(SpanWrapper spanWrapper) {
-			connectionMonitorThreadLocal.set(new Object[]{connectionMonitor, monitorGetConnectionMethod});
+			if (connectionMonitorThreadLocal != null) {
+				connectionMonitorThreadLocal.set(new Object[]{connectionMonitor, monitorGetConnectionMethod});
+			}
 		}
 
 		@Override
 		public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-			connectionMonitorThreadLocal.remove();
+			if (connectionMonitorThreadLocal != null) {
+				connectionMonitorThreadLocal.remove();
+			}
 		}
 
 	}

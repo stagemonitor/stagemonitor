@@ -66,8 +66,8 @@ public class SpanServletTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test");
 		request.addHeader(WidgetAjaxSpanReporter.CONNECTION_ID, connectionId);
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration);
-		spanContext = SpanContextInformation.of(null, "test");
-		span = monitoredHttpRequest.createSpan(spanContext);
+		span = monitoredHttpRequest.createSpan();
+		spanContext = SpanContextInformation.forSpan(span);
 		span.setOperationName("test");
 		spanContext.setSpan(span);
 
@@ -201,6 +201,6 @@ public class SpanServletTest {
 		new MockFilterChain(spanServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 
 		Assert.assertEquals(404, response.getStatus());
-		Assert.assertFalse(reporter.isActive(SpanContextInformation.of(mock(Span.class))));
+		Assert.assertFalse(reporter.isActive(SpanContextInformation.forUnitTest(mock(Span.class))));
 	}
 }

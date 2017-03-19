@@ -76,10 +76,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public Span createSpan(SpanContextInformation info) {
-		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
-		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
-		info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
+	public Span createSpan() {
 		boolean sample = true;
 		if (webPlugin.isHonorDoNotTrackHeader() && "1".equals(httpServletRequest.getHeader("dnt"))) {
 			sample = false;
@@ -102,6 +99,10 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			SpanUtils.setHttpHeaders(span, getHeaders(httpServletRequest));
 		}
 
+		SpanContextInformation info = SpanContextInformation.forSpan(span);
+		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
+		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
+		info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
 		return span;
 	}
 
@@ -206,8 +207,8 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		@Override
 		public void onFinish(SpanWrapper span, String operationName, long durationNanos) {
-			final MonitoredHttpRequest monitoredHttpRequest = (MonitoredHttpRequest) requestMonitorPlugin.getRequestMonitor()
-					.getSpanContext().getRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE);
+			final MonitoredHttpRequest monitoredHttpRequest = (MonitoredHttpRequest) SpanContextInformation.forSpan(span)
+					.getRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE);
 			if (monitoredHttpRequest == null) {
 				return;
 			}

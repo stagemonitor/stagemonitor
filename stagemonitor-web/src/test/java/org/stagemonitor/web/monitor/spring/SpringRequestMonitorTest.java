@@ -117,7 +117,7 @@ public class SpringRequestMonitorTest {
 		handlerAdapters.set(dispatcherServlet, Collections.singletonList(handlerAdapter));
 
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanEventListener.asList(tags),
+				registry, requestMonitorPlugin, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
@@ -166,7 +166,7 @@ public class SpringRequestMonitorTest {
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
 		assertEquals(1, registry.timer(getTimerMetricName(spanContext.getOperationName())).getCount());
 		verify(monitoredRequest, times(1)).getRequestName();
-		assertTrue(spanContext.isReport());
+		assertTrue(spanContext.isSampled());
 	}
 
 	@Test
@@ -179,7 +179,7 @@ public class SpringRequestMonitorTest {
 
 		assertNull(spanContext.getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		assertFalse(spanContext.isReport());
+		assertFalse(spanContext.isSampled());
 	}
 
 	private SpanContextInformation anyRequestInformation() {
@@ -199,7 +199,7 @@ public class SpringRequestMonitorTest {
 	@Test
 	public void testGetRequestNameFromHandler() throws Exception {
 		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
-		final SpanContextInformation spanContext = RequestMonitor.get().getSpanContext();
+		final SpanContextInformation spanContext = SpanContextInformation.getCurrent();
 		assertNotNull(spanContext);
 		try {
 			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());

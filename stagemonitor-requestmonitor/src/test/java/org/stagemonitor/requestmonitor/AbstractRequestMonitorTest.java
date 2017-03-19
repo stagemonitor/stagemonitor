@@ -73,7 +73,7 @@ public abstract class AbstractRequestMonitorTest {
 
 		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanEventListener(configuration, registry);
 		tracer = RequestMonitorPlugin.createSpanWrappingTracer(getTracer(), registry,
-				requestMonitorPlugin, requestMonitor, TagRecordingSpanEventListener.asList(tags),
+				requestMonitorPlugin, TagRecordingSpanEventListener.asList(tags),
 				samplePriorityDeterminingSpanInterceptor);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		assertTrue(TracingUtils.getTraceContext().isEmpty());

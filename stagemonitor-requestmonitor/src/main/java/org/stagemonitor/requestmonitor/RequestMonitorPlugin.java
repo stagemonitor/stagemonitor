@@ -345,20 +345,19 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final Tracer tracer = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator().next().getTracer(initArguments);
 		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanEventListener(initArguments.getConfiguration(), metricRegistry);
 		final ServiceLoader<SpanEventListenerFactory> factories = ServiceLoader.load(SpanEventListenerFactory.class, RequestMonitorPlugin.class.getClassLoader());
-		this.tracer = createSpanWrappingTracer(tracer, metricRegistry, requestMonitorPlugin, getRequestMonitor(),
+		this.tracer = createSpanWrappingTracer(tracer, metricRegistry, requestMonitorPlugin,
 				factories, samplePriorityDeterminingSpanInterceptor);
 	}
 
 	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, final Metric2Registry metricRegistry,
 															  final RequestMonitorPlugin requestMonitorPlugin,
-															  final RequestMonitor requestMonitor,
 															  final Iterable<SpanEventListenerFactory> spanInterceptorFactories,
 															  final SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor) {
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
-		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanEventListener(requestMonitor));
-		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
-		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry, requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanEventListener());
+		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry));
 		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanEventListener.Factory(metricRegistry, requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
 		spanWrappingTracer.addSpanInterceptor(new AnonymizingSpanEventListener.MySpanEventListenerFactory(requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(new MDCSpanEventListener());
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {

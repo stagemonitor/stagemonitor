@@ -22,8 +22,7 @@ import io.opentracing.Tracer;
  * </li>
  * </ul>
  */
-public abstract class SpanEventListener {
-
+public interface SpanEventListener {
 	/**
 	 * Called when a {@link Span} is started ({@link Tracer.SpanBuilder#start()}
 	 * <p/>
@@ -34,8 +33,7 @@ public abstract class SpanEventListener {
 	 *
 	 * @param spanWrapper the span which was just started
 	 */
-	public void onStart(SpanWrapper spanWrapper) {
-	}
+	void onStart(SpanWrapper spanWrapper);
 
 	/**
 	 * Callback for {@link Span#setTag(String, String)} and {@link Tracer.SpanBuilder#withTag(String, String)}
@@ -46,9 +44,7 @@ public abstract class SpanEventListener {
 	 * @param value the tag value
 	 * @return you can modify the value of the tag by returning a different value then the provided one
 	 */
-	public String onSetTag(String key, String value) {
-		return value;
-	}
+	String onSetTag(String key, String value);
 
 	/**
 	 * Callback for {@link Span#setTag(String, boolean)} and {@link Tracer.SpanBuilder#withTag(String, boolean)}
@@ -59,9 +55,7 @@ public abstract class SpanEventListener {
 	 * @param value the tag value
 	 * @return you can modify the value of the tag by returning a different value then the provided one
 	 */
-	public boolean onSetTag(String key, boolean value) {
-		return value;
-	}
+	boolean onSetTag(String key, boolean value);
 
 	/**
 	 * Callback for {@link Span#setTag(String, Number)} and {@link Tracer.SpanBuilder#withTag(String, Number)}
@@ -72,9 +66,7 @@ public abstract class SpanEventListener {
 	 * @param value the tag value
 	 * @return you can modify the value of the tag by returning a different value then the provided one
 	 */
-	public Number onSetTag(String key, Number value) {
-		return value;
-	}
+	Number onSetTag(String key, Number value);
 
 	/**
 	 * Callback for {@link Span#finish}. The actual span will be finished after all {@link #onFinish} callbacks have
@@ -88,6 +80,5 @@ public abstract class SpanEventListener {
 	 *                      be set any time via {@link Span#setOperationName(String)}
 	 * @param durationNanos the duration of this span in nanoseconds
 	 */
-	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-	}
+	void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos);
 }

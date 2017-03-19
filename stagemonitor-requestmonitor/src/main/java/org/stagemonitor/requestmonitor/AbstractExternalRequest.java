@@ -17,7 +17,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
-	public Span createSpan(SpanContextInformation info) {
+	public Span createSpan() {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final String callerSignature = CallerUtil.getCallerSignature();
 		final Span span;

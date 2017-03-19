@@ -41,8 +41,6 @@ public class AbstractElasticsearchSpanReporterTest {
 	protected Configuration configuration;
 	protected CorePlugin corePlugin;
 	protected Map<String, Object> tags;
-	protected SpanContextInformation spanContext = new SpanContextInformation();
-	private RequestMonitor requestMonitor;
 
 	@Before
 	public void setUp() throws Exception {
@@ -65,11 +63,9 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		spanLogger = mock(Logger.class);
 		tags = new HashMap<>();
-		requestMonitor = mock(RequestMonitor.class);
-		when(requestMonitor.getSpanContext()).thenReturn(spanContext);
-		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, requestMonitor, TagRecordingSpanEventListener.asList(tags),
+				registry, requestMonitorPlugin, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		assertTrue(TracingUtils.getTraceContext().isEmpty());
@@ -93,9 +89,9 @@ public class AbstractElasticsearchSpanReporterTest {
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
 				.withStartTimestamp(1)
 				.start();
-		spanContext.setSpan(span);
-		spanContext.setCallTree(callTree);
+		final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(span);
+		spanContextInformation.setCallTree(callTree);
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMs) + 1);
-		return spanContext;
+		return spanContextInformation;
 	}
 }

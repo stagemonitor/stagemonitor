@@ -1,7 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.Timer;
+import com.uber.jaeger.context.TraceContext;
+import com.uber.jaeger.context.TracingUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +11,11 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
+import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.List;
@@ -30,18 +29,14 @@ import io.opentracing.Span;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
 
 /**
- * @deprecated we should try to do everything with {@link org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener}s
+ * @deprecated we should try to do everything with {@link AbstractSpanEventListener}s
  */
 @Deprecated
 public class RequestMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
-
-	// TODO remove static keyword. This is currently needed for tests
-	private static ThreadLocal<SpanContextInformation> request = new ThreadLocal<SpanContextInformation>();
 
 	private final List<SpanReporter> spanReporters = new CopyOnWriteArrayList<SpanReporter>();
 
@@ -77,10 +72,6 @@ public class RequestMonitor {
 
 	public void monitorStart(MonitoredRequest monitoredRequest) {
 		final long start = System.nanoTime();
-		SpanContextInformation info = new SpanContextInformation();
-		info.setMonitoredRequest(monitoredRequest);
-		info.setParent(request.get());
-		request.set(info);
 		try {
 			if (!corePlugin.isStagemonitorActive()) {
 				return;
@@ -98,47 +89,41 @@ public class RequestMonitor {
 				Stagemonitor.startMonitoring();
 			}
 			if (monitorThisRequest()) {
-				monitoredRequest.createSpan(info);
+				monitoredRequest.createSpan();
 			}
 		} finally {
-			info.setOverhead1(System.nanoTime() - start);
+			final SpanContextInformation info = SpanContextInformation.getCurrent();
+			if (info != null) {
+				info.setOverhead1(System.nanoTime() - start);
+			}
 		}
 	}
 
 	public void monitorStop() {
-		final SpanContextInformation info = getSpanContext();
-		if (!corePlugin.isStagemonitorActive()) {
-			cleanUpAfter(info);
+		final SpanContextInformation info = SpanContextInformation.getCurrent();
+		if (info == null || !corePlugin.isStagemonitorActive()) {
 			return;
 		}
 		long overhead2 = System.nanoTime();
 		if (info.getSpan() != null) {
 			info.getSpan().finish();
 		}
-		if (monitorThisRequest() && info.isReport()) {
+		if (monitorThisRequest() && info.isSampled()) {
 			try {
 				info.setSpanReporterFuture(report(info));
 			} catch (Exception e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}
-		} else {
-			removeTimerIfCountIsZero(info);
 		}
 
-		cleanUpAfter(info);
-
 		trackOverhead(info.getOverhead1(), overhead2);
-	}
-
-	private void cleanUpAfter(SpanContextInformation info) {
-		request.set(info.getParent());
 	}
 
 	public SpanContextInformation monitor(MonitoredRequest monitoredRequest) throws Exception {
 		try {
 			monitorStart(monitoredRequest);
 			monitoredRequest.execute();
-			return getSpanContext();
+			return SpanContextInformation.getCurrent();
 		} catch (Exception e) {
 			recordException(e);
 			throw e;
@@ -179,17 +164,6 @@ public class RequestMonitor {
 		}
 	}
 
-	private void removeTimerIfCountIsZero(SpanContextInformation info) {
-		final String requestName = info.getOperationName();
-		if (requestName != null) {
-			MetricName timerMetricName = getTimerMetricName(requestName);
-			final Metric timer = metricRegistry.getMetrics().get(timerMetricName);
-			if (timer instanceof Timer && ((Timer) timer).getCount() == 0) {
-				metricRegistry.remove(timerMetricName);
-			}
-		}
-	}
-
 	private Future<?> report(final SpanContextInformation spanContext) {
 		try {
 			if (requestMonitorPlugin.isReportAsync()) {
@@ -211,22 +185,14 @@ public class RequestMonitor {
 
 	private void doReport(SpanContextInformation spanContext) {
 		for (SpanReporter spanReporter : spanReporters) {
-			final CallStackElement callTree = spanContext.getCallTree();
-			if (isActive(spanContext, spanReporter)) {
+			if (spanReporter.isActive(spanContext)) {
 				try {
 					spanReporter.report(spanContext);
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 				}
 			}
-			if (callTree != null) {
-				callTree.recycle();
-			}
 		}
-	}
-
-	public SpanContextInformation getSpanContext() {
-		return request.get();
 	}
 
 	private boolean monitorThisRequest() {
@@ -239,29 +205,12 @@ public class RequestMonitor {
 	}
 
 	/**
-	 * Checks whether the given {@link SpanReporter} is active for the current {@link Span}. If this method was
-	 * already called for a {@link SpanReporter} in the context of the current request it returns the previous result.
-	 * In other words this method makes sure that {@link SpanReporter#isActive(SpanContextInformation)} is
-	 * called at most once.
-	 */
-	private boolean isActive(SpanContextInformation spanContext, SpanReporter spanReporter) {
-		final String requestAttributeActive = ClassUtils.getIdentityString(spanReporter) + ".active";
-		final Boolean activeFromAttribute = (Boolean) spanContext.getRequestAttribute(requestAttributeActive);
-		if (activeFromAttribute != null) {
-			return activeFromAttribute;
-		}
-		final boolean active = spanReporter.isActive(SpanContextInformation.of(spanContext.getSpan(), null, spanContext.getRequestAttributes()));
-		spanContext.addRequestAttribute(requestAttributeActive, active);
-		return active;
-	}
-
-	/**
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
 	 */
 	public Span getSpan() {
-		final SpanContextInformation spanContext = getSpanContext();
-		if (spanContext != null) {
-			return spanContext.getSpan() != null ? spanContext.getSpan() : NoopSpan.INSTANCE;
+		final TraceContext traceContext = TracingUtils.getTraceContext();
+		if (!traceContext.isEmpty()) {
+			return traceContext.getCurrentSpan();
 		} else {
 			return NoopSpan.INSTANCE;
 		}
@@ -306,7 +255,6 @@ public class RequestMonitor {
 	 */
 	public void close() {
 		asyncSpanReporterPool.shutdown();
-		request.remove();
 	}
 
 }

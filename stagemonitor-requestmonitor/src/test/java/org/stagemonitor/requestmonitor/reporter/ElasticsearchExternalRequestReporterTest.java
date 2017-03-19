@@ -49,7 +49,6 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(requestMonitorPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
-		when(requestMonitor.getSpanContext()).thenReturn(mock(SpanContextInformation.class));
 	}
 
 	@Test
@@ -59,7 +58,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		report(span);
 
 		verify(elasticsearchClient).index(startsWith("stagemonitor-spans-"), eq("spans"), any());
-		assertTrue(reporter.isActive(SpanContextInformation.of(span)));
+		assertTrue(reporter.isActive(SpanContextInformation.forUnitTest(span)));
 		verifyTimerCreated(1);
 	}
 
@@ -73,7 +72,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(spanLogger, times(0)).info(anyString());
-		assertFalse(reporter.isActive(SpanContextInformation.of(span)));
+		assertFalse(reporter.isActive(SpanContextInformation.forUnitTest(span)));
 		verifyTimerCreated(1);
 	}
 
@@ -85,7 +84,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 			report(span);
 			verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 			verify(spanLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
-			assertTrue(reporter.isActive(SpanContextInformation.of(span)));
+			assertTrue(reporter.isActive(SpanContextInformation.forUnitTest(span)));
 		}
 	}
 
@@ -124,8 +123,8 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private void report(Span span) {
-		final SpanContextInformation spanContext = SpanContextInformation.of(span);
-		final SpanContextInformation reportArguments = SpanContextInformation.of(span, null, Collections.<String, Object>emptyMap());
+		final SpanContextInformation spanContext = SpanContextInformation.forUnitTest(span);
+		final SpanContextInformation reportArguments = SpanContextInformation.forUnitTest(span, null, Collections.<String, Object>emptyMap());
 		if (reporter.isActive(spanContext)) {
 			reporter.report(reportArguments);
 		}
@@ -148,7 +147,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private Span getSpan(long executionTimeMillis) {
 		final Span span = new SpanWrapper(NoopSpan.INSTANCE, "External Request", 1,
-				Collections.singletonList(new ExternalRequestMetricsSpanEventListener(registry, requestMonitorPlugin)));
+				Collections.singletonList(new ExternalRequestMetricsSpanEventListener(registry)));
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 		span.setTag(SpanUtils.OPERATION_TYPE, "jdbc");
 		span.setTag("method", "SELECT");

@@ -59,7 +59,7 @@ public class MonitoredMethodExecutionTest {
 
 		tags = new HashMap<>();
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(), registry,
-				requestMonitorPlugin, requestMonitor, TagRecordingSpanEventListener.asList(tags),
+				requestMonitorPlugin, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 

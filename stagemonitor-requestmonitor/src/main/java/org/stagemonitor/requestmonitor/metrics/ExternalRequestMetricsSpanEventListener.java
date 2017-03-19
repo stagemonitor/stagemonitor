@@ -6,7 +6,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
@@ -20,7 +19,6 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 public class ExternalRequestMetricsSpanEventListener extends ClientServerAwareSpanEventListener {
 
 	private final Metric2Registry metricRegistry;
-	private final RequestMonitorPlugin requestMonitorPlugin;
 
 	public static final String EXTERNAL_REQUEST_TYPE = "type";
 	public static final String EXTERNAL_REQUEST_METHOD = "method";
@@ -31,28 +29,25 @@ public class ExternalRequestMetricsSpanEventListener extends ClientServerAwareSp
 	private String type;
 	private String method;
 
-	public ExternalRequestMetricsSpanEventListener(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
+	public ExternalRequestMetricsSpanEventListener(Metric2Registry metricRegistry) {
 		this.metricRegistry = metricRegistry;
-		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
 	public static class Factory implements SpanEventListenerFactory {
 
 		private final Metric2Registry metricRegistry;
-		private final RequestMonitorPlugin requestMonitorPlugin;
 
 		public Factory() {
-			this(Stagemonitor.getMetric2Registry(), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
+			this(Stagemonitor.getMetric2Registry());
 		}
 
-		public Factory(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
+		public Factory(Metric2Registry metricRegistry) {
 			this.metricRegistry = metricRegistry;
-			this.requestMonitorPlugin = requestMonitorPlugin;
 		}
 
 		@Override
 		public SpanEventListener create() {
-			return new ExternalRequestMetricsSpanEventListener(metricRegistry, requestMonitorPlugin);
+			return new ExternalRequestMetricsSpanEventListener(metricRegistry);
 		}
 	}
 
@@ -73,13 +68,10 @@ public class ExternalRequestMetricsSpanEventListener extends ClientServerAwareSp
 			metricRegistry.timer(externalRequestTemplate.build(type, "All", method))
 					.update(durationNanos, TimeUnit.NANOSECONDS);
 			final Timer timer = metricRegistry.timer(externalRequestTemplate.build(type, operationName, method));
-			requestMonitorPlugin.getRequestMonitor().getSpanContext().setTimerForThisRequest(timer);
+			SpanContextInformation.forSpan(spanWrapper).setTimerForThisRequest(timer);
 			timer.update(durationNanos, TimeUnit.NANOSECONDS);
 
-			final SpanContextInformation parent = requestMonitorPlugin
-					.getRequestMonitor()
-					.getSpanContext()
-					.getParent();
+			final SpanContextInformation parent = SpanContextInformation.forSpan(spanWrapper).getParent();
 			if (parent != null) {
 				parent.addExternalRequest(type, durationNanos);
 			}

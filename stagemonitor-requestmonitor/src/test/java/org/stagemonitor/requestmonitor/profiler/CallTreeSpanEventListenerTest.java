@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 public class CallTreeSpanEventListenerTest {
 
 	private RequestMonitorPlugin requestMonitorPlugin;
-	private SpanContextInformation spanContext;
 
 	@Before
 	public void setUp() throws Exception {
@@ -29,52 +28,53 @@ public class CallTreeSpanEventListenerTest {
 		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
-		when(requestMonitor.getSpanContext()).then(invocation -> spanContext);
 		doReturn(requestMonitor).when(requestMonitorPlugin).getRequestMonitor();
-		initSpanContext();
-	}
-
-	public void initSpanContext() {
-		spanContext = new SpanContextInformation();
-		spanContext.setPostExecutionInterceptorContext(new PostExecutionInterceptorContext(mock(Configuration.class), spanContext, mock(Metric2Registry.class)));
 	}
 
 	@Test
 	public void testProfileThisExecutionDeactive() throws Exception {
 		doReturn(0d).when(requestMonitorPlugin).getProfilerRateLimitPerMinute();
-		invokeEventListener();
+		final SpanContextInformation spanContext = invokeEventListener();
 		assertNull(spanContext.getCallTree());
 	}
 
 	@Test
 	public void testProfileThisExecutionAlwaysActive() throws Exception {
 		doReturn(1000000d).when(requestMonitorPlugin).getProfilerRateLimitPerMinute();
-		invokeEventListener();
+		final SpanContextInformation spanContext = invokeEventListener();
 		assertNotNull(spanContext.getCallTree());
 	}
 
 	@Test
 	public void testDontActivateProfilerWhenSpanIsNotSampled() throws Exception {
-		spanContext.setReport(false);
-		invokeEventListener();
+		doReturn(1000000d).when(requestMonitorPlugin).getProfilerRateLimitPerMinute();
+		final SpanContextInformation spanContext = invokeEventListener(false);
 		assertNull(spanContext.getCallTree());
 	}
 
-	private void invokeEventListener() {
+	private SpanContextInformation invokeEventListener() {
+		return invokeEventListener(true);
+	}
+
+	private SpanContextInformation invokeEventListener(boolean sampled) {
 		CallTreeSpanEventListener eventListener = new CallTreeSpanEventListener(requestMonitorPlugin);
-		eventListener.onStart(mock(SpanWrapper.class));
-		eventListener.onFinish(mock(SpanWrapper.class), "", 0);
+		final SpanWrapper span = mock(SpanWrapper.class);
+		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(span);
+		contextInformation.setSampled(sampled);
+		contextInformation.setPostExecutionInterceptorContext(new PostExecutionInterceptorContext(mock(Configuration.class), contextInformation, mock(Metric2Registry.class)));
+		eventListener.onStart(span);
+		eventListener.onFinish(span, "", 0);
+		return contextInformation;
 	}
 
 	@Test
 	public void testRateLimiting() throws Exception {
 		when(requestMonitorPlugin.getProfilerRateLimitPerMinute()).thenReturn(1d);
-		invokeEventListener();
-		assertNotNull(spanContext.getCallTree());
+		final SpanContextInformation spanContext1 = invokeEventListener();
+		assertNotNull(spanContext1.getCallTree());
 
-		initSpanContext();
-		invokeEventListener();
-		assertNotNull(spanContext.getCallTree());
+		final SpanContextInformation spanContext2 = invokeEventListener();
+		assertNotNull(spanContext2.getCallTree());
 
 	}
 

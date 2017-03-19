@@ -76,7 +76,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		requestMonitor.addReporter(spanCapturingReporter);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, requestMonitor, new ArrayList<>(),
+				registry, requestMonitorPlugin, new ArrayList<>(),
 				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}

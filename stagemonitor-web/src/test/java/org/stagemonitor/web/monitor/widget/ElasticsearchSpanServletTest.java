@@ -32,8 +32,8 @@ public class ElasticsearchSpanServletTest extends ElasticsearchSpanReporterInteg
 	@Test
 	public void testSpanServlet() throws Exception {
 		final Span span = new MonitoredMethodRequest(configuration, "Test#test", null, Collections.singletonMap("attr.Color", "Blue"))
-				.createSpan(mock(SpanContextInformation.class));
-		reporter.report(SpanContextInformation.of(span, null, Collections.<String, Object>emptyMap()));
+				.createSpan();
+		reporter.report(SpanContextInformation.forUnitTest(span, null, Collections.<String, Object>emptyMap()));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final MockHttpServletRequest req = new MockHttpServletRequest();

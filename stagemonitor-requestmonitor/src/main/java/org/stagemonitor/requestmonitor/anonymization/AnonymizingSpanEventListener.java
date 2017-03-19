@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor.anonymization;
 
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
@@ -10,7 +11,7 @@ import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import io.opentracing.tag.Tags;
 
-public class AnonymizingSpanEventListener extends SpanEventListener {
+public class AnonymizingSpanEventListener extends AbstractSpanEventListener {
 
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	public String username;

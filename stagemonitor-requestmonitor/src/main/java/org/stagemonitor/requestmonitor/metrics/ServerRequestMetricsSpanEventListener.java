@@ -67,10 +67,11 @@ public class ServerRequestMetricsSpanEventListener extends ClientServerAwareSpan
 
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
+		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(spanWrapper);
 		if (isServer && StringUtils.isNotEmpty(operationName)) {
 			final long cpuTime = trackCpuTime(spanWrapper.getDelegate());
-			trackMetrics(operationName, durationNanos, cpuTime);
-			trackExternalRequestMetricsOfParent(spanWrapper.getDelegate(), operationName);
+			trackMetrics(spanWrapper, operationName, durationNanos, cpuTime);
+			trackExternalRequestMetricsOfParent(spanWrapper.getDelegate(), operationName, contextInformation);
 		}
 	}
 
@@ -81,10 +82,10 @@ public class ServerRequestMetricsSpanEventListener extends ClientServerAwareSpan
 		return cpuTime;
 	}
 
-	private void trackMetrics(String operationName, long durationNanos, long cpuTime) {
+	private void trackMetrics(Span span, String operationName, long durationNanos, long cpuTime) {
 		final Timer timer = metricRegistry.timer(getTimerMetricName(operationName));
 		timer.update(durationNanos, NANOSECONDS);
-		final SpanContextInformation spanContext = requestMonitorPlugin.getRequestMonitor().getSpanContext();
+		final SpanContextInformation spanContext = SpanContextInformation.forSpan(span);
 		spanContext.setTimerForThisRequest(timer);
 
 		metricRegistry.timer(getTimerMetricName("All")).update(durationNanos, NANOSECONDS);
@@ -103,8 +104,7 @@ public class ServerRequestMetricsSpanEventListener extends ClientServerAwareSpan
 	/*
 	 * tracks the external requests grouped by the parent request name
 	 */
-	private void trackExternalRequestMetricsOfParent(Span span, String operationName) {
-		final SpanContextInformation spanContext = requestMonitorPlugin.getRequestMonitor().getSpanContext();
+	private void trackExternalRequestMetricsOfParent(Span span, String operationName, SpanContextInformation spanContext) {
 		for (SpanContextInformation.ExternalRequestStats externalRequestStats : spanContext.getExternalRequestStats()) {
 			long durationNanos = externalRequestStats.getExecutionTimeNanos();
 			final String requestType = externalRequestStats.getRequestType();
