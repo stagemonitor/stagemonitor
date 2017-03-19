@@ -1,11 +1,15 @@
 package org.stagemonitor.requestmonitor.ejb;
 
+import com.uber.jaeger.context.TracingUtils;
+
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.SpanCapturingReporter;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 import javax.ejb.Remote;
 
@@ -27,15 +31,25 @@ public class RemoteEjbMonitorTransformerTest {
 		Stagemonitor.reset();
 	}
 
+	@Before
+	public void setUp() throws Exception {
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
+	}
+
 	@Test
 	public void testMonitorRemoteCalls() throws Exception {
 		remote.foo();
 
-		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
-		assertNotNull(requestInformation.getSpan());
-		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl#foo", requestInformation.getOperationName());
-		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
-		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
+		final SpanContextInformation spanContext = spanCapturingReporter.get();
+		assertNotNull(spanContext.getSpan());
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl#foo", spanContext.getOperationName());
+		assertFalse(spanContext.getCallTree().toString(), spanContext.getCallTree().getChildren().isEmpty());
+		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl"));
 	}
 
@@ -43,11 +57,11 @@ public class RemoteEjbMonitorTransformerTest {
 	public void testMonitorRemoteCallsAlternateHierarchy() throws Exception {
 		remoteAlt.bar();
 
-		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
-		assertNotNull(requestInformation.getSpan());
-		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#bar", requestInformation.getOperationName());
-		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
-		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
+		final SpanContextInformation spanContext = spanCapturingReporter.get();
+		assertNotNull(spanContext.getSpan());
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#bar", spanContext.getOperationName());
+		assertFalse(spanContext.getCallTree().toString(), spanContext.getCallTree().getChildren().isEmpty());
+		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl"));
 	}
 
@@ -55,11 +69,11 @@ public class RemoteEjbMonitorTransformerTest {
 	public void testMonitorRemoteCallsSuperInterface() throws Exception {
 		remoteAlt.foo();
 
-		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
-		assertNotNull(requestInformation.getSpan());
-		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#foo", requestInformation.getOperationName());
-		assertFalse(requestInformation.getCallTree().toString(), requestInformation.getCallTree().getChildren().isEmpty());
-		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
+		final SpanContextInformation spanContext = spanCapturingReporter.get();
+		assertNotNull(spanContext.getSpan());
+		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#foo", spanContext.getOperationName());
+		assertFalse(spanContext.getCallTree().toString(), spanContext.getCallTree().getChildren().isEmpty());
+		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.ejb.RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl"));
 	}
 

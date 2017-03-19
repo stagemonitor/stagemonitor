@@ -13,6 +13,7 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
@@ -47,21 +48,21 @@ public class HttpRequestMonitorFilterTest {
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-	private RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
+	private SpanContextInformation spanContext = mock(SpanContextInformation.class);
 	private HttpRequestMonitorFilter httpRequestMonitorFilter;
 	private String testHtml = "<html><body></body></html>";
 
 	@Before
 	public void before() throws Exception {
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
-		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<RequestMonitor.RequestInformation>() {
+		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<SpanContextInformation>() {
 			@Override
-			public RequestMonitor.RequestInformation answer(InvocationOnMock invocation) throws Throwable {
+			public SpanContextInformation answer(InvocationOnMock invocation) throws Throwable {
 				MonitoredRequest request = (MonitoredRequest) invocation.getArguments()[0];
 				request.execute();
-				when(requestInformation.getOperationName()).thenReturn("testName");
-				when(requestInformation.getSpan()).thenReturn(mock(Span.class));
-				return requestInformation;
+				when(spanContext.getOperationName()).thenReturn("testName");
+				when(spanContext.getSpan()).thenReturn(mock(Span.class));
+				return spanContext;
 			}
 		});
 

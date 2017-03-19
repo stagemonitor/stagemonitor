@@ -12,8 +12,8 @@ import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
@@ -69,7 +69,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		SpanUtils.setOperationType(span, "method_invocation");
 		span.setTag("foo.bar", "baz");
 		span.finish();
-		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.emptyMap()));
+		reporter.report(SpanContextInformation.of(span, null, Collections.emptyMap()));
 		elasticsearchClient.waitForCompletion();
 		validateSpanJson(JsonUtils.getMapper().valueToTree(span));
 

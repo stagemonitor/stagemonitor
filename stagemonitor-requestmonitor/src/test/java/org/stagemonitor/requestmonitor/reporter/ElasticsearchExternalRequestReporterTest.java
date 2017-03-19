@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
@@ -48,7 +49,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(requestMonitorPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
-		when(requestMonitor.getRequestInformation()).thenReturn(mock(RequestMonitor.RequestInformation.class));
+		when(requestMonitor.getSpanContext()).thenReturn(mock(SpanContextInformation.class));
 	}
 
 	@Test
@@ -58,7 +59,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		report(span);
 
 		verify(elasticsearchClient).index(startsWith("stagemonitor-spans-"), eq("spans"), any());
-		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
+		assertTrue(reporter.isActive(SpanContextInformation.of(span)));
 		verifyTimerCreated(1);
 	}
 
@@ -72,7 +73,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(spanLogger, times(0)).info(anyString());
-		assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
+		assertFalse(reporter.isActive(SpanContextInformation.of(span)));
 		verifyTimerCreated(1);
 	}
 
@@ -80,12 +81,12 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void testLogReportSpan() throws Exception {
 		when(requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(true);
 
-		final Span span = requestMonitorPlugin.getTracer().buildSpan("test").start();
-		report(span);
-
-		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
-		verify(spanLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
-		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
+		try (final Span span = requestMonitorPlugin.getTracer().buildSpan("test").start()) {
+			report(span);
+			verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
+			verify(spanLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
+			assertTrue(reporter.isActive(SpanContextInformation.of(span)));
+		}
 	}
 
 	@Test
@@ -123,9 +124,9 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private void report(Span span) {
-		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(span);
-		final RequestMonitor.RequestInformation reportArguments = RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap());
-		if (reporter.isActive(requestInformation)) {
+		final SpanContextInformation spanContext = SpanContextInformation.of(span);
+		final SpanContextInformation reportArguments = SpanContextInformation.of(span, null, Collections.<String, Object>emptyMap());
+		if (reporter.isActive(spanContext)) {
 			reporter.report(reportArguments);
 		}
 	}

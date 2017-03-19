@@ -6,12 +6,8 @@ import org.slf4j.MDC;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-
-import java.util.concurrent.Callable;
-
-import io.opentracing.Span;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
 
 /**
  * This class adds the {@link MDC} properties requestId, application, host and instance.
@@ -19,7 +15,7 @@ import io.opentracing.Span;
  * If you are using logback or log4j, you can append this to your pattern to append the properties to each log entry:
  * <code>trace:[%X{traceId}] span:[%X{spanId}] A:[%X{application}] H:[%X{host}] I:[%X{instance}]</code>
  */
-public class MDCSpanInterceptor extends SpanInterceptor implements Callable<SpanInterceptor> {
+public class MDCSpanInterceptor extends StatelessSpanInterceptor {
 
 	private final CorePlugin corePlugin;
 
@@ -32,7 +28,7 @@ public class MDCSpanInterceptor extends SpanInterceptor implements Callable<Span
 	}
 
 	@Override
-	public void onStart(Span span) {
+	public void onStart(SpanWrapper spanWrapper) {
 		if (corePlugin.isStagemonitorActive()) {
 			final MeasurementSession measurementSession = corePlugin.getMeasurementSession();
 			addToMdcIfNotNull("application", measurementSession.getApplicationName());
@@ -41,8 +37,8 @@ public class MDCSpanInterceptor extends SpanInterceptor implements Callable<Span
 
 			// don't store the context in MDC if stagemonitor is not active
 			// so that thread pools that get created on startup don't inherit the ids
-			if (Stagemonitor.isStarted() && span instanceof SpanWrapper) {
-				final com.uber.jaeger.Span jaegerSpan = ((SpanWrapper) span).unwrap(com.uber.jaeger.Span.class);
+			if (Stagemonitor.isStarted() && spanWrapper instanceof SpanWrapper) {
+				final com.uber.jaeger.Span jaegerSpan = ((SpanWrapper) spanWrapper).unwrap(com.uber.jaeger.Span.class);
 				if (jaegerSpan != null) {
 					setContextToMdc(jaegerSpan.context());
 				}
@@ -57,15 +53,10 @@ public class MDCSpanInterceptor extends SpanInterceptor implements Callable<Span
 	}
 
 	@Override
-	public void onFinish(Span span, String operationName, long durationNanos) {
+	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		MDC.remove("traceId");
 		MDC.remove("spanId");
 		MDC.remove("parentId");
-	}
-
-	@Override
-	public SpanInterceptor call() throws Exception {
-		return this;
 	}
 
 	private void addToMdcIfNotNull(String key, String value) {

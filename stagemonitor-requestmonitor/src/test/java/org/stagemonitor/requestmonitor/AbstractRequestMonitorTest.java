@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
+import com.uber.jaeger.context.TracingUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -22,6 +23,7 @@ import java.util.Map;
 
 import io.opentracing.Tracer;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -73,6 +75,7 @@ public abstract class AbstractRequestMonitorTest {
 				requestMonitorPlugin, requestMonitor, TagRecordingSpanInterceptor.asList(tags),
 				samplePriorityDeterminingSpanInterceptor);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 
 	protected Tracer getTracer() {
@@ -83,5 +86,6 @@ public abstract class AbstractRequestMonitorTest {
 	public void after() {
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 }

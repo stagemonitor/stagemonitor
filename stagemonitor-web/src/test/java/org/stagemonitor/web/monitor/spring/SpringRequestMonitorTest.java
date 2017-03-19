@@ -1,6 +1,5 @@
 package org.stagemonitor.web.monitor.spring;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
@@ -25,6 +24,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
@@ -142,14 +142,13 @@ public class SpringRequestMonitorTest {
 
 		MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(mvcRequest);
 
-		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
+		final SpanContextInformation spanContext = requestMonitor.monitor(monitoredRequest);
 
-		assertEquals("Test Get Request Name", requestInformation.getOperationName());
-		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
-		assertEquals("Test Get Request Name", requestInformation.getOperationName());
+		assertEquals("Test Get Request Name", spanContext.getOperationName());
+		assertEquals(1, registry.timer(getTimerMetricName(spanContext.getOperationName())).getCount());
+		assertEquals("Test Get Request Name", spanContext.getOperationName());
 		assertEquals("/test/requestName", tags.get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET", tags.get("method"));
-		Assert.assertNull(requestInformation.getExecutionResult());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 	}
@@ -160,15 +159,15 @@ public class SpringRequestMonitorTest {
 
 		final MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonMvcRequest);
 
-		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
+		SpanContextInformation spanContext = requestMonitor.monitor(monitoredRequest);
 
-		assertEquals("GET *.js", requestInformation.getOperationName());
-		assertEquals("GET *.js", requestInformation.getOperationName());
+		assertEquals("GET *.js", spanContext.getOperationName());
+		assertEquals("GET *.js", spanContext.getOperationName());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		assertEquals(1, registry.timer(getTimerMetricName(requestInformation.getOperationName())).getCount());
+		assertEquals(1, registry.timer(getTimerMetricName(spanContext.getOperationName())).getCount());
 		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(1)).getRequestName();
-		assertTrue(requestInformation.isReport());
+		assertTrue(spanContext.isReport());
 	}
 
 	@Test
@@ -177,14 +176,14 @@ public class SpringRequestMonitorTest {
 
 		final MonitoredHttpRequest monitoredRequest = createMonitoredHttpRequest(nonMvcRequest);
 
-		RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(monitoredRequest);
+		SpanContextInformation spanContext = requestMonitor.monitor(monitoredRequest);
 
-		assertNull(requestInformation.getOperationName());
+		assertNull(spanContext.getOperationName());
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
-		assertFalse(requestInformation.isReport());
+		assertFalse(spanContext.isReport());
 	}
 
-	private RequestMonitor.RequestInformation anyRequestInformation() {
+	private SpanContextInformation anyRequestInformation() {
 		return any();
 	}
 
@@ -201,13 +200,13 @@ public class SpringRequestMonitorTest {
 	@Test
 	public void testGetRequestNameFromHandler() throws Exception {
 		requestMonitor.monitorStart(createMonitoredHttpRequest(mvcRequest));
-		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.get().getRequestInformation();
-		assertNotNull(requestInformation);
+		final SpanContextInformation spanContext = RequestMonitor.get().getSpanContext();
+		assertNotNull(spanContext);
 		try {
 			dispatcherServlet.service(mvcRequest, new MockHttpServletResponse());
 		} finally {
 			requestMonitor.monitorStop();
 		}
-		assertEquals("Test Get Request Name", requestInformation.getOperationName());
+		assertEquals("Test Get Request Name", spanContext.getOperationName());
 	}
 }

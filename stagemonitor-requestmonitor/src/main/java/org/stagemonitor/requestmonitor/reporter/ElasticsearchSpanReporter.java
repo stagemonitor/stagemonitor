@@ -6,8 +6,8 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 public class ElasticsearchSpanReporter extends SpanReporter {
 
@@ -36,17 +36,17 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(RequestMonitor.RequestInformation requestInformation) {
+	public void report(SpanContextInformation spanContext) {
 		final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 		if (requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()) {
-			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(requestInformation.getSpan()));
+			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(spanContext.getSpan()));
 		} else {
-			elasticsearchClient.index(spansIndex, SPANS_TYPE, requestInformation.getSpan());
+			elasticsearchClient.index(spansIndex, SPANS_TYPE, spanContext.getSpan());
 		}
 	}
 
 	@Override
-	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
+	public boolean isActive(SpanContextInformation spanContext) {
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchSpanReports();
 		return (elasticsearchClient.isElasticsearchAvailable() || logOnly);
 	}

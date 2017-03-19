@@ -17,6 +17,7 @@ import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanCapturingReporter;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
@@ -84,7 +85,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		final MonitoredRequest request = new MonitoredMethodRequest(configuration, "override me", () -> resource.getTestString());
 		requestMonitor.monitor(request);
 
-		final RequestMonitor.RequestInformation info = spanCapturingReporter.get();
+		final SpanContextInformation info = spanCapturingReporter.get();
 
 		assertNotNull(info.getSpan());
 		assertEquals("Get Test String", info.getOperationName());

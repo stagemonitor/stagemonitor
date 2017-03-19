@@ -6,8 +6,8 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MockTracer;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
@@ -44,11 +44,11 @@ public class BoomerangJsHtmlInjectorTest {
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		injector.init(new HtmlInjector.InitArguments(configuration, new MockServletContext()));
 
-		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
-		when(requestInformation.getSpan()).thenReturn(mock(Span.class));
-		when(requestInformation.getOperationName()).thenReturn("GET /index.html");
+		final SpanContextInformation spanContext = mock(SpanContextInformation.class);
+		when(spanContext.getSpan()).thenReturn(mock(Span.class));
+		when(spanContext.getOperationName()).thenReturn("GET /index.html");
 
-		final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(requestInformation);
+		final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(spanContext);
 		injector.injectHtml(injectArguments);
 		assertEquals("<script src=\"/stagemonitor/public/static/rum/boomerang-56c823668fc.min.js\"></script>\n" +
 				"<script>\n" +

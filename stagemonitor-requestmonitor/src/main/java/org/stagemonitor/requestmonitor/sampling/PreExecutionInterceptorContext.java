@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 import io.opentracing.Span;
 
@@ -14,14 +14,14 @@ public class PreExecutionInterceptorContext {
 	private static final Logger logger = LoggerFactory.getLogger(PreExecutionInterceptorContext.class);
 
 	private final Configuration configuration;
-	private final RequestMonitor.RequestInformation requestInformation;
+	private final SpanContextInformation spanContext;
 	private final Metric2Registry metricRegistry;
 	private boolean mustReport = false;
 	private boolean report = true;
 
-	public PreExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Metric2Registry metricRegistry) {
+	public PreExecutionInterceptorContext(Configuration configuration, SpanContextInformation spanContext, Metric2Registry metricRegistry) {
 		this.configuration = configuration;
-		this.requestInformation = requestInformation;
+		this.spanContext = spanContext;
 		this.metricRegistry = metricRegistry;
 	}
 
@@ -41,7 +41,7 @@ public class PreExecutionInterceptorContext {
 	}
 
 	public Span getSpan() {
-		return requestInformation.getSpan();
+		return spanContext.getSpan();
 	}
 
 	public boolean isReport() {
@@ -56,7 +56,7 @@ public class PreExecutionInterceptorContext {
 		return configuration.getConfig(configClass);
 	}
 
-	public RequestMonitor.RequestInformation getRequestInformation() {
-		return requestInformation;
+	public SpanContextInformation getSpanContext() {
+		return spanContext;
 	}
 }

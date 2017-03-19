@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
-import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporterIntegrationTest;
 import org.stagemonitor.web.WebPlugin;
 
@@ -32,8 +32,8 @@ public class ElasticsearchSpanServletTest extends ElasticsearchSpanReporterInteg
 	@Test
 	public void testSpanServlet() throws Exception {
 		final Span span = new MonitoredMethodRequest(configuration, "Test#test", null, Collections.singletonMap("attr.Color", "Blue"))
-				.createSpan(mock(RequestMonitor.RequestInformation.class));
-		reporter.report(RequestMonitor.RequestInformation.of(span, null, Collections.<String, Object>emptyMap()));
+				.createSpan(mock(SpanContextInformation.class));
+		reporter.report(SpanContextInformation.of(span, null, Collections.<String, Object>emptyMap()));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final MockHttpServletRequest req = new MockHttpServletRequest();

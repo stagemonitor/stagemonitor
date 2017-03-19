@@ -25,7 +25,8 @@ public class SamplePriorityDeterminingSpanInterceptorTest extends AbstractReques
 			}
 		});
 
-		requestMonitor.monitor(new MonitoredMethodRequest(configuration, "testSetSamplePrioInPreInterceptor", () -> null));
+		requestMonitor.monitor(new MonitoredMethodRequest(configuration, "testSetSamplePrioInPreInterceptor", () -> {
+		}));
 
 		verify(spanReporter, never()).report(any());
 	}

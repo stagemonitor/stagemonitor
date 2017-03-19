@@ -9,10 +9,12 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MockTracer;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.TagRecordingSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
@@ -22,7 +24,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
@@ -46,20 +47,15 @@ public class MonitoredHttpRequestTest {
 		final WebPlugin webPlugin = new WebPlugin();
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		final List<Callable<SpanInterceptor>> spanInterceptorSuppliers = TagRecordingSpanInterceptor.asList(tags);
-		spanInterceptorSuppliers.add(new Callable<SpanInterceptor>() {
+		final List<SpanInterceptorFactory> spanInterceptorFactories = TagRecordingSpanInterceptor.asList(tags);
+		spanInterceptorFactories.add(() -> new SpanInterceptor() {
 			@Override
-			public SpanInterceptor call() throws Exception {
-				return new SpanInterceptor() {
-					@Override
-					public void onFinish(Span span, String operationName, long durationNanos) {
-						MonitoredHttpRequestTest.this.operationName = operationName;
-					}
-				};
+			public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
+				MonitoredHttpRequestTest.this.operationName = operationName;
 			}
 		});
 		when(requestMonitorPlugin.getTracer()).thenReturn(new SpanWrappingTracer(new MockTracer(),
-				spanInterceptorSuppliers));
+				spanInterceptorFactories));
 	}
 
 	@After
@@ -81,12 +77,6 @@ public class MonitoredHttpRequestTest {
 	}
 
 	@Test
-	public void testIsMonitorForwardedExecutions() throws Exception {
-		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(new MockHttpServletRequest("GET", "/test.js"));
-		assertEquals(true, monitoredHttpRequest.isMonitorForwardedExecutions());
-	}
-
-	@Test
 	public void testCreateSpan() throws Exception {
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
 		request.addParameter("foo", "bar");
@@ -98,7 +88,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = monitoredHttpRequest.createSpan(mock(RequestMonitor.RequestInformation.class));
+		final Span span = monitoredHttpRequest.createSpan(mock(SpanContextInformation.class));
 		span.finish();
 		assertEquals("/test.js", tags.get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET *.js", operationName);
@@ -108,9 +98,9 @@ public class MonitoredHttpRequestTest {
 		assertFalse(tags.containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "cookie"));
 		assertFalse(tags.containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "Cookie"));
 
-		final RequestMonitor.RequestInformation requestInformation = mock(RequestMonitor.RequestInformation.class);
-		when(requestInformation.getSpan()).thenReturn(span);
-		monitoredHttpRequest.onPostExecute(requestInformation);
+		final SpanContextInformation spanContext = mock(SpanContextInformation.class);
+		when(spanContext.getSpan()).thenReturn(span);
+		monitoredHttpRequest.onPostExecute(spanContext);
 		assertEquals("bar", tags.get(SpanUtils.PARAMETERS_PREFIX + "foo"));
 		assertEquals("blubb", tags.get(SpanUtils.PARAMETERS_PREFIX + "bla"));
 		assertEquals("XXXX", tags.get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
@@ -124,7 +114,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan(mock(RequestMonitor.RequestInformation.class));
+		monitoredHttpRequest.createSpan(mock(SpanContextInformation.class));
 		assertEquals("www.github.com", tags.get("http.referring_site"));
 	}
 
@@ -136,7 +126,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan(mock(RequestMonitor.RequestInformation.class));
+		monitoredHttpRequest.createSpan(mock(SpanContextInformation.class));
 		assertNull(tags.get("http.referring_site"));
 	}
 

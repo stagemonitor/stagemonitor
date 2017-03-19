@@ -3,7 +3,6 @@ package org.stagemonitor.requestmonitor;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
-import com.uber.jaeger.context.TracingUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,29 +18,18 @@ import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
-import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import io.opentracing.Span;
-import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -56,26 +44,18 @@ public class RequestMonitor {
 	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
 
 	// TODO remove static keyword. This is currently needed for tests
-	private static ThreadLocal<RequestInformation> request = new ThreadLocal<RequestInformation>();
+	private static ThreadLocal<SpanContextInformation> request = new ThreadLocal<SpanContextInformation>();
 
 	private final List<SpanReporter> spanReporters = new CopyOnWriteArrayList<SpanReporter>();
-
-	private final List<Runnable> onBeforeRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
-
-	private final List<Runnable> onAfterRequestCallbacks = new CopyOnWriteArrayList<Runnable>();
 
 	private final MetricName internalOverheadMetricName = name("internal_overhead_request_monitor").build();
 
 	private ExecutorService asyncSpanReporterPool;
 
-	private int warmupRequests = 0;
-	private AtomicBoolean warmedUp = new AtomicBoolean(false);
-	private AtomicInteger noOfRequests = new AtomicInteger(0);
 	private final Configuration configuration;
 	private Metric2Registry metricRegistry;
 	private CorePlugin corePlugin;
 	private RequestMonitorPlugin requestMonitorPlugin;
-	private Date endOfWarmup;
 	private Meter callTreeMeter = new Meter();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
@@ -92,8 +72,6 @@ public class RequestMonitor {
 		this.metricRegistry = registry;
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		this.requestMonitorPlugin = requestMonitorPlugin;
-		this.warmupRequests = requestMonitorPlugin.getNoOfWarmupRequests();
-		this.endOfWarmup = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(requestMonitorPlugin.getWarmupSeconds()));
 		this.asyncSpanReporterPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit());
 		for (SpanReporter spanReporter : spanReporters) {
@@ -103,8 +81,8 @@ public class RequestMonitor {
 
 	public void monitorStart(MonitoredRequest monitoredRequest) {
 		final long start = System.nanoTime();
-		RequestInformation info = new RequestInformation();
-		info.monitoredRequest = monitoredRequest;
+		SpanContextInformation info = new SpanContextInformation();
+		info.setMonitoredRequest(monitoredRequest);
 		info.setParent(request.get());
 		request.set(info);
 		try {
@@ -116,7 +94,6 @@ public class RequestMonitor {
 				createMeasurementSession();
 			}
 
-			info.firstRequest = noOfRequests.get() == 0;
 			if (Stagemonitor.getMeasurementSession().getInstanceName() == null) {
 				getInstanceNameFromExecution(monitoredRequest);
 			}
@@ -128,25 +105,24 @@ public class RequestMonitor {
 				beforeExecution(monitoredRequest, info);
 			}
 		} finally {
-			info.overhead1 = System.nanoTime() - start;
+			info.setOverhead1(System.nanoTime() - start);
 		}
 	}
 
 	public void monitorStop() {
-		final RequestInformation info = getRequestInformation();
+		final SpanContextInformation info = getSpanContext();
 		if (!corePlugin.isStagemonitorActive()) {
 			cleanUpAfter(info);
 			return;
 		}
 		long overhead2 = System.nanoTime();
-		info.monitoredRequest.onPostExecute(info);
-		info.getSpan().finish();
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			TracingUtils.getTraceContext().pop();
+		info.getMonitoredRequest().onPostExecute(info);
+		if (info.getSpan() != null) {
+			info.getSpan().finish();
 		}
 		if (monitorThisRequest() && info.isReport()) {
 			try {
-				info.spanReporterFuture = report(info);
+				info.setSpanReporterFuture(report(info));
 			} catch (Exception e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}
@@ -156,32 +132,21 @@ public class RequestMonitor {
 
 		cleanUpAfter(info);
 
-		if (!info.firstRequest) {
-			trackOverhead(info.overhead1, overhead2);
-		}
-
-		for (Runnable onAfterRequestCallback : onAfterRequestCallbacks) {
-			try {
-				onAfterRequestCallback.run();
-			} catch (RuntimeException e) {
-				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
-			}
-		}
+		trackOverhead(info.getOverhead1(), overhead2);
 	}
 
-	private void cleanUpAfter(RequestInformation info) {
+	private void cleanUpAfter(SpanContextInformation info) {
 		request.set(info.getParent());
-		if (info.callTree != null) {
+		if (info.getCallTree() != null) {
 			Profiler.clearMethodCallParent();
 		}
 	}
 
-	public RequestInformation monitor(MonitoredRequest monitoredRequest) throws Exception {
+	public SpanContextInformation monitor(MonitoredRequest monitoredRequest) throws Exception {
 		try {
 			monitorStart(monitoredRequest);
-			final RequestInformation info = getRequestInformation();
-			info.executionResult = monitoredRequest.execute();
-			return info;
+			monitoredRequest.execute();
+			return getSpanContext();
 		} catch (Exception e) {
 			recordException(e);
 			throw e;
@@ -222,31 +187,19 @@ public class RequestMonitor {
 		}
 	}
 
-	private void beforeExecution(MonitoredRequest monitoredRequest, RequestInformation info) {
-		info.span = monitoredRequest.createSpan(info);
-		for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
-			info.span.setTag(entry.getKey(), entry.getValue());
-		}
-		TracingUtils.getTraceContext().push(info.span);
-
+	private void beforeExecution(MonitoredRequest monitoredRequest, SpanContextInformation info) {
+		monitoredRequest.createSpan(info);
 		try {
 			if (isProfileThisRequest(info)) {
 				callTreeMeter.mark();
-				info.callTree = Profiler.activateProfiling("total");
+				info.setCallTree(Profiler.activateProfiling("total"));
 			}
 		} catch (RuntimeException e) {
 			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 		}
-		for (Runnable onBeforeRequestCallback : onBeforeRequestCallbacks) {
-			try {
-				onBeforeRequestCallback.run();
-			} catch (RuntimeException e) {
-				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
-			}
-		}
 	}
 
-	private void removeTimerIfCountIsZero(RequestInformation info) {
+	private void removeTimerIfCountIsZero(SpanContextInformation info) {
 		final String requestName = info.getOperationName();
 		if (requestName != null) {
 			MetricName timerMetricName = getTimerMetricName(requestName);
@@ -257,17 +210,17 @@ public class RequestMonitor {
 		}
 	}
 
-	private Future<?> report(final RequestInformation requestInformation) {
+	private Future<?> report(final SpanContextInformation spanContext) {
 		try {
 			if (requestMonitorPlugin.isReportAsync()) {
 				return asyncSpanReporterPool.submit(new Runnable() {
 					@Override
 					public void run() {
-						doReport(requestInformation);
+						doReport(spanContext);
 					}
 				});
 			} else {
-				doReport(requestInformation);
+				doReport(spanContext);
 				return new CompletedFuture<Object>(null);
 			}
 		} catch (RejectedExecutionException e) {
@@ -276,13 +229,13 @@ public class RequestMonitor {
 		}
 	}
 
-	private void doReport(RequestInformation requestInformation) {
-		requestInformation.monitoredRequest.onBeforeReport(requestInformation);
+	private void doReport(SpanContextInformation spanContext) {
+		spanContext.getMonitoredRequest().onBeforeReport(spanContext);
 		for (SpanReporter spanReporter : spanReporters) {
-			final CallStackElement callTree = requestInformation.getCallTree();
-			if (isActive(requestInformation, spanReporter)) {
+			final CallStackElement callTree = spanContext.getCallTree();
+			if (isActive(spanContext, spanReporter)) {
 				try {
-					spanReporter.report(requestInformation);
+					spanReporter.report(spanContext);
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 				}
@@ -293,16 +246,7 @@ public class RequestMonitor {
 		}
 	}
 
-	private boolean isWarmedUp() {
-		if (!warmedUp.get()) {
-			warmedUp.set(warmupRequests < noOfRequests.incrementAndGet() && new Date(System.currentTimeMillis() + 1).after(endOfWarmup));
-			return warmedUp.get();
-		} else {
-			return true;
-		}
-	}
-
-	public RequestInformation getRequestInformation() {
+	public SpanContextInformation getSpanContext() {
 		return request.get();
 	}
 
@@ -312,16 +256,11 @@ public class RequestMonitor {
 			logger.debug(msg, "stagemonitor has not been started yet");
 			return false;
 		}
-		if (!isWarmedUp()) {
-			logger.debug(msg, "the application is not warmed up");
-			return false;
-		}
-
 		return true;
 	}
 
-	private boolean isProfileThisRequest(RequestInformation requestInformation) {
-		if (requestInformation.span == null || requestInformation.isExternalRequest()) {
+	private boolean isProfileThisRequest(SpanContextInformation spanContext) {
+		if (spanContext.getSpan() == null || spanContext.isExternalRequest()) {
 			return false;
 		}
 		double callTreeRateLimit = requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute();
@@ -331,283 +270,23 @@ public class RequestMonitor {
 		} else if (callTreeRateLimit <= 0) {
 			logger.debug("Not profiling this request because stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch <= 0");
 			return false;
-		} else if (!isAnySpanReporterActive(requestInformation)) {
+		} else if (!isAnySpanReporterActive(spanContext)) {
 			// TODO what if no span reporter is active but for example the jaeger zikin reporter is active?
 			logger.debug("Not profiling this request because no SpanReporter is active {}", spanReporters);
 			return false;
 		} else if (callTreeRateLimit < 1000000d && callTreeMeter.getOneMinuteRate() >= callTreeRateLimit) {
 			logger.debug("Not profiling this request because more than {} call trees per minute where created", callTreeRateLimit);
 			return false;
-		} else if (!requestInformation.isReport()) {
+		} else if (!spanContext.isReport()) {
 			logger.debug("Not profiling this request because this request is not sampled", callTreeRateLimit);
 			return false;
 		}
 		return true;
 	}
 
-	public static class RequestInformation {
-		private Span span = NoopSpan.INSTANCE;
-		private Object executionResult = null;
-		private long overhead1;
-		private MonitoredRequest monitoredRequest;
-		private boolean firstRequest;
-		private RequestInformation parent;
-		private Future<?> spanReporterFuture;
-		private Map<String, Object> requestAttributes = new HashMap<String, Object>();
-		private CallStackElement callTree;
-		private String operationName;
-		private long duration;
-		private boolean externalRequest;
-		private boolean serverRequest;
-		private Timer timerForThisRequest;
-		private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
-		private PostExecutionInterceptorContext postExecutionInterceptorContext;
-		private boolean report = true;
-
-		public static RequestInformation of(Span span) {
-			final RequestInformation requestInformation = new RequestInformation();
-			requestInformation.setSpan(span);
-			return requestInformation;
-		}
-
-		public static RequestInformation of(Span span, String operationName) {
-			final RequestInformation requestInformation = new RequestInformation();
-			requestInformation.setSpan(span);
-			requestInformation.setOperationName(operationName);
-			return requestInformation;
-		}
-
-		public static RequestInformation of(Span span, CallStackElement callTree) {
-			return of(span, callTree, Collections.<String, Object>emptyMap());
-		}
-
-		public static RequestInformation of(Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
-			final RequestInformation requestInformation = new RequestInformation();
-			requestInformation.setSpan(span);
-			requestInformation.setCallTree(callTree);
-			for (Map.Entry<String, Object> entry : requestAttributes.entrySet()) {
-				requestInformation.addRequestAttribute(entry.getKey(), entry.getValue());
-			}
-			return requestInformation;
-		}
-
-		public String getOperationName() {
-			return operationName;
-		}
-
-		public Object getExecutionResult() {
-			return executionResult;
-		}
-
-		@Override
-		public String toString() {
-			return "RequestInformation{" +
-					"span=" + span +
-					", executionResult=" + executionResult +
-					'}';
-		}
-
-		public Future<?> getSpanReporterFuture() {
-			return spanReporterFuture;
-		}
-
-		public Span getSpan() {
-			return span;
-		}
-
-		public void setSpan(Span span) {
-			this.span = span;
-		}
-
-		/**
-		 * Adds an attribute to the request which can later be retrieved by {@link #getRequestAttribute(String)}
-		 * <p/>
-		 * The attributes won't be reported
-		 */
-		public void addRequestAttribute(String key, Object value) {
-			requestAttributes.put(key, value);
-		}
-
-		public Object getRequestAttribute(String key) {
-			return requestAttributes.get(key);
-		}
-
-		public CallStackElement getCallTree() {
-			return callTree;
-		}
-
-		private void setOperationName(String operationName) {
-			this.operationName = operationName;
-		}
-
-		private void setDuration(long duration) {
-			this.duration = duration;
-		}
-
-		public long getDurationNanos() {
-			return duration;
-		}
-
-		private void setExternalRequest(boolean externalRequest) {
-			this.externalRequest = externalRequest;
-		}
-
-		public boolean isExternalRequest() {
-			return externalRequest;
-		}
-
-		public void setServerRequest(boolean serverRequest) {
-			this.serverRequest = serverRequest;
-		}
-
-		public boolean isServerRequest() {
-			return serverRequest;
-		}
-
-		public void setCallTree(CallStackElement callTree) {
-			this.callTree = callTree;
-		}
-
-		public Map<String, Object> getRequestAttributes() {
-			return requestAttributes;
-		}
-
-		public void setTimerForThisRequest(Timer timerForThisRequest) {
-			this.timerForThisRequest = timerForThisRequest;
-		}
-
-		public Timer getTimerForThisRequest() {
-			return timerForThisRequest;
-		}
-
-		public RequestInformation getParent() {
-			return parent;
-		}
-
-		public void setParent(RequestInformation parent) {
-			this.parent = parent;
-		}
-
-		public void addExternalRequest(String requestType, long executionTimeNanos) {
-			final ExternalRequestStats stats = this.externalRequestStats.get(requestType);
-			if (stats == null) {
-				externalRequestStats.put(requestType, new ExternalRequestStats(requestType, executionTimeNanos));
-			} else {
-				stats.add(executionTimeNanos);
-			}
-		}
-
-		public Collection<ExternalRequestStats> getExternalRequestStats() {
-			return externalRequestStats.values();
-		}
-
-		public void setPostExecutionInterceptorContext(PostExecutionInterceptorContext postExecutionInterceptorContext) {
-			this.postExecutionInterceptorContext = postExecutionInterceptorContext;
-		}
-
-		public PostExecutionInterceptorContext getPostExecutionInterceptorContext() {
-			return postExecutionInterceptorContext;
-		}
-
-		public boolean isReport() {
-			return report;
-		}
-
-		public void setReport(boolean report) {
-			this.report = report;
-		}
-
-		public static class ExternalRequestStats {
-
-			private final double MS_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
-
-			private final String requestType;
-			private int executionCount = 1;
-			private long executionTimeNanos;
-
-			ExternalRequestStats(String requestType, long executionTimeNanos) {
-				this.requestType = requestType;
-				this.executionTimeNanos = executionTimeNanos;
-			}
-
-			public double getExecutionTimeMs() {
-				return executionTimeNanos / MS_IN_NANOS;
-			}
-
-			public long getExecutionTimeNanos() {
-				return executionTimeNanos;
-			}
-
-			public int getExecutionCount() {
-				return executionCount;
-			}
-
-			public String getRequestType() {
-				return requestType;
-			}
-
-			public void add(long executionTimeNanos) {
-				executionCount++;
-				this.executionTimeNanos += executionTimeNanos;
-			}
-
-			public void incrementExecutionTime(long additionalExecutionTime) {
-				executionTimeNanos += additionalExecutionTime;
-			}
-		}
-
-	}
-
-	static class RequestInformationSettingSpanInterceptor extends SpanInterceptor implements Callable<SpanInterceptor> {
-		private final RequestMonitor requestMonitor;
-
-		RequestInformationSettingSpanInterceptor(RequestMonitor requestMonitor) {
-			this.requestMonitor = requestMonitor;
-		}
-
-		@Override
-		public String onSetTag(String key, String value) {
-			final RequestInformation info = requestMonitor.getRequestInformation();
-			if (info != null) {
-				if (key.equals(Tags.SPAN_KIND.getKey())) {
-					info.setExternalRequest(Tags.SPAN_KIND_CLIENT.equals(value));
-					info.setServerRequest(Tags.SPAN_KIND_SERVER.equals(value));
-				}
-			}
-			return value;
-		}
-
-		@Override
-		public Number onSetTag(String key, Number value) {
-			final RequestInformation info = requestMonitor.getRequestInformation();
-			if (info != null) {
-				if (Tags.SAMPLING_PRIORITY.getKey().equals(key)) {
-					info.setReport(value.shortValue() > 0);
-				}
-			}
-			return value;
-		}
-
-		@Override
-		public void onFinish(Span span, String operationName, long durationNanos) {
-			final RequestInformation info = requestMonitor.getRequestInformation();
-			if (info != null) {
-				info.setOperationName(operationName);
-				info.setDuration(durationNanos);
-			}
-		}
-
-		@Override
-		public SpanInterceptor call() throws Exception {
-			// this interceptor is stateless
-			return this;
-		}
-
-	}
-
-	private boolean isAnySpanReporterActive(RequestInformation requestInformation) {
+	private boolean isAnySpanReporterActive(SpanContextInformation spanContext) {
 		for (SpanReporter reporter : spanReporters) {
-			if (isActive(requestInformation, reporter)) {
+			if (isActive(spanContext, reporter)) {
 				return true;
 			}
 		}
@@ -617,17 +296,17 @@ public class RequestMonitor {
 	/**
 	 * Checks whether the given {@link SpanReporter} is active for the current {@link Span}. If this method was
 	 * already called for a {@link SpanReporter} in the context of the current request it returns the previous result.
-	 * In other words this method makes sure that {@link SpanReporter#isActive(RequestMonitor.RequestInformation)} is
+	 * In other words this method makes sure that {@link SpanReporter#isActive(SpanContextInformation)} is
 	 * called at most once.
 	 */
-	private boolean isActive(RequestInformation requestInformation, SpanReporter spanReporter) {
+	private boolean isActive(SpanContextInformation spanContext, SpanReporter spanReporter) {
 		final String requestAttributeActive = ClassUtils.getIdentityString(spanReporter) + ".active";
-		final Boolean activeFromAttribute = (Boolean) requestInformation.getRequestAttribute(requestAttributeActive);
+		final Boolean activeFromAttribute = (Boolean) spanContext.getRequestAttribute(requestAttributeActive);
 		if (activeFromAttribute != null) {
 			return activeFromAttribute;
 		}
-		final boolean active = spanReporter.isActive(RequestInformation.of(requestInformation.span, null, requestInformation.requestAttributes));
-		requestInformation.addRequestAttribute(requestAttributeActive, active);
+		final boolean active = spanReporter.isActive(SpanContextInformation.of(spanContext.getSpan(), null, spanContext.getRequestAttributes()));
+		spanContext.addRequestAttribute(requestAttributeActive, active);
 		return active;
 	}
 
@@ -635,9 +314,9 @@ public class RequestMonitor {
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
 	 */
 	public Span getSpan() {
-		final RequestInformation requestInformation = getRequestInformation();
-		if (requestInformation != null) {
-			return requestInformation.getSpan() != null ? requestInformation.getSpan() : NoopSpan.INSTANCE;
+		final SpanContextInformation spanContext = getSpanContext();
+		if (spanContext != null) {
+			return spanContext.getSpan() != null ? spanContext.getSpan() : NoopSpan.INSTANCE;
 		} else {
 			return NoopSpan.INSTANCE;
 		}
@@ -658,8 +337,6 @@ public class RequestMonitor {
 	 * You can use this instance for example to call the following methods:
 	 * <ul>
 	 * <li>{@link #addReporter(SpanReporter)}</li>
-	 * <li>{@link #addOnBeforeRequestCallback(Runnable)}</li>
-	 * <li>{@link #addOnAfterRequestCallback(Runnable)}</li>
 	 * <li>{@link #getSpan()}</li>
 	 * </ul>
 	 *
@@ -685,28 +362,6 @@ public class RequestMonitor {
 	public void close() {
 		asyncSpanReporterPool.shutdown();
 		request.remove();
-	}
-
-	/**
-	 * Registers a callback that is called before a request gets executed
-	 * <p/>
-	 * This is a internal method. The API is likely to change!
-	 *
-	 * @param onBeforeRequestCallback The callback
-	 */
-	public void addOnBeforeRequestCallback(Runnable onBeforeRequestCallback) {
-		onBeforeRequestCallbacks.add(onBeforeRequestCallback);
-	}
-
-	/**
-	 * Registers a callback that is called after a request has been executed
-	 * <p/>
-	 * This is a internal method. The API is likely to change!
-	 *
-	 * @param onAfterRequestCallback The callback
-	 */
-	public void addOnAfterRequestCallback(Runnable onAfterRequestCallback) {
-		onAfterRequestCallbacks.add(onAfterRequestCallback);
 	}
 
 	void setCallTreeMeter(Meter callTreeMeter) {

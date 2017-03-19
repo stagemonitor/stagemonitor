@@ -2,7 +2,7 @@ package org.stagemonitor.web.monitor.filter;
 
 import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +27,7 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	/**
 	 * Implementations can return html snippets that are injected just before the closing body tag.
 	 * <p/>
-	 * <b>Note:</b> {@link RequestMonitor.RequestInformation#getSpan()} ()} may return null
+	 * <b>Note:</b> {@link SpanContextInformation#getSpan()} ()} may return null
 	 *
 	 * @param injectArguments
 	 * @return the code to inject into html documents just before the closing body tag
@@ -65,18 +65,18 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	}
 
 	public static class InjectArguments {
-		private final RequestMonitor.RequestInformation requestInformation;
+		private final SpanContextInformation spanContext;
 		private String contentToInjectBeforeClosingBody;
 
 		/**
-		 * @param requestInformation information about the current request
+		 * @param spanContext information about the current request
 		 */
-		public InjectArguments(RequestMonitor.RequestInformation requestInformation) {
-			this.requestInformation = requestInformation;
+		public InjectArguments(SpanContextInformation spanContext) {
+			this.spanContext = spanContext;
 		}
 
-		public RequestMonitor.RequestInformation getRequestInformation() {
-			return requestInformation;
+		public SpanContextInformation getSpanContext() {
+			return spanContext;
 		}
 
 		public void setContentToInjectBeforeClosingBody(String contentToInject) {

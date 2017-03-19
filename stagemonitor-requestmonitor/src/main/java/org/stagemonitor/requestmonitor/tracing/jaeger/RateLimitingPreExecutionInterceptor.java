@@ -4,8 +4,8 @@ import com.uber.jaeger.utils.RateLimiter;
 
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
 
@@ -42,11 +42,11 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 
 	@Override
 	public void interceptReport(PreExecutionInterceptorContext context) {
-		final RequestMonitor.RequestInformation requestInformation = context.getRequestInformation();
+		final SpanContextInformation spanContext = context.getSpanContext();
 		boolean rateExceeded = false;
-		if (requestInformation.isServerRequest() && serverSpanRateLimiter != null) {
+		if (spanContext.isServerRequest() && serverSpanRateLimiter != null) {
 			rateExceeded = !serverSpanRateLimiter.checkCredit(1.0);
-		} else if (requestInformation.isExternalRequest() && clientSpanRateLimiter != null) {
+		} else if (spanContext.isExternalRequest() && clientSpanRateLimiter != null) {
 			rateExceeded = !clientSpanRateLimiter.checkCredit(1.0);
 		}
 		if (rateExceeded) {

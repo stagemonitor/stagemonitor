@@ -1,6 +1,18 @@
 package org.stagemonitor.requestmonitor;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleSerializers;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
+
+import java.io.IOException;
+import java.util.Collections;
 
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
@@ -16,6 +28,30 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class MockTracer implements Tracer {
+
+	static {
+		JsonUtils.getMapper().registerModule(new Module() {
+			@Override
+			public String getModuleName() {
+				return "stagemonitor-noop-spans";
+			}
+
+			@Override
+			public Version version() {
+				return new Version(1, 0, 0, "", "org.stagemonitor", "stagemonitor-requestmonitor");
+			}
+
+			@Override
+			public void setupModule(final SetupContext context) {
+				context.addSerializers(new SimpleSerializers(Collections.<JsonSerializer<?>>singletonList(new StdSerializer<NoopSpan>(NoopSpan.class) {
+					@Override
+					public void serialize(NoopSpan value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+					}
+				})));
+			}
+		});
+	}
+
 	@Override
 	public SpanBuilder buildSpan(String operationName) {
 		final SpanBuilder spanBuilder = mock(SpanBuilder.class);

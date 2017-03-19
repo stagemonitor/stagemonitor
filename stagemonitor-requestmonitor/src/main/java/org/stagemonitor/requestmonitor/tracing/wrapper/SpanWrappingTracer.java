@@ -3,7 +3,7 @@ package org.stagemonitor.requestmonitor.tracing.wrapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
@@ -14,11 +14,15 @@ import io.opentracing.propagation.Format;
 public class SpanWrappingTracer implements Tracer {
 
 	private final Tracer delegate;
-	private final List<Callable<SpanInterceptor>> spanInterceptorSuppliers;
+	private final List<SpanInterceptorFactory> spanInterceptorFactories;
 
-	public SpanWrappingTracer(Tracer delegate, List<Callable<SpanInterceptor>> spanInterceptorSuppliers) {
+	public SpanWrappingTracer(Tracer delegate) {
+		this(delegate, new CopyOnWriteArrayList<SpanInterceptorFactory>());
+	}
+
+	public SpanWrappingTracer(Tracer delegate, List<SpanInterceptorFactory> spanInterceptorFactories) {
 		this.delegate = delegate;
-		this.spanInterceptorSuppliers = spanInterceptorSuppliers;
+		this.spanInterceptorFactories = spanInterceptorFactories;
 	}
 
 	@Override
@@ -37,19 +41,15 @@ public class SpanWrappingTracer implements Tracer {
 	}
 
 	protected List<SpanInterceptor> createSpanInterceptors() {
-		List<SpanInterceptor> spanInterceptors = new ArrayList<SpanInterceptor>(spanInterceptorSuppliers.size());
-		for (Callable<SpanInterceptor> spanInterceptorSupplier : spanInterceptorSuppliers) {
-			try {
-				spanInterceptors.add(spanInterceptorSupplier.call());
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+		List<SpanInterceptor> spanInterceptors = new ArrayList<SpanInterceptor>(spanInterceptorFactories.size());
+		for (SpanInterceptorFactory spanInterceptorFactory : spanInterceptorFactories) {
+			spanInterceptors.add(spanInterceptorFactory.create());
 		}
 		return spanInterceptors;
 	}
 
-	public void addSpanInterceptor(Callable<SpanInterceptor> spanInterceptorSupplier) {
-		spanInterceptorSuppliers.add(spanInterceptorSupplier);
+	public void addSpanInterceptor(SpanInterceptorFactory spanInterceptorFactory) {
+		spanInterceptorFactories.add(spanInterceptorFactory);
 	}
 
 	class SpanWrappingSpanBuilder implements SpanBuilder {
@@ -118,11 +118,11 @@ public class SpanWrappingTracer implements Tracer {
 			if (startTimestampNanos == 0) {
 				startTimestampNanos = System.nanoTime();
 			}
-			final Span span = delegate.start();
+			final SpanWrapper spanWrapper = new SpanWrapper(delegate.start(), operationName, startTimestampNanos, spanInterceptors);
 			for (SpanInterceptor spanInterceptor : spanInterceptors) {
-				spanInterceptor.onStart(span);
+				spanInterceptor.onStart(spanWrapper);
 			}
-			return new SpanWrapper(span, operationName, startTimestampNanos, spanInterceptors);
+			return spanWrapper;
 		}
 	}
 }

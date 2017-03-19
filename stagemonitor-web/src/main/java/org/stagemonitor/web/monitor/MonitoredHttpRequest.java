@@ -6,8 +6,8 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -30,7 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import io.opentracing.Span;
-import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
@@ -76,7 +75,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public Span createSpan(RequestMonitor.RequestInformation info) {
+	public Span createSpan(SpanContextInformation info) {
 		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
 		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
 		boolean sample = true;
@@ -85,7 +84,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		}
 
 		final Tracer tracer = requestMonitorPlugin.getTracer();
-		SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
+		io.opentracing.SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
 		Tracer.SpanBuilder spanBuilder = tracer.buildSpan(getRequestName())
 				.asChildOf(spanCtx)
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
@@ -184,13 +183,12 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public Object execute() throws Exception {
+	public void execute() throws Exception {
 		filterChain.doFilter(httpServletRequest, responseWrapper);
-		return null;
 	}
 
 	@Override
-	public void onPostExecute(RequestMonitor.RequestInformation info) {
+	public void onPostExecute(SpanContextInformation info) {
 		final Span span = info.getSpan();
 
 		// Search the configured exception attributes that may have been set
@@ -219,9 +217,9 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 	@Override
 	@SuppressWarnings("squid:S2696")
-	public void onBeforeReport(RequestMonitor.RequestInformation requestInformation) {
+	public void onBeforeReport(SpanContextInformation spanContext) {
 		// TODO move to SpanInterceptor.onFinish()
-		final Span span = requestInformation.getSpan();
+		final Span span = spanContext.getSpan();
 
 		final String userName = getUserName();
 		final String sessionId = getSessionId();
@@ -237,7 +235,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		int status = responseWrapper.getStatus();
 		Tags.HTTP_STATUS.set(span, status);
 
-		metricRegistry.meter(throughputMetricNameTemplate.build(requestInformation.getOperationName(), Integer.toString(status))).mark();
+		metricRegistry.meter(throughputMetricNameTemplate.build(spanContext.getOperationName(), Integer.toString(status))).mark();
 		metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
 		Tags.ERROR.set(span, status >= 400);
 		span.setTag("bytes_written", responseWrapper.getContentLength());
@@ -260,16 +258,4 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		return userPrincipal != null ? userPrincipal.getName() : null;
 	}
 
-	/**
-	 * In a web context, we only want to monitor forwarded requests.
-	 * If a request to /a makes a
-	 * {@link javax.servlet.RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)}
-	 * to /b, we only want to collect metrics for /b, because it is the request, that does the actual computation.
-	 *
-	 * @return true
-	 */
-	@Override
-	public boolean isMonitorForwardedExecutions() {
-		return true;
-	}
 }

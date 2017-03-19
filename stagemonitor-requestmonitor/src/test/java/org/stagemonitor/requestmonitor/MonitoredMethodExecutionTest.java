@@ -1,5 +1,8 @@
 package org.stagemonitor.requestmonitor;
 
+import com.uber.jaeger.context.TracingUtils;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
@@ -18,15 +21,16 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MonitoredMethodExecutionTest {
 
-	private RequestMonitor.RequestInformation requestInformation1;
-	private RequestMonitor.RequestInformation requestInformation2;
-	private RequestMonitor.RequestInformation requestInformation3;
+	private SpanContextInformation spanContext1;
+	private SpanContextInformation spanContext2;
+	private SpanContextInformation spanContext3;
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
 	private Configuration configuration;
@@ -43,13 +47,12 @@ public class MonitoredMethodExecutionTest {
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 
-		when(requestMonitorPlugin.getNoOfWarmupRequests()).thenReturn(0);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 
-		requestInformation1 = requestInformation2 = requestInformation3 = null;
+		spanContext1 = spanContext2 = spanContext3 = null;
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, registry);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 
@@ -60,13 +63,18 @@ public class MonitoredMethodExecutionTest {
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 
 		testObject = new TestObject(requestMonitor);
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 
 	@Test
 	public void testDoubleForwarding() throws Exception {
 		testObject.monitored1();
-		assertEquals(1, requestInformation1.getExecutionResult());
-		assertEquals("monitored1()", requestInformation1.getOperationName());
+		assertEquals("monitored1()", spanContext1.getOperationName());
 		assertEquals(tags.toString(), "1", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg0"));
 		assertEquals(tags.toString(), "test", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg1"));
 
@@ -79,7 +87,6 @@ public class MonitoredMethodExecutionTest {
 	@Test
 	public void testNormalForwarding() throws Exception {
 		testObject.monitored3();
-		assertEquals(1, requestInformation3.getExecutionResult());
 
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
 		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
@@ -94,38 +101,19 @@ public class MonitoredMethodExecutionTest {
 			this.requestMonitor = requestMonitor;
 		}
 
-		private int monitored1() throws Exception {
-			requestInformation1 = requestMonitor.monitor(
-					new MonitoredMethodRequest(configuration, "monitored1()", new MonitoredMethodRequest.MethodExecution() {
-						@Override
-						public Object execute() throws Exception {
-							return monitored2();
-						}
-					}, MetricsReporterTestHelper.<String, Object>map("arg0", 1).add("arg1", "test")));
-			return (Integer) requestInformation1.getExecutionResult();
+		private void monitored1() throws Exception {
+			spanContext1 = requestMonitor.monitor(
+					new MonitoredMethodRequest(configuration, "monitored1()", this::monitored2, MetricsReporterTestHelper.<String, Object>map("arg0", 1).add("arg1", "test")));
 		}
 
-		private int monitored2() throws Exception {
-			requestInformation2 = requestMonitor.monitor(
-					new MonitoredMethodRequest(configuration, "monitored2()", new MonitoredMethodRequest.MethodExecution() {
-						@Override
-						public Object execute() throws Exception {
-							return monitored3();
-						}
-					}));
-			return (Integer) requestInformation2.getExecutionResult();
+		private void monitored2() throws Exception {
+			spanContext2 = requestMonitor.monitor(
+					new MonitoredMethodRequest(configuration, "monitored2()", this::monitored3));
 		}
 
-		private int monitored3() throws Exception {
-			requestInformation3 = requestMonitor.monitor(
-					new MonitoredMethodRequest(configuration, "monitored3()", new MonitoredMethodRequest.MethodExecution() {
-						@Override
-						public Object execute() throws Exception {
-							return notMonitored();
-						}
-					}));
-			System.out.println(requestInformation3);
-			return (Integer) requestInformation3.getExecutionResult();
+		private void monitored3() throws Exception {
+			spanContext3 = requestMonitor.monitor(
+					new MonitoredMethodRequest(configuration, "monitored3()", this::notMonitored));
 		}
 
 		private int notMonitored() {

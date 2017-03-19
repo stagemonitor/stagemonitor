@@ -15,6 +15,7 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -44,7 +45,7 @@ public class SpanServletTest {
 	private String connectionId;
 	private WebPlugin webPlugin;
 	private Span span;
-	private RequestMonitor.RequestInformation requestInformation;
+	private SpanContextInformation spanContext;
 
 	@Before
 	public void setUp() throws Exception {
@@ -65,20 +66,20 @@ public class SpanServletTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test");
 		request.addHeader(WidgetAjaxSpanReporter.CONNECTION_ID, connectionId);
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration);
-		requestInformation = RequestMonitor.RequestInformation.of(null, "test");
-		span = monitoredHttpRequest.createSpan(requestInformation);
+		spanContext = SpanContextInformation.of(null, "test");
+		span = monitoredHttpRequest.createSpan(spanContext);
 		span.setOperationName("test");
-		requestInformation.setSpan(span);
+		spanContext.setSpan(span);
 
-		monitoredHttpRequest.onPostExecute(requestInformation);
-		monitoredHttpRequest.onBeforeReport(requestInformation);
+		monitoredHttpRequest.onPostExecute(spanContext);
+		monitoredHttpRequest.onBeforeReport(spanContext);
 		// init jackson module
 		new ElasticsearchSpanReporter();
 	}
 
 	@Test
 	public void testSpanBeforeRequest() throws Exception {
-		reporter.report(requestInformation);
+		reporter.report(spanContext);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", connectionId);
@@ -92,8 +93,8 @@ public class SpanServletTest {
 
 	@Test
 	public void testTwoSpanBeforeRequest() throws Exception {
-		reporter.report(requestInformation);
-		reporter.report(requestInformation);
+		reporter.report(spanContext);
+		reporter.report(spanContext);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", connectionId);
@@ -148,7 +149,7 @@ public class SpanServletTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(requestInformation);
+		reporter.report(spanContext);
 		waitForResponse(response);
 
 		Assert.assertEquals(spanAsJsonArray(), response.getContentAsString());
@@ -163,7 +164,7 @@ public class SpanServletTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(requestInformation);
+		reporter.report(spanContext);
 		waitForResponse(response);
 
 		Assert.assertEquals("[]", response.getContentAsString());
@@ -202,6 +203,6 @@ public class SpanServletTest {
 		new MockFilterChain(spanServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 
 		Assert.assertEquals(404, response.getStatus());
-		Assert.assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(mock(Span.class))));
+		Assert.assertFalse(reporter.isActive(SpanContextInformation.of(mock(Span.class))));
 	}
 }

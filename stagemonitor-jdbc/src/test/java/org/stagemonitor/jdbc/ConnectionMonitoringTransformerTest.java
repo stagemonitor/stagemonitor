@@ -23,6 +23,7 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 
@@ -113,11 +114,11 @@ public class ConnectionMonitoringTransformerTest {
 		// make sure call trees are recorded
 		requestMonitor.addReporter(new SpanReporter() {
 			@Override
-			public void report(RequestMonitor.RequestInformation requestInformation) throws Exception {
+			public void report(SpanContextInformation spanContext) throws Exception {
 			}
 
 			@Override
-			public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
+			public boolean isActive(SpanContextInformation spanContext) {
 				return true;
 			}
 		});
@@ -136,7 +137,6 @@ public class ConnectionMonitoringTransformerTest {
 		requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", () -> {
 					dataSource.getConnection().close();
-					return null;
 				})).getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
@@ -153,7 +153,6 @@ public class ConnectionMonitoringTransformerTest {
 		requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", () -> {
 					dataSource.getConnection("sa", "").close();
-					return null;
 				})).getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
@@ -161,42 +160,35 @@ public class ConnectionMonitoringTransformerTest {
 
 	@Test
 	public void testRecordSqlPreparedStatement() throws Exception {
-		final RequestMonitor.RequestInformation requestInformation = requestMonitor
-				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlPreparedStatement", new MonitoredMethodRequest.MethodExecution() {
-					@Override
-					public Object execute() throws Exception {
-						testDao.executePreparedStatement();
-						return null;
-					}
-				}));
-		requestInformation.getSpanReporterFuture().get();
+		final SpanContextInformation spanContext = requestMonitor
+				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlPreparedStatement", () -> testDao.executePreparedStatement()));
+		spanContext.getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()));
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").tag("method", "SELECT").build()));
 		final Map<MetricName, Meter> meters = metric2Registry.getMeters();
 		assertNotNull(meters.keySet().toString(), meters.get(name("external_requests_rate").tag("request_name", "testRecordSqlPreparedStatement").tag("type", "jdbc").build()));
-		final CallStackElement callStack = requestInformation.getCallTree();
+		final CallStackElement callStack = spanContext.getCallTree();
 		assertEquals("testRecordSqlPreparedStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executePreparedStatement()",
-				callStack.getChildren().get(0).getChildren().get(0).getSignature());
-		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getChildren().get(0).getSignature());
+				callStack.getChildren().get(0).getSignature());
+		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getSignature());
 	}
 
 	@Test
 	public void testRecordSqlStatement() throws Exception {
-		final RequestMonitor.RequestInformation requestInformation = requestMonitor
+		final SpanContextInformation spanContext = requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlStatement", () -> {
 					testDao.executeStatement();
-					return null;
 				}));
-		requestInformation.getSpanReporterFuture().get();
+		spanContext.getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		final String message = timers.keySet().toString();
 		assertTrue(message, timers.size() > 1);
 		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executeStatement").tag("method", "SELECT").build()).getCount());
 		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()).getCount());
-		final CallStackElement callStack = requestInformation.getCallTree();
+		final CallStackElement callStack = spanContext.getCallTree();
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executeStatement()",
 				callStack.getChildren().get(0).getSignature());

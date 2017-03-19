@@ -11,7 +11,7 @@ class CallTreeExcludingPostExecutionInterceptor extends PostExecutionSpanInterce
 				.getConfig(RequestMonitorPlugin.class)
 				.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests();
 
-		if (!MetricUtils.isFasterThanXPercentOfAllRequests(context.getRequestInformation().getDurationNanos(), percentileLimit, context.getRequestInformation().getTimerForThisRequest())) {
+		if (!MetricUtils.isFasterThanXPercentOfAllRequests(context.getSpanContext().getDurationNanos(), percentileLimit, context.getSpanContext().getTimerForThisRequest())) {
 			context.excludeCallTree();
 		}
 	}

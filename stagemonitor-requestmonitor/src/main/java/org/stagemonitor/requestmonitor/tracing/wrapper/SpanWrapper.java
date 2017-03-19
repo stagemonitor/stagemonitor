@@ -29,7 +29,7 @@ public class SpanWrapper implements Span {
 	public void close() {
 		final long durationNanos = System.nanoTime() - startTimestampNanos;
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(delegate, operationName, durationNanos);
+			spanInterceptor.onFinish(this, operationName, durationNanos);
 		}
 		delegate.close();
 	}
@@ -37,7 +37,7 @@ public class SpanWrapper implements Span {
 	public void finish() {
 		final long durationNanos = System.nanoTime() - startTimestampNanos;
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(delegate, operationName, durationNanos);
+			spanInterceptor.onFinish(this, operationName, durationNanos);
 		}
 		delegate.finish();
 	}
@@ -45,7 +45,7 @@ public class SpanWrapper implements Span {
 	public void finish(long finishMicros) {
 		final long durationNanos = TimeUnit.MICROSECONDS.toNanos(finishMicros) - startTimestampNanos;
 		for (SpanInterceptor spanInterceptor : spanInterceptors) {
-			spanInterceptor.onFinish(delegate, operationName, durationNanos);
+			spanInterceptor.onFinish(this, operationName, durationNanos);
 		}
 		delegate.finish(finishMicros);
 	}

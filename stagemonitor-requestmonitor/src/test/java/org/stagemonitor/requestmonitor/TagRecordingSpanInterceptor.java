@@ -1,17 +1,17 @@
 package org.stagemonitor.requestmonitor;
 
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
-public class TagRecordingSpanInterceptor extends SpanInterceptor implements Callable<SpanInterceptor> {
+public class TagRecordingSpanInterceptor extends StatelessSpanInterceptor {
 	private final Map<String, Object> tags;
 
-	public static List<Callable<SpanInterceptor>> asList(Map<String, Object> tags) {
-		List<Callable<SpanInterceptor>> list = new ArrayList<>();
+	public static List<SpanInterceptorFactory> asList(Map<String, Object> tags) {
+		List<SpanInterceptorFactory> list = new ArrayList<>();
 		list.add(new TagRecordingSpanInterceptor(tags));
 		return list;
 	}
@@ -36,10 +36,5 @@ public class TagRecordingSpanInterceptor extends SpanInterceptor implements Call
 	public Number onSetTag(String key, Number value) {
 		tags.put(key, value);
 		return value;
-	}
-
-	@Override
-	public SpanInterceptor call() throws Exception {
-		return this;
 	}
 }

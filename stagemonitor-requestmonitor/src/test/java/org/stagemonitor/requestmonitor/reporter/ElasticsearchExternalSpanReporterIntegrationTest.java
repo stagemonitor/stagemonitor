@@ -11,8 +11,8 @@ import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +58,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 
 	@Test
 	public void reportSpan() throws Exception {
-		reporter.report(RequestMonitor.RequestInformation.of(getSpan(100), null, Collections.<String, Object>emptyMap()));
+		reporter.report(SpanContextInformation.of(getSpan(100), null, Collections.<String, Object>emptyMap()));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");

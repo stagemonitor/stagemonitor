@@ -4,6 +4,7 @@ import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 import java.io.Closeable;
 
@@ -17,9 +18,9 @@ public abstract class SpanReporter implements StagemonitorSPI, Closeable {
 	/**
 	 * Callback method that is called when a {@link Span} was created and is ready to be reported
 	 *
-	 * @param requestInformation The object which contains all information about the request
+	 * @param spanContext The object which contains all information about the request
 	 */
-	public abstract void report(RequestMonitor.RequestInformation requestInformation) throws Exception;
+	public abstract void report(SpanContextInformation spanContext) throws Exception;
 
 	/**
 	 * Whether this {@link SpanReporter} is active
@@ -27,10 +28,10 @@ public abstract class SpanReporter implements StagemonitorSPI, Closeable {
 	 * This method is called at most once from {@link RequestMonitor} for one request.
 	 * That means that the result from the first evaluation is final.
 	 *
-	 * @param requestInformation The parameter object which contains the actual parameters
+	 * @param spanContext The parameter object which contains the actual parameters
 	 * @return <code>true</code>, if this {@link SpanReporter} is active, <code>false</code> otherwise
 	 */
-	public abstract boolean isActive(RequestMonitor.RequestInformation requestInformation);
+	public abstract boolean isActive(SpanContextInformation spanContext);
 
 	@Override
 	public void close() {

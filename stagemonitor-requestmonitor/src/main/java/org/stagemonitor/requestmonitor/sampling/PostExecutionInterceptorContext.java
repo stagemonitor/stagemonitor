@@ -2,14 +2,14 @@ package org.stagemonitor.requestmonitor.sampling;
 
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 public class PostExecutionInterceptorContext extends PreExecutionInterceptorContext {
 
 	private boolean excludeCallTree = false;
 
-	PostExecutionInterceptorContext(Configuration configuration, RequestMonitor.RequestInformation requestInformation, Metric2Registry metricRegistry) {
-		super(configuration, requestInformation, metricRegistry);
+	PostExecutionInterceptorContext(Configuration configuration, SpanContextInformation spanContext, Metric2Registry metricRegistry) {
+		super(configuration, spanContext, metricRegistry);
 	}
 
 	public PreExecutionInterceptorContext mustReport(Class<?> interceptorClass) {

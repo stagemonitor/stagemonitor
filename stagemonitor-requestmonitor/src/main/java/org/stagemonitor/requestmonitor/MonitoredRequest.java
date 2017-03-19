@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import io.opentracing.Span;
 
+@Deprecated
 public abstract class MonitoredRequest {
 
 	/**
@@ -27,9 +28,9 @@ public abstract class MonitoredRequest {
 	 * So be careful, that no exceptions are thrown in to the implementation of this method.
 	 *
 	 * @return the {@link Span}
-	 * @param requestInformation
+	 * @param spanContext
 	 */
-	public abstract Span createSpan(RequestMonitor.RequestInformation requestInformation);
+	public abstract Span createSpan(SpanContextInformation spanContext);
 
 	/**
 	 * Executing this method triggers the execution of the execution context.
@@ -37,16 +38,16 @@ public abstract class MonitoredRequest {
 	 * @return the result of the execution
 	 * @throws Exception
 	 */
-	public abstract Object execute() throws Exception;
+	public abstract void execute() throws Exception;
 
 	/**
 	 * Implement this method to do actions after the execution context.
 	 *
 	 * This method is executed synchronously and will block the request
 	 *
-	 * @param requestInformation the execution context
+	 * @param spanContext the execution context
 	 */
-	public void onPostExecute(RequestMonitor.RequestInformation requestInformation) {
+	public void onPostExecute(SpanContextInformation spanContext) {
 	}
 
 	/**
@@ -55,18 +56,9 @@ public abstract class MonitoredRequest {
 	 * This method is executed asynchronously and will not block the request. However, this method will not be executed
 	 * concurrently.
 	 *
-	 * @param requestInformation the execution context
+	 * @param spanContext the execution context
 	 */
-	public void onBeforeReport(RequestMonitor.RequestInformation requestInformation) {
+	public void onBeforeReport(SpanContextInformation spanContext) {
 	}
 
-	/**
-	 * If the current execution context triggers another one, the first one is called the forwarding execution and the
-	 * second one is the forwarded execution.
-	 *
-	 * Implementers of this interface have to decide whether only to monitor the forwarding or forwarded execution.
-	 *
-	 * @return true, if only the forwarded , false, if only the forwarding execution shall be monitored.
-	 */
-	public abstract boolean isMonitorForwardedExecutions();
 }

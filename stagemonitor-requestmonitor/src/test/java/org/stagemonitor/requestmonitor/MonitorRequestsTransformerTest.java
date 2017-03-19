@@ -60,12 +60,12 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
-		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
+		final SpanContextInformation spanContext = spanCapturingReporter.get();
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", requestInformation.getOperationName());
-		assertEquals(1, requestInformation.getCallTree().getChildren().size());
-		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
+		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", spanContext.getOperationName());
+		assertEquals(1, spanContext.getCallTree().getChildren().size());
+		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass.monitorMe"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
@@ -75,10 +75,10 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorAsyncMethods() throws Exception {
 		testClass.asyncMethod();
-		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
-		assertEquals("MonitorRequestsTransformerTest$TestClass#asyncMethod", requestInformation.getOperationName());
-		assertEquals(1, requestInformation.getCallTree().getChildren().size());
-		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
+		final SpanContextInformation spanContext = spanCapturingReporter.get();
+		assertEquals("MonitorRequestsTransformerTest$TestClass#asyncMethod", spanContext.getOperationName());
+		assertEquals(1, spanContext.getCallTree().getChildren().size());
+		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass.asyncMethod"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
@@ -108,10 +108,10 @@ public class MonitorRequestsTransformerTest {
 	@Test
 	public void testMonitorRequestsAnnonymousInnerClass() throws Exception {
 		testClass.monitorAnnonymousInnerClass();
-		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
-		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", requestInformation.getOperationName());
-		assertEquals(1, requestInformation.getCallTree().getChildren().size());
-		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
+		final SpanContextInformation spanContext = spanCapturingReporter.get();
+		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", spanContext.getOperationName());
+		assertEquals(1, spanContext.getCallTree().getChildren().size());
+		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClass$1.run"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
@@ -197,13 +197,13 @@ public class MonitorRequestsTransformerTest {
 	public void testClassLevelAnnotationClass() throws Exception {
 		testClassLevelAnnotationClass.monitorMe("1");
 		testClassLevelAnnotationClass.dontMonitorMe();
-		final RequestMonitor.RequestInformation requestInformation = spanCapturingReporter.get();
+		final SpanContextInformation spanContext = spanCapturingReporter.get();
 
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", requestInformation.getOperationName());
-		assertEquals(1, requestInformation.getCallTree().getChildren().size());
-		final String signature = requestInformation.getCallTree().getChildren().get(0).getSignature();
+		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", spanContext.getOperationName());
+		assertEquals(1, spanContext.getCallTree().getChildren().size());
+		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
 		assertTrue(signature, signature.contains("org.stagemonitor.requestmonitor.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe"));
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();

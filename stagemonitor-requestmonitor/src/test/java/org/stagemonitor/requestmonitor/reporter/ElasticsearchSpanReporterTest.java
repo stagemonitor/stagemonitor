@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -41,30 +41,30 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testReportSpan() throws Exception {
-		final RequestMonitor.RequestInformation requestInformation = RequestMonitor.RequestInformation.of(mock(Span.class), "Report Me");
-		reporter.report(requestInformation);
+		final SpanContextInformation spanContext = SpanContextInformation.of(mock(Span.class), "Report Me");
+		reporter.report(spanContext);
 
 		verify(elasticsearchClient).index(anyString(), anyString(), any());
-		assertTrue(reporter.isActive(requestInformation));
+		assertTrue(reporter.isActive(spanContext));
 	}
 
 	@Test
 	public void testLogReportSpan() throws Exception {
 		when(requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(true);
-		final RequestMonitor.RequestInformation requestInformation = createTestSpanWithCallTree(1000, "Report Me");
+		final SpanContextInformation spanContext = createTestSpanWithCallTree(1000, "Report Me");
 
-		reporter.report(requestInformation);
+		reporter.report(spanContext);
 
 		verify(elasticsearchClient, times(0)).index(anyString(), anyString(), any());
 		verify(spanLogger).info(startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "\",\"_type\":\"spans\"}}\n"));
-		assertTrue(reporter.isActive(requestInformation));
+		assertTrue(reporter.isActive(spanContext));
 	}
 
 	@Test
 	public void testReportSpanDontReport() throws Exception {
-		final RequestMonitor.RequestInformation info = createTestSpanWithCallTree(1, "Regular Foo");
+		final SpanContextInformation info = createTestSpanWithCallTree(1, "Regular Foo");
 
-		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(info.getSpan())));
+		assertTrue(reporter.isActive(SpanContextInformation.of(info.getSpan())));
 		assertFalse(info.isReport());
 		verify(((SpanWrapper) info.getSpan()).getDelegate()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 	}
@@ -75,10 +75,10 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1d);
 		final Span span = mock(Span.class);
 
-		assertTrue(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
-		reporter.report(RequestMonitor.RequestInformation.of(span, "Regular Foo"));
+		assertTrue(reporter.isActive(SpanContextInformation.of(span)));
+		reporter.report(SpanContextInformation.of(span, "Regular Foo"));
 		Thread.sleep(5010); // the meter only updates every 5 seconds
-		assertFalse(reporter.isActive(RequestMonitor.RequestInformation.of(span)));
+		assertFalse(reporter.isActive(SpanContextInformation.of(span)));
 	}
 
 	@Test
@@ -118,16 +118,16 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 	public void testElasticsearchExcludeFastCallTree() throws Exception {
 		when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
-		requestInformation = createTestSpanWithCallTree(1000, "Report Me");
-		reporter.report(requestInformation);
-		assertFalse(requestInformation.getPostExecutionInterceptorContext().isExcludeCallTree());
-		verifyContainsCallTree((SpanWrapper) requestInformation.getSpan(), true);
+		spanContext = createTestSpanWithCallTree(1000, "Report Me");
+		reporter.report(spanContext);
+		assertFalse(spanContext.getPostExecutionInterceptorContext().isExcludeCallTree());
+		verifyContainsCallTree((SpanWrapper) spanContext.getSpan(), true);
 
-		requestInformation = createTestSpanWithCallTree(250, "Report Me");
-		reporter.report(requestInformation);
+		spanContext = createTestSpanWithCallTree(250, "Report Me");
+		reporter.report(spanContext);
 
-		assertTrue(requestInformation.getPostExecutionInterceptorContext().isExcludeCallTree());
-		verifyContainsCallTree((SpanWrapper) requestInformation.getSpan(), false);
+		assertTrue(spanContext.getPostExecutionInterceptorContext().isExcludeCallTree());
+		verifyContainsCallTree((SpanWrapper) spanContext.getSpan(), false);
 	}
 
 	@Test

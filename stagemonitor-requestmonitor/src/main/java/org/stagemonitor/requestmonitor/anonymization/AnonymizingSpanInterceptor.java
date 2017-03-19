@@ -3,12 +3,11 @@ package org.stagemonitor.requestmonitor.anonymization;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.IPAnonymizationUtils;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
-import java.util.concurrent.Callable;
-
-import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 public class AnonymizingSpanInterceptor extends SpanInterceptor {
@@ -27,16 +26,6 @@ public class AnonymizingSpanInterceptor extends SpanInterceptor {
 		active = anonymizeIPs || pseudonymizeUserNames;
 	}
 
-
-	public static Callable<SpanInterceptor> asCallable(final RequestMonitorPlugin requestMonitorPlugin) {
-		return new Callable<SpanInterceptor>() {
-			@Override
-			public SpanInterceptor call() throws Exception {
-				return new AnonymizingSpanInterceptor(requestMonitorPlugin);
-			}
-		};
-	}
-
 	@Override
 	public String onSetTag(String key, String value) {
 		if (!active) {
@@ -53,21 +42,34 @@ public class AnonymizingSpanInterceptor extends SpanInterceptor {
 	}
 
 	@Override
-	public void onFinish(Span span, String operationName, long durationNanos) {
+	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		if (!active) {
 			return;
 		}
 		String hashedUserName = username;
 		if (pseudonymizeUserNames) {
 			hashedUserName = StringUtils.sha1Hash(username);
-			span.setTag(SpanUtils.USERNAME, hashedUserName);
+			spanWrapper.getDelegate().setTag(SpanUtils.USERNAME, hashedUserName);
 		}
 		final boolean disclose = requestMonitorPlugin.getDiscloseUsers().contains(hashedUserName);
 		if (disclose) {
-			span.setTag("username_disclosed", username);
+			spanWrapper.getDelegate().setTag("username_disclosed", username);
 		}
 		if (anonymizeIPs && ip != null && !disclose) {
-			SpanUtils.setClientIp(span, IPAnonymizationUtils.anonymize(ip));
+			SpanUtils.setClientIp(spanWrapper, IPAnonymizationUtils.anonymize(ip));
+		}
+	}
+
+	public static class MySpanInterceptorFactory implements SpanInterceptorFactory {
+		private final RequestMonitorPlugin requestMonitorPlugin;
+
+		public MySpanInterceptorFactory(RequestMonitorPlugin requestMonitorPlugin) {
+			this.requestMonitorPlugin = requestMonitorPlugin;
+		}
+
+		@Override
+		public SpanInterceptor create() {
+			return new AnonymizingSpanInterceptor(requestMonitorPlugin);
 		}
 	}
 }

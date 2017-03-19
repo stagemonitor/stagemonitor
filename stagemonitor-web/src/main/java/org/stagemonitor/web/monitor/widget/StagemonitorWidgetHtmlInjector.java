@@ -56,8 +56,8 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 	@Override
 	public void injectHtml(HtmlInjector.InjectArguments injectArguments) {
 		Span span = null;
-		if (injectArguments.getRequestInformation() != null) {
-			span = injectArguments.getRequestInformation().getSpan();
+		if (injectArguments.getSpanContext() != null) {
+			span = injectArguments.getSpanContext().getSpan();
 		}
 		final List<String> pathsOfWidgetTabPlugins = new ArrayList<String>();
 		for (String path : Stagemonitor.getPathsOfWidgetTabPlugins()) {

@@ -4,7 +4,7 @@ package org.stagemonitor.web.monitor.widget;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.Pair;
-import org.stagemonitor.requestmonitor.RequestMonitor;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 
@@ -85,13 +85,13 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(RequestMonitor.RequestInformation requestInformation) throws IOException {
-		if (isActive(requestInformation)) {
+	public void report(SpanContextInformation spanContext) throws IOException {
+		if (isActive(spanContext)) {
 
-			final String connectionId = (String) requestInformation.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
+			final String connectionId = (String) spanContext.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
-				logger.debug("report {}", requestInformation.getSpan());
-				bufferSpan(connectionId, requestInformation.getSpan());
+				logger.debug("report {}", spanContext.getSpan());
+				bufferSpan(connectionId, spanContext.getSpan());
 
 				final Object lock = connectionIdToLockMap.remove(connectionId);
 				if (lock != null) {
@@ -117,8 +117,8 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 
 
 	@Override
-	public boolean isActive(RequestMonitor.RequestInformation requestInformation) {
-		return Boolean.TRUE.equals(requestInformation.getRequestAttributes().get(MonitoredHttpRequest.WIDGET_ALLOWED_ATTRIBUTE));
+	public boolean isActive(SpanContextInformation spanContext) {
+		return Boolean.TRUE.equals(spanContext.getRequestAttributes().get(MonitoredHttpRequest.WIDGET_ALLOWED_ATTRIBUTE));
 	}
 
 	/**

@@ -18,18 +18,15 @@ import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanInt
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
 import io.opentracing.Tracer;
@@ -37,20 +34,6 @@ import io.opentracing.Tracer;
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public static final String REQUEST_MONITOR_PLUGIN = "Request Monitor Plugin";
-	private final ConfigurationOption<Integer> noOfWarmupRequests = ConfigurationOption.integerOption()
-			.key("stagemonitor.requestmonitor.noOfWarmupRequests")
-			.dynamic(false)
-			.label("Number of warmup requests")
-			.description("the minimum number of requests that have to be issued against the application before metrics are collected")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.buildWithDefault(0);
-	private final ConfigurationOption<Integer> warmupSeconds = ConfigurationOption.integerOption()
-			.key("stagemonitor.requestmonitor.warmupSeconds")
-			.dynamic(false)
-			.label("Number of warmup seconds")
-			.description("A timespan in seconds after the start of the server where no metrics are collected.")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.buildWithDefault(0);
 
 	/* What/how to monitor */
 	private final ConfigurationOption<Boolean> collectCpuTime = ConfigurationOption.booleanOption()
@@ -319,7 +302,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	private static RequestMonitor requestMonitor;
 
 	private SpanWrappingTracer tracer;
-	private final List<Callable<SpanInterceptor>> spanInterceptorSuppliers = new CopyOnWriteArrayList<Callable<SpanInterceptor>>();
 	private SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor;
 
 	public Tracer getTracer() {
@@ -360,22 +342,26 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 		final Tracer tracer = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator().next().getTracer(initArguments);
 		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanInterceptor(initArguments.getConfiguration(), metricRegistry);
+		final ServiceLoader<SpanInterceptorFactory> factories = ServiceLoader.load(SpanInterceptorFactory.class, RequestMonitorPlugin.class.getClassLoader());
 		this.tracer = createSpanWrappingTracer(tracer, metricRegistry, requestMonitorPlugin, getRequestMonitor(),
-				spanInterceptorSuppliers, samplePriorityDeterminingSpanInterceptor);
+				factories, samplePriorityDeterminingSpanInterceptor);
 	}
 
 	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, final Metric2Registry metricRegistry,
 															  final RequestMonitorPlugin requestMonitorPlugin,
 															  final RequestMonitor requestMonitor,
-															  final List<Callable<SpanInterceptor>> spanInterceptorSuppliers,
+															  final Iterable<SpanInterceptorFactory> spanInterceptorFactories,
 															  final SamplePriorityDeterminingSpanInterceptor samplePriorityDeterminingSpanInterceptor) {
-		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate, spanInterceptorSuppliers);
-		spanWrappingTracer.addSpanInterceptor(new RequestMonitor.RequestInformationSettingSpanInterceptor(requestMonitor));
+		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
+		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanInterceptor(requestMonitor));
 		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
-		spanWrappingTracer.addSpanInterceptor(ExternalRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
-		spanWrappingTracer.addSpanInterceptor(ServerRequestMetricsSpanInterceptor.asCallable(metricRegistry, requestMonitorPlugin));
-		spanWrappingTracer.addSpanInterceptor(AnonymizingSpanInterceptor.asCallable(requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanInterceptor.Factory(metricRegistry, requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanInterceptor.Factory(metricRegistry, requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(new AnonymizingSpanInterceptor.MySpanInterceptorFactory(requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(new MDCSpanInterceptor());
+		for (SpanInterceptorFactory spanInterceptorFactory : spanInterceptorFactories) {
+			spanWrappingTracer.addSpanInterceptor(spanInterceptorFactory);
+		}
 		return spanWrappingTracer;
 	}
 
@@ -389,14 +375,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			requestMonitor = new RequestMonitor(Stagemonitor.getConfiguration(), Stagemonitor.getMetric2Registry());
 		}
 		return requestMonitor;
-	}
-
-	public int getNoOfWarmupRequests() {
-		return noOfWarmupRequests.getValue();
-	}
-
-	public int getWarmupSeconds() {
-		return warmupSeconds.getValue();
 	}
 
 	public boolean isCollectCpuTime() {
@@ -529,8 +507,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return reportSpansAsync.getValue();
 	}
 
-	public void addSpanInterceptor(Callable<SpanInterceptor> spanInterceptorSupplier) {
-		tracer.addSpanInterceptor(spanInterceptorSupplier);
+	public void addSpanInterceptor(SpanInterceptorFactory spanInterceptorFactory) {
+		tracer.addSpanInterceptor(spanInterceptorFactory);
 	}
 
 	/**

@@ -11,7 +11,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
@@ -27,7 +26,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -48,18 +46,9 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	public void testDeactivated() throws Exception {
 		doReturn(false).when(corePlugin).isStagemonitorActive();
 
-		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(createMonitoredRequest());
+		final SpanContextInformation spanContext = requestMonitor.monitor(createMonitoredRequest());
 
-		assertEquals("test", requestInformation.getExecutionResult());
-		assertSame(NoopSpan.INSTANCE, requestInformation.getSpan());
-	}
-
-	@Test
-	public void testNotWarmedUp() throws Exception {
-		doReturn(2).when(requestMonitorPlugin).getNoOfWarmupRequests();
-		requestMonitor = new RequestMonitor(configuration, registry);
-		final RequestMonitor.RequestInformation requestInformation = requestMonitor.monitor(createMonitoredRequest());
-		assertSame(NoopSpan.INSTANCE, requestInformation.getSpan());
+		assertNull(spanContext.getSpan());
 	}
 
 	@Test
@@ -70,14 +59,14 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 		doAnswer(new Answer<Void>() {
 			@Override
 			public Void answer(InvocationOnMock invocation) throws Throwable {
-				RequestMonitor.RequestInformation requestInformation = (RequestMonitor.RequestInformation) invocation.getArguments()[0];
-				assertNotNull(requestInformation.getSpan());
+				SpanContextInformation spanContext = (SpanContextInformation) invocation.getArguments()[0];
+				assertNotNull(spanContext.getSpan());
 				assertEquals("java.lang.RuntimeException", tags.get("exception.class"));
 				assertEquals("test", tags.get("exception.message"));
 				assertNotNull(tags.get("exception.stack_trace"));
 				return null;
 			}
-		}).when(monitoredRequest).onPostExecute(Mockito.<RequestMonitor.RequestInformation>any());
+		}).when(monitoredRequest).onPostExecute(Mockito.<SpanContextInformation>any());
 
 		try {
 			requestMonitor.monitor(monitoredRequest);
@@ -95,9 +84,6 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 		doReturn(true).when(corePlugin).isInternalMonitoringActive();
 
 		requestMonitor.monitor(createMonitoredRequest());
-		verify(registry, times(0)).timer(name("internal_overhead_request_monitor").build());
-
-		requestMonitor.monitor(createMonitoredRequest());
 		verify(registry, times(1)).timer(name("internal_overhead_request_monitor").build());
 	}
 
@@ -108,20 +94,21 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	}
 
 	private MonitoredRequest createMonitoredRequest() throws Exception {
-		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", () -> "test"));
+		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", () -> {
+		}));
 	}
 
 	@Test
 	public void testProfileThisExecutionDeactive() throws Exception {
 		doReturn(0d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
+		final SpanContextInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getCallTree());
 	}
 
 	@Test
 	public void testProfileThisExecutionAlwaysActive() throws Exception {
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
+		final SpanContextInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNotNull(monitor.getCallTree());
 	}
 
@@ -130,13 +117,13 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 		// don't profile if no one is interested in the result
 		tracer.addSpanInterceptor(() -> new SpanInterceptor() {
 			@Override
-			public void onStart(io.opentracing.Span span) {
-				requestMonitor.getRequestInformation().setReport(false);
+			public void onStart(SpanWrapper spanWrapper) {
+				requestMonitor.getSpanContext().setReport(false);
 			}
 		});
 		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
 		doReturn(false).when(requestMonitorPlugin).isLogSpans();
-		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
+		final SpanContextInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		assertNull(monitor.getCallTree());
 	}
 
@@ -155,7 +142,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 		doReturn(callTreeRate).when(callTreeMeter).getOneMinuteRate();
 		requestMonitor.setCallTreeMeter(callTreeMeter);
 
-		final RequestMonitor.RequestInformation monitor = requestMonitor.monitor(createMonitoredRequest());
+		final SpanContextInformation monitor = requestMonitor.monitor(createMonitoredRequest());
 		if (callStackExpected) {
 			assertNotNull(monitor.getCallTree());
 		} else {
@@ -177,28 +164,29 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 		SpanCapturingReporter spanCapturingReporter = new SpanCapturingReporter(requestMonitor);
 
 		final ExecutorService executorService = TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor());
-		final RequestMonitor.RequestInformation[] asyncSpan = new RequestMonitor.RequestInformation[1];
+		final SpanContextInformation[] asyncSpan = new SpanContextInformation[1];
 
-		final RequestMonitor.RequestInformation testInfo = requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
+		final Future<?>[] asyncMethodCallFuture = new Future<?>[1];
+		final SpanContextInformation testInfo = requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
 			assertNotNull(TracingUtils.getTraceContext().getCurrentSpan());
-			return monitorAsyncMethodCall(executorService, asyncSpan);
+			asyncMethodCallFuture[0] = monitorAsyncMethodCall(executorService, asyncSpan);
 		}));
 		executorService.shutdown();
 		// waiting for completion
 		spanCapturingReporter.get();
 		spanCapturingReporter.get();
-		((Future<?>) testInfo.getExecutionResult()).get();
+		asyncMethodCallFuture[0].get();
 		assertEquals("test", testInfo.getOperationName());
 		assertEquals("async", asyncSpan[0].getOperationName());
 
 		assertEquals(((SpanWrapper) testInfo.getSpan()).unwrap(Span.class).context(), ((SpanWrapper) asyncSpan[0].getSpan()).unwrap(Span.class).context());
 	}
 
-	private Future<?> monitorAsyncMethodCall(ExecutorService executorService, final RequestMonitor.RequestInformation[] asyncSpan) {
+	private Future<?> monitorAsyncMethodCall(ExecutorService executorService, final SpanContextInformation[] asyncSpan) {
 		return executorService.submit((Callable<Object>) () ->
 				asyncSpan[0] = requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
 					assertNotNull(TracingUtils.getTraceContext().getCurrentSpan());
-					return callAsyncMethod();
+					callAsyncMethod();
 				})));
 	}
 
@@ -217,6 +205,8 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 			}
 		});
 
-		assertFalse(requestMonitor.getRequestInformation().isReport());
+		assertFalse(requestMonitor.getSpanContext().isReport());
+
+		requestMonitor.monitorStop();
 	}
 }

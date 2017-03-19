@@ -6,12 +6,13 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.core.util.TimeUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptorFactory;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
@@ -51,18 +52,8 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
-
-	public static Callable<SpanInterceptor> asCallable(final Metric2Registry metricRegistry, final RequestMonitorPlugin requestMonitorPlugin) {
-		return new Callable<SpanInterceptor>() {
-			@Override
-			public SpanInterceptor call() throws Exception {
-				return new ServerRequestMetricsSpanInterceptor(metricRegistry, requestMonitorPlugin);
-			}
-		};
-	}
-
 	@Override
-	public void onStart(Span span) {
+	public void onStart(SpanWrapper spanWrapper) {
 		startCpu = TimeUtils.getCpuTime();
 	}
 
@@ -75,11 +66,11 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 	}
 
 	@Override
-	public void onFinish(Span span, String operationName, long durationNanos) {
+	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		if (isServer && StringUtils.isNotEmpty(operationName)) {
-			final long cpuTime = trackCpuTime(span);
+			final long cpuTime = trackCpuTime(spanWrapper.getDelegate());
 			trackMetrics(operationName, durationNanos, cpuTime);
-			trackExternalRequestMetricsOfParent(span, operationName);
+			trackExternalRequestMetricsOfParent(spanWrapper.getDelegate(), operationName);
 		}
 	}
 
@@ -93,8 +84,8 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 	private void trackMetrics(String operationName, long durationNanos, long cpuTime) {
 		final Timer timer = metricRegistry.timer(getTimerMetricName(operationName));
 		timer.update(durationNanos, NANOSECONDS);
-		final RequestMonitor.RequestInformation requestInformation = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
-		requestInformation.setTimerForThisRequest(timer);
+		final SpanContextInformation spanContext = requestMonitorPlugin.getRequestMonitor().getSpanContext();
+		spanContext.setTimerForThisRequest(timer);
 
 		metricRegistry.timer(getTimerMetricName("All")).update(durationNanos, NANOSECONDS);
 
@@ -113,8 +104,8 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 	 * tracks the external requests grouped by the parent request name
 	 */
 	private void trackExternalRequestMetricsOfParent(Span span, String operationName) {
-		final RequestMonitor.RequestInformation requestInformation = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
-		for (RequestMonitor.RequestInformation.ExternalRequestStats externalRequestStats : requestInformation.getExternalRequestStats()) {
+		final SpanContextInformation spanContext = requestMonitorPlugin.getRequestMonitor().getSpanContext();
+		for (SpanContextInformation.ExternalRequestStats externalRequestStats : spanContext.getExternalRequestStats()) {
 			long durationNanos = externalRequestStats.getExecutionTimeNanos();
 			final String requestType = externalRequestStats.getRequestType();
 			span.setTag("external_requests." + requestType + ".duration_ms", TimeUnit.NANOSECONDS.toMillis(durationNanos));
@@ -143,5 +134,20 @@ public class ServerRequestMetricsSpanInterceptor extends ClientServerAwareSpanIn
 
 	public static MetricName getTimerMetricName(String requestName) {
 		return timerMetricNameTemplate.build(requestName);
+	}
+
+	public static class Factory implements SpanInterceptorFactory {
+		private final Metric2Registry metricRegistry;
+		private final RequestMonitorPlugin requestMonitorPlugin;
+
+		public Factory(Metric2Registry metricRegistry, RequestMonitorPlugin requestMonitorPlugin) {
+			this.metricRegistry = metricRegistry;
+			this.requestMonitorPlugin = requestMonitorPlugin;
+		}
+
+		@Override
+		public SpanInterceptor create() {
+			return new ServerRequestMetricsSpanInterceptor(metricRegistry, requestMonitorPlugin);
+		}
 	}
 }

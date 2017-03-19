@@ -17,7 +17,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
-	public Span createSpan(RequestMonitor.RequestInformation info) {
+	public Span createSpan(SpanContextInformation info) {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final String callerSignature = CallerUtil.getCallerSignature();
 		final Span span;
@@ -40,12 +40,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 
 	protected abstract String getType();
 
-	public boolean isMonitorForwardedExecutions() {
-		return true;
-	}
-
 	@Override
-	public Object execute() throws Exception {
-		return null;
+	public void execute() throws Exception {
 	}
 }

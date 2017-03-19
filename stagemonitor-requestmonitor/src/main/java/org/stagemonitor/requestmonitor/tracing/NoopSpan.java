@@ -70,7 +70,7 @@ public class NoopSpan implements Span {
 		return this;
 	}
 
-	private final static class NoopSpanContext implements SpanContext {
+	private static class NoopSpanContext implements SpanContext {
 		static final SpanContext INSTANCE = new NoopSpanContext();
 
 		@Override

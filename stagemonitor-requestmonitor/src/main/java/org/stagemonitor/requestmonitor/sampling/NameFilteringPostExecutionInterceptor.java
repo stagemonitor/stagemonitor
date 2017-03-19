@@ -11,9 +11,9 @@ class NameFilteringPostExecutionInterceptor extends PostExecutionSpanInterceptor
 	public void interceptReport(PostExecutionInterceptorContext context) {
 		final Collection<String> onlyReportRequestsWithName = context.getConfig(RequestMonitorPlugin.class)
 				.getOnlyReportSpansWithName();
-		if (StringUtils.isEmpty(context.getRequestInformation().getOperationName())) {
+		if (StringUtils.isEmpty(context.getSpanContext().getOperationName())) {
 			context.shouldNotReport(getClass());
-		} else if (!onlyReportRequestsWithName.isEmpty() && !onlyReportRequestsWithName.contains(context.getRequestInformation().getOperationName())) {
+		} else if (!onlyReportRequestsWithName.isEmpty() && !onlyReportRequestsWithName.contains(context.getSpanContext().getOperationName())) {
 			context.shouldNotReport(getClass());
 		}
 	}

@@ -9,8 +9,8 @@ import net.bytebuddy.utility.JavaModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
 
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
@@ -39,13 +39,6 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 	public ReflectiveConnectionMonitoringTransformer() throws NoSuchMethodException {
 		if (isActive()) {
-			RequestMonitor requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
-			final Method monitorGetConnectionMethod = ConnectionMonitor.class
-					.getMethod("monitorGetConnection", Connection.class, Object.class, long.class);
-			makeReflectionInvocationFaster(monitorGetConnectionMethod);
-
-			addConnectionMonitorToThreadLocalOnEachRequest(requestMonitor, monitorGetConnectionMethod);
-
 			Dispatcher.getValues().putIfAbsent(CONNECTION_MONITOR, new ThreadLocal<Object[]>());
 			connectionMonitorThreadLocal = Dispatcher.get(CONNECTION_MONITOR);
 		}
@@ -55,23 +48,31 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	 * If the ThreadLocal is added, the code added in {@link #addReflectiveMonitorMethodCall} gets active
 	 * <p/>
 	 * Using a ThreadLocal ensures that each application invokes its own instance of the ConnectionMonitor and that
-	 * applications that are not monitored by stagemonitor are not influenced
+	 * applications which are not monitored by stagemonitor are not influenced
 	 */
-	private void addConnectionMonitorToThreadLocalOnEachRequest(RequestMonitor requestMonitor, final Method monitorGetConnectionMethod) {
-		requestMonitor.addOnBeforeRequestCallback(new Runnable() {
-			public void run() {
-				connectionMonitorThreadLocal.set(new Object[]{connectionMonitor, monitorGetConnectionMethod});
-			}
-		});
-		// clean up
-		requestMonitor.addOnAfterRequestCallback(new Runnable() {
-			public void run() {
-				connectionMonitorThreadLocal.remove();
-			}
-		});
+	public static class ConnectionMonitorAddingSpanInterceptor extends StatelessSpanInterceptor {
+
+		private final Method monitorGetConnectionMethod;
+
+		public ConnectionMonitorAddingSpanInterceptor() throws NoSuchMethodException {
+			monitorGetConnectionMethod = ConnectionMonitor.class
+					.getMethod("monitorGetConnection", Connection.class, Object.class, long.class);
+			makeReflectionInvocationFaster(monitorGetConnectionMethod);
+		}
+
+		@Override
+		public void onStart(SpanWrapper spanWrapper) {
+			connectionMonitorThreadLocal.set(new Object[]{connectionMonitor, monitorGetConnectionMethod});
+		}
+
+		@Override
+		public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
+			connectionMonitorThreadLocal.remove();
+		}
+
 	}
 
-	private void makeReflectionInvocationFaster(Method method) {
+	private static void makeReflectionInvocationFaster(Method method) {
 		try {
 			method.setAccessible(true);
 		} catch (SecurityException e) {
@@ -80,8 +81,8 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 	}
 
 	/**
-	 * Only applies if stagemonitor can't be loaded by this class loader.
-	 * For example a module class loader which loaded the DataSource but does not have access to the application classes.
+	 * Only applies if stagemonitor can't be loaded by this class loader. For example a module class loader which loaded
+	 * the DataSource but does not have access to the application classes.
 	 */
 	@Override
 	public ElementMatcher.Junction<ClassLoader> getClassLoaderMatcher() {
@@ -100,6 +101,8 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 			if (connectionMonitor != null) {
 				final Method connectionMonitorMethod = (Method) connectionMonitor[1];
 				final long duration = System.nanoTime() - startTime;
+				// In JBoss, this method is executed in the context of the module class loader which loads the DataSource
+				// The connectionMonitor is not accessible from this class loader. That's why we have to use reflection.
 				connection = (Connection) connectionMonitorMethod.invoke(connectionMonitor[0], connection, dataSource, duration);
 			}
 		} catch (Exception e) {

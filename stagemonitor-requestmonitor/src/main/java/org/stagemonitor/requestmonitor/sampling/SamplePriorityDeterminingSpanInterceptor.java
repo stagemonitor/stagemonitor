@@ -4,23 +4,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
-import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanInterceptor;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanInterceptor;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collection;
 import java.util.ServiceLoader;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
-public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareSpanInterceptor implements Callable<SpanInterceptor> {
+public class SamplePriorityDeterminingSpanInterceptor extends StatelessSpanInterceptor {
 
 	private static final Logger logger = LoggerFactory.getLogger(SamplePriorityDeterminingSpanInterceptor.class);
 	private final Collection<PreExecutionSpanInterceptor> preInterceptors =
@@ -60,14 +59,14 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 	}
 
 	@Override
-	public void onStart(Span span) {
-		final RequestMonitor.RequestInformation requestInformation = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
-		if (!requestInformation.isReport()) {
+	public void onStart(SpanWrapper spanWrapper) {
+		final SpanContextInformation spanContext = requestMonitorPlugin.getRequestMonitor().getSpanContext();
+		if (!spanContext.isReport()) {
 			return;
 		}
 
 		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration,
-				requestInformation, metricRegistry);
+				spanContext, metricRegistry);
 		for (PreExecutionSpanInterceptor interceptor : preInterceptors) {
 			try {
 				interceptor.interceptReport(context);
@@ -77,14 +76,14 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 		}
 
 		if (!context.isReport()) {
-			requestInformation.setReport(false);
-			Tags.SAMPLING_PRIORITY.set(span, (short) 0);
+			spanContext.setReport(false);
+			Tags.SAMPLING_PRIORITY.set(spanWrapper, (short) 0);
 		}
 	}
 
 	@Override
-	public void onFinish(Span span, String operationName, long durationNanos) {
-		final RequestMonitor.RequestInformation info = requestMonitorPlugin.getRequestMonitor().getRequestInformation();
+	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
+		final SpanContextInformation info = requestMonitorPlugin.getRequestMonitor().getSpanContext();
 		if (!info.isReport()) {
 			return;
 		}
@@ -97,14 +96,14 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 			}
 		}
 		info.setPostExecutionInterceptorContext(context);
-		handleCallTree(info, span, context.isExcludeCallTree(), operationName);
+		handleCallTree(info, spanWrapper.getDelegate(), context.isExcludeCallTree(), operationName);
 		if (!context.isReport()) {
 			info.setReport(false);
-			Tags.SAMPLING_PRIORITY.set(span, (short) 0);
+			Tags.SAMPLING_PRIORITY.set(spanWrapper.getDelegate(), (short) 0);
 		}
 	}
 
-	private void handleCallTree(RequestMonitor.RequestInformation info, Span span, boolean excludeCallTree, String operationName) {
+	private void handleCallTree(SpanContextInformation info, Span span, boolean excludeCallTree, String operationName) {
 		final CallStackElement callTree = info.getCallTree();
 		if (callTree != null) {
 			Profiler.stop();
@@ -117,11 +116,6 @@ public class SamplePriorityDeterminingSpanInterceptor extends ClientServerAwareS
 				SpanUtils.setCallTree(span, callTree);
 			}
 		}
-	}
-
-	@Override
-	public SpanInterceptor call() throws Exception {
-		return this;
 	}
 
 	public void addPreInterceptor(PreExecutionSpanInterceptor interceptor) {
