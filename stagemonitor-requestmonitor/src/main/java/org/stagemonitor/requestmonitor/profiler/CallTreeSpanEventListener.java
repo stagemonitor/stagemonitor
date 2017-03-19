@@ -61,17 +61,19 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-		try {
-			Profiler.stop();
-			final SpanContextInformation contextInfo = SpanContextInformation.forSpan(spanWrapper);
-			if (contextInfo.isSampled() && contextInfo.getCallTree() != null) {
-				determineIfExcludeCallTree(contextInfo);
-				if (isAddCallTreeToSpan(contextInfo, operationName)) {
-					addCallTreeToSpan(contextInfo, spanWrapper.getDelegate(), operationName);
+		final SpanContextInformation contextInfo = SpanContextInformation.forSpan(spanWrapper);
+		if (contextInfo.getCallTree() != null) {
+			try {
+				Profiler.stop();
+				if (contextInfo.isSampled()) {
+					determineIfExcludeCallTree(contextInfo);
+					if (isAddCallTreeToSpan(contextInfo, operationName)) {
+						addCallTreeToSpan(contextInfo, spanWrapper.getDelegate(), operationName);
+					}
 				}
+			} finally {
+				Profiler.clearMethodCallParent();
 			}
-		} finally {
-			Profiler.clearMethodCallParent();
 		}
 	}
 
