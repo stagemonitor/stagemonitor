@@ -71,7 +71,6 @@ public class SpanServletTest {
 		span.setOperationName("test");
 		spanContext.setSpan(span);
 
-		monitoredHttpRequest.onPostExecute(spanContext);
 		monitoredHttpRequest.onBeforeReport(spanContext);
 		// init jackson module
 		new ElasticsearchSpanReporter();

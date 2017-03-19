@@ -19,7 +19,6 @@ import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanInterceptor;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.List;
@@ -33,10 +32,10 @@ import io.opentracing.Span;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanInterceptor.getTimerMetricName;
+import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
 
 /**
- * @deprecated we should try to do everything with {@link SpanInterceptor}s
+ * @deprecated we should try to do everything with {@link org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener}s
  */
 @Deprecated
 public class RequestMonitor {
@@ -116,7 +115,6 @@ public class RequestMonitor {
 			return;
 		}
 		long overhead2 = System.nanoTime();
-		info.getMonitoredRequest().onPostExecute(info);
 		if (info.getSpan() != null) {
 			info.getSpan().finish();
 		}

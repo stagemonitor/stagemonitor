@@ -41,16 +41,6 @@ public abstract class MonitoredRequest {
 	public abstract void execute() throws Exception;
 
 	/**
-	 * Implement this method to do actions after the execution context.
-	 *
-	 * This method is executed synchronously and will block the request
-	 *
-	 * @param spanContext the execution context
-	 */
-	public void onPostExecute(SpanContextInformation spanContext) {
-	}
-
-	/**
 	 * Implement this method to do actions before {@link Span} is reported.
 	 *
 	 * This method is executed asynchronously and will not block the request. However, this method will not be executed

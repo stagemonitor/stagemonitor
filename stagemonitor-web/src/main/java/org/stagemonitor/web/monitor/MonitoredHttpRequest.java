@@ -8,6 +8,8 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -189,32 +191,51 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		filterChain.doFilter(httpServletRequest, responseWrapper);
 	}
 
-	@Override
-	public void onPostExecute(SpanContextInformation info) {
-		final Span span = info.getSpan();
+	public static class HttpSpanEventListener extends StatelessSpanEventListener {
 
-		// Search the configured exception attributes that may have been set
-		// by the servlet container/framework. Use the first exception found (if any)
-		for (String requestExceptionAttribute : webPlugin.getRequestExceptionAttributes()) {
-			Object exception = httpServletRequest.getAttribute(requestExceptionAttribute);
-			if (exception != null && exception instanceof Exception) {
-				SpanUtils.setException(span, (Exception) exception, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
-				break;
+		private final WebPlugin webPlugin;
+		private final RequestMonitorPlugin requestMonitorPlugin;
+
+		public HttpSpanEventListener() {
+			this(Stagemonitor.getPlugin(WebPlugin.class), Stagemonitor.getPlugin(RequestMonitorPlugin.class));
+		}
+
+		public HttpSpanEventListener(WebPlugin webPlugin, RequestMonitorPlugin requestMonitorPlugin) {
+			this.webPlugin = webPlugin;
+			this.requestMonitorPlugin = requestMonitorPlugin;
+		}
+
+		@Override
+		public void onFinish(SpanWrapper span, String operationName, long durationNanos) {
+			final HttpServletRequest httpServletRequest = (HttpServletRequest) requestMonitorPlugin.getRequestMonitor()
+					.getSpanContext().getRequestAttribute(HTTP_REQUEST_ATTRIBUTE);
+			if (httpServletRequest == null) {
+				return;
 			}
-		}
 
-		// get the parameters after the execution and not on creation, because that could lead to wrong decoded
-		// parameters inside the application
-		@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
-		final Map<String, String[]> parameterMap = httpServletRequest.getParameterMap();
-		Map<String, String> params = new HashMap<String, String>();
-		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
-			params.put(entry.getKey(), StringUtils.toCommaSeparatedString(entry.getValue()));
+			// Search the configured exception attributes that may have been set
+			// by the servlet container/framework. Use the first exception found (if any)
+			for (String requestExceptionAttribute : webPlugin.getRequestExceptionAttributes()) {
+				Object exception = httpServletRequest.getAttribute(requestExceptionAttribute);
+				if (exception != null && exception instanceof Exception) {
+					SpanUtils.setException(span, (Exception) exception, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
+					break;
+				}
+			}
+
+			// get the parameters after the execution and not on creation, because that could lead to wrong decoded
+			// parameters inside the application
+			@SuppressWarnings("unchecked") // according to javadoc, its always a Map<String, String[]>
+			final Map<String, String[]> parameterMap = httpServletRequest.getParameterMap();
+			Map<String, String> params = new HashMap<String, String>();
+			for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+				params.put(entry.getKey(), StringUtils.toCommaSeparatedString(entry.getValue()));
+			}
+			Set<Pattern> confidentialParams = new HashSet<Pattern>();
+			confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
+			confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
+			SpanUtils.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
 		}
-		Set<Pattern> confidentialParams = new HashSet<Pattern>();
-		confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
-		confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
-		SpanUtils.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
 	}
 
 	@Override

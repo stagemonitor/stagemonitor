@@ -150,7 +150,6 @@ public class SpringRequestMonitorTest {
 		assertEquals("/test/requestName", tags.get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET", tags.get("method"));
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "Test Get Request Name").layer("All").build()));
-		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 	}
 
 	@Test
@@ -165,7 +164,6 @@ public class SpringRequestMonitorTest {
 		assertEquals("GET *.js", spanContext.getOperationName());
 		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "GET *.js").layer("All").build()));
 		assertEquals(1, registry.timer(getTimerMetricName(spanContext.getOperationName())).getCount());
-		verify(monitoredRequest, times(1)).onPostExecute(anyRequestInformation());
 		verify(monitoredRequest, times(1)).getRequestName();
 		assertTrue(spanContext.isReport());
 	}

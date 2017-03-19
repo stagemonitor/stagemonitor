@@ -8,8 +8,6 @@ import com.uber.jaeger.samplers.ConstSampler;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
@@ -26,7 +24,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -55,23 +52,13 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	public void testRecordException() throws Exception {
 		final MonitoredRequest monitoredRequest = createMonitoredRequest();
 		doThrow(new RuntimeException("test")).when(monitoredRequest).execute();
-
-		doAnswer(new Answer<Void>() {
-			@Override
-			public Void answer(InvocationOnMock invocation) throws Throwable {
-				SpanContextInformation spanContext = (SpanContextInformation) invocation.getArguments()[0];
-				assertNotNull(spanContext.getSpan());
-				assertEquals("java.lang.RuntimeException", tags.get("exception.class"));
-				assertEquals("test", tags.get("exception.message"));
-				assertNotNull(tags.get("exception.stack_trace"));
-				return null;
-			}
-		}).when(monitoredRequest).onPostExecute(Mockito.<SpanContextInformation>any());
-
 		try {
 			requestMonitor.monitor(monitoredRequest);
 		} catch (Exception e) {
 		}
+		assertEquals("java.lang.RuntimeException", tags.get("exception.class"));
+		assertEquals("test", tags.get("exception.message"));
+		assertNotNull(tags.get("exception.stack_trace"));
 	}
 
 	@Test

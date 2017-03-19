@@ -9,6 +9,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.MockTracer;
+import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
@@ -36,26 +37,32 @@ import static org.mockito.Mockito.when;
 
 public class MonitoredHttpRequestTest {
 
+	private SpanContextInformation spanContextInformation;
 	private Configuration configuration;
 	private Map<String, Object> tags = new HashMap<>();
 	private String operationName;
 
 	@Before
 	public void setUp() throws Exception {
+		spanContextInformation = new SpanContextInformation();
 		configuration = mock(Configuration.class);
 		final RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		final WebPlugin webPlugin = new WebPlugin();
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		final List<SpanEventListenerFactory> spanInterceptorFactories = TagRecordingSpanEventListener.asList(tags);
-		spanInterceptorFactories.add(() -> new SpanEventListener() {
+		final List<SpanEventListenerFactory> spanEventListenerFactories = TagRecordingSpanEventListener.asList(tags);
+		spanEventListenerFactories.add(() -> new SpanEventListener() {
 			@Override
 			public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 				MonitoredHttpRequestTest.this.operationName = operationName;
 			}
 		});
+		spanEventListenerFactories.add(new MonitoredHttpRequest.HttpSpanEventListener(webPlugin, requestMonitorPlugin));
 		when(requestMonitorPlugin.getTracer()).thenReturn(new SpanWrappingTracer(new MockTracer(),
-				spanInterceptorFactories));
+				spanEventListenerFactories));
+		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
+		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(requestMonitor.getSpanContext()).thenReturn(spanContextInformation);
 	}
 
 	@After
@@ -88,7 +95,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = monitoredHttpRequest.createSpan(mock(SpanContextInformation.class));
+		final Span span = monitoredHttpRequest.createSpan(spanContextInformation);
 		span.finish();
 		assertEquals("/test.js", tags.get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET *.js", operationName);
@@ -98,9 +105,6 @@ public class MonitoredHttpRequestTest {
 		assertFalse(tags.containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "cookie"));
 		assertFalse(tags.containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "Cookie"));
 
-		final SpanContextInformation spanContext = mock(SpanContextInformation.class);
-		when(spanContext.getSpan()).thenReturn(span);
-		monitoredHttpRequest.onPostExecute(spanContext);
 		assertEquals("bar", tags.get(SpanUtils.PARAMETERS_PREFIX + "foo"));
 		assertEquals("blubb", tags.get(SpanUtils.PARAMETERS_PREFIX + "bla"));
 		assertEquals("XXXX", tags.get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
@@ -114,7 +118,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan(mock(SpanContextInformation.class));
+		monitoredHttpRequest.createSpan(spanContextInformation);
 		assertEquals("www.github.com", tags.get("http.referring_site"));
 	}
 
@@ -126,7 +130,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan(mock(SpanContextInformation.class));
+		monitoredHttpRequest.createSpan(spanContextInformation);
 		assertNull(tags.get("http.referring_site"));
 	}
 
