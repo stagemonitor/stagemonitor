@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -43,6 +44,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private final List<HtmlInjector> htmlInjectors = new ArrayList<HtmlInjector>();
 	private boolean atLeastServletApi3 = false;
 	private final MonitoredHttpRequestFactory monitoredHttpRequestFactory;
+	private final AtomicBoolean firstRequest = new AtomicBoolean(true);
 
 	public HttpRequestMonitorFilter() {
 		this(Stagemonitor.getConfiguration());
@@ -68,7 +70,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
 		final MeasurementSession measurementSession = new MeasurementSession(getApplicationName(filterConfig),
 				corePlugin.getHostName(), corePlugin.getInstanceName());
-		Stagemonitor.setMeasurementSession(measurementSession);
+		Stagemonitor.startMonitoring(measurementSession);
 		final ServletContext servletContext = filterConfig.getServletContext();
 		atLeastServletApi3 = servletContext.getMajorVersion() >= 3;
 
@@ -92,11 +94,23 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	@Override
 	public final void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
+		if (firstRequest.getAndSet(false) && Stagemonitor.getMeasurementSession().getInstanceName() == null) {
+			setInstanceAndStartMonitoring(request.getServerName());
+		}
 		if (corePlugin.isStagemonitorActive() && !isInternalRequest(request) &&
 				request.getDispatcherType() == REQUEST) {
 			doMonitor(request, response, filterChain);
 		} else {
 			filterChain.doFilter(request, response);
+		}
+	}
+
+	private synchronized void setInstanceAndStartMonitoring(String instanceName) {
+		final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
+		if (measurementSession.getInstanceName() == null) {
+			MeasurementSession session = new MeasurementSession(measurementSession.getApplicationName(),
+					measurementSession.getHostName(), instanceName);
+			Stagemonitor.startMonitoring(session);
 		}
 	}
 

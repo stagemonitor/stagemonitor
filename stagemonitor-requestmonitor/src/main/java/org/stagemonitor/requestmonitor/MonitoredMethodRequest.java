@@ -30,11 +30,6 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 		this.safeParameters = getSafeParameterMap(parameters);
 	}
 
-	@Override
-	public String getInstanceName() {
-		return null;
-	}
-
 	private Map<String, String> getSafeParameterMap(Map<String, Object> parameters) {
 		if (parameters == null) {
 			return null;

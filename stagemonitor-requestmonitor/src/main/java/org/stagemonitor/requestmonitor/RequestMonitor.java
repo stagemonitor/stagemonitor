@@ -1,21 +1,14 @@
 package org.stagemonitor.requestmonitor;
 
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-/**
- * @deprecated we should try to do everything with {@link SpanEventListener}s
- */
-@Deprecated
 public class RequestMonitor {
 
 	private final MetricName internalOverheadMetricName = name("internal_overhead_request_monitor").build();
@@ -36,44 +29,20 @@ public class RequestMonitor {
 
 	public void monitorStart(MonitoredRequest monitoredRequest) {
 		final long start = System.nanoTime();
-		try {
-			if (!corePlugin.isStagemonitorActive()) {
-				return;
-			}
-
-			if (Stagemonitor.getMeasurementSession().isNull()) {
-				createMeasurementSession();
-			}
-
-			if (Stagemonitor.getMeasurementSession().getInstanceName() == null) {
-				getInstanceNameFromExecution(monitoredRequest);
-			}
-
-			if (!Stagemonitor.isStarted()) {
-				Stagemonitor.startMonitoring();
-			}
-			if (Stagemonitor.isStarted()) {
-				monitoredRequest.createSpan();
-			}
-		} finally {
-			final SpanContextInformation info = SpanContextInformation.getCurrent();
-			if (info != null) {
-				info.setOverhead1(System.nanoTime() - start);
-			}
+		monitoredRequest.createSpan();
+		final SpanContextInformation info = SpanContextInformation.getCurrent();
+		if (info != null) {
+			info.setOverhead1(System.nanoTime() - start);
 		}
 	}
 
 	public void monitorStop() {
 		final SpanContextInformation info = SpanContextInformation.getCurrent();
-		if (info == null || !corePlugin.isStagemonitorActive()) {
-			return;
-		}
-		long overhead2 = System.nanoTime();
-		if (info.getSpan() != null) {
+		if (info != null) {
+			long overhead2 = System.nanoTime();
 			info.getSpan().finish();
+			trackOverhead(info.getOverhead1(), overhead2);
 		}
-
-		trackOverhead(info.getOverhead1(), overhead2);
 	}
 
 	public SpanContextInformation monitor(MonitoredRequest monitoredRequest) throws Exception {
@@ -97,27 +66,6 @@ public class RequestMonitor {
 		if (corePlugin.isInternalMonitoringActive()) {
 			overhead2 = System.nanoTime() - overhead2;
 			metricRegistry.timer(internalOverheadMetricName).update(overhead2 + overhead1, NANOSECONDS);
-		}
-	}
-
-	/*
-	 * In case the instance name is not set by configuration, try to read from monitored execution
-	 * (e.g. the domain name from a HTTP request)
-	 */
-	private synchronized void getInstanceNameFromExecution(MonitoredRequest monitoredRequest) {
-		final MeasurementSession measurementSession = Stagemonitor.getMeasurementSession();
-		if (measurementSession.getInstanceName() == null) {
-			MeasurementSession session = new MeasurementSession(measurementSession.getApplicationName(), measurementSession.getHostName(),
-					monitoredRequest.getInstanceName());
-			Stagemonitor.setMeasurementSession(session);
-		}
-	}
-
-	private synchronized void createMeasurementSession() {
-		if (Stagemonitor.getMeasurementSession().isNull()) {
-			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), corePlugin.getHostName(),
-					corePlugin.getInstanceName());
-			Stagemonitor.setMeasurementSession(session);
 		}
 	}
 

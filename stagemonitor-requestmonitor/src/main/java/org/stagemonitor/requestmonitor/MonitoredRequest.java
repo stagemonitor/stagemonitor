@@ -2,18 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import io.opentracing.Span;
 
-@Deprecated
 public abstract class MonitoredRequest {
-
-	/**
-	 * Optionally, the instance name can be derived from a request.
-	 * For instance in a HTTP context you could return the domain name.
-	 *
-	 * @return the instance name
-	 */
-	public String getInstanceName() {
-		return null;
-	}
 
 	/**
 	 * Creates a instance of {@link Span} that represents the current request, e.g. a HTTP request.

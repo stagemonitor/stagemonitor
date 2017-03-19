@@ -71,11 +71,6 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public String getInstanceName() {
-		return httpServletRequest.getServerName();
-	}
-
-	@Override
 	public Span createSpan() {
 		boolean sample = true;
 		if (webPlugin.isHonorDoNotTrackHeader() && "1".equals(httpServletRequest.getHeader("dnt"))) {

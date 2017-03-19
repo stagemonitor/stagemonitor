@@ -16,6 +16,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.NoopTracer;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Collections;
@@ -80,7 +81,13 @@ public abstract class AbstractRequestMonitorTest {
 		tracer = RequestMonitorPlugin.createSpanWrappingTracer(getTracer(), configuration, registry,
 				TagRecordingSpanEventListener.asList(tags),
 				samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+		when(requestMonitorPlugin.getTracer()).then((invocation) -> {
+			if (corePlugin.isStagemonitorActive()) {
+				return tracer;
+			} else {
+				return NoopTracer.INSTANCE;
+			}
+		});
 		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 

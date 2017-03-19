@@ -4,10 +4,8 @@ import com.uber.jaeger.Span;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.samplers.ConstSampler;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
@@ -80,15 +78,6 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	private MonitoredRequest createMonitoredRequest() throws Exception {
 		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", () -> {
 		}));
-	}
-
-	@Test
-	@Ignore
-	public void testGetInstanceNameFromExecution() throws Exception {
-		final MonitoredRequest monitoredRequest = createMonitoredRequest();
-		doReturn("testInstance").when(monitoredRequest).getInstanceName();
-		requestMonitor.monitor(monitoredRequest);
-		assertEquals("testInstance", Stagemonitor.getMeasurementSession().getInstanceName());
 	}
 
 	@Test

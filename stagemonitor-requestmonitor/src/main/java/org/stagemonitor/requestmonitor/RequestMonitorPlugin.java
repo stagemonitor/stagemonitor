@@ -313,7 +313,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	private static RequestMonitor requestMonitor;
 
 	private SpanWrappingTracer spanWrappingTracer;
-	private Tracer noopTracer = NoopTracer.INSTANCE;
 	private SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor;
 	private ReportingSpanEventListener reportingSpanEventListener;
 	private CorePlugin corePlugin;
@@ -334,7 +333,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		if (spanWrappingTracer != null && corePlugin.isStagemonitorActive()) {
 			return spanWrappingTracer;
 		} else {
-			return noopTracer;
+			return NoopTracer.INSTANCE;
 		}
 	}
 
@@ -376,7 +375,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final ServiceLoader<SpanEventListenerFactory> factories = ServiceLoader.load(SpanEventListenerFactory.class, RequestMonitorPlugin.class.getClassLoader());
 		this.spanWrappingTracer = createSpanWrappingTracer(tracer, initArguments.getConfiguration(), metricRegistry,
 				factories, samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
-		noopTracer = null;
 	}
 
 	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, Configuration configuration, final Metric2Registry metricRegistry,

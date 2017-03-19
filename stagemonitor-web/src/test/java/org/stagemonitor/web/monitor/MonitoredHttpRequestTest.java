@@ -71,13 +71,6 @@ public class MonitoredHttpRequestTest {
 	public void testGetRequestName() throws Exception {
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(new MockHttpServletRequest("GET", "/test.js"));
 		assertEquals("GET *.js", monitoredHttpRequest.getRequestName());
-		testGetInstanceName();
-	}
-
-	@Test
-	public void testGetInstanceName() throws Exception {
-		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(new MockHttpServletRequest("GET", "/test.js"));
-		assertEquals("localhost", monitoredHttpRequest.getInstanceName());
 	}
 
 	@Test
