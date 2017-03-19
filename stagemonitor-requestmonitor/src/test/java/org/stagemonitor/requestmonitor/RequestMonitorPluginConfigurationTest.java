@@ -34,7 +34,7 @@ public class RequestMonitorPluginConfigurationTest {
 	public void testDefaultValues() {
 		assertEquals(false, config.isCollectCpuTime());
 
-		assertEquals(1000000d, config.getOnlyCollectNCallTreesPerMinute(), 0);
+		assertEquals(1000000d, config.getProfilerRateLimitPerMinute(), 0);
 		assertEquals(false, config.isLogSpans());
 	}
 }

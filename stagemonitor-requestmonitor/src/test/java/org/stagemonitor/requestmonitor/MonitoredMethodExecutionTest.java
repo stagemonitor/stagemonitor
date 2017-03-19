@@ -42,6 +42,7 @@ public class MonitoredMethodExecutionTest {
 		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 
 		configuration = mock(Configuration.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);

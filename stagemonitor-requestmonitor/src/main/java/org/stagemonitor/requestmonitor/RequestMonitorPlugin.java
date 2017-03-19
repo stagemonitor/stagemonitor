@@ -11,6 +11,7 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanEventListener;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventListener;
 import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener;
+import org.stagemonitor.requestmonitor.profiler.CallTreeSpanEventListener;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
@@ -125,8 +126,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.tags("profiler", "experimental")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.buildWithDefault(false);
-	private final ConfigurationOption<Double> onlyCollectNCallTreesPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.onlyCollectNCallTreesPerMinute")
+	private final ConfigurationOption<Double> profilerRateLimitPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.profiler.sampling.rateLimitPerMinute")
+			.aliasKeys("stagemonitor.requestmonitor.onlyCollectNCallTreesPerMinute")
 			.dynamic(true)
 			.label("Only report N call trees per minute")
 			.description("Limits the rate at which call trees are collected. " +
@@ -362,6 +364,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
 			spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
 		}
+		spanWrappingTracer.addSpanInterceptor(new CallTreeSpanEventListener(requestMonitorPlugin));
 		return spanWrappingTracer;
 	}
 
@@ -385,8 +388,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		return minExecutionTimeNanos.getValue();
 	}
 
-	public double getOnlyCollectNCallTreesPerMinute() {
-		return onlyCollectNCallTreesPerMinute.getValue();
+	public double getProfilerRateLimitPerMinute() {
+		return profilerRateLimitPerMinute.getValue();
+	}
+
+	public ConfigurationOption<Double> getProfilerRateLimitPerMinuteOption() {
+		return profilerRateLimitPerMinute;
 	}
 
 	public boolean isLogSpans() {

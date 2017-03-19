@@ -17,13 +17,10 @@ public abstract class MonitoredRequest {
 
 	/**
 	 * Creates a instance of {@link Span} that represents the current request, e.g. a HTTP request.
-	 * If <code>null</code> is returned, or the {@link Span#setOperationName(String)} is empty, the execution context
-	 * will not be monitored.
 	 * <p/>
 	 * Any exception thrown by this method will be propagated (not ignored). Sometimes, methods that are required to
 	 * create the execution context, like {@link javax.servlet.http.HttpServletRequest#getParameterMap()} can throw
-	 * exceptions (for example, if the maximum number of parameters is exceeded). These exceptions have to be
-	 * propagated and not swallowed.
+	 * exceptions (for example, if the maximum number of parameters is exceeded).
 	 * <p/>
 	 * So be careful, that no exceptions are thrown in to the implementation of this method.
 	 *

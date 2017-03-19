@@ -8,7 +8,7 @@ public class PostExecutionInterceptorContext extends PreExecutionInterceptorCont
 
 	private boolean excludeCallTree = false;
 
-	PostExecutionInterceptorContext(Configuration configuration, SpanContextInformation spanContext, Metric2Registry metricRegistry) {
+	public PostExecutionInterceptorContext(Configuration configuration, SpanContextInformation spanContext, Metric2Registry metricRegistry) {
 		super(configuration, spanContext, metricRegistry);
 	}
 

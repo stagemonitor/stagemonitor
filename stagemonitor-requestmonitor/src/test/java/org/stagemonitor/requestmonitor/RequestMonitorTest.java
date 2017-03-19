@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import com.codahale.metrics.Meter;
 import com.uber.jaeger.Span;
 import com.uber.jaeger.context.TracingUtils;
 import com.uber.jaeger.samplers.ConstSampler;
@@ -10,7 +9,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.concurrent.Callable;
@@ -26,7 +24,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,58 +80,6 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	private MonitoredRequest createMonitoredRequest() throws Exception {
 		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", () -> {
 		}));
-	}
-
-	@Test
-	public void testProfileThisExecutionDeactive() throws Exception {
-		doReturn(0d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		final SpanContextInformation monitor = requestMonitor.monitor(createMonitoredRequest());
-		assertNull(monitor.getCallTree());
-	}
-
-	@Test
-	public void testProfileThisExecutionAlwaysActive() throws Exception {
-		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		final SpanContextInformation monitor = requestMonitor.monitor(createMonitoredRequest());
-		assertNotNull(monitor.getCallTree());
-	}
-
-	@Test
-	public void testDontActivateProfilerWhenNoSpanReporterIsActive() throws Exception {
-		// don't profile if no one is interested in the result
-		tracer.addSpanInterceptor(() -> new SpanEventListener() {
-			@Override
-			public void onStart(SpanWrapper spanWrapper) {
-				requestMonitor.getSpanContext().setReport(false);
-			}
-		});
-		doReturn(1000000d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		doReturn(false).when(requestMonitorPlugin).isLogSpans();
-		final SpanContextInformation monitor = requestMonitor.monitor(createMonitoredRequest());
-		assertNull(monitor.getCallTree());
-	}
-
-	@Test
-	public void testProfileThisExecutionActiveEvery2Requests() throws Exception {
-		doReturn(2d).when(requestMonitorPlugin).getOnlyCollectNCallTreesPerMinute();
-		testProfileThisExecutionHelper(0, true);
-		testProfileThisExecutionHelper(1.99, true);
-		testProfileThisExecutionHelper(2, false);
-		testProfileThisExecutionHelper(3, false);
-		testProfileThisExecutionHelper(1, true);
-	}
-
-	private void testProfileThisExecutionHelper(double callTreeRate, boolean callStackExpected) throws Exception {
-		final Meter callTreeMeter = mock(Meter.class);
-		doReturn(callTreeRate).when(callTreeMeter).getOneMinuteRate();
-		requestMonitor.setCallTreeMeter(callTreeMeter);
-
-		final SpanContextInformation monitor = requestMonitor.monitor(createMonitoredRequest());
-		if (callStackExpected) {
-			assertNotNull(monitor.getCallTree());
-		} else {
-			assertNull(monitor.getCallTree());
-		}
 	}
 
 	@Test

@@ -64,6 +64,7 @@ public abstract class AbstractRequestMonitorTest {
 		doReturn(1000000d).when(requestMonitorPlugin).getRateLimitServerSpansPerMinute();
 		doReturn(mock(ConfigurationOption.class)).when(requestMonitorPlugin).getRateLimitServerSpansPerMinuteOption();
 		doReturn(mock(ConfigurationOption.class)).when(requestMonitorPlugin).getRateLimitClientSpansPerMinuteOption();
+		doReturn(mock(ConfigurationOption.class)).when(requestMonitorPlugin).getProfilerRateLimitPerMinuteOption();
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));
 		doReturn(mock(Meter.class)).when(registry).meter(any(MetricName.class));
 		requestMonitor = new RequestMonitor(configuration, registry);

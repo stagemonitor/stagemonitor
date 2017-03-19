@@ -6,17 +6,13 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collection;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEventListener {
@@ -96,25 +92,9 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 			}
 		}
 		info.setPostExecutionInterceptorContext(context);
-		handleCallTree(info, spanWrapper.getDelegate(), context.isExcludeCallTree(), operationName);
 		if (!context.isReport()) {
 			info.setReport(false);
 			Tags.SAMPLING_PRIORITY.set(spanWrapper.getDelegate(), (short) 0);
-		}
-	}
-
-	private void handleCallTree(SpanContextInformation info, Span span, boolean excludeCallTree, String operationName) {
-		final CallStackElement callTree = info.getCallTree();
-		if (callTree != null) {
-			Profiler.stop();
-			if (!excludeCallTree) {
-				callTree.setSignature(operationName);
-				final double minExecutionTimeMultiplier = requestMonitorPlugin.getMinExecutionTimePercent() / 100;
-				if (minExecutionTimeMultiplier > 0d) {
-					callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
-				}
-				SpanUtils.setCallTree(span, callTree);
-			}
 		}
 	}
 

@@ -49,7 +49,6 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
 	protected final WebPlugin webPlugin;
-	private final Metric2Registry metricRegistry;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private static final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("request_name", "http_code");
 	private final String userAgenHeader;
@@ -64,7 +63,6 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		this.filterChain = filterChain;
 		this.responseWrapper = responseWrapper;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
-		this.metricRegistry = Stagemonitor.getMetric2Registry();
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		userAgenHeader = httpServletRequest.getHeader("user-agent");
 		connectionId = httpServletRequest.getHeader(WidgetAjaxSpanReporter.CONNECTION_ID);

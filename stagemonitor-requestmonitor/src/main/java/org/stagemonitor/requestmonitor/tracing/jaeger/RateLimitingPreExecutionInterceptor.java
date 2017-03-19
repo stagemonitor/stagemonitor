@@ -33,11 +33,11 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 		});
 	}
 
-	private static RateLimiter getRateLimiter(double spansPerMinute) {
-		if (spansPerMinute >= 1000000) {
+	public static RateLimiter getRateLimiter(double creditsPerMinute) {
+		if (creditsPerMinute >= 1000000) {
 			return null;
 		}
-		return new RateLimiter(spansPerMinute / 60);
+		return new RateLimiter(creditsPerMinute / 60);
 	}
 
 	@Override

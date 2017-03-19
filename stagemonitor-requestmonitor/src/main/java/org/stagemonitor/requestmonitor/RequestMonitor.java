@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor;
 
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
 
@@ -16,7 +15,6 @@ import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.profiler.Profiler;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -55,7 +53,6 @@ public class RequestMonitor {
 	private Metric2Registry metricRegistry;
 	private CorePlugin corePlugin;
 	private RequestMonitorPlugin requestMonitorPlugin;
-	private Meter callTreeMeter = new Meter();
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
 		this(configuration, registry, ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader()));
@@ -101,7 +98,7 @@ public class RequestMonitor {
 				Stagemonitor.startMonitoring();
 			}
 			if (monitorThisRequest()) {
-				beforeExecution(monitoredRequest, info);
+				monitoredRequest.createSpan(info);
 			}
 		} finally {
 			info.setOverhead1(System.nanoTime() - start);
@@ -135,9 +132,6 @@ public class RequestMonitor {
 
 	private void cleanUpAfter(SpanContextInformation info) {
 		request.set(info.getParent());
-		if (info.getCallTree() != null) {
-			Profiler.clearMethodCallParent();
-		}
 	}
 
 	public SpanContextInformation monitor(MonitoredRequest monitoredRequest) throws Exception {
@@ -182,18 +176,6 @@ public class RequestMonitor {
 			MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(), corePlugin.getHostName(),
 					corePlugin.getInstanceName());
 			Stagemonitor.setMeasurementSession(session);
-		}
-	}
-
-	private void beforeExecution(MonitoredRequest monitoredRequest, SpanContextInformation info) {
-		monitoredRequest.createSpan(info);
-		try {
-			if (isProfileThisRequest(info)) {
-				callTreeMeter.mark();
-				info.setCallTree(Profiler.activateProfiling("total"));
-			}
-		} catch (RuntimeException e) {
-			logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 		}
 	}
 
@@ -254,40 +236,6 @@ public class RequestMonitor {
 			return false;
 		}
 		return true;
-	}
-
-	private boolean isProfileThisRequest(SpanContextInformation spanContext) {
-		if (spanContext.getSpan() == null || spanContext.isExternalRequest()) {
-			return false;
-		}
-		double callTreeRateLimit = requestMonitorPlugin.getOnlyCollectNCallTreesPerMinute();
-		if (!requestMonitorPlugin.isProfilerActive()) {
-			logger.debug("Not profiling this request because stagemonitor.profiler.active=false");
-			return false;
-		} else if (callTreeRateLimit <= 0) {
-			logger.debug("Not profiling this request because stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch <= 0");
-			return false;
-		} else if (!isAnySpanReporterActive(spanContext)) {
-			// TODO what if no span reporter is active but for example the jaeger zikin reporter is active?
-			logger.debug("Not profiling this request because no SpanReporter is active {}", spanReporters);
-			return false;
-		} else if (callTreeRateLimit < 1000000d && callTreeMeter.getOneMinuteRate() >= callTreeRateLimit) {
-			logger.debug("Not profiling this request because more than {} call trees per minute where created", callTreeRateLimit);
-			return false;
-		} else if (!spanContext.isReport()) {
-			logger.debug("Not profiling this request because this request is not sampled", callTreeRateLimit);
-			return false;
-		}
-		return true;
-	}
-
-	private boolean isAnySpanReporterActive(SpanContextInformation spanContext) {
-		for (SpanReporter reporter : spanReporters) {
-			if (isActive(spanContext, reporter)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -359,10 +307,6 @@ public class RequestMonitor {
 	public void close() {
 		asyncSpanReporterPool.shutdown();
 		request.remove();
-	}
-
-	void setCallTreeMeter(Meter callTreeMeter) {
-		this.callTreeMeter = callTreeMeter;
 	}
 
 }

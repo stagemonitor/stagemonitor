@@ -2,9 +2,7 @@ package org.stagemonitor.requestmonitor.utils;
 
 import com.uber.jaeger.utils.Utils;
 
-import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -73,11 +71,6 @@ public class SpanUtils {
 		PrintWriter pw = new PrintWriter(sw, true);
 		throwable.printStackTrace(pw);
 		span.setTag("exception.stack_trace", sw.getBuffer().toString());
-	}
-
-	public static void setCallTree(Span span, CallStackElement callTree) {
-		span.setTag(CALL_TREE_JSON, JsonUtils.toJson(callTree));
-		span.setTag(CALL_TREE_ASCII, callTree.toString(true));
 	}
 
 	public static void setHttpHeaders(Span span, Map<String, String> headers) {

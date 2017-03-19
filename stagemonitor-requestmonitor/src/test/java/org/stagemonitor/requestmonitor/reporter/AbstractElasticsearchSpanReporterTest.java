@@ -55,6 +55,7 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(requestMonitorPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.singleton("Report Me"));
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
