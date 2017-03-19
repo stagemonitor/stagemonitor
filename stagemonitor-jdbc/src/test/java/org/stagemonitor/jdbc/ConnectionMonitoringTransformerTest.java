@@ -156,11 +156,12 @@ public class ConnectionMonitoringTransformerTest {
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").tag("method", "SELECT").build()));
 		final Map<MetricName, Meter> meters = metric2Registry.getMeters();
 		assertNotNull(meters.keySet().toString(), meters.get(name("external_requests_rate").tag("request_name", "testRecordSqlPreparedStatement").tag("type", "jdbc").build()));
-		final CallStackElement callStack = spanContext.getCallTree();
-		assertEquals("testRecordSqlPreparedStatement", callStack.getSignature());
+		final CallStackElement callTree = spanContext.getCallTree();
+		assertEquals("testRecordSqlPreparedStatement", callTree.getSignature());
+		assertEquals(callTree.toString(), 1, callTree.getChildren().size());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executePreparedStatement()",
-				callStack.getChildren().get(0).getSignature());
-		assertEquals("SELECT * from STAGEMONITOR ", callStack.getChildren().get(0).getChildren().get(0).getSignature());
+				callTree.getChildren().get(0).getSignature());
+		assertEquals(callTree.toString(), "SELECT * from STAGEMONITOR ", callTree.getChildren().get(0).getChildren().get(0).getSignature());
 	}
 
 	@Test

@@ -2,13 +2,12 @@ package org.stagemonitor.requestmonitor.profiler;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import static org.junit.Assert.assertNotNull;
@@ -61,7 +60,8 @@ public class CallTreeSpanEventListenerTest {
 		final SpanWrapper span = mock(SpanWrapper.class);
 		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(span);
 		contextInformation.setSampled(sampled);
-		contextInformation.setPostExecutionInterceptorContext(new PostExecutionInterceptorContext(mock(Configuration.class), contextInformation, mock(Metric2Registry.class)));
+		contextInformation.setPreExecutionInterceptorContext(new PreExecutionInterceptorContext(contextInformation));
+		contextInformation.setPostExecutionInterceptorContext(new PostExecutionInterceptorContext(contextInformation));
 		eventListener.onStart(span);
 		eventListener.onFinish(span, "", 0);
 		return contextInformation;

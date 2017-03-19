@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.source.SimpleSource;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
@@ -33,7 +32,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 		spanContext = mock(SpanContextInformation.class);
 		when(spanContext.isExternalRequest()).thenReturn(false);
 
-		context = new PreExecutionInterceptorContext(configuration, spanContext, mock(Metric2Registry.class));
+		context = new PreExecutionInterceptorContext(spanContext);
 		interceptor = new RateLimitingPreExecutionInterceptor();
 		interceptor.init(configuration);
 	}

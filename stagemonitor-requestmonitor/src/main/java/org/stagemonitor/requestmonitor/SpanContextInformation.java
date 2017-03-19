@@ -8,6 +8,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.WeakConcurrentMap;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
+import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
@@ -39,6 +40,7 @@ public class SpanContextInformation {
 	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 	private PostExecutionInterceptorContext postExecutionInterceptorContext;
 	private boolean sampled = true;
+	private PreExecutionInterceptorContext preExecutionInterceptorContext;
 
 	public static SpanContextInformation getCurrent() {
 		final TraceContext traceContext = TracingUtils.getTraceContext();
@@ -61,12 +63,18 @@ public class SpanContextInformation {
 		return null;
 	}
 
+	/**
+	 * Internal method, should only be called by stagemonitor tests
+	 */
 	public static SpanContextInformation forUnitTest(Span span) {
 		final SpanContextInformation spanContext = new SpanContextInformation();
 		spanContext.setSpan(span);
 		return spanContext;
 	}
 
+	/**
+	 * Internal method, should only be called by stagemonitor tests
+	 */
 	public static SpanContextInformation forUnitTest(Span span, String operationName) {
 		final SpanContextInformation spanContext = new SpanContextInformation();
 		spanContext.setSpan(span);
@@ -74,10 +82,12 @@ public class SpanContextInformation {
 		return spanContext;
 	}
 
-	public static SpanContextInformation forUnitTest(Span span, CallStackElement callTree, Map<String, Object> requestAttributes) {
+	/**
+	 * Internal method, should only be called by stagemonitor tests
+	 */
+	public static SpanContextInformation forUnitTest(Span span, Map<String, Object> requestAttributes) {
 		final SpanContextInformation spanContext = new SpanContextInformation();
 		spanContext.setSpan(span);
-		spanContext.setCallTree(callTree);
 		for (Map.Entry<String, Object> entry : requestAttributes.entrySet()) {
 			spanContext.addRequestAttribute(entry.getKey(), entry.getValue());
 		}
@@ -92,6 +102,9 @@ public class SpanContextInformation {
 		return span;
 	}
 
+	/**
+	 * Internal method, should only be called by stagemonitor itself
+	 */
 	public void setSpan(Span span) {
 		this.span = span;
 	}
@@ -141,6 +154,9 @@ public class SpanContextInformation {
 		return serverRequest;
 	}
 
+	/**
+	 * Internal method, should only be called by stagemonitor itself
+	 */
 	public void setCallTree(CallStackElement callTree) {
 		this.callTree = callTree;
 	}
@@ -178,6 +194,9 @@ public class SpanContextInformation {
 		return externalRequestStats.values();
 	}
 
+	/**
+	 * Internal method, should only be called by stagemonitor itself
+	 */
 	public void setPostExecutionInterceptorContext(PostExecutionInterceptorContext postExecutionInterceptorContext) {
 		this.postExecutionInterceptorContext = postExecutionInterceptorContext;
 	}
@@ -190,6 +209,9 @@ public class SpanContextInformation {
 		return sampled;
 	}
 
+	/**
+	 * Internal method, should only be called by stagemonitor itself
+	 */
 	public void setSampled(boolean sampled) {
 		this.sampled = sampled;
 	}
@@ -208,6 +230,17 @@ public class SpanContextInformation {
 		if (callTree != null) {
 			callTree.recycle();
 		}
+	}
+
+	/**
+	 * Internal method, should only be called by stagemonitor itself
+	 */
+	public void setPreExecutionInterceptorContext(PreExecutionInterceptorContext preExecutionInterceptorContext) {
+		this.preExecutionInterceptorContext = preExecutionInterceptorContext;
+	}
+
+	public PreExecutionInterceptorContext getPreExecutionInterceptorContext() {
+		return preExecutionInterceptorContext;
 	}
 
 	public static class ExternalRequestStats {

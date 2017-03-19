@@ -80,7 +80,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		reportingSpanEventListener.addReporter(spanCapturingReporter);
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
 				configuration, registry, new ArrayList<>(),
-				new SamplePriorityDeterminingSpanEventListener(configuration, registry), reportingSpanEventListener);
+				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}
 

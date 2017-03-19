@@ -74,7 +74,7 @@ public abstract class AbstractRequestMonitorTest {
 		when(requestMonitorPlugin.isLogSpans()).thenReturn(true);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 
-		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanEventListener(configuration, registry);
+		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanEventListener(configuration);
 		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
 		spanCapturingReporter = new SpanCapturingReporter();
 		reportingSpanEventListener.addReporter(spanCapturingReporter);

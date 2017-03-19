@@ -2,61 +2,47 @@ package org.stagemonitor.requestmonitor.sampling;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 
-import io.opentracing.Span;
-
-public class PreExecutionInterceptorContext {
+public class PreExecutionInterceptorContext extends AbstractInterceptorContext<PreExecutionInterceptorContext> {
 
 	private static final Logger logger = LoggerFactory.getLogger(PreExecutionInterceptorContext.class);
 
-	private final Configuration configuration;
-	private final SpanContextInformation spanContext;
-	private final Metric2Registry metricRegistry;
-	private boolean mustReport = false;
-	private boolean report = true;
+	private boolean mustCollectCallTree = false;
+	private boolean collectCallTree = true;
 
-	public PreExecutionInterceptorContext(Configuration configuration, SpanContextInformation spanContext, Metric2Registry metricRegistry) {
-		this.configuration = configuration;
-		this.spanContext = spanContext;
-		this.metricRegistry = metricRegistry;
+	public PreExecutionInterceptorContext(SpanContextInformation spanContext) {
+		super(spanContext);
 	}
 
-	public PreExecutionInterceptorContext mustReport(Class<?> interceptorClass) {
-		logger.debug("Must report current span (requested by {})", interceptorClass);
-		mustReport = true;
-		report = true;
+	/**
+	 * Makes sure, that a call tree is collected for the current request. In other words, profiles this request.
+	 *
+	 * @param reason the reason why a call tree should always be collected (debug message)
+	 * @return <code>this</code> for chaining
+	 */
+	public PreExecutionInterceptorContext mustCollectCallTree(String reason) {
+		logger.debug("Must collect call tree because {}", reason);
+		mustCollectCallTree = true;
+		collectCallTree = true;
 		return this;
 	}
 
-	public PreExecutionInterceptorContext shouldNotReport(Class<?> interceptorClass) {
-		logger.debug("Should not report current span (requested by {})", interceptorClass);
-		if (!mustReport) {
-			report = false;
+	/**
+	 * Requests that this request should not be profiled
+	 *
+	 * @param reason the reason why no call tree should be collected (debug message)
+	 * @return <code>this</code> for chaining
+	 */
+	public PreExecutionInterceptorContext shouldNotCollectCallTree(String reason) {
+		if (!mustCollectCallTree) {
+			logger.debug("Should not collect call tree because {}", reason);
+			collectCallTree = false;
 		}
 		return this;
 	}
 
-	public Span getSpan() {
-		return spanContext.getSpan();
-	}
-
-	public boolean isReport() {
-		return report;
-	}
-
-	public Metric2Registry getMetricRegistry() {
-		return metricRegistry;
-	}
-
-	public <T extends ConfigurationOptionProvider> T getConfig(Class<T> configClass) {
-		return configuration.getConfig(configClass);
-	}
-
-	public SpanContextInformation getSpanContext() {
-		return spanContext;
+	public boolean isCollectCallTree() {
+		return collectCallTree;
 	}
 }

@@ -124,7 +124,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private void report(Span span) {
 		final SpanContextInformation spanContext = SpanContextInformation.forUnitTest(span);
-		final SpanContextInformation reportArguments = SpanContextInformation.forUnitTest(span, null, Collections.<String, Object>emptyMap());
+		final SpanContextInformation reportArguments = SpanContextInformation.forUnitTest(span, Collections.emptyMap());
 		if (reporter.isActive(spanContext)) {
 			reporter.report(reportArguments);
 		}

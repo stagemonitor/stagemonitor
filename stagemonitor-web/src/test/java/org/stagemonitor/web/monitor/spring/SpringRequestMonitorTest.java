@@ -119,7 +119,7 @@ public class SpringRequestMonitorTest {
 
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
-				new SamplePriorityDeterminingSpanEventListener(configuration, registry), new ReportingSpanEventListener(configuration));
+				new SamplePriorityDeterminingSpanEventListener(configuration), new ReportingSpanEventListener(configuration));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 	}

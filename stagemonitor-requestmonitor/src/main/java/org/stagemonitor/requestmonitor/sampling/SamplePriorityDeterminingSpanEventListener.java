@@ -3,7 +3,6 @@ package org.stagemonitor.requestmonitor.sampling;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
@@ -22,11 +21,9 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	private final Collection<PostExecutionSpanInterceptor> postInterceptors =
 			new CopyOnWriteArrayList<PostExecutionSpanInterceptor>();
 	private final Configuration configuration;
-	private final Metric2Registry metricRegistry;
 
-	public SamplePriorityDeterminingSpanEventListener(Configuration configuration, Metric2Registry metricRegistry) {
+	public SamplePriorityDeterminingSpanEventListener(Configuration configuration) {
 		this.configuration = configuration;
-		this.metricRegistry = metricRegistry;
 		registerPreInterceptors();
 		registerPostInterceptors();
 	}
@@ -41,7 +38,6 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 
 	private void registerPostInterceptors() {
 		addPostInterceptor(new NameFilteringPostExecutionInterceptor());
-		addPostInterceptor(new CallTreeExcludingPostExecutionInterceptor());
 		addPostInterceptor(new FastExternalSpanExcludingPostExecutionInterceptor());
 
 		for (PostExecutionSpanInterceptor interceptor : ServiceLoader.load(
@@ -58,8 +54,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 			return;
 		}
 
-		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(configuration,
-				spanContext, metricRegistry);
+		PreExecutionInterceptorContext context = new PreExecutionInterceptorContext(spanContext);
 		for (PreExecutionSpanInterceptor interceptor : preInterceptors) {
 			try {
 				interceptor.interceptReport(context);
@@ -67,6 +62,8 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 				logger.warn(e.getMessage(), e);
 			}
 		}
+
+		spanContext.setPreExecutionInterceptorContext(context);
 
 		if (!context.isReport()) {
 			spanContext.setSampled(false);
@@ -80,7 +77,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 		if (!info.isSampled()) {
 			return;
 		}
-		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(configuration, info, metricRegistry);
+		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(info);
 		for (PostExecutionSpanInterceptor interceptor : postInterceptors) {
 			try {
 				interceptor.interceptReport(context);
@@ -96,10 +93,12 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	}
 
 	public void addPreInterceptor(PreExecutionSpanInterceptor interceptor) {
+		interceptor.init(configuration);
 		preInterceptors.add(interceptor);
 	}
 
 	public void addPostInterceptor(PostExecutionSpanInterceptor interceptor) {
+		interceptor.init(configuration);
 		postInterceptors.add(interceptor);
 	}
 }

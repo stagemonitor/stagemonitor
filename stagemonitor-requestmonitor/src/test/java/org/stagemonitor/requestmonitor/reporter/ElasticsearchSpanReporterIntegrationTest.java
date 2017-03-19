@@ -68,7 +68,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		span.setTag(SpanUtils.OPERATION_TYPE, "method_invocation");
 		span.setTag("foo.bar", "baz");
 		span.finish();
-		reporter.report(SpanContextInformation.forUnitTest(span, null, Collections.emptyMap()));
+		reporter.report(SpanContextInformation.forUnitTest(span, Collections.emptyMap()));
 		elasticsearchClient.waitForCompletion();
 		validateSpanJson(JsonUtils.getMapper().valueToTree(span));
 

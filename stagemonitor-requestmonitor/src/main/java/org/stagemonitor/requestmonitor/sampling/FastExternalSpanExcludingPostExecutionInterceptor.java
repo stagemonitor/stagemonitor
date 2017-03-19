@@ -2,6 +2,7 @@ package org.stagemonitor.requestmonitor.sampling;
 
 import com.codahale.metrics.Timer;
 
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
@@ -9,10 +10,16 @@ import java.util.concurrent.TimeUnit;
 
 public class FastExternalSpanExcludingPostExecutionInterceptor extends PostExecutionSpanInterceptor {
 
+	private RequestMonitorPlugin requestMonitorPlugin;
+
+	@Override
+	public void init(Configuration configuration) {
+		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
+	}
+
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
 		if (context.getSpanContext().isExternalRequest()) {
-			final RequestMonitorPlugin requestMonitorPlugin = context.getConfig(RequestMonitorPlugin.class);
 			final double thresholdMs = requestMonitorPlugin.getExcludeExternalRequestsFasterThan();
 			final long durationNs = context.getSpanContext().getDurationNanos();
 			final long durationMs = TimeUnit.NANOSECONDS.toMillis(context.getSpanContext().getDurationNanos());
