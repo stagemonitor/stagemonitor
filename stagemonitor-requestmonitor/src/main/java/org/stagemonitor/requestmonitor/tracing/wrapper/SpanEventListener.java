@@ -27,8 +27,8 @@ public abstract class SpanEventListener {
 	/**
 	 * Called when a {@link Span} is started ({@link Tracer.SpanBuilder#start()}
 	 * <p/>
-	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanEventListener}s are called
-	 * again. If you don't want that, call <code>spanWrapper.getDelegate().setTag(...)</code>.
+	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanEventListener}s are notified.
+	 * If you don't want that, call <code>spanWrapper.getDelegate().setTag(...)</code>.
 	 * <p/>
 	 * Note: tags might be set on the span before it has been started
 	 *
@@ -77,10 +77,11 @@ public abstract class SpanEventListener {
 	}
 
 	/**
-	 * Called when {@link Span#finish} has been called
+	 * Callback for {@link Span#finish}. The actual span will be finished after all {@link #onFinish} callbacks have
+	 * been executed.
 	 * <p/>
-	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanEventListener}s are called
-	 * again. If you don't want that, call <code>spanWrapper.getDelegate().setTag(...)</code>.
+	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanEventListener}s are notified.
+	 * If you don't want that, call <code>spanWrapper.getDelegate().setTag(...)</code>.
 	 *
 	 * @param spanWrapper   the span which has just beed finished
 	 * @param operationName the operation name of this span. The operation name is final only on finish because it can
