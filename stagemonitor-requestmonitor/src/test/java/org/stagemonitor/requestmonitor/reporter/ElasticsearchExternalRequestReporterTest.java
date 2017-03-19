@@ -45,7 +45,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		JsonUtils.getMapper().registerModule(new SpanJsonModule());
 		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchSpanReporter(spanLogger);
-		reporter.init(new SpanReporter.InitArguments(configuration, registry));
+		reporter.init(configuration);
 		when(requestMonitorPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);

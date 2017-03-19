@@ -25,7 +25,6 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -111,17 +110,6 @@ public class ConnectionMonitoringTransformerTest {
 			connection.prepareStatement("INSERT INTO STAGEMONITOR (FOO) VALUES (1)").execute();
 		}
 		requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
-		// make sure call trees are recorded
-		requestMonitor.addReporter(new SpanReporter() {
-			@Override
-			public void report(SpanContextInformation spanContext) throws Exception {
-			}
-
-			@Override
-			public boolean isActive(SpanContextInformation spanContext) {
-				return true;
-			}
-		});
 		configuration = Stagemonitor.getConfiguration();
 		testDao = new TestDao(dataSource);
 	}
@@ -137,7 +125,7 @@ public class ConnectionMonitoringTransformerTest {
 		requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", () -> {
 					dataSource.getConnection().close();
-				})).getSpanReporterFuture().get();
+				}));
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
 	}
@@ -153,7 +141,7 @@ public class ConnectionMonitoringTransformerTest {
 		requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "monitorGetConnectionUsernamePassword()", () -> {
 					dataSource.getConnection("sa", "").close();
-				})).getSpanReporterFuture().get();
+				}));
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
 	}
@@ -162,7 +150,6 @@ public class ConnectionMonitoringTransformerTest {
 	public void testRecordSqlPreparedStatement() throws Exception {
 		final SpanContextInformation spanContext = requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlPreparedStatement", () -> testDao.executePreparedStatement()));
-		spanContext.getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertTrue(timers.keySet().toString(), timers.size() > 1);
 		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()));
@@ -182,7 +169,6 @@ public class ConnectionMonitoringTransformerTest {
 				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlStatement", () -> {
 					testDao.executeStatement();
 				}));
-		spanContext.getSpanReporterFuture().get();
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		final String message = timers.keySet().toString();
 		assertTrue(message, timers.size() > 1);

@@ -2,57 +2,28 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-
-import java.io.Closeable;
 
 import io.opentracing.Span;
 
-public abstract class SpanReporter implements StagemonitorSPI, Closeable {
+public abstract class SpanReporter implements StagemonitorSPI {
 
-	public void init(InitArguments initArguments) {
+	public void init(Configuration configuration) {
 	}
 
 	/**
 	 * Callback method that is called when a {@link Span} was created and is ready to be reported
 	 *
-	 * @param spanContext The object which contains all information about the request
+	 * @param spanContext context information about the span
 	 */
 	public abstract void report(SpanContextInformation spanContext) throws Exception;
 
 	/**
 	 * Whether this {@link SpanReporter} is active
-	 * <p/>
-	 * This method is called at most once from {@link RequestMonitor} for one request.
-	 * That means that the result from the first evaluation is final.
 	 *
-	 * @param spanContext The parameter object which contains the actual parameters
+	 * @param spanContext context information about the span
 	 * @return <code>true</code>, if this {@link SpanReporter} is active, <code>false</code> otherwise
 	 */
 	public abstract boolean isActive(SpanContextInformation spanContext);
-
-	@Override
-	public void close() {
-	}
-
-	public static class InitArguments {
-		private final Configuration configuration;
-		private final Metric2Registry metricRegistry;
-
-		public InitArguments(Configuration configuration, Metric2Registry metricRegistry) {
-			this.configuration = configuration;
-			this.metricRegistry = metricRegistry;
-		}
-
-		public Configuration getConfiguration() {
-			return configuration;
-		}
-
-		public Metric2Registry getMetricRegistry() {
-			return metricRegistry;
-		}
-	}
 
 }

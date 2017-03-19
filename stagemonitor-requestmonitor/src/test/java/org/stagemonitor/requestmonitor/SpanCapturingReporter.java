@@ -9,14 +9,6 @@ import java.util.concurrent.TimeUnit;
 public class SpanCapturingReporter extends SpanReporter {
 	private final BlockingQueue<SpanContextInformation> spans = new LinkedBlockingQueue<>();
 
-	public SpanCapturingReporter() {
-		RequestMonitor.addSpanReporter(this);
-	}
-
-	public SpanCapturingReporter(RequestMonitor requestMonitor) {
-		requestMonitor.addReporter(this);
-	}
-
 	@Override
 	public void report(SpanContextInformation spanContext) throws Exception {
 		spans.add(spanContext);

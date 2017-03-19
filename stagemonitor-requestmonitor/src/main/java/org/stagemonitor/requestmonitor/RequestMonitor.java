@@ -1,73 +1,37 @@
 package org.stagemonitor.requestmonitor;
 
-import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.context.TracingUtils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.core.util.CompletedFuture;
-import org.stagemonitor.core.util.ExecutorUtils;
-import org.stagemonitor.requestmonitor.reporter.SpanReporter;
-import org.stagemonitor.requestmonitor.tracing.NoopSpan;
-import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
-
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-
-import io.opentracing.Span;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 /**
- * @deprecated we should try to do everything with {@link AbstractSpanEventListener}s
+ * @deprecated we should try to do everything with {@link SpanEventListener}s
  */
 @Deprecated
 public class RequestMonitor {
 
-	private static final Logger logger = LoggerFactory.getLogger(RequestMonitor.class);
-
-	private final List<SpanReporter> spanReporters = new CopyOnWriteArrayList<SpanReporter>();
-
 	private final MetricName internalOverheadMetricName = name("internal_overhead_request_monitor").build();
 
-	private ExecutorService asyncSpanReporterPool;
-
-	private final Configuration configuration;
 	private Metric2Registry metricRegistry;
 	private CorePlugin corePlugin;
 	private RequestMonitorPlugin requestMonitorPlugin;
 
 	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
-		this(configuration, registry, ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader()));
+		this(configuration, registry, configuration.getConfig(RequestMonitorPlugin.class));
 	}
 
-	public RequestMonitor(Configuration configuration, Metric2Registry registry, Iterable<SpanReporter> spanReporters) {
-		this(configuration, registry, configuration.getConfig(RequestMonitorPlugin.class), spanReporters);
-	}
-
-	private RequestMonitor(Configuration configuration, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin,
-						   Iterable<SpanReporter> spanReporters) {
-		this.configuration = configuration;
+	private RequestMonitor(Configuration configuration, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin) {
 		this.metricRegistry = registry;
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		this.requestMonitorPlugin = requestMonitorPlugin;
-		this.asyncSpanReporterPool = ExecutorUtils
-				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit());
-		for (SpanReporter spanReporter : spanReporters) {
-			addReporter(spanReporter);
-		}
 	}
 
 	public void monitorStart(MonitoredRequest monitoredRequest) {
@@ -88,7 +52,7 @@ public class RequestMonitor {
 			if (!Stagemonitor.isStarted()) {
 				Stagemonitor.startMonitoring();
 			}
-			if (monitorThisRequest()) {
+			if (Stagemonitor.isStarted()) {
 				monitoredRequest.createSpan();
 			}
 		} finally {
@@ -108,13 +72,6 @@ public class RequestMonitor {
 		if (info.getSpan() != null) {
 			info.getSpan().finish();
 		}
-		if (monitorThisRequest() && info.isSampled()) {
-			try {
-				info.setSpanReporterFuture(report(info));
-			} catch (Exception e) {
-				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
-			}
-		}
 
 		trackOverhead(info.getOverhead1(), overhead2);
 	}
@@ -133,7 +90,7 @@ public class RequestMonitor {
 	}
 
 	public void recordException(Exception e) {
-		SpanUtils.setException(getSpan(), e, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
+		SpanUtils.setException(RequestMonitorPlugin.getSpan(), e, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {
@@ -162,99 +119,6 @@ public class RequestMonitor {
 					corePlugin.getInstanceName());
 			Stagemonitor.setMeasurementSession(session);
 		}
-	}
-
-	private Future<?> report(final SpanContextInformation spanContext) {
-		try {
-			if (requestMonitorPlugin.isReportAsync()) {
-				return asyncSpanReporterPool.submit(new Runnable() {
-					@Override
-					public void run() {
-						doReport(spanContext);
-					}
-				});
-			} else {
-				doReport(spanContext);
-				return new CompletedFuture<Object>(null);
-			}
-		} catch (RejectedExecutionException e) {
-			ExecutorUtils.logRejectionWarning(e);
-			return new CompletedFuture<Object>(null);
-		}
-	}
-
-	private void doReport(SpanContextInformation spanContext) {
-		for (SpanReporter spanReporter : spanReporters) {
-			if (spanReporter.isActive(spanContext)) {
-				try {
-					spanReporter.report(spanContext);
-				} catch (Exception e) {
-					logger.warn(e.getMessage() + " (this exception is ignored)", e);
-				}
-			}
-		}
-	}
-
-	private boolean monitorThisRequest() {
-		final String msg = "This request is not monitored because {}";
-		if (!Stagemonitor.isStarted()) {
-			logger.debug(msg, "stagemonitor has not been started yet");
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
-	 */
-	public Span getSpan() {
-		final TraceContext traceContext = TracingUtils.getTraceContext();
-		if (!traceContext.isEmpty()) {
-			return traceContext.getCurrentSpan();
-		} else {
-			return NoopSpan.INSTANCE;
-		}
-	}
-
-	/**
-	 * Adds a {@link SpanReporter}
-	 *
-	 * @param spanReporter the {@link SpanReporter} to add
-	 */
-	public static void addSpanReporter(SpanReporter spanReporter) {
-		get().addReporter(spanReporter);
-	}
-
-	/**
-	 * Gets the {@link RequestMonitor}.
-	 * <p/>
-	 * You can use this instance for example to call the following methods:
-	 * <ul>
-	 * <li>{@link #addReporter(SpanReporter)}</li>
-	 * <li>{@link #getSpan()}</li>
-	 * </ul>
-	 *
-	 * @return the current request monitor
-	 */
-	public static RequestMonitor get() {
-		return Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
-	}
-
-	/**
-	 * Adds a {@link SpanReporter}
-	 *
-	 * @param spanReporter the {@link SpanReporter} to add
-	 */
-	public void addReporter(SpanReporter spanReporter) {
-		spanReporters.add(0, spanReporter);
-		spanReporter.init(new SpanReporter.InitArguments(configuration, metricRegistry));
-	}
-
-	/**
-	 * Shuts down the internal thread pool
-	 */
-	public void close() {
-		asyncSpanReporterPool.shutdown();
 	}
 
 }

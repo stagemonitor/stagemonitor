@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
 import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
@@ -48,7 +47,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		reporter = new ElasticsearchSpanReporter();
-		reporter.init(new SpanReporter.InitArguments(configuration, mock(Metric2Registry.class)));
+		reporter.init(configuration);
 		final Sampler sampler = mock(Sampler.class);
 		when(sampler.isSampled(anyLong())).thenReturn(true);
 		when(sampler.getTags()).thenReturn(Collections.emptyMap());

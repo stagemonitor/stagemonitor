@@ -10,7 +10,6 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -51,7 +50,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		ElasticsearchSpanReporter reporter = new ElasticsearchSpanReporter();
-		reporter.init(new SpanReporter.InitArguments(configuration, mock(Metric2Registry.class)));
+		reporter.init(configuration);
 		when(requestMonitorPlugin.getTracer()).thenReturn(new MockTracer());
 	}
 

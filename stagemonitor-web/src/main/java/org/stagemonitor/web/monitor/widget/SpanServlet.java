@@ -6,7 +6,6 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.Pair;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
@@ -26,7 +25,6 @@ public class SpanServlet extends HttpServlet {
 	private static final long DEFAULT_REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(25);
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final RequestMonitor requestMonitor;
 	private final long requestTimeout;
 	private WidgetAjaxSpanReporter widgetAjaxSpanReporter;
 
@@ -37,8 +35,7 @@ public class SpanServlet extends HttpServlet {
 	public SpanServlet(Configuration configuration, WidgetAjaxSpanReporter reporter, long requestTimeout) {
 		this.widgetAjaxSpanReporter = reporter;
 		this.requestTimeout = requestTimeout;
-		this.requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
-		requestMonitor.addReporter(widgetAjaxSpanReporter);
+		configuration.getConfig(RequestMonitorPlugin.class).addReporter(widgetAjaxSpanReporter);
 	}
 
 	@Override

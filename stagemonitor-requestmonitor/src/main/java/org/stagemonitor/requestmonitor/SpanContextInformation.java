@@ -16,7 +16,6 @@ import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
@@ -30,7 +29,6 @@ public class SpanContextInformation {
 	private Span span;
 	private long overhead1;
 	private SpanContextInformation parent;
-	private Future<?> spanReporterFuture;
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 	private CallStackElement callTree;
 	private String operationName;
@@ -88,10 +86,6 @@ public class SpanContextInformation {
 
 	public String getOperationName() {
 		return operationName;
-	}
-
-	public Future<?> getSpanReporterFuture() {
-		return spanReporterFuture;
 	}
 
 	public Span getSpan() {
@@ -198,10 +192,6 @@ public class SpanContextInformation {
 
 	public void setSampled(boolean sampled) {
 		this.sampled = sampled;
-	}
-
-	void setSpanReporterFuture(Future<?> spanReporterFuture) {
-		this.spanReporterFuture = spanReporterFuture;
 	}
 
 	long getOverhead1() {

@@ -93,8 +93,6 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 
 	@Test
 	public void testExecutorServiceContextPropagation() throws Exception {
-		SpanCapturingReporter spanCapturingReporter = new SpanCapturingReporter(requestMonitor);
-
 		final ExecutorService executorService = TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor());
 		final SpanContextInformation[] asyncSpan = new SpanContextInformation[1];
 

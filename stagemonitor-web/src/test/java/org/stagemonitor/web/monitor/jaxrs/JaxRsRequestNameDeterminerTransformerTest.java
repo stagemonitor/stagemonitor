@@ -18,6 +18,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanCapturingReporter;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
+import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
@@ -38,7 +39,7 @@ import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.
 public class JaxRsRequestNameDeterminerTransformerTest {
 
 	private TestResource resource = new TestResource();
-	private SpanCapturingReporter spanCapturingReporter = new SpanCapturingReporter();
+	private SpanCapturingReporter spanCapturingReporter;
 
 	@BeforeClass
 	@AfterClass
@@ -73,11 +74,13 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
-		requestMonitor.addReporter(spanCapturingReporter);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
+		spanCapturingReporter = new SpanCapturingReporter();
+		reportingSpanEventListener.addReporter(spanCapturingReporter);
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, new ArrayList<>(),
-				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
+				configuration, registry, new ArrayList<>(),
+				new SamplePriorityDeterminingSpanEventListener(configuration, registry), reportingSpanEventListener);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}
 

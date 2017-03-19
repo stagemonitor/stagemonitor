@@ -40,7 +40,7 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 		final RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
 		requestMonitorPlugin.getRequestMonitor().monitorStart(monitoredRequest);
 		if (requestName == null) {
-			RequestMonitor.get()
+			RequestMonitorPlugin
 					.getSpan()
 					.setOperationName(getBusinessTransationName(thiz != null ? thiz.getClass().getName() : className, methodName));
 		}

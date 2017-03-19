@@ -35,7 +35,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 	public void setUp() throws Exception {
 		super.setUp();
 		reporter = new ElasticsearchSpanReporter(spanLogger);
-		reporter.init(new SpanReporter.InitArguments(configuration, registry));
+		reporter.init(configuration);
 		JsonUtils.getMapper().registerModule(new SpanJsonModule());
 	}
 

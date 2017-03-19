@@ -58,6 +58,7 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
+		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
 		registry = new Metric2Registry();
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
@@ -65,8 +66,8 @@ public class AbstractElasticsearchSpanReporterTest {
 		tags = new HashMap<>();
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, TagRecordingSpanEventListener.asList(tags),
-				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
+				configuration, registry, TagRecordingSpanEventListener.asList(tags),
+				new SamplePriorityDeterminingSpanEventListener(configuration, registry), new ReportingSpanEventListener(configuration));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}

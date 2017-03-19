@@ -3,6 +3,7 @@ package org.stagemonitor.requestmonitor.reporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
@@ -29,9 +30,9 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void init(InitArguments initArguments) {
-		corePlugin = initArguments.getConfiguration().getConfig(CorePlugin.class);
-		requestMonitorPlugin = initArguments.getConfiguration().getConfig(RequestMonitorPlugin.class);
+	public void init(Configuration configuration) {
+		corePlugin = configuration.getConfig(CorePlugin.class);
+		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		elasticsearchClient = corePlugin.getElasticsearchClient();
 	}
 

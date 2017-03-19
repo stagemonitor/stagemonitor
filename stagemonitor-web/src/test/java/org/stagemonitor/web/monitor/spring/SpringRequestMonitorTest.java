@@ -26,6 +26,7 @@ import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
+import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
@@ -117,8 +118,8 @@ public class SpringRequestMonitorTest {
 		handlerAdapters.set(dispatcherServlet, Collections.singletonList(handlerAdapter));
 
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
-				registry, requestMonitorPlugin, TagRecordingSpanEventListener.asList(tags),
-				new SamplePriorityDeterminingSpanEventListener(configuration, registry));
+				configuration, registry, TagRecordingSpanEventListener.asList(tags),
+				new SamplePriorityDeterminingSpanEventListener(configuration, registry), new ReportingSpanEventListener(configuration));
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 	}

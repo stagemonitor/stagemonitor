@@ -1,8 +1,12 @@
 package org.stagemonitor.requestmonitor;
 
+import com.uber.jaeger.context.TraceContext;
+import com.uber.jaeger.context.TracingUtils;
+
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
@@ -13,9 +17,12 @@ import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventLi
 import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener;
 import org.stagemonitor.requestmonitor.profiler.CallTreeSpanEventListener;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
+import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
+import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
@@ -30,6 +37,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.regex.Pattern;
 
+import io.opentracing.Span;
 import io.opentracing.Tracer;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
@@ -305,6 +313,19 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	private SpanWrappingTracer tracer;
 	private SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor;
+	private ReportingSpanEventListener reportingSpanEventListener;
+
+	/**
+	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
+	 */
+	public static Span getSpan() {
+		final TraceContext traceContext = TracingUtils.getTraceContext();
+		if (!traceContext.isEmpty()) {
+			return traceContext.getCurrentSpan();
+		} else {
+			return NoopSpan.INSTANCE;
+		}
+	}
 
 	public Tracer getTracer() {
 		return tracer;
@@ -340,19 +361,22 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		}
 
 		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
-		final RequestMonitorPlugin requestMonitorPlugin = this;
-
 		final Tracer tracer = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator().next().getTracer(initArguments);
+		reportingSpanEventListener = new ReportingSpanEventListener(initArguments.getConfiguration());
+		for (SpanReporter spanReporter : ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader())) {
+			addReporter(spanReporter);
+		}
 		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanEventListener(initArguments.getConfiguration(), metricRegistry);
 		final ServiceLoader<SpanEventListenerFactory> factories = ServiceLoader.load(SpanEventListenerFactory.class, RequestMonitorPlugin.class.getClassLoader());
-		this.tracer = createSpanWrappingTracer(tracer, metricRegistry, requestMonitorPlugin,
-				factories, samplePriorityDeterminingSpanInterceptor);
+		this.tracer = createSpanWrappingTracer(tracer, initArguments.getConfiguration(), metricRegistry,
+				factories, samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
 	}
 
-	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, final Metric2Registry metricRegistry,
-															  final RequestMonitorPlugin requestMonitorPlugin,
+	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, Configuration configuration, final Metric2Registry metricRegistry,
 															  final Iterable<SpanEventListenerFactory> spanInterceptorFactories,
-															  final SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor) {
+															  final SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor,
+															  final ReportingSpanEventListener reportingSpanEventListener) {
+		final RequestMonitorPlugin requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
 		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanEventListener());
 		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry));
@@ -364,6 +388,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
 		}
 		spanWrappingTracer.addSpanInterceptor(new CallTreeSpanEventListener(requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(reportingSpanEventListener);
 		return spanWrappingTracer;
 	}
 
@@ -413,8 +438,8 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void onShutDown() {
-		if (requestMonitor != null) {
-			requestMonitor.close();
+		if (reportingSpanEventListener != null) {
+			reportingSpanEventListener.close();
 		}
 	}
 
@@ -537,5 +562,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public boolean isMonitorScheduledTasks() {
 		return monitorScheduledTasks.getValue();
+	}
+
+	public void addReporter(SpanReporter spanReporter) {
+		reportingSpanEventListener.addReporter(spanReporter);
 	}
 }

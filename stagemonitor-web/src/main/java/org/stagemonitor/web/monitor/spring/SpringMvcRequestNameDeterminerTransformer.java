@@ -12,7 +12,6 @@ import org.springframework.web.servlet.HandlerExecutionChain;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy;
-import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -43,7 +42,7 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 					.getBusinessTransactionNamingStrategy();
 			final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
 			if (requestNameFromHandler != null) {
-				RequestMonitor.get().getSpan().setOperationName(requestNameFromHandler);
+				RequestMonitorPlugin.getSpan().setOperationName(requestNameFromHandler);
 			}
 		}
 	}

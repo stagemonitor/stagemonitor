@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanCapturingReporter;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 
@@ -23,7 +24,7 @@ public class RemoteEjbMonitorTransformerTest {
 
 	private RemoteInterface remote = new RemoteInterfaceImpl();
 	private RemoteInterfaceWithRemoteAnnotation remoteAlt = new RemoteInterfaceWithRemoteAnnotationImpl();
-	private SpanCapturingReporter spanCapturingReporter = new SpanCapturingReporter();
+	private SpanCapturingReporter spanCapturingReporter;
 
 	@BeforeClass
 	@AfterClass
@@ -34,6 +35,8 @@ public class RemoteEjbMonitorTransformerTest {
 	@Before
 	public void setUp() throws Exception {
 		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		spanCapturingReporter = new SpanCapturingReporter();
+		Stagemonitor.getPlugin(RequestMonitorPlugin.class).addReporter(spanCapturingReporter);
 	}
 
 	@After
