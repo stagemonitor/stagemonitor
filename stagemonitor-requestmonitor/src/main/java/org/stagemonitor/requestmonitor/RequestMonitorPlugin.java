@@ -23,6 +23,7 @@ import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
+import org.stagemonitor.requestmonitor.tracing.NoopTracer;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
@@ -311,9 +312,11 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	private static RequestMonitor requestMonitor;
 
-	private SpanWrappingTracer tracer;
+	private SpanWrappingTracer spanWrappingTracer;
+	private Tracer noopTracer = NoopTracer.INSTANCE;
 	private SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor;
 	private ReportingSpanEventListener reportingSpanEventListener;
+	private CorePlugin corePlugin;
 
 	/**
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
@@ -328,14 +331,17 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	}
 
 	public Tracer getTracer() {
-		return tracer;
+		if (spanWrappingTracer != null && corePlugin.isStagemonitorActive()) {
+			return spanWrappingTracer;
+		} else {
+			return noopTracer;
+		}
 	}
 
 	@Override
 	public void initializePlugin(final StagemonitorPlugin.InitArguments initArguments) {
 		JsonUtils.getMapper().registerModule(new SpanJsonModule());
-
-		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
+		corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 
@@ -368,8 +374,9 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		}
 		samplePriorityDeterminingSpanInterceptor = new SamplePriorityDeterminingSpanEventListener(initArguments.getConfiguration(), metricRegistry);
 		final ServiceLoader<SpanEventListenerFactory> factories = ServiceLoader.load(SpanEventListenerFactory.class, RequestMonitorPlugin.class.getClassLoader());
-		this.tracer = createSpanWrappingTracer(tracer, initArguments.getConfiguration(), metricRegistry,
+		this.spanWrappingTracer = createSpanWrappingTracer(tracer, initArguments.getConfiguration(), metricRegistry,
 				factories, samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
+		noopTracer = null;
 	}
 
 	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, Configuration configuration, final Metric2Registry metricRegistry,
@@ -539,7 +546,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 	}
 
 	public void addSpanInterceptor(SpanEventListenerFactory spanEventListenerFactory) {
-		tracer.addSpanInterceptor(spanEventListenerFactory);
+		spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
 	}
 
 	/**
