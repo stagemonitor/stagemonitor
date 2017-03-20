@@ -1,6 +1,5 @@
 package org.stagemonitor.requestmonitor.tracing.jaeger;
 
-import com.uber.jaeger.reporters.CompositeReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 
 import org.stagemonitor.core.StagemonitorPlugin;
@@ -15,7 +14,7 @@ public class JaegerTracerFactory extends TracerFactory {
 	public Tracer getTracer(StagemonitorPlugin.InitArguments initArguments) {
 		return new com.uber.jaeger.Tracer.Builder(
 				initArguments.getMeasurementSession().getApplicationName(),
-				new CompositeReporter(new LoggingSpanReporter(initArguments.getPlugin(RequestMonitorPlugin.class))),
+				new LoggingSpanReporter(initArguments.getPlugin(RequestMonitorPlugin.class)),
 				new ConstSampler(true))
 				.build();
 	}
