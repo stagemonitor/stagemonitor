@@ -1,6 +1,7 @@
 package org.stagemonitor.requestmonitor.tracing.wrapper;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -11,16 +12,21 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 
+/**
+ * The purpose of this class is to make it possible to register {@link SpanEventListener}s which are created by
+ * {@link SpanEventListenerFactory}s. The {@link SpanEventListener}s are called when certain methods of a
+ * {@link SpanBuilder} or {@link Span} are called.
+ */
 public class SpanWrappingTracer implements Tracer {
 
 	private final Tracer delegate;
-	private final List<SpanEventListenerFactory> spanInterceptorFactories;
+	private final Collection<SpanEventListenerFactory> spanInterceptorFactories;
 
 	public SpanWrappingTracer(Tracer delegate) {
 		this(delegate, new CopyOnWriteArrayList<SpanEventListenerFactory>());
 	}
 
-	public SpanWrappingTracer(Tracer delegate, List<SpanEventListenerFactory> spanInterceptorFactories) {
+	public SpanWrappingTracer(Tracer delegate, Collection<SpanEventListenerFactory> spanInterceptorFactories) {
 		this.delegate = delegate;
 		this.spanInterceptorFactories = spanInterceptorFactories;
 	}

@@ -20,6 +20,9 @@ import io.opentracing.Tracer;
  * <li>
  * Populate the {@link org.slf4j.MDC}
  * </li>
+ * <li>
+ * Implement custom span reporters by leveraging the {@link #onFinish(SpanWrapper, String, long)} method
+ * </li>
  * </ul>
  */
 public interface SpanEventListener {
