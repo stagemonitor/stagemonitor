@@ -8,8 +8,15 @@ import java.util.concurrent.TimeUnit;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 
+/**
+ * The purpose of this wrapper is to call the registered {@link SpanEventListener}s before certain methods of the
+ * {@link #delegate} {@link Span} are invoked.
+ */
 public class SpanWrapper implements Span {
 
+	/**
+	 * The actual span to be invoked
+	 */
 	private Span delegate;
 	private String operationName;
 	private final long startTimestampNanos;

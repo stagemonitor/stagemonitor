@@ -54,6 +54,7 @@ public class MDCSpanEventListener extends StatelessSpanEventListener {
 
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
+		// the other keys are not span-scoped hence not removed here
 		MDC.remove("traceId");
 		MDC.remove("spanId");
 		MDC.remove("parentId");
