@@ -8,7 +8,7 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 
-public class NoopTracer implements Tracer {
+public final class NoopTracer implements Tracer {
 
 	public static final Tracer INSTANCE = new NoopTracer();
 
@@ -29,7 +29,7 @@ public class NoopTracer implements Tracer {
 		return NoopSpan.NoopSpanContext.INSTANCE;
 	}
 
-	private static class NoopSpanBuilder implements SpanBuilder {
+	private final static class NoopSpanBuilder implements SpanBuilder {
 
 		private static final NoopSpanBuilder INSTANCE = new NoopSpanBuilder();
 
