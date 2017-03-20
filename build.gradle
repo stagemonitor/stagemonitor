@@ -55,6 +55,7 @@ ext {
 	jacksonVersion = '2.7.4'
 	esVersion = '5.1.2'
 	byteBuddyVersion = '1.5.7'
+	jaegerVersion = '0.17.0'
 	getProjectsToRelease = this.&getProjectsToRelease
 }
 

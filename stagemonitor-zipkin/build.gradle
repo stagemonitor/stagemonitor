@@ -1,4 +1,4 @@
 dependencies {
 	compile project(":stagemonitor-requestmonitor")
-//	compile 'com.uber.jaeger:jaeger-zipkin:0.12.0'
+	compile "com.uber.jaeger:jaeger-zipkin:$jaegerVersion"
 }
