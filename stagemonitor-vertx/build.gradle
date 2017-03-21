@@ -1,0 +1,15 @@
+dependencies {
+	compile project(":stagemonitor-requestmonitor")
+	compile 'io.vertx:vertx-core:3.0.0+'
+	compile 'io.vertx:vertx-web:3.0.0+'
+	compile 'org.javassist:javassist:3.21.0-GA'
+	optional 'io.vertx:vertx-rx-java:3.0.0+'
+	optional 'io.reactivex:rxjava:1.0.8+'
+
+	testCompile project(':stagemonitor-core').sourceSets.test.output
+}
+
+compileJava {
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+}

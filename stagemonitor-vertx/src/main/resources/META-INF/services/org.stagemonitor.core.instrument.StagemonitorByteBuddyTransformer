@@ -1,0 +1,5 @@
+org.stagemonitor.vertx.transformers.MessageConsumerObservableTransformer
+org.stagemonitor.vertx.transformers.EventBusSendObservableTransformer
+org.stagemonitor.vertx.transformers.ObservableMonitorRequestTransformer
+org.stagemonitor.vertx.transformers.RouteHandlerTransformer
+org.stagemonitor.vertx.transformers.ObservableTransformer
