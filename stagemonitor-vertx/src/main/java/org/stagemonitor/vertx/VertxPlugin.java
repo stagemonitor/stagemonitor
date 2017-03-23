@@ -1,30 +1,52 @@
 package org.stagemonitor.vertx;
 
-import net.bytebuddy.agent.ByteBuddyAgent;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.ConfigurationOption;
-
-
-import java.lang.instrument.Instrumentation;
+import org.stagemonitor.vertx.utils.RequestNamer;
 
 public class VertxPlugin extends StagemonitorPlugin {
 	public static final String VERTX_PLUGIN = "Vertx Plugin";
 
-	private final ConfigurationOption<Boolean> useRxJava = ConfigurationOption.booleanOption()
-			.key("stagemonitor.vertx.events.useRxJava")
-			.dynamic(false)
-			.label("Use rxjava for event handling")
-			.description("Whether or not the app use rxjava for handling events")
-			.defaultValue(false)
+	private final ConfigurationOption<String> requestNamerImplementation = ConfigurationOption.stringOption()
+			.key("stagemonitor.vertx.eventbus.requestNamerImplementation")
+			.dynamic(true)
+			.label("The class name of your implementation of RequestNamer")
+			.description("The default implementation name the request with the address of the message. "
+					+ "If you want a different naming, implement the RequestNamer interface. "
+					+ "The class that implements it must have a default unparameterized constructor")
 			.configurationCategory(VERTX_PLUGIN)
-			.build();
+			.buildWithDefault("org.stagemonitor.vertx.utils.DefaultRequestNamer");
+
+	private final ConfigurationOption<String> eventBusImplementation = ConfigurationOption.stringOption()
+			.key("stagemonitor.vertx.eventbus.eventBusImplementation")
+			.dynamic(true)
+			.label("Class name of EventBus implementation")
+			.description("If you don't use vertx default implementation of the EventBus provide your implementation here.")
+			.configurationCategory(VERTX_PLUGIN)
+			.buildWithDefault("io.vertx.core.eventbus.impl.EventBusImpl");
+
+	private final ConfigurationOption<String> messageConsumerImplementation = ConfigurationOption.stringOption()
+			.key("stagemonitor.vertx.eventbus.messageConsumerImplementation")
+			.dynamic(true)
+			.label("Class name of MessageConsumer implementation")
+			.description("If you don't use vertx default implementation of the MessageConsumer provide your implementation here.")
+			.configurationCategory(VERTX_PLUGIN)
+			.buildWithDefault("io.vertx.core.eventbus.impl.EventBusImpl$HandlerRegistration");
 
 	@Override
 	public void initializePlugin(InitArguments initArguments) throws Exception {
 
 	}
 
-	public boolean isUseRxJava() {
-		return useRxJava.getValue();
+	public RequestNamer getRequestNamer() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+		return (RequestNamer) Class.forName(requestNamerImplementation.getValue()).newInstance();
+	}
+
+	public String getEventBusImplementation() {
+		return eventBusImplementation.getValue();
+	}
+
+	public String getMessageConsumerImplementation() {
+		return messageConsumerImplementation.getValue();
 	}
 }

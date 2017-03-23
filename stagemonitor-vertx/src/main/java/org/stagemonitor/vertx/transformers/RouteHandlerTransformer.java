@@ -10,7 +10,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.vertx.wrappers.RequestMonitoringHandler;
+import org.stagemonitor.vertx.wrappers.RouteMonitoringHandler;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -36,7 +36,7 @@ public class RouteHandlerTransformer extends StagemonitorByteBuddyTransformer {
     }
 
     @Advice.OnMethodEnter
-    public static void monitorStart(@Advice.Argument(value = 0, readOnly = false) Handler<RoutingContext> handler) {
-        handler = new RequestMonitoringHandler(handler);
+    public static void wrapHandler(@Advice.Argument(value = 0, readOnly = false) Handler<RoutingContext> handler) {
+        handler = new RouteMonitoringHandler(handler);
     }
 }
