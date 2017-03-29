@@ -1,6 +1,7 @@
 org.stagemonitor.vertx.transformers.rxJava.MessageConsumerObservableTransformer
 org.stagemonitor.vertx.transformers.rxJava.EventBusSendObservableTransformer
 org.stagemonitor.vertx.transformers.rxJava.ObservableTransformer
+org.stagemonitor.vertx.transformers.rxJava.RouteRxHandlerTransformer
 org.stagemonitor.vertx.transformers.EventBusConsumerTransformer
 org.stagemonitor.vertx.transformers.EventBusSendTransformer
 org.stagemonitor.vertx.transformers.MessageConsumerTransformer

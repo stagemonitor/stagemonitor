@@ -33,6 +33,14 @@ public class VertxPlugin extends StagemonitorPlugin {
 			.configurationCategory(VERTX_PLUGIN)
 			.buildWithDefault("io.vertx.core.eventbus.impl.EventBusImpl$HandlerRegistration");
 
+	private final ConfigurationOption<String> webRouteImplementation = ConfigurationOption.stringOption()
+			.key("stagemonitor.vertx.web.webRouteImplementation")
+			.dynamic(true)
+			.label("Class name of Route implementation of vertx-web")
+			.description("If you don't use vertx default implementation of the Route provide your implementation here.")
+			.configurationCategory(VERTX_PLUGIN)
+			.buildWithDefault("io.vertx.ext.web.impl.RouteImpl");
+
 	@Override
 	public void initializePlugin(InitArguments initArguments) throws Exception {
 
@@ -48,5 +56,9 @@ public class VertxPlugin extends StagemonitorPlugin {
 
 	public String getMessageConsumerImplementation() {
 		return messageConsumerImplementation.getValue();
+	}
+
+	public String getWebRouteImplementation() {
+		return webRouteImplementation.getValue();
 	}
 }

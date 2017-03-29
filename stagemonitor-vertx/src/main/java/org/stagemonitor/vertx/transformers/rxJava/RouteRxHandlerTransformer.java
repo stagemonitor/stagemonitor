@@ -1,4 +1,4 @@
-package org.stagemonitor.vertx.transformers;
+package org.stagemonitor.vertx.transformers.rxJava;
 
 import io.vertx.core.Handler;
 import io.vertx.rxjava.ext.web.Route;
@@ -9,27 +9,23 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.vertx.VertxPlugin;
 import org.stagemonitor.vertx.wrappers.RouteMonitoringHandler;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
-public class RouteHandlerTransformer extends StagemonitorByteBuddyTransformer {
+public class RouteRxHandlerTransformer extends StagemonitorByteBuddyTransformer {
 
-    public static Logger logger = LoggerFactory.getLogger(RouteHandlerTransformer.class);
-
-	private static VertxPlugin vertxPlugin = Stagemonitor.getPlugin(VertxPlugin.class);
+    public static Logger logger = LoggerFactory.getLogger(RouteRxHandlerTransformer.class);
 
     @Override
     protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
-        return RouteHandlerTransformer.class;
+        return RouteRxHandlerTransformer.class;
     }
 
     @Override
     protected ElementMatcher.Junction<TypeDescription> getNarrowTypesMatcher() {
-        return named(vertxPlugin.getWebRouteImplementation());
+        return named("io.vertx.rxjava.ext.web.Route");
     }
 
     @Override
