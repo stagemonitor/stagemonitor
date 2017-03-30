@@ -1,6 +1,7 @@
 package org.stagemonitor.vertx.utils;
 
 import com.uber.jaeger.context.TraceContext;
+
 import io.opentracing.Span;
 
 /**
