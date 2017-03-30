@@ -339,8 +339,9 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.instrument.include")
 			.dynamic(true)
 			.label("Included packages")
-			.description("The packages that should be included for instrumentation (for example the profiler). " +
-					"If this property is empty, all packages (except for the excluded ones) are instrumented. " +
+			.description("The packages that should be included for instrumentation. " +
+					"If this property is required if you want to use the profiler, the @MonitorRequests annotation, the " +
+					"com.codahale.metrics.annotation.* annotations or similar features. " +
 					"You can exclude subpackages of a included package via `stagemonitor.instrument.exclude`.")
 			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
