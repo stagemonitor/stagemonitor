@@ -4,8 +4,8 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Base class for stagemonitor Plugins.
@@ -15,21 +15,19 @@ import java.util.List;
  */
 public abstract class StagemonitorPlugin extends ConfigurationOptionProvider implements StagemonitorSPI {
 
+	volatile boolean initialized;
+	List<Runnable> onInitCallbacks = new CopyOnWriteArrayList<Runnable>();
+
+	public boolean isInitialized() {
+		return initialized;
+	}
+
 	/**
 	 * Implementing classes have to initialize the plugin by registering their metrics the
 	 * {@link Metric2Registry}
 	 * @param initArguments
 	 */
 	public void initializePlugin(InitArguments initArguments) throws Exception {
-	}
-
-	/**
-	 * Implementing classes have to initialize the plugin by registering their metrics the
-	 * {@link Metric2Registry}
-	 * @deprecated use {@link #initializePlugin(InitArguments)}
-	 */
-	@Deprecated
-	public void initializePlugin(Metric2Registry metricRegistry, Configuration configuration) throws Exception {
 	}
 
 	/**
@@ -56,11 +54,6 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 	public void registerWidgetTabPlugins(WidgetTabPluginsRegistry widgetTabPluginsRegistry) {
 	}
 
-	@Deprecated
-	public List<String> getPathsOfWidgetTabPlugins() {
-		return Collections.emptyList();
-	}
-
 	/**
 	 * StagemonitorPlugins can extend the metrics tab in the in browser widget.
 	 * A widget metrics tab plugin consists of a javascript file and a html file.
@@ -78,9 +71,18 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {
 	}
 
-	@Deprecated
-	public List<String> getPathsOfWidgetMetricTabPlugins() {
-		return Collections.emptyList();
+	/**
+	 * If this plugin is initialized, the callback is executed immediately. Otherwise, it is executed after the plugin
+	 * has been initialized.
+	 *
+	 * @param onInitCallback the callback which is not executed in a different thread
+	 */
+	public void onInit(Runnable onInitCallback) {
+		if (initialized) {
+			onInitCallback.run();
+		} else {
+			onInitCallbacks.add(onInitCallback);
+		}
 	}
 
 	public static class InitArguments {

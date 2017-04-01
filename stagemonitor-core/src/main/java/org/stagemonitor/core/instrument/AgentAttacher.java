@@ -189,7 +189,9 @@ public class AgentAttacher {
 						.or(nameContains("javassist"))
 						.or(nameContains(".asm."))
 						.or(nameStartsWith("org.stagemonitor")
-								.and(not(nameContains("Test").or(nameContains("benchmark")))))
+								.and(not(nameContains("Test")
+										.or(nameContains("benchmark"))
+										.or(nameStartsWith("org.stagemonitor.demo")))))
 				))
 				.disableClassFormatChanges();
 	}

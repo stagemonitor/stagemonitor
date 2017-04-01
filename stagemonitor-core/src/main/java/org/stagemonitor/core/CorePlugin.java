@@ -447,7 +447,6 @@ public class CorePlugin extends StagemonitorPlugin {
 	private IndexSelector indexSelector = new IndexSelector(new Clock.UserTimeClock());
 	private Metric2Registry metricRegistry;
 	private AtomicInteger accessesToElasticsearchUrl = new AtomicInteger();
-	private boolean initialized;
 
 	public CorePlugin() {
 	}
@@ -482,7 +481,6 @@ public class CorePlugin extends StagemonitorPlugin {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchCustomMetricsDashboard.json");
 		}
 		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
-		initialized = true;
 	}
 
 	void registerReporters(Metric2Registry metric2Registry, Configuration configuration, MeasurementSession measurementSession) {
@@ -823,10 +821,6 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public Collection<String> getExportClassesWithName() {
 		return exportClassesWithName.getValue();
-	}
-
-	public boolean isInitialized() {
-		return initialized;
 	}
 
 	public Integer getNumberOfReplicas() {

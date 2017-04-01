@@ -249,7 +249,6 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		}
-		spanServlet.onStagemonitorStarted();
 	}
 
 	@Override

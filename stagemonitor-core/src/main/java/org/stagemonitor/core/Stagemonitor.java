@@ -123,9 +123,11 @@ public final class Stagemonitor {
 		logger.info("Initializing plugin {}", pluginName);
 		try {
 			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession));
-			stagemonitorPlugin.initializePlugin(metric2Registry, getConfiguration());
-			pathsOfWidgetMetricTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetMetricTabPlugins());
-			pathsOfWidgetTabPlugins.addAll(stagemonitorPlugin.getPathsOfWidgetTabPlugins());
+			stagemonitorPlugin.initialized = true;
+			for (Runnable onInitCallback : stagemonitorPlugin.onInitCallbacks) {
+				onInitCallback.run();
+			}
+			stagemonitorPlugin.onInitCallbacks = null;
 			stagemonitorPlugin.registerWidgetTabPlugins(new StagemonitorPlugin.WidgetTabPluginsRegistry(pathsOfWidgetTabPlugins));
 			stagemonitorPlugin.registerWidgetMetricTabPlugins(new StagemonitorPlugin.WidgetMetricTabPluginsRegistry(pathsOfWidgetMetricTabPlugins));
 		} catch (Exception e) {
