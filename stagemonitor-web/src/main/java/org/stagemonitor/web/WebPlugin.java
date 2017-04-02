@@ -13,6 +13,7 @@ import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
+import org.stagemonitor.web.init.ServletContainerInitializerUtil;
 import org.stagemonitor.web.metrics.StagemonitorMetricsServlet;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter;
@@ -342,6 +343,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 
 	@Override
 	public void onStartup(Set<Class<?>> c, ServletContext ctx) {
+		if (ServletContainerInitializerUtil.avoidDoubleInit(this, ctx)) return;
 		ctx.addServlet(ConfigurationServlet.class.getSimpleName(), new ConfigurationServlet())
 				.addMapping(ConfigurationServlet.CONFIGURATION_ENDPOINT);
 		ctx.addServlet(StagemonitorMetricsServlet.class.getSimpleName(), new StagemonitorMetricsServlet())

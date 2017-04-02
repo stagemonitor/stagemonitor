@@ -6,6 +6,7 @@ import org.stagemonitor.core.configuration.source.ConfigurationSource;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -133,6 +134,10 @@ public class Configuration {
 			}
 			return null;
 		}
+	}
+
+	public Collection<ConfigurationOptionProvider> getConfigurationOptionProviders() {
+		return Collections.unmodifiableCollection(optionProvidersByClass.values());
 	}
 
 	private void add(final ConfigurationOption<?> configurationOption) {

@@ -344,6 +344,13 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 		@Override
 		public void onStartup(Set<Class<?>> c, ServletContext ctx) {
+			final String initializedAttribute = getClass().getName() + ".initialized";
+			if (ctx.getAttribute(initializedAttribute) != null) {
+				// already initialized
+				return;
+			}
+			ctx.setAttribute(initializedAttribute, true);
+
 			final AlertingPlugin alertingPlugin = Stagemonitor.getPlugin(AlertingPlugin.class);
 			ctx.addServlet(AlerterTypeServlet.class.getSimpleName(), new AlerterTypeServlet(alertingPlugin, Stagemonitor.getMeasurementSession()))
 					.addMapping("/stagemonitor/alerter-types");
