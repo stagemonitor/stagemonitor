@@ -127,7 +127,6 @@ public final class Stagemonitor {
 			for (Runnable onInitCallback : stagemonitorPlugin.onInitCallbacks) {
 				onInitCallback.run();
 			}
-			stagemonitorPlugin.onInitCallbacks = null;
 			stagemonitorPlugin.registerWidgetTabPlugins(new StagemonitorPlugin.WidgetTabPluginsRegistry(pathsOfWidgetTabPlugins));
 			stagemonitorPlugin.registerWidgetMetricTabPlugins(new StagemonitorPlugin.WidgetMetricTabPluginsRegistry(pathsOfWidgetMetricTabPlugins));
 		} catch (Exception e) {

@@ -61,7 +61,9 @@ public class SpanWrapper implements Span {
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			value = spanEventListener.onSetTag(key, value);
 		}
-		delegate = delegate.setTag(key, value);
+		if (value != null) {
+			delegate = delegate.setTag(key, value);
+		}
 		return this;
 	}
 
@@ -77,7 +79,9 @@ public class SpanWrapper implements Span {
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			value = spanEventListener.onSetTag(key, value);
 		}
-		delegate = delegate.setTag(key, value);
+		if (value != null) {
+			delegate = delegate.setTag(key, value);
+		}
 		return this;
 	}
 

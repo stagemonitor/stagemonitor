@@ -8,6 +8,8 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.configuration.converter.DoubleValueConverter;
+import org.stagemonitor.core.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -269,15 +271,28 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.buildWithDefault(1000000d);
 	private final ConfigurationOption<Double> rateLimitClientSpansPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute")
+			.key("stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute.generic")
 			.aliasKeys("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
 			.dynamic(true)
 			.label("Rate limit for external requests (client spans) per minute")
 			.description("Limits the rate at which external spans are collected and reported. " +
-					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report.")
+					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report. " +
+					"This setting is active for all operation types which are not listed in " +
+					"'stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute.perType'")
 			.tags("external-requests", "sampling")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.buildWithDefault(0d);
+			.buildWithDefault(1000000d);
+	private final ConfigurationOption<Map<String, Double>> rateLimitClientSpansPerTypePerMinute = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, DoubleValueConverter.INSTANCE)
+			.key("stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute.perType")
+			.dynamic(true)
+			.label("Rate limit for external requests (client spans) per minute per operation type")
+			.description("Limits the rate at which specific external spans like 'jdbc' queries are collected and reported. " +
+					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report. " +
+					"If your application makes excessive use of for example jdbc queries, you might want to deactivate " +
+					"or rate limit the collection of spans. Example: `jdbc: 0, http: 1000000`")
+			.tags("external-requests", "sampling")
+			.configurationCategory(REQUEST_MONITOR_PLUGIN)
+			.buildWithDefault(Collections.<String, Double>emptyMap());
 	private final ConfigurationOption<Double> excludeCallTreeFromReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
 			.key("stagemonitor.requestmonitor.sampling.excludeCallTreeFromReportWhenFasterThanXPercentOfRequests")
 			.aliasKeys("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
@@ -540,6 +555,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public ConfigurationOption<Double> getRateLimitClientSpansPerMinuteOption() {
 		return rateLimitClientSpansPerMinute;
+	}
+
+	public Map<String, Double> getRateLimitClientSpansPerTypePerMinute() {
+		return rateLimitClientSpansPerTypePerMinute.getValue();
+	}
+
+	public ConfigurationOption<Map<String, Double>> getRateLimitClientSpansPerTypePerMinuteOption() {
+		return rateLimitClientSpansPerTypePerMinute;
 	}
 
 	public double getExcludeExternalRequestsWhenFasterThanXPercent() {

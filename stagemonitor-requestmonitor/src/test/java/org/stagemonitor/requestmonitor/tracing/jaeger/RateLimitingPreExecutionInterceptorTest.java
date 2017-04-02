@@ -104,4 +104,28 @@ public class RateLimitingPreExecutionInterceptorTest {
 		assertFalse(context.isReport());
 	}
 
+	@Test
+	public void testReportExternalRequestGenericType() throws Exception {
+		when(spanContext.isExternalRequest()).thenReturn(true);
+		when(spanContext.isServerRequest()).thenReturn(false);
+		when(spanContext.getOperationType()).thenReturn("jdbc");
+		requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption().update(0d, SimpleSource.NAME);
+		requestMonitorPlugin.getRateLimitClientSpansPerTypePerMinuteOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
+
+		interceptor.interceptReport(context);
+		assertFalse(context.isReport());
+	}
+
+	@Test
+	public void testReportExternalRequestType() throws Exception {
+		when(spanContext.isExternalRequest()).thenReturn(true);
+		when(spanContext.isServerRequest()).thenReturn(false);
+		when(spanContext.getOperationType()).thenReturn("http");
+		requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption().update(0d, SimpleSource.NAME);
+		requestMonitorPlugin.getRateLimitClientSpansPerTypePerMinuteOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
+
+		interceptor.interceptReport(context);
+		assertTrue(context.isReport());
+	}
+
 }

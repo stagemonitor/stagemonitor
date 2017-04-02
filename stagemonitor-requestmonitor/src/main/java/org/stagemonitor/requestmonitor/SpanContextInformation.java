@@ -13,6 +13,7 @@ import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ public class SpanContextInformation {
 	private PostExecutionInterceptorContext postExecutionInterceptorContext;
 	private boolean sampled = true;
 	private PreExecutionInterceptorContext preExecutionInterceptorContext;
+	private String operationType;
 
 	public static SpanContextInformation getCurrent() {
 		final TraceContext traceContext = TracingUtils.getTraceContext();
@@ -243,6 +245,10 @@ public class SpanContextInformation {
 		return preExecutionInterceptorContext;
 	}
 
+	public String getOperationType() {
+		return operationType;
+	}
+
 	public static class ExternalRequestStats {
 
 		private final double MS_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
@@ -283,6 +289,7 @@ public class SpanContextInformation {
 		private SpanContextInformation info;
 		private String spanKind;
 		private Number samplingPriority;
+		private String operationType;
 
 		@Override
 		public void onStart(SpanWrapper spanWrapper) {
@@ -306,33 +313,42 @@ public class SpanContextInformation {
 			if (samplingPriority != null) {
 				onSetTag(Tags.SAMPLING_PRIORITY.getKey(), samplingPriority);
 			}
+			if (operationType != null) {
+				onSetTag(SpanUtils.OPERATION_TYPE, operationType);
+			}
 		}
 
 		@Override
 		public String onSetTag(String key, String value) {
-			if (info != null) {
-				if (key.equals(Tags.SPAN_KIND.getKey())) {
+			if (key.equals(Tags.SPAN_KIND.getKey())) {
+				if (info != null) {
 					info.setExternalRequest(Tags.SPAN_KIND_CLIENT.equals(value));
 					info.setServerRequest(Tags.SPAN_KIND_SERVER.equals(value));
+				} else {
+					// span.kind was set before the span has been started
+					// store in instance variable and set again if a SpanContextInformation is available
+					spanKind = value;
 				}
-			} else {
-				// span.kind was set before the span has been started
-				// store in instance variable and set again if a SpanContextInformation is available
-				spanKind = value;
+			} else if (SpanUtils.OPERATION_TYPE.equals(key)) {
+				if (info != null) {
+					info.operationType = value;
+				} else {
+					operationType = value;
+				}
 			}
 			return value;
 		}
 
 		@Override
 		public Number onSetTag(String key, Number value) {
-			if (info != null) {
-				if (Tags.SAMPLING_PRIORITY.getKey().equals(key)) {
+			if (Tags.SAMPLING_PRIORITY.getKey().equals(key)) {
+				if (info != null) {
 					info.setSampled(value.shortValue() > 0);
+				} else {
+					// sampling.priority was set before the span has been started
+					// store in instance variable and set again if a SpanContextInformation is available
+					samplingPriority = value;
 				}
-			} else {
-				// sampling.priority was set before the span has been started
-				// store in instance variable and set again if a SpanContextInformation is available
-				samplingPriority = value;
 			}
 			return value;
 		}

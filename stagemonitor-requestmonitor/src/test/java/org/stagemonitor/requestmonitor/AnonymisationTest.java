@@ -100,7 +100,7 @@ public class AnonymisationTest {
 
 		verify(span, atLeastOnce()).setTag("username", (String) null);
 		verify(span, times(0)).setTag(eq("username_disclosed"), anyString());
-		verify(span).setTag(SpanUtils.IPV4_STRING, (String) null);
+		verify(span, times(0)).setTag(eq(SpanUtils.IPV4_STRING), anyString());
 	}
 
 	@Test
@@ -125,7 +125,7 @@ public class AnonymisationTest {
 
 		verify(span).setTag("username", "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3");
 		verify(span, times(0)).setTag(eq("username_disclosed"), anyString());
-		verify(span).setTag(SpanUtils.IPV4_STRING, (String) null);
+		verify(span, times(0)).setTag(eq(SpanUtils.IPV4_STRING), anyString());
 	}
 
 	@Test

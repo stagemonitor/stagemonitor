@@ -35,12 +35,13 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(StagemonitorJdbcEventListener.class);
+	private static final String DB_STATEMENT = "db.statement";
 
 	private final JdbcPlugin jdbcPlugin;
 
 	private final MetricName.MetricNameTemplate getConnectionTemplate = name("get_jdbc_connection").templateFor("url");
 
-	private final ConcurrentMap<DataSource, String> dataSourceUrlMap = new ConcurrentHashMap<DataSource, String>();
+	private final ConcurrentMap<DataSource, MetaData> dataSourceUrlMap = new ConcurrentHashMap<DataSource, MetaData>();
 
 	private CorePlugin corePlugin;
 	private RequestMonitorPlugin requestMonitorPlugin;
@@ -62,8 +63,8 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 		if (connectionInformation.getDataSource() instanceof DataSource && corePlugin.isInitialized()) {
 			DataSource dataSource = (DataSource) connectionInformation.getDataSource();
 			ensureUrlExistsForDataSource(dataSource, connectionInformation.getConnection());
-			String url = dataSourceUrlMap.get(dataSource);
-			metricRegistry.timer(getConnectionTemplate.build(url)).update(connectionInformation.getTimeToGetConnectionNs(), TimeUnit.NANOSECONDS);
+			MetaData metaData = dataSourceUrlMap.get(dataSource);
+			metricRegistry.timer(getConnectionTemplate.build(metaData.serviceName)).update(connectionInformation.getTimeToGetConnectionNs(), TimeUnit.NANOSECONDS);
 		}
 	}
 
@@ -72,12 +73,26 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 			final DatabaseMetaData metaData;
 			try {
 				metaData = connection.getMetaData();
-				dataSourceUrlMap.put(dataSource, metaData.getUserName() + '@' + metaData.getURL());
+				final MetaData meta = new MetaData(metaData.getUserName(), metaData.getURL(), metaData.getDatabaseProductName());
+				dataSourceUrlMap.put(dataSource, meta);
 			} catch (SQLException e) {
 				logger.warn(e.getMessage(), e);
 			}
 		}
 		return dataSource;
+	}
+
+	private static class MetaData {
+		private final String serviceName;
+		private final String userName;
+		private final String productName;
+
+		private MetaData(String userName, String url, String productName) {
+			this.userName = userName;
+			this.productName = productName;
+			serviceName = userName + "@" + url;
+		}
+
 	}
 
 	@Override
@@ -90,13 +105,16 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 		if (!TracingUtils.getTraceContext().isEmpty()) {
 			final Span span = TracingUtils.getTraceContext().getCurrentSpan();
 			if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
-				String url = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
-				Tags.PEER_SERVICE.set(span, url);
+				MetaData metaData = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
+				Tags.PEER_SERVICE.set(span, metaData.serviceName);
+				span.setTag("db.type", metaData.productName);
+				span.setTag("db.user", metaData.userName);
+
 				if (StringUtils.isNotEmpty(statementInformation.getSql())) {
 					String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
 					Profiler.addIOCall(sql, timeElapsedNanos);
 					span.setTag(ExternalRequestMetricsSpanEventListener.EXTERNAL_REQUEST_METHOD, sql.substring(0, sql.indexOf(' ')).toUpperCase());
-					span.setTag("request", sql);
+					span.setTag(DB_STATEMENT, sql);
 				}
 
 			}
@@ -114,7 +132,7 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 	private static class MonitoredJdbcRequest extends AbstractExternalRequest {
 
 		private MonitoredJdbcRequest(RequestMonitorPlugin requestMonitorPlugin) {
-			super(requestMonitorPlugin);
+			super(requestMonitorPlugin.getTracer());
 		}
 
 		@Override

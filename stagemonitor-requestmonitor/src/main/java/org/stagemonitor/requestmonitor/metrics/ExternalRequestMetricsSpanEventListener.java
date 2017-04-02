@@ -11,6 +11,7 @@ import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanEven
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +21,6 @@ public class ExternalRequestMetricsSpanEventListener extends ClientServerAwareSp
 
 	private final Metric2Registry metricRegistry;
 
-	public static final String EXTERNAL_REQUEST_TYPE = "type";
 	public static final String EXTERNAL_REQUEST_METHOD = "method";
 
 	private static final MetricName.MetricNameTemplate externalRequestTemplate = name("external_request_response_time")
@@ -54,7 +54,7 @@ public class ExternalRequestMetricsSpanEventListener extends ClientServerAwareSp
 	@Override
 	public String onSetTag(String key, String value) {
 		value = super.onSetTag(key, value);
-		if (EXTERNAL_REQUEST_TYPE.equals(key)) {
+		if (SpanUtils.OPERATION_TYPE.equals(key)) {
 			type = value;
 		} else if (EXTERNAL_REQUEST_METHOD.equals(key)) {
 			method = value;

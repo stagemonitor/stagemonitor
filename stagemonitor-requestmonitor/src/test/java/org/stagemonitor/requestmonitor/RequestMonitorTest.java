@@ -117,7 +117,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	public void testDontMonitorClientRootSpans() throws Exception {
 		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1_000_000.0);
 
-		requestMonitor.monitorStart(new AbstractExternalRequest(requestMonitorPlugin) {
+		requestMonitor.monitorStart(new AbstractExternalRequest(requestMonitorPlugin.getTracer()) {
 			@Override
 			protected String getType() {
 				return "jdbc";

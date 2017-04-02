@@ -63,22 +63,20 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"A list of request parameter name patterns that should not be collected.\n" +
 					"A request parameter is either a query string or a application/x-www-form-urlencoded request " +
 					"body (POST form content)")
-			.defaultValue(Arrays.asList(
-					Pattern.compile("(?i).*pass.*"),
-					Pattern.compile("(?i).*credit.*"),
-					Pattern.compile("(?i).*pwd.*")))
 			.tags("security-relevant", "deprecated")
 			.configurationCategory(WEB_PLUGIN)
-			.build();
+			.buildWithDefault(Arrays.asList(
+					Pattern.compile("(?i).*pass.*"),
+					Pattern.compile("(?i).*credit.*"),
+					Pattern.compile("(?i).*pwd.*")));
 	private ConfigurationOption<Boolean> collectHttpHeaders = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.http.collectHeaders")
 			.dynamic(true)
 			.label("Collect HTTP headers")
 			.description("Whether or not HTTP headers should be collected with a call stack.")
-			.defaultValue(true)
 			.configurationCategory(WEB_PLUGIN)
 			.tags("security-relevant")
-			.build();
+			.buildWithDefault(true);
 	private ConfigurationOption<Boolean> parseUserAgent = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.http.parseUserAgent")
 			.dynamic(true)
@@ -88,19 +86,17 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"to add a dependency on net.sf.uadetector:uadetector-resources:2014.10. As this library is no longer " +
 					"maintained, it is however recommended to use the Elasticsearch ingest user agent plugin. See " +
 					"https://www.elastic.co/guide/en/elasticsearch/plugins/master/ingest-user-agent.html")
-			.defaultValue(false)
 			.tags("deprecated")
 			.configurationCategory(WEB_PLUGIN)
-			.build();
+			.buildWithDefault(true);
 	private ConfigurationOption<Collection<String>> excludeHeaders = ConfigurationOption.lowerStringsOption()
 			.key("stagemonitor.requestmonitor.http.headers.excluded")
 			.dynamic(true)
 			.label("Do not collect headers")
 			.description("A list of (case insensitive) header names that should not be collected.")
-			.defaultValue(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization", STAGEMONITOR_SHOW_WIDGET)))
 			.configurationCategory(WEB_PLUGIN)
 			.tags("security-relevant")
-			.build();
+			.buildWithDefault(new LinkedHashSet<String>(Arrays.asList("cookie", "authorization", STAGEMONITOR_SHOW_WIDGET)));
 	private final ConfigurationOption<Boolean> widgetEnabled = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.widget.enabled")
 			.dynamic(true)
@@ -110,9 +106,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"`X-Stagemonitor-Show-Widget: <stagemonitor.password>`. You can use browser plugins like Modify " +
 					"Headers for this. Note: if `stagemonitor.password` is set to an empty string, you can't disable the widget.\n" +
 					"Requires Servlet-Api >= 3.0")
-			.defaultValue(true)
 			.configurationCategory(WEB_PLUGIN)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Map<Pattern, String>> groupUrls = ConfigurationOption.regexMapOption()
 			.key("stagemonitor.groupUrls")
 			.dynamic(true)
@@ -121,16 +116,14 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"E.g. `(.*).js: *.js` combines all URLs that end with `.js` to a group named `*.js`. " +
 					"The metrics for all URLs matching the pattern are consolidated and shown in one row in the request table. " +
 					"The syntax is `<regex>: <group name>[, <regex>: <group name>]*`")
-			.defaultValue(
-					new LinkedHashMap<Pattern, String>() {{
-						put(Pattern.compile("(.*).js$"), "*.js");
-						put(Pattern.compile("(.*).css$"), "*.css");
-						put(Pattern.compile("(.*).jpg$"), "*.jpg");
-						put(Pattern.compile("(.*).jpeg$"), "*.jpeg");
-						put(Pattern.compile("(.*).png$"), "*.png");
-					}})
 			.configurationCategory(WEB_PLUGIN)
-			.build();
+			.buildWithDefault(new LinkedHashMap<Pattern, String>() {{
+				put(Pattern.compile("(.*).js$"), "*.js");
+				put(Pattern.compile("(.*).css$"), "*.css");
+				put(Pattern.compile("(.*).jpg$"), "*.jpg");
+				put(Pattern.compile("(.*).jpeg$"), "*.jpeg");
+				put(Pattern.compile("(.*).png$"), "*.png");
+			}});
 	private final ConfigurationOption<Boolean> rumEnabled = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.rum.enabled")
 			.dynamic(true)
@@ -139,9 +132,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"execution time from the user's perspective. When activated, a piece of javascript will be " +
 					"injected to each html page that collects the data from real users and sends it back " +
 					"to the server. Servlet API 3.0 or higher is required for this.")
-			.defaultValue(true)
 			.configurationCategory(WEB_PLUGIN)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Boolean> collectPageLoadTimesPerRequest = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.collectPageLoadTimesPerRequest")
 			.dynamic(true)
@@ -150,9 +142,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"If set to true, four additional timers will be created for each request group to record the page " +
 					"rendering time, dom processing time, network time and overall time per request. " +
 					"If set to false, the times of all requests will be aggregated.")
-			.defaultValue(false)
 			.configurationCategory(WEB_PLUGIN)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<String>> excludedRequestPaths = ConfigurationOption.stringsOption()
 			.key("stagemonitor.web.paths.excluded")
 			.dynamic(false)
@@ -161,19 +152,18 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"A value of `/aaa` means, that all paths starting with `/aaa` should not be monitored." +
 					" It's recommended to not monitor static resources, as they are typically not interesting to " +
 					"monitor but consume resources when you do.")
-			.defaultValue(SetValueConverter.immutableSet(
+			.configurationCategory(WEB_PLUGIN)
+			.buildWithDefault(SetValueConverter.immutableSet(
 					// exclude paths of static vaadin resources
 					"/VAADIN/",
 					// don't monitor vaadin heatbeat
-					"/HEARTBEAT/"))
-			.configurationCategory(WEB_PLUGIN)
-			.build();
+					"/HEARTBEAT/",
+					"/favicon.ico"));
 	private final ConfigurationOption<String> metricsServletAllowedOrigin = ConfigurationOption.stringOption()
 			.key("stagemonitor.web.metricsServlet.allowedOrigin")
 			.dynamic(true)
 			.label("Allowed origin")
 			.description("The Access-Control-Allow-Origin header value for the metrics servlet.")
-			.defaultValue(null)
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private final ConfigurationOption<String> metricsServletJsonpParameter = ConfigurationOption.stringOption()
@@ -181,7 +171,6 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.dynamic(true)
 			.label("The Jsonp callback parameter name")
 			.description("The name of the parameter used to specify the jsonp callback.")
-			.defaultValue(null)
 			.configurationCategory(WEB_PLUGIN)
 			.build();
 	private ConfigurationOption<Boolean> monitorOnlySpringMvcOption = ConfigurationOption.booleanOption()
@@ -192,9 +181,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"This is handy, if you are not interested in the performance of serving static files. " +
 					"Setting this to true can also significantly reduce the amount of files (and thus storing space) " +
 					"Graphite will allocate.")
-			.defaultValue(false)
 			.configurationCategory("Spring MVC Plugin")
-			.build();
+			.buildWithDefault(false);
 	private ConfigurationOption<Boolean> monitorOnlyResteasyOption = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.resteasy.monitorOnlyResteasyRequests")
 			.dynamic(true)
@@ -203,9 +191,8 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"This is handy, if you are not interested in the performance of serving static files. " +
 					"Setting this to true can also significantly reduce the amount of files (and thus storing space) " +
 					"Graphite will allocate.")
-			.defaultValue(false)
 			.configurationCategory("Resteasy Plugin")
-			.build();
+			.buildWithDefault(false);
 	private ConfigurationOption<Collection<String>> requestExceptionAttributes = ConfigurationOption.stringsOption()
 			.key("stagemonitor.requestmonitor.requestExceptionAttributes")
 			.dynamic(true)
@@ -215,13 +202,12 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"an Exception object and then records that information on the span. If your web framework " +
 					"sets a different attribute outside of the defaults, you can add that attribute to this list to properly " +
 					     "record the exception on the trace.")
-			.defaultValue(new LinkedHashSet<String>() {{
+			.configurationCategory(WEB_PLUGIN)
+			.buildWithDefault(new LinkedHashSet<String>() {{
 				add("javax.servlet.error.exception");
 				add("exception");
 				add("org.springframework.web.servlet.DispatcherServlet.EXCEPTION");
-			}})
-			.configurationCategory(WEB_PLUGIN)
-			.build();
+			}});
 	private ConfigurationOption<Boolean> honorDoNotTrackHeader = ConfigurationOption.booleanOption()
 			.key("stagemonitor.web.honorDoNotTrackHeader")
 			.dynamic(true)
@@ -229,11 +215,9 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			.description("When set to true, requests that include the dnt header won't be reported. " +
 					"Depending on your use case you might not be required to stop reporting spans even " +
 					"if dnt is set. See https://tools.ietf.org/html/draft-mayer-do-not-track-00#section-9.3")
-			.defaultValue(false)
 			.tags("privacy")
 			.configurationCategory(WEB_PLUGIN)
-			.build();
-	private SpanServlet spanServlet;
+			.buildWithDefault(false);
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
@@ -369,8 +353,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
 				.addMapping("/stagemonitor");
 
-		this.spanServlet = new SpanServlet();
-		final ServletRegistration.Dynamic spanServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), this.spanServlet);
+		final ServletRegistration.Dynamic spanServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), new SpanServlet());
 		spanServlet.addMapping("/stagemonitor/spans");
 		spanServlet.setAsyncSupported(true);
 

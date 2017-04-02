@@ -67,7 +67,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		assertEquals("jdbc", spanJson.get("type").asText());
 		assertEquals("SELECT", spanJson.get("method").asText());
 		assertEquals(100000, spanJson.get("duration").asInt());
-		assertEquals("SELECT * from STAGEMONITOR where 1 < 2", spanJson.get("request").asText());
+		assertEquals("SELECT * from STAGEMONITOR where 1 < 2", spanJson.get("db").get("statement").asText());
 		assertEquals("ElasticsearchExternalSpanReporterIntegrationTest#test", spanJson.get("name").asText());
 	}
 
@@ -79,7 +79,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 				.start();
 		span.setTag("type", "jdbc");
 		span.setTag("method", "SELECT");
-		span.setTag("request", "SELECT * from STAGEMONITOR where 1 < 2");
+		span.setTag("db.statement", "SELECT * from STAGEMONITOR where 1 < 2");
 		Tags.PEER_SERVICE.set(span, "foo@jdbc:bar");
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis) + 1);
 		return span;
