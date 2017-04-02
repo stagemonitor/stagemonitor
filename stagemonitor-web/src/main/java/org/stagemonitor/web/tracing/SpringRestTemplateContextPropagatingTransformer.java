@@ -14,6 +14,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.requestmonitor.AbstractExternalRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -58,9 +59,11 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 		public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
 			final Span span = new ExternalHttpRequest(requestMonitorPlugin.getTracer(), request).createSpan();
 			try {
+				Profiler.start(request.getMethod().toString() + " " + request.getURI() + " ");
 				requestMonitorPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
 				return execution.execute(request, body);
 			} finally {
+				Profiler.stop();
 				span.finish();
 			}
 		}
