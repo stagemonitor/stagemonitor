@@ -88,7 +88,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 					"https://www.elastic.co/guide/en/elasticsearch/plugins/master/ingest-user-agent.html")
 			.tags("deprecated")
 			.configurationCategory(WEB_PLUGIN)
-			.buildWithDefault(true);
+			.buildWithDefault(false);
 	private ConfigurationOption<Collection<String>> excludeHeaders = ConfigurationOption.lowerStringsOption()
 			.key("stagemonitor.requestmonitor.http.headers.excluded")
 			.dynamic(true)

@@ -14,7 +14,7 @@ import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.WidgetAjaxSpanReporter;
-import org.stagemonitor.web.opentracing.HttpServletRequestTextMapExtractAdapter;
+import org.stagemonitor.web.tracing.HttpServletRequestTextMapExtractAdapter;
 
 import java.net.URI;
 import java.net.URISyntaxException;

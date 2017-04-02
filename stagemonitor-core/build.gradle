@@ -11,7 +11,7 @@ dependencies {
 	provided "io.prometheus:simpleclient:0.0.14"
 	provided project(":stagemonitor-dispatcher")
 
-	testCompile 'org.eclipse.jetty:jetty-server:9.3.13.v20161014'
+	testCompile "org.eclipse.jetty:jetty-server:$jettyVersion"
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
 	testCompile "org.elasticsearch.client:transport:$esVersion"
 }

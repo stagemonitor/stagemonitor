@@ -1,4 +1,4 @@
-package org.stagemonitor.web.opentracing;
+package org.stagemonitor.web.tracing;
 
 import java.util.AbstractMap;
 import java.util.Enumeration;
