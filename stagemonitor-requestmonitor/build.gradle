@@ -1,7 +1,7 @@
 dependencies {
 	compile project(":stagemonitor-core")
-	compile 'com.uber.jaeger:jaeger-zipkin:0.17.0'
-	compile 'com.uber.jaeger:jaeger-context:0.17.0'
+	compile "com.uber.jaeger:jaeger-zipkin:$jaegerVersion"
+	compile "com.uber.jaeger:jaeger-context:$jaegerVersion"
 	optional "org.elasticsearch:elasticsearch:$esVersion"
 	optional 'javax.ejb:ejb-api:3.0'
 	optional 'org.freemarker:freemarker:2.3.23'

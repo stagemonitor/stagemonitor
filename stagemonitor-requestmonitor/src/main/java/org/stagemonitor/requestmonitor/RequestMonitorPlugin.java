@@ -25,6 +25,7 @@ import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEve
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.NoopTracer;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
+import org.stagemonitor.requestmonitor.tracing.jaeger.JaegerTracerFactory;
 import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
@@ -33,6 +34,7 @@ import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -366,7 +368,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		}
 
 		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
-		final Tracer tracer = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator().next().getTracer(initArguments);
+		final Tracer tracer = getTracerImpl(initArguments);
 		reportingSpanEventListener = new ReportingSpanEventListener(initArguments.getConfiguration());
 		for (SpanReporter spanReporter : ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader())) {
 			addReporter(spanReporter);
@@ -375,6 +377,15 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final ServiceLoader<SpanEventListenerFactory> factories = ServiceLoader.load(SpanEventListenerFactory.class, RequestMonitorPlugin.class.getClassLoader());
 		this.spanWrappingTracer = createSpanWrappingTracer(tracer, initArguments.getConfiguration(), metricRegistry,
 				factories, samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
+	}
+
+	private Tracer getTracerImpl(InitArguments initArguments) {
+		final Iterator<TracerFactory> tracerFactoryIterator = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator();
+		if (tracerFactoryIterator.hasNext()) {
+			return tracerFactoryIterator.next().getTracer(initArguments);
+		} else {
+			return new JaegerTracerFactory().getTracer(initArguments);
+		}
 	}
 
 	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, Configuration configuration, final Metric2Registry metricRegistry,
