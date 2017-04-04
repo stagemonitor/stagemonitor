@@ -99,6 +99,7 @@ public class MonitoredHttpRequestTest {
 		assertEquals("blubb", tags.get(SpanUtils.PARAMETERS_PREFIX + "bla"));
 		assertEquals("XXXX", tags.get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
 		assertEquals("XXXX", tags.get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
+		assertFalse(tags.containsKey(Tags.ERROR.getKey()));
 	}
 
 	@Test

@@ -220,7 +220,9 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		private void setStatus(Span span, int status) {
 			Tags.HTTP_STATUS.set(span, status);
-			Tags.ERROR.set(span, status >= 400);
+			if (status >= 400) {
+				Tags.ERROR.set(span, true);
+			}
 		}
 
 		private void trackThroughput(String operationName, int status) {
