@@ -23,17 +23,17 @@ public class ZipkinPlugin extends StagemonitorPlugin {
 			.tags("reporting", "zipkin")
 			.configurationCategory(ZIPKIN_PLUGIN)
 			.buildWithDefault(1000);
-	private final ConfigurationOption<Integer> zipkinMaxQueueSize = ConfigurationOption.integerOption()
+	private final ConfigurationOption<Integer> zipkinMaxQueuedBytes = ConfigurationOption.integerOption()
 			.key("stagemonitor.zipkin.reporter.maxQueueSize")
 			.dynamic(false)
-			.label("Max zipkin queue size")
-			.description("The max size of the queue which holds spans which should be reported to zipkin. " +
+			.label("Max zipkin queued bytes")
+			.description("Maximum backlog of span bytes reported vs sent. Default 1% of heap. " +
 					"The higher this value, the more memory overhead stagemonitor may impose to your application. " +
 					"When the limit is reached, spans are dropped. To observe the amount of dropped spans, set " +
 					"'stagemonitor.internal.monitoring' to true.")
 			.tags("reporting", "zipkin")
 			.configurationCategory(ZIPKIN_PLUGIN)
-			.buildWithDefault(1000);
+			.build();
 
 	public String getZipkinEndpoint() {
 		return zipkinEndpoint.get();
@@ -43,8 +43,7 @@ public class ZipkinPlugin extends StagemonitorPlugin {
 		return zipkinFlushInterval.get();
 	}
 
-	public int getZipkinMaxQueueSize() {
-		return zipkinMaxQueueSize.get();
+	public int getZipkinMaxQueuedBytes() {
+		return zipkinMaxQueuedBytes.getValue();
 	}
-
 }
