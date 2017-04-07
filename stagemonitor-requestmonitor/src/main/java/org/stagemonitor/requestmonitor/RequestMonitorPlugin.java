@@ -370,6 +370,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Metrics.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/External-Request-Metrics.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchExternalRequestsDashboard.json");
 		}
@@ -410,14 +411,14 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final RequestMonitorPlugin requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
 		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanEventListener());
-		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry));
-		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanEventListener.Factory(metricRegistry, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
 		spanWrappingTracer.addSpanInterceptor(new AnonymizingSpanEventListener.MySpanEventListenerFactory(requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(new MDCSpanEventListener());
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
 			spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
 		}
+		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry));
+		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanEventListener.Factory(metricRegistry, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(new CallTreeSpanEventListener(requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(reportingSpanEventListener);
 		return spanWrappingTracer;
