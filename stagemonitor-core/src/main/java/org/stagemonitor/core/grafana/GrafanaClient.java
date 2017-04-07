@@ -1,15 +1,8 @@
 package org.stagemonitor.core.grafana;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
@@ -18,6 +11,14 @@ import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Utility class for interacting with the Grafana HTTP API
@@ -58,7 +59,7 @@ public class GrafanaClient {
 		jsonData.put("timeField", "@timestamp");
 		jsonData.put("interval", "Daily");
 		jsonData.put("timeInterval", ">" + corePlugin.getElasticsearchReportingInterval() + "s");
-		jsonData.put("esVersion", 2);
+		jsonData.put("esVersion", 5);
 		dataSource.put("jsonData", jsonData);
 		asyncGrafanaRequest("POST", "/api/datasources", dataSource);
 	}
