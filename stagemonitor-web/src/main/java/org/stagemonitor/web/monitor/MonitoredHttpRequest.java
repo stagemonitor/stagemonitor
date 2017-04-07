@@ -88,6 +88,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		final Span span = spanBuilder.start();
 		span.setTag(SpanUtils.OPERATION_TYPE, "http");
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
+		Tags.PEER_PORT.set(span, (short) httpServletRequest.getRemotePort());
 		span.setTag("method", httpServletRequest.getMethod());
 		span.setTag("http.referring_site", getReferringSite());
 		if (webPlugin.isCollectHttpHeaders()) {
@@ -211,7 +212,9 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			setParams(span, monitoredHttpRequest.httpServletRequest);
 			setTrackingInformation(span, monitoredHttpRequest.httpServletRequest, monitoredHttpRequest.clientIp, monitoredHttpRequest.userAgenHeader);
 			setStatus(span, monitoredHttpRequest.responseWrapper.getStatus());
-			trackThroughput(operationName, monitoredHttpRequest.responseWrapper.getStatus());
+			if (operationName != null) {
+				trackThroughput(operationName, monitoredHttpRequest.responseWrapper.getStatus());
+			}
 			span.setTag("bytes_written", monitoredHttpRequest.responseWrapper.getContentLength());
 			if (webPlugin.isParseUserAgent()) {
 				setUserAgentInformation(span, monitoredHttpRequest.userAgenHeader);
