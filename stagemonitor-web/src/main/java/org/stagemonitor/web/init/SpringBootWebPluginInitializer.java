@@ -8,6 +8,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.util.ClassUtils;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -21,6 +22,11 @@ public class SpringBootWebPluginInitializer extends StagemonitorByteBuddyTransfo
 	@Override
 	protected ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return named("org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizerBeanPostProcessor");
+	}
+
+	@Override
+	public boolean isActive() {
+		return ClassUtils.isPresent("org.springframework.boot.web.servlet.ServletContextInitializer");
 	}
 
 	@Override
