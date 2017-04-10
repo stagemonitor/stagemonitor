@@ -97,19 +97,30 @@ public abstract class StagemonitorByteBuddyTransformer {
 	}
 
 	public AgentBuilder.Transformer getTransformer() {
-		return new AgentBuilder.Transformer() {
+		final AsmVisitorWrapper.ForDeclaredMethods advice = getAdvice();
+		if (advice == null) {
+			return AgentBuilder.Transformer.NoOp.INSTANCE;
+		} else {
+			return new AgentBuilder.Transformer() {
+				@Override
+				public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+					beforeTransformation(typeDescription, classLoader);
+					return builder.visit(advice);
+				}
+			};
+		}
+	}
 
-			private AsmVisitorWrapper.ForDeclaredMethods advice = registerDynamicValues()
+	private AsmVisitorWrapper.ForDeclaredMethods getAdvice() {
+		try {
+			return registerDynamicValues()
 					.to(getAdviceClass())
 					.on(timed("method", transformerName, getMethodElementMatcher()));
-
-			@Override
-			public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
-				beforeTransformation(typeDescription, classLoader);
-				return builder.visit(advice);
-			}
-
-		};
+		} catch (NoClassDefFoundError error) {
+			logger.debug("Error while creating advice. This usually means that a optional type is not present " +
+					"so this is nothing wo worry about. Error message: {}", error.getMessage());
+			return null;
+		}
 	}
 
 	private Advice.WithCustomMapping registerDynamicValues() {

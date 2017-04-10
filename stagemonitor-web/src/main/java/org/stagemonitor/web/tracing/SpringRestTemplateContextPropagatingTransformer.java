@@ -40,9 +40,9 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 	}
 
 	@Advice.OnMethodExit(inline = false)
-	public static void onInterceptingHttpAccessorCreated(@Advice.This Object httpAccessor) {
+	public static void onInterceptingHttpAccessorCreated(@Advice.This InterceptingHttpAccessor httpAccessor) {
 		final RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
-		((InterceptingHttpAccessor) httpAccessor).getInterceptors().add(new SpringRestTemplateContextPropagatingInterceptor(requestMonitorPlugin));
+		httpAccessor.getInterceptors().add(new SpringRestTemplateContextPropagatingInterceptor(requestMonitorPlugin));
 	}
 
 	public static class SpringRestTemplateContextPropagatingInterceptor implements ClientHttpRequestInterceptor {
