@@ -54,7 +54,7 @@ ext {
 	slf4jVersion = '1.7.21'
 	jacksonVersion = '2.7.4'
 	esVersion = '5.1.2'
-	byteBuddyVersion = '1.5.7'
+	byteBuddyVersion = '1.6.12'
 	opentracingVersion = '0.21.0'
 	jaegerVersion = '0.18.0'
 	jettyVersion = '9.3.13.v20161014'
@@ -100,7 +100,7 @@ subprojects {
 
 	dependencies {
 		testCompile 'junit:junit:4.12'
-		testCompile 'org.mockito:mockito-core:2.0.111-beta'
+		testCompile 'org.mockito:mockito-core:2.7.22'
 		testCompile 'ch.qos.logback:logback-classic:1.1.7'
 		testCompile 'org.apache.logging.log4j:log4j-core:2.7'
 		testCompile 'commons-io:commons-io:2.5'

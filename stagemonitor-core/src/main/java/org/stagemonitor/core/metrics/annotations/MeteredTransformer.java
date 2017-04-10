@@ -28,7 +28,7 @@ public class MeteredTransformer extends StagemonitorByteBuddyTransformer {
 	public static final MetricName.MetricNameTemplate metricNameTemplate = name("rate").templateFor("signature");
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(Metered.class);
 	}
 

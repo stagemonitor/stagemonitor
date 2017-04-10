@@ -1,5 +1,9 @@
 package org.stagemonitor.core.instrument;
 
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
+
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.declaresMethod;
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -8,11 +12,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 import static net.bytebuddy.matcher.ElementMatchers.returns;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
-
-public class OverridesMethodElementMatcher implements ElementMatcher<MethodDescription.InDefinedShape> {
+public class OverridesMethodElementMatcher implements ElementMatcher<MethodDescription> {
 
 	private final ElementMatcher<? super MethodDescription> extraMethodMatcher;
 	private final ElementMatcher<? super TypeDescription> superClassMatcher;
@@ -38,13 +38,13 @@ public class OverridesMethodElementMatcher implements ElementMatcher<MethodDescr
 		this.superClassMatcher = superClassMatcher;
 	}
 
-	public ElementMatcher<MethodDescription.InDefinedShape> onSuperClassesThat(ElementMatcher<? super TypeDescription> superClassMatcher) {
+	public ElementMatcher<MethodDescription> onSuperClassesThat(ElementMatcher<? super TypeDescription> superClassMatcher) {
 		return new OverridesMethodElementMatcher(extraMethodMatcher, superClassMatcher);
 	}
 
 	@Override
-	public boolean matches(MethodDescription.InDefinedShape targetMethod) {
-		TypeDescription superClass = targetMethod.getDeclaringType();
+	public boolean matches(MethodDescription targetMethod) {
+		TypeDescription superClass = targetMethod.getDeclaringType().asErasure();
 		do {
 			superClass = superClass.getSuperClass().asErasure();
 			if (declaresMethod(named(targetMethod.getName())

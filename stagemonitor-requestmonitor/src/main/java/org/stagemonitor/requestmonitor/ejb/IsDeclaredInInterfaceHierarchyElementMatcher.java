@@ -1,22 +1,22 @@
 package org.stagemonitor.requestmonitor.ejb;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.returns;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
-
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 
-class IsDeclaredInInterfaceHierarchyElementMatcher implements ElementMatcher<TypeDescription> {
-	private final MethodDescription.InDefinedShape targetMethod;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.returns;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
-	static ElementMatcher<TypeDescription> isDeclaredInInterfaceHierarchy(MethodDescription.InDefinedShape method) {
+class IsDeclaredInInterfaceHierarchyElementMatcher implements ElementMatcher<TypeDescription> {
+	private final MethodDescription targetMethod;
+
+	static ElementMatcher<TypeDescription> isDeclaredInInterfaceHierarchy(MethodDescription method) {
 		return new IsDeclaredInInterfaceHierarchyElementMatcher(method);
 	}
 
-	public IsDeclaredInInterfaceHierarchyElementMatcher(MethodDescription.InDefinedShape targetMethod) {
+	public IsDeclaredInInterfaceHierarchyElementMatcher(MethodDescription targetMethod) {
 		this.targetMethod = targetMethod;
 	}
 

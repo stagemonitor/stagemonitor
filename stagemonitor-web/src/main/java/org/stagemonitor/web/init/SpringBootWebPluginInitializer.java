@@ -30,7 +30,7 @@ public class SpringBootWebPluginInitializer extends StagemonitorByteBuddyTransfo
 	}
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getMethodElementMatcher() {
 		return named("postProcessBeforeInitialization")
 				.and(returns(Object.class))
 				.and(takesArguments(Object.class, String.class));

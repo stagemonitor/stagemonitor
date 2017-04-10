@@ -103,7 +103,8 @@ public abstract class StagemonitorByteBuddyTransformer {
 		} else {
 			return new AgentBuilder.Transformer() {
 				@Override
-				public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+				public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription,
+													    ClassLoader classLoader, JavaModule module) {
 					beforeTransformation(typeDescription, classLoader);
 					return builder.visit(advice);
 				}
@@ -136,7 +137,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return Collections.emptyList();
 	}
 
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getMethodElementMatcher() {
 		return not(isConstructor())
 				.and(not(isAbstract()))
 				.and(not(isNative()))
@@ -146,7 +147,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 				.and(getExtraMethodElementMatcher());
 	}
 
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
 		return any();
 	}
 

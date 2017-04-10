@@ -60,7 +60,7 @@ public class FreemarkerProfilingTransformer extends StagemonitorByteBuddyTransfo
 	}
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
 		return named("_eval").and(takesArguments(Environment.class));
 	}
 

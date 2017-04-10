@@ -30,7 +30,7 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 	}
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(GET.class)
 				.or(isAnnotatedWith(POST.class))
 				.or(isAnnotatedWith(PUT.class))

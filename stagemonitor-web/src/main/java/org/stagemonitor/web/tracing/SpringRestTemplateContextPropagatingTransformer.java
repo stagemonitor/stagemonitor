@@ -35,7 +35,7 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 	}
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getMethodElementMatcher() {
 		return isConstructor();
 	}
 

@@ -49,7 +49,7 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 	}
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
 		return named("getConnection")
 				.and(returns(Connection.class))
 				.and(isPublic())
