@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.tracing.jaeger;
+package org.stagemonitor.requestmonitor.sampling;
 
 import com.uber.jaeger.utils.RateLimiter;
 
@@ -6,8 +6,6 @@ import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
-import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +56,16 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 		if (creditsPerMinute >= 1000000) {
 			return null;
 		}
-		return new RateLimiter(creditsPerMinute / 60);
+		final double maxTracesPerSecond = creditsPerMinute / 60;
+		double maxBalance;
+		if (maxTracesPerSecond <= 0) {
+			maxBalance = 0.0;
+		} else if (maxTracesPerSecond < 1.0) {
+			maxBalance = 1.0;
+		} else {
+			maxBalance = maxTracesPerSecond;
+		}
+		return new RateLimiter(maxTracesPerSecond, maxBalance);
 	}
 
 	@Override
@@ -79,7 +86,7 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 		}
 	}
 
-	private boolean isRateExceeded(RateLimiter rateLimiter) {
+	public static boolean isRateExceeded(RateLimiter rateLimiter) {
 		return rateLimiter != null && !rateLimiter.checkCredit(1.0);
 	}
 

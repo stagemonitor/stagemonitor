@@ -26,7 +26,7 @@ public class ExternalHttpRequest extends AbstractExternalRequest {
 		final Span span = super.createSpan();
 		Tags.HTTP_URL.set(span, url);
 		Tags.PEER_HOSTNAME.set(span, host);
-		Tags.PEER_PORT.set(span, (short) port);
+		Tags.PEER_PORT.set(span, port);
 		span.setTag(ExternalRequestMetricsSpanEventListener.EXTERNAL_REQUEST_METHOD, method);
 		return span;
 	}

@@ -88,7 +88,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		final Span span = spanBuilder.start();
 		span.setTag(SpanUtils.OPERATION_TYPE, "http");
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
-		Tags.PEER_PORT.set(span, (short) httpServletRequest.getRemotePort());
+		Tags.PEER_PORT.set(span, httpServletRequest.getRemotePort());
 		span.setTag("method", httpServletRequest.getMethod());
 		span.setTag("http.referring_site", getReferringSite());
 		if (webPlugin.isCollectHttpHeaders()) {

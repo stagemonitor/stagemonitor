@@ -3,6 +3,7 @@ package org.stagemonitor.requestmonitor.tracing.wrapper;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
@@ -82,6 +83,30 @@ public class SpanWrapper implements Span {
 		if (value != null) {
 			delegate = delegate.setTag(key, value);
 		}
+		return this;
+	}
+
+	@Override
+	public Span log(Map<String, ?> fields) {
+		delegate = delegate.log(fields);
+		return this;
+	}
+
+	@Override
+	public Span log(long timestampMicroseconds, Map<String, ?> fields) {
+		delegate = delegate.log(timestampMicroseconds, fields);
+		return this;
+	}
+
+	@Override
+	public Span log(String event) {
+		delegate = delegate.log(event);
+		return this;
+	}
+
+	@Override
+	public Span log(long timestampMicroseconds, String event) {
+		delegate = delegate.log(timestampMicroseconds, event);
 		return this;
 	}
 

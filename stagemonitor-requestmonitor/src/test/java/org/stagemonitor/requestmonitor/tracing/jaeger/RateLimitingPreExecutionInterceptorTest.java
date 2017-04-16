@@ -7,6 +7,7 @@ import org.stagemonitor.core.configuration.source.SimpleSource;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
+import org.stagemonitor.requestmonitor.sampling.RateLimitingPreExecutionInterceptor;
 
 import java.util.Collections;
 
@@ -42,6 +43,9 @@ public class RateLimitingPreExecutionInterceptorTest {
 		requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption().update(0d, SimpleSource.NAME);
 		when(spanContext.isExternalRequest()).thenReturn(false);
 		when(spanContext.isServerRequest()).thenReturn(true);
+
+		interceptor.interceptReport(context);
+		assertFalse(context.isReport());
 		interceptor.interceptReport(context);
 		assertFalse(context.isReport());
 	}

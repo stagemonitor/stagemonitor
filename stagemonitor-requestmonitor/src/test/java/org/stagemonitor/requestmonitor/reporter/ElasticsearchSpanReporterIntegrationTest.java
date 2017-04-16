@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.uber.jaeger.Tracer;
 import com.uber.jaeger.reporters.NoopReporter;
 import com.uber.jaeger.samplers.Sampler;
+import com.uber.jaeger.samplers.SamplingStatus;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,6 +27,7 @@ import io.opentracing.tag.Tags;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -49,8 +51,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(configuration);
 		final Sampler sampler = mock(Sampler.class);
-		when(sampler.isSampled(anyLong())).thenReturn(true);
-		when(sampler.getTags()).thenReturn(Collections.emptyMap());
+		when(sampler.sample(anyString(), anyLong())).thenReturn(SamplingStatus.of(true, Collections.emptyMap()));
 		tracer = new Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), sampler).build();
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 	}

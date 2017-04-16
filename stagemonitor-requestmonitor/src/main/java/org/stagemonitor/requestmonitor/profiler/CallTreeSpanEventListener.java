@@ -9,7 +9,7 @@ import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
-import org.stagemonitor.requestmonitor.tracing.jaeger.RateLimitingPreExecutionInterceptor;
+import org.stagemonitor.requestmonitor.sampling.RateLimitingPreExecutionInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -54,7 +54,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 			interceptorContext.shouldNotCollectCallTree("stagemonitor.profiler.active=false");
 		} else if (callTreeRateLimit <= 0) {
 			interceptorContext.shouldNotCollectCallTree("stagemonitor.profiler.sampling.rateLimitPerMinute <= 0");
-		} else if (rateLimiter != null && rateLimiter.checkCredit(1d)) {
+		} else if (RateLimitingPreExecutionInterceptor.isRateExceeded(rateLimiter)) {
 			interceptorContext.shouldNotCollectCallTree("rate limit is reached");
 		}
 	}

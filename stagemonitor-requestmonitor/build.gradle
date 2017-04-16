@@ -1,5 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-core")
+	compile "io.opentracing:opentracing-util:$opentracingVersion"
 	compile "com.uber.jaeger:jaeger-core:$jaegerVersion"
 	compile "com.uber.jaeger:jaeger-context:$jaegerVersion"
 	optional "org.elasticsearch:elasticsearch:$esVersion"
@@ -7,6 +8,7 @@ dependencies {
 	optional 'org.freemarker:freemarker:2.3.23'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
+	testCompile "io.opentracing:opentracing-mock:$opentracingVersion"
 	testCompile 'net.sf.ehcache:ehcache-core:2.6.6'
 	testCompile "org.elasticsearch.client:transport:$esVersion"
 	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
