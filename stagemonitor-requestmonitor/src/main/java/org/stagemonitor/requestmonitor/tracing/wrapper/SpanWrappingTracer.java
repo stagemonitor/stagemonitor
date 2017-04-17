@@ -64,6 +64,7 @@ public class SpanWrappingTracer implements Tracer {
 		private final List<SpanEventListener> spanEventListeners;
 		private SpanBuilder delegate;
 		private long startTimestampNanos;
+		private long startTimestampMillis;
 
 		SpanWrappingSpanBuilder(SpanBuilder delegate, String operationName, List<SpanEventListener> spanEventListeners) {
 			this.operationName = operationName;
@@ -116,6 +117,7 @@ public class SpanWrappingTracer implements Tracer {
 
 		public SpanBuilder withStartTimestamp(long microseconds) {
 			startTimestampNanos = TimeUnit.MICROSECONDS.toNanos(microseconds);
+			startTimestampMillis = TimeUnit.MICROSECONDS.toMillis(microseconds);
 			delegate = delegate.withStartTimestamp(microseconds);
 			return this;
 		}
@@ -123,8 +125,9 @@ public class SpanWrappingTracer implements Tracer {
 		public Span start() {
 			if (startTimestampNanos == 0) {
 				startTimestampNanos = System.nanoTime();
+				startTimestampMillis = System.currentTimeMillis();
 			}
-			final SpanWrapper spanWrapper = new SpanWrapper(delegate.start(), operationName, startTimestampNanos, spanEventListeners);
+			final SpanWrapper spanWrapper = new SpanWrapper(delegate.start(), operationName, startTimestampNanos, startTimestampMillis, spanEventListeners);
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				spanEventListener.onStart(spanWrapper);
 			}

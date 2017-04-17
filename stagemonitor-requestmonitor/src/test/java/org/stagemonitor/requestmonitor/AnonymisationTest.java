@@ -145,7 +145,7 @@ public class AnonymisationTest {
 	}
 
 	private Span createSpan(String username, String ip) {
-		final Span span = new SpanWrapper(spy(NoopSpan.INSTANCE), "", 0, Collections.singletonList(new AnonymizingSpanEventListener(requestMonitorPlugin)));
+		final Span span = new SpanWrapper(spy(NoopSpan.INSTANCE), "", 0, 0, Collections.singletonList(new AnonymizingSpanEventListener(requestMonitorPlugin)));
 		span.setTag(SpanUtils.USERNAME, username);
 		SpanUtils.setClientIp(span, ip);
 		final Span mockSpan = ((SpanWrapper) span).getDelegate();

@@ -7,6 +7,7 @@ import com.uber.jaeger.context.TracingUtils;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.WeakConcurrentMap;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
@@ -43,6 +44,7 @@ public class SpanContextInformation {
 	private boolean sampled = true;
 	private PreExecutionInterceptorContext preExecutionInterceptorContext;
 	private String operationType;
+	private ReadbackSpan readbackSpan;
 
 	public static SpanContextInformation getCurrent() {
 		final TraceContext traceContext = TracingUtils.getTraceContext();
@@ -71,6 +73,15 @@ public class SpanContextInformation {
 	public static SpanContextInformation forUnitTest(Span span) {
 		final SpanContextInformation spanContext = new SpanContextInformation();
 		spanContext.setSpan(span);
+		return spanContext;
+	}
+
+	/**
+	 * Internal method, should only be called by stagemonitor tests
+	 */
+	public static SpanContextInformation forUnitTest(ReadbackSpan span) {
+		final SpanContextInformation spanContext = new SpanContextInformation();
+		spanContext.setReadbackSpan(span);
 		return spanContext;
 	}
 
@@ -247,6 +258,14 @@ public class SpanContextInformation {
 
 	public String getOperationType() {
 		return operationType;
+	}
+
+	public void setReadbackSpan(ReadbackSpan readbackSpan) {
+		this.readbackSpan = readbackSpan;
+	}
+
+	public ReadbackSpan getReadbackSpan() {
+		return readbackSpan;
 	}
 
 	public static class ExternalRequestStats {
