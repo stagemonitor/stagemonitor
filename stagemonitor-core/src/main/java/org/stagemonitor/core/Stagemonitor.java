@@ -79,8 +79,8 @@ public final class Stagemonitor {
 			logger.info("Measurement Session is initialized: " + measurementSession);
 			try {
 				start();
-			} catch (RuntimeException e) {
-				logger.warn("Error while trying to start monitoring. (this exception is ignored)", e);
+			} catch (Throwable t) {
+				logger.warn("Error while trying to start monitoring. (this exception is ignored)", t);
 			}
 		} else {
 			logger.debug("Measurement Session is not initialized: {}", measurementSession);
