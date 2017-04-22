@@ -95,7 +95,9 @@ public class SpanWrappingTracer implements Tracer {
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				value = spanEventListener.onSetTag(key, value);
 			}
-			delegate = delegate.withTag(key, value);
+			if (value != null) {
+				delegate = delegate.withTag(key, value);
+			}
 			return this;
 		}
 
@@ -111,7 +113,9 @@ public class SpanWrappingTracer implements Tracer {
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				value = spanEventListener.onSetTag(key, value);
 			}
-			delegate = delegate.withTag(key, value);
+			if (value != null) {
+				delegate = delegate.withTag(key, value);
+			}
 			return this;
 		}
 

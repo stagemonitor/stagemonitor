@@ -1,44 +1,57 @@
 package org.stagemonitor.zipkin;
 
-import com.codahale.metrics.Gauge;
-
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import brave.opentracing.BraveTracer;
+import brave.propagation.Propagation;
 import brave.sampler.Sampler;
 import io.opentracing.Tracer;
-import zipkin.Span;
 import zipkin.reporter.AsyncReporter;
-import zipkin.reporter.ReporterMetrics;
-import zipkin.reporter.okhttp3.OkHttpSender;
-
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import zipkin.reporter.urlconnection.URLConnectionSender;
 
 public class BraveZipkinReportingTracerFactory extends TracerFactory {
 
 	@Override
 	public Tracer getTracer(StagemonitorPlugin.InitArguments initArguments) {
-		return BraveTracer.wrap(brave.Tracer.newBuilder()
+		final brave.Tracer braveTracer = brave.Tracer.newBuilder()
 				.localServiceName(initArguments.getMeasurementSession().getApplicationName())
-				.reporter(getZipkinReporter(initArguments))
-				.sampler(new AlwaysSampler())
-				.build());
+				.reporter(getZipkinReporterBuilder(initArguments).build())
+				.sampler(getSampler())
+				.build();
+		return BraveTracer.newBuilder(braveTracer)
+				.textMapPropagation(B3HeaderFormat.INSTANCE, Propagation.B3_STRING)
+				.build();
 	}
 
-	private AsyncReporter<Span> getZipkinReporter(StagemonitorPlugin.InitArguments initArguments) {
+	protected AlwaysSampler getSampler() {
+		return new AlwaysSampler();
+	}
+
+	protected AsyncReporter.Builder getZipkinReporterBuilder(StagemonitorPlugin.InitArguments initArguments) {
 		final ZipkinPlugin zipkinPlugin = initArguments.getPlugin(ZipkinPlugin.class);
-		return AsyncReporter
-				.builder(OkHttpSender.create(zipkinPlugin.getZipkinEndpoint()))
-				.queuedMaxBytes(zipkinPlugin.getZipkinMaxQueuedBytes())
-				.messageTimeout(zipkinPlugin.getZipkinFlushInterval(), TimeUnit.MILLISECONDS)
-				.metrics(new StagemonitorReporterMetrics(initArguments.getMetricRegistry()))
-				.build();
+		final AsyncReporter.Builder reporterBuilder = AsyncReporter
+				.builder(getSender(zipkinPlugin))
+				.messageTimeout(zipkinPlugin.getZipkinFlushInterval(), TimeUnit.MILLISECONDS);
+
+		final Integer zipkinMaxQueuedBytes = zipkinPlugin.getZipkinMaxQueuedBytes();
+		if (zipkinMaxQueuedBytes != null) {
+			reporterBuilder.queuedMaxBytes(zipkinMaxQueuedBytes);
+		}
+		if (initArguments.getPlugin(CorePlugin.class).isInternalMonitoringActive()) {
+			reporterBuilder.metrics(new StagemonitorReporterMetrics(initArguments.getMetricRegistry()));
+		}
+
+		return reporterBuilder;
+	}
+
+	protected URLConnectionSender getSender(ZipkinPlugin zipkinPlugin) {
+		return URLConnectionSender.create(zipkinPlugin.getZipkinEndpoint());
 	}
 
 	/**
@@ -53,66 +66,4 @@ public class BraveZipkinReportingTracerFactory extends TracerFactory {
 		}
 	}
 
-	private static class StagemonitorReporterMetrics implements ReporterMetrics {
-		private final Metric2Registry metricRegistry;
-
-		private AtomicInteger queuedSpans = new AtomicInteger(0);
-		private AtomicInteger queuedBytes = new AtomicInteger(0);
-
-		public StagemonitorReporterMetrics(Metric2Registry metricRegistry) {
-			this.metricRegistry = metricRegistry;
-			metricRegistry.register(name("spans_queued").build(), new Gauge<Integer>() {
-				@Override
-				public Integer getValue() {
-					return queuedSpans.get();
-				}
-			});
-			metricRegistry.register(name("spans_queued_bytes").build(), new Gauge<Integer>() {
-				@Override
-				public Integer getValue() {
-					return queuedBytes.get();
-				}
-			});
-		}
-
-		@Override
-		public void incrementMessages() {
-			metricRegistry.counter(name("messages_sent").build()).inc();
-		}
-
-		@Override
-		public void incrementMessageBytes(int quantity) {
-			metricRegistry.counter(name("messages_sent_bytes").build()).inc(quantity);
-		}
-
-		@Override
-		public void incrementMessagesDropped(Throwable cause) {
-			metricRegistry.counter(name("messages_dropped").build()).inc();
-		}
-
-		@Override
-		public void incrementSpans(int quantity) {
-			metricRegistry.counter(name("spans_reported").build()).inc();
-		}
-
-		@Override
-		public void incrementSpanBytes(int quantity) {
-			metricRegistry.counter(name("spans_reported_bytes").build()).inc();
-		}
-
-		@Override
-		public void incrementSpansDropped(int quantity) {
-			metricRegistry.counter(name("spans_dropped").build()).inc(quantity);
-		}
-
-		@Override
-		public void updateQueuedSpans(int update) {
-			queuedSpans.set(update);
-		}
-
-		@Override
-		public void updateQueuedBytes(int update) {
-			queuedBytes.set(update);
-		}
-	}
 }
