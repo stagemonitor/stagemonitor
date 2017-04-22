@@ -3,7 +3,7 @@ package org.stagemonitor.zipkin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.configuration.ConfigurationOption;
 
-public class ZipkinPlugin extends StagemonitorPlugin {
+public final class ZipkinPlugin extends StagemonitorPlugin {
 
 	private static final String ZIPKIN_PLUGIN = "Zipkin Plugin";
 
@@ -35,15 +35,15 @@ public class ZipkinPlugin extends StagemonitorPlugin {
 			.configurationCategory(ZIPKIN_PLUGIN)
 			.build();
 
-	public String getZipkinEndpoint() {
+	String getZipkinEndpoint() {
 		return zipkinEndpoint.get();
 	}
 
-	public int getZipkinFlushInterval() {
+	int getZipkinFlushInterval() {
 		return zipkinFlushInterval.get();
 	}
 
-	public int getZipkinMaxQueuedBytes() {
+	Integer getZipkinMaxQueuedBytes() {
 		return zipkinMaxQueuedBytes.getValue();
 	}
 }
