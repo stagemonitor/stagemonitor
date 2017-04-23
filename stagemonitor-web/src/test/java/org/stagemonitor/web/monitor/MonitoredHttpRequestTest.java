@@ -100,6 +100,7 @@ public class MonitoredHttpRequestTest {
 		assertEquals("blubb", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "bla"));
 		assertEquals("XXXX", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
 		assertEquals("XXXX", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
+		assertFalse(mockSpan.tags().containsKey(Tags.ERROR.getKey()));
 	}
 
 	@Test
