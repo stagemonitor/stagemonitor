@@ -17,9 +17,11 @@ public final class ZipkinPlugin extends StagemonitorPlugin {
 			.configurationCategory(ZIPKIN_PLUGIN)
 			.buildRequired();
 	private final ConfigurationOption<Integer> zipkinFlushInterval = ConfigurationOption.integerOption()
-			.key("stagemonitor.zipkin.reporter.flushInverval")
+			.key("stagemonitor.zipkin.reporter.messageTimeout")
 			.dynamic(false)
-			.label("Zipkin flush interval (ms)")
+			.label("Zipkin message timeout")
+			.description("Instead of sending one message at a time, spans are bundled into messages. " +
+					"Messages are sent when they fill the queue or after the timeout occurs, whichever happens first.")
 			.tags("reporting", "zipkin")
 			.configurationCategory(ZIPKIN_PLUGIN)
 			.buildWithDefault(1000);
