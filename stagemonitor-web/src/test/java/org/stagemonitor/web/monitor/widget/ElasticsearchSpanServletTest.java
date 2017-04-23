@@ -33,11 +33,11 @@ public class ElasticsearchSpanServletTest extends ElasticsearchSpanReporterInteg
 	public void testSpanServlet() throws Exception {
 		final Span span = new MonitoredMethodRequest(configuration, "Test#test", null, Collections.singletonMap("attr.Color", "Blue"))
 				.createSpan();
-		reporter.report(SpanContextInformation.forUnitTest(span, Collections.emptyMap()));
+		span.finish();
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final MockHttpServletRequest req = new MockHttpServletRequest();
-		final String spanId = String.format("%x", ((com.uber.jaeger.Span) span).context().getSpanID());
+		final String spanId = SpanContextInformation.forSpan(span).getReadbackSpan().getId();
 		req.addParameter("id", spanId);
 		final MockHttpServletResponse resp = new MockHttpServletResponse();
 		elasticsearchSpanServlet.doGet(req, resp);

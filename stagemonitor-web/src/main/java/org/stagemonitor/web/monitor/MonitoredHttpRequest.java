@@ -51,7 +51,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	protected final WebPlugin webPlugin;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private static final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("request_name", "http_code");
-	private final String userAgenHeader;
+	private final String userAgentHeader;
 	private final String connectionId;
 	private final boolean widgetAndStagemonitorEndpointsAllowed;
 	private final String clientIp;
@@ -64,7 +64,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		this.responseWrapper = responseWrapper;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
-		userAgenHeader = httpServletRequest.getHeader("user-agent");
+		userAgentHeader = httpServletRequest.getHeader("user-agent");
 		connectionId = httpServletRequest.getHeader(WidgetAjaxSpanReporter.CONNECTION_ID);
 		widgetAndStagemonitorEndpointsAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
 		clientIp = getClientIp(httpServletRequest);
@@ -82,12 +82,16 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		Tracer.SpanBuilder spanBuilder = tracer.buildSpan(getRequestName())
 				.asChildOf(spanCtx)
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
+		if (widgetAndStagemonitorEndpointsAllowed) {
+			spanBuilder = spanBuilder.withTag(WIDGET_ALLOWED_ATTRIBUTE, (String) null);
+		}
 		if (!sample) {
 			spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
 		}
 		final Span span = spanBuilder.start();
 		span.setTag(SpanUtils.OPERATION_TYPE, "http");
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
+		Tags.PEER_PORT.set(span, httpServletRequest.getRemotePort());
 		span.setTag("method", httpServletRequest.getMethod());
 		span.setTag("http.referring_site", getReferringSite());
 		if (webPlugin.isCollectHttpHeaders()) {
@@ -96,7 +100,6 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		SpanContextInformation info = SpanContextInformation.forSpan(span);
 		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
-		info.addRequestAttribute(WIDGET_ALLOWED_ATTRIBUTE, widgetAndStagemonitorEndpointsAllowed);
 		info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
 		return span;
 	}
@@ -209,12 +212,14 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			}
 			trackServletExceptions(span, monitoredHttpRequest.httpServletRequest);
 			setParams(span, monitoredHttpRequest.httpServletRequest);
-			setTrackingInformation(span, monitoredHttpRequest.httpServletRequest, monitoredHttpRequest.clientIp, monitoredHttpRequest.userAgenHeader);
+			setTrackingInformation(span, monitoredHttpRequest.httpServletRequest, monitoredHttpRequest.clientIp, monitoredHttpRequest.userAgentHeader);
 			setStatus(span, monitoredHttpRequest.responseWrapper.getStatus());
-			trackThroughput(operationName, monitoredHttpRequest.responseWrapper.getStatus());
+			if (operationName != null) {
+				trackThroughput(operationName, monitoredHttpRequest.responseWrapper.getStatus());
+			}
 			span.setTag("bytes_written", monitoredHttpRequest.responseWrapper.getContentLength());
 			if (webPlugin.isParseUserAgent()) {
-				setUserAgentInformation(span, monitoredHttpRequest.userAgenHeader);
+				setUserAgentInformation(span, monitoredHttpRequest.userAgentHeader);
 			}
 		}
 

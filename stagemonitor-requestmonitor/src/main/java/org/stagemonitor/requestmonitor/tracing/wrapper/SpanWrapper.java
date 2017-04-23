@@ -3,6 +3,7 @@ package org.stagemonitor.requestmonitor.tracing.wrapper;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
@@ -20,12 +21,14 @@ public class SpanWrapper implements Span {
 	private Span delegate;
 	private String operationName;
 	private final long startTimestampNanos;
+	private final long startTimestampMillis;
 	private final List<SpanEventListener> spanEventListeners;
 
-	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, List<SpanEventListener> spanEventListeners) {
+	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, long startTimestampMillis, List<SpanEventListener> spanEventListeners) {
 		this.delegate = delegate;
 		this.operationName = operationName;
 		this.startTimestampNanos = startTimestampNanos;
+		this.startTimestampMillis = startTimestampMillis;
 		this.spanEventListeners = spanEventListeners;
 	}
 
@@ -85,6 +88,30 @@ public class SpanWrapper implements Span {
 		return this;
 	}
 
+	@Override
+	public Span log(Map<String, ?> fields) {
+		delegate = delegate.log(fields);
+		return this;
+	}
+
+	@Override
+	public Span log(long timestampMicroseconds, Map<String, ?> fields) {
+		delegate = delegate.log(timestampMicroseconds, fields);
+		return this;
+	}
+
+	@Override
+	public Span log(String event) {
+		delegate = delegate.log(event);
+		return this;
+	}
+
+	@Override
+	public Span log(long timestampMicroseconds, String event) {
+		delegate = delegate.log(timestampMicroseconds, event);
+		return this;
+	}
+
 	public Span log(String eventName, Object payload) {
 		delegate = delegate.log(eventName, payload);
 		return this;
@@ -117,6 +144,10 @@ public class SpanWrapper implements Span {
 
 	public String getOperationName() {
 		return operationName;
+	}
+
+	public long getStartTimestampMillis() {
+		return startTimestampMillis;
 	}
 
 	public <T extends Span> T unwrap(Class<T> delegateClass) {

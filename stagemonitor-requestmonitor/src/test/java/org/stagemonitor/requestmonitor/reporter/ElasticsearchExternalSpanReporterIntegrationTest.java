@@ -14,10 +14,8 @@ import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 import static org.junit.Assert.assertEquals;
@@ -58,7 +56,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 
 	@Test
 	public void reportSpan() throws Exception {
-		reporter.report(SpanContextInformation.forUnitTest(getSpan(100), Collections.emptyMap()));
+		reporter.report(SpanContextInformation.forUnitTest(getSpan(100)));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
@@ -71,17 +69,14 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		assertEquals("ElasticsearchExternalSpanReporterIntegrationTest#test", spanJson.get("name").asText());
 	}
 
-	private Span getSpan(long executionTimeMillis) {
-		final Span span = tracer
-				.buildSpan("ElasticsearchExternalSpanReporterIntegrationTest#test")
-				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-				.withStartTimestamp(1)
-				.start();
-		span.setTag("type", "jdbc");
-		span.setTag("method", "SELECT");
-		span.setTag("db.statement", "SELECT * from STAGEMONITOR where 1 < 2");
-		Tags.PEER_SERVICE.set(span, "foo@jdbc:bar");
-		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis) + 1);
-		return span;
+	private ReadbackSpan getSpan(long executionTimeMillis) {
+		final ReadbackSpan readbackSpan = new ReadbackSpan();
+		readbackSpan.setName("ElasticsearchExternalSpanReporterIntegrationTest#test");
+		readbackSpan.setDuration(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis));
+		readbackSpan.setTag("type", "jdbc");
+		readbackSpan.setTag("method", "SELECT");
+		readbackSpan.setTag("db.statement", "SELECT * from STAGEMONITOR where 1 < 2");
+		readbackSpan.setTag(Tags.PEER_SERVICE.getKey(), "foo@jdbc:bar");
+		return readbackSpan;
 	}
 }

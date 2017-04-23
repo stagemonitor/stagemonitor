@@ -1,8 +1,5 @@
 package org.stagemonitor.web.monitor.widget;
 
-import com.uber.jaeger.reporters.NoopReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,14 +7,21 @@ import org.mockito.Mockito;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
+import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
+import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
+import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.B3Propagator;
+import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -27,12 +31,17 @@ import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResp
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.ServiceLoader;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
 import io.opentracing.Span;
+import io.opentracing.Tracer;
+import io.opentracing.mock.MockTracer;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -46,38 +55,61 @@ public class SpanServletTest {
 	private WebPlugin webPlugin;
 	private Span span;
 	private SpanContextInformation spanContext;
+	private Configuration configuration;
 
 	@Before
 	public void setUp() throws Exception {
-		JsonUtils.getMapper().registerModule(new SpanJsonModule());
-		Configuration configuration = mock(Configuration.class);
-		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		webPlugin = mock(WebPlugin.class);
+		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
+		configuration = mock(Configuration.class);
 
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
-		when(requestMonitorPlugin.getTracer()).thenReturn(new com.uber.jaeger.Tracer.Builder(getClass().getSimpleName(), new NoopReporter(), new ConstSampler(true)).build());
+		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+
+		webPlugin = mock(WebPlugin.class);
 		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
+
+		final CorePlugin corePlugin = mock(CorePlugin.class);
+		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+
 		reporter = new WidgetAjaxSpanReporter();
 		spanServlet = new SpanServlet(configuration, reporter, 1500);
 		spanServlet.init();
 		connectionId = UUID.randomUUID().toString();
-		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test");
-		request.addHeader(WidgetAjaxSpanReporter.CONNECTION_ID, connectionId);
-		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration);
-		span = monitoredHttpRequest.createSpan();
-		spanContext = SpanContextInformation.forSpan(span);
-		span.setOperationName("test");
-		spanContext.setSpan(span);
+
+		final SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor = mock(SamplePriorityDeterminingSpanEventListener.class);
+		when(samplePriorityDeterminingSpanInterceptor.onSetTag(anyString(), anyString())).then(invocation -> invocation.getArgument(1));
+		when(samplePriorityDeterminingSpanInterceptor.onSetTag(anyString(), anyBoolean())).then(invocation -> invocation.getArgument(1));
+		when(samplePriorityDeterminingSpanInterceptor.onSetTag(anyString(), any(Number.class))).then(invocation -> invocation.getArgument(1));
+		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
+		reportingSpanEventListener.addReporter(reporter);
+		Tracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(new B3Propagator()), configuration,
+				new Metric2Registry(), ServiceLoader.load(SpanEventListenerFactory.class), samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 
 		// init jackson module
 		new ElasticsearchSpanReporter();
 	}
 
+	private void reportSpan() {
+		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test");
+		request.addHeader(WidgetAjaxSpanReporter.CONNECTION_ID, connectionId);
+		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request,
+				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration);
+
+		span = monitoredHttpRequest.createSpan();
+		spanContext = SpanContextInformation.forSpan(span);
+		span.setOperationName("test");
+		spanContext.setSpan(span);
+		span.finish();
+	}
+
 	@Test
 	public void testSpanBeforeRequest() throws Exception {
-		reporter.report(spanContext);
+		reportSpan();
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", connectionId);
@@ -91,8 +123,10 @@ public class SpanServletTest {
 
 	@Test
 	public void testTwoSpanBeforeRequest() throws Exception {
-		reporter.report(spanContext);
-		reporter.report(spanContext);
+		reportSpan();
+		final String span1 = spanAsJson();
+		reportSpan();
+		final String span2 = spanAsJson();
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", connectionId);
@@ -100,7 +134,7 @@ public class SpanServletTest {
 
 		spanServlet.service(request, response);
 
-		Assert.assertEquals(Arrays.asList(spanAsJson(), spanAsJson()).toString(), response.getContentAsString());
+		Assert.assertEquals(Arrays.asList(span1, span2).toString(), response.getContentAsString());
 		Assert.assertEquals("application/json;charset=UTF-8", response.getHeader("content-type"));
 	}
 
@@ -109,7 +143,7 @@ public class SpanServletTest {
 	}
 
 	private String spanAsJson() {
-		return JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII);
+		return JsonUtils.toJson(spanContext.getReadbackSpan(), SpanUtils.CALL_TREE_ASCII);
 	}
 
 	private void performNonBlockingRequest(final HttpServletRequest request, final MockHttpServletResponse response) throws Exception {
@@ -134,7 +168,10 @@ public class SpanServletTest {
 	}
 
 	private void waitForResponse(MockHttpServletResponse response) throws UnsupportedEncodingException, InterruptedException {
-		while (StringUtils.isEmpty(response.getContentAsString())) {
+		final int maxWait = 2_000;
+		int wait = 0;
+		while (StringUtils.isEmpty(response.getContentAsString()) && wait <= maxWait) {
+			wait += 10;
 			Thread.sleep(10);
 		}
 	}
@@ -147,7 +184,7 @@ public class SpanServletTest {
 		final MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(spanContext);
+		reportSpan();
 		waitForResponse(response);
 
 		Assert.assertEquals(spanAsJsonArray(), response.getContentAsString());
@@ -162,7 +199,7 @@ public class SpanServletTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		performNonBlockingRequest(request, response);
 
-		reporter.report(spanContext);
+		reportSpan();
 		waitForResponse(response);
 
 		Assert.assertEquals("[]", response.getContentAsString());

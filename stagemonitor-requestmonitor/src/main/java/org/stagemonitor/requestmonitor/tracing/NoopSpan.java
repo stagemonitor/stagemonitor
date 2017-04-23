@@ -46,6 +46,26 @@ public class NoopSpan implements Span {
 	}
 
 	@Override
+	public Span log(Map<String, ?> fields) {
+		return this;
+	}
+
+	@Override
+	public Span log(long timestampMicroseconds, Map<String, ?> fields) {
+		return this;
+	}
+
+	@Override
+	public Span log(String event) {
+		return this;
+	}
+
+	@Override
+	public Span log(long timestampMicroseconds, String event) {
+		return this;
+	}
+
+	@Override
 	public Span setBaggageItem(String key, String value) {
 		return this;
 	}

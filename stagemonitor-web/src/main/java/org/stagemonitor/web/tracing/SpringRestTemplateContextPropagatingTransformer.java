@@ -12,7 +12,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.InterceptingHttpAccessor;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.requestmonitor.AbstractExternalRequest;
+import org.stagemonitor.requestmonitor.ExternalHttpRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
@@ -21,10 +21,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import io.opentracing.Span;
-import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
-import io.opentracing.tag.Tags;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -57,7 +55,7 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 
 		@Override
 		public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-			final Span span = new ExternalHttpRequest(requestMonitorPlugin.getTracer(), request).createSpan();
+			final Span span = new ExternalHttpRequest(requestMonitorPlugin.getTracer(), request.getMethod().toString(), request.getURI().toString(), request.getURI().getHost(), request.getURI().getPort()).createSpan();
 			try {
 				Profiler.start(request.getMethod().toString() + " " + request.getURI() + " ");
 				requestMonitorPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
@@ -66,30 +64,6 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 				Profiler.stop();
 				span.finish();
 			}
-		}
-	}
-
-	public static class ExternalHttpRequest extends AbstractExternalRequest {
-
-		private final HttpRequest request;
-
-		protected ExternalHttpRequest(Tracer tracer, HttpRequest request) {
-			super(tracer, request.getMethod().toString() + " " + request.getURI());
-			this.request = request;
-		}
-
-		@Override
-		public Span createSpan() {
-			final Span span = super.createSpan();
-			Tags.HTTP_URL.set(span, request.getURI().toString());
-			Tags.PEER_HOSTNAME.set(span, request.getURI().getHost());
-			Tags.PEER_PORT.set(span, (short) request.getURI().getPort());
-			return span;
-		}
-
-		@Override
-		protected String getType() {
-			return "http";
 		}
 	}
 

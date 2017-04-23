@@ -40,16 +40,16 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 	public void report(SpanContextInformation spanContext) {
 		final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 		if (requestMonitorPlugin.isOnlyLogElasticsearchSpanReports()) {
-			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(spanContext.getSpan()));
+			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(spanContext.getReadbackSpan()));
 		} else {
-			elasticsearchClient.index(spansIndex, SPANS_TYPE, spanContext.getSpan());
+			elasticsearchClient.index(spansIndex, SPANS_TYPE, spanContext.getReadbackSpan());
 		}
 	}
 
 	@Override
 	public boolean isActive(SpanContextInformation spanContext) {
 		final boolean logOnly = requestMonitorPlugin.isOnlyLogElasticsearchSpanReports();
-		return (elasticsearchClient.isElasticsearchAvailable() || logOnly);
+		return elasticsearchClient.isElasticsearchAvailable() || logOnly;
 	}
 
 }

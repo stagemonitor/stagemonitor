@@ -175,8 +175,4 @@ public class ConfigurationOptionTest {
 		ConfigurationOption.stringOption().key("foo").buildWithDefault(null);
 	}
 
-	@Test
-	public void testSupplier() throws Exception {
-		assertEquals("fooBar", string.asSupplier().get());
-	}
 }

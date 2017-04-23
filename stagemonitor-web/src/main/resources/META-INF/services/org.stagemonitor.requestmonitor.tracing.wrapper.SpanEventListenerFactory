@@ -1,1 +1,2 @@
 org.stagemonitor.web.monitor.MonitoredHttpRequest$HttpSpanEventListener
+org.stagemonitor.web.monitor.widget.WidgetAjaxSpanReporter$WidgetAllowedEventListener$Factory

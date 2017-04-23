@@ -3,6 +3,8 @@ package org.stagemonitor.requestmonitor;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.context.TracingUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
@@ -19,17 +21,17 @@ import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventLi
 import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener;
 import org.stagemonitor.requestmonitor.profiler.CallTreeSpanEventListener;
 import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
+import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
+import org.stagemonitor.requestmonitor.reporter.ReadbackSpanEventListener;
 import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
 import org.stagemonitor.requestmonitor.reporter.SpanReporter;
 import org.stagemonitor.requestmonitor.sampling.PostExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
-import org.stagemonitor.requestmonitor.tracing.NoopTracer;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 import org.stagemonitor.requestmonitor.tracing.jaeger.JaegerTracerFactory;
-import org.stagemonitor.requestmonitor.tracing.jaeger.MDCSpanEventListener;
-import org.stagemonitor.requestmonitor.tracing.jaeger.SpanJsonModule;
+import org.stagemonitor.requestmonitor.mdc.MDCSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
@@ -42,12 +44,16 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.regex.Pattern;
 
+import io.opentracing.NoopTracerFactory;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.util.GlobalTracer;
 
 public class RequestMonitorPlugin extends StagemonitorPlugin {
 
-	public static final String REQUEST_MONITOR_PLUGIN = "Request Monitor Plugin";
+	private static final Logger logger = LoggerFactory.getLogger(RequestMonitorPlugin.class);
+
+	private static final String REQUEST_MONITOR_PLUGIN = "Request Monitor Plugin";
 
 	/* What/how to monitor */
 	private final ConfigurationOption<Boolean> collectCpuTime = ConfigurationOption.booleanOption()
@@ -346,17 +352,20 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		}
 	}
 
+	/**
+	 * This is an internal method, use {@link GlobalTracer#get()}
+	 */
 	public Tracer getTracer() {
 		if (spanWrappingTracer != null && corePlugin.isStagemonitorActive()) {
 			return spanWrappingTracer;
 		} else {
-			return NoopTracer.INSTANCE;
+			return NoopTracerFactory.create();
 		}
 	}
 
 	@Override
 	public void initializePlugin(final StagemonitorPlugin.InitArguments initArguments) {
-		JsonUtils.getMapper().registerModule(new SpanJsonModule());
+		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
 		corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
@@ -370,6 +379,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		}
 		if (corePlugin.isReportToElasticsearch()) {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Metrics.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/External-Request-Metrics.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchExternalRequestsDashboard.json");
 		}
@@ -392,6 +402,12 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final ServiceLoader<SpanEventListenerFactory> factories = ServiceLoader.load(SpanEventListenerFactory.class, RequestMonitorPlugin.class.getClassLoader());
 		this.spanWrappingTracer = createSpanWrappingTracer(tracer, initArguments.getConfiguration(), metricRegistry,
 				factories, samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
+		try {
+			GlobalTracer.register(spanWrappingTracer);
+		} catch (IllegalStateException e) {
+			logger.debug("If this exception occurs outside of stagemonitor's unit tests it indicates a programming " +
+					"error.", e);
+		}
 	}
 
 	private Tracer getTracerImpl(InitArguments initArguments) {
@@ -410,15 +426,16 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final RequestMonitorPlugin requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
 		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanEventListener());
-		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry));
-		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanEventListener.Factory(metricRegistry, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
 		spanWrappingTracer.addSpanInterceptor(new AnonymizingSpanEventListener.MySpanEventListenerFactory(requestMonitorPlugin));
-		spanWrappingTracer.addSpanInterceptor(new MDCSpanEventListener());
+		spanWrappingTracer.addSpanInterceptor(new MDCSpanEventListener(configuration.getConfig(CorePlugin.class), requestMonitorPlugin));
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
 			spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
 		}
+		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry));
+		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanEventListener.Factory(metricRegistry, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(new CallTreeSpanEventListener(requestMonitorPlugin));
+		spanWrappingTracer.addSpanInterceptor(new ReadbackSpanEventListener.Factory(reportingSpanEventListener, requestMonitorPlugin));
 		spanWrappingTracer.addSpanInterceptor(reportingSpanEventListener);
 		return spanWrappingTracer;
 	}

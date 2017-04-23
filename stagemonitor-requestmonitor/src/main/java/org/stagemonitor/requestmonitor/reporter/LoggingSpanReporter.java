@@ -1,19 +1,14 @@
-package org.stagemonitor.requestmonitor.tracing.jaeger;
-
-
-import com.uber.jaeger.LogData;
-import com.uber.jaeger.Span;
-import com.uber.jaeger.reporters.Reporter;
+package org.stagemonitor.requestmonitor.reporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
-import java.util.List;
 import java.util.Map;
 
-public class LoggingSpanReporter implements Reporter {
+public class LoggingSpanReporter extends SpanReporter {
 
 	private static final Logger logger = LoggerFactory.getLogger(LoggingSpanReporter.class);
 	private final RequestMonitorPlugin requestMonitorPlugin;
@@ -23,19 +18,21 @@ public class LoggingSpanReporter implements Reporter {
 	}
 
 	@Override
-	public void report(Span span) {
-		if (!requestMonitorPlugin.isLogSpans()) {
-			return;
-		}
-		logger.info("Reporting span");
+	public void report(SpanContextInformation context) {
+		logger.info(getLogMessage(context));
+	}
+
+	String getLogMessage(SpanContextInformation context) {
+		ReadbackSpan span = context.getReadbackSpan();
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n###########################\n");
 		sb.append("# Span report             #\n");
 		sb.append("###########################\n");
-		appendLine(sb, "name", span.getOperationName());
+		appendLine(sb, "name", span.getName());
 		appendLine(sb, "duration", span.getDuration());
-		appendLine(sb, "context", span.context().contextAsString());
-		appendLine(sb, "endpoint", span.getPeer());
+		appendLine(sb, "traceId", span.getTraceId());
+		appendLine(sb, "spanId", span.getId());
+		appendLine(sb, "parentId", span.getParentId());
 		sb.append("###########################\n");
 		sb.append("# Tags                    #\n");
 		sb.append("###########################\n");
@@ -45,18 +42,7 @@ public class LoggingSpanReporter implements Reporter {
 			}
 		}
 		sb.append("###########################\n");
-		final List<LogData> logs = span.getLogs();
-		if (logs != null) {
-			sb.append("###########################\n");
-			sb.append("# Logs                    #\n");
-			sb.append("###########################\n");
-			for (LogData logData : logs) {
-				appendLine(sb, logData.getTime(), logData.getMessage());
-				appendLine(sb, "payload", logData.getPayload());
-			}
-			sb.append("###########################\n");
-		}
-		logger.info(sb.toString());
+		return sb.toString();
 	}
 
 	private void appendLine(StringBuilder sb, Object key, Object value) {
@@ -66,6 +52,7 @@ public class LoggingSpanReporter implements Reporter {
 	}
 
 	@Override
-	public void close() {
+	public boolean isActive(SpanContextInformation spanContext) {
+		return requestMonitorPlugin.isLogSpans();
 	}
 }

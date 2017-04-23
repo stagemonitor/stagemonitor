@@ -16,6 +16,7 @@ dependencies {
 	testCompile 'org.springframework:spring-test:4.1.0.RELEASE'
 	testCompile "org.elasticsearch.client:transport:$esVersion"
 	testCompile "org.eclipse.jetty:jetty-server:$jettyVersion"
+	testCompile "io.opentracing:opentracing-mock:$opentracingVersion"
 
 }
 

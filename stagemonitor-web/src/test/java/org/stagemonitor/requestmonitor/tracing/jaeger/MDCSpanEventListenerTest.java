@@ -1,8 +1,6 @@
 package org.stagemonitor.requestmonitor.tracing.jaeger;
 
 import com.codahale.metrics.SharedMetricRegistries;
-import com.uber.jaeger.Span;
-import com.uber.jaeger.SpanContext;
 
 import org.junit.After;
 import org.junit.Before;
@@ -11,11 +9,17 @@ import org.slf4j.MDC;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.mdc.MDCSpanEventListener;
+import org.stagemonitor.requestmonitor.tracing.B3Propagator;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.Collections;
 
+import io.opentracing.mock.MockTracer;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,14 +37,14 @@ public class MDCSpanEventListenerTest {
 		this.corePlugin = mock(CorePlugin.class);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 
-		mdcSpanInterceptor = new MDCSpanEventListener(corePlugin);
-		final Span span = mock(Span.class);
-		final SpanContext spanContext = mock(SpanContext.class);
-		when(spanContext.getTraceID()).thenReturn(1L);
-		when(spanContext.getSpanID()).thenReturn(1L);
-		when(spanContext.getParentID()).thenReturn(0L);
-		when(span.context()).thenReturn(spanContext);
-		spanWrapper = new SpanWrapper(span, null, 0, Collections.singletonList(mdcSpanInterceptor));
+		final MockTracer tracer = new MockTracer(new B3Propagator());
+
+		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+
+		mdcSpanInterceptor = new MDCSpanEventListener(corePlugin, requestMonitorPlugin);
+		spanWrapper = new SpanWrapper(tracer.buildSpan("operation name").start(),"operation name",
+				1, 1, Collections.emptyList());
 	}
 
 	@After
@@ -56,8 +60,8 @@ public class MDCSpanEventListenerTest {
 				.thenReturn(new MeasurementSession("MDCSpanEventListenerTest", "testHost", "testInstance"));
 		mdcSpanInterceptor.onStart(spanWrapper);
 
-		assertEquals("1", MDC.get("spanId"));
-		assertEquals("1", MDC.get("traceId"));
+		assertNotNull(MDC.get("spanId"));
+		assertNotNull(MDC.get("traceId"));
 		assertNull(MDC.get("parentId"));
 
 		mdcSpanInterceptor.onFinish(spanWrapper, null, 0);
@@ -94,4 +98,5 @@ public class MDCSpanEventListenerTest {
 
 		assertNull(MDC.getCopyOfContextMap());
 	}
+
 }

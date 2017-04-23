@@ -27,6 +27,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+/**
+ * @deprecated use {@link io.opentracing.mock.MockTracer}
+ */
+@Deprecated
 public class MockTracer implements Tracer {
 
 	static {

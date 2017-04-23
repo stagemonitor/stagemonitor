@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -492,18 +491,6 @@ public class ConfigurationOption<T> {
 		this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
 	}
 
-	/**
-	 * @throws NoClassDefFoundError When not using Java 8+
-	 */
-	public Supplier<T> asSupplier() {
-		return new Supplier<T>() {
-			@Override
-			public T get() {
-				return getValue();
-			}
-		};
-	}
-
 	public void addChangeListener(ChangeListener<T> changeListener) {
 		changeListeners.add(changeListener);
 	}
@@ -635,8 +622,6 @@ public class ConfigurationOption<T> {
 		 * Builds the option and marks it as not required
 		 * <p/>
 		 * Use this method if setting this option is not required and to express that it may be <code>null</code>.
-		 *
-		 * @throws NoClassDefFoundError When not using Java 8+
 		 */
 		public ConfigurationOption<Optional<T>> buildOptional() {
 			required = false;
@@ -649,8 +634,8 @@ public class ConfigurationOption<T> {
 				optionalValidators.add(new Validator.OptionalValidatorAdapter<T>(validator));
 			}
 			return new ConfigurationOption<Optional<T>>(dynamic, sensitive, key, label, description,
-					Optional.ofNullable(defaultValue), configurationCategory,
-					new OptionalValueConverter<T>(valueConverter), Optional.class, Arrays.asList(this.tags), required,
+					java.util.Optional.ofNullable(defaultValue), configurationCategory,
+					new OptionalValueConverter<T>(valueConverter), java.util.Optional.class, Arrays.asList(this.tags), required,
 					optionalChangeListeners, optionalValidators, Arrays.asList(aliasKeys));
 		}
 

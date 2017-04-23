@@ -1,1 +1,1 @@
-org.stagemonitor.requestmonitor.tracing.jaeger.RateLimitingPreExecutionInterceptor
+org.stagemonitor.requestmonitor.sampling.RateLimitingPreExecutionInterceptor
