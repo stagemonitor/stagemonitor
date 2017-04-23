@@ -1,6 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-requestmonitor")
 	compile "io.opentracing:opentracing-api:$opentracingVersion"
-	compile "io.opentracing.brave:brave-opentracing:0.19.4"
-	compile "io.zipkin.reporter:zipkin-sender-urlconnection:0.6.13"
+	compile "io.opentracing.brave:brave-opentracing:0.20.0"
+	compile "io.zipkin.reporter:zipkin-sender-urlconnection:0.7.0"
 }

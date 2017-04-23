@@ -8,6 +8,7 @@ import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 
 import java.util.concurrent.TimeUnit;
 
+import brave.Tracing;
 import brave.opentracing.BraveTracer;
 import brave.propagation.Propagation;
 import brave.sampler.Sampler;
@@ -19,7 +20,7 @@ public class BraveZipkinReportingTracerFactory extends TracerFactory {
 
 	@Override
 	public Tracer getTracer(StagemonitorPlugin.InitArguments initArguments) {
-		final brave.Tracer braveTracer = brave.Tracer.newBuilder()
+		final Tracing braveTracer = Tracing.newBuilder()
 				.localServiceName(initArguments.getMeasurementSession().getApplicationName())
 				.reporter(getZipkinReporterBuilder(initArguments).build())
 				.sampler(getSampler())
