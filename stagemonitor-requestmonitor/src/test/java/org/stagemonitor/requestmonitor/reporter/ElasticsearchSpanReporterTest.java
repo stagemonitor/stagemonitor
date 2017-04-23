@@ -9,6 +9,10 @@ import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
+
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
@@ -134,5 +138,12 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		verify(elasticsearchClient).index(anyString(), anyString(), spanCaptor.capture());
 		ReadbackSpan span = spanCaptor.getValue();
 		assertTrue((Boolean) span.getTags().get("serviceLoaderWorks"));
+	}
+
+	@Test
+	public void testLoadedViaServiceLoader() throws Exception {
+		List<Class<? extends SpanReporter>> spanReporters = new ArrayList<>();
+		ServiceLoader.load(SpanReporter.class).forEach(reporter -> spanReporters.add(reporter.getClass()));
+		assertTrue(spanReporters.contains(ElasticsearchSpanReporter.class));
 	}
 }

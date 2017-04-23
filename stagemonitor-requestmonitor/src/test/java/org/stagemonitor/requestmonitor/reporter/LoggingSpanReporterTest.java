@@ -2,8 +2,13 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -18,7 +23,10 @@ public class LoggingSpanReporterTest {
 	@Before
 	public void setUp() throws Exception {
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		loggingSpanReporter = new LoggingSpanReporter(requestMonitorPlugin);
+		loggingSpanReporter = new LoggingSpanReporter();
+		final Configuration configuration = mock(Configuration.class);
+		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		loggingSpanReporter.init(configuration);
 	}
 
 	@Test
@@ -37,6 +45,13 @@ public class LoggingSpanReporterTest {
 
 		when(requestMonitorPlugin.isLogSpans()).thenReturn(false);
 		assertFalse(loggingSpanReporter.isActive(null));
+	}
+
+	@Test
+	public void testLoadedViaServiceLoader() throws Exception {
+		List<Class<? extends SpanReporter>> spanReporters = new ArrayList<>();
+		ServiceLoader.load(SpanReporter.class).forEach(reporter -> spanReporters.add(reporter.getClass()));
+		assertTrue(spanReporters.contains(LoggingSpanReporter.class));
 	}
 
 }
