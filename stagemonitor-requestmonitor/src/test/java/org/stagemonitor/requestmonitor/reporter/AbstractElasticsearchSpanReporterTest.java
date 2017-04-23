@@ -41,6 +41,7 @@ public class AbstractElasticsearchSpanReporterTest {
 	protected Configuration configuration;
 	protected CorePlugin corePlugin;
 	protected Map<String, Object> tags;
+	protected ReportingSpanEventListener reportingSpanEventListener;
 
 	@Before
 	public void setUp() throws Exception {
@@ -68,9 +69,10 @@ public class AbstractElasticsearchSpanReporterTest {
 		spanLogger = mock(Logger.class);
 		tags = new HashMap<>();
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
+		reportingSpanEventListener = new ReportingSpanEventListener(configuration);
 		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
-				new SamplePriorityDeterminingSpanEventListener(configuration), new ReportingSpanEventListener(configuration));
+				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
 		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
@@ -80,13 +82,13 @@ public class AbstractElasticsearchSpanReporterTest {
 		assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 
-	protected SpanContextInformation createTestSpanWithCallTree(long executionTimeMs, String operationName) {
-		final SpanContextInformation info = createTestSpan(executionTimeMs, CallStackElement.createRoot("test"), operationName);
+	protected SpanContextInformation reportSpanWithCallTree(long executionTimeMs, String operationName) {
+		final SpanContextInformation info = reportSpan(executionTimeMs, CallStackElement.createRoot("test"), operationName);
 		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
 		return info;
 	}
 
-	private SpanContextInformation createTestSpan(long executionTimeMs, CallStackElement callTree, String operationName) {
+	private SpanContextInformation reportSpan(long executionTimeMs, CallStackElement callTree, String operationName) {
 		final Tracer tracer = requestMonitorPlugin.getTracer();
 		final Span span;
 		span = tracer.buildSpan(operationName)
@@ -95,6 +97,7 @@ public class AbstractElasticsearchSpanReporterTest {
 				.start();
 		final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(span);
 		spanContextInformation.setCallTree(callTree);
+		// implicitly reports
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMs) + 1);
 		return spanContextInformation;
 	}

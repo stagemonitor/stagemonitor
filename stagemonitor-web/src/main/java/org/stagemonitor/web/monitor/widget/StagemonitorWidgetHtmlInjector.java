@@ -4,14 +4,13 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import io.opentracing.Span;
 
 public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 
@@ -55,9 +54,9 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 
 	@Override
 	public void injectHtml(HtmlInjector.InjectArguments injectArguments) {
-		Span span = null;
+		ReadbackSpan span = null;
 		if (injectArguments.getSpanContext() != null) {
-			span = injectArguments.getSpanContext().getSpan();
+			span = injectArguments.getSpanContext().getReadbackSpan();
 		}
 		final List<String> pathsOfWidgetTabPlugins = new ArrayList<String>();
 		for (String path : Stagemonitor.getPathsOfWidgetTabPlugins()) {

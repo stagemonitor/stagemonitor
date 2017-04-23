@@ -1,20 +1,10 @@
 package org.stagemonitor.requestmonitor;
 
-import com.uber.jaeger.Span;
-import com.uber.jaeger.context.TracingUtils;
-import com.uber.jaeger.samplers.ConstSampler;
-
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.stagemonitor.requestmonitor.tracing.jaeger.LoggingSpanReporter;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import io.opentracing.Tracer;
+import io.opentracing.mock.MockTracer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,8 +20,7 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 public class RequestMonitorTest extends AbstractRequestMonitorTest {
 
 	protected Tracer getTracer() {
-		return new com.uber.jaeger.Tracer.Builder("RequestMonitorTest",
-				new LoggingSpanReporter(requestMonitorPlugin), new ConstSampler(true)).build();
+		return new MockTracer();
 	}
 
 	@Test
@@ -78,39 +67,6 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	private MonitoredRequest createMonitoredRequest() throws Exception {
 		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", () -> {
 		}));
-	}
-
-	@Test
-	public void testExecutorServiceContextPropagation() throws Exception {
-		final ExecutorService executorService = TracingUtils.tracedExecutor(Executors.newSingleThreadExecutor());
-		final SpanContextInformation[] asyncSpan = new SpanContextInformation[1];
-
-		final Future<?>[] asyncMethodCallFuture = new Future<?>[1];
-		final SpanContextInformation testInfo = requestMonitor.monitor(new MonitoredMethodRequest(configuration, "test", () -> {
-			assertNotNull(TracingUtils.getTraceContext().getCurrentSpan());
-			asyncMethodCallFuture[0] = monitorAsyncMethodCall(executorService, asyncSpan);
-		}));
-		executorService.shutdown();
-		// waiting for completion
-		spanCapturingReporter.get();
-		spanCapturingReporter.get();
-		asyncMethodCallFuture[0].get();
-		assertEquals("test", testInfo.getOperationName());
-		assertEquals("async", asyncSpan[0].getOperationName());
-
-		assertEquals(((SpanWrapper) testInfo.getSpan()).unwrap(Span.class).context(), ((SpanWrapper) asyncSpan[0].getSpan()).unwrap(Span.class).context());
-	}
-
-	private Future<?> monitorAsyncMethodCall(ExecutorService executorService, final SpanContextInformation[] asyncSpan) {
-		return executorService.submit((Callable<Object>) () ->
-				asyncSpan[0] = requestMonitor.monitor(new MonitoredMethodRequest(configuration, "async", () -> {
-					assertNotNull(TracingUtils.getTraceContext().getCurrentSpan());
-					callAsyncMethod();
-				})));
-	}
-
-	private Object callAsyncMethod() {
-		return null;
 	}
 
 	@Test

@@ -1,11 +1,11 @@
-package org.stagemonitor.requestmonitor.tracing.jaeger;
-
-import com.uber.jaeger.SpanContext;
+package org.stagemonitor.requestmonitor.mdc;
 
 import org.slf4j.MDC;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
 
@@ -18,38 +18,44 @@ import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListene
 public class MDCSpanEventListener extends StatelessSpanEventListener {
 
 	private final CorePlugin corePlugin;
+	private final RequestMonitorPlugin requestMonitorPlugin;
 
-	public MDCSpanEventListener() {
-		this(Stagemonitor.getPlugin(CorePlugin.class));
-	}
-
-	public MDCSpanEventListener(CorePlugin corePlugin) {
+	public MDCSpanEventListener(CorePlugin corePlugin, RequestMonitorPlugin requestMonitorPlugin) {
 		this.corePlugin = corePlugin;
+		this.requestMonitorPlugin = requestMonitorPlugin;
 	}
 
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
 		if (corePlugin.isStagemonitorActive()) {
 			final MeasurementSession measurementSession = corePlugin.getMeasurementSession();
-			addToMdcIfNotNull("application", measurementSession.getApplicationName());
-			addToMdcIfNotNull("host", measurementSession.getHostName());
-			addToMdcIfNotNull("instance", measurementSession.getInstanceName());
+			if (measurementSession != null) {
+				addToMdcIfNotNull("application", measurementSession.getApplicationName());
+				addToMdcIfNotNull("host", measurementSession.getHostName());
+				addToMdcIfNotNull("instance", measurementSession.getInstanceName());
+			}
 
 			// don't store the context in MDC if stagemonitor is not active
 			// so that thread pools that get created on startup don't inherit the ids
-			if (Stagemonitor.isStarted() && spanWrapper instanceof SpanWrapper) {
-				final com.uber.jaeger.Span jaegerSpan = ((SpanWrapper) spanWrapper).unwrap(com.uber.jaeger.Span.class);
-				if (jaegerSpan != null) {
-					setContextToMdc(jaegerSpan.context());
-				}
+			if (Stagemonitor.isStarted()) {
+				requestMonitorPlugin.getTracer().inject(spanWrapper.context(), B3HeaderFormat.INSTANCE, new B3HeaderFormat.B3InjectAdapter() {
+					@Override
+					public void setParentId(String value) {
+						addToMdcIfNotNull("parentId", value);
+					}
+
+					@Override
+					public void setSpanId(String value) {
+						addToMdcIfNotNull("spanId", value);
+					}
+
+					@Override
+					public void setTraceId(String value) {
+						addToMdcIfNotNull("traceId", value);
+					}
+				});
 			}
 		}
-	}
-
-	private void setContextToMdc(SpanContext context) {
-		addToMdcIfNotZero("traceId", context.getTraceID());
-		addToMdcIfNotZero("spanId", context.getSpanID());
-		addToMdcIfNotZero("parentId", context.getParentID());
 	}
 
 	@Override
@@ -63,12 +69,6 @@ public class MDCSpanEventListener extends StatelessSpanEventListener {
 	private void addToMdcIfNotNull(String key, String value) {
 		if (value != null) {
 			MDC.put(key, value);
-		}
-	}
-
-	private void addToMdcIfNotZero(String key, long value) {
-		if (value != 0) {
-			MDC.put(key, Long.toString(value));
 		}
 	}
 }

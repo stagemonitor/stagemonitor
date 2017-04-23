@@ -3,10 +3,11 @@ package org.stagemonitor.requestmonitor.tracing.jaeger;
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.propagation.Extractor;
 import com.uber.jaeger.propagation.Injector;
+import com.uber.jaeger.reporters.NoopReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.requestmonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
 
 import java.nio.charset.Charset;
@@ -32,9 +33,10 @@ public class JaegerTracerFactory extends TracerFactory {
 		final B3TextMapCodec b3TextMapCodec = new B3TextMapCodec();
 		return new com.uber.jaeger.Tracer.Builder(
 				initArguments.getMeasurementSession().getApplicationName(),
-				new LoggingSpanReporter(initArguments.getPlugin(RequestMonitorPlugin.class)),
+				new NoopReporter(),
 				new ConstSampler(true))
 				.registerInjector(Format.Builtin.HTTP_HEADERS, b3TextMapCodec)
+				.registerInjector(B3HeaderFormat.INSTANCE, b3TextMapCodec)
 				.registerExtractor(Format.Builtin.HTTP_HEADERS, b3TextMapCodec)
 				.build();
 	}

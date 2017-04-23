@@ -7,6 +7,7 @@ import com.uber.jaeger.context.TracingUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.configuration.ConfigurationOption;
@@ -82,6 +83,7 @@ public abstract class AbstractRequestMonitorTest {
 		tracer = RequestMonitorPlugin.createSpanWrappingTracer(getTracer(), configuration, registry,
 				TagRecordingSpanEventListener.asList(tags),
 				samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
+		when(corePlugin.getMeasurementSession()).thenReturn(new MeasurementSession(getClass().getSimpleName(), "test", "test"));
 		when(requestMonitorPlugin.getTracer()).then((invocation) -> {
 			if (corePlugin.isStagemonitorActive()) {
 				return tracer;

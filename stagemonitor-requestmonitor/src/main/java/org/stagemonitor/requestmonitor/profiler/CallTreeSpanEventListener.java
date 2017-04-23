@@ -68,7 +68,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 				if (contextInfo.isSampled()) {
 					determineIfExcludeCallTree(contextInfo);
 					if (isAddCallTreeToSpan(contextInfo, operationName)) {
-						addCallTreeToSpan(contextInfo, spanWrapper.getDelegate(), operationName);
+						addCallTreeToSpan(contextInfo, spanWrapper, operationName);
 					}
 				}
 			} finally {

@@ -21,12 +21,14 @@ public class SpanWrapper implements Span {
 	private Span delegate;
 	private String operationName;
 	private final long startTimestampNanos;
+	private final long startTimestampMillis;
 	private final List<SpanEventListener> spanEventListeners;
 
-	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, List<SpanEventListener> spanEventListeners) {
+	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, long startTimestampMillis, List<SpanEventListener> spanEventListeners) {
 		this.delegate = delegate;
 		this.operationName = operationName;
 		this.startTimestampNanos = startTimestampNanos;
+		this.startTimestampMillis = startTimestampMillis;
 		this.spanEventListeners = spanEventListeners;
 	}
 
@@ -142,6 +144,10 @@ public class SpanWrapper implements Span {
 
 	public String getOperationName() {
 		return operationName;
+	}
+
+	public long getStartTimestampMillis() {
+		return startTimestampMillis;
 	}
 
 	public <T extends Span> T unwrap(Class<T> delegateClass) {

@@ -9,10 +9,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.Configuration;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
@@ -22,11 +20,11 @@ import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import io.opentracing.Span;
+import io.opentracing.mock.MockSpan;
 import io.opentracing.tag.Tags;
 
 import static junit.framework.Assert.assertNull;
@@ -38,8 +36,8 @@ import static org.mockito.Mockito.when;
 public class MonitoredHttpRequestTest {
 
 	private Configuration configuration;
-	private Map<String, Object> tags = new HashMap<>();
 	private String operationName;
+	private io.opentracing.mock.MockTracer tracer;
 
 	@Before
 	public void setUp() throws Exception {
@@ -48,7 +46,7 @@ public class MonitoredHttpRequestTest {
 		final WebPlugin webPlugin = new WebPlugin();
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		final List<SpanEventListenerFactory> spanEventListenerFactories = TagRecordingSpanEventListener.asList(tags);
+		final List<SpanEventListenerFactory> spanEventListenerFactories = new ArrayList<>();
 		spanEventListenerFactories.add(() -> new AbstractSpanEventListener() {
 			@Override
 			public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
@@ -56,7 +54,8 @@ public class MonitoredHttpRequestTest {
 			}
 		});
 		spanEventListenerFactories.add(new MonitoredHttpRequest.HttpSpanEventListener(webPlugin, requestMonitorPlugin, new Metric2Registry()));
-		when(requestMonitorPlugin.getTracer()).thenReturn(new SpanWrappingTracer(new MockTracer(),
+		tracer = new io.opentracing.mock.MockTracer();
+		when(requestMonitorPlugin.getTracer()).thenReturn(new SpanWrappingTracer(tracer,
 				spanEventListenerFactories));
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
@@ -87,18 +86,20 @@ public class MonitoredHttpRequestTest {
 
 		final Span span = monitoredHttpRequest.createSpan();
 		span.finish();
-		assertEquals("/test.js", tags.get(Tags.HTTP_URL.getKey()));
+		assertEquals(1, tracer.finishedSpans().size());
+		final MockSpan mockSpan = tracer.finishedSpans().get(0);
+		assertEquals("/test.js", mockSpan.tags().get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET *.js", operationName);
-		assertEquals("GET", tags.get("method"));
+		assertEquals("GET", mockSpan.tags().get("method"));
 
-		assertEquals("application/json", tags.get(SpanUtils.HTTP_HEADERS_PREFIX + "accept"));
-		assertFalse(tags.containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "cookie"));
-		assertFalse(tags.containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "Cookie"));
+		assertEquals("application/json", mockSpan.tags().get(SpanUtils.HTTP_HEADERS_PREFIX + "accept"));
+		assertFalse(mockSpan.tags().containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "cookie"));
+		assertFalse(mockSpan.tags().containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "Cookie"));
 
-		assertEquals("bar", tags.get(SpanUtils.PARAMETERS_PREFIX + "foo"));
-		assertEquals("blubb", tags.get(SpanUtils.PARAMETERS_PREFIX + "bla"));
-		assertEquals("XXXX", tags.get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
-		assertEquals("XXXX", tags.get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
+		assertEquals("bar", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "foo"));
+		assertEquals("blubb", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "bla"));
+		assertEquals("XXXX", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
+		assertEquals("XXXX", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
 	}
 
 	@Test
@@ -108,8 +109,10 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan();
-		assertEquals("www.github.com", tags.get("http.referring_site"));
+		monitoredHttpRequest.createSpan().finish();
+		assertEquals(1, tracer.finishedSpans().size());
+		final MockSpan mockSpan = tracer.finishedSpans().get(0);
+		assertEquals("www.github.com", mockSpan.tags().get("http.referring_site"));
 	}
 
 	@Test
@@ -120,8 +123,10 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan();
-		assertNull(tags.get("http.referring_site"));
+		monitoredHttpRequest.createSpan().finish();
+		assertEquals(1, tracer.finishedSpans().size());
+		final MockSpan mockSpan = tracer.finishedSpans().get(0);
+		assertNull(mockSpan.tags().get("http.referring_site"));
 	}
 
 	private MonitoredHttpRequest createMonitoredHttpRequest(MockHttpServletRequest request) throws IOException {
