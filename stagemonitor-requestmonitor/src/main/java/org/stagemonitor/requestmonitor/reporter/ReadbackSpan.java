@@ -17,6 +17,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import io.opentracing.tag.Tags;
+
 /**
  * A span which supports readback of tags and meta data
  */
@@ -124,6 +126,10 @@ public class ReadbackSpan {
 						if (value != null) {
 							gen.writeObjectField(entry.getKey(), value);
 						}
+					}
+					// always include error tag so we can have a successful/error filter in Kibana
+					if (!nestedTags.containsKey(Tags.ERROR.getKey())) {
+						gen.writeBooleanField("error", false);
 					}
 
 					gen.writeStringField("name", span.getName());

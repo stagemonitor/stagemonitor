@@ -26,6 +26,7 @@ import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -87,6 +88,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 	}
 
 	private void validateSpanJson(JsonNode spanJson) {
+		assertFalse(spanJson.get("error").booleanValue());
 		assertNotNull(spanJson.toString(), spanJson.get("foo"));
 		assertEquals(spanJson.toString(), "baz", spanJson.get("foo").get("bar").asText());
 		assertNotNull(spanJson.toString(), spanJson.get("parameters"));
