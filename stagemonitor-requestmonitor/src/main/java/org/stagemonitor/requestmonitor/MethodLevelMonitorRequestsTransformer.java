@@ -31,7 +31,8 @@ public class MethodLevelMonitorRequestsTransformer extends AbstractMonitorReques
 	}
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
+	// TODO revert to protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getMethodElementMatcher() {
 		ElementMatcher.Junction<MethodDescription> matcher = isAnnotatedWith(MonitorRequests.class)
 				// TODO maybe add a configuration to disable super method search as it is relatively costly
 				// InstrumentationPerformanceTest without: ~20ms with: ~420ms
@@ -42,7 +43,13 @@ public class MethodLevelMonitorRequestsTransformer extends AbstractMonitorReques
 			matcher = matcher.or(isAnnotatedWith(annotation));
 		}
 
-		return matcher;
+		// TODO revert to return matcher;
+		return new ElementMatcher.Junction.AbstractBase<MethodDescription>() {
+			@Override
+			public boolean matches(MethodDescription target) {
+				return isAnnotatedWith(MonitorRequests.class).matches(target);
+			}
+		};
 	}
 
 }

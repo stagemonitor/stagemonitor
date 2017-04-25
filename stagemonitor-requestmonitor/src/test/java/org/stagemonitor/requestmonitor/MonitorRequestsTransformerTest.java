@@ -62,6 +62,7 @@ public class MonitorRequestsTransformerTest {
 	public void testMonitorRequests() throws Exception {
 		testClass.monitorMe(1);
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
+		assertNotNull(spanContext);
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
 		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", spanContext.getOperationName());
