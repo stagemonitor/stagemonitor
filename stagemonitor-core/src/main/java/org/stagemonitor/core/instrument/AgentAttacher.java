@@ -168,7 +168,7 @@ public class AgentAttacher {
 	private static AgentBuilder createAgentBuilder(AutoEvictingCachingBinaryLocator binaryLocator) {
 		final ByteBuddy byteBuddy = new ByteBuddy()
 				.with(TypeValidation.of(corePlugin.isDebugInstrumentation()))
-				.with(MethodGraph.Empty.INSTANCE);
+				.with(MethodGraph.Compiler.ForDeclaredMethods.INSTANCE);
 		return new AgentBuilder.Default(byteBuddy)
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 				.with(getListener())

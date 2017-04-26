@@ -37,7 +37,7 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 	private static volatile MeasurementSession measurementSession;
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(SLA.class).or(isAnnotatedWith(SLAs.class));
 	}
 

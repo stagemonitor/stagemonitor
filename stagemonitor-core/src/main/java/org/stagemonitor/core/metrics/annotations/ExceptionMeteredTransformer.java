@@ -29,7 +29,7 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 	private static final MetricName.MetricNameTemplate metricNameTemplate = name("exception_rate").templateFor("signature");
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
 		return isAnnotatedWith(ExceptionMetered.class);
 	}
 

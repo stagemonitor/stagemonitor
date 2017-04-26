@@ -36,7 +36,7 @@ public class MeterLoggingTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
 		return not(isPrivate())
 				.and(named("trace")
 						.or(named("debug"))

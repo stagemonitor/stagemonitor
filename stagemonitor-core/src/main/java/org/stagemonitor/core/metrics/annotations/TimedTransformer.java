@@ -29,9 +29,8 @@ public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 	private final static MetricName.MetricNameTemplate metricNameTemplate = name("timer").templateFor("signature");
 
 	@Override
-	protected ElementMatcher.Junction<MethodDescription.InDefinedShape> getExtraMethodElementMatcher() {
-		ElementMatcher.Junction<MethodDescription.InDefinedShape> matcher = isAnnotatedWith(Timed.class);
-		return matcher;
+	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
+		return isAnnotatedWith(Timed.class);
 	}
 
 	@Override

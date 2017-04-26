@@ -10,7 +10,7 @@ class ErrorLoggingListener extends AgentBuilder.Listener.Adapter {
 	private static final Logger logger = LoggerFactory.getLogger(ErrorLoggingListener.class);
 
 	@Override
-	public void onError(String typeName, ClassLoader classLoader, JavaModule javaModule, Throwable throwable) {
+	public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
 		logger.warn("ERROR on transformation " + typeName, throwable);
 	}
 }
