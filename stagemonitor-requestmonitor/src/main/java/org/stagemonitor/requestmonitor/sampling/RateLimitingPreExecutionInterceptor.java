@@ -1,11 +1,10 @@
 package org.stagemonitor.requestmonitor.sampling;
 
-import com.uber.jaeger.utils.RateLimiter;
-
-import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
+import org.stagemonitor.requestmonitor.utils.RateLimiter;
 
 import java.util.HashMap;
 import java.util.Map;

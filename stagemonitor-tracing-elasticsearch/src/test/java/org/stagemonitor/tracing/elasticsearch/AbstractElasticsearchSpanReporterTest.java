@@ -1,13 +1,14 @@
-package org.stagemonitor.requestmonitor.reporter;
+package org.stagemonitor.tracing.elasticsearch;
 
 import com.uber.jaeger.context.TracingUtils;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.slf4j.Logger;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
@@ -16,6 +17,7 @@ import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
 import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
@@ -28,7 +30,6 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
@@ -36,6 +37,7 @@ import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEv
 public class AbstractElasticsearchSpanReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
 	protected RequestMonitorPlugin requestMonitorPlugin;
+	protected ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 	protected Logger spanLogger;
 	protected Metric2Registry registry;
 	protected ConfigurationRegistry configuration;
@@ -48,9 +50,11 @@ public class AbstractElasticsearchSpanReporterTest {
 		configuration = mock(ConfigurationRegistry.class);
 		corePlugin = mock(CorePlugin.class);
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		elasticsearchTracingPlugin = mock(ElasticsearchTracingPlugin.class);
 
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(elasticsearchTracingPlugin);
 		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
@@ -74,12 +78,12 @@ public class AbstractElasticsearchSpanReporterTest {
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		Assert.assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		Assert.assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 
 	protected SpanContextInformation reportSpanWithCallTree(long executionTimeMs, String operationName) {

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
@@ -24,6 +25,10 @@ import io.opentracing.tag.Tags;
  */
 public class ReadbackSpan {
 
+	static {
+		JsonUtils.getMapper().registerModule(new SpanJsonModule());
+	}
+
 	private String id;
 	private String traceId;
 	private String parentId;
@@ -38,7 +43,7 @@ public class ReadbackSpan {
 		return id;
 	}
 
-	void setId(String id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
@@ -46,7 +51,7 @@ public class ReadbackSpan {
 		return traceId;
 	}
 
-	void setTraceId(String traceId) {
+	public void setTraceId(String traceId) {
 		this.traceId = traceId;
 	}
 
@@ -54,7 +59,7 @@ public class ReadbackSpan {
 		return parentId;
 	}
 
-	void setParentId(String parentId) {
+	public void setParentId(String parentId) {
 		this.parentId = parentId;
 	}
 
@@ -62,7 +67,7 @@ public class ReadbackSpan {
 		return name;
 	}
 
-	void setName(String name) {
+	public void setName(String name) {
 		this.name = name;
 	}
 
@@ -70,7 +75,7 @@ public class ReadbackSpan {
 		return duration;
 	}
 
-	void setDuration(long duration) {
+	public void setDuration(long duration) {
 		this.duration = duration;
 	}
 
@@ -78,7 +83,7 @@ public class ReadbackSpan {
 		return timestamp;
 	}
 
-	void setTimestamp(String timestamp) {
+	public void setTimestamp(String timestamp) {
 		this.timestamp = timestamp;
 	}
 
@@ -86,7 +91,7 @@ public class ReadbackSpan {
 		return tags;
 	}
 
-	void setTag(String key, Object value) {
+	public void setTag(String key, Object value) {
 		if (value != null) {
 			synchronized (this) {
 				tags.put(key, value);

@@ -49,7 +49,7 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 
 		private final RequestMonitorPlugin requestMonitorPlugin;
 
-		private SpringRestTemplateContextPropagatingInterceptor(RequestMonitorPlugin requestMonitorPlugin) {
+		SpringRestTemplateContextPropagatingInterceptor(RequestMonitorPlugin requestMonitorPlugin) {
 			this.requestMonitorPlugin = requestMonitorPlugin;
 		}
 

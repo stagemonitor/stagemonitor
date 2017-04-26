@@ -3,13 +3,12 @@ package org.stagemonitor.web.reporter;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
@@ -49,8 +48,6 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(webPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
-		ElasticsearchSpanReporter reporter = new ElasticsearchSpanReporter();
-		reporter.init(configuration);
 		when(requestMonitorPlugin.getTracer()).thenReturn(new MockTracer());
 	}
 

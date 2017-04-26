@@ -8,10 +8,8 @@ import io.opentracing.propagation.TextMap;
 public class B3Propagator implements MockTracer.Propagator {
 	@Override
 	public <C> void inject(MockSpan.MockContext ctx, Format<C> format, C carrier) {
-		if (format instanceof B3HeaderFormat) {
-			((TextMap) carrier).put(B3HeaderFormat.SPAN_ID_NAME, Long.toHexString(ctx.spanId()));
-			((TextMap) carrier).put(B3HeaderFormat.TRACE_ID_NAME, Long.toHexString(ctx.traceId()));
-		}
+		((TextMap) carrier).put(B3HeaderFormat.SPAN_ID_NAME, Long.toHexString(ctx.spanId()));
+		((TextMap) carrier).put(B3HeaderFormat.TRACE_ID_NAME, Long.toHexString(ctx.traceId()));
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package org.stagemonitor.zipkin;
 
-import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.core.StagemonitorPlugin;
 
 public final class ZipkinPlugin extends StagemonitorPlugin {
 

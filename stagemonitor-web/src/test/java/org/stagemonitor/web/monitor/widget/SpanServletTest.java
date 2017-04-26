@@ -7,22 +7,20 @@ import org.mockito.Mockito;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
-import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
 import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.B3Propagator;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
 import org.stagemonitor.web.monitor.filter.StagemonitorSecurityFilter;
@@ -53,13 +51,11 @@ public class SpanServletTest {
 	private SpanServlet spanServlet;
 	private String connectionId;
 	private WebPlugin webPlugin;
-	private Span span;
 	private SpanContextInformation spanContext;
 	private ConfigurationRegistry configuration;
 
 	@Before
 	public void setUp() throws Exception {
-		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
 		configuration = mock(ConfigurationRegistry.class);
 
 		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
@@ -89,9 +85,6 @@ public class SpanServletTest {
 		Tracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(new B3Propagator()), configuration,
 				new Metric2Registry(), ServiceLoader.load(SpanEventListenerFactory.class), samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
 		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
-
-		// init jackson module
-		new ElasticsearchSpanReporter();
 	}
 
 	private void reportSpan() {
@@ -100,7 +93,7 @@ public class SpanServletTest {
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request,
 				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration);
 
-		span = monitoredHttpRequest.createSpan();
+		Span span = monitoredHttpRequest.createSpan();
 		spanContext = SpanContextInformation.forSpan(span);
 		span.setOperationName("test");
 		spanContext.setSpan(span);

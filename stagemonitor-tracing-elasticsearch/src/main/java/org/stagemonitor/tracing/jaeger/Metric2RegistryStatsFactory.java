@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.tracing.jaeger;
+package org.stagemonitor.tracing.jaeger;
 
 import com.uber.jaeger.metrics.Counter;
 import com.uber.jaeger.metrics.Gauge;

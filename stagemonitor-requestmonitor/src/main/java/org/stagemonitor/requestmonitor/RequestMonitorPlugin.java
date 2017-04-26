@@ -5,22 +5,22 @@ import com.uber.jaeger.context.TracingUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.converter.DoubleValueConverter;
+import org.stagemonitor.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.ConfigurationOption;
-import org.stagemonitor.configuration.converter.DoubleValueConverter;
-import org.stagemonitor.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanEventListener;
+import org.stagemonitor.requestmonitor.mdc.MDCSpanEventListener;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventListener;
 import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener;
 import org.stagemonitor.requestmonitor.profiler.CallTreeSpanEventListener;
-import org.stagemonitor.requestmonitor.reporter.ElasticsearchSpanReporter;
 import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
 import org.stagemonitor.requestmonitor.reporter.ReadbackSpanEventListener;
 import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
@@ -30,11 +30,10 @@ import org.stagemonitor.requestmonitor.sampling.PreExecutionSpanInterceptor;
 import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.TracerFactory;
-import org.stagemonitor.requestmonitor.tracing.jaeger.JaegerTracerFactory;
-import org.stagemonitor.requestmonitor.mdc.MDCSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -190,16 +189,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			.buildWithDefault(Collections.<String>emptySet());
 
 	/* Reporting */
-	private final ConfigurationOption<Boolean> onlyLogElasticsearchSpanReports = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.elasticsearch.onlyLogElasticsearchRequestTraceReports")
-			.dynamic(true)
-			.label("Only log Elasticsearch request trace reports")
-			.description(String.format("If set to true, the spans won't be reported to elasticsearch but instead logged in bulk format. " +
-					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
-					"different external process to send the spans to elasticsearch.", ElasticsearchSpanReporter.ES_SPAN_LOGGER))
-			.tags("reporting")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.buildWithDefault(false);
 	private final ConfigurationOption<Boolean> logSpans = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.reporting.log")
 			.dynamic(true)
@@ -236,25 +225,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 					"and won't cause the error flag of the span to be set to true.")
 			.configurationCategory(REQUEST_MONITOR_PLUGIN)
 			.buildWithDefault(Collections.<String>emptyList());
-
-	/* Storage */
-	private final ConfigurationOption<String> spanIndexTemplate = ConfigurationOption.stringOption()
-			.key("stagemonitor.requestmonitor.elasticsearch.spanIndexTemplate")
-			.dynamic(false)
-			.label("ES Request Span Template")
-			.description("The classpath location of the index template that is used for the stagemonitor-spans-* indices. " +
-					"By specifying the location to your own template, you can fully customize the index template.")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.tags("elasticsearch")
-			.buildWithDefault("stagemonitor-elasticsearch-span-index-template.json");
-	private final ConfigurationOption<Integer> deleteSpansAfterDays = ConfigurationOption.integerOption()
-			.key("stagemonitor.requestmonitor.deleteRequestTracesAfterDays")
-			.dynamic(true)
-			.label("Delete spans after (days)")
-			.description("When set, spans will be deleted automatically after the specified days. " +
-					"Set to a negative value to never delete spans.")
-			.configurationCategory(REQUEST_MONITOR_PLUGIN)
-			.buildWithDefault(7);
 
 	/* Sampling */
 	private final ConfigurationOption<Collection<String>> onlyReportSpansWithName = ConfigurationOption.stringsOption()
@@ -370,10 +340,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 
-		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
-				spanIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
-		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
-
 		if (corePlugin.isReportToGraphite()) {
 			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteRequestDashboard.json");
 		}
@@ -382,14 +348,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/External-Request-Metrics.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchExternalRequestsDashboard.json");
-		}
-		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/stagemonitor-spans-kibana-index-pattern.bulk");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Analysis.bulk");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk");
-
-			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
-					corePlugin.getMoveToColdNodesAfterDays(), deleteSpansAfterDays.getValue());
 		}
 
 		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
@@ -406,16 +364,31 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 			GlobalTracer.register(spanWrappingTracer);
 		} catch (IllegalStateException e) {
 			logger.debug("If this exception occurs outside of stagemonitor's unit tests it indicates a programming " +
-					"error.", e);
+					"error. Make sure you don't call Stagemonitor.reset()", e);
 		}
 	}
 
 	private Tracer getTracerImpl(InitArguments initArguments) {
 		final Iterator<TracerFactory> tracerFactoryIterator = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator();
 		if (tracerFactoryIterator.hasNext()) {
-			return tracerFactoryIterator.next().getTracer(initArguments);
+			final Tracer tracer = tracerFactoryIterator.next().getTracer(initArguments);
+			assertIsSingleImplementation(initArguments, tracerFactoryIterator, tracer);
+			return tracer;
 		} else {
-			return new JaegerTracerFactory().getTracer(initArguments);
+			logger.info("No OpenTracing implementation found. Falling back to NoopTracer. " +
+					"This is fine if you just want to use stagemonitor for development, for example with the in-browser-widget. " +
+					"If you want to report your traces to Elasticsearch, add a dependency to stagemonitor-tracing-elasticsearch. " +
+					"If you want to report to Zipkin, add stagemonitor-tracing-zipkin.");
+			return NoopTracerFactory.create();
+		}
+	}
+
+	private void assertIsSingleImplementation(InitArguments initArguments, Iterator<TracerFactory> tracerFactoryIterator, Tracer tracer) {
+		if (tracerFactoryIterator.hasNext()) {
+			final Tracer tracer2 = tracerFactoryIterator.next().getTracer(initArguments);
+			throw new IllegalStateException(MessageFormat.format("Multiple tracing implementations found: {0}, {1}. " +
+							"Make sure you only have one stagemonitor-tracing-* jar in your class path.",
+					tracer.getClass().getName(), tracer2.getClass().getName()));
 		}
 	}
 
@@ -517,10 +490,6 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 
 	public ConfigurationOption<Double> getRateLimitServerSpansPerMinuteOption() {
 		return rateLimitServerSpansPerMinute;
-	}
-
-	public boolean isOnlyLogElasticsearchSpanReports() {
-		return onlyLogElasticsearchSpanReports.getValue();
 	}
 
 	public double getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests() {

@@ -1,4 +1,4 @@
-package org.stagemonitor.requestmonitor.tracing.jaeger;
+package org.stagemonitor.tracing.jaeger;
 
 import com.uber.jaeger.SpanContext;
 import com.uber.jaeger.propagation.Extractor;
@@ -31,16 +31,17 @@ public class JaegerTracerFactory extends TracerFactory {
 	@Override
 	public Tracer getTracer(StagemonitorPlugin.InitArguments initArguments) {
 		final B3TextMapCodec b3TextMapCodec = new B3TextMapCodec();
-		return new com.uber.jaeger.Tracer.Builder(
+		final com.uber.jaeger.Tracer.Builder builder = new com.uber.jaeger.Tracer.Builder(
 				initArguments.getMeasurementSession().getApplicationName(),
 				new NoopReporter(),
 				new ConstSampler(true))
-				.registerInjector(Format.Builtin.HTTP_HEADERS, b3TextMapCodec)
 				.registerInjector(B3HeaderFormat.INSTANCE, b3TextMapCodec)
-				.registerExtractor(Format.Builtin.HTTP_HEADERS, b3TextMapCodec)
-				.build();
+				.registerInjector(Format.Builtin.HTTP_HEADERS, b3TextMapCodec)
+				.registerExtractor(Format.Builtin.HTTP_HEADERS, b3TextMapCodec);
+		return builder.build();
 	}
 
+	// TODO use jaeger-b3 module
 	/*
 	 * Copyright (c) 2016, Uber Technologies, Inc
 	 *

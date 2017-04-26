@@ -1,18 +1,17 @@
 package org.stagemonitor.requestmonitor.profiler;
 
-import com.uber.jaeger.utils.RateLimiter;
-
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.requestmonitor.sampling.RateLimitingPreExecutionInterceptor;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
+import org.stagemonitor.requestmonitor.utils.RateLimiter;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.util.StringUtils;
 
 import io.opentracing.Span;
 

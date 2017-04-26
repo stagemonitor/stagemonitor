@@ -1,7 +1,5 @@
 package org.stagemonitor.requestmonitor.utils;
 
-import com.uber.jaeger.utils.Utils;
-
 import org.stagemonitor.util.StringUtils;
 
 import java.io.PrintWriter;
@@ -30,10 +28,13 @@ public class SpanUtils {
 	}
 
 	public static void setClientIp(Span span, String clientIp) {
+		if (clientIp == null) {
+			return;
+		}
 		try {
 			final InetAddress inetAddress = InetAddress.getByName(clientIp);
 			if (inetAddress instanceof Inet4Address) {
-				Tags.PEER_HOST_IPV4.set(span, clientIp != null ? Utils.ipToInt(clientIp) : null);
+				Tags.PEER_HOST_IPV4.set(span, inetAddressToInt((Inet4Address) inetAddress));
 				span.setTag(IPV4_STRING, clientIp);
 			} else if (inetAddress instanceof Inet6Address) {
 				Tags.PEER_HOST_IPV6.set(span, clientIp);
@@ -41,6 +42,14 @@ public class SpanUtils {
 		} catch (UnknownHostException e) {
 			// ignore
 		}
+	}
+
+	private static int inetAddressToInt(Inet4Address clientIp) {
+		int intIP = 0;
+		for (byte octet : clientIp.getAddress()) {
+			intIP = (intIP << 8) | (octet);
+		}
+		return intIP;
 	}
 
 	public static void setParameters(Span span, Map<String, String> parameters) {
