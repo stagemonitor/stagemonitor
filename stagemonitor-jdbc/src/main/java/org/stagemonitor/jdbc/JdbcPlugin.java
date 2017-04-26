@@ -2,8 +2,8 @@ package org.stagemonitor.jdbc;
 
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.converter.SetValueConverter;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 import java.util.Collection;

@@ -2,9 +2,9 @@ package org.stagemonitor.web.monitor.filter.htmlinjector;
 
 import org.junit.Test;
 import org.springframework.mock.web.MockServletContext;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.util.IOUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.MockTracer;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
@@ -36,7 +36,7 @@ public class BoomerangJsHtmlInjectorTest {
 	@Test
 	public void injectWithNullRequestName() throws Exception {
 		final BoomerangJsHtmlInjector injector = new BoomerangJsHtmlInjector();
-		final Configuration configuration = mock(Configuration.class);
+		final ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		final WebPlugin webPlugin = mock(WebPlugin.class);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		final RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);

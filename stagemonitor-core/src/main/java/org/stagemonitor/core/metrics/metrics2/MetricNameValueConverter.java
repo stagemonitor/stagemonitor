@@ -1,6 +1,6 @@
 package org.stagemonitor.core.metrics.metrics2;
 
-import org.stagemonitor.core.configuration.converter.ValueConverter;
+import org.stagemonitor.configuration.converter.ValueConverter;
 
 public class MetricNameValueConverter implements ValueConverter<MetricName> {
 	@Override

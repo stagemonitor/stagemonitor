@@ -1,7 +1,7 @@
 package org.stagemonitor.core.metrics.aspects;
 
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 public final class SignatureUtils {
 

@@ -10,19 +10,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 
 public class WidgetServlet extends HttpServlet {
 
-	private final Configuration configuration;
+	private final ConfigurationRegistry configuration;
 	private final StagemonitorWidgetHtmlInjector widgetHtmlInjector;
 
 	public WidgetServlet() {
 		this(Stagemonitor.getConfiguration(), new StagemonitorWidgetHtmlInjector(true));
 	}
 
-	public WidgetServlet(Configuration configuration, StagemonitorWidgetHtmlInjector widgetHtmlInjector) {
+	public WidgetServlet(ConfigurationRegistry configuration, StagemonitorWidgetHtmlInjector widgetHtmlInjector) {
 		this.configuration = configuration;
 		this.widgetHtmlInjector = widgetHtmlInjector;
 	}

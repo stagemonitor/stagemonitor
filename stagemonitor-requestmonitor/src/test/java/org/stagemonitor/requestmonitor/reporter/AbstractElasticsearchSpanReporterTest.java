@@ -6,8 +6,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
@@ -38,14 +38,14 @@ public class AbstractElasticsearchSpanReporterTest {
 	protected RequestMonitorPlugin requestMonitorPlugin;
 	protected Logger spanLogger;
 	protected Metric2Registry registry;
-	protected Configuration configuration;
+	protected ConfigurationRegistry configuration;
 	protected CorePlugin corePlugin;
 	protected Map<String, Object> tags;
 	protected ReportingSpanEventListener reportingSpanEventListener;
 
 	@Before
 	public void setUp() throws Exception {
-		configuration = mock(Configuration.class);
+		configuration = mock(ConfigurationRegistry.class);
 		corePlugin = mock(CorePlugin.class);
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 

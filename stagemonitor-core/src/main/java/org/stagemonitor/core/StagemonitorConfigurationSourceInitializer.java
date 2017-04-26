@@ -2,8 +2,8 @@ package org.stagemonitor.core;
 
 import java.util.List;
 
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.ConfigurationSource;
 
 /**
  * This SPI provides callback methods that can be used to modify stagemonitor's configuration and configuration sources.
@@ -15,7 +15,7 @@ import org.stagemonitor.core.configuration.source.ConfigurationSource;
 public abstract class StagemonitorConfigurationSourceInitializer implements StagemonitorSPI {
 
 	/**
-	 * This method is called before just before the initialisation of the stagemonitor {@link Configuration}.
+	 * This method is called before just before the initialisation of the stagemonitor {@link ConfigurationRegistry}.
 	 * <p/>
 	 * This callback can be used to initialize or modify the list of configuration sources.
 	 *
@@ -24,7 +24,7 @@ public abstract class StagemonitorConfigurationSourceInitializer implements Stag
 	public abstract void modifyConfigurationSources(ModifyArguments modifyArguments);
 
 	/**
-	 * This method is called as soon as the stagemonitor {@link Configuration} has been initialized and before anything
+	 * This method is called as soon as the stagemonitor {@link ConfigurationRegistry} has been initialized and before anything
 	 * has been read from it.
 	 *
 	 *
@@ -53,16 +53,16 @@ public abstract class StagemonitorConfigurationSourceInitializer implements Stag
 	}
 
 	public static class ConfigInitializedArguments {
-		private final Configuration configuration;
+		private final ConfigurationRegistry configuration;
 
 		/**
 		 * @param configuration the configuration that has just been initialized
 		 */
-		ConfigInitializedArguments(Configuration configuration) {
+		ConfigInitializedArguments(ConfigurationRegistry configuration) {
 			this.configuration = configuration;
 		}
 
-		public Configuration getConfiguration() {
+		public ConfigurationRegistry getConfiguration() {
 			return configuration;
 		}
 	}

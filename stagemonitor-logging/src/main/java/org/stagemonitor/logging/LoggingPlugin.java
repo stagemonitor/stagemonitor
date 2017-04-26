@@ -4,7 +4,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.util.IOUtils;
 
 public class LoggingPlugin extends StagemonitorPlugin {
 

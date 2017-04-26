@@ -1,7 +1,7 @@
 package org.stagemonitor.alerting.alerter;
 
 
-import static org.stagemonitor.core.util.StringUtils.isEmpty;
+import static org.stagemonitor.util.StringUtils.isEmpty;
 
 import javax.mail.BodyPart;
 import javax.mail.Message;

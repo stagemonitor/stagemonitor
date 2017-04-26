@@ -7,10 +7,10 @@ import com.uber.jaeger.samplers.ConstSampler;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.AbstractElasticsearchTest;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 
@@ -26,12 +26,12 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 
 	protected ElasticsearchSpanReporter reporter;
 	protected RequestMonitorPlugin requestMonitorPlugin;
-	protected Configuration configuration;
+	protected ConfigurationRegistry configuration;
 	private com.uber.jaeger.Tracer tracer;
 
 	@Before
 	public void setUp() throws Exception {
-		this.configuration = mock(Configuration.class);
+		this.configuration = mock(ConfigurationRegistry.class);
 		this.requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);

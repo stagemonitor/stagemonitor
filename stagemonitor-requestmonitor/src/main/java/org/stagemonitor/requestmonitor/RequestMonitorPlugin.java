@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.converter.DoubleValueConverter;
-import org.stagemonitor.core.configuration.converter.StringValueConverter;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.converter.DoubleValueConverter;
+import org.stagemonitor.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -419,7 +419,7 @@ public class RequestMonitorPlugin extends StagemonitorPlugin {
 		}
 	}
 
-	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, Configuration configuration, final Metric2Registry metricRegistry,
+	public static SpanWrappingTracer createSpanWrappingTracer(final Tracer delegate, ConfigurationRegistry configuration, final Metric2Registry metricRegistry,
 															  final Iterable<SpanEventListenerFactory> spanInterceptorFactories,
 															  final SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor,
 															  final ReportingSpanEventListener reportingSpanEventListener) {

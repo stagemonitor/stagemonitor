@@ -1,6 +1,6 @@
 package org.stagemonitor.web.monitor.rum;
 
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
@@ -12,7 +12,7 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 	public static final String BOOMERANG_FILENAME = "boomerang-56c823668fc.min.js";
 	private WebPlugin webPlugin;
 	private String boomerangTemplate;
-	private Configuration configuration;
+	private ConfigurationRegistry configuration;
 
 	@Override
 	public void init(HtmlInjector.InitArguments initArguments) {

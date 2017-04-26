@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 import java.lang.annotation.Annotation;
 import java.security.ProtectionDomain;
@@ -36,7 +36,7 @@ import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.time
 
 public abstract class StagemonitorByteBuddyTransformer {
 
-	protected static final Configuration configuration = Stagemonitor.getConfiguration();
+	protected static final ConfigurationRegistry configuration = Stagemonitor.getConfiguration();
 
 	protected static final boolean DEBUG_INSTRUMENTATION = configuration.getConfig(CorePlugin.class).isDebugInstrumentation();
 

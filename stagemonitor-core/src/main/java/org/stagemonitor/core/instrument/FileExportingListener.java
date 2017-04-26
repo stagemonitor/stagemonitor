@@ -7,7 +7,7 @@ import net.bytebuddy.utility.JavaModule;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.util.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

@@ -8,12 +8,12 @@ import java.util.Collections;
 import org.junit.Assert;
 
 import org.junit.Test;
-import org.mockito.Mockito;
+
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.configuration.source.SimpleSource;
+
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.ConfigurationSource;
+import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -22,7 +22,7 @@ public class CorePluginTest {
 
 	@Test
 	public void testCycleElasticsearchUrls() throws Exception {
-		CorePlugin corePlugin = new Configuration(
+		CorePlugin corePlugin = new ConfigurationRegistry(
 				Collections.singletonList(new CorePlugin()),
 				Collections.<ConfigurationSource>singletonList(new SimpleSource("test")
 						.add("stagemonitor.elasticsearch.url", "http://bla:1/,http://bla:2,http://bla:3")),
@@ -38,7 +38,7 @@ public class CorePluginTest {
 
 	@Test
 	public void testNoElasticsearchUrl() throws Exception {
-		CorePlugin corePlugin = new Configuration(
+		CorePlugin corePlugin = new ConfigurationRegistry(
 				Collections.singletonList(new CorePlugin()),
 				Collections.<ConfigurationSource>singletonList(new SimpleSource("test")),
 				null).getConfig(CorePlugin.class);
@@ -50,7 +50,7 @@ public class CorePluginTest {
 	public void testOnlyLogElasticsearchMetricReports() throws Exception {
 		Metric2Registry registry = new Metric2Registry();
 		CorePlugin corePlugin = new CorePlugin(mock(ElasticsearchClient.class));
-		Configuration configuration = new Configuration(
+		ConfigurationRegistry configuration = new ConfigurationRegistry(
 				Collections.singletonList(corePlugin),
 				Collections.<ConfigurationSource>singletonList(new SimpleSource("test")
 					.add("stagemonitor.reporting.elasticsearch.onlyLogElasticsearchMetricReports", "true")),

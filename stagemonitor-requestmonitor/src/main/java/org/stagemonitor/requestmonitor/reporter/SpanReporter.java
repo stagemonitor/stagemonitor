@@ -1,14 +1,14 @@
 package org.stagemonitor.requestmonitor.reporter;
 
 import org.stagemonitor.core.StagemonitorSPI;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 import io.opentracing.Span;
 
 public abstract class SpanReporter implements StagemonitorSPI {
 
-	public void init(Configuration configuration) {
+	public void init(ConfigurationRegistry configuration) {
 	}
 
 	/**

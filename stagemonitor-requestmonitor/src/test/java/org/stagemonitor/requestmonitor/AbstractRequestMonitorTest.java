@@ -9,8 +9,8 @@ import org.junit.Before;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -38,7 +38,7 @@ public abstract class AbstractRequestMonitorTest {
 	protected RequestMonitorPlugin requestMonitorPlugin;
 	protected Metric2Registry registry;
 	protected RequestMonitor requestMonitor;
-	protected Configuration configuration;
+	protected ConfigurationRegistry configuration;
 	protected Map<String, Object> tags = new HashMap<>();
 	protected SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor;
 	protected SpanWrappingTracer tracer;
@@ -47,7 +47,7 @@ public abstract class AbstractRequestMonitorTest {
 	@Before
 	public void before() {
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		configuration = mock(Configuration.class);
+		configuration = mock(ConfigurationRegistry.class);
 		corePlugin = mock(CorePlugin.class);
 		registry = mock(Metric2Registry.class);
 

@@ -11,7 +11,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchType;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;

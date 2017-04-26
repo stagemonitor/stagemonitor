@@ -8,7 +8,7 @@ import com.p6spy.engine.wrapper.ConnectionWrapper;
 import com.p6spy.engine.wrapper.P6Proxy;
 
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -21,7 +21,7 @@ public class ConnectionMonitor {
 	private final boolean active;
 	private final JdbcEventListener jdbcEventListener;
 
-	public ConnectionMonitor(Configuration configuration) {
+	public ConnectionMonitor(ConfigurationRegistry configuration) {
 		active = ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class));
 		jdbcEventListener = new CompoundJdbcEventListener(Arrays.asList(DefaultEventListener.INSTANCE, new StagemonitorJdbcEventListener(configuration)));
 	}

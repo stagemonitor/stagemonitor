@@ -5,13 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.converter.SetValueConverter;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.init.ServletContainerInitializerUtil;
 import org.stagemonitor.web.metrics.StagemonitorMetricsServlet;
@@ -294,7 +294,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		return metricsServletJsonpParameter.getValue();
 	}
 
-	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request, Configuration configuration) {
+	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request, ConfigurationRegistry configuration) {
 		final Boolean showWidgetAttr = (Boolean) request.getAttribute(STAGEMONITOR_SHOW_WIDGET);
 		if (showWidgetAttr != null) {
 			logger.debug("isWidgetAndStagemonitorEndpointsAllowed: showWidgetAttr={}", showWidgetAttr);
@@ -309,7 +309,7 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		return result;
 	}
 
-	private boolean isPasswordInShowWidgetHeaderCorrect(HttpServletRequest request, Configuration configuration) {
+	private boolean isPasswordInShowWidgetHeaderCorrect(HttpServletRequest request, ConfigurationRegistry configuration) {
 		String password = request.getHeader(STAGEMONITOR_SHOW_WIDGET);
 		if (configuration.isPasswordCorrect(password)) {
 			return true;

@@ -14,10 +14,10 @@ import javax.servlet.ServletResponse;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.configuration.source.SimpleSource;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOptionProvider;
+import org.stagemonitor.configuration.source.ConfigurationSource;
+import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.web.WebPlugin;
 
 public class StagemonitorSecurityFilterTest {
@@ -68,7 +68,7 @@ public class StagemonitorSecurityFilterTest {
 			configurationSource.add("stagemonitor.password", password);
 		}
 		configurationSource.add("stagemonitor.web.widget.enabled", Boolean.toString(widgetEnabled));
-		Configuration configuration = new Configuration(Arrays.<ConfigurationOptionProvider>asList(webPlugin),
+		ConfigurationRegistry configuration = new ConfigurationRegistry(Arrays.<ConfigurationOptionProvider>asList(webPlugin),
 				Arrays.<ConfigurationSource>asList(configurationSource), "stagemonitor.password");
 
 		StagemonitorSecurityFilter stagemonitorSecurityFilter = new StagemonitorSecurityFilter(configuration);

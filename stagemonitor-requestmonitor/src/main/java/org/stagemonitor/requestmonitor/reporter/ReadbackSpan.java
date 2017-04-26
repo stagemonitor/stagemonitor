@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
 import java.util.Collections;

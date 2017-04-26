@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
@@ -47,7 +47,7 @@ public class ConnectionMonitoringTransformerTest {
 	private static final String DRIVER_CLASS_NAME = "org.hsqldb.jdbcDriver";
 	private static final String URL = "jdbc:hsqldb:mem:test";
 
-	private Configuration configuration;
+	private ConfigurationRegistry configuration;
 	private DataSource dataSource;
 	private RequestMonitor requestMonitor;
 	private Metric2Registry metric2Registry;

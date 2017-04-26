@@ -8,9 +8,9 @@ import java.util.Map;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.util.StringUtils;
 
 public class ConfigurationOptionsMarkdownExporter {
 
@@ -19,7 +19,7 @@ public class ConfigurationOptionsMarkdownExporter {
 
 	public static void main(String[] args) throws IOException {
 		StringBuilder markdown = new StringBuilder();
-		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new Configuration(StagemonitorPlugin.class).getConfigurationOptionsByCategory();
+		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new ConfigurationRegistry(StagemonitorPlugin.class).getConfigurationOptionsByCategory();
 
 		MultiValueMap<String, ConfigurationOption<?>> configurationOptionsByTags = new LinkedMultiValueMap<>();
 		configurationOptionsByPlugin.values()

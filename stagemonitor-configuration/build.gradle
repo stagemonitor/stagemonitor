@@ -1,0 +1,7 @@
+dependencies {
+	compile "org.slf4j:slf4j-api:$slf4jVersion"
+
+	compileOnly "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
+	testCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+}

@@ -11,7 +11,7 @@ import java.util.Set;
 import com.codahale.metrics.Clock;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
+import org.stagemonitor.AbstractElasticsearchTest;
 
 public class IndexSelectorIntegrationTest extends AbstractElasticsearchTest {
 

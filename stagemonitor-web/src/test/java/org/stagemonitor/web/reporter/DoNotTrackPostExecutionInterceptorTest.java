@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.MockTracer;
@@ -28,11 +28,11 @@ import static org.mockito.Mockito.when;
 public class DoNotTrackPostExecutionInterceptorTest {
 
 	private WebPlugin webPlugin;
-	private Configuration configuration;
+	private ConfigurationRegistry configuration;
 
 	@Before
 	public void setUp() throws Exception {
-		configuration = mock(Configuration.class);
+		configuration = mock(ConfigurationRegistry.class);
 		CorePlugin corePlugin = mock(CorePlugin.class);
 		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		this.webPlugin = mock(WebPlugin.class);

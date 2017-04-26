@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 
@@ -24,7 +24,7 @@ public class LoggingSpanReporterTest {
 	public void setUp() throws Exception {
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		loggingSpanReporter = new LoggingSpanReporter();
-		final Configuration configuration = mock(Configuration.class);
+		final ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		loggingSpanReporter.init(configuration);
 	}

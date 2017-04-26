@@ -9,10 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.AbstractExternalRequest;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventListener;
@@ -50,7 +50,7 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 		this(Stagemonitor.getConfiguration());
 	}
 
-	public StagemonitorJdbcEventListener(Configuration configuration) {
+	public StagemonitorJdbcEventListener(ConfigurationRegistry configuration) {
 		this.jdbcPlugin = configuration.getConfig(JdbcPlugin.class);
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		corePlugin = configuration.getConfig(CorePlugin.class);

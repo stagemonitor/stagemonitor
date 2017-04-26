@@ -10,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -23,7 +23,7 @@ public class JmxReportingTest {
 	@Before
 	public void setUp() throws Exception {
 		registry = new Metric2Registry();
-		final Configuration configuration = Mockito.mock(Configuration.class);
+		final ConfigurationRegistry configuration = Mockito.mock(ConfigurationRegistry.class);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.isReportToJMX()).thenReturn(true);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);

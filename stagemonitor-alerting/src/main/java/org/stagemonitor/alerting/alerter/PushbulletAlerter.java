@@ -6,7 +6,7 @@ import java.util.Map;
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 public class PushbulletAlerter extends Alerter {
 

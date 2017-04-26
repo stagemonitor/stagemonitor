@@ -1,7 +1,7 @@
 package org.stagemonitor.requestmonitor.sampling;
 
 import org.stagemonitor.core.StagemonitorSPI;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 /**
  * Allows implementers omit reporting a {@link io.opentracing.Span}
@@ -16,7 +16,7 @@ import org.stagemonitor.core.configuration.Configuration;
  */
 public abstract class PreExecutionSpanInterceptor implements StagemonitorSPI {
 
-	public void init(Configuration configuration) {
+	public void init(ConfigurationRegistry configuration) {
 	}
 
 	/**

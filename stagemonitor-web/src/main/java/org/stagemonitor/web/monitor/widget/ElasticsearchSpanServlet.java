@@ -2,10 +2,10 @@ package org.stagemonitor.web.monitor.widget;
 
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.IOUtils;
+import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
 
@@ -22,7 +22,7 @@ public class ElasticsearchSpanServlet extends HttpServlet {
 		this(Stagemonitor.getConfiguration());
 	}
 
-	public ElasticsearchSpanServlet(Configuration configuration) {
+	public ElasticsearchSpanServlet(ConfigurationRegistry configuration) {
 		elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
 	}
 

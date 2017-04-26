@@ -18,8 +18,8 @@ import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.source.SimpleSource;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.source.SimpleSource;
 
 import java.io.IOException;
 import java.util.Collections;

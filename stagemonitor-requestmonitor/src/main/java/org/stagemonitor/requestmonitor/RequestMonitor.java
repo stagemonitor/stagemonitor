@@ -1,7 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -17,11 +17,11 @@ public class RequestMonitor {
 	private CorePlugin corePlugin;
 	private RequestMonitorPlugin requestMonitorPlugin;
 
-	public RequestMonitor(Configuration configuration, Metric2Registry registry) {
+	public RequestMonitor(ConfigurationRegistry configuration, Metric2Registry registry) {
 		this(configuration, registry, configuration.getConfig(RequestMonitorPlugin.class));
 	}
 
-	private RequestMonitor(Configuration configuration, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin) {
+	private RequestMonitor(ConfigurationRegistry configuration, Metric2Registry registry, RequestMonitorPlugin requestMonitorPlugin) {
 		this.metricRegistry = registry;
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		this.requestMonitorPlugin = requestMonitorPlugin;

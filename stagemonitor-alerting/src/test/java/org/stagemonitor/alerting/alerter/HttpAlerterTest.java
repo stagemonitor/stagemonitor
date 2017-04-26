@@ -7,7 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.alerting.incident.Incident;
-import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
+import org.stagemonitor.AbstractElasticsearchTest;
 
 public class HttpAlerterTest extends AbstractElasticsearchTest {
 

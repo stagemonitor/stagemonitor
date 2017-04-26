@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -43,7 +43,7 @@ public class OsPluginTest {
 	@Before
 	public void setUp() throws Exception {
 		metricRegistry = new Metric2Registry();
-		final Configuration configuration = mock(Configuration.class);
+		final ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);

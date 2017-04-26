@@ -1,7 +1,7 @@
 package org.stagemonitor.web.monitor.filter;
 
 import org.stagemonitor.core.StagemonitorSPI;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 
 import javax.servlet.ServletContext;
@@ -43,19 +43,19 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	public abstract boolean isActive(IsActiveArguments isActiveArguments);
 
 	public static class InitArguments {
-		private final Configuration configuration;
+		private final ConfigurationRegistry configuration;
 		private final ServletContext servletContext;
 
 		/**
 		 * @param configuration the configuration
 		 * @param servletContext the current servlet context
 		 */
-		public InitArguments(Configuration configuration, ServletContext servletContext) {
+		public InitArguments(ConfigurationRegistry configuration, ServletContext servletContext) {
 			this.configuration = configuration;
 			this.servletContext = servletContext;
 		}
 
-		public Configuration getConfiguration() {
+		public ConfigurationRegistry getConfiguration() {
 			return configuration;
 		}
 

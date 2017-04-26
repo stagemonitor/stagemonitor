@@ -7,7 +7,7 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -35,13 +35,13 @@ import static org.mockito.Mockito.when;
 
 public class MonitoredHttpRequestTest {
 
-	private Configuration configuration;
+	private ConfigurationRegistry configuration;
 	private String operationName;
 	private io.opentracing.mock.MockTracer tracer;
 
 	@Before
 	public void setUp() throws Exception {
-		configuration = mock(Configuration.class);
+		configuration = mock(ConfigurationRegistry.class);
 		final RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		final WebPlugin webPlugin = new WebPlugin();
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);

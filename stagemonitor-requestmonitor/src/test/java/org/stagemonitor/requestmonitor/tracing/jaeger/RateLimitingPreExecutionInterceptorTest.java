@@ -2,8 +2,8 @@ package org.stagemonitor.requestmonitor.tracing.jaeger;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.SimpleSource;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;
@@ -26,7 +26,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	@Before
 	public void setUp() throws Exception {
 		requestMonitorPlugin = new RequestMonitorPlugin();
-		final Configuration configuration = new Configuration(Collections.singletonList(requestMonitorPlugin),
+		final ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(requestMonitorPlugin),
 				Collections.singletonList(new SimpleSource()),
 				null);
 

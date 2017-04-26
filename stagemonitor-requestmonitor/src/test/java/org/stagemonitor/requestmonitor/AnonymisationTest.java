@@ -4,7 +4,7 @@ package org.stagemonitor.requestmonitor;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.anonymization.AnonymizingSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.NoopSpan;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
@@ -30,7 +30,7 @@ public class AnonymisationTest {
 	@Before
 	public void setUp() throws Exception {
 		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		final Configuration configuration = mock(Configuration.class);
+		final ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);

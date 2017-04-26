@@ -2,10 +2,10 @@ package org.stagemonitor.requestmonitor.profiler;
 
 import com.uber.jaeger.utils.RateLimiter;
 
-import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.sampling.PreExecutionInterceptorContext;

@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.utils;
 
 import com.uber.jaeger.utils.Utils;
 
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

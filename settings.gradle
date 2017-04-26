@@ -1,5 +1,6 @@
 include 'stagemonitor-alerting',
 		'stagemonitor-benchmark',
+		'stagemonitor-configuration',
 		'stagemonitor-core',
 		'stagemonitor-dispatcher',
 		'stagemonitor-ehcache',

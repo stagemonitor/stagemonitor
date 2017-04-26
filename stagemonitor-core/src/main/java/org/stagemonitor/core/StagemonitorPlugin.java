@@ -1,7 +1,7 @@
 package org.stagemonitor.core;
 
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 import java.util.List;
@@ -87,10 +87,10 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 
 	public static class InitArguments {
 		private final Metric2Registry metricRegistry;
-		private final Configuration configuration;
+		private final ConfigurationRegistry configuration;
 		private final MeasurementSession measurementSession;
 
-		public InitArguments(Metric2Registry metricRegistry, Configuration configuration, MeasurementSession measurementSession) {
+		public InitArguments(Metric2Registry metricRegistry, ConfigurationRegistry configuration, MeasurementSession measurementSession) {
 			this.metricRegistry = metricRegistry;
 			this.configuration = configuration;
 			this.measurementSession = measurementSession;
@@ -100,7 +100,7 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 			return metricRegistry;
 		}
 
-		public Configuration getConfiguration() {
+		public ConfigurationRegistry getConfiguration() {
 			return configuration;
 		}
 

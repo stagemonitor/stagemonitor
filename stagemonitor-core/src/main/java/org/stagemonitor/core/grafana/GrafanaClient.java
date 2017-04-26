@@ -8,9 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
 import java.util.Collections;

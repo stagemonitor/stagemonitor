@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.profiler;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;

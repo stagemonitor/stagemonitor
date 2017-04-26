@@ -1,6 +1,6 @@
 package org.stagemonitor.alerting.alerter;
 
-import static org.stagemonitor.core.util.StringUtils.isNotEmpty;
+import static org.stagemonitor.util.StringUtils.isNotEmpty;
 
 import java.util.Properties;
 import javax.mail.MessagingException;

@@ -3,9 +3,8 @@ package org.stagemonitor.core;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
-import static org.stagemonitor.core.util.StringUtils.replaceWhitespacesWithDash;
+import static org.stagemonitor.util.StringUtils.replaceWhitespacesWithDash;
 
-import java.net.InetAddress;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -15,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = ANY, setterVisibility = NONE)
 public class MeasurementSession {

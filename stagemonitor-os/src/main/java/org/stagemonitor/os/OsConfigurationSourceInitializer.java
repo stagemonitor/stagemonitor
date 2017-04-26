@@ -1,8 +1,8 @@
 package org.stagemonitor.os;
 
 import org.stagemonitor.core.StagemonitorConfigurationSourceInitializer;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.configuration.source.SimpleSource;
+import org.stagemonitor.configuration.source.ConfigurationSource;
+import org.stagemonitor.configuration.source.SimpleSource;
 
 public class OsConfigurationSourceInitializer extends StagemonitorConfigurationSourceInitializer {
 

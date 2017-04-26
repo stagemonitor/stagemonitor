@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.web.WebPlugin;
 
 /**
@@ -29,13 +29,13 @@ import org.stagemonitor.web.WebPlugin;
 public class StagemonitorSecurityFilter extends AbstractExclusionFilter {
 
 	private final WebPlugin webPlugin;
-	private final Configuration configuration;
+	private final ConfigurationRegistry configuration;
 
 	public StagemonitorSecurityFilter() {
 		this(Stagemonitor.getConfiguration());
 	}
 
-	public StagemonitorSecurityFilter(Configuration configuration) {
+	public StagemonitorSecurityFilter(ConfigurationRegistry configuration) {
 		super(Arrays.asList("/stagemonitor/public", "/stagemonitor/configuration"));
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);

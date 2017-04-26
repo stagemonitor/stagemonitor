@@ -16,8 +16,8 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -65,7 +65,7 @@ public class SpringRequestMonitorTest {
 
 	private MockHttpServletRequest mvcRequest = new MockHttpServletRequest("GET", "/test/requestName");
 	private MockHttpServletRequest nonMvcRequest = new MockHttpServletRequest("GET", "/META-INF/resources/stagemonitor/static/jquery.js");
-	private Configuration configuration = mock(Configuration.class);
+	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);

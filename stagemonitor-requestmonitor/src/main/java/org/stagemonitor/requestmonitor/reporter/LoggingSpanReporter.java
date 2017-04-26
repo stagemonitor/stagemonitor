@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.reporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -15,7 +15,7 @@ public class LoggingSpanReporter extends SpanReporter {
 	private RequestMonitorPlugin requestMonitorPlugin;
 
 	@Override
-	public void init(Configuration configuration) {
+	public void init(ConfigurationRegistry configuration) {
 		this.requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 	}
 

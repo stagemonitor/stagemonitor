@@ -8,20 +8,20 @@ import java.util.TimeZone;
 
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
-import org.stagemonitor.core.configuration.source.SimpleSource;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.ConfigurationSource;
+import org.stagemonitor.configuration.source.SimpleSource;
 
 public class AbstractAlerterTest {
 
 	protected SimpleSource configurationSource;
-	protected Configuration configuration;
+	protected ConfigurationRegistry configuration;
 	protected AlertingPlugin alertingPlugin;
 
 	public AbstractAlerterTest() {
 		configurationSource = new SimpleSource();
 		alertingPlugin = new AlertingPlugin();
-		configuration = new Configuration(Arrays.asList(new CorePlugin(), alertingPlugin), Arrays.<ConfigurationSource>asList(configurationSource), null);
+		configuration = new ConfigurationRegistry(Arrays.asList(new CorePlugin(), alertingPlugin), Arrays.<ConfigurationSource>asList(configurationSource), null);
 	}
 
 	public AlertSender createAlertSender(Alerter alerter) {

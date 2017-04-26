@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 public class ConfigurationServlet extends HttpServlet {
 
@@ -17,13 +17,13 @@ public class ConfigurationServlet extends HttpServlet {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConfigurationServlet.class);
 
-	private final Configuration configuration;
+	private final ConfigurationRegistry configuration;
 
 	public ConfigurationServlet() {
 		this(Stagemonitor.getConfiguration());
 	}
 
-	public ConfigurationServlet(Configuration configuration) {
+	public ConfigurationServlet(ConfigurationRegistry configuration) {
 		this.configuration = configuration;
 		logger.info("Registering configuration Endpoint {}. You can dynamically change the configuration by " +
 				"issuing a POST request to {}?key=stagemonitor.config.key&value=configValue&stagemonitor.password=password. " +
@@ -67,7 +67,7 @@ public class ConfigurationServlet extends HttpServlet {
 				req.getParameter("value"));
 	}
 
-	public static void tryToSaveAndHandleErrors(Configuration configuration, HttpServletRequest req,
+	public static void tryToSaveAndHandleErrors(ConfigurationRegistry configuration, HttpServletRequest req,
 												HttpServletResponse resp,
 												String key, String value) throws IOException {
 		String password = req.getHeader("X-Stagemonitor-Show-Widget");

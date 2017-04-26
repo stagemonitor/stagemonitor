@@ -3,7 +3,7 @@ package org.stagemonitor.web.init;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.ConfigurationOptionProvider;
+import org.stagemonitor.configuration.ConfigurationOptionProvider;
 
 import java.util.ArrayList;
 import java.util.List;

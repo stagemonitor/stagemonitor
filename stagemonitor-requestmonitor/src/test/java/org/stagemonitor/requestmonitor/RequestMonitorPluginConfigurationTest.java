@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 import java.util.Collections;
 
@@ -20,7 +20,7 @@ public class RequestMonitorPluginConfigurationTest {
 	public void before() throws Exception {
 		Stagemonitor.reset();
 		SharedMetricRegistries.clear();
-		Configuration configuration = new Configuration(Collections.singletonList(new RequestMonitorPlugin()), Collections.emptyList(), "");
+		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(new RequestMonitorPlugin()), Collections.emptyList(), "");
 		config = configuration.getConfig(RequestMonitorPlugin.class);
 	}
 

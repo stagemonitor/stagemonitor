@@ -15,9 +15,9 @@ import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.DateUtils;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -41,7 +41,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.stagemonitor.core.util.StringUtils.slugify;
+import static org.stagemonitor.util.StringUtils.slugify;
 
 public class ElasticsearchClient {
 

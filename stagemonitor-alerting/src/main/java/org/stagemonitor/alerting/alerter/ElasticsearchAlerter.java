@@ -1,16 +1,16 @@
 package org.stagemonitor.alerting.alerter;
 
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 public class ElasticsearchAlerter extends Alerter {
 
 	private CorePlugin corePlugin;
 	private HttpClient httpClient;
 
-	public ElasticsearchAlerter(Configuration configuration, HttpClient httpClient) {
+	public ElasticsearchAlerter(ConfigurationRegistry configuration, HttpClient httpClient) {
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		this.httpClient = httpClient;
 	}

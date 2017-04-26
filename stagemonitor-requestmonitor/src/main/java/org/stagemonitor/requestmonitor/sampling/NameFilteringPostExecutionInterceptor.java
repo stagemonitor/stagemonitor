@@ -1,7 +1,7 @@
 package org.stagemonitor.requestmonitor.sampling;
 
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
 import java.util.Collection;
@@ -11,7 +11,7 @@ class NameFilteringPostExecutionInterceptor extends PostExecutionSpanInterceptor
 	private RequestMonitorPlugin requestMonitorPlugin;
 
 	@Override
-	public void init(Configuration configuration) {
+	public void init(ConfigurationRegistry configuration) {
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 	}
 

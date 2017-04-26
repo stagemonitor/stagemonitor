@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.util.IOUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;

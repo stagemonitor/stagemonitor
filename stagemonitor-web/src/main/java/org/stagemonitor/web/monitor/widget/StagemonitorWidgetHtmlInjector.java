@@ -1,8 +1,8 @@
 package org.stagemonitor.web.monitor.widget;
 
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.IOUtils;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
@@ -20,7 +20,7 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 	 */
 	private final boolean openImmediately;
 	private WebPlugin webPlugin;
-	private Configuration configuration;
+	private ConfigurationRegistry configuration;
 	private String widgetTemplate;
 	private String contextPath;
 

@@ -13,11 +13,11 @@ import javax.servlet.ServletException;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 public class ConfigurationServletTest {
 
-	private Configuration configuration = mock(Configuration.class);
+	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 	private ConfigurationServlet configurationServlet = new ConfigurationServlet(configuration);
 
 	@Test

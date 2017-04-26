@@ -9,10 +9,10 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
-import org.stagemonitor.core.configuration.converter.ListValueConverter;
-import org.stagemonitor.core.configuration.converter.SetValueConverter;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.converter.ListValueConverter;
+import org.stagemonitor.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
@@ -29,8 +29,8 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.metrics.metrics2.MetricNameValueConverter;
 import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.IOUtils;
+import org.stagemonitor.util.StringUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -483,7 +483,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
 	}
 
-	void registerReporters(Metric2Registry metric2Registry, Configuration configuration, MeasurementSession measurementSession) {
+	void registerReporters(Metric2Registry metric2Registry, ConfigurationRegistry configuration, MeasurementSession measurementSession) {
 		Metric2Filter regexFilter = Metric2Filter.ALL;
 		Collection<MetricName> excludedMetricsPatterns = getExcludedMetricsPatterns();
 		if (!excludedMetricsPatterns.isEmpty()) {

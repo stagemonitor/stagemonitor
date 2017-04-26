@@ -5,12 +5,12 @@ import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.ElasticsearchConfigurationSource;
-import org.stagemonitor.core.configuration.source.EnvironmentVariableConfigurationSource;
-import org.stagemonitor.core.configuration.source.PropertyFileConfigurationSource;
-import org.stagemonitor.core.configuration.source.SimpleSource;
-import org.stagemonitor.core.configuration.source.SystemPropertyConfigurationSource;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.ElasticsearchConfigurationSource;
+import org.stagemonitor.configuration.source.EnvironmentVariableConfigurationSource;
+import org.stagemonitor.configuration.source.PropertyFileConfigurationSource;
+import org.stagemonitor.configuration.source.SimpleSource;
+import org.stagemonitor.configuration.source.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class StagemonitorCoreConfigurationSourceInitializer extends StagemonitorConfigurationSourceInitializer {
@@ -41,7 +41,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 		}
 	}
 
-	private void addElasticsearchConfigurationSources(Configuration configuration, CorePlugin corePlugin, Collection<String> elasticsearchConfigurationSourceIds) {
+	private void addElasticsearchConfigurationSources(ConfigurationRegistry configuration, CorePlugin corePlugin, Collection<String> elasticsearchConfigurationSourceIds) {
 		ElasticsearchClient elasticsearchClient = configuration.getConfig(CorePlugin.class).getElasticsearchClient();
 		if (corePlugin.isDeactivateStagemonitorIfEsConfigSourceIsDown()) {
 			assertElasticsearchIsAvailable(elasticsearchClient, corePlugin);

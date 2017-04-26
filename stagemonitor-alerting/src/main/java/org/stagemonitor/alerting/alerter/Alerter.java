@@ -2,7 +2,7 @@ package org.stagemonitor.alerting.alerter;
 
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.StagemonitorSPI;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 /**
  * An alerter reports incidents to some channel like email.
@@ -50,13 +50,13 @@ public abstract class Alerter implements StagemonitorSPI {
 	public abstract String getTargetLabel();
 
 	public static class InitArguments {
-		private final Configuration configuration;
+		private final ConfigurationRegistry configuration;
 
-		InitArguments(Configuration configuration) {
+		InitArguments(ConfigurationRegistry configuration) {
 			this.configuration = configuration;
 		}
 
-		public Configuration getConfiguration() {
+		public ConfigurationRegistry getConfiguration() {
 			return configuration;
 		}
 	}

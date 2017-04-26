@@ -17,7 +17,7 @@ import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.alerting.incident.IncidentRepository;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.JsonUtils;
@@ -53,7 +53,7 @@ public class ThresholdMonitoringReporterTest {
 
 	@Before
 	public void setUp() throws Exception {
-		Configuration configuration = mock(Configuration.class);
+		ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(mock(CorePlugin.class));
 		alertingPlugin = mock(AlertingPlugin.class);
 		Subscription subscription = new Subscription();

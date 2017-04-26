@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.sampling;
 
 import com.codahale.metrics.Timer;
 
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 
@@ -13,7 +13,7 @@ public class FastExternalSpanExcludingPostExecutionInterceptor extends PostExecu
 	private RequestMonitorPlugin requestMonitorPlugin;
 
 	@Override
-	public void init(Configuration configuration) {
+	public void init(ConfigurationRegistry configuration) {
 		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 	}
 

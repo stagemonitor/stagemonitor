@@ -6,7 +6,7 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 import com.codahale.metrics.Clock;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 public class IndexSelector {
 

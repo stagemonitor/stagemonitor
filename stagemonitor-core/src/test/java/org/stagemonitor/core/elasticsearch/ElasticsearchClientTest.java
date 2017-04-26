@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
+import org.stagemonitor.AbstractElasticsearchTest;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 

@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor;
 
 import com.uber.jaeger.context.TracingUtils;
 
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.utils.SpanUtils;
 
 import java.util.LinkedHashMap;
@@ -19,11 +19,11 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 	private final Map<String, String> safeParameters;
 	private final RequestMonitorPlugin requestMonitorPlugin;
 
-	public MonitoredMethodRequest(Configuration configuration, String methodSignature, MethodExecution methodExecution) {
+	public MonitoredMethodRequest(ConfigurationRegistry configuration, String methodSignature, MethodExecution methodExecution) {
 		this(configuration, methodSignature, methodExecution, null);
 	}
 
-	public MonitoredMethodRequest(Configuration configuration, String methodSignature, MethodExecution methodExecution, Map<String, Object> parameters) {
+	public MonitoredMethodRequest(ConfigurationRegistry configuration, String methodSignature, MethodExecution methodExecution, Map<String, Object> parameters) {
 		this.requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		this.methodSignature = methodSignature;
 		this.methodExecution = methodExecution;

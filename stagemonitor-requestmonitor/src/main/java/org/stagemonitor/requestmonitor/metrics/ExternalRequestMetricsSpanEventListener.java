@@ -5,7 +5,7 @@ import com.codahale.metrics.Timer;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.wrapper.ClientServerAwareSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;

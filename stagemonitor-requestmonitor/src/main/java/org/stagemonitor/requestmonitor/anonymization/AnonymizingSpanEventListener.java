@@ -1,6 +1,6 @@
 package org.stagemonitor.requestmonitor.anonymization;
 
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListener;

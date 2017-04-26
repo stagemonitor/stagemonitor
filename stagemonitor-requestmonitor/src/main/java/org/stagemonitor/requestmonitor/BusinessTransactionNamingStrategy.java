@@ -1,7 +1,7 @@
 package org.stagemonitor.requestmonitor;
 
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 
 /**
  * Determines how a business transaction should be named

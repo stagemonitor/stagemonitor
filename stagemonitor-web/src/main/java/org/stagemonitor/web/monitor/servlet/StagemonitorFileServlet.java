@@ -10,8 +10,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.stagemonitor.core.util.IOUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.IOUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
 public class StagemonitorFileServlet extends HttpServlet {

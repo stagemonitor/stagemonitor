@@ -8,11 +8,11 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
@@ -55,12 +55,12 @@ public class SpanServletTest {
 	private WebPlugin webPlugin;
 	private Span span;
 	private SpanContextInformation spanContext;
-	private Configuration configuration;
+	private ConfigurationRegistry configuration;
 
 	@Before
 	public void setUp() throws Exception {
 		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
-		configuration = mock(Configuration.class);
+		configuration = mock(ConfigurationRegistry.class);
 
 		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
@@ -68,7 +68,7 @@ public class SpanServletTest {
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 
 		webPlugin = mock(WebPlugin.class);
-		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(Boolean.TRUE);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(Boolean.TRUE);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 
 		final CorePlugin corePlugin = mock(CorePlugin.class);
@@ -231,9 +231,9 @@ public class SpanServletTest {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
-		Mockito.when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(eq(request), any(Configuration.class))).thenReturn(Boolean.FALSE);
+		Mockito.when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(eq(request), any(ConfigurationRegistry.class))).thenReturn(Boolean.FALSE);
 
-		Configuration configuration = mock(Configuration.class);
+		ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		new MockFilterChain(spanServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 

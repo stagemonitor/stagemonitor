@@ -5,8 +5,8 @@ import com.codahale.metrics.SharedMetricRegistries;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
@@ -22,7 +22,7 @@ public final class Stagemonitor {
 
 	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
 	private static Logger logger = LoggerFactory.getLogger(Stagemonitor.class);
-	private static Configuration configuration;
+	private static ConfigurationRegistry configuration;
 	private static volatile boolean started;
 	private static volatile boolean disabled;
 	private static volatile MeasurementSession measurementSession;
@@ -173,7 +173,7 @@ public final class Stagemonitor {
 		return metric2Registry;
 	}
 
-	public static Configuration getConfiguration() {
+	public static ConfigurationRegistry getConfiguration() {
 		return configuration;
 	}
 
@@ -189,7 +189,7 @@ public final class Stagemonitor {
 		return getPlugin(plugin);
 	}
 
-	static void setConfiguration(Configuration configuration) {
+	static void setConfiguration(ConfigurationRegistry configuration) {
 		Stagemonitor.configuration = configuration;
 	}
 
@@ -251,7 +251,7 @@ public final class Stagemonitor {
 		configurationSources.remove(null);
 
 		plugins = ServiceLoader.load(StagemonitorPlugin.class, Stagemonitor.class.getClassLoader());
-		configuration = new Configuration(plugins, configurationSources, STAGEMONITOR_PASSWORD);
+		configuration = new ConfigurationRegistry(plugins, configurationSources, STAGEMONITOR_PASSWORD);
 
 		try {
 			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {

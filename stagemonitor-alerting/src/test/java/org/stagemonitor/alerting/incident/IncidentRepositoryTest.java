@@ -7,7 +7,7 @@ import org.junit.runners.Parameterized;
 import org.stagemonitor.alerting.ThresholdMonitoringReporterTest;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.configuration.AbstractElasticsearchTest;
+import org.stagemonitor.AbstractElasticsearchTest;
 import org.stagemonitor.core.util.JsonUtils;
 
 import java.util.Arrays;

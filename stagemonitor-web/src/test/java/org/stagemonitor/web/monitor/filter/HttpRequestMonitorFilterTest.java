@@ -9,7 +9,7 @@ import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.MonitoredRequest;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 
 public class HttpRequestMonitorFilterTest {
 
-	private Configuration configuration = mock(Configuration.class);
+	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
@@ -70,7 +70,7 @@ public class HttpRequestMonitorFilterTest {
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(webPlugin.isWidgetEnabled()).thenReturn(true);
-		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(true);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(true);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(requestMonitorPlugin.getProfilerRateLimitPerMinute()).thenReturn(1000000d);
 		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
@@ -122,7 +122,7 @@ public class HttpRequestMonitorFilterTest {
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
 		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(false);
-		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(false);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(false);
 		when(webPlugin.isWidgetEnabled()).thenReturn(false);
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
@@ -193,7 +193,7 @@ public class HttpRequestMonitorFilterTest {
 	public void testRUM() throws Exception {
 		when(webPlugin.isRealUserMonitoringEnabled()).thenReturn(true);
 		when(webPlugin.isWidgetEnabled()).thenReturn(false);
-		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(Configuration.class))).thenReturn(false);
+		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(false);
 		initFilter();
 
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();

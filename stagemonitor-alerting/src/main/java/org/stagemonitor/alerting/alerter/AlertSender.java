@@ -8,7 +8,7 @@ import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.MeasurementSession;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.util.HttpClient;
 
 import java.util.ArrayList;
@@ -29,11 +29,11 @@ public class AlertSender {
 	private final Map<String, Alerter> alerterByType;
 	private final List<Alerter> defaultAlerters;
 
-	public AlertSender(Configuration configuration) {
+	public AlertSender(ConfigurationRegistry configuration) {
 		this(configuration, ServiceLoader.load(Alerter.class));
 	}
 
-	public AlertSender(Configuration configuration, Iterable<Alerter> alerterIterable) {
+	public AlertSender(ConfigurationRegistry configuration, Iterable<Alerter> alerterIterable) {
 		this.alertingPlugin = configuration.getConfig(AlertingPlugin.class);
 		Map<String, Alerter> alerters = new HashMap<String, Alerter>();
 		for (Alerter alerter : alerterIterable) {

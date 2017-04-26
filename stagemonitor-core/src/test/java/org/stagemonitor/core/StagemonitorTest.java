@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 import java.util.Arrays;
 
@@ -20,8 +20,8 @@ import static org.mockito.Mockito.when;
 
 public class StagemonitorTest {
 
-	private static Configuration originalConfiguration;
-	private Configuration configuration = mock(Configuration.class);
+	private static ConfigurationRegistry originalConfiguration;
+	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private Logger logger = mock(Logger.class);
 

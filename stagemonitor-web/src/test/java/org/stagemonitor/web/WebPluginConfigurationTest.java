@@ -2,7 +2,7 @@ package org.stagemonitor.web;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,7 +22,7 @@ public class WebPluginConfigurationTest {
 
 	@Before
 	public void before() throws Exception {
-		Configuration configuration = new Configuration(Collections.singletonList(new WebPlugin()), Collections.emptyList(), "");
+		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(new WebPlugin()), Collections.emptyList(), "");
 		config = configuration.getConfig(WebPlugin.class);
 	}
 

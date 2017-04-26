@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.util.StringUtils;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.requestmonitor.RequestMonitor;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
@@ -37,7 +37,7 @@ import static javax.servlet.DispatcherType.REQUEST;
 public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements Filter {
 
 	private static final Logger logger = LoggerFactory.getLogger(HttpRequestMonitorFilter.class);
-	protected final Configuration configuration;
+	protected final ConfigurationRegistry configuration;
 	protected final CorePlugin corePlugin;
 	protected final WebPlugin webPlugin;
 	protected final RequestMonitor requestMonitor;
@@ -50,7 +50,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		this(Stagemonitor.getConfiguration());
 	}
 
-	public HttpRequestMonitorFilter(Configuration configuration) {
+	public HttpRequestMonitorFilter(ConfigurationRegistry configuration) {
 		super(configuration.getConfig(WebPlugin.class).getExcludedRequestPaths());
 		logger.debug("Instantiating HttpRequestMonitorFilter");
 		this.configuration = configuration;

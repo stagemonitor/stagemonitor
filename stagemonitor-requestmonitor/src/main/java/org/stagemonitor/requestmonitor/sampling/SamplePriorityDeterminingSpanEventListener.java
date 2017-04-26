@@ -2,7 +2,7 @@ package org.stagemonitor.requestmonitor.sampling;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
@@ -20,9 +20,9 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 			new CopyOnWriteArrayList<PreExecutionSpanInterceptor>();
 	private final Collection<PostExecutionSpanInterceptor> postInterceptors =
 			new CopyOnWriteArrayList<PostExecutionSpanInterceptor>();
-	private final Configuration configuration;
+	private final ConfigurationRegistry configuration;
 
-	public SamplePriorityDeterminingSpanEventListener(Configuration configuration) {
+	public SamplePriorityDeterminingSpanEventListener(ConfigurationRegistry configuration) {
 		this.configuration = configuration;
 		registerPreInterceptors();
 		registerPostInterceptors();

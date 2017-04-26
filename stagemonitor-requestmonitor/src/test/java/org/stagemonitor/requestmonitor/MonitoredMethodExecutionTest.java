@@ -6,8 +6,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.MetricsReporterTestHelper;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -34,7 +34,7 @@ public class MonitoredMethodExecutionTest {
 	private SpanContextInformation spanContext3;
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
-	private Configuration configuration;
+	private ConfigurationRegistry configuration;
 	private Map<String, Object> tags;
 
 	@Before
@@ -46,7 +46,7 @@ public class MonitoredMethodExecutionTest {
 		when(requestMonitorPlugin.getRateLimitClientSpansPerTypePerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 
-		configuration = mock(Configuration.class);
+		configuration = mock(ConfigurationRegistry.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
 

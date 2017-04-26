@@ -3,8 +3,8 @@ package org.stagemonitor.core;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.stagemonitor.core.configuration.Configuration;
-import org.stagemonitor.core.configuration.source.ConfigurationSource;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	private StagemonitorCoreConfigurationSourceInitializer initializer = new StagemonitorCoreConfigurationSourceInitializer();
-	final Configuration configuration = Mockito.mock(Configuration.class);
+	final ConfigurationRegistry configuration = Mockito.mock(ConfigurationRegistry.class);
 	final CorePlugin corePlugin = Mockito.mock(CorePlugin.class);
 
 	@Before

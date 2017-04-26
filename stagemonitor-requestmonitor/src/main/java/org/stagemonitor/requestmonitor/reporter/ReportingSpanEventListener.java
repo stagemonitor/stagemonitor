@@ -3,7 +3,7 @@ package org.stagemonitor.requestmonitor.reporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.configuration.Configuration;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
@@ -24,9 +24,9 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 	private final RequestMonitorPlugin requestMonitorPlugin;
 	private final ExecutorService asyncSpanReporterPool;
 	private final List<SpanReporter> spanReporters = new CopyOnWriteArrayList<SpanReporter>();
-	private final Configuration configuration;
+	private final ConfigurationRegistry configuration;
 
-	public ReportingSpanEventListener(Configuration configuration) {
+	public ReportingSpanEventListener(ConfigurationRegistry configuration) {
 		this.configuration = configuration;
 		this.requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
 		final int threadPoolQueueCapacityLimit = configuration.getConfig(CorePlugin.class).getThreadPoolQueueCapacityLimit();
