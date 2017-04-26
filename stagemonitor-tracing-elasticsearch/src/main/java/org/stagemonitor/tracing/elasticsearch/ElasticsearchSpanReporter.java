@@ -6,8 +6,8 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.reporter.SpanReporter;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.util.StringUtils;
 
 public class ElasticsearchSpanReporter extends SpanReporter {

@@ -1,8 +1,8 @@
 package org.stagemonitor.web.monitor.filter;
 
-import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
+import org.stagemonitor.core.StagemonitorSPI;
+import org.stagemonitor.tracing.SpanContextInformation;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;

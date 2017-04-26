@@ -3,11 +3,11 @@ package org.stagemonitor.web.monitor.filter.htmlinjector;
 import org.junit.Test;
 import org.springframework.mock.web.MockServletContext;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.tracing.MockTracer;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
-import org.stagemonitor.requestmonitor.MockTracer;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
@@ -39,9 +39,9 @@ public class BoomerangJsHtmlInjectorTest {
 		final ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		final WebPlugin webPlugin = mock(WebPlugin.class);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		final RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		when(requestMonitorPlugin.getTracer()).thenReturn(new MockTracer());
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		final TracingPlugin tracingPlugin = mock(TracingPlugin.class);
+		when(tracingPlugin.getTracer()).thenReturn(new MockTracer());
+		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		injector.init(new HtmlInjector.InitArguments(configuration, new MockServletContext()));
 
 		final SpanContextInformation spanContext = mock(SpanContextInformation.class);

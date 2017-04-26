@@ -15,7 +15,7 @@ import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.MonitorRequests;
+import org.stagemonitor.tracing.MonitorRequests;
 
 import java.util.List;
 import java.util.Map;

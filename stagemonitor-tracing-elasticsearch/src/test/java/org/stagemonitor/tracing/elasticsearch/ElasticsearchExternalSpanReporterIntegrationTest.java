@@ -9,9 +9,9 @@ import org.stagemonitor.AbstractElasticsearchTest;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.util.IOUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -24,19 +24,19 @@ import static org.mockito.Mockito.when;
 public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractElasticsearchTest {
 
 	protected ElasticsearchSpanReporter reporter;
-	protected RequestMonitorPlugin requestMonitorPlugin;
+	protected TracingPlugin tracingPlugin;
 	protected ConfigurationRegistry configuration;
 
 	@Before
 	public void setUp() throws Exception {
 		this.configuration = mock(ConfigurationRegistry.class);
-		this.requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		this.tracingPlugin = mock(TracingPlugin.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(mock(ElasticsearchTracingPlugin.class));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
-		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(configuration);
 		final String mappingTemplate = IOUtils.getResourceAsString("stagemonitor-elasticsearch-span-index-template.json");

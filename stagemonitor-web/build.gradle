@@ -1,5 +1,5 @@
 dependencies {
-	compile project(":stagemonitor-requestmonitor")
+	compile project(":stagemonitor-tracing")
 	compile project(":stagemonitor-jvm")
 	compile project(":stagemonitor-jdbc")
 	compile "io.dropwizard.metrics:metrics-json:$metricsVersion"
@@ -11,17 +11,10 @@ dependencies {
 	provided 'org.jboss.resteasy:resteasy-jaxrs:3.0.10.Final'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
-	testCompile project(':stagemonitor-requestmonitor').sourceSets.test.output
+	testCompile project(':stagemonitor-tracing').sourceSets.test.output
 	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
 	testCompile 'org.springframework:spring-test:4.1.0.RELEASE'
 	testCompile "org.elasticsearch.client:transport:$esVersion"
 	testCompile "org.eclipse.jetty:jetty-server:$jettyVersion"
 	testCompile "io.opentracing:opentracing-mock:$opentracingVersion"
-
-}
-
-task fatJar(type: Jar) {
-	baseName = project.name + '-all'
-	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-	with jar
 }

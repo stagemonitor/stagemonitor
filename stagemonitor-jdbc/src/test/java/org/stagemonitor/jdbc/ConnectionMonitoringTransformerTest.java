@@ -15,16 +15,16 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
+import org.stagemonitor.tracing.MonitoredMethodRequest;
+import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.profiler.CallStackElement;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -109,7 +109,7 @@ public class ConnectionMonitoringTransformerTest {
 			connection.prepareStatement("CREATE TABLE IF NOT EXISTS STAGEMONITOR (FOO INT)").execute();
 			connection.prepareStatement("INSERT INTO STAGEMONITOR (FOO) VALUES (1)").execute();
 		}
-		requestMonitor = Stagemonitor.getPlugin(RequestMonitorPlugin.class).getRequestMonitor();
+		requestMonitor = Stagemonitor.getPlugin(TracingPlugin.class).getRequestMonitor();
 		configuration = Stagemonitor.getConfiguration();
 		testDao = new TestDao(dataSource);
 	}

@@ -7,8 +7,8 @@ import com.uber.jaeger.reporters.NoopReporter;
 import com.uber.jaeger.samplers.ConstSampler;
 
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.requestmonitor.tracing.B3HeaderFormat;
-import org.stagemonitor.requestmonitor.tracing.TracerFactory;
+import org.stagemonitor.tracing.B3HeaderFormat;
+import org.stagemonitor.tracing.TracerFactory;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;

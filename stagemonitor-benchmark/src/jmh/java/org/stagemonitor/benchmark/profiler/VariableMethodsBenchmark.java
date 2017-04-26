@@ -6,9 +6,9 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.profiler.Profiler;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.profiler.CallStackElement;
+import org.stagemonitor.tracing.profiler.Profiler;
 
 //@Fork(jvmArgs = {"-Xmx6144m", "-Xms6144m", "-XX:NewSize=6000m", "-XX:MaxNewSize=6000m"})
 @State(Scope.Benchmark)
@@ -30,7 +30,7 @@ public class VariableMethodsBenchmark {
 
 	@Setup
 	public void init() {
-		System.out.println("object pooling: " + Stagemonitor.getPlugin(RequestMonitorPlugin.class).isProfilerObjectPoolingActive());
+		System.out.println("object pooling: " + Stagemonitor.getPlugin(TracingPlugin.class).isProfilerObjectPoolingActive());
 	}
 
 	@Param({"1000"})

@@ -7,16 +7,16 @@ import com.uber.jaeger.context.TracingUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.tracing.AbstractExternalRequest;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.metrics.ExternalRequestMetricsSpanEventListener;
+import org.stagemonitor.tracing.profiler.Profiler;
 import org.stagemonitor.util.StringUtils;
-import org.stagemonitor.requestmonitor.AbstractExternalRequest;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventListener;
-import org.stagemonitor.requestmonitor.profiler.Profiler;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -44,7 +44,7 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 	private final ConcurrentMap<DataSource, MetaData> dataSourceUrlMap = new ConcurrentHashMap<DataSource, MetaData>();
 
 	private CorePlugin corePlugin;
-	private RequestMonitorPlugin requestMonitorPlugin;
+	private TracingPlugin tracingPlugin;
 
 	public StagemonitorJdbcEventListener() {
 		this(Stagemonitor.getConfiguration());
@@ -52,7 +52,7 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	public StagemonitorJdbcEventListener(ConfigurationRegistry configuration) {
 		this.jdbcPlugin = configuration.getConfig(JdbcPlugin.class);
-		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
+		tracingPlugin = configuration.getConfig(TracingPlugin.class);
 		corePlugin = configuration.getConfig(CorePlugin.class);
 	}
 
@@ -97,7 +97,7 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	@Override
 	public void onBeforeAnyExecute(StatementInformation statementInformation) {
-		requestMonitorPlugin.getRequestMonitor().monitorStart(new MonitoredJdbcRequest(requestMonitorPlugin));
+		tracingPlugin.getRequestMonitor().monitorStart(new MonitoredJdbcRequest(tracingPlugin));
 	}
 
 	@Override
@@ -118,7 +118,7 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 				}
 
 			}
-			requestMonitorPlugin.getRequestMonitor().monitorStop();
+			tracingPlugin.getRequestMonitor().monitorStop();
 		}
 	}
 
@@ -131,8 +131,8 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	private static class MonitoredJdbcRequest extends AbstractExternalRequest {
 
-		private MonitoredJdbcRequest(RequestMonitorPlugin requestMonitorPlugin) {
-			super(requestMonitorPlugin.getTracer());
+		private MonitoredJdbcRequest(TracingPlugin tracingPlugin) {
+			super(tracingPlugin.getTracer());
 		}
 
 		@Override

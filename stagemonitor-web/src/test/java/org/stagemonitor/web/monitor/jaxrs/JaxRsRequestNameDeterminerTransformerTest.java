@@ -4,23 +4,23 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.MockTracer;
-import org.stagemonitor.requestmonitor.MonitoredMethodRequest;
-import org.stagemonitor.requestmonitor.MonitoredRequest;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanCapturingReporter;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
+import org.stagemonitor.tracing.MockTracer;
+import org.stagemonitor.tracing.MonitoredMethodRequest;
+import org.stagemonitor.tracing.MonitoredRequest;
+import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanCapturingReporter;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
+import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.requestmonitor.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
+import static org.stagemonitor.tracing.BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE;
 
 public class JaxRsRequestNameDeterminerTransformerTest {
 
@@ -48,7 +48,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 	}
 
 	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
-	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+	private TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private RequestMonitor requestMonitor;
@@ -59,30 +59,30 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 	public void before() throws Exception {
 		Stagemonitor.startMonitoring(new MeasurementSession("JaxRsRequestNameDeterminerTransformerTest", "testHost", "testInstance"));
 		registry.removeMatching(Metric2Filter.ALL);
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(corePlugin.getApplicationName()).thenReturn("JaxRsRequestNameDeterminerTransformerTest");
 		when(corePlugin.getInstanceName()).thenReturn("test");
-		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
-		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.getRateLimitClientSpansPerTypePerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
+		when(tracingPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getBusinessTransactionNamingStrategy()).thenReturn(METHOD_NAME_SPLIT_CAMEL_CASE);
 
 		when(webPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
-		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
 		spanCapturingReporter = new SpanCapturingReporter();
 		reportingSpanEventListener.addReporter(spanCapturingReporter);
-		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
+		final SpanWrappingTracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(),
 				configuration, registry, new ArrayList<>(),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+		when(tracingPlugin.getTracer()).thenReturn(tracer);
 	}
 
 	@Test

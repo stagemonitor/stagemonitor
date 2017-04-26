@@ -1,11 +1,11 @@
 package org.stagemonitor.web.monitor.widget;
 
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.util.IOUtils;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.tracing.reporter.ReadbackSpan;
+import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 

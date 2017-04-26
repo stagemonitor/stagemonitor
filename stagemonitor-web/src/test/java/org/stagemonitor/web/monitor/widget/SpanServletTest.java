@@ -12,14 +12,14 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
-import org.stagemonitor.requestmonitor.tracing.B3Propagator;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
+import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.tracing.tracing.B3Propagator;
+import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -58,10 +58,10 @@ public class SpanServletTest {
 	public void setUp() throws Exception {
 		configuration = mock(ConfigurationRegistry.class);
 
-		RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
-		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
-		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
+		when(tracingPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
+		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 
 		webPlugin = mock(WebPlugin.class);
 		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(Boolean.TRUE);
@@ -82,9 +82,9 @@ public class SpanServletTest {
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(anyString(), any(Number.class))).then(invocation -> invocation.getArgument(1));
 		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
 		reportingSpanEventListener.addReporter(reporter);
-		Tracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(new B3Propagator()), configuration,
+		Tracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(new B3Propagator()), configuration,
 				new Metric2Registry(), ServiceLoader.load(SpanEventListenerFactory.class), samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+		when(tracingPlugin.getTracer()).thenReturn(tracer);
 	}
 
 	private void reportSpan() {

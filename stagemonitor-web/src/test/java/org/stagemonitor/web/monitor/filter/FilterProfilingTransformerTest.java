@@ -1,17 +1,17 @@
 package org.stagemonitor.web.monitor.filter;
 
-import static org.junit.Assert.assertEquals;
-
-import javax.servlet.Filter;
-
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.filter.CompositeFilter;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.profiler.Profiler;
+import org.stagemonitor.tracing.profiler.CallStackElement;
+import org.stagemonitor.tracing.profiler.Profiler;
+
+import javax.servlet.Filter;
+
+import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class FilterProfilingTransformerTest {

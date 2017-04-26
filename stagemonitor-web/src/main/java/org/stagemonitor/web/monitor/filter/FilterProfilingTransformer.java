@@ -1,15 +1,16 @@
 package org.stagemonitor.web.monitor.filter;
 
-import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
-import static net.bytebuddy.matcher.ElementMatchers.nameEndsWith;
-import static net.bytebuddy.matcher.ElementMatchers.named;
-
-import javax.servlet.Filter;
-
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-import org.stagemonitor.requestmonitor.profiler.ProfilingTransformer;
+
+import org.stagemonitor.tracing.profiler.ProfilingTransformer;
+
+import javax.servlet.Filter;
+
+import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
+import static net.bytebuddy.matcher.ElementMatchers.nameEndsWith;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class FilterProfilingTransformer extends ProfilingTransformer {
 

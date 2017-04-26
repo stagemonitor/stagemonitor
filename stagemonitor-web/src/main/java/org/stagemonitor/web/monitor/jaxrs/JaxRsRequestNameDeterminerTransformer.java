@@ -7,8 +7,8 @@ import net.bytebuddy.matcher.ElementMatcher;
 
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
+import org.stagemonitor.tracing.AbstractMonitorRequestsTransformer;
+import org.stagemonitor.tracing.TracingPlugin;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,6 +50,6 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 
 	@Advice.OnMethodEnter(inline = false)
 	public static void setRequestName(@AbstractMonitorRequestsTransformer.RequestName String requestName) {
-		RequestMonitorPlugin.getSpan().setOperationName(requestName);
+		TracingPlugin.getSpan().setOperationName(requestName);
 	}
 }

@@ -1,0 +1,6 @@
+org.stagemonitor.tracing.profiler.ProfilingTransformer
+org.stagemonitor.tracing.profiler.elasticsearch.ElasticsearchSearchQueryTransformer
+org.stagemonitor.tracing.MethodLevelMonitorRequestsTransformer
+org.stagemonitor.tracing.ClassLevelMonitorRequestsTransformer
+org.stagemonitor.tracing.ejb.RemoteEjbMonitorTransformer
+org.stagemonitor.tracing.freemarker.FreemarkerProfilingTransformer

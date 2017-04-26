@@ -2,13 +2,13 @@ package org.stagemonitor.web.monitor.widget;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.Pair;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.reporter.ReadbackSpan;
+import org.stagemonitor.tracing.utils.SpanUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,11 +36,11 @@ public class SpanServlet extends HttpServlet {
 	public SpanServlet(ConfigurationRegistry configuration, WidgetAjaxSpanReporter reporter, long requestTimeout) {
 		this.widgetAjaxSpanReporter = reporter;
 		this.requestTimeout = requestTimeout;
-		final RequestMonitorPlugin requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
-		requestMonitorPlugin.onInit(new Runnable() {
+		final TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
+		tracingPlugin.onInit(new Runnable() {
 			@Override
 			public void run() {
-				requestMonitorPlugin.addReporter(widgetAjaxSpanReporter);
+				tracingPlugin.addReporter(widgetAjaxSpanReporter);
 			}
 		});
 	}

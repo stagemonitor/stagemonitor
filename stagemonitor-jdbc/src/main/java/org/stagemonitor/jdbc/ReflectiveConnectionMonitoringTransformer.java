@@ -9,8 +9,8 @@ import net.bytebuddy.utility.JavaModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;

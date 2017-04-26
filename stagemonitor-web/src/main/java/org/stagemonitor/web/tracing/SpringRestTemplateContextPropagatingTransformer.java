@@ -12,9 +12,9 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.InterceptingHttpAccessor;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.requestmonitor.ExternalHttpRequest;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.profiler.Profiler;
+import org.stagemonitor.tracing.ExternalHttpRequest;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.profiler.Profiler;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -41,24 +41,24 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 
 	@Advice.OnMethodExit(inline = false)
 	public static void onInterceptingHttpAccessorCreated(@Advice.This InterceptingHttpAccessor httpAccessor) {
-		final RequestMonitorPlugin requestMonitorPlugin = Stagemonitor.getPlugin(RequestMonitorPlugin.class);
-		httpAccessor.getInterceptors().add(new SpringRestTemplateContextPropagatingInterceptor(requestMonitorPlugin));
+		final TracingPlugin tracingPlugin = Stagemonitor.getPlugin(TracingPlugin.class);
+		httpAccessor.getInterceptors().add(new SpringRestTemplateContextPropagatingInterceptor(tracingPlugin));
 	}
 
 	public static class SpringRestTemplateContextPropagatingInterceptor implements ClientHttpRequestInterceptor {
 
-		private final RequestMonitorPlugin requestMonitorPlugin;
+		private final TracingPlugin tracingPlugin;
 
-		SpringRestTemplateContextPropagatingInterceptor(RequestMonitorPlugin requestMonitorPlugin) {
-			this.requestMonitorPlugin = requestMonitorPlugin;
+		SpringRestTemplateContextPropagatingInterceptor(TracingPlugin tracingPlugin) {
+			this.tracingPlugin = tracingPlugin;
 		}
 
 		@Override
 		public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-			final Span span = new ExternalHttpRequest(requestMonitorPlugin.getTracer(), request.getMethod().toString(), request.getURI().toString(), request.getURI().getHost(), request.getURI().getPort()).createSpan();
+			final Span span = new ExternalHttpRequest(tracingPlugin.getTracer(), request.getMethod().toString(), request.getURI().toString(), request.getURI().getHost(), request.getURI().getPort()).createSpan();
 			try {
 				Profiler.start(request.getMethod().toString() + " " + request.getURI() + " ");
-				requestMonitorPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
+				tracingPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
 				return execution.execute(request, body);
 			} finally {
 				Profiler.stop();

@@ -1,3 +1,3 @@
 dependencies {
-	compile project(":stagemonitor-requestmonitor")
+	compile project(":stagemonitor-tracing")
 }

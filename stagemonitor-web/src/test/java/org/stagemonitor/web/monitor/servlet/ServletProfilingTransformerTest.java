@@ -1,15 +1,15 @@
 package org.stagemonitor.web.monitor.servlet;
 
-import static org.junit.Assert.assertEquals;
-
-import javax.servlet.Servlet;
-
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.servlet.DispatcherServlet;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.profiler.Profiler;
+import org.stagemonitor.tracing.profiler.CallStackElement;
+import org.stagemonitor.tracing.profiler.Profiler;
+
+import javax.servlet.Servlet;
+
+import static org.junit.Assert.assertEquals;
 
 public class ServletProfilingTransformerTest {
 

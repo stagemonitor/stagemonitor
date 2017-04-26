@@ -1,7 +1,7 @@
 package org.stagemonitor.web.monitor.rum;
 
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
+import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.HtmlInjector;
 

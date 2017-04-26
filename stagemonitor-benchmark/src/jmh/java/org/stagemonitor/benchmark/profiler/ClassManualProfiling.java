@@ -1,6 +1,6 @@
 package org.stagemonitor.benchmark.profiler;
 
-import org.stagemonitor.requestmonitor.profiler.Profiler;
+import org.stagemonitor.tracing.profiler.Profiler;
 
 public class ClassManualProfiling {
 

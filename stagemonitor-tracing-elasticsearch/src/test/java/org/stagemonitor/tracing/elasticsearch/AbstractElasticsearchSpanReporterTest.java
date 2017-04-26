@@ -11,15 +11,15 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.MockTracer;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.TagRecordingSpanEventListener;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
+import org.stagemonitor.tracing.MockTracer;
+import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TagRecordingSpanEventListener;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.profiler.CallStackElement;
+import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
+import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,11 +32,11 @@ import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
+import static org.stagemonitor.tracing.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
 
 public class AbstractElasticsearchSpanReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
-	protected RequestMonitorPlugin requestMonitorPlugin;
+	protected TracingPlugin tracingPlugin;
 	protected ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 	protected Logger spanLogger;
 	protected Metric2Registry registry;
@@ -49,20 +49,20 @@ public class AbstractElasticsearchSpanReporterTest {
 	public void setUp() throws Exception {
 		configuration = mock(ConfigurationRegistry.class);
 		corePlugin = mock(CorePlugin.class);
-		requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		tracingPlugin = mock(TracingPlugin.class);
 		elasticsearchTracingPlugin = mock(ElasticsearchTracingPlugin.class);
 
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(elasticsearchTracingPlugin);
-		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
-		when(requestMonitorPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.getRateLimitClientSpansPerTypePerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.singleton("Report Me"));
-		when(requestMonitorPlugin.isProfilerActive()).thenReturn(true);
-		when(requestMonitorPlugin.getProfilerRateLimitPerMinute()).thenReturn(1_000_000d);
+		when(tracingPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.singleton("Report Me"));
+		when(tracingPlugin.isProfilerActive()).thenReturn(true);
+		when(tracingPlugin.getProfilerRateLimitPerMinute()).thenReturn(1_000_000d);
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
@@ -72,12 +72,12 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		spanLogger = mock(Logger.class);
 		tags = new HashMap<>();
-		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
+		when(tracingPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
 		reportingSpanEventListener = new ReportingSpanEventListener(configuration);
-		final SpanWrappingTracer tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(),
+		final SpanWrappingTracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(),
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+		when(tracingPlugin.getTracer()).thenReturn(tracer);
 		Assert.assertTrue(TracingUtils.getTraceContext().isEmpty());
 	}
 
@@ -93,7 +93,7 @@ public class AbstractElasticsearchSpanReporterTest {
 	}
 
 	private SpanContextInformation reportSpan(long executionTimeMs, CallStackElement callTree, String operationName) {
-		final Tracer tracer = requestMonitorPlugin.getTracer();
+		final Tracer tracer = tracingPlugin.getTracer();
 		final Span span;
 		span = tracer.buildSpan(operationName)
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)

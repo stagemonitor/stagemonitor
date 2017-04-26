@@ -12,13 +12,13 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
-import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
-import org.stagemonitor.requestmonitor.sampling.SamplePriorityDeterminingSpanEventListener;
-import org.stagemonitor.requestmonitor.tracing.B3Propagator;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.reporter.ReadbackSpan;
+import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
+import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.tracing.tracing.B3Propagator;
+import org.stagemonitor.tracing.utils.SpanUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
 public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsearchTest {
 
 	protected ElasticsearchSpanReporter reporter;
-	protected RequestMonitorPlugin requestMonitorPlugin;
+	protected TracingPlugin tracingPlugin;
 	protected ConfigurationRegistry configuration;
 	private Tracer tracer;
 
@@ -43,14 +43,14 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 	public void setUp() throws Exception {
 		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
 		this.configuration = mock(ConfigurationRegistry.class);
-		this.requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		this.tracingPlugin = mock(TracingPlugin.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(mock(ElasticsearchTracingPlugin.class));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
-		when(requestMonitorPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
-		when(requestMonitorPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(requestMonitorPlugin.isPseudonymizeUserNames()).thenReturn(true);
+		when(tracingPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(configuration);
 		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
@@ -59,9 +59,9 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())).then(invocation -> invocation.getArgument(1));
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean())).then(invocation -> invocation.getArgument(1));
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(ArgumentMatchers.anyString(), ArgumentMatchers.any(Number.class))).then(invocation -> invocation.getArgument(1));
-		tracer = RequestMonitorPlugin.createSpanWrappingTracer(new MockTracer(new B3Propagator()), configuration,
+		tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(new B3Propagator()), configuration,
 				new Metric2Registry(), Collections.emptyList(), samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
-		when(requestMonitorPlugin.getTracer()).thenReturn(tracer);
+		when(tracingPlugin.getTracer()).thenReturn(tracer);
 	}
 
 	@Test

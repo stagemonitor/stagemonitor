@@ -2,9 +2,9 @@ package org.stagemonitor.zipkin;
 
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.tracing.B3HeaderFormat;
-import org.stagemonitor.requestmonitor.tracing.TracerFactory;
+import org.stagemonitor.tracing.B3HeaderFormat;
+import org.stagemonitor.tracing.TracerFactory;
+import org.stagemonitor.tracing.TracingPlugin;
 
 import java.util.concurrent.TimeUnit;
 
@@ -58,7 +58,7 @@ public class BraveZipkinReportingTracerFactory extends TracerFactory {
 	/**
 	 * Sampling is performed by stagemonitor to ensure consistent configuration regardless of the OT impl
 	 *
-	 * See ConfigurationOptions in {@link RequestMonitorPlugin} tagged with sampling
+	 * See ConfigurationOptions in {@link TracingPlugin} tagged with sampling
 	 */
 	private static class AlwaysSampler extends Sampler {
 		@Override

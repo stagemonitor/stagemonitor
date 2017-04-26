@@ -1,16 +1,16 @@
 package org.stagemonitor.web.monitor;
 
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.tracing.MonitoredRequest;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.util.StringUtils;
-import org.stagemonitor.requestmonitor.MonitoredRequest;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.StatelessSpanEventListener;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 import org.stagemonitor.web.monitor.widget.WidgetAjaxSpanReporter;
@@ -49,7 +49,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	protected final FilterChain filterChain;
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
 	protected final WebPlugin webPlugin;
-	private final RequestMonitorPlugin requestMonitorPlugin;
+	private final TracingPlugin tracingPlugin;
 	private static final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("request_name", "http_code");
 	private final String userAgentHeader;
 	private final String connectionId;
@@ -63,7 +63,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		this.filterChain = filterChain;
 		this.responseWrapper = responseWrapper;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
-		requestMonitorPlugin = configuration.getConfig(RequestMonitorPlugin.class);
+		tracingPlugin = configuration.getConfig(TracingPlugin.class);
 		userAgentHeader = httpServletRequest.getHeader("user-agent");
 		connectionId = httpServletRequest.getHeader(WidgetAjaxSpanReporter.CONNECTION_ID);
 		widgetAndStagemonitorEndpointsAllowed = webPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
@@ -77,7 +77,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			sample = false;
 		}
 
-		final Tracer tracer = requestMonitorPlugin.getTracer();
+		final Tracer tracer = tracingPlugin.getTracer();
 		io.opentracing.SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
 		Tracer.SpanBuilder spanBuilder = tracer.buildSpan(getRequestName())
 				.asChildOf(spanCtx)
@@ -190,16 +190,16 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	public static class HttpSpanEventListener extends StatelessSpanEventListener {
 
 		private final WebPlugin webPlugin;
-		private final RequestMonitorPlugin requestMonitorPlugin;
+		private final TracingPlugin tracingPlugin;
 		private final Metric2Registry metricRegistry;
 
 		public HttpSpanEventListener() {
-			this(Stagemonitor.getPlugin(WebPlugin.class), Stagemonitor.getPlugin(RequestMonitorPlugin.class), Stagemonitor.getMetric2Registry());
+			this(Stagemonitor.getPlugin(WebPlugin.class), Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getMetric2Registry());
 		}
 
-		public HttpSpanEventListener(WebPlugin webPlugin, RequestMonitorPlugin requestMonitorPlugin, Metric2Registry metricRegistry) {
+		public HttpSpanEventListener(WebPlugin webPlugin, TracingPlugin tracingPlugin, Metric2Registry metricRegistry) {
 			this.webPlugin = webPlugin;
-			this.requestMonitorPlugin = requestMonitorPlugin;
+			this.tracingPlugin = tracingPlugin;
 			this.metricRegistry = metricRegistry;
 		}
 
@@ -262,7 +262,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			for (String requestExceptionAttribute : webPlugin.getRequestExceptionAttributes()) {
 				Object exception = httpServletRequest.getAttribute(requestExceptionAttribute);
 				if (exception != null && exception instanceof Exception) {
-					SpanUtils.setException(span, (Exception) exception, requestMonitorPlugin.getIgnoreExceptions(), requestMonitorPlugin.getUnnestExceptions());
+					SpanUtils.setException(span, (Exception) exception, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
 					break;
 				}
 			}
@@ -279,8 +279,8 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			}
 			Set<Pattern> confidentialParams = new HashSet<Pattern>();
 			confidentialParams.addAll(webPlugin.getRequestParamsConfidential());
-			confidentialParams.addAll(requestMonitorPlugin.getConfidentialParameters());
-			SpanUtils.setParameters(span, RequestMonitorPlugin.getSafeParameterMap(params, confidentialParams));
+			confidentialParams.addAll(tracingPlugin.getConfidentialParameters());
+			SpanUtils.setParameters(span, TracingPlugin.getSafeParameterMap(params, confidentialParams));
 		}
 
 		private String getSessionId(HttpServletRequest httpServletRequest) {

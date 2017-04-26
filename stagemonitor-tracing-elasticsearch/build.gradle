@@ -1,12 +1,12 @@
 dependencies {
-	compile project(":stagemonitor-requestmonitor")
+	compile project(":stagemonitor-tracing")
 	compile "com.uber.jaeger:jaeger-core:$jaegerVersion"
 	compile "com.uber.jaeger:jaeger-context:$jaegerVersion"
 
 	compileOnly "org.elasticsearch:elasticsearch:$esVersion"
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
-	testCompile project(':stagemonitor-requestmonitor').sourceSets.test.output
+	testCompile project(':stagemonitor-tracing').sourceSets.test.output
 	testCompile "io.opentracing:opentracing-mock:$opentracingVersion"
 	testCompile "org.elasticsearch.client:transport:$esVersion"
 }

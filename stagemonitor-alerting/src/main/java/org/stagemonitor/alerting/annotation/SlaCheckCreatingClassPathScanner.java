@@ -18,9 +18,9 @@ import org.stagemonitor.core.instrument.AbstractClassPathScanner;
 import org.stagemonitor.core.metrics.annotations.ExceptionMeteredTransformer;
 import org.stagemonitor.core.metrics.annotations.TimedTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.requestmonitor.AbstractMonitorRequestsTransformer;
-import org.stagemonitor.requestmonitor.MonitorRequests;
-import org.stagemonitor.requestmonitor.metrics.ServerRequestMetricsSpanEventListener;
+import org.stagemonitor.tracing.AbstractMonitorRequestsTransformer;
+import org.stagemonitor.tracing.MonitorRequests;
+import org.stagemonitor.tracing.metrics.ServerRequestMetricsSpanEventListener;
 
 import java.io.IOException;
 import java.util.LinkedList;

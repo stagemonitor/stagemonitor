@@ -8,15 +8,15 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.metrics.ExternalRequestMetricsSpanEventListener;
-import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
-import org.stagemonitor.requestmonitor.reporter.ReadbackSpanEventListener;
-import org.stagemonitor.requestmonitor.reporter.ReportingSpanEventListener;
-import org.stagemonitor.requestmonitor.tracing.NoopSpan;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.tracing.NoopSpan;
+import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.metrics.ExternalRequestMetricsSpanEventListener;
+import org.stagemonitor.tracing.reporter.ReadbackSpan;
+import org.stagemonitor.tracing.reporter.ReadbackSpanEventListener;
+import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
+import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,12 +38,12 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void setUp() throws Exception {
 		super.setUp();
 		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
-		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1000000d);
 		reporter = new ElasticsearchSpanReporter(spanLogger);
 		reporter.init(configuration);
-		when(requestMonitorPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
+		when(tracingPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
 		final RequestMonitor requestMonitor = Mockito.mock(RequestMonitor.class);
-		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		reportingSpanEventListener = Mockito.mock(ReportingSpanEventListener.class);
 	}
 
@@ -76,7 +76,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void testLogReportSpan() throws Exception {
 		when(elasticsearchTracingPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(true);
 
-		try (final Span span = requestMonitorPlugin.getTracer().buildSpan("test").start()) {
+		try (final Span span = tracingPlugin.getTracer().buildSpan("test").start()) {
 			report(SpanContextInformation.forSpan(span).getReadbackSpan());
 			Mockito.verify(elasticsearchClient, Mockito.times(0)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
 			Mockito.verify(spanLogger).info(ArgumentMatchers.startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
@@ -86,7 +86,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	@Test
 	public void reportSpanRateLimited() throws Exception {
-		when(requestMonitorPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1d);
+		when(tracingPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1d);
 		report(getSpan());
 		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
 		Thread.sleep(5010); // the meter only updates every 5 seconds
@@ -97,7 +97,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	@Test
 	public void excludeExternalRequestsFasterThan() throws Exception {
-		when(requestMonitorPlugin.getExcludeExternalRequestsFasterThan()).thenReturn(100d);
+		when(tracingPlugin.getExcludeExternalRequestsFasterThan()).thenReturn(100d);
 
 		report(getSpan(100));
 		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
@@ -109,7 +109,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	@Test
 	public void testElasticsearchExcludeFastCallTree() throws Exception {
-		when(requestMonitorPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
+		when(tracingPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
 
 		report(getSpan(1000));
 		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
@@ -128,7 +128,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	@Test
 	public void testElasticsearchDontExcludeSlowCallTree() throws Exception {
-		when(requestMonitorPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
+		when(tracingPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
 
 		report(getSpan(250));
 		report(getSpan(1000));
@@ -143,7 +143,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private ReadbackSpan getSpan(long executionTimeMillis) {
 		final Span span = new SpanWrapper(NoopSpan.INSTANCE, "External Request", 1,
-				1, Arrays.asList(new ExternalRequestMetricsSpanEventListener(registry), new ReadbackSpanEventListener(reportingSpanEventListener, requestMonitorPlugin)));
+				1, Arrays.asList(new ExternalRequestMetricsSpanEventListener(registry), new ReadbackSpanEventListener(reportingSpanEventListener, tracingPlugin)));
 		Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
 		span.setTag(SpanUtils.OPERATION_TYPE, "jdbc");
 		span.setTag("method", "SELECT");

@@ -6,16 +6,16 @@ import org.junit.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.tracing.wrapper.AbstractSpanEventListener;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanEventListenerFactory;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrappingTracer;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.AbstractSpanEventListener;
+import org.stagemonitor.tracing.wrapper.SpanEventListenerFactory;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.filter.StatusExposingByteCountingServletResponse;
 
@@ -42,9 +42,9 @@ public class MonitoredHttpRequestTest {
 	@Before
 	public void setUp() throws Exception {
 		configuration = mock(ConfigurationRegistry.class);
-		final RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+		final TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		final WebPlugin webPlugin = new WebPlugin();
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
 		final List<SpanEventListenerFactory> spanEventListenerFactories = new ArrayList<>();
 		spanEventListenerFactories.add(() -> new AbstractSpanEventListener() {
@@ -53,12 +53,12 @@ public class MonitoredHttpRequestTest {
 				MonitoredHttpRequestTest.this.operationName = operationName;
 			}
 		});
-		spanEventListenerFactories.add(new MonitoredHttpRequest.HttpSpanEventListener(webPlugin, requestMonitorPlugin, new Metric2Registry()));
+		spanEventListenerFactories.add(new MonitoredHttpRequest.HttpSpanEventListener(webPlugin, tracingPlugin, new Metric2Registry()));
 		tracer = new io.opentracing.mock.MockTracer();
-		when(requestMonitorPlugin.getTracer()).thenReturn(new SpanWrappingTracer(tracer,
+		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(tracer,
 				spanEventListenerFactories));
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
-		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 	}
 
 	@After

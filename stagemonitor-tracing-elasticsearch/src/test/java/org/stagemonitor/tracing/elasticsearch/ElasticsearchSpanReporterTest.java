@@ -7,11 +7,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
-import org.stagemonitor.requestmonitor.reporter.ReadbackSpan;
-import org.stagemonitor.requestmonitor.reporter.SpanReporter;
-import org.stagemonitor.requestmonitor.tracing.wrapper.SpanWrapper;
-import org.stagemonitor.requestmonitor.utils.SpanUtils;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.reporter.ReadbackSpan;
+import org.stagemonitor.tracing.reporter.SpanReporter;
+import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.StringUtils;
 
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testElasticsearchExcludeCallTree() throws Exception {
-		Mockito.when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(1d);
+		Mockito.when(tracingPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(1d);
 
 		reportSpanWithCallTree(1000, "Report Me");
 		reportSpanWithCallTree(500, "Report Me");
@@ -80,7 +80,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testElasticsearchDontExcludeCallTree() throws Exception {
-		Mockito.when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
+		Mockito.when(tracingPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
 
 		reportSpanWithCallTree(250, "Report Me");
 		reportSpanWithCallTree(500, "Report Me");
@@ -98,7 +98,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testElasticsearchExcludeFastCallTree() throws Exception {
-		Mockito.when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
+		Mockito.when(tracingPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
 		SpanContextInformation spanContext = reportSpanWithCallTree(1000, "Report Me");
 		Assert.assertFalse(spanContext.getPostExecutionInterceptorContext().isExcludeCallTree());
@@ -112,7 +112,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testElasticsearchDontExcludeSlowCallTree() throws Exception {
-		Mockito.when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
+		Mockito.when(tracingPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
 		reportSpanWithCallTree(250, "Report Me");
 		reportSpanWithCallTree(1000, "Report Me");
@@ -122,7 +122,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testInterceptorServiceLoader() throws Exception {
-		Mockito.when(requestMonitorPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
+		Mockito.when(tracingPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0d);
 
 		reportSpanWithCallTree(250, "Report Me");
 

@@ -8,12 +8,12 @@ import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.requestmonitor.MonitoredRequest;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.tracing.MonitoredRequest;
+import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
@@ -47,7 +47,7 @@ public class HttpRequestMonitorFilterTest {
 	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 	private WebPlugin webPlugin = mock(WebPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
-	private RequestMonitorPlugin requestMonitorPlugin = mock(RequestMonitorPlugin.class);
+	private TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 	private SpanContextInformation spanContext = mock(SpanContextInformation.class);
 	private HttpRequestMonitorFilter httpRequestMonitorFilter;
 	private String testHtml = "<html><body></body></html>";
@@ -67,13 +67,13 @@ public class HttpRequestMonitorFilterTest {
 		});
 
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		when(configuration.getConfig(RequestMonitorPlugin.class)).thenReturn(requestMonitorPlugin);
+		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(webPlugin.isWidgetEnabled()).thenReturn(true);
 		when(webPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(true);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
-		when(requestMonitorPlugin.getProfilerRateLimitPerMinute()).thenReturn(1000000d);
-		when(requestMonitorPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(tracingPlugin.getProfilerRateLimitPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		when(corePlugin.getApplicationName()).thenReturn("testApplication");
 		when(corePlugin.getInstanceName()).thenReturn("testInstance");
 

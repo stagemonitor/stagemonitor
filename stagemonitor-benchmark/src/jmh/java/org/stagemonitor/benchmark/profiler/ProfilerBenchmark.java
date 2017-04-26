@@ -1,13 +1,13 @@
 package org.stagemonitor.benchmark.profiler;
 
-import java.lang.management.ManagementFactory;
-
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.requestmonitor.profiler.CallStackElement;
-import org.stagemonitor.requestmonitor.profiler.Profiler;
+import org.stagemonitor.tracing.profiler.CallStackElement;
+import org.stagemonitor.tracing.profiler.Profiler;
+
+import java.lang.management.ManagementFactory;
 
 @State(value = Scope.Benchmark)
 public class ProfilerBenchmark {

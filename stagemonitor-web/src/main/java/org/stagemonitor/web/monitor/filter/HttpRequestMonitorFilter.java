@@ -2,14 +2,14 @@ package org.stagemonitor.web.monitor.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.util.StringUtils;
-import org.stagemonitor.requestmonitor.RequestMonitor;
-import org.stagemonitor.requestmonitor.RequestMonitorPlugin;
-import org.stagemonitor.requestmonitor.SpanContextInformation;
 import org.stagemonitor.web.WebPlugin;
 import org.stagemonitor.web.monitor.DefaultMonitoredHttpRequestFactory;
 import org.stagemonitor.web.monitor.MonitoredHttpRequest;
@@ -56,7 +56,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		this.configuration = configuration;
 		this.webPlugin = configuration.getConfig(WebPlugin.class);
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
-		this.requestMonitor = configuration.getConfig(RequestMonitorPlugin.class).getRequestMonitor();
+		this.requestMonitor = configuration.getConfig(TracingPlugin.class).getRequestMonitor();
 
 		final Iterator<MonitoredHttpRequestFactory> requestFactoryIterator = ServiceLoader.load(MonitoredHttpRequestFactory.class).iterator();
 		if (!requestFactoryIterator.hasNext()) {
