@@ -11,5 +11,6 @@ include 'stagemonitor-alerting',
 		'stagemonitor-requestmonitor',
 		'stagemonitor-web',
 		'stagemonitor-grafana-elasticsearch',
-		'stagemonitor-zipkin'
+		'stagemonitor-zipkin',
+		'stagemonitor-vertx'
 
