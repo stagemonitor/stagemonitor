@@ -113,10 +113,12 @@ subprojects {
 		targetCompatibility = 1.6
 		options.debug = true
 		options.debugOptions.debugLevel = "source,lines,vars"
+		options.incremental = true
 	}
 
 	compileTestJava {
 		options.debugOptions.debugLevel = "source,lines,vars"
+		options.incremental = true
 	}
 
 	tasks.withType(JavaCompile) {
@@ -124,11 +126,9 @@ subprojects {
 		options.incremental = true
 	}
 
-	if (!System.getProperty("java.version").startsWith("1.6.")) {
-		cobertura {
-			coverageFormats = []
-			coverageIgnoreTrivial = true
-		}
+	cobertura {
+		coverageFormats = []
+		coverageIgnoreTrivial = true
 	}
 
 	processResources {
@@ -191,11 +191,13 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "2.12"
+	gradleVersion = "3.5"
 }
 
-task printProjectsToTest() << {
-	println getProjectsToRelease()
+task printProjectsToTest() {
+	doLast {
+		println getProjectsToRelease()
+	}
 }
 
 task install

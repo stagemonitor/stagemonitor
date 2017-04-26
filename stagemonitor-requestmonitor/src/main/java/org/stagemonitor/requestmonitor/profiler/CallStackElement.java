@@ -22,9 +22,9 @@ public class CallStackElement {
 			objectPool = new ArrayBlockingQueue<CallStackElement>(100000);
 		}
 	}
-	private static final String HORIZONTAL;       // '│   '
-	private static final String HORIZONTAL_ANGLE; // '├── '
-	private static final String ANGLE;            // '└── '
+	private static final String HORIZONTAL;
+	private static final String HORIZONTAL_ANGLE;
+	private static final String ANGLE;
 	static {
 		HORIZONTAL = new String(new char[]{9474, ' ', ' ', ' '});
 		ANGLE = new String(new char[] {9492, 9472, 9472, ' '});
@@ -265,11 +265,11 @@ public class CallStackElement {
 		StringBuilder sb = new StringBuilder(totalBars);
 		for (int i = 0; i < totalBars; i++) {
 			if (i < actualBars) {
-				sb.append(asciiArt ? (char) 9608 : '|'); // █
+				sb.append(asciiArt ? (char) 9608 : '|');
 			} else if (i == actualBars && includeHalfBarAtEnd) {
-				sb.append(asciiArt ? (char) 9619 : ':'); // ▓
+				sb.append(asciiArt ? (char) 9619 : ':');
 			} else {
-				sb.append(asciiArt ? (char) 9617 : '-'); // ▒
+				sb.append(asciiArt ? (char) 9617 : '-');
 			}
 		}
 		return sb.toString();

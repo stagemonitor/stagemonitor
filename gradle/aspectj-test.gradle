@@ -17,24 +17,26 @@ dependencies {
  * Replace the standard compile action with that of the IAJC Ant task.
  */
 compileTestJava.deleteAllActions()
-compileTestJava << {
-	ant.taskdef(
-			resource: 'org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties',
-			classpath: configurations.ajc.asPath)
-	ant.iajc(
-			source: sourceCompatibility,
-			target: targetCompatibility,
-			destDir: sourceSets.test.output.classesDir.absolutePath,
-			fork: 'true',
-			X: 'noInline',
-			aspectPath: configurations.aspects.asPath,
-			inpath: configurations.ajInpath.asPath,
-			sourceRootCopyFilter: '**/*.java,**/*.aj',
-			classpath: "${configurations.compile.asPath};${configurations.testCompile.asPath}") {
+compileTestJava {
+	doLast {
+		ant.taskdef(
+				resource: 'org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties',
+				classpath: configurations.ajc.asPath)
+		ant.iajc(
+				source: sourceCompatibility,
+				target: targetCompatibility,
+				destDir: sourceSets.test.output.classesDir.absolutePath,
+				fork: 'true',
+				X: 'noInline',
+				aspectPath: configurations.aspects.asPath,
+				inpath: configurations.ajInpath.asPath,
+				sourceRootCopyFilter: '**/*.java,**/*.aj',
+				classpath: "${configurations.compile.asPath};${configurations.testCompile.asPath}") {
 
-		sourceroots {
-			(sourceSets.test.java.srcDirs + sourceSets.main.java.srcDirs).each { dir ->
-				pathelement(location: dir.absolutePath)
+			sourceroots {
+				(sourceSets.test.java.srcDirs + sourceSets.main.java.srcDirs).each { dir ->
+					pathelement(location: dir.absolutePath)
+				}
 			}
 		}
 	}

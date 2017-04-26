@@ -15,7 +15,7 @@ git checkout $VERSION
 ./gradlew uploadArchives
 
 # build and push grafana app
-./gradlew :stagemonitor-grafana-elasticsearch:clean :stagemonitor-grafana-elasticsearch:build
+./gradlew :stagemonitor-grafana-elasticsearch:clean :stagemonitor-grafana-elasticsearch:buildModule
 pushd stagemonitor-grafana-elasticsearch
 git init
 git remote add origin git@github.com:stagemonitor/stagemonitor-grafana-elasticsearch.git

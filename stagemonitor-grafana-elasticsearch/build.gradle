@@ -1,85 +1,89 @@
-import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 
 plugins {
-    id "com.moowork.node" version "0.12"
+	id "com.moowork.node" version "0.12"
 }
 
 dependencies {
-    // dashboard files for grafana include documentation which is injected in the dashboard when the corresponding project is built.
-    // Therefore stagmeonitor-grafana-elasticsearch depends on them.
-    getProjectsToRelease().each {
-        compile it
-    }
+	// dashboard files for grafana include documentation which is injected in the dashboard when the corresponding project is built.
+	// Therefore stagmeonitor-grafana-elasticsearch depends on them.
+	getProjectsToRelease().each {
+		compile it
+	}
 }
 
 project.buildDir = "dist"
 
 node {
-    // Version of node to use.
-    version = '4.4.3'
-    download = true
+	// Version of node to use.
+	version = '4.4.3'
+	download = true
 }
 
 def processResourcesTasks = getProjectsToRelease().collect { it.tasks.processResources }
-task collectDashboards(dependsOn: processResourcesTasks) << {
-    copy {
-        from project.parent.fileTree(".") {
-            include "**/build/**/grafana/Elasticsearch*.json"
-            exclude "Grafana1"
-        }.files
-        into "$buildDir/dashboards"
-        rename { String fileName ->
-            fileName.toLowerCase()
-        }
-        includeEmptyDirs = false
-    }
+task collectDashboards(dependsOn: processResourcesTasks) {
+	doLast {
+		copy {
+			from project.parent.fileTree(".") {
+				include "**/build/**/grafana/Elasticsearch*.json"
+				exclude "Grafana1"
+			}.files
+			into "$buildDir/dashboards"
+			rename { String fileName ->
+				fileName.toLowerCase()
+			}
+			includeEmptyDirs = false
+		}
+	}
 }
 
 def getDashboardsJson() {
-    def slurper = new JsonSlurper()
-    def dashboards = []
+	def slurper = new JsonSlurper()
+	def dashboards = []
 
-    file("$buildDir/dashboards/").listFiles().each {
-        def relativePathToDashboard = it.canonicalPath - (project.buildDir.canonicalPath + '/');
-        def originalDashboardPath = project.parent.fileTree(".") {
-            include "*/src/**/grafana/Elasticsearch*.json"
-        }.find({ file ->
-            file.canonicalPath.toLowerCase().endsWith(it.name)
-        }).canonicalPath
-        def relativeOriginalDashboardPath = originalDashboardPath.replace(rootDir.canonicalPath + '/', '')
-        def projectName = relativeOriginalDashboardPath.substring(0, relativeOriginalDashboardPath.indexOf("/"));
+	file("$buildDir/dashboards/").listFiles().each {
+		def relativePathToDashboard = it.canonicalPath - (project.buildDir.canonicalPath + '/');
+		def originalDashboardPath = project.parent.fileTree(".") {
+			include "*/src/**/grafana/Elasticsearch*.json"
+		}.find({ file ->
+			file.canonicalPath.toLowerCase().endsWith(it.name)
+		}).canonicalPath
+		def relativeOriginalDashboardPath = originalDashboardPath.replace(rootDir.canonicalPath + '/', '')
+		def projectName = relativeOriginalDashboardPath.substring(0, relativeOriginalDashboardPath.indexOf("/"));
 
-        dashboards << [
-            'type': "dashboard",
-            'name': slurper.parseText(it.text).title,
-            'path': relativePathToDashboard,
-            'stagemonitorPlugin': projectName,
-            'revision': project.version
-        ]
-    }
+		dashboards << [
+				'type'              : "dashboard",
+				'name'              : slurper.parseText(it.text).title,
+				'path'              : relativePathToDashboard,
+				'stagemonitorPlugin': projectName,
+				'revision'          : project.version
+		]
+	}
 
-    return JsonOutput.prettyPrint(JsonOutput.toJson(dashboards))
+	return JsonOutput.prettyPrint(JsonOutput.toJson(dashboards))
 }
 
-task addDashboardsToPluginJson(dependsOn: collectDashboards) << {
-    copy {
-        from 'src'
-        into "$buildDir"
-        include 'plugin.json'
-        expand(
-            'dashboards': getDashboardsJson(),
-            'version': version,
-            'releaseDate': new Date().format("yyyy-MM-dd")
-        )
-    }
+task addDashboardsToPluginJson(dependsOn: collectDashboards) {
+	doLast {
+		copy {
+			from 'src'
+			into "$buildDir"
+			include 'plugin.json'
+			expand(
+					'dashboards': getDashboardsJson(),
+					'version': version,
+					'releaseDate': new Date().format("yyyy-MM-dd")
+			)
+		}
+	}
 }
 
 task copyAssets(type: Copy) {
-    from 'src', 'README.md'
-    into "$buildDir"
-    exclude 'plugin.json', '*.js'
+	from 'src', 'README.md'
+	into "$buildDir"
+	exclude 'plugin.json', '*.js'
 }
 
 
-task build(dependsOn: [copyAssets, addDashboardsToPluginJson, npm_install, npm_run_build])
+task buildModule(dependsOn: [copyAssets, addDashboardsToPluginJson, npm_install, npm_run_build])

@@ -3,8 +3,10 @@ apply plugin: 'com.bmuschko.nexus'
 uploadArchives.dependsOn << compileJava
 install.dependsOn << compileJava
 
-task setIntegrationSnapshotVersion << {
-	project.version = "integration-SNAPSHOT"
+task setIntegrationSnapshotVersion {
+	doLast {
+		project.version = "integration-SNAPSHOT"
+	}
 }
 install.mustRunAfter setIntegrationSnapshotVersion
 compileJava.mustRunAfter setIntegrationSnapshotVersion
