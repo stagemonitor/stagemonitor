@@ -14,8 +14,6 @@ import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.util.IOUtils;
 
-import java.util.concurrent.TimeUnit;
-
 import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
@@ -53,7 +51,9 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 
 	@Test
 	public void reportSpan() throws Exception {
-		reporter.report(SpanContextInformation.forUnitTest(getSpan(100)));
+		SpanContextInformation spanContextInformation = mock(SpanContextInformation.class);
+		when(spanContextInformation.getReadbackSpan()).thenReturn(getSpan(100));
+		reporter.report(spanContextInformation);
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
@@ -61,7 +61,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		final JsonNode spanJson = hits.get("hits").elements().next().get("_source");
 		Assert.assertEquals("jdbc", spanJson.get("type").asText());
 		Assert.assertEquals("SELECT", spanJson.get("method").asText());
-		Assert.assertEquals(100000, spanJson.get("duration").asInt());
+		Assert.assertEquals(100, spanJson.get("duration_ms").asInt());
 		Assert.assertEquals("SELECT * from STAGEMONITOR where 1 < 2", spanJson.get("db").get("statement").asText());
 		Assert.assertEquals("ElasticsearchExternalSpanReporterIntegrationTest#test", spanJson.get("name").asText());
 	}
@@ -69,7 +69,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 	private ReadbackSpan getSpan(long executionTimeMillis) {
 		final ReadbackSpan readbackSpan = new ReadbackSpan();
 		readbackSpan.setName("ElasticsearchExternalSpanReporterIntegrationTest#test");
-		readbackSpan.setDuration(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis));
+		readbackSpan.setDuration(executionTimeMillis);
 		readbackSpan.setTag("type", "jdbc");
 		readbackSpan.setTag("method", "SELECT");
 		readbackSpan.setTag("db.statement", "SELECT * from STAGEMONITOR where 1 < 2");

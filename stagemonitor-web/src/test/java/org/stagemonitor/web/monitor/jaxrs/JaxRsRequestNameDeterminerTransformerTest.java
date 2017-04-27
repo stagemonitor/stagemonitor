@@ -92,7 +92,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 
 		final SpanContextInformation info = spanCapturingReporter.get();
 
-		assertNotNull(info.getSpan());
+		assertNotNull(info);
 		assertEquals("Get Test String", info.getOperationName());
 	}
 

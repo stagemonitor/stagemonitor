@@ -11,15 +11,15 @@ import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.utils.SpanUtils;
-import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
-import io.opentracing.Span;
 import io.opentracing.tag.Tags;
+
+import static org.junit.Assert.assertEquals;
 
 public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanReporterTest {
 
@@ -37,8 +37,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testReportSpan() throws Exception {
-		final SpanContextInformation spanContext = SpanContextInformation.forUnitTest(Mockito.mock(Span.class), "Report Me");
-		reporter.report(spanContext);
+		final SpanContextInformation spanContext = reportSpanWithCallTree(1000, "Report Me");
 
 		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
 		Assert.assertTrue(reporter.isActive(spanContext));
@@ -58,9 +57,9 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 	public void testReportSpanDontReport() throws Exception {
 		final SpanContextInformation info = reportSpanWithCallTree(1, "Regular Foo");
 
-		Assert.assertTrue(reporter.isActive(SpanContextInformation.forUnitTest(info.getSpan())));
+		Assert.assertTrue(reporter.isActive(info));
 		Assert.assertFalse(info.isSampled());
-		Mockito.verify(((SpanWrapper) info.getSpan()).getDelegate()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
+		assertEquals((short) 0, tags.get(Tags.SAMPLING_PRIORITY.getKey()));
 	}
 
 	@Test
@@ -92,8 +91,8 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 	}
 
 	private void verifyContainsCallTree(ReadbackSpan span, boolean contains) {
-		Assert.assertEquals(contains, span.getTags().get(SpanUtils.CALL_TREE_ASCII) != null);
-		Assert.assertEquals(contains, span.getTags().get(SpanUtils.CALL_TREE_JSON) != null);
+		assertEquals(contains, span.getTags().get(SpanUtils.CALL_TREE_ASCII) != null);
+		assertEquals(contains, span.getTags().get(SpanUtils.CALL_TREE_JSON) != null);
 	}
 
 	@Test

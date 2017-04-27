@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
@@ -42,9 +43,9 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		reporter = new ElasticsearchSpanReporter(spanLogger);
 		reporter.init(configuration);
 		when(tracingPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
-		final RequestMonitor requestMonitor = Mockito.mock(RequestMonitor.class);
+		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
-		reportingSpanEventListener = Mockito.mock(ReportingSpanEventListener.class);
+		reportingSpanEventListener = mock(ReportingSpanEventListener.class);
 	}
 
 	@Test
@@ -54,7 +55,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		report(span);
 
 		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.startsWith("stagemonitor-spans-"), ArgumentMatchers.eq("spans"), ArgumentMatchers.any());
-		Assert.assertTrue(reporter.isActive(SpanContextInformation.forUnitTest(span)));
+		Assert.assertTrue(reporter.isActive(null));
 		verifyTimerCreated(1);
 	}
 
@@ -68,7 +69,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 		Mockito.verify(elasticsearchClient, Mockito.times(0)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
 		Mockito.verify(spanLogger, Mockito.times(0)).info(ArgumentMatchers.anyString());
-		Assert.assertFalse(reporter.isActive(SpanContextInformation.forUnitTest(span)));
+		Assert.assertFalse(reporter.isActive(null));
 		verifyTimerCreated(1);
 	}
 
@@ -80,7 +81,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 			report(SpanContextInformation.forSpan(span).getReadbackSpan());
 			Mockito.verify(elasticsearchClient, Mockito.times(0)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
 			Mockito.verify(spanLogger).info(ArgumentMatchers.startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
-			Assert.assertTrue(reporter.isActive(SpanContextInformation.forUnitTest(span)));
+			Assert.assertTrue(reporter.isActive(SpanContextInformation.forSpan(span)));
 		}
 	}
 
@@ -119,10 +120,10 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	}
 
 	private void report(ReadbackSpan span) {
-		final SpanContextInformation spanContext = SpanContextInformation.forUnitTest(span);
-		final SpanContextInformation reportArguments = SpanContextInformation.forUnitTest(span);
-		if (reporter.isActive(spanContext)) {
-			reporter.report(reportArguments);
+		if (reporter.isActive(null)) {
+			SpanContextInformation spanContextInformation = mock(SpanContextInformation.class);
+			when(spanContextInformation.getReadbackSpan()).thenReturn(span);
+			reporter.report(spanContextInformation);
 		}
 	}
 

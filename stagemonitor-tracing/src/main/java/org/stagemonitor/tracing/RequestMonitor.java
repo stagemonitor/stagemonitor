@@ -1,10 +1,15 @@
 package org.stagemonitor.tracing;
 
+import com.uber.jaeger.context.TraceContext;
+import com.uber.jaeger.context.TracingUtils;
+
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.utils.SpanUtils;
+
+import io.opentracing.Span;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -37,11 +42,15 @@ public class RequestMonitor {
 	}
 
 	public void monitorStop() {
-		final SpanContextInformation info = SpanContextInformation.getCurrent();
-		if (info != null) {
-			long overhead2 = System.nanoTime();
-			info.getSpan().finish();
-			trackOverhead(info.getOverhead1(), overhead2);
+		final TraceContext traceContext = TracingUtils.getTraceContext();
+		if (!traceContext.isEmpty()) {
+			final Span currentSpan = traceContext.getCurrentSpan();
+			final SpanContextInformation info = SpanContextInformation.forSpan(currentSpan);
+			if (info != null) {
+				long overhead2 = System.nanoTime();
+				currentSpan.finish();
+				trackOverhead(info.getOverhead1(), overhead2);
+			}
 		}
 	}
 
@@ -59,7 +68,7 @@ public class RequestMonitor {
 	}
 
 	public void recordException(Exception e) {
-		SpanUtils.setException(TracingPlugin.getSpan(), e, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
+		SpanUtils.setException(TracingPlugin.getCurrentSpan(), e, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {

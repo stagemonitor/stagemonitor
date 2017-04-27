@@ -14,8 +14,6 @@ import org.stagemonitor.web.monitor.rum.BoomerangJsHtmlInjector;
 
 import java.io.InputStream;
 
-import io.opentracing.Span;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -45,7 +43,6 @@ public class BoomerangJsHtmlInjectorTest {
 		injector.init(new HtmlInjector.InitArguments(configuration, new MockServletContext()));
 
 		final SpanContextInformation spanContext = mock(SpanContextInformation.class);
-		when(spanContext.getSpan()).thenReturn(mock(Span.class));
 		when(spanContext.getOperationName()).thenReturn("GET /index.html");
 
 		final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(spanContext);

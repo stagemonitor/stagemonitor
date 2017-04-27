@@ -96,7 +96,6 @@ public class SpanServletTest {
 		Span span = monitoredHttpRequest.createSpan();
 		spanContext = SpanContextInformation.forSpan(span);
 		span.setOperationName("test");
-		spanContext.setSpan(span);
 		span.finish();
 	}
 
@@ -231,6 +230,5 @@ public class SpanServletTest {
 		new MockFilterChain(spanServlet, new StagemonitorSecurityFilter(configuration)).doFilter(request, response);
 
 		Assert.assertEquals(404, response.getStatus());
-		Assert.assertFalse(reporter.isActive(SpanContextInformation.forUnitTest(mock(Span.class))));
 	}
 }

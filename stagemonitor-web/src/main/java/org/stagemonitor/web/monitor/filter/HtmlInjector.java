@@ -26,8 +26,6 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 
 	/**
 	 * Implementations can return html snippets that are injected just before the closing body tag.
-	 * <p/>
-	 * <b>Note:</b> {@link SpanContextInformation#getSpan()} ()} may return null
 	 *
 	 * @param injectArguments
 	 * @return the code to inject into html documents just before the closing body tag

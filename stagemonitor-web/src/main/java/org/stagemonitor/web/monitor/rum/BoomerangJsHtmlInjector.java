@@ -45,7 +45,7 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 	@Override
 	public void injectHtml(HtmlInjector.InjectArguments injectArguments) {
 		final SpanContextInformation spanContext = injectArguments.getSpanContext();
-		if (spanContext == null || spanContext.getSpan() == null) {
+		if (spanContext == null) {
 			return;
 		}
 		injectArguments.setContentToInjectBeforeClosingBody(boomerangTemplate

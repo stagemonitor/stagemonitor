@@ -30,8 +30,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import io.opentracing.Span;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -61,7 +59,6 @@ public class HttpRequestMonitorFilterTest {
 				MonitoredRequest request = (MonitoredRequest) invocation.getArguments()[0];
 				request.execute();
 				when(spanContext.getOperationName()).thenReturn("testName");
-				when(spanContext.getSpan()).thenReturn(mock(Span.class));
 				return spanContext;
 			}
 		});

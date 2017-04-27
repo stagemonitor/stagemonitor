@@ -311,7 +311,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 	/**
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
 	 */
-	public static Span getSpan() {
+	public static Span getCurrentSpan() {
 		final TraceContext traceContext = TracingUtils.getTraceContext();
 		if (!traceContext.isEmpty()) {
 			return traceContext.getCurrentSpan();
@@ -408,6 +408,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 		spanWrappingTracer.addSpanInterceptor(new CallTreeSpanEventListener(tracingPlugin));
 		spanWrappingTracer.addSpanInterceptor(new ReadbackSpanEventListener.Factory(reportingSpanEventListener, tracingPlugin));
 		spanWrappingTracer.addSpanInterceptor(reportingSpanEventListener);
+		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanFinalizer());
 		return spanWrappingTracer;
 	}
 

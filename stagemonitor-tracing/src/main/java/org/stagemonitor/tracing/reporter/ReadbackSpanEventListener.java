@@ -8,9 +8,13 @@ import org.stagemonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.StringUtils;
 
+import java.util.concurrent.TimeUnit;
+
 import io.opentracing.tag.Tags;
 
 public class ReadbackSpanEventListener implements SpanEventListener {
+
+	private static final double MILLISECOND_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
 	private final ReportingSpanEventListener reportingSpanEventListener;
 	private final TracingPlugin tracingPlugin;
@@ -92,7 +96,7 @@ public class ReadbackSpanEventListener implements SpanEventListener {
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		if (readbackSpan != null) {
 			readbackSpan.setName(operationName);
-			readbackSpan.setDuration(durationNanos);
+			readbackSpan.setDuration(durationNanos / MILLISECOND_IN_NANOS);
 			final String timestamp = StringUtils.timestampAsIsoString(spanWrapper.getStartTimestampMillis());
 			readbackSpan.setTimestamp(timestamp);
 			SpanContextInformation.forSpan(spanWrapper).setReadbackSpan(readbackSpan);

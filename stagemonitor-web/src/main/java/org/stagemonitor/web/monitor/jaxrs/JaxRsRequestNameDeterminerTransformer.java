@@ -50,6 +50,6 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 
 	@Advice.OnMethodEnter(inline = false)
 	public static void setRequestName(@AbstractMonitorRequestsTransformer.RequestName String requestName) {
-		TracingPlugin.getSpan().setOperationName(requestName);
+		TracingPlugin.getCurrentSpan().setOperationName(requestName);
 	}
 }

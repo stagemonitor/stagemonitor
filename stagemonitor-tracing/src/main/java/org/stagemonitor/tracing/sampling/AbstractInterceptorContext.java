@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.tracing.SpanContextInformation;
 
-import io.opentracing.Span;
-
 public class AbstractInterceptorContext<T extends AbstractInterceptorContext> {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractInterceptorContext.class);
@@ -35,11 +33,6 @@ public class AbstractInterceptorContext<T extends AbstractInterceptorContext> {
 
 	public boolean isReport() {
 		return report;
-	}
-
-
-	public Span getSpan() {
-		return spanContext.getSpan();
 	}
 
 	public SpanContextInformation getSpanContext() {

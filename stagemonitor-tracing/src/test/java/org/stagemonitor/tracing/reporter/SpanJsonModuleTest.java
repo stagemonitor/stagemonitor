@@ -6,8 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
 
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -31,12 +29,11 @@ public class SpanJsonModuleTest {
 	}
 
 	@Test
-	public void testSampledTag() {
+	public void testSetReservedTagName() {
 		final ReadbackSpan span = createTestSpan(1);
-		span.setTag("duration", "foo");
+		span.setTag("duration_ms", "foo");
 		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
-		System.out.println(jsonSpan);
-		assertEquals(1000, jsonSpan.get("duration").intValue());
+		assertEquals(jsonSpan.toString(), 1, jsonSpan.get("duration_ms").intValue());
 	}
 
 	@Test
@@ -55,7 +52,7 @@ public class SpanJsonModuleTest {
 
 	private ReadbackSpan createTestSpan(int durationMs) {
 		final ReadbackSpan readbackSpan = new ReadbackSpan();
-		readbackSpan.setDuration(TimeUnit.MILLISECONDS.toMicros(durationMs));
+		readbackSpan.setDuration(durationMs);
 		return readbackSpan;
 	}
 

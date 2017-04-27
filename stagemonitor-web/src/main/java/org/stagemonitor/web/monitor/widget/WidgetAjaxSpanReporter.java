@@ -97,7 +97,7 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 
 			final String connectionId = (String) spanContext.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
-				logger.debug("report {}", spanContext.getSpan());
+				logger.debug("buffering span '{}'", spanContext.getOperationName());
 				bufferSpan(connectionId, spanContext.getReadbackSpan());
 
 				final Object lock = connectionIdToLockMap.remove(connectionId);

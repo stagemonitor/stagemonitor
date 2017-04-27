@@ -33,8 +33,9 @@ public class LoggingSpanReporterTest {
 	public void report() throws Exception {
 		final ReadbackSpan readbackSpan = new ReadbackSpan();
 		readbackSpan.setTag("foo.bar", "baz");
-		final SpanContextInformation context = SpanContextInformation.forUnitTest(readbackSpan);
-		final String logMessage = loggingSpanReporter.getLogMessage(context);
+		SpanContextInformation spanContextInformation = mock(SpanContextInformation.class);
+		when(spanContextInformation.getReadbackSpan()).thenReturn(readbackSpan);
+		final String logMessage = loggingSpanReporter.getLogMessage(spanContextInformation);
 		assertTrue(logMessage.contains("foo.bar: baz"));
 	}
 

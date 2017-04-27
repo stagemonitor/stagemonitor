@@ -15,6 +15,7 @@ import org.stagemonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,7 +30,6 @@ public class SpanContextInformation {
 	private static final WeakConcurrentMap<Span, SpanContextInformation> spanContextMap = new WeakConcurrentMap
 			.WithInlinedExpunction<Span, SpanContextInformation>();
 
-	private Span span;
 	private long overhead1;
 	private SpanContextInformation parent;
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
@@ -60,66 +60,15 @@ public class SpanContextInformation {
 	public static SpanContextInformation forSpan(Span span) {
 		if (span != null) {
 			if (!spanContextMap.containsKey(span)) {
-				spanContextMap.putIfAbsent(span, SpanContextInformation.forUnitTest(span));
+				spanContextMap.putIfAbsent(span, new SpanContextInformation());
 			}
 			return spanContextMap.get(span);
 		}
 		return null;
 	}
 
-	/**
-	 * Internal method, should only be called by stagemonitor tests
-	 */
-	public static SpanContextInformation forUnitTest(Span span) {
-		final SpanContextInformation spanContext = new SpanContextInformation();
-		spanContext.setSpan(span);
-		return spanContext;
-	}
-
-	/**
-	 * Internal method, should only be called by stagemonitor tests
-	 */
-	public static SpanContextInformation forUnitTest(ReadbackSpan span) {
-		final SpanContextInformation spanContext = new SpanContextInformation();
-		spanContext.setReadbackSpan(span);
-		return spanContext;
-	}
-
-	/**
-	 * Internal method, should only be called by stagemonitor tests
-	 */
-	public static SpanContextInformation forUnitTest(Span span, String operationName) {
-		final SpanContextInformation spanContext = new SpanContextInformation();
-		spanContext.setSpan(span);
-		spanContext.setOperationName(operationName);
-		return spanContext;
-	}
-
-	/**
-	 * Internal method, should only be called by stagemonitor tests
-	 */
-	public static SpanContextInformation forUnitTest(Span span, Map<String, Object> requestAttributes) {
-		final SpanContextInformation spanContext = new SpanContextInformation();
-		spanContext.setSpan(span);
-		for (Map.Entry<String, Object> entry : requestAttributes.entrySet()) {
-			spanContext.addRequestAttribute(entry.getKey(), entry.getValue());
-		}
-		return spanContext;
-	}
-
 	public String getOperationName() {
 		return operationName;
-	}
-
-	public Span getSpan() {
-		return span;
-	}
-
-	/**
-	 * Internal method, should only be called by stagemonitor itself
-	 */
-	public void setSpan(Span span) {
-		this.span = span;
 	}
 
 	/**
@@ -317,7 +266,6 @@ public class SpanContextInformation {
 
 			TracingUtils.getTraceContext().push(spanWrapper);
 			spanContextMap.put(spanWrapper, info);
-			info.setSpan(spanWrapper);
 			for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
 				spanWrapper.setTag(entry.getKey(), entry.getValue());
 			}
@@ -374,7 +322,6 @@ public class SpanContextInformation {
 
 		@Override
 		public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-			TracingUtils.getTraceContext().pop();
 			final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
 			info.setOperationName(operationName);
 			info.setDuration(durationNanos);
@@ -383,6 +330,14 @@ public class SpanContextInformation {
 		@Override
 		public SpanEventListener create() {
 			return new SpanContextSpanEventListener();
+		}
+	}
+
+	public static class SpanFinalizer extends StatelessSpanEventListener {
+		@Override
+		public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
+			TracingUtils.getTraceContext().pop();
+			spanContextMap.remove(spanWrapper);
 		}
 	}
 }

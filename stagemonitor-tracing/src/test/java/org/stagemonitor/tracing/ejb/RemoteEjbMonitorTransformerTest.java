@@ -49,7 +49,7 @@ public class RemoteEjbMonitorTransformerTest {
 		remote.foo();
 
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
-		assertNotNull(spanContext.getSpan());
+		assertNotNull(spanContext);
 		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceImpl#foo", spanContext.getOperationName());
 		assertFalse(spanContext.getCallTree().toString(), spanContext.getCallTree().getChildren().isEmpty());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
@@ -61,7 +61,7 @@ public class RemoteEjbMonitorTransformerTest {
 		remoteAlt.bar();
 
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
-		assertNotNull(spanContext.getSpan());
+		assertNotNull(spanContext);
 		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#bar", spanContext.getOperationName());
 		assertFalse(spanContext.getCallTree().toString(), spanContext.getCallTree().getChildren().isEmpty());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
@@ -73,7 +73,7 @@ public class RemoteEjbMonitorTransformerTest {
 		remoteAlt.foo();
 
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
-		assertNotNull(spanContext.getSpan());
+		assertNotNull(spanContext);
 		assertEquals("RemoteEjbMonitorTransformerTest$RemoteInterfaceWithRemoteAnnotationImpl#foo", spanContext.getOperationName());
 		assertFalse(spanContext.getCallTree().toString(), spanContext.getCallTree().getChildren().isEmpty());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();

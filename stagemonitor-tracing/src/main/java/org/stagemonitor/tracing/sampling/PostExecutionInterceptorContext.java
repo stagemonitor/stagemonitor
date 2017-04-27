@@ -20,7 +20,7 @@ public class PostExecutionInterceptorContext extends AbstractInterceptorContext<
 	/**
 	 * Requests that the call tree should not be added to the current {@link Span}
 	 *
-	 * @param reasonthe reason why the call tree should be excluded (debug message)
+	 * @param reason the reason why the call tree should be excluded (debug message)
 	 * @return <code>this</code> for chaining
 	 */
 	public PostExecutionInterceptorContext excludeCallTree(String reason) {

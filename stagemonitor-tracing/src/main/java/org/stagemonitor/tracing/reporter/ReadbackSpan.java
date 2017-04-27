@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import io.opentracing.tag.Tags;
 
@@ -34,7 +33,7 @@ public class ReadbackSpan {
 	private String parentId;
 
 	private String name;
-	private long duration;
+	private double duration;
 	private String timestamp;
 
 	private Map<String, Object> tags = new HashMap<String, Object>();
@@ -71,11 +70,11 @@ public class ReadbackSpan {
 		this.name = name;
 	}
 
-	public long getDuration() {
+	public double getDuration() {
 		return duration;
 	}
 
-	public void setDuration(long duration) {
+	public void setDuration(double duration) {
 		this.duration = duration;
 	}
 
@@ -100,8 +99,6 @@ public class ReadbackSpan {
 	}
 
 	public static class SpanJsonModule extends Module {
-
-		private static final double MICROSECONDS_OF_MILLISECOND = TimeUnit.MILLISECONDS.toMicros(1);
 
 		@Override
 		public String getModuleName() {
@@ -138,8 +135,7 @@ public class ReadbackSpan {
 					}
 
 					gen.writeStringField("name", span.getName());
-					gen.writeNumberField("duration", span.getDuration());
-					gen.writeNumberField("duration_ms", span.getDuration() / MICROSECONDS_OF_MILLISECOND);
+					gen.writeNumberField("duration_ms", span.getDuration());
 					gen.writeStringField("@timestamp", span.getTimestamp());
 					gen.writeStringField("id", span.getId());
 					gen.writeStringField("trace_id", span.getTraceId());
