@@ -88,6 +88,13 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.description("Set to true trace EJB (@Schedule) and Spring (@Scheduled) scheduled tasks.")
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(false);
+	private final ConfigurationOption<Boolean> monitorAsyncInvocations = ConfigurationOption.booleanOption()
+			.key("stagemonitor.requestmonitor.monitorAsyncInvocations")
+			.dynamic(false)
+			.label("Monitor async invocations")
+			.description("Set to true trace EJB (@Asynchronous) and Spring (@Async) async invocations.")
+			.configurationCategory(TRACING_PLUGIN)
+			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
 			.key("stagemonitor.requestmonitor.params.confidential.regex")
 			.dynamic(true)
@@ -586,6 +593,10 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	public boolean isMonitorScheduledTasks() {
 		return monitorScheduledTasks.getValue();
+	}
+
+	public boolean isMonitorAsyncInvocations() {
+		return monitorAsyncInvocations.getValue();
 	}
 
 	public void addReporter(SpanReporter spanReporter) {

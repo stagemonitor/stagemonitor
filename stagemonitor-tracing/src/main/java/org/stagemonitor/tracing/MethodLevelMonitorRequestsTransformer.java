@@ -19,9 +19,12 @@ public class MethodLevelMonitorRequestsTransformer extends AbstractMonitorReques
 
 	@SuppressWarnings("unchecked")
 	public MethodLevelMonitorRequestsTransformer() {
-		asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Async"));
-		asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("javax.ejb.Asynchronous"));
-		if (configuration.getConfig(TracingPlugin.class).isMonitorScheduledTasks()) {
+		final TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
+		if (tracingPlugin.isMonitorAsyncInvocations()) {
+			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Async"));
+			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("javax.ejb.Asynchronous"));
+		}
+		if (tracingPlugin.isMonitorScheduledTasks()) {
 			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Scheduled"));
 			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Schedules"));
 			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("javax.ejb.Schedule"));
