@@ -76,9 +76,10 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		SpanUtils.setParameters(span, parameters);
 		span.setTag(SpanUtils.OPERATION_TYPE, "method_invocation");
 		span.setTag("foo.bar", "baz");
+		final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(span);
 		span.finish();
 		elasticsearchClient.waitForCompletion();
-		validateSpanJson(JsonUtils.getMapper().valueToTree(SpanContextInformation.forSpan(span).getReadbackSpan()));
+		validateSpanJson(JsonUtils.getMapper().valueToTree(spanContextInformation.getReadbackSpan()));
 
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
