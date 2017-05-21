@@ -97,7 +97,11 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 		if (minExecutionTimeMultiplier > 0d) {
 			callTree.removeCallsFasterThan((long) (callTree.getExecutionTime() * minExecutionTimeMultiplier));
 		}
-		span.setTag(SpanUtils.CALL_TREE_JSON, JsonUtils.toJson(callTree));
-		span.setTag(SpanUtils.CALL_TREE_ASCII, callTree.toString(true));
+		if (!tracingPlugin.getExcludedTags().contains(SpanUtils.CALL_TREE_JSON)) {
+			span.setTag(SpanUtils.CALL_TREE_JSON, JsonUtils.toJson(callTree));
+		}
+		if (!tracingPlugin.getExcludedTags().contains(SpanUtils.CALL_TREE_ASCII)) {
+			span.setTag(SpanUtils.CALL_TREE_ASCII, callTree.toString(true));
+		}
 	}
 }

@@ -9,8 +9,8 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.converter.ListValueConverter;
 import org.stagemonitor.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -314,7 +314,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<Collection<String>> excludePackages = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.exclude")
-			.dynamic(true)
+			.dynamic(false)
 			.label("Excluded packages")
 			.description("Exclude packages and their sub-packages from the instrumentation (for example the profiler).")
 			.defaultValue(Collections.<String>emptySet())
@@ -322,7 +322,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<Collection<String>> excludeContaining = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.excludeContaining")
-			.dynamic(true)
+			.dynamic(false)
 			.label("Exclude containing")
 			.description("Exclude classes from the instrumentation (for example from profiling) that contain one of the " +
 					"following strings as part of their class name.")
@@ -337,7 +337,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.build();
 	private final ConfigurationOption<Collection<String>> includePackages = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.include")
-			.dynamic(true)
+			.dynamic(false)
 			.label("Included packages")
 			.description("The packages that should be included for instrumentation. " +
 					"If this property is required if you want to use the profiler, the @MonitorRequests annotation, the " +

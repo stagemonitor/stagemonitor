@@ -28,6 +28,7 @@ import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.sampling.PostExecutionSpanInterceptor;
 import org.stagemonitor.tracing.sampling.PreExecutionSpanInterceptor;
 import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 
@@ -54,7 +55,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	/* What/how to monitor */
 	private final ConfigurationOption<Boolean> collectCpuTime = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.cpuTime")
+			.key("stagemonitor.tracing.cpuTime")
+			.aliasKeys("stagemonitor.requestmonitor.cpuTime")
 			.dynamic(true)
 			.label("Collect CPU time")
 			.description("Whether or not a timer for the cpu time of executions should be created. " +
@@ -63,7 +65,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(false);
 	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.collectExternalRequestTimePerRequest")
+			.key("stagemonitor.tracing.collectExternalRequestTimePerRequest")
+			.aliasKeys("stagemonitor.requestmonitor.collectExternalRequestTimePerRequest")
 			.dynamic(true)
 			.label("Collect external request time per request group")
 			.description("Whether or not the execution time of external should be collected per request group\n" +
@@ -82,21 +85,24 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE);
 	private final ConfigurationOption<Boolean> monitorScheduledTasks = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.monitorScheduledTasks")
+			.key("stagemonitor.tracing.monitorScheduledTasks")
+			.aliasKeys("stagemonitor.requestmonitor.monitorScheduledTasks")
 			.dynamic(false)
 			.label("Monitor scheduled tasks")
 			.description("Set to true trace EJB (@Schedule) and Spring (@Scheduled) scheduled tasks.")
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(false);
 	private final ConfigurationOption<Boolean> monitorAsyncInvocations = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.monitorAsyncInvocations")
+			.key("stagemonitor.tracing.monitorAsyncInvocations")
+			.aliasKeys("stagemonitor.requestmonitor.monitorAsyncInvocations")
 			.dynamic(false)
 			.label("Monitor async invocations")
 			.description("Set to true trace EJB (@Asynchronous) and Spring (@Async) async invocations.")
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
-			.key("stagemonitor.requestmonitor.params.confidential.regex")
+			.key("stagemonitor.tracing.params.confidential.regex")
+			.aliasKeys("stagemonitor.requestmonitor.params.confidential.regex")
 			.dynamic(true)
 			.label("Confidential parameters (regex)")
 			.description("A list of request parameter name patterns that should not be collected.\n" +
@@ -111,6 +117,15 @@ public class TracingPlugin extends StagemonitorPlugin {
 					Pattern.compile("(?i).*credit.*"),
 					Pattern.compile("(?i).*pwd.*"),
 					Pattern.compile("(?i)pw")));
+	private final ConfigurationOption<Collection<String>> excludedTags = ConfigurationOption.stringsOption()
+			.key("stagemonitor.tracing.tags.excluded")
+			.dynamic(true)
+			.label("Excluded tags")
+			.description("A list of tags which should not be reported. Note that is not possible to exclude boolean tags. " +
+					"For example, if you don't want a particular call tree format to be reported, add " +
+					SpanUtils.CALL_TREE_JSON + " or " + SpanUtils.CALL_TREE_ASCII + " accordingly.")
+			.configurationCategory(TRACING_PLUGIN)
+			.buildWithDefault(Collections.<String>emptySet());
 
 	/* Profiler */
 	private final ConfigurationOption<Boolean> profilerActive = ConfigurationOption.booleanOption()
@@ -195,7 +210,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	/* Reporting */
 	private final ConfigurationOption<Boolean> logSpans = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.reporting.log")
+			.key("stagemonitor.tracing.reporting.log")
+			.aliasKeys("stagemonitor.requestmonitor.reporting.log")
 			.dynamic(true)
 			.label("Log spans")
 			.description("Whether or not spans should be logged.")
@@ -203,7 +219,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(false);
 	private final ConfigurationOption<Boolean> reportSpansAsync = ConfigurationOption.booleanOption()
-			.key("stagemonitor.requestmonitor.report.async")
+			.key("stagemonitor.tracing.report.async")
+			.aliasKeys("stagemonitor.requestmonitor.report.async")
 			.dynamic(true)
 			.label("Report Async")
 			.description("Set to true to report collected spans asynchronously. It's recommended to always set this to " +
@@ -214,7 +231,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	/* Exceptions */
 	private final ConfigurationOption<Collection<String>> unnestExceptions = ConfigurationOption.stringsOption()
-			.key("stagemonitor.requestmonitor.unnestExeptions")
+			.key("stagemonitor.tracing.unnestExeptions")
+			.aliasKeys("stagemonitor.requestmonitor.unnestExeptions")
 			.dynamic(true)
 			.label("Unnest Exceptions")
 			.description("Some Exceptions are so called 'nested exceptions' which wrap the actual cause of the exception. " +
@@ -223,7 +241,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(Collections.singleton("org.springframework.web.util.NestedServletException"));
 	private final ConfigurationOption<Collection<String>> ignoreExceptions = ConfigurationOption.stringsOption()
-			.key("stagemonitor.requestmonitor.ignoreExeptions")
+			.key("stagemonitor.tracing.ignoreExeptions")
+			.aliasKeys("stagemonitor.requestmonitor.ignoreExeptions")
 			.dynamic(true)
 			.label("Ignore Exceptions")
 			.description("The class names of exception to ignore. These exceptions won't show up in the span " +
@@ -233,7 +252,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	/* Sampling */
 	private final ConfigurationOption<Collection<String>> onlyReportSpansWithName = ConfigurationOption.stringsOption()
-			.key("stagemonitor.requestmonitor.sampling.onlyReportSpansWithName")
+			.key("stagemonitor.tracing.sampling.onlyReportSpansWithName")
 			.aliasKeys("stagemonitor.requestmonitor.onlyReportRequestsWithNameToElasticsearch")
 			.dynamic(true)
 			.label("Only report these operation names")
@@ -242,7 +261,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(Collections.<String>emptySet());
 	private final ConfigurationOption<Double> rateLimitServerSpansPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.sampling.server.rateLimitPerMinute")
+			.key("stagemonitor.tracing.sampling.server.rateLimitPerMinute")
 			.aliasKeys("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
 			.dynamic(true)
 			.label("Rate limit for server spans per minute")
@@ -252,7 +271,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(1000000d);
 	private final ConfigurationOption<Double> rateLimitClientSpansPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute.generic")
+			.key("stagemonitor.tracing.sampling.client.rateLimitPerMinute.generic")
 			.aliasKeys("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
 			.dynamic(true)
 			.label("Rate limit for external requests (client spans) per minute")
@@ -264,7 +283,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(1000000d);
 	private final ConfigurationOption<Map<String, Double>> rateLimitClientSpansPerTypePerMinute = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, DoubleValueConverter.INSTANCE)
-			.key("stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute.perType")
+			.key("stagemonitor.tracing.sampling.client.rateLimitPerMinute.perType")
+			.aliasKeys("stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute.perType")
 			.dynamic(true)
 			.label("Rate limit for external requests (client spans) per minute per operation type")
 			.description("Limits the rate at which specific external spans like 'jdbc' queries are collected and reported. " +
@@ -275,7 +295,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(Collections.<String, Double>emptyMap());
 	private final ConfigurationOption<Double> excludeCallTreeFromReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.sampling.excludeCallTreeFromReportWhenFasterThanXPercentOfRequests")
+			.key("stagemonitor.tracing.sampling.excludeCallTreeFromReportWhenFasterThanXPercentOfRequests")
 			.aliasKeys("stagemonitor.requestmonitor.elasticsearch.excludeCallTreeFromElasticsearchReportWhenFasterThanXPercentOfRequests")
 			.dynamic(true)
 			.label("Exclude the Call Tree from reports on x% of the fastest requests")
@@ -288,7 +308,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(0d);
 	private final ConfigurationOption<Double> excludeExternalRequestsWhenFasterThanXPercent = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsWhenFasterThanXPercent")
+			.key("stagemonitor.tracing.external.excludeExternalRequestsWhenFasterThanXPercent")
+			.aliasKeys("stagemonitor.requestmonitor.external.excludeExternalRequestsWhenFasterThanXPercent")
 			.dynamic(true)
 			.label("Exclude external requests from reporting on x% of the fastest external requests")
 			.description("Exclude the external request from reporting when the request was faster faster than x " +
@@ -300,7 +321,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(0d);
 	private final ConfigurationOption<Double> excludeExternalRequestsFasterThan = ConfigurationOption.doubleOption()
-			.key("stagemonitor.requestmonitor.external.excludeExternalRequestsFasterThan")
+			.key("stagemonitor.tracing.external.excludeExternalRequestsFasterThan")
+			.aliasKeys("stagemonitor.requestmonitor.external.excludeExternalRequestsFasterThan")
 			.dynamic(true)
 			.label("Exclude external requests from reporting when faster than x ms")
 			.description("Exclude the external request from reporting when the request was faster faster than x ms.")
@@ -569,8 +591,20 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return reportSpansAsync.getValue();
 	}
 
+	public boolean isMonitorScheduledTasks() {
+		return monitorScheduledTasks.getValue();
+	}
+
+	public boolean isMonitorAsyncInvocations() {
+		return monitorAsyncInvocations.getValue();
+	}
+
 	public void addSpanInterceptor(SpanEventListenerFactory spanEventListenerFactory) {
 		spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
+	}
+
+	public Collection<String> getExcludedTags() {
+		return excludedTags.get();
 	}
 
 	/**
@@ -589,14 +623,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 	 */
 	public void registerPostInterceptor(PostExecutionSpanInterceptor interceptor) {
 		samplePriorityDeterminingSpanInterceptor.addPostInterceptor(interceptor);
-	}
-
-	public boolean isMonitorScheduledTasks() {
-		return monitorScheduledTasks.getValue();
-	}
-
-	public boolean isMonitorAsyncInvocations() {
-		return monitorAsyncInvocations.getValue();
 	}
 
 	public void addReporter(SpanReporter spanReporter) {
