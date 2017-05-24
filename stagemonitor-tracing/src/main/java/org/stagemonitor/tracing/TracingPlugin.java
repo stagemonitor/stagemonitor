@@ -260,33 +260,21 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.tags("sampling")
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(Collections.<String>emptySet());
-	private final ConfigurationOption<Double> rateLimitServerSpansPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.tracing.sampling.server.rateLimitPerMinute")
-			.aliasKeys("stagemonitor.requestmonitor.onlyReportNRequestsPerMinuteToElasticsearch")
+	private final ConfigurationOption<Double> defaultRateLimitSpansPerMinute = ConfigurationOption.doubleOption()
+			.key("stagemonitor.tracing.sampling.rateLimitPerMinute.default")
 			.dynamic(true)
-			.label("Rate limit for server spans per minute")
-			.description("Limits the rate at which spans are collected reported. " +
-					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report.")
+			.label("Rate limit for spans per minute")
+			.description("Limits the rate at which spans are collected and reported. " +
+					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report. " +
+					"This setting is active for all operation types which are not listed in " +
+					"'stagemonitor.requestmonitor.sampling.rateLimitPerMinute.perType'")
 			.tags("sampling")
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(1000000d);
-	private final ConfigurationOption<Double> rateLimitClientSpansPerMinute = ConfigurationOption.doubleOption()
-			.key("stagemonitor.tracing.sampling.client.rateLimitPerMinute.generic")
-			.aliasKeys("stagemonitor.requestmonitor.external.onlyReportNExternalRequestsPerMinute")
+	private final ConfigurationOption<Map<String, Double>> rateLimitSpansPerMinutePerType = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, DoubleValueConverter.INSTANCE)
+			.key("stagemonitor.tracing.sampling.rateLimitPerMinute.perType")
 			.dynamic(true)
-			.label("Rate limit for external requests (client spans) per minute")
-			.description("Limits the rate at which external spans are collected and reported. " +
-					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report. " +
-					"This setting is active for all operation types which are not listed in " +
-					"'stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute.perType'")
-			.tags("external-requests", "sampling")
-			.configurationCategory(TRACING_PLUGIN)
-			.buildWithDefault(1000000d);
-	private final ConfigurationOption<Map<String, Double>> rateLimitClientSpansPerTypePerMinute = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, DoubleValueConverter.INSTANCE)
-			.key("stagemonitor.tracing.sampling.client.rateLimitPerMinute.perType")
-			.aliasKeys("stagemonitor.requestmonitor.sampling.client.rateLimitPerMinute.perType")
-			.dynamic(true)
-			.label("Rate limit for external requests (client spans) per minute per operation type")
+			.label("Rate limit for spans per minute per operation type")
 			.description("Limits the rate at which specific external spans like 'jdbc' queries are collected and reported. " +
 					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report. " +
 					"If your application makes excessive use of for example jdbc queries, you might want to deactivate " +
@@ -512,14 +500,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return onlyReportSpansWithName.getValue();
 	}
 
-	public double getRateLimitServerSpansPerMinute() {
-		return rateLimitServerSpansPerMinute.getValue();
-	}
-
-	public ConfigurationOption<Double> getRateLimitServerSpansPerMinuteOption() {
-		return rateLimitServerSpansPerMinute;
-	}
-
 	public double getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests() {
 		return excludeCallTreeFromReportWhenFasterThanXPercentOfRequests.getValue();
 	}
@@ -563,20 +543,20 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return ignoreExceptions.getValue();
 	}
 
-	public double getRateLimitClientSpansPerMinute() {
-		return rateLimitClientSpansPerMinute.getValue();
+	public double getDefaultRateLimitSpansPerMinute() {
+		return defaultRateLimitSpansPerMinute.getValue();
 	}
 
-	public ConfigurationOption<Double> getRateLimitClientSpansPerMinuteOption() {
-		return rateLimitClientSpansPerMinute;
+	public ConfigurationOption<Double> getDefaultRateLimitSpansPerMinuteOption() {
+		return defaultRateLimitSpansPerMinute;
 	}
 
-	public Map<String, Double> getRateLimitClientSpansPerTypePerMinute() {
-		return rateLimitClientSpansPerTypePerMinute.getValue();
+	public Map<String, Double> getRateLimitSpansPerMinutePerType() {
+		return rateLimitSpansPerMinutePerType.getValue();
 	}
 
 	public ConfigurationOption<Map<String, Double>> getRateLimitClientSpansPerTypePerMinuteOption() {
-		return rateLimitClientSpansPerTypePerMinute;
+		return rateLimitSpansPerMinutePerType;
 	}
 
 	public double getExcludeExternalRequestsWhenFasterThanXPercent() {

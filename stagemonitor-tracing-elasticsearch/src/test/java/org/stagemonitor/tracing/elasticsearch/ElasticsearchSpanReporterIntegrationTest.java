@@ -48,7 +48,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(mock(ElasticsearchTracingPlugin.class));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
-		when(tracingPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1000000d);
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.isPseudonymizeUserNames()).thenReturn(true);
 		reporter = new ElasticsearchSpanReporter();

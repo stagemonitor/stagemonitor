@@ -11,30 +11,22 @@ import java.util.Map;
 
 public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterceptor {
 
-	private RateLimiter serverSpanRateLimiter;
-	private RateLimiter clientSpanRateLimiter;
+	private RateLimiter defaultSpanRateLimiter;
 	private Map<String, RateLimiter> clientSpanRateLimiterByType;
 
 	@Override
 	public void init(ConfigurationRegistry configuration) {
 		TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
-		serverSpanRateLimiter = getRateLimiter(tracingPlugin.getRateLimitServerSpansPerMinute());
-		tracingPlugin.getRateLimitServerSpansPerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Double>() {
+
+		defaultSpanRateLimiter = getRateLimiter(tracingPlugin.getDefaultRateLimitSpansPerMinute());
+		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Double>() {
 			@Override
 			public void onChange(ConfigurationOption<?> configurationOption, Double oldValue, Double newValue) {
-				serverSpanRateLimiter = getRateLimiter(newValue);
+				defaultSpanRateLimiter = getRateLimiter(newValue);
 			}
 		});
 
-		clientSpanRateLimiter = getRateLimiter(tracingPlugin.getRateLimitClientSpansPerMinute());
-		tracingPlugin.getRateLimitClientSpansPerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Double>() {
-			@Override
-			public void onChange(ConfigurationOption<?> configurationOption, Double oldValue, Double newValue) {
-				clientSpanRateLimiter = getRateLimiter(newValue);
-			}
-		});
-
-		setRateLimiterMap(tracingPlugin.getRateLimitClientSpansPerTypePerMinute());
+		setRateLimiterMap(tracingPlugin.getRateLimitSpansPerMinutePerType());
 		tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Map<String, Double>>() {
 			@Override
 			public void onChange(ConfigurationOption<?> configurationOption, Map<String, Double> oldValue, Map<String, Double> newValue) {
@@ -70,17 +62,13 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 	@Override
 	public void interceptReport(PreExecutionInterceptorContext context) {
 		final SpanContextInformation spanContext = context.getSpanContext();
-		boolean rateExceeded = false;
-		if (spanContext.isServerRequest()) {
-			rateExceeded = isRateExceeded(serverSpanRateLimiter);
-		} else if (spanContext.isExternalRequest()) {
-			RateLimiter rateLimiter = clientSpanRateLimiter;
-			if (clientSpanRateLimiterByType.containsKey(spanContext.getOperationType())) {
-				rateLimiter = clientSpanRateLimiterByType.get(spanContext.getOperationType());
-			}
-			rateExceeded = isRateExceeded(rateLimiter);
+		final RateLimiter rateLimiter;
+		if (clientSpanRateLimiterByType.containsKey(spanContext.getOperationType())) {
+			rateLimiter = clientSpanRateLimiterByType.get(spanContext.getOperationType());
+		} else {
+			rateLimiter = defaultSpanRateLimiter;
 		}
-		if (rateExceeded) {
+		if (isRateExceeded(rateLimiter)) {
 			context.shouldNotReport(getClass());
 		}
 	}

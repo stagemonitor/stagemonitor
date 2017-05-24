@@ -31,7 +31,6 @@ public class RateLimitingPreExecutionInterceptorTest {
 				null);
 
 		spanContext = mock(SpanContextInformation.class);
-		when(spanContext.isExternalRequest()).thenReturn(false);
 
 		context = new PreExecutionInterceptorContext(spanContext);
 		interceptor = new RateLimitingPreExecutionInterceptor();
@@ -39,10 +38,8 @@ public class RateLimitingPreExecutionInterceptorTest {
 	}
 
 	@Test
-	public void testNeverReportServerSpan() throws Exception {
-		tracingPlugin.getRateLimitServerSpansPerMinuteOption().update(0d, SimpleSource.NAME);
-		when(spanContext.isExternalRequest()).thenReturn(false);
-		when(spanContext.isServerRequest()).thenReturn(true);
+	public void testNeverReportSpan() throws Exception {
+		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(0d, SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 		assertFalse(context.isReport());
@@ -51,10 +48,8 @@ public class RateLimitingPreExecutionInterceptorTest {
 	}
 
 	@Test
-	public void testAlwaysReportServerSpan() throws Exception {
-		when(spanContext.isExternalRequest()).thenReturn(false);
-		when(spanContext.isServerRequest()).thenReturn(true);
-		tracingPlugin.getRateLimitServerSpansPerMinuteOption().update(1_000_000.0, SimpleSource.NAME);
+	public void testAlwaysReportSpan() throws Exception {
+		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(1_000_000.0, SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 
@@ -62,10 +57,8 @@ public class RateLimitingPreExecutionInterceptorTest {
 	}
 
 	@Test
-	public void testRateNotExceededThenExceededServerSpan() throws Exception {
-		when(spanContext.isExternalRequest()).thenReturn(false);
-		when(spanContext.isServerRequest()).thenReturn(true);
-		tracingPlugin.getRateLimitServerSpansPerMinuteOption().update(60d, SimpleSource.NAME);
+	public void testRateNotExceededThenExceededSpan() throws Exception {
+		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(60d, SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 		assertTrue(context.isReport());
@@ -75,31 +68,8 @@ public class RateLimitingPreExecutionInterceptorTest {
 	}
 
 	@Test
-	public void testNeverReportExternalRequest() throws Exception {
-		when(spanContext.isExternalRequest()).thenReturn(true);
-		when(spanContext.isServerRequest()).thenReturn(false);
-		tracingPlugin.getRateLimitClientSpansPerMinuteOption().update(0d, SimpleSource.NAME);
-
-		interceptor.interceptReport(context);
-		assertFalse(context.isReport());
-	}
-
-	@Test
-	public void testAlwaysReportExternalRequest() throws Exception {
-		when(spanContext.isExternalRequest()).thenReturn(true);
-		when(spanContext.isServerRequest()).thenReturn(false);
-		tracingPlugin.getRateLimitClientSpansPerMinuteOption().update(10_000_000.0, SimpleSource.NAME);
-
-		interceptor.interceptReport(context);
-
-		assertTrue(context.isReport());
-	}
-
-	@Test
-	public void testRateExceededThenNotExceededExternalRequest() throws Exception {
-		when(spanContext.isExternalRequest()).thenReturn(true);
-		when(spanContext.isServerRequest()).thenReturn(false);
-		tracingPlugin.getRateLimitClientSpansPerMinuteOption().update(60.0, SimpleSource.NAME);
+	public void testRateExceededThenNotExceededSpan() throws Exception {
+		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(60.0, SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 		assertTrue(context.isReport());
@@ -109,11 +79,9 @@ public class RateLimitingPreExecutionInterceptorTest {
 	}
 
 	@Test
-	public void testReportExternalRequestGenericType() throws Exception {
-		when(spanContext.isExternalRequest()).thenReturn(true);
-		when(spanContext.isServerRequest()).thenReturn(false);
+	public void testReportSpanGenericType() throws Exception {
 		when(spanContext.getOperationType()).thenReturn("jdbc");
-		tracingPlugin.getRateLimitClientSpansPerMinuteOption().update(0d, SimpleSource.NAME);
+		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(0d, SimpleSource.NAME);
 		tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
@@ -121,11 +89,9 @@ public class RateLimitingPreExecutionInterceptorTest {
 	}
 
 	@Test
-	public void testReportExternalRequestType() throws Exception {
-		when(spanContext.isExternalRequest()).thenReturn(true);
-		when(spanContext.isServerRequest()).thenReturn(false);
+	public void testReportSpanType() throws Exception {
 		when(spanContext.getOperationType()).thenReturn("http");
-		tracingPlugin.getRateLimitClientSpansPerMinuteOption().update(0d, SimpleSource.NAME);
+		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(0d, SimpleSource.NAME);
 		tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
 
 		interceptor.interceptReport(context);

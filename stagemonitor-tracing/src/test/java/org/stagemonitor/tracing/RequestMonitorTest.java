@@ -71,7 +71,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 
 	@Test
 	public void testDontMonitorClientRootSpans() throws Exception {
-		when(tracingPlugin.getRateLimitClientSpansPerMinute()).thenReturn(1_000_000.0);
+		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1_000_000.0);
 
 		requestMonitor.monitorStart(new AbstractExternalRequest(tracingPlugin.getTracer()) {
 			@Override

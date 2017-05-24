@@ -66,3 +66,6 @@ stagemonitor-core/src/main/java/org/stagemonitor/core/instrument/WeakConcurrentM
 
 This product includes code derived from https://github.com/prometheus/client_java/blob/master/simpleclient_dropwizard/src/main/java/io/prometheus/client/dropwizard/DropwizardExports.java, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-core/src/main/java/org/stagemonitor/core/metrics/prometheus/StagemonitorPrometheusCollector.java
+
+This product includes code from https://github.com/uber/jaeger-client-java, which is available under the "MIT" license.
+stagemonitor/stagemonitor-tracing/src/main/java/org/stagemonitor/tracing/utils/RateLimiter.java

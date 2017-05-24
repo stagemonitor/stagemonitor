@@ -55,9 +55,9 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(elasticsearchTracingPlugin);
-		when(tracingPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
-		when(tracingPlugin.getRateLimitServerSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(tracingPlugin.getRateLimitClientSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getDefaultRateLimitSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getDefaultRateLimitSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.singleton("Report Me"));

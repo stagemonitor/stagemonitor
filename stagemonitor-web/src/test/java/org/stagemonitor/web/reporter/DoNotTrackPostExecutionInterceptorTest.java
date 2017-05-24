@@ -39,7 +39,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(WebPlugin.class)).thenReturn(webPlugin);
-		when(tracingPlugin.getRateLimitServerSpansPerMinute()).thenReturn(1000000d);
+		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1000000d);
 		when(tracingPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
