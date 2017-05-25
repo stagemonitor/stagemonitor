@@ -47,6 +47,8 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.util.GlobalTracer;
 
+import static org.stagemonitor.core.util.Assert.checkArgument;
+
 public class TracingPlugin extends StagemonitorPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(TracingPlugin.class);
@@ -275,11 +277,49 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.tracing.sampling.rateLimitPerMinute.perType")
 			.dynamic(true)
 			.label("Rate limit for spans per minute per operation type")
-			.description("Limits the rate at which specific external spans like 'jdbc' queries are collected and reported. " +
+			.description("Limits the rate at which specific spans like 'jdbc' queries are collected and reported. " +
 					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report. " +
 					"If your application makes excessive use of for example jdbc queries, you might want to deactivate " +
 					"or rate limit the collection of spans. Example: `jdbc: 0, http: 1000000`")
 			.tags("external-requests", "sampling")
+			.configurationCategory(TRACING_PLUGIN)
+			.buildWithDefault(Collections.<String, Double>emptyMap());
+	private final ConfigurationOption<Double> defaultRateLimitSpansPercent = ConfigurationOption.doubleOption()
+			.key("stagemonitor.tracing.sampling.percent.default")
+			.dynamic(true)
+			.label("Sampling probability for spans in %")
+			.description("Sets the percentage of spans which are collected and reported. " +
+					"When set to '0.01', only 1% of the spans will be reported; when set to '1', all spans will be reported. " +
+					"Note that the maximum granularity is 1%. " +
+					"This setting is active for all operation types which are not listed in " +
+					"'stagemonitor.requestmonitor.sampling.percent.perType'")
+			.tags("sampling")
+			.addValidator(new ConfigurationOption.Validator<Double>() {
+				@Override
+				public void assertValid(Double rate) {
+					checkArgument(rate >= 0.0 && rate <= 1, "rate should be between 0 and 1: was %s", rate);
+				}
+			})
+			.configurationCategory(TRACING_PLUGIN)
+			.buildWithDefault(1d);
+	private final ConfigurationOption<Map<String, Double>> rateLimitSpansPerMinutePercent = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, DoubleValueConverter.INSTANCE)
+			.key("stagemonitor.tracing.sampling.percent.perType")
+			.dynamic(true)
+			.label("Sampling probability for spans in % per operation type")
+			.description("Sets the percentage of specific spans like 'jdbc' queries are collected and reported. " +
+					"When set to '0.01', only 1% of the spans will be reported; when set to '1', all spans will be reported. " +
+					"Note that the maximum granularity is 1%. " +
+					"If your application makes excessive use of for example jdbc queries, you might want to deactivate " +
+					"or rate limit the collection of spans. Example: `jdbc: 0, http: 0.1`")
+			.tags("sampling")
+			.addValidator(new ConfigurationOption.Validator<Map<String, Double>>() {
+				@Override
+				public void assertValid(Map<String, Double> value) {
+					for (double rate : value.values()) {
+						checkArgument(rate >= 0.0 && rate <= 1, "rate should be between 0 and 1: was %s", rate);
+					}
+				}
+			})
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(Collections.<String, Double>emptyMap());
 	private final ConfigurationOption<Double> excludeCallTreeFromReportWhenFasterThanXPercentOfRequests = ConfigurationOption.doubleOption()
@@ -555,8 +595,24 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return rateLimitSpansPerMinutePerType.getValue();
 	}
 
-	public ConfigurationOption<Map<String, Double>> getRateLimitClientSpansPerTypePerMinuteOption() {
+	public ConfigurationOption<Map<String, Double>> getRateLimitSpansPerMinutePerTypeOption() {
 		return rateLimitSpansPerMinutePerType;
+	}
+
+	public Double getDefaultRateLimitSpansPercent() {
+		return defaultRateLimitSpansPercent.getValue();
+	}
+
+	public Map<String, Double> getRateLimitSpansPerMinutePercent() {
+		return rateLimitSpansPerMinutePercent.getValue();
+	}
+
+	public ConfigurationOption<Double> getDefaultRateLimitSpansPercentOption() {
+		return defaultRateLimitSpansPercent;
+	}
+
+	public ConfigurationOption<Map<String, Double>> getRateLimitSpansPerMinutePercentOption() {
+		return rateLimitSpansPerMinutePercent;
 	}
 
 	public double getExcludeExternalRequestsWhenFasterThanXPercent() {

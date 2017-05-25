@@ -43,7 +43,7 @@ public class MonitoredMethodExecutionTest {
 		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getRateLimitSpansPerMinutePerTypeOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 
 		configuration = mock(ConfigurationRegistry.class);

@@ -21,10 +21,7 @@ import java.util.List;
 
 import io.opentracing.mock.MockTracer;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.isA;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -47,8 +44,8 @@ public class SpringRestTemplateContextPropagatingTransformerTest {
 				new RestTemplate(new SimpleClientHttpRequestFactory()),
 				new RestTemplate(Collections.singletonList(new StringHttpMessageConverter())));
 		for (RestTemplate restTemplate : restTemplates) {
-			assertThat(restTemplate.getInterceptors().size(), is(1));
-			assertThat(restTemplate.getInterceptors(), hasItem(isA(SpringRestTemplateContextPropagatingInterceptor.class)));
+			assertThat(restTemplate.getInterceptors()).hasSize(1);
+			assertThat(restTemplate.getInterceptors()).hasAtLeastOneElementOfType(SpringRestTemplateContextPropagatingInterceptor.class);
 		}
 	}
 

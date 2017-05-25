@@ -18,11 +18,9 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 
-import static org.hamcrest.CoreMatchers.startsWith;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.stagemonitor.core.elasticsearch.ElasticsearchClient.modifyIndexTemplate;
 
@@ -110,10 +108,10 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 				os.write(("").getBytes("UTF-8"));
 			}
 		});
-		assertThat(testAppender.list.size(), is(1));
+		assertThat(testAppender.list).hasSize(1);
 		final ILoggingEvent event = testAppender.list.get(0);
-		assertThat(event.getLevel().toString(), is("WARN"));
-		assertThat(event.getMessage(), startsWith("Error(s) while sending a _bulk request to elasticsearch: {}"));
+		assertThat(event.getLevel().toString()).isEqualTo("WARN");
+		assertThat(event.getMessage()).startsWith("Error(s) while sending a _bulk request to elasticsearch: {}");
 	}
 
 	@Test
@@ -125,10 +123,10 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 						"{ \"doc\" : {\"field\" : \"value\"} }\n").getBytes("UTF-8"));
 			}
 		});
-		assertThat(testAppender.list.toString(), testAppender.list.size(), is(1));
+		assertThat(testAppender.list).hasSize(1);
 		final ILoggingEvent event = testAppender.list.get(0);
-		assertThat(event.getLevel().toString(), is("WARN"));
-		assertThat(event.getMessage(), startsWith("Error(s) while sending a _bulk request to elasticsearch: {}"));
+		assertThat(event.getLevel().toString()).isEqualTo("WARN");
+		assertThat(event.getMessage()).startsWith("Error(s) while sending a _bulk request to elasticsearch: {}");
 	}
 
 	@Test
@@ -140,7 +138,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 						"{ \"field1\" : \"value1\" }\n").getBytes("UTF-8"));
 			}
 		});
-		assertThat(testAppender.list.size(), is(0));
+		assertThat(testAppender.list).hasSize(0);
 	}
 
 }

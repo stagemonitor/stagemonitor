@@ -1,4 +1,4 @@
-package org.stagemonitor.tracing.tracing.jaeger;
+package org.stagemonitor.tracing.sampling;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -6,8 +6,6 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
-import org.stagemonitor.tracing.sampling.PreExecutionInterceptorContext;
-import org.stagemonitor.tracing.sampling.RateLimitingPreExecutionInterceptor;
 
 import java.util.Collections;
 
@@ -82,7 +80,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	public void testReportSpanGenericType() throws Exception {
 		when(spanContext.getOperationType()).thenReturn("jdbc");
 		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(0d, SimpleSource.NAME);
-		tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
+		tracingPlugin.getRateLimitSpansPerMinutePerTypeOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 		assertFalse(context.isReport());
@@ -92,7 +90,7 @@ public class RateLimitingPreExecutionInterceptorTest {
 	public void testReportSpanType() throws Exception {
 		when(spanContext.getOperationType()).thenReturn("http");
 		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(0d, SimpleSource.NAME);
-		tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
+		tracingPlugin.getRateLimitSpansPerMinutePerTypeOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 		assertTrue(context.isReport());

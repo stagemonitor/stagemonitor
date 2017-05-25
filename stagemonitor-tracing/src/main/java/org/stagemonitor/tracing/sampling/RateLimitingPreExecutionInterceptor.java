@@ -12,7 +12,7 @@ import java.util.Map;
 public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterceptor {
 
 	private RateLimiter defaultSpanRateLimiter;
-	private Map<String, RateLimiter> clientSpanRateLimiterByType;
+	private Map<String, RateLimiter> spanRateLimiterByType;
 
 	@Override
 	public void init(ConfigurationRegistry configuration) {
@@ -27,7 +27,7 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 		});
 
 		setRateLimiterMap(tracingPlugin.getRateLimitSpansPerMinutePerType());
-		tracingPlugin.getRateLimitClientSpansPerTypePerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Map<String, Double>>() {
+		tracingPlugin.getRateLimitSpansPerMinutePerTypeOption().addChangeListener(new ConfigurationOption.ChangeListener<Map<String, Double>>() {
 			@Override
 			public void onChange(ConfigurationOption<?> configurationOption, Map<String, Double> oldValue, Map<String, Double> newValue) {
 				setRateLimiterMap(newValue);
@@ -40,7 +40,7 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 		for (Map.Entry<String, Double> entry : newValue.entrySet()) {
 			rateLimiters.put(entry.getKey(), getRateLimiter(entry.getValue()));
 		}
-		clientSpanRateLimiterByType = rateLimiters;
+		spanRateLimiterByType = rateLimiters;
 	}
 
 	public static RateLimiter getRateLimiter(double creditsPerMinute) {
@@ -63,8 +63,8 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 	public void interceptReport(PreExecutionInterceptorContext context) {
 		final SpanContextInformation spanContext = context.getSpanContext();
 		final RateLimiter rateLimiter;
-		if (clientSpanRateLimiterByType.containsKey(spanContext.getOperationType())) {
-			rateLimiter = clientSpanRateLimiterByType.get(spanContext.getOperationType());
+		if (spanRateLimiterByType.containsKey(spanContext.getOperationType())) {
+			rateLimiter = spanRateLimiterByType.get(spanContext.getOperationType());
 		} else {
 			rateLimiter = defaultSpanRateLimiter;
 		}

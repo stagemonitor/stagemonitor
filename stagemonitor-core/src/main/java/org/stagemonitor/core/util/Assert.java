@@ -17,4 +17,15 @@ public final class Assert {
 			throw new IllegalArgumentException(message);
 		}
 	}
+
+	/**
+	 * Copy of {@code com.google.common.base.Preconditions#checkArgument}.
+	 */
+	public static void checkArgument(boolean expression,
+									 String errorMessageTemplate,
+									 Object... errorMessageArgs) {
+		if (!expression) {
+			throw new IllegalArgumentException(String.format(errorMessageTemplate, errorMessageArgs));
+		}
+	}
 }

@@ -1,1 +1,2 @@
 org.stagemonitor.tracing.sampling.RateLimitingPreExecutionInterceptor
+org.stagemonitor.tracing.sampling.ProbabilisticSamplingPreExecutionInterceptor

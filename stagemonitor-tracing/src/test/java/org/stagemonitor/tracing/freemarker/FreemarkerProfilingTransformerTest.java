@@ -16,9 +16,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collections;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class FreemarkerProfilingTransformerTest {
@@ -39,16 +37,16 @@ public class FreemarkerProfilingTransformerTest {
 		final String renderedTemplate = processTemplate("test.ftl", "${templateModel.foo}", new TemplateModel());
 		Profiler.stop();
 		Profiler.deactivateProfiling();
-		assertThat(renderedTemplate, is("foo"));
+		assertThat(renderedTemplate).isEqualTo("foo");
 		System.out.println(callTree);
 
-		assertThat(callTree.getChildren().size(), is(1));
+		assertThat(callTree.getChildren()).hasSize(1);
 		final CallStackElement freemarkerNode = callTree.getChildren().get(0);
-		assertThat(freemarkerNode.getSignature(), is("test.ftl:1#templateModel.foo"));
+		assertThat(freemarkerNode.getSignature()).isEqualTo("test.ftl:1#templateModel.foo");
 
-		assertThat(freemarkerNode.getChildren().size(), is(1));
+		assertThat(freemarkerNode.getChildren()).hasSize(1);
 		final CallStackElement templateModelNode = freemarkerNode.getChildren().get(0);
-		assertThat(templateModelNode.getSignature(), is("String org.stagemonitor.tracing.freemarker.FreemarkerProfilingTransformerTest$TemplateModel.getFoo()"));
+		assertThat(templateModelNode.getSignature()).isEqualTo("String org.stagemonitor.tracing.freemarker.FreemarkerProfilingTransformerTest$TemplateModel.getFoo()");
 	}
 
 	@Test
@@ -57,29 +55,29 @@ public class FreemarkerProfilingTransformerTest {
 		final String renderedTemplate = processTemplate("test.ftl", "${templateModel.getFoo()}", new TemplateModel());
 		Profiler.stop();
 		Profiler.deactivateProfiling();
-		assertThat(renderedTemplate, is("foo"));
+		assertThat(renderedTemplate).isEqualTo("foo");
 		System.out.println(callTree);
 
-		assertThat(callTree.getChildren().size(), is(1));
+		assertThat(callTree.getChildren()).hasSize(1);
 		final CallStackElement freemarkerNode = callTree.getChildren().get(0);
-		assertThat(freemarkerNode.getSignature(), is("test.ftl:1#templateModel.getFoo()"));
+		assertThat(freemarkerNode.getSignature()).isEqualTo("test.ftl:1#templateModel.getFoo()");
 
-		assertThat(freemarkerNode.getChildren().size(), is(1));
+		assertThat(freemarkerNode.getChildren()).hasSize(1);
 		final CallStackElement templateModelNode = freemarkerNode.getChildren().get(0);
-		assertThat(templateModelNode.getSignature(), is("String org.stagemonitor.tracing.freemarker.FreemarkerProfilingTransformerTest$TemplateModel.getFoo()"));
+		assertThat(templateModelNode.getSignature()).isEqualTo("String org.stagemonitor.tracing.freemarker.FreemarkerProfilingTransformerTest$TemplateModel.getFoo()");
 	}
 
 	@Test
 	public void testFreemarkerWorksIfNotProfiling() throws Exception {
 		final String renderedTemplate = processTemplate("test.ftl", "${templateModel.getFoo()}", new TemplateModel());
-		assertThat(renderedTemplate, is("foo"));
+		assertThat(renderedTemplate).isEqualTo("foo");
 	}
 
 	@Test
 	public void testShortSignature() {
 		final String signature = "foobar.ftl:123#foo.getBar('123').baz";
 		// don't try to shorten ftl signatures
-		assertThat(CallStackElement.createRoot(signature).getShortSignature(), nullValue());
+		assertThat(CallStackElement.createRoot(signature).getShortSignature()).isNull();
 	}
 
 	public static class TemplateModel {
