@@ -16,6 +16,7 @@ import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListe
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,8 +43,11 @@ public class MonitoredMethodExecutionTest {
 		CorePlugin corePlugin = mock(CorePlugin.class);
 		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
-		when(tracingPlugin.getDefaultRateLimitSpansPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.getRateLimitSpansPerMinutePerTypeOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getDefaultRateLimitSpansPercentOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getRateLimitSpansPerMinutePercentPerTypeOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getDefaultRateLimitSpansPercent()).thenReturn(1.0);
+		when(tracingPlugin.getRateLimitSpansPerMinutePercentPerType()).thenReturn(Collections.emptyMap());
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 
 		configuration = mock(ConfigurationRegistry.class);

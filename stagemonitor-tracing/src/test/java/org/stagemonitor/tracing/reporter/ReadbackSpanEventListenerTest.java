@@ -2,10 +2,8 @@ package org.stagemonitor.tracing.reporter;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.tracing.B3Propagator;
-import org.stagemonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.Collections;
@@ -23,7 +21,7 @@ public class ReadbackSpanEventListenerTest {
 
 	private TracingPlugin tracingPlugin;
 	private ReportingSpanEventListener reportingSpanEventListener;
-	private SpanEventListener readbackSpanEventListener;
+	private ReadbackSpanEventListener readbackSpanEventListener;
 	private SpanWrapper spanWrapper;
 
 	@Before
@@ -47,14 +45,14 @@ public class ReadbackSpanEventListenerTest {
 		readbackSpanEventListener.onSetTag("boolean", true);
 		readbackSpanEventListener.onSetTag("number", 42);
 		readbackSpanEventListener.onFinish(spanWrapper, "operation name", 1);
-		final SpanContextInformation context = SpanContextInformation.forSpan(spanWrapper);
-		assertNotNull(context.getReadbackSpan());
-		assertNotNull(context.getReadbackSpan().getId());
-		assertNotNull(context.getReadbackSpan().getTraceId());
-		assertEquals("foo", context.getReadbackSpan().getTags().get("string"));
-		assertEquals(true, context.getReadbackSpan().getTags().get("boolean"));
-		assertEquals(42, context.getReadbackSpan().getTags().get("number"));
-		assertEquals("operation name", context.getReadbackSpan().getName());
+		final ReadbackSpan readbackSpan = readbackSpanEventListener.getReadbackSpan();
+		assertNotNull(readbackSpan);
+		assertNotNull(readbackSpan.getId());
+		assertNotNull(readbackSpan.getTraceId());
+		assertEquals("foo", readbackSpan.getTags().get("string"));
+		assertEquals(true, readbackSpan.getTags().get("boolean"));
+		assertEquals(42, readbackSpan.getTags().get("number"));
+		assertEquals("operation name", readbackSpan.getName());
 	}
 
 	@Test
@@ -63,7 +61,6 @@ public class ReadbackSpanEventListenerTest {
 		final SpanWrapper spanWrapper = mock(SpanWrapper.class);
 		readbackSpanEventListener.onStart(spanWrapper);
 		readbackSpanEventListener.onFinish(spanWrapper, "op", 1);
-		final SpanContextInformation context = SpanContextInformation.forSpan(spanWrapper);
-		assertNull(context.getReadbackSpan());
+		assertNull(readbackSpanEventListener.getReadbackSpan());
 	}
 }

@@ -11,10 +11,7 @@ import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.tracing.tracing.B3Propagator;
@@ -41,7 +38,6 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 
 	@Before
 	public void setUp() throws Exception {
-		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
 		this.configuration = mock(ConfigurationRegistry.class);
 		this.tracingPlugin = mock(TracingPlugin.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
@@ -76,10 +72,8 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		SpanUtils.setParameters(span, parameters);
 		span.setTag(SpanUtils.OPERATION_TYPE, "method_invocation");
 		span.setTag("foo.bar", "baz");
-		final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(span);
 		span.finish();
 		elasticsearchClient.waitForCompletion();
-		validateSpanJson(JsonUtils.getMapper().valueToTree(spanContextInformation.getReadbackSpan()));
 
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");

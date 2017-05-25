@@ -15,13 +15,11 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.anonymization.AnonymizingSpanEventListener;
 import org.stagemonitor.tracing.mdc.MDCSpanEventListener;
 import org.stagemonitor.tracing.metrics.ExternalRequestMetricsSpanEventListener;
 import org.stagemonitor.tracing.metrics.ServerRequestMetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallTreeSpanEventListener;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.reporter.ReadbackSpanEventListener;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.reporter.SpanReporter;
@@ -302,7 +300,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			})
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(1d);
-	private final ConfigurationOption<Map<String, Double>> rateLimitSpansPerMinutePercent = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, DoubleValueConverter.INSTANCE)
+	private final ConfigurationOption<Map<String, Double>> rateLimitSpansPerMinutePercentPerType = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, DoubleValueConverter.INSTANCE)
 			.key("stagemonitor.tracing.sampling.percent.perType")
 			.dynamic(true)
 			.label("Sampling probability for spans in % per operation type")
@@ -390,7 +388,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(final StagemonitorPlugin.InitArguments initArguments) {
-		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
 		corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
@@ -603,16 +600,16 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return defaultRateLimitSpansPercent.getValue();
 	}
 
-	public Map<String, Double> getRateLimitSpansPerMinutePercent() {
-		return rateLimitSpansPerMinutePercent.getValue();
+	public Map<String, Double> getRateLimitSpansPerMinutePercentPerType() {
+		return rateLimitSpansPerMinutePercentPerType.getValue();
 	}
 
 	public ConfigurationOption<Double> getDefaultRateLimitSpansPercentOption() {
 		return defaultRateLimitSpansPercent;
 	}
 
-	public ConfigurationOption<Map<String, Double>> getRateLimitSpansPerMinutePercentOption() {
-		return rateLimitSpansPerMinutePercent;
+	public ConfigurationOption<Map<String, Double>> getRateLimitSpansPerMinutePercentPerTypeOption() {
+		return rateLimitSpansPerMinutePercentPerType;
 	}
 
 	public double getExcludeExternalRequestsWhenFasterThanXPercent() {

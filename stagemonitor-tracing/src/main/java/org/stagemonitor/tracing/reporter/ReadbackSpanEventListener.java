@@ -36,7 +36,7 @@ public class ReadbackSpanEventListener implements SpanEventListener {
 		}
 
 		@Override
-		public SpanEventListener create() {
+		public ReadbackSpanEventListener create() {
 			return new ReadbackSpanEventListener(reportingSpanEventListener, tracingPlugin);
 		}
 	}
@@ -109,5 +109,9 @@ public class ReadbackSpanEventListener implements SpanEventListener {
 
 	private boolean isAnyReporterActive(SpanWrapper spanWrapper) {
 		return reportingSpanEventListener.isAnyReporterActive(SpanContextInformation.forSpan(spanWrapper));
+	}
+
+	public ReadbackSpan getReadbackSpan() {
+		return readbackSpan;
 	}
 }

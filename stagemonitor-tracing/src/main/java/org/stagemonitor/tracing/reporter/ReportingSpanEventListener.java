@@ -39,24 +39,24 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 		final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
 		if (info.isSampled() && info.getReadbackSpan() != null) {
 			try {
-				report(info);
+				report(info, info.getReadbackSpan());
 			} catch (Exception e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}
 		}
 	}
 
-	private Future<?> report(final SpanContextInformation spanContext) {
+	private Future<?> report(final SpanContextInformation spanContext, final ReadbackSpan readbackSpan) {
 		try {
 			if (tracingPlugin.isReportAsync()) {
 				return asyncSpanReporterPool.submit(new Runnable() {
 					@Override
 					public void run() {
-						doReport(spanContext);
+						doReport(spanContext, readbackSpan);
 					}
 				});
 			} else {
-				doReport(spanContext);
+				doReport(spanContext, readbackSpan);
 				return new CompletedFuture<Object>(null);
 			}
 		} catch (RejectedExecutionException e) {
@@ -65,11 +65,11 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 		}
 	}
 
-	private void doReport(SpanContextInformation spanContext) {
+	private void doReport(SpanContextInformation spanContext, ReadbackSpan readbackSpan) {
 		for (SpanReporter spanReporter : spanReporters) {
 			if (spanReporter.isActive(spanContext)) {
 				try {
-					spanReporter.report(spanContext);
+					spanReporter.report(spanContext, readbackSpan);
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 				}

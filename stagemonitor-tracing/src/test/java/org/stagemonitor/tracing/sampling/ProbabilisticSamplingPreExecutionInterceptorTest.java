@@ -69,11 +69,11 @@ public class ProbabilisticSamplingPreExecutionInterceptorTest {
 
 	@Test
 	public void testValidationFailedPerTypeOption() throws Exception {
-		assertThatThrownBy(() -> tracingPlugin.getRateLimitSpansPerMinutePercentOption()
+		assertThatThrownBy(() -> tracingPlugin.getRateLimitSpansPerMinutePercentPerTypeOption()
 				.update(singletonMap("jdbc", 10.0), SimpleSource.NAME))
 				.isInstanceOf(IllegalArgumentException.class);
 
-		assertThat(tracingPlugin.getRateLimitSpansPerMinutePercentOption().getValue()).isEqualTo(emptyMap());
+		assertThat(tracingPlugin.getRateLimitSpansPerMinutePercentPerTypeOption().getValue()).isEqualTo(emptyMap());
 	}
 
 	@Test
@@ -96,7 +96,7 @@ public class ProbabilisticSamplingPreExecutionInterceptorTest {
 	public void testReportSpanGenericType() throws Exception {
 		when(spanContext.getOperationType()).thenReturn("jdbc");
 		tracingPlugin.getDefaultRateLimitSpansPercentOption().update(0d, SimpleSource.NAME);
-		tracingPlugin.getRateLimitSpansPerMinutePercentOption().update(singletonMap("http", 1d), SimpleSource.NAME);
+		tracingPlugin.getRateLimitSpansPerMinutePercentPerTypeOption().update(singletonMap("http", 1d), SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 		assertFalse(context.isReport());
@@ -106,7 +106,7 @@ public class ProbabilisticSamplingPreExecutionInterceptorTest {
 	public void testReportSpanType() throws Exception {
 		when(spanContext.getOperationType()).thenReturn("http");
 		tracingPlugin.getDefaultRateLimitSpansPercentOption().update(0d, SimpleSource.NAME);
-		tracingPlugin.getRateLimitSpansPerMinutePercentOption().update(singletonMap("http", 1d), SimpleSource.NAME);
+		tracingPlugin.getRateLimitSpansPerMinutePercentPerTypeOption().update(singletonMap("http", 1d), SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 		assertTrue(context.isReport());

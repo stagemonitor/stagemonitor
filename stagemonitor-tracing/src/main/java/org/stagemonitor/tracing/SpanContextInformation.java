@@ -213,6 +213,10 @@ public class SpanContextInformation {
 		this.readbackSpan = readbackSpan;
 	}
 
+	/**
+	 * @deprecated {@link ReadbackSpan}s should only be used in {@link org.stagemonitor.tracing.reporter.SpanReporter}s
+	 */
+	@Deprecated
 	public ReadbackSpan getReadbackSpan() {
 		return readbackSpan;
 	}

@@ -2,7 +2,6 @@ package org.stagemonitor.tracing.reporter;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.util.JsonUtils;
 
@@ -11,11 +10,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class SpanJsonModuleTest {
-
-	@Before
-	public void setUp() throws Exception {
-		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
-	}
 
 	@Test
 	public void testNestDottedTagKeys() {

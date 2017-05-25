@@ -23,7 +23,7 @@ public class ProbabilisticSamplingPreExecutionInterceptor extends PreExecutionSp
 		TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
 
 		defaultSampleDecisions = getBitSet(tracingPlugin.getDefaultRateLimitSpansPercent());
-		setBitSetMap(tracingPlugin.getRateLimitSpansPerMinutePercent());
+		setBitSetMap(tracingPlugin.getRateLimitSpansPerMinutePercentPerType());
 		handleRuntimeConfigChanges(tracingPlugin);
 	}
 
@@ -34,7 +34,7 @@ public class ProbabilisticSamplingPreExecutionInterceptor extends PreExecutionSp
 				defaultSampleDecisions = getBitSet(newValue);
 			}
 		});
-		tracingPlugin.getRateLimitSpansPerMinutePercentOption().addChangeListener(new ConfigurationOption.ChangeListener<Map<String, Double>>() {
+		tracingPlugin.getRateLimitSpansPerMinutePercentPerTypeOption().addChangeListener(new ConfigurationOption.ChangeListener<Map<String, Double>>() {
 			@Override
 			public void onChange(ConfigurationOption<?> configurationOption, Map<String, Double> oldValue, Map<String, Double> newValue) {
 				setBitSetMap(newValue);

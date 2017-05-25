@@ -20,25 +20,24 @@ public class LoggingSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(SpanContextInformation context) {
-		logger.info(getLogMessage(context));
+	public void report(SpanContextInformation context, ReadbackSpan readbackSpan) {
+		logger.info(getLogMessage(readbackSpan));
 	}
 
-	String getLogMessage(SpanContextInformation context) {
-		ReadbackSpan span = context.getReadbackSpan();
+	String getLogMessage(ReadbackSpan readbackSpan) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n###########################\n");
 		sb.append("# Span report             #\n");
 		sb.append("###########################\n");
-		appendLine(sb, "name", span.getName());
-		appendLine(sb, "duration", span.getDuration());
-		appendLine(sb, "traceId", span.getTraceId());
-		appendLine(sb, "spanId", span.getId());
-		appendLine(sb, "parentId", span.getParentId());
+		appendLine(sb, "name", readbackSpan.getName());
+		appendLine(sb, "duration", readbackSpan.getDuration());
+		appendLine(sb, "traceId", readbackSpan.getTraceId());
+		appendLine(sb, "spanId", readbackSpan.getId());
+		appendLine(sb, "parentId", readbackSpan.getParentId());
 		sb.append("###########################\n");
 		sb.append("# Tags                    #\n");
 		sb.append("###########################\n");
-		for (Map.Entry<String, Object> entry : span.getTags().entrySet()) {
+		for (Map.Entry<String, Object> entry : readbackSpan.getTags().entrySet()) {
 			if (!SpanUtils.CALL_TREE_JSON.equals(entry.getKey())) {
 				appendLine(sb, entry.getKey(), entry.getValue());
 			}

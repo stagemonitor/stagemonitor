@@ -67,6 +67,10 @@ public abstract class AbstractRequestMonitorTest {
 		doReturn(1000000d).when(tracingPlugin).getDefaultRateLimitSpansPerMinute();
 		doReturn(mock(ConfigurationOption.class)).when(tracingPlugin).getDefaultRateLimitSpansPerMinuteOption();
 		doReturn(mock(ConfigurationOption.class)).when(tracingPlugin).getDefaultRateLimitSpansPerMinuteOption();
+		when(tracingPlugin.getDefaultRateLimitSpansPercentOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getRateLimitSpansPerMinutePercentPerTypeOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.getDefaultRateLimitSpansPercent()).thenReturn(1.0);
+		when(tracingPlugin.getRateLimitSpansPerMinutePercentPerType()).thenReturn(Collections.emptyMap());
 		when(tracingPlugin.getRateLimitSpansPerMinutePerTypeOption()).thenReturn(mock(ConfigurationOption.class));
 		doReturn(mock(ConfigurationOption.class)).when(tracingPlugin).getProfilerRateLimitPerMinuteOption();
 		doReturn(mock(Timer.class)).when(registry).timer(any(MetricName.class));

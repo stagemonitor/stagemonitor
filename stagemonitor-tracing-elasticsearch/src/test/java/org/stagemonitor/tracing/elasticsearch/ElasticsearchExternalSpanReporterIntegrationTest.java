@@ -51,9 +51,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 
 	@Test
 	public void reportSpan() throws Exception {
-		SpanContextInformation spanContextInformation = mock(SpanContextInformation.class);
-		when(spanContextInformation.getReadbackSpan()).thenReturn(getSpan(100));
-		reporter.report(spanContextInformation);
+		reporter.report(mock(SpanContextInformation.class), getSpan(100));
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");

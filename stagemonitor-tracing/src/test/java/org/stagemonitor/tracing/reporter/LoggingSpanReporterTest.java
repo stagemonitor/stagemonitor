@@ -3,7 +3,6 @@ package org.stagemonitor.tracing.reporter;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 
 import java.util.ArrayList;
@@ -33,9 +32,7 @@ public class LoggingSpanReporterTest {
 	public void report() throws Exception {
 		final ReadbackSpan readbackSpan = new ReadbackSpan();
 		readbackSpan.setTag("foo.bar", "baz");
-		SpanContextInformation spanContextInformation = mock(SpanContextInformation.class);
-		when(spanContextInformation.getReadbackSpan()).thenReturn(readbackSpan);
-		final String logMessage = loggingSpanReporter.getLogMessage(spanContextInformation);
+		final String logMessage = loggingSpanReporter.getLogMessage(readbackSpan);
 		assertTrue(logMessage.contains("foo.bar: baz"));
 	}
 

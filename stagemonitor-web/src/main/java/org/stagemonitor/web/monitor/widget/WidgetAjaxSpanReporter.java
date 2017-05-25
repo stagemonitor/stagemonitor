@@ -92,7 +92,7 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(SpanContextInformation spanContext) throws IOException {
+	public void report(SpanContextInformation spanContext, ReadbackSpan readbackSpan) throws IOException {
 		if (isActive(spanContext)) {
 
 			final String connectionId = (String) spanContext.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);

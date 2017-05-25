@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.reporter.SpanReporter;
@@ -31,7 +30,6 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		super.setUp();
 		reporter = new ElasticsearchSpanReporter(spanLogger);
 		reporter.init(configuration);
-		JsonUtils.getMapper().registerModule(new ReadbackSpan.SpanJsonModule());
 		reportingSpanEventListener.addReporter(reporter);
 	}
 

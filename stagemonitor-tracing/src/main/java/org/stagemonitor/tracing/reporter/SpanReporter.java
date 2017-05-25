@@ -15,8 +15,9 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	 * Callback method that is called when a {@link Span} was created and is ready to be reported
 	 *
 	 * @param spanContext context information about the span
+	 * @param readbackSpan
 	 */
-	public abstract void report(SpanContextInformation spanContext) throws Exception;
+	public abstract void report(SpanContextInformation spanContext, ReadbackSpan readbackSpan) throws Exception;
 
 	/**
 	 * Whether this {@link SpanReporter} is active
