@@ -32,8 +32,6 @@ public class TracingPluginConfigurationTest {
 
 	@Test
 	public void testDefaultValues() {
-		assertEquals(false, config.isCollectCpuTime());
-
 		assertEquals(1000000d, config.getProfilerRateLimitPerMinute(), 0);
 		assertEquals(false, config.isLogSpans());
 	}

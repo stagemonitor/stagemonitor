@@ -9,78 +9,78 @@
 				columns: [
 					{
 						metricMatcher: {
-							name: "response_time_server",
+							name: "response_time",
 							tags: {
 								layer: "All"
 							}
 						},
-						groupBy: "request_name",
+						groupBy: "operation_name",
 						metric: "m1_rate",
 						title: "Requests/s"
 					},
 					{
 						metricMatcher: {
-							name: "response_time_server",
+							name: "response_time",
 							tags: {
 								layer: "All"
 							}
 						},
-						groupBy: "request_name",
+						groupBy: "operation_name",
 						metric: "max",
 						title: "Max"
 					},
 					{
 						metricMatcher: {
-							name: "response_time_server",
+							name: "response_time",
 							tags: {
 								layer: "All"
 							}
 						},
-						groupBy: "request_name",
+						groupBy: "operation_name",
 						metric: "mean",
 						title: "Mean"
 					},
 					{
 						metricMatcher: {
-							name: "response_time_server",
+							name: "response_time",
 							tags: {
 								layer: "All"
 							}
 						},
-						groupBy: "request_name",
+						groupBy: "operation_name",
 						metric: "min",
 						title: "Min"
 					},
 					{
 						metricMatcher: {
-							name: "response_time_server",
+							name: "response_time",
 							tags: {
 								layer: "All"
 							}
 						},
-						groupBy: "request_name",
+						groupBy: "operation_name",
 						metric: "p50",
 						title: "p50"
 					},
 					{
 						metricMatcher: {
-							name: "response_time_server",
+							name: "response_time",
 							tags: {
 								layer: "All"
 							}
 						},
-						groupBy: "request_name",
+						groupBy: "operation_name",
 						metric: "p95",
 						title: "p95"
 					},
 					{
 						metricMatcher: {
-							name: "response_time_server",
+							name: "response_time",
 							tags: {
 								layer: "All"
 							}
 						},
-						groupBy: "request_name",
+						groupBy: "operation_name",
 						metric: "std",
 						title: "Std. Dev."
 					},
@@ -91,7 +91,7 @@
 								type: "jdbc"
 							}
 						},
-						groupBy: "request_name",
+						groupBy: "operation_name",
 						metric: "m1_rate",
 						title: "SQLs/sec"
 					}
@@ -108,13 +108,13 @@
 								columns: [
 									{
 										metricMatcher: {
-											name: "response_time_server",
+											name: "response_time",
 											tags: {
 												layer: "All",
-												request_name: "${rowName}"
+												operation_name: "${rowName}"
 											}
 										},
-										groupBy: "request_name",
+										groupBy: "operation_name",
 										metric: "mean"
 									}
 								]
@@ -129,13 +129,13 @@
 								columns: [
 									{
 										metricMatcher: {
-											name: "response_time_server",
+											name: "response_time",
 											tags: {
 												layer: "All",
-												request_name: "${rowName}"
+												operation_name: "${rowName}"
 											}
 										},
-										groupBy: "request_name",
+										groupBy: "operation_name",
 										metric: "m1_rate"
 									}
 								]

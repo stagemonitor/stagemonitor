@@ -36,8 +36,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
@@ -127,7 +127,7 @@ public class ConnectionMonitoringTransformerTest {
 					dataSource.getConnection().close();
 				}));
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
+		assertThat(timers).containsKey(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build());
 	}
 
 	@Test
@@ -143,7 +143,7 @@ public class ConnectionMonitoringTransformerTest {
 					dataSource.getConnection("sa", "").close();
 				}));
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build()));
+		assertThat(timers).containsKey(name("get_jdbc_connection").tag("url", "SA@jdbc:hsqldb:mem:test").build());
 	}
 
 	@Test
@@ -151,11 +151,11 @@ public class ConnectionMonitoringTransformerTest {
 		final SpanContextInformation spanContext = requestMonitor
 				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlPreparedStatement", () -> testDao.executePreparedStatement()));
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
-		assertTrue(timers.keySet().toString(), timers.size() > 1);
-		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()));
-		assertNotNull(timers.keySet().toString(), timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").tag("method", "SELECT").build()));
+		assertThat(timers).isNotEmpty();
+		assertThat(timers).containsKey(name("response_time").type("jdbc").operationName("All").build());
+		assertThat(timers).containsKey(name("response_time").type("jdbc").operationName("ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").build());
 		final Map<MetricName, Meter> meters = metric2Registry.getMeters();
-		assertNotNull(meters.keySet().toString(), meters.get(name("external_requests_rate").tag("request_name", "testRecordSqlPreparedStatement").tag("type", "jdbc").build()));
+		assertThat(meters).containsKey(name("external_requests_rate").operationName("testRecordSqlPreparedStatement").build());
 		final CallStackElement callTree = spanContext.getCallTree();
 		assertEquals("testRecordSqlPreparedStatement", callTree.getSignature());
 		assertEquals(callTree.toString(), 1, callTree.getChildren().size());
@@ -173,8 +173,8 @@ public class ConnectionMonitoringTransformerTest {
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		final String message = timers.keySet().toString();
 		assertTrue(message, timers.size() > 1);
-		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("signature", "ConnectionMonitoringTransformerTest$TestDao#executeStatement").tag("method", "SELECT").build()).getCount());
-		assertEquals(message, 1, timers.get(name("external_request_response_time").type("jdbc").tag("signature", "All").tag("method", "SELECT").build()).getCount());
+		assertEquals(message, 1, timers.get(name("response_time").type("jdbc").operationName("ConnectionMonitoringTransformerTest$TestDao#executeStatement").build()).getCount());
+		assertEquals(message, 1, timers.get(name("response_time").type("jdbc").operationName("All").build()).getCount());
 		final CallStackElement callStack = spanContext.getCallTree();
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executeStatement()",

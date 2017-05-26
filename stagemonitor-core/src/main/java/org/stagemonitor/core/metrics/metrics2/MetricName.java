@@ -157,10 +157,10 @@ public class MetricName {
 	 * <p/>
 	 * Example:
 	 * <pre>
-	 *     MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time_server")
-	 *             .tag("request_name", "")
+	 *     MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time")
+	 *             .operationName("")
 	 *             .layer("All")
-	 *             .templateFor("request_name");
+	 *             .templateFor("operation_name");
 	 *     MetricName metricName = timerMetricNameTemplate.build("Search Products");
 	 * </pre>
 	 */
@@ -255,6 +255,10 @@ public class MetricName {
 
 		public Builder type(String value) {
 			return tag("type", value);
+		}
+
+		public Builder operationName(String value) {
+			return tag("operation_name", value);
 		}
 
 		public Builder tier(String value) {

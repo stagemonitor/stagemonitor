@@ -22,7 +22,7 @@ public class RumServlet extends HttpServlet {
 
 	private final Metric2Registry metricRegistry;
 	private final WebPlugin webPlugin;
-	private final MetricName.MetricNameTemplate metricNameTemplate = name("response_time_rum").templateFor("request_name", "layer");
+	private final MetricName.MetricNameTemplate metricNameTemplate = name("response_time_rum").templateFor("operation_name", "layer");
 
 	public RumServlet() {
 		this(Stagemonitor.getMetric2Registry(), Stagemonitor.getPlugin(WebPlugin.class));

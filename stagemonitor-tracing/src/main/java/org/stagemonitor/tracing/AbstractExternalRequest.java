@@ -11,6 +11,7 @@ import io.opentracing.tag.Tags;
 
 public abstract class AbstractExternalRequest extends MonitoredRequest {
 
+	public static final String EXTERNAL_REQUEST_METHOD = "method";
 	private final Tracer tracer;
 	private final String operationName;
 

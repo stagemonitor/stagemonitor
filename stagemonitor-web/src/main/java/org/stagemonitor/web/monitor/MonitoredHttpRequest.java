@@ -2,7 +2,6 @@ package org.stagemonitor.web.monitor;
 
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.MonitoredRequest;
 import org.stagemonitor.tracing.SpanContextInformation;
@@ -50,7 +49,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	protected final StatusExposingByteCountingServletResponse responseWrapper;
 	protected final WebPlugin webPlugin;
 	private final TracingPlugin tracingPlugin;
-	private static final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("request_name", "http_code");
+	private static final MetricName.MetricNameTemplate throughputMetricNameTemplate = name("request_throughput").templateFor("operation_name", "http_code");
 	private final String userAgentHeader;
 	private final String connectionId;
 	private final boolean widgetAndStagemonitorEndpointsAllowed;
@@ -191,21 +190,19 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		private final WebPlugin webPlugin;
 		private final TracingPlugin tracingPlugin;
-		private final Metric2Registry metricRegistry;
 
 		public HttpSpanEventListener() {
-			this(Stagemonitor.getPlugin(WebPlugin.class), Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getMetric2Registry());
+			this(Stagemonitor.getPlugin(WebPlugin.class), Stagemonitor.getPlugin(TracingPlugin.class));
 		}
 
-		public HttpSpanEventListener(WebPlugin webPlugin, TracingPlugin tracingPlugin, Metric2Registry metricRegistry) {
+		public HttpSpanEventListener(WebPlugin webPlugin, TracingPlugin tracingPlugin) {
 			this.webPlugin = webPlugin;
 			this.tracingPlugin = tracingPlugin;
-			this.metricRegistry = metricRegistry;
 		}
 
 		@Override
 		public void onFinish(SpanWrapper span, String operationName, long durationNanos) {
-			final MonitoredHttpRequest monitoredHttpRequest = (MonitoredHttpRequest) SpanContextInformation.forSpan(span)
+			final MonitoredHttpRequest monitoredHttpRequest = SpanContextInformation.forSpan(span)
 					.getRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE);
 			if (monitoredHttpRequest == null) {
 				return;
@@ -214,9 +211,6 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			setParams(span, monitoredHttpRequest.httpServletRequest);
 			setTrackingInformation(span, monitoredHttpRequest.httpServletRequest, monitoredHttpRequest.clientIp, monitoredHttpRequest.userAgentHeader);
 			setStatus(span, monitoredHttpRequest.responseWrapper.getStatus());
-			if (operationName != null) {
-				trackThroughput(operationName, monitoredHttpRequest.responseWrapper.getStatus());
-			}
 			span.setTag("bytes_written", monitoredHttpRequest.responseWrapper.getContentLength());
 			if (webPlugin.isParseUserAgent()) {
 				setUserAgentInformation(span, monitoredHttpRequest.userAgentHeader);
@@ -228,11 +222,6 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			if (status >= 400) {
 				Tags.ERROR.set(span, true);
 			}
-		}
-
-		private void trackThroughput(String operationName, int status) {
-			metricRegistry.meter(throughputMetricNameTemplate.build(operationName, Integer.toString(status))).mark();
-			metricRegistry.meter(throughputMetricNameTemplate.build("All", Integer.toString(status))).mark();
 		}
 
 		private void setUserAgentInformation(Span span, String userAgenHeader) {

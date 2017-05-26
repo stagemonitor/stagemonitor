@@ -114,14 +114,14 @@
 					},
 					"targets": [
 						{
-							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.All.All.p75),'now')",
+							"target": "alias(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.All.All.p75),'now')",
 							"hide": false
 						},
 						{
-							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.All.All.p75),'7d'),'-7d')"
+							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.All.All.p75),'7d'),'-7d')"
 						},
 						{
-							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.All.All.p75),'28d'),'-28d')"
+							"target": "alias(timeShift(averageSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.All.All.p75),'28d'),'-28d')"
 						}
 					],
 					"aliasColors": {
@@ -219,13 +219,13 @@
 					},
 					"targets": [
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.All.All.m15_rate),'now')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.All.All.m15_rate),'now')"
 						},
 						{
-							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.All.All.m15_rate),'7d'),'-7d')"
+							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.All.All.m15_rate),'7d'),'-7d')"
 						},
 						{
-							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_server.All.All.m15_rate),'28d'),'-28d')"
+							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time.All.All.m15_rate),'28d'),'-28d')"
 						}
 					],
 					"aliasColors": {
@@ -320,13 +320,13 @@
 					},
 					"targets": [
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate_server.All.All.m15_rate),'now')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate.All.All.m15_rate),'now')"
 						},
 						{
-							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate_server.All.All.m15_rate),'7d'),'-7d')"
+							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate.All.All.m15_rate),'7d'),'-7d')"
 						},
 						{
-							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate_server.All.All.m15_rate),'28d'),'-28d')"
+							"target": "alias(timeShift(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate.All.All.m15_rate),'28d'),'-28d')"
 						}
 					],
 					"aliasColors": {

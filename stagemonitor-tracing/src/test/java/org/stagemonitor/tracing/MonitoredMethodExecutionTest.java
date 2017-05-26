@@ -20,9 +20,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -31,8 +30,6 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 public class MonitoredMethodExecutionTest {
 
 	private SpanContextInformation spanContext1;
-	private SpanContextInformation spanContext2;
-	private SpanContextInformation spanContext3;
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
 	private ConfigurationRegistry configuration;
@@ -59,7 +56,7 @@ public class MonitoredMethodExecutionTest {
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 
-		spanContext1 = spanContext2 = spanContext3 = null;
+		spanContext1 = null;
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, registry);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 
@@ -85,20 +82,20 @@ public class MonitoredMethodExecutionTest {
 		assertEquals(tags.toString(), "1", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg0"));
 		assertEquals(tags.toString(), "test", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg1"));
 
-		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
-		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
-		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored3()").layer("All").build()));
-		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "notMonitored()").layer("All").build()));
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored1()").type("method_invocation").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored2()").type("method_invocation").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored3()").type("method_invocation").build());
+		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("notMonitored()").type("method_invocation").build());
 	}
 
 	@Test
 	public void testNormalForwarding() throws Exception {
 		testObject.monitored3();
 
-		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored1()").layer("All").build()));
-		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored2()").layer("All").build()));
-		assertNotNull(registry.getTimers().get(name("response_time_server").tag("request_name", "monitored3()").layer("All").build()));
-		assertNull(registry.getTimers().get(name("response_time_server").tag("request_name", "notMonitored()").layer("All").build()));
+		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("monitored1()").type("method_invocation").build());
+		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("monitored2()").type("method_invocation").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored3()").type("method_invocation").build());
+		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("notMonitored()").type("method_invocation").build());
 	}
 
 	private class TestObject {
@@ -114,12 +111,12 @@ public class MonitoredMethodExecutionTest {
 		}
 
 		private void monitored2() throws Exception {
-			spanContext2 = requestMonitor.monitor(
+			requestMonitor.monitor(
 					new MonitoredMethodRequest(configuration, "monitored2()", this::monitored3));
 		}
 
 		private void monitored3() throws Exception {
-			spanContext3 = requestMonitor.monitor(
+			requestMonitor.monitor(
 					new MonitoredMethodRequest(configuration, "monitored3()", this::notMonitored));
 		}
 

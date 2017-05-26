@@ -17,8 +17,7 @@ import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.anonymization.AnonymizingSpanEventListener;
 import org.stagemonitor.tracing.mdc.MDCSpanEventListener;
-import org.stagemonitor.tracing.metrics.ExternalRequestMetricsSpanEventListener;
-import org.stagemonitor.tracing.metrics.ServerRequestMetricsSpanEventListener;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallTreeSpanEventListener;
 import org.stagemonitor.tracing.reporter.ReadbackSpanEventListener;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
@@ -54,25 +53,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 	private static final String TRACING_PLUGIN = "Tracing Plugin";
 
 	/* What/how to monitor */
-	private final ConfigurationOption<Boolean> collectCpuTime = ConfigurationOption.booleanOption()
-			.key("stagemonitor.tracing.cpuTime")
-			.aliasKeys("stagemonitor.requestmonitor.cpuTime")
-			.dynamic(true)
-			.label("Collect CPU time")
-			.description("Whether or not a timer for the cpu time of executions should be created. " +
-					"This is useful if you want to know which use cases are responsible for the most CPU usage. " +
-					"Be aware that setting this to true almost doubles the amount of timers created.")
-			.configurationCategory(TRACING_PLUGIN)
-			.buildWithDefault(false);
-	private final ConfigurationOption<Boolean> collectDbTimePerRequest = ConfigurationOption.booleanOption()
-			.key("stagemonitor.tracing.collectExternalRequestTimePerRequest")
-			.aliasKeys("stagemonitor.requestmonitor.collectExternalRequestTimePerRequest")
-			.dynamic(true)
-			.label("Collect external request time per request group")
-			.description("Whether or not the execution time of external should be collected per request group\n" +
-					"If set to true, a timer will be created for each request to record the total db time per request.")
-			.configurationCategory(TRACING_PLUGIN)
-			.buildWithDefault(false);
 	private final ConfigurationOption<BusinessTransactionNamingStrategy> businessTransactionNamingStrategy = ConfigurationOption.enumOption(BusinessTransactionNamingStrategy.class)
 			.key("stagemonitor.businessTransaction.namingStrategy")
 			.dynamic(false)
@@ -457,8 +437,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
 			spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
 		}
-		spanWrappingTracer.addSpanInterceptor(new ExternalRequestMetricsSpanEventListener.Factory(metricRegistry));
-		spanWrappingTracer.addSpanInterceptor(new ServerRequestMetricsSpanEventListener.Factory(metricRegistry, tracingPlugin));
+		spanWrappingTracer.addSpanInterceptor(new MetricsSpanEventListener(metricRegistry));
 		spanWrappingTracer.addSpanInterceptor(new CallTreeSpanEventListener(tracingPlugin));
 		spanWrappingTracer.addSpanInterceptor(new ReadbackSpanEventListener.Factory(reportingSpanEventListener, tracingPlugin));
 		spanWrappingTracer.addSpanInterceptor(reportingSpanEventListener);
@@ -478,10 +457,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return requestMonitor;
 	}
 
-	public boolean isCollectCpuTime() {
-		return collectCpuTime.getValue();
-	}
-
 	public long getMinExecutionTimeNanos() {
 		return minExecutionTimeNanos.getValue();
 	}
@@ -496,10 +471,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	public boolean isLogSpans() {
 		return logSpans.getValue();
-	}
-
-	public boolean isCollectDbTimePerRequest() {
-		return collectDbTimePerRequest.getValue();
 	}
 
 	public boolean isProfilerActive() {

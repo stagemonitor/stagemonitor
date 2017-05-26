@@ -256,7 +256,7 @@
 							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].response_time_[[time]].[[request]].All.m1_rate),'total')"
 						},
 						{
-							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate_server.[[request]].All.m1_rate),'failed')"
+							"target": "alias(sumSeries(stagemonitor.[[application]].[[instance]].[[host]].error_rate.[[request]].All.m1_rate),'failed')"
 						}
 					],
 					"aliasColors": {
@@ -588,11 +588,11 @@
 					},
 					"targets": [
 						{
-							"target": "highestAverage(groupByNode(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].error_rate_server.*.All,'All.All'),0),5,'sum'),5)",
+							"target": "highestAverage(groupByNode(nonNegativeDerivative(exclude(stagemonitor.[[application]].[[instance]].[[host]].error_rate.*.All,'All.All'),0),5,'sum'),5)",
 							"hide": true
 						},
 						{
-							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].error_rate_server.*.All.m1_rate,'All.All'),5,'sum'),5)"
+							"target": "highestAverage(groupByNode(exclude(stagemonitor.[[application]].[[instance]].[[host]].error_rate.*.All.m1_rate,'All.All'),5,'sum'),5)"
 						}
 					],
 					"aliasColors": {},

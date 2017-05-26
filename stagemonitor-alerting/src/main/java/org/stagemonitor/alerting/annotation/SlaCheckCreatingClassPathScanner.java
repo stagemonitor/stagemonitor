@@ -20,13 +20,14 @@ import org.stagemonitor.core.metrics.annotations.TimedTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.AbstractMonitorRequestsTransformer;
 import org.stagemonitor.tracing.MonitorRequests;
-import org.stagemonitor.tracing.metrics.ServerRequestMetricsSpanEventListener;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static org.stagemonitor.tracing.MonitoredMethodRequest.OP_TYPE_METHOD_INVOCATION;
 
 public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
@@ -71,9 +72,9 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 		if (declaredAnnotations.isAnnotationPresent(MonitorRequests.class)) {
 			timerNames.timerName = AbstractMonitorRequestsTransformer.getRequestName(methodDescription);
 			if (timerNames.timerName != null) {
-				timerNames.timerMetricName = ServerRequestMetricsSpanEventListener.getTimerMetricName(timerNames.timerName);
+				timerNames.timerMetricName = MetricsSpanEventListener.getResponseTimeMetricName(timerNames.timerName, OP_TYPE_METHOD_INVOCATION);
 				timerNames.errorRequestName = timerNames.timerName;
-				timerNames.errorMetricName = ServerRequestMetricsSpanEventListener.getErrorMetricName(timerNames.timerName);
+				timerNames.errorMetricName = MetricsSpanEventListener.getErrorMetricName(timerNames.timerName, OP_TYPE_METHOD_INVOCATION);
 			}
 		} else {
 			if (declaredAnnotations.isAnnotationPresent(Timed.class)) {

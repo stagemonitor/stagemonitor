@@ -8,7 +8,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
@@ -53,7 +52,7 @@ public class MonitoredHttpRequestTest {
 				MonitoredHttpRequestTest.this.operationName = operationName;
 			}
 		});
-		spanEventListenerFactories.add(new MonitoredHttpRequest.HttpSpanEventListener(webPlugin, tracingPlugin, new Metric2Registry()));
+		spanEventListenerFactories.add(new MonitoredHttpRequest.HttpSpanEventListener(webPlugin, tracingPlugin));
 		tracer = new io.opentracing.mock.MockTracer();
 		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(tracer,
 				spanEventListenerFactories));

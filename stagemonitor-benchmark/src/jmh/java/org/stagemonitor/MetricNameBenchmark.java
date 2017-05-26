@@ -15,14 +15,14 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 @State(value = Scope.Benchmark)
 public class MetricNameBenchmark {
 
-	private static final MetricName METRIC_NAME = name("response_time_server")
-			.tag("request_name", "Process Find Form")
+	private static final MetricName METRIC_NAME = name("response_time")
+			.operationName("Process Find Form")
 			.tag("layer", "All")
 			.build();
-	private static MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time_server")
-			.tag("request_name", "")
+	private static MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time")
+			.operationName("")
 			.layer("All")
-			.templateFor("request_name");
+			.templateFor("operation_name");
 	private static final MetricName.MetricNameTemplate externalRequestTemplate = name("external_request_response_time")
 			.templateFor("type", "signature", "method");
 
@@ -426,11 +426,11 @@ public class MetricNameBenchmark {
 				.build());
 		names.add(name("cpu_info_cache").build());
 		names.add(name("request_throughput")
-				.tag("request_name", "Process Find Form")
+				.operationName("Process Find Form")
 				.tag("http_code", "200")
 				.build());
 		names.add(name("external_requests_rate")
-				.tag("request_name", "Process Find Form")
+				.operationName("Process Find Form")
 				.tag("type", "jdbc")
 				.build());
 		names.add(name("rate")
@@ -451,18 +451,18 @@ public class MetricNameBenchmark {
 				.tag("tier", "All")
 				.build());
 		names.add(name("request_throughput")
-				.tag("request_name", "All")
+				.operationName("All")
 				.tag("http_code", "200")
 				.build());
 		names.add(name("logging")
 				.tag("log_level", "info")
 				.build());
 		names.add(name("request_throughput")
-				.tag("request_name", "GET /")
+				.operationName("GET /")
 				.tag("http_code", "200")
 				.build());
 		names.add(name("request_throughput")
-				.tag("request_name", "Init Find Form")
+				.operationName("Init Find Form")
 				.tag("http_code", "200")
 				.build());
 		names.add(name("cache_hits")
@@ -470,11 +470,11 @@ public class MetricNameBenchmark {
 				.tag("tier", "All")
 				.build());
 		names.add(name("request_throughput")
-				.tag("request_name", "Show Vet List")
+				.operationName("Show Vet List")
 				.tag("http_code", "200")
 				.build());
 		names.add(name("external_requests_rate")
-				.tag("request_name", "Show Vet List")
+				.operationName("Show Vet List")
 				.tag("type", "jdbc")
 				.build());
 		names.add(name("logging")
@@ -485,19 +485,19 @@ public class MetricNameBenchmark {
 				.tag("signature", "All")
 				.tag("method", "SELECT")
 				.build());
-		names.add(name("response_time_server")
-				.tag("request_name", "Show Vet List")
+		names.add(name("response_time")
+				.operationName("Show Vet List")
 				.tag("layer", "All")
 				.build());
 		names.add(name("response_time_rum")
-				.tag("request_name", "All")
+				.operationName("All")
 				.tag("layer", "Page Rendering")
 				.build());
 		names.add(name("get_jdbc_connection")
 				.tag("url", "jdbc:hsqldb:mem:petclinic-SA")
 				.build());
 		names.add(name("response_time_rum")
-				.tag("request_name", "All")
+				.operationName("All")
 				.tag("layer", "Network")
 				.build());
 		names.add(name("external_request_response_time")
@@ -508,20 +508,20 @@ public class MetricNameBenchmark {
 		names.add(name("reporting_time")
 				.tag("reporter", "elasticsearch")
 				.build());
-		names.add(name("response_time_server")
-				.tag("request_name", "GET /")
+		names.add(name("response_time")
+				.operationName("GET /")
 				.tag("layer", "All")
 				.build());
-		names.add(name("response_time_server")
-				.tag("request_name", "All")
+		names.add(name("response_time")
+				.operationName("All")
 				.tag("layer", "jdbc")
 				.build());
-		names.add(name("response_time_server")
-				.tag("request_name", "Init Find Form")
+		names.add(name("response_time")
+				.operationName("Init Find Form")
 				.tag("layer", "All")
 				.build());
 		names.add(name("response_time_rum")
-				.tag("request_name", "All")
+				.operationName("All")
 				.tag("layer", "Server")
 				.build());
 		names.add(name("timer")
@@ -533,15 +533,15 @@ public class MetricNameBenchmark {
 				.tag("method", "SELECT")
 				.build());
 		names.add(name("response_time_rum")
-				.tag("request_name", "All")
+				.operationName("All")
 				.tag("layer", "Dom Processing")
 				.build());
-		names.add(name("response_time_server")
-				.tag("request_name", "All")
+		names.add(name("response_time")
+				.operationName("All")
 				.tag("layer", "All")
 				.build());
 		names.add(name("response_time_rum")
-				.tag("request_name", "All")
+				.operationName("All")
 				.tag("layer", "All")
 				.build());
 		names.add(METRIC_NAME);
@@ -556,8 +556,8 @@ public class MetricNameBenchmark {
 	@Benchmark
 	public MetricName buildMetricNameSingleValue() {
 		i++;
-		return name("response_time_server")
-				.tag("request_name", Integer.toString(i % 100))
+		return name("response_time")
+				.operationName(Integer.toString(i % 100))
 				.layer("All")
 				.build();
 	}

@@ -1,5 +1,7 @@
 package org.stagemonitor.tracing.profiler;
 
+import com.codahale.metrics.Timer;
+
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.core.util.JsonUtils;
@@ -78,7 +80,8 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 
 	private void determineIfExcludeCallTree(SpanContextInformation contextInfo) {
 		final double percentileLimit = tracingPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests();
-		if (!MetricUtils.isFasterThanXPercentOfAllRequests(contextInfo.getDurationNanos(), percentileLimit, contextInfo.getTimerForThisRequest())) {
+		final Timer timer = contextInfo.getTimerForThisRequest();
+		if (timer != null && !MetricUtils.isFasterThanXPercentOfAllRequests(contextInfo.getDurationNanos(), percentileLimit, timer)) {
 			contextInfo.getPostExecutionInterceptorContext().excludeCallTree("the duration of this request is faster than the percentile limit");
 		}
 	}

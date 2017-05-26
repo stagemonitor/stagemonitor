@@ -14,7 +14,6 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.AbstractExternalRequest;
 import org.stagemonitor.tracing.TracingPlugin;
-import org.stagemonitor.tracing.metrics.ExternalRequestMetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.Profiler;
 import org.stagemonitor.util.StringUtils;
 
@@ -113,7 +112,7 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 				if (StringUtils.isNotEmpty(statementInformation.getSql())) {
 					String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
 					Profiler.addIOCall(sql, timeElapsedNanos);
-					span.setTag(ExternalRequestMetricsSpanEventListener.EXTERNAL_REQUEST_METHOD, sql.substring(0, sql.indexOf(' ')).toUpperCase());
+					span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, sql.substring(0, sql.indexOf(' ')).toUpperCase());
 					span.setTag(DB_STATEMENT, sql);
 				}
 

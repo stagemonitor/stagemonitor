@@ -447,7 +447,7 @@
               "bucketAggs": [
                 {
                   "type": "terms",
-                  "field": "request_name",
+					"field": "operation_name",
                   "id": "3",
                   "fake": true,
                   "settings": {
@@ -466,7 +466,7 @@
                 }
               ],
               "timeField": "@timestamp",
-              "query": "name: external_requests_rate AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance"
+				"query": "name: external_requests_rate AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance"
             }
           ],
           "timeFrom": null,

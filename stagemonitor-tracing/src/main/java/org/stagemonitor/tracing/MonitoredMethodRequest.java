@@ -14,6 +14,7 @@ import io.opentracing.tag.Tags;
 
 public class MonitoredMethodRequest extends MonitoredRequest {
 
+	public static final String OP_TYPE_METHOD_INVOCATION = "method_invocation";
 	private final String methodSignature;
 	private final MethodExecution methodExecution;
 	private final Map<String, String> safeParameters;
@@ -63,7 +64,7 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 					.start();
 		}
 		SpanUtils.setParameters(span, safeParameters);
-		span.setTag(SpanUtils.OPERATION_TYPE, "method_invocation");
+		span.setTag(SpanUtils.OPERATION_TYPE, OP_TYPE_METHOD_INVOCATION);
 		return span;
 	}
 

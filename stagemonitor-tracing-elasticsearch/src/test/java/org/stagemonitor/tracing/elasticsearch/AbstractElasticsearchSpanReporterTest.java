@@ -19,6 +19,7 @@ import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.profiler.CallStackElement;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
+import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Collections;
@@ -32,7 +33,6 @@ import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.stagemonitor.tracing.metrics.ServerRequestMetricsSpanEventListener.getTimerMetricName;
 
 public class AbstractElasticsearchSpanReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
@@ -91,22 +91,40 @@ public class AbstractElasticsearchSpanReporterTest {
 	}
 
 	protected SpanContextInformation reportSpanWithCallTree(long executionTimeMs, String operationName) {
-		final SpanContextInformation info = reportSpan(executionTimeMs, CallStackElement.createRoot("test"), operationName);
-		registry.timer(getTimerMetricName("Report Me")).update(executionTimeMs, TimeUnit.MILLISECONDS);
-		return info;
+		return reportSpan(executionTimeMs, CallStackElement.createRoot("test"), operationName);
+	}
+
+	protected SpanContextInformation reportSpan() {
+		return reportSpan(1);
+	}
+
+	protected SpanContextInformation reportSpan(long executionTimeMs) {
+		return reportSpan(executionTimeMs, "Report Me");
+	}
+
+	protected SpanContextInformation reportSpan(long executionTimeMs, String operationName) {
+		return reportSpan(executionTimeMs, null, operationName);
 	}
 
 	private SpanContextInformation reportSpan(long executionTimeMs, CallStackElement callTree, String operationName) {
 		final Tracer tracer = tracingPlugin.getTracer();
 		final Span span;
-		span = tracer.buildSpan(operationName)
-				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-				.withStartTimestamp(1)
+		Tracer.SpanBuilder spanBuilder = tracer.buildSpan(operationName)
+				.withStartTimestamp(1);
+		spanBuilder = setStartTags(spanBuilder);
+
+		span = spanBuilder
 				.start();
 		final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(span);
 		spanContextInformation.setCallTree(callTree);
 		// implicitly reports
 		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMs) + 1);
 		return spanContextInformation;
+	}
+
+	protected Tracer.SpanBuilder setStartTags(Tracer.SpanBuilder spanBuilder) {
+		return spanBuilder
+				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+				.withTag(SpanUtils.OPERATION_TYPE, "http");
 	}
 }

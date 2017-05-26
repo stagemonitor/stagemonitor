@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing;
 
-import org.stagemonitor.tracing.metrics.ExternalRequestMetricsSpanEventListener;
-
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
@@ -27,7 +25,7 @@ public class ExternalHttpRequest extends AbstractExternalRequest {
 		Tags.HTTP_URL.set(span, url);
 		Tags.PEER_HOSTNAME.set(span, host);
 		Tags.PEER_PORT.set(span, port);
-		span.setTag(ExternalRequestMetricsSpanEventListener.EXTERNAL_REQUEST_METHOD, method);
+		span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, method);
 		return span;
 	}
 

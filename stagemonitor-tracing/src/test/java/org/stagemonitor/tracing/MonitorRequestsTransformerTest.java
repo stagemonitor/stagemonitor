@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -70,7 +71,7 @@ public class MonitorRequestsTransformerTest {
 		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass.monitorMe"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass#monitorMe").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#monitorMe").type("method_invocation").build()));
 	}
 
 	@Test
@@ -83,7 +84,7 @@ public class MonitorRequestsTransformerTest {
 		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass.asyncMethod"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass#asyncMethod").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#asyncMethod").type("method_invocation").build()));
 	}
 
 	@Test
@@ -103,7 +104,7 @@ public class MonitorRequestsTransformerTest {
 		assertEquals(NullPointerException.class.getName(), tags.get("exception.class"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass#monitorThrowException").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#monitorThrowException").type("method_invocation").build()));
 	}
 
 	@Test
@@ -116,7 +117,7 @@ public class MonitorRequestsTransformerTest {
 		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass$1.run"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClass$1#run").layer("All").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass$1#run").type("method_invocation").build()));
 	}
 
 	@Test
@@ -205,10 +206,10 @@ public class MonitorRequestsTransformerTest {
 		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", spanContext.getOperationName());
 		assertEquals(1, spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe"));
+		assertThat(signature).contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe");
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time_server").tag("request_name", "MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe").layer("All").build()));
+		assertThat(timers).containsKey(name("response_time").operationName("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe").type("method_invocation").build());
 	}
 
 	@MonitorRequests

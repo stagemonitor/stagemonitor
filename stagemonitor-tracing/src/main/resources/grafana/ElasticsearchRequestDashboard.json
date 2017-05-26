@@ -163,7 +163,7 @@
                   "type": "percentiles"
                 }
               ],
-              "query": "name: response_time_$Time AND layer: All AND request_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
+				"query": "name: response_time_$Time AND layer: All AND operation_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "B",
               "timeField": "@timestamp",
               "dsType": "elasticsearch"
@@ -283,7 +283,7 @@
                   "type": "avg"
                 }
               ],
-              "query": "name: request_throughput AND request_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
+				"query": "name: request_throughput AND operation_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp",
               "dsType": "elasticsearch"
@@ -381,7 +381,7 @@
               "bucketAggs": [
                 {
                   "fake": true,
-                  "field": "request_name",
+					"field": "operation_name",
                   "id": "3",
                   "settings": {
                     "order": "desc",
@@ -410,7 +410,7 @@
                   "type": "avg"
                 }
               ],
-              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+				"query": "name: response_time_$Time AND layer: All AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp",
               "dsType": "elasticsearch"
@@ -500,7 +500,7 @@
               "bucketAggs": [
                 {
                   "fake": true,
-                  "field": "request_name",
+					"field": "operation_name",
                   "id": "3",
                   "settings": {
                     "order": "desc",
@@ -527,7 +527,7 @@
                   "type": "avg"
                 }
               ],
-              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+				"query": "name: response_time_$Time AND layer: All AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp",
               "dsType": "elasticsearch"
@@ -625,7 +625,7 @@
               "bucketAggs": [
                 {
                   "fake": true,
-                  "field": "request_name",
+					"field": "operation_name",
                   "id": "3",
                   "settings": {
                     "order": "desc",
@@ -652,7 +652,7 @@
                   "type": "avg"
                 }
               ],
-              "query": "name: response_time_$Time AND layer: All AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+				"query": "name: response_time_$Time AND layer: All AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp",
               "dsType": "elasticsearch"
@@ -742,7 +742,7 @@
               "bucketAggs": [
                 {
                   "fake": true,
-                  "field": "request_name",
+					"field": "operation_name",
                   "id": "3",
                   "settings": {
                     "order": "desc",
@@ -769,7 +769,7 @@
                   "type": "avg"
                 }
               ],
-              "query": "name: error_rate_server AND !request_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+				"query": "name: error_rate AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp",
               "dsType": "elasticsearch"
@@ -899,7 +899,7 @@
                   "type": "avg"
                 }
               ],
-              "query": "name: response_time_rum AND request_name: All AND !layer: All AND application: $Application AND host: $Host AND instance: $Instance",
+				"query": "name: response_time_rum AND operation_name: All AND !layer: All AND application: $Application AND host: $Host AND instance: $Instance",
               "refId": "A",
               "timeField": "@timestamp",
               "dsType": "elasticsearch"
@@ -1028,7 +1028,7 @@
         "multi": false,
         "multiFormat": "lucene",
         "name": "Request",
-        "query": "{\"find\": \"terms\", \"field\": \"request_name\"}",
+		  "query": "{\"find\": \"terms\", \"field\": \"operation_name\"}",
         "refresh": 1,
         "refresh_on_load": false,
         "type": "query",

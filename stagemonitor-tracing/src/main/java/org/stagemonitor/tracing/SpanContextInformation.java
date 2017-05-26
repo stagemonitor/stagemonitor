@@ -42,6 +42,7 @@ public class SpanContextInformation {
 	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 	private PostExecutionInterceptorContext postExecutionInterceptorContext;
 	private boolean sampled = true;
+	private boolean error = false;
 	private PreExecutionInterceptorContext preExecutionInterceptorContext;
 	private String operationType;
 	private ReadbackSpan readbackSpan;
@@ -80,8 +81,8 @@ public class SpanContextInformation {
 		requestAttributes.put(key, value);
 	}
 
-	public Object getRequestAttribute(String key) {
-		return requestAttributes.get(key);
+	public <T> T getRequestAttribute(String key) {
+		return (T) requestAttributes.get(key);
 	}
 
 	public CallStackElement getCallTree() {
@@ -221,6 +222,10 @@ public class SpanContextInformation {
 		return readbackSpan;
 	}
 
+	public boolean isError() {
+		return error;
+	}
+
 	public static class ExternalRequestStats {
 
 		private final double MS_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
@@ -256,7 +261,7 @@ public class SpanContextInformation {
 		}
 	}
 
-	static class SpanContextSpanEventListener extends AbstractSpanEventListener implements SpanEventListenerFactory {
+	public static class SpanContextSpanEventListener extends AbstractSpanEventListener implements SpanEventListenerFactory {
 
 		private SpanContextInformation info;
 		private String spanKind;
@@ -320,6 +325,14 @@ public class SpanContextInformation {
 					// store in instance variable and set again if a SpanContextInformation is available
 					samplingPriority = value;
 				}
+			}
+			return value;
+		}
+
+		@Override
+		public boolean onSetTag(String key, boolean value) {
+			if (info != null && Tags.ERROR.getKey().equals(key)) {
+				info.error = value;
 			}
 			return value;
 		}
