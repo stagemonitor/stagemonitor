@@ -61,10 +61,6 @@ public class JvmPlugin extends StagemonitorPlugin {
 		final CorePlugin config = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = config.getElasticsearchClient();
 		final GrafanaClient grafanaClient = config.getGrafanaClient();
-		if (config.isReportToGraphite()) {
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteJvmMemory.json");
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteJvmOverview.json");
-		}
 		if (config.isReportToElasticsearch()) {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/JVM.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchJvm.json");

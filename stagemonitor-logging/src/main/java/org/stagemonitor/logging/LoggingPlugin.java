@@ -12,9 +12,6 @@ public class LoggingPlugin extends StagemonitorPlugin {
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-		if (corePlugin.isReportToGraphite()) {
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteLogging.json");
-		}
 		if (corePlugin.isReportToElasticsearch()) {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchLogging.json");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Logging.bulk");

@@ -2,12 +2,12 @@ package org.stagemonitor.web;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.ConfigurationOption;
-import org.stagemonitor.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.ClassUtils;
@@ -225,10 +225,6 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 		registerPooledResources(initArguments.getMetricRegistry(), tomcatThreadPools());
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
-		if (corePlugin.isReportToGraphite()) {
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteServer.json");
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteKPIsOverTime.json");
-		}
 		if (corePlugin.isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk");

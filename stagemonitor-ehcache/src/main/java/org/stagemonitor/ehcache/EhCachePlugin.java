@@ -3,9 +3,10 @@ package org.stagemonitor.ehcache;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
+
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -43,9 +44,6 @@ public class EhCachePlugin extends StagemonitorPlugin {
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-		if (corePlugin.isReportToGraphite()) {
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteEhCache.json");
-		}
 		if (corePlugin.isReportToElasticsearch()) {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchEhCache.json");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/EhCache.bulk");

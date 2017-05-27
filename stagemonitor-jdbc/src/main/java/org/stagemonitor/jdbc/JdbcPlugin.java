@@ -1,10 +1,8 @@
 package org.stagemonitor.jdbc;
 
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.converter.SetValueConverter;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.StagemonitorPlugin;
 
 import java.util.Collection;
 
@@ -50,15 +48,6 @@ public class JdbcPlugin extends StagemonitorPlugin {
 			))
 			.configurationCategory(JDBC_PLUGIN)
 			.build();
-
-	@Override
-	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
-		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
-		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
-		if (corePlugin.isReportToGraphite()) {
-			elasticsearchClient.sendGrafana1DashboardAsync("grafana/Grafana1GraphiteDBQueries.json");
-		}
-	}
 
 	@Override
 	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {
