@@ -15,8 +15,8 @@ import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.DateUtils;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
 
 import java.io.FileNotFoundException;
@@ -45,6 +45,7 @@ import static org.stagemonitor.util.StringUtils.slugify;
 
 public class ElasticsearchClient {
 
+	public static final Map<String, String> CONTENT_TYPE_JSON = Collections.singletonMap("Content-Type", "application/json");
 	private final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
@@ -108,7 +109,7 @@ public class ElasticsearchClient {
 		if (!isElasticsearchAvailable()) {
 			return -1;
 		}
-		return httpClient.sendAsJson(method, corePlugin.getElasticsearchUrl() + path, requestBody);
+		return httpClient.sendAsJson(method, corePlugin.getElasticsearchUrl() + path, requestBody, CONTENT_TYPE_JSON);
 	}
 
 	public void index(final String index, final String type, final Object document) {
@@ -232,7 +233,7 @@ public class ElasticsearchClient {
 		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", null, outputStreamHandler, new BulkErrorReportingResponseHandler());
+		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", CONTENT_TYPE_JSON, outputStreamHandler, new BulkErrorReportingResponseHandler());
 	}
 
 	public void deleteIndices(String indexPattern) {
@@ -249,7 +250,7 @@ public class ElasticsearchClient {
 		}
 		final String url = corePlugin.getElasticsearchUrl() + "/" + indexPattern + "/_settings?ignore_unavailable=true";
 		logger.info("Updating index settings {}\n{}", url, settings);
-		httpClient.sendAsJson("PUT", url, settings);
+		httpClient.sendAsJson("PUT", url, settings, CONTENT_TYPE_JSON);
 	}
 
 	private void execute(String method, String path, String logMessage) {
