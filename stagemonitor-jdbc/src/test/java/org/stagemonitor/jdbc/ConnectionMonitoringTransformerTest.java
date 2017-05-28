@@ -152,8 +152,8 @@ public class ConnectionMonitoringTransformerTest {
 				.monitor(new MonitoredMethodRequest(configuration, "testRecordSqlPreparedStatement", () -> testDao.executePreparedStatement()));
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		assertThat(timers).isNotEmpty();
-		assertThat(timers).containsKey(name("response_time").type("jdbc").operationName("All").build());
-		assertThat(timers).containsKey(name("response_time").type("jdbc").operationName("ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").build());
+		assertThat(timers).containsKey(name("response_time").operationType("jdbc").operationName("All").build());
+		assertThat(timers).containsKey(name("response_time").operationType("jdbc").operationName("ConnectionMonitoringTransformerTest$TestDao#executePreparedStatement").build());
 		final Map<MetricName, Meter> meters = metric2Registry.getMeters();
 		assertThat(meters).containsKey(name("external_requests_rate").operationName("testRecordSqlPreparedStatement").build());
 		final CallStackElement callTree = spanContext.getCallTree();
@@ -173,8 +173,8 @@ public class ConnectionMonitoringTransformerTest {
 		final Map<MetricName, Timer> timers = metric2Registry.getTimers();
 		final String message = timers.keySet().toString();
 		assertTrue(message, timers.size() > 1);
-		assertEquals(message, 1, timers.get(name("response_time").type("jdbc").operationName("ConnectionMonitoringTransformerTest$TestDao#executeStatement").build()).getCount());
-		assertEquals(message, 1, timers.get(name("response_time").type("jdbc").operationName("All").build()).getCount());
+		assertEquals(message, 1, timers.get(name("response_time").operationType("jdbc").operationName("ConnectionMonitoringTransformerTest$TestDao#executeStatement").build()).getCount());
+		assertEquals(message, 1, timers.get(name("response_time").operationType("jdbc").operationName("All").build()).getCount());
 		final CallStackElement callStack = spanContext.getCallTree();
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executeStatement()",

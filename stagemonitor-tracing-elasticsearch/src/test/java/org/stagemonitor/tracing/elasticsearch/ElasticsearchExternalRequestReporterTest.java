@@ -130,7 +130,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 
 	private void verifyTimerCreated(int count) {
 		final MetricName timerName = name("response_time")
-				.tag("type", "jdbc")
+				.operationType("jdbc")
 				.operationName("Report Me")
 				.build();
 		assertThat(registry.getTimers()).containsKey(timerName);
@@ -138,7 +138,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		assertThat(timer.getCount()).isEqualTo(count);
 
 		final MetricName allTimerName = name("response_time")
-				.tag("type", "jdbc")
+				.operationType("jdbc")
 				.operationName("All")
 				.build();
 		assertThat(registry.getTimers()).containsKey(allTimerName);

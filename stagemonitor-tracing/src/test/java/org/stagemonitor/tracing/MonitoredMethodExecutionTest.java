@@ -82,20 +82,20 @@ public class MonitoredMethodExecutionTest {
 		assertEquals(tags.toString(), "1", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg0"));
 		assertEquals(tags.toString(), "test", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg1"));
 
-		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored1()").type("method_invocation").build());
-		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored2()").type("method_invocation").build());
-		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored3()").type("method_invocation").build());
-		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("notMonitored()").type("method_invocation").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored1()").operationType("method_invocation").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored2()").operationType("method_invocation").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored3()").operationType("method_invocation").build());
+		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("notMonitored()").operationType("method_invocation").build());
 	}
 
 	@Test
 	public void testNormalForwarding() throws Exception {
 		testObject.monitored3();
 
-		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("monitored1()").type("method_invocation").build());
-		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("monitored2()").type("method_invocation").build());
-		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored3()").type("method_invocation").build());
-		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("notMonitored()").type("method_invocation").build());
+		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("monitored1()").operationType("method_invocation").build());
+		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("monitored2()").operationType("method_invocation").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("monitored3()").operationType("method_invocation").build());
+		assertThat(registry.getTimers()).doesNotContainKey(name("response_time").operationName("notMonitored()").operationType("method_invocation").build());
 	}
 
 	private class TestObject {

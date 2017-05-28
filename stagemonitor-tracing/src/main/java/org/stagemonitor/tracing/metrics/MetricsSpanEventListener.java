@@ -21,9 +21,9 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener {
 	private static final double MILLISECOND_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
 	private static final MetricName.MetricNameTemplate responseTimeTemplate = name("response_time")
-			.templateFor("operation_name", "type");
+			.templateFor("operation_name", "operation_type");
 	private static final MetricName.MetricNameTemplate errorRateTemplate = name("error_rate")
-			.templateFor("operation_name", "type");
+			.templateFor("operation_name", "operation_type");
 	private static final MetricName.MetricNameTemplate externalRequestRateTemplate = name("external_requests_rate")
 			.templateFor("operation_name");
 
@@ -39,7 +39,11 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener {
 		final String operationType = contextInformation.getOperationType();
 		if (StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(operationType)) {
 			trackMetrics(contextInformation, operationName, durationNanos, operationType);
-			trackExternalRequestMetricsByParent(spanWrapper.getDelegate(), operationName, contextInformation);
+			if (contextInformation.isServerRequest()) {
+				trackExternalRequestRate(spanWrapper, operationName, contextInformation);
+			} else if (contextInformation.isExternalRequest()) {
+				addExternalRequestToParent(durationNanos, contextInformation, operationType);
+			}
 		}
 	}
 
@@ -53,6 +57,9 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener {
 		if (contextInformation.isError()) {
 			metricRegistry.meter(getErrorMetricName(operationName, operationType)).mark();
 			metricRegistry.meter(getErrorMetricName("All", operationType)).mark();
+		} else {
+			metricRegistry.meter(getErrorMetricName(operationName, operationType)).mark(0);
+			metricRegistry.meter(getErrorMetricName("All", operationType)).mark(0);
 		}
 	}
 
@@ -60,7 +67,7 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener {
 	 * tracks the external requests grouped by the parent request name
 	 * this helps to analyze which requests issue a lot of external requests like jdbc calls
 	 */
-	private void trackExternalRequestMetricsByParent(Span span, String operationName, SpanContextInformation spanContext) {
+	private void trackExternalRequestRate(Span span, String operationName, SpanContextInformation spanContext) {
 		int totalCount = 0;
 		for (SpanContextInformation.ExternalRequestStats externalRequestStats : spanContext.getExternalRequestStats()) {
 			long durationNanos = externalRequestStats.getExecutionTimeNanos();
@@ -72,6 +79,13 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener {
 		metricRegistry.meter(externalRequestRateTemplate
 				.build(operationName))
 				.mark(totalCount);
+	}
+
+	private void addExternalRequestToParent(long durationNanos, SpanContextInformation contextInformation, String operationType) {
+		final SpanContextInformation parent = contextInformation.getParent();
+		if (parent != null) {
+			parent.addExternalRequest(operationType, durationNanos);
+		}
 	}
 
 	public static MetricName getErrorMetricName(String requestName, String operationType) {

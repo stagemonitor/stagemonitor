@@ -431,7 +431,7 @@ public class MetricNameBenchmark {
 				.build());
 		names.add(name("external_requests_rate")
 				.operationName("Process Find Form")
-				.tag("type", "jdbc")
+				.operationType("jdbc")
 				.build());
 		names.add(name("rate")
 				.tag("signature", "VetController#showVetList")
@@ -475,13 +475,13 @@ public class MetricNameBenchmark {
 				.build());
 		names.add(name("external_requests_rate")
 				.operationName("Show Vet List")
-				.tag("type", "jdbc")
+				.operationType("jdbc")
 				.build());
 		names.add(name("logging")
 				.tag("log_level", "debug")
 				.build());
 		names.add(name("external_request_response_time")
-				.tag("type", "jdbc")
+				.operationType("jdbc")
 				.tag("signature", "All")
 				.tag("method", "SELECT")
 				.build());
@@ -501,7 +501,7 @@ public class MetricNameBenchmark {
 				.tag("layer", "Network")
 				.build());
 		names.add(name("external_request_response_time")
-				.tag("type", "jdbc")
+				.operationType("jdbc")
 				.tag("signature", "JpaVetRepositoryImpl#findAll")
 				.tag("method", "SELECT")
 				.build());
@@ -528,7 +528,7 @@ public class MetricNameBenchmark {
 				.tag("signature", "VetController#showVetList")
 				.build());
 		names.add(name("external_request_response_time")
-				.tag("type", "jdbc")
+				.operationType("jdbc")
 				.tag("signature", "JpaOwnerRepositoryImpl#findByLastName")
 				.tag("method", "SELECT")
 				.build());

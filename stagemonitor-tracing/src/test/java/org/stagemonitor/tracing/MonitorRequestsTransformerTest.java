@@ -71,7 +71,7 @@ public class MonitorRequestsTransformerTest {
 		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass.monitorMe"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#monitorMe").type("method_invocation").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#monitorMe").operationType("method_invocation").build()));
 	}
 
 	@Test
@@ -84,7 +84,7 @@ public class MonitorRequestsTransformerTest {
 		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass.asyncMethod"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#asyncMethod").type("method_invocation").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#asyncMethod").operationType("method_invocation").build()));
 	}
 
 	@Test
@@ -104,7 +104,7 @@ public class MonitorRequestsTransformerTest {
 		assertEquals(NullPointerException.class.getName(), tags.get("exception.class"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#monitorThrowException").type("method_invocation").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#monitorThrowException").operationType("method_invocation").build()));
 	}
 
 	@Test
@@ -117,7 +117,7 @@ public class MonitorRequestsTransformerTest {
 		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass$1.run"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass$1#run").type("method_invocation").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass$1#run").operationType("method_invocation").build()));
 	}
 
 	@Test
@@ -209,7 +209,7 @@ public class MonitorRequestsTransformerTest {
 		assertThat(signature).contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe");
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();
-		assertThat(timers).containsKey(name("response_time").operationName("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe").type("method_invocation").build());
+		assertThat(timers).containsKey(name("response_time").operationName("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe").operationType("method_invocation").build());
 	}
 
 	@MonitorRequests

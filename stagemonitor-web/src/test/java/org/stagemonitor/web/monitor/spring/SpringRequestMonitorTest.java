@@ -157,7 +157,7 @@ public class SpringRequestMonitorTest {
 		assertEquals("Test Get Request Name", spanContext.getOperationName());
 		assertEquals("/test/requestName", tags.get(Tags.HTTP_URL.getKey()));
 		assertEquals("GET", tags.get("method"));
-		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("Test Get Request Name").type("http").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("Test Get Request Name").operationType("http").build());
 	}
 
 	@Test
@@ -170,7 +170,7 @@ public class SpringRequestMonitorTest {
 
 		assertEquals("GET *.js", spanContext.getOperationName());
 		assertEquals("GET *.js", spanContext.getOperationName());
-		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("GET *.js").type("http").build());
+		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("GET *.js").operationType("http").build());
 		assertEquals(1, registry.timer(getResponseTimeMetricName(spanContext.getOperationName(), "http")).getCount());
 		verify(monitoredRequest, times(1)).getRequestName();
 		assertTrue(spanContext.isSampled());
@@ -185,7 +185,7 @@ public class SpringRequestMonitorTest {
 		SpanContextInformation spanContext = requestMonitor.monitor(monitoredRequest);
 
 		assertNull(spanContext.getOperationName());
-		assertNull(registry.getTimers().get(name("response_time").operationName("GET *.js").type("http").build()));
+		assertNull(registry.getTimers().get(name("response_time").operationName("GET *.js").operationType("http").build()));
 		assertFalse(spanContext.isSampled());
 	}
 

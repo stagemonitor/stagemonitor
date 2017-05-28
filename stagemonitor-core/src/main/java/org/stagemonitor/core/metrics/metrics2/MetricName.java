@@ -257,6 +257,10 @@ public class MetricName {
 			return tag("type", value);
 		}
 
+		public Builder operationType(String value) {
+			return tag("operation_type", value);
+		}
+
 		public Builder operationName(String value) {
 			return tag("operation_name", value);
 		}

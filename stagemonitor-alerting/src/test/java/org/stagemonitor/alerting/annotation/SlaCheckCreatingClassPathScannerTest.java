@@ -100,10 +100,10 @@ public class SlaCheckCreatingClassPathScannerTest {
 	@Test
 	public void testSlaMonitorRequests() throws Exception {
 		testErrorRateCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().errors",
-				name("error_rate").operationName("Monitor Sla").type("method_invocation").build());
+				name("error_rate").operationName("Monitor Sla").operationType("method_invocation").build());
 
 		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().responseTime",
-				name("response_time").operationName("Monitor Sla").type("method_invocation").build());
+				name("response_time").operationName("Monitor Sla").operationType("method_invocation").build());
 	}
 
 	private void testErrorRateCheck(String checkId, MetricName checkTarget) {
@@ -132,7 +132,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 	@Test
 	public void testSlaCustomName() throws Exception {
 		testResponseTimeCheck("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.slaMonitorRequestsCustomName().responseTime",
-				name("response_time").operationName("monitor requests custom name").type("method_invocation").build());
+				name("response_time").operationName("monitor requests custom name").operationType("method_invocation").build());
 	}
 
 	@Test
@@ -166,7 +166,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 	@Test
 	public void testSlaMonitorRequestsClassLevel() throws Exception {
 		testResponseTimeCheck("public void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$ClassLevelMonitorRequestsTestClass.slaMonitorRequestsClassLevel().responseTime",
-				name("response_time").operationName("Sla Monitor Requests Class Level").type("method_invocation").build());
+				name("response_time").operationName("Sla Monitor Requests Class Level").operationType("method_invocation").build());
 	}
 
 	@MonitorRequests
