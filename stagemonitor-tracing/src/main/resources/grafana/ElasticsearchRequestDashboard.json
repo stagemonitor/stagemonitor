@@ -1,1101 +1,1207 @@
 {
-  "title": "Request Metrics",
-  "originalTitle": "Request Metrics",
-  "tags": [
-    "stagemonitor"
-  ],
-  "style": "dark",
-  "timezone": "browser",
-  "editable": true,
-  "hideControls": false,
-  "sharedCrosshair": false,
-  "rows": [
-    {
-      "collapse": true,
-      "editable": true,
-      "height": "250px",
-      "panels": [
-        {
-          "content": "$documentation",
-          "editable": true,
-          "error": false,
-          "isNew": true,
-          "links": [],
-          "mode": "markdown",
-          "span": 12,
-          "title": "Documentation",
-          "type": "text"
-        }
-      ],
-      "showTitle": false,
-      "title": "Documentation (click me to expand)"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "350px",
-      "panels": [
-        {
-          "aliasColors": {
-            "max": "#0A50A1",
-            "p50": "#1F78C1",
-            "p25": "#052B51",
-            "p75": "#447EBC",
-            "p95": "#64B0C8",
-            "p99": "#5195CE",
-            "p999": "#1F78C1"
-          },
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 10,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 1,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 1,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "alias": "{{field}}",
-              "bucketAggs": [
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "$Interval",
-                    "min_doc_count": 0,
-                    "trimEdges": 0
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "metrics": [
-                {
-                  "type": "max",
-                  "field": "max",
-                  "id": "7",
-                  "settings": {},
-                  "meta": {}
-                },
-                {
-                  "field": "p999",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {
-                    "percents": [
-                      "99.9"
-                    ]
-                  },
-                  "type": "percentiles"
-                },
-                {
-                  "field": "p99",
-                  "id": "3",
-                  "meta": {},
-                  "settings": {
-                    "percents": [
-                      "99"
-                    ]
-                  },
-                  "type": "percentiles"
-                },
-                {
-                  "field": "p95",
-                  "id": "4",
-                  "meta": {},
-                  "settings": {
-                    "percents": [
-                      "95"
-                    ]
-                  },
-                  "type": "percentiles"
-                },
-                {
-                  "field": "p75",
-                  "id": "5",
-                  "meta": {},
-                  "settings": {
-                    "percents": [
-                      "75"
-                    ]
-                  },
-                  "type": "percentiles"
-                },
-                {
-                  "field": "p50",
-                  "id": "6",
-                  "meta": {},
-                  "settings": {
-                    "percents": [
-                      "50"
-                    ]
-                  },
-                  "type": "percentiles"
-                }
-              ],
-				"query": "name: response_time_$Time AND layer: All AND operation_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
-              "refId": "B",
-              "timeField": "@timestamp",
-              "dsType": "elasticsearch"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Response Time",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative",
-            "msResolution": false
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "ms",
-            "short"
-          ],
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 10,
-              "min": null,
-              "max": null,
-              "format": "ms"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          }
-        },
-        {
-          "aliasColors": {
-            "200": "#508642",
-            "500": "#E24D42"
-          },
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 2,
-          "leftYAxisLabel": "Requests/s",
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "fake": true,
-                  "field": "http_code",
-                  "id": "3",
-                  "settings": {
-                    "order": "desc",
-                    "orderBy": "1",
-                    "size": "5"
-                  },
-                  "type": "terms"
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "$Interval"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "m1_rate",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-				"query": "name: request_throughput AND operation_name: \"$Request\" AND application: $Application AND host: $Host AND instance: $Instance",
-              "refId": "A",
-              "timeField": "@timestamp",
-              "dsType": "elasticsearch"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Throughput by Status",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative",
-            "msResolution": false
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ],
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          }
-        }
-      ],
-      "title": "Row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "450px",
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 3,
-          "legend": {
-            "alignAsTable": true,
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": true,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "fake": true,
-					"field": "operation_name",
-                  "id": "3",
-                  "settings": {
-                    "order": "desc",
-                    "orderBy": "1",
-                    "size": "5"
-                  },
-                  "type": "terms"
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "$Interval",
-                    "min_doc_count": 0,
-                    "trimEdges": 0
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "p50",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-				"query": "name: response_time_$Time AND layer: All AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
-              "refId": "A",
-              "timeField": "@timestamp",
-              "dsType": "elasticsearch"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Slowest Requests (Median)",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative",
-            "msResolution": false
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "ms",
-            "short"
-          ],
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "ms"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 5,
-          "legend": {
-            "alignAsTable": true,
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": true,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "fake": true,
-					"field": "operation_name",
-                  "id": "3",
-                  "settings": {
-                    "order": "desc",
-                    "orderBy": "1",
-                    "size": "5"
-                  },
-                  "type": "terms"
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "$Interval"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "m1_rate",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-				"query": "name: response_time_$Time AND layer: All AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
-              "refId": "A",
-              "timeField": "@timestamp",
-              "dsType": "elasticsearch"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Highest Throughput",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative",
-            "msResolution": false
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ],
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          }
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "450px",
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 4,
-          "legend": {
-            "alignAsTable": true,
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": true,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "fake": true,
-					"field": "operation_name",
-                  "id": "3",
-                  "settings": {
-                    "order": "desc",
-                    "orderBy": "1",
-                    "size": "5"
-                  },
-                  "type": "terms"
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "$Interval"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "p95",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-				"query": "name: response_time_$Time AND layer: All AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
-              "refId": "A",
-              "timeField": "@timestamp",
-              "dsType": "elasticsearch"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Slowest Requests (p95)",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative",
-            "msResolution": false
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "ms",
-            "short"
-          ],
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "ms"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 6,
-          "legend": {
-            "alignAsTable": true,
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": true,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "fake": true,
-					"field": "operation_name",
-                  "id": "3",
-                  "settings": {
-                    "order": "desc",
-                    "orderBy": "1",
-                    "size": "5"
-                  },
-                  "type": "terms"
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "$Interval"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "m1_rate",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-				"query": "name: error_rate AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
-              "refId": "A",
-              "timeField": "@timestamp",
-              "dsType": "elasticsearch"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Most Errors",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative",
-            "msResolution": false
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ],
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          }
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "350px",
-      "panels": [
-        {
-          "aliasColors": {
-            "Dom Processing": "#0A437C",
-            "Network": "#1F78C1",
-            "Page Rendering": "#447EBC",
-            "Server": "#5195CE"
-          },
-          "bars": false,
-          "datasource": "ES stagemonitor",
-          "decimals": null,
-          "editable": true,
-          "error": false,
-          "fill": 8,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 7,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 6,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "bucketAggs": [
-                {
-                  "fake": true,
-                  "field": "layer",
-                  "id": "3",
-                  "settings": {
-                    "order": "asc",
-                    "orderBy": "_term",
-                    "size": "0"
-                  },
-                  "type": "terms"
-                },
-                {
-                  "field": "@timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "$Interval"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "metrics": [
-                {
-                  "field": "mean",
-                  "id": "1",
-                  "meta": {},
-                  "settings": {},
-                  "type": "avg"
-                }
-              ],
-				"query": "name: response_time_rum AND operation_name: All AND !layer: All AND application: $Application AND host: $Host AND instance: $Instance",
-              "refId": "A",
-              "timeField": "@timestamp",
-              "dsType": "elasticsearch"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Page Load Time Breakdown",
-          "tooltip": {
-            "shared": true,
-            "value_type": "individual",
-            "msResolution": false
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "ms",
-            "short"
-          ],
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": 0,
-              "max": null,
-              "format": "ms"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          }
-        }
-      ],
-      "title": "New row"
-    }
-  ],
-  "time": {
-    "from": "now-1h",
-    "to": "now"
-  },
-  "timepicker": {
-    "collapse": false,
-    "enable": true,
-    "notice": false,
-    "now": true,
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ],
-    "status": "Stable",
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ],
-    "type": "timepicker"
-  },
-  "templating": {
-    "list": [
-      {
-        "allFormat": "lucene",
-        "datasource": "ES stagemonitor",
-        "hide": 0,
-        "includeAll": false,
-        "multi": false,
-        "multiFormat": "lucene",
-        "name": "Application",
-        "query": "{\"find\": \"terms\", \"field\": \"application\"}",
-        "refresh": 1,
-        "refresh_on_load": false,
-        "regex": "",
-        "type": "query"
-      },
-      {
-        "allFormat": "lucene",
-        "datasource": "ES stagemonitor",
-        "includeAll": true,
-        "multi": true,
-        "multiFormat": "lucene",
-        "name": "Host",
-        "query": "{\"find\": \"terms\", \"field\": \"host\"}",
-        "refresh": 1,
-        "refresh_on_load": false,
-        "type": "query"
-      },
-      {
-        "allFormat": "lucene",
-        "datasource": "ES stagemonitor",
-        "includeAll": true,
-        "multi": true,
-        "multiFormat": "lucene",
-        "name": "Instance",
-        "query": "{\"find\": \"terms\", \"field\": \"instance\"}",
-        "refresh": 1,
-        "refresh_on_load": false,
-        "type": "query"
-      },
-      {
-        "allFormat": "lucene",
-        "datasource": "ES stagemonitor",
-        "includeAll": false,
-        "multi": false,
-        "multiFormat": "lucene",
-        "name": "Request",
-		  "query": "{\"find\": \"terms\", \"field\": \"operation_name\"}",
-        "refresh": 1,
-        "refresh_on_load": false,
-        "type": "query",
-        "useTags": false,
-        "current": {
-          "text": "All",
-          "value": "All"
-        }
-      },
-      {
-        "allFormat": "glob",
-        "current": {
-          "tags": [],
-          "text": "Server",
-          "value": "server"
-        },
-        "datasource": null,
-        "includeAll": false,
-        "multi": false,
-        "multiFormat": "glob",
-        "name": "Time",
-        "options": [
-          {
-            "selected": false,
-            "text": "Server",
-            "value": "server"
-          },
-          {
-            "selected": true,
-            "text": "Real User Monitoring",
-            "value": "rum"
-          }
-        ],
-        "query": "server, rum",
-        "refresh_on_load": false,
-        "type": "custom"
-      },
-      {
-        "auto": true,
-        "auto_count": 200,
-        "auto_min": "60s",
-        "current": {
-          "text": "auto",
-          "value": "$__auto_interval"
-        },
-        "datasource": null,
-        "hide": 2,
-        "includeAll": false,
-        "multi": false,
-        "name": "Interval",
-        "options": [
-          {
-            "selected": true,
-            "text": "auto",
-            "value": "$__auto_interval"
-          }
-        ],
-        "query": "",
-        "refresh": 0,
-        "type": "interval",
-        "allFormat": "glob"
-      }    ]
-  },
-  "annotations": {
-    "list": []
-  },
-  "refresh": "30s",
-  "schemaVersion": 12,
-  "links": []
+	"annotations": {
+		"list": []
+	},
+	"editable": true,
+	"gnetId": null,
+	"graphTooltip": 0,
+	"hideControls": false,
+	"id": 2,
+	"links": [],
+	"refresh": "30s",
+	"rows": [
+		{
+			"collapse": false,
+			"height": "350px",
+			"panels": [
+				{
+					"aliasColors": {
+						"max": "#0A50A1",
+						"p25": "#052B51",
+						"p50": "#1F78C1",
+						"p75": "#447EBC",
+						"p95": "#64B0C8",
+						"p99": "#5195CE",
+						"p999": "#1F78C1"
+					},
+					"bars": false,
+					"datasource": "ES stagemonitor",
+					"description": "This panel contains the percentiles of all response timings.\nThe p99 percentile is the time, below which 99% of the request times will be.\nTherefore can a strong increase from p95 to p99 indicate that most of the application performs good with the exception of a few slow endpoints.\nA lower response time is generally desired.",
+					"editable": true,
+					"error": false,
+					"fill": 1,
+					"grid": {
+						"leftLogBase": 10,
+						"leftMax": null,
+						"leftMin": 0,
+						"rightLogBase": 1,
+						"rightMax": null,
+						"rightMin": null
+					},
+					"id": 1,
+					"interval": "$Interval",
+					"legend": {
+						"avg": false,
+						"current": false,
+						"max": false,
+						"min": false,
+						"show": true,
+						"total": false,
+						"values": false
+					},
+					"lines": true,
+					"linewidth": 2,
+					"links": [],
+					"nullPointMode": "connected",
+					"percentage": false,
+					"pointradius": 1,
+					"points": false,
+					"renderer": "flot",
+					"seriesOverrides": [],
+					"span": 6,
+					"stack": false,
+					"steppedLine": false,
+					"targets": [
+						{
+							"alias": "{{field}}",
+							"bucketAggs": [
+								{
+									"field": "@timestamp",
+									"id": "2",
+									"settings": {
+										"interval": "$Interval",
+										"min_doc_count": 0,
+										"trimEdges": 0
+									},
+									"type": "date_histogram"
+								}
+							],
+							"dsType": "elasticsearch",
+							"metrics": [
+								{
+									"field": "max",
+									"id": "7",
+									"meta": {},
+									"settings": {},
+									"type": "max"
+								},
+								{
+									"field": "p999",
+									"id": "1",
+									"meta": {},
+									"settings": {
+										"percents": [
+											"99.9"
+										]
+									},
+									"type": "percentiles"
+								},
+								{
+									"field": "p99",
+									"id": "3",
+									"meta": {},
+									"settings": {
+										"percents": [
+											"99"
+										]
+									},
+									"type": "percentiles"
+								},
+								{
+									"field": "p95",
+									"id": "4",
+									"meta": {},
+									"settings": {
+										"percents": [
+											"95"
+										]
+									},
+									"type": "percentiles"
+								},
+								{
+									"field": "p75",
+									"id": "5",
+									"meta": {},
+									"settings": {
+										"percents": [
+											"75"
+										]
+									},
+									"type": "percentiles"
+								},
+								{
+									"field": "p50",
+									"id": "6",
+									"meta": {},
+									"settings": {
+										"percents": [
+											"50"
+										]
+									},
+									"type": "percentiles"
+								}
+							],
+							"query": "name: response_time AND operation_type: $operation_type AND operation_name: \"$operation_name\" AND application: $Application AND host: $Host AND instance: $Instance",
+							"refId": "B",
+							"timeField": "@timestamp"
+						}
+					],
+					"thresholds": [],
+					"timeFrom": null,
+					"timeShift": null,
+					"title": "Response Time",
+					"tooltip": {
+						"msResolution": false,
+						"shared": true,
+						"sort": 0,
+						"value_type": "cumulative"
+					},
+					"type": "graph",
+					"x-axis": true,
+					"xaxis": {
+						"mode": "time",
+						"name": null,
+						"show": true,
+						"values": []
+					},
+					"y-axis": true,
+					"y_formats": [
+						"ms",
+						"short"
+					],
+					"yaxes": [
+						{
+							"format": "ms",
+							"label": null,
+							"logBase": 10,
+							"max": null,
+							"min": null,
+							"show": true
+						},
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": null,
+							"show": true
+						}
+					]
+				},
+				{
+					"aliasColors": {
+						"200": "#508642",
+						"500": "#E24D42"
+					},
+					"bars": false,
+					"datasource": "ES stagemonitor",
+					"description": "Shows the total and the faulty requests per second.\n\nNote that this is the average and not the sum across the selected application host and instance.",
+					"editable": true,
+					"error": false,
+					"fill": 1,
+					"grid": {
+						"leftLogBase": 1,
+						"leftMax": null,
+						"leftMin": 0,
+						"rightLogBase": 1,
+						"rightMax": null,
+						"rightMin": null
+					},
+					"id": 2,
+					"interval": "$Interval",
+					"leftYAxisLabel": "Requests/s",
+					"legend": {
+						"avg": false,
+						"current": false,
+						"max": false,
+						"min": false,
+						"show": true,
+						"total": false,
+						"values": false
+					},
+					"lines": true,
+					"linewidth": 2,
+					"links": [],
+					"nullPointMode": "connected",
+					"percentage": false,
+					"pointradius": 5,
+					"points": false,
+					"renderer": "flot",
+					"seriesOverrides": [],
+					"span": 6,
+					"stack": false,
+					"steppedLine": false,
+					"targets": [
+						{
+							"alias": "throughput",
+							"bucketAggs": [
+								{
+									"field": "@timestamp",
+									"id": "2",
+									"settings": {
+										"interval": "$Interval",
+										"min_doc_count": 0,
+										"trimEdges": 0
+									},
+									"type": "date_histogram"
+								}
+							],
+							"dsType": "elasticsearch",
+							"hide": false,
+							"metrics": [
+								{
+									"field": "m1_rate",
+									"id": "1",
+									"meta": {},
+									"settings": {},
+									"type": "avg"
+								}
+							],
+							"query": "name: response_time AND operation_name: \"$operation_name\" AND operation_type: \"$operation_type\" AND application: $Application AND host: $Host AND instance: $Instance",
+							"refId": "A",
+							"timeField": "@timestamp"
+						},
+						{
+							"alias": "error rate",
+							"bucketAggs": [
+								{
+									"field": "@timestamp",
+									"id": "2",
+									"settings": {
+										"interval": "$Interval",
+										"min_doc_count": 0,
+										"trimEdges": 0
+									},
+									"type": "date_histogram"
+								}
+							],
+							"dsType": "elasticsearch",
+							"metrics": [
+								{
+									"field": "m1_rate",
+									"id": "1",
+									"meta": {},
+									"settings": {},
+									"type": "avg"
+								}
+							],
+							"query": "name: error_rate AND operation_name: \"$operation_name\" AND operation_type: \"$operation_type\" AND application: $Application AND host: $Host AND instance: $Instance",
+							"refId": "B",
+							"timeField": "@timestamp"
+						}
+					],
+					"thresholds": [],
+					"timeFrom": null,
+					"timeShift": null,
+					"title": "Throughput (requests per second)",
+					"tooltip": {
+						"msResolution": false,
+						"shared": true,
+						"sort": 0,
+						"value_type": "cumulative"
+					},
+					"type": "graph",
+					"x-axis": true,
+					"xaxis": {
+						"mode": "time",
+						"name": null,
+						"show": true,
+						"values": []
+					},
+					"y-axis": true,
+					"y_formats": [
+						"short",
+						"short"
+					],
+					"yaxes": [
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": 0,
+							"show": true
+						},
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": null,
+							"show": true
+						}
+					]
+				}
+			],
+			"repeat": null,
+			"repeatIteration": null,
+			"repeatRowId": null,
+			"showTitle": false,
+			"title": "Row",
+			"titleSize": "h6"
+		},
+		{
+			"collapse": false,
+			"height": "450px",
+			"panels": [
+				{
+					"aliasColors": {},
+					"bars": false,
+					"datasource": "ES stagemonitor",
+					"description": "This panel groups the slowest requests for the median of all requests.\nFrequently accessed slow endpoints may provide potential for optimization.",
+					"editable": true,
+					"error": false,
+					"fill": 1,
+					"grid": {
+						"leftLogBase": 1,
+						"leftMax": null,
+						"leftMin": 0,
+						"rightLogBase": 1,
+						"rightMax": null,
+						"rightMin": null
+					},
+					"id": 3,
+					"interval": "$Interval",
+					"legend": {
+						"alignAsTable": true,
+						"avg": true,
+						"current": true,
+						"max": true,
+						"min": true,
+						"show": true,
+						"total": false,
+						"values": true
+					},
+					"lines": true,
+					"linewidth": 2,
+					"links": [],
+					"nullPointMode": "connected",
+					"percentage": false,
+					"pointradius": 5,
+					"points": false,
+					"renderer": "flot",
+					"seriesOverrides": [],
+					"span": 6,
+					"stack": false,
+					"steppedLine": false,
+					"targets": [
+						{
+							"bucketAggs": [
+								{
+									"fake": true,
+									"field": "operation_name",
+									"id": "3",
+									"settings": {
+										"min_doc_count": 0,
+										"order": "desc",
+										"orderBy": "1",
+										"size": "5"
+									},
+									"type": "terms"
+								},
+								{
+									"field": "@timestamp",
+									"id": "2",
+									"settings": {
+										"interval": "$Interval",
+										"min_doc_count": 0,
+										"trimEdges": 0
+									},
+									"type": "date_histogram"
+								}
+							],
+							"dsType": "elasticsearch",
+							"metrics": [
+								{
+									"field": "p50",
+									"id": "1",
+									"meta": {},
+									"settings": {},
+									"type": "avg"
+								}
+							],
+							"query": "name: response_time AND !operation_name: All AND operation_type: $operation_type AND application: $Application AND host: $Host AND instance: $Instance",
+							"refId": "A",
+							"timeField": "@timestamp"
+						}
+					],
+					"thresholds": [],
+					"timeFrom": null,
+					"timeShift": null,
+					"title": "Slowest Requests (Median)",
+					"tooltip": {
+						"msResolution": false,
+						"shared": true,
+						"sort": 0,
+						"value_type": "cumulative"
+					},
+					"type": "graph",
+					"x-axis": true,
+					"xaxis": {
+						"mode": "time",
+						"name": null,
+						"show": true,
+						"values": []
+					},
+					"y-axis": true,
+					"y_formats": [
+						"ms",
+						"short"
+					],
+					"yaxes": [
+						{
+							"format": "ms",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": 0,
+							"show": true
+						},
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": null,
+							"show": true
+						}
+					]
+				},
+				{
+					"aliasColors": {},
+					"bars": false,
+					"datasource": "ES stagemonitor",
+					"description": "This panel shows the most frequently executed operations",
+					"editable": true,
+					"error": false,
+					"fill": 1,
+					"grid": {
+						"leftLogBase": 1,
+						"leftMax": null,
+						"leftMin": 0,
+						"rightLogBase": 1,
+						"rightMax": null,
+						"rightMin": null
+					},
+					"id": 5,
+					"interval": "$Interval",
+					"legend": {
+						"alignAsTable": true,
+						"avg": true,
+						"current": true,
+						"max": true,
+						"min": true,
+						"show": true,
+						"total": false,
+						"values": true
+					},
+					"lines": true,
+					"linewidth": 2,
+					"links": [],
+					"nullPointMode": "connected",
+					"percentage": false,
+					"pointradius": 5,
+					"points": false,
+					"renderer": "flot",
+					"seriesOverrides": [],
+					"span": 6,
+					"stack": false,
+					"steppedLine": false,
+					"targets": [
+						{
+							"bucketAggs": [
+								{
+									"fake": true,
+									"field": "operation_name",
+									"id": "3",
+									"settings": {
+										"min_doc_count": 0,
+										"order": "desc",
+										"orderBy": "1",
+										"size": "5"
+									},
+									"type": "terms"
+								},
+								{
+									"field": "@timestamp",
+									"id": "2",
+									"settings": {
+										"interval": "$Interval",
+										"min_doc_count": 0,
+										"trimEdges": 0
+									},
+									"type": "date_histogram"
+								}
+							],
+							"dsType": "elasticsearch",
+							"metrics": [
+								{
+									"field": "m1_rate",
+									"id": "1",
+									"meta": {},
+									"settings": {},
+									"type": "avg"
+								}
+							],
+							"query": "name: response_time AND !operation_name: All AND operation_type: $operation_type AND application: $Application AND host: $Host AND instance: $Instance",
+							"refId": "A",
+							"timeField": "@timestamp"
+						}
+					],
+					"thresholds": [],
+					"timeFrom": null,
+					"timeShift": null,
+					"title": "Highest Throughput",
+					"tooltip": {
+						"msResolution": false,
+						"shared": true,
+						"sort": 0,
+						"value_type": "cumulative"
+					},
+					"type": "graph",
+					"x-axis": true,
+					"xaxis": {
+						"mode": "time",
+						"name": null,
+						"show": true,
+						"values": []
+					},
+					"y-axis": true,
+					"y_formats": [
+						"short",
+						"short"
+					],
+					"yaxes": [
+						{
+							"format": "short",
+							"label": "req/s",
+							"logBase": 1,
+							"max": null,
+							"min": 0,
+							"show": true
+						},
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": null,
+							"show": true
+						}
+					]
+				}
+			],
+			"repeat": null,
+			"repeatIteration": null,
+			"repeatRowId": null,
+			"showTitle": false,
+			"title": "New row",
+			"titleSize": "h6"
+		},
+		{
+			"collapse": false,
+			"height": "450px",
+			"panels": [
+				{
+					"aliasColors": {},
+					"bars": false,
+					"datasource": "ES stagemonitor",
+					"description": "This panel groups the slowest requests for the 95th percentile of all requests.\nFrequently accessed slow endpoints may provide potential for optimization.\nYou can use the stagemonitor Kibana Request Analysis Dashboard for a more in-depth analysis of the slow response time cause.",
+					"editable": true,
+					"error": false,
+					"fill": 1,
+					"grid": {
+						"leftLogBase": 1,
+						"leftMax": null,
+						"leftMin": 0,
+						"rightLogBase": 1,
+						"rightMax": null,
+						"rightMin": null
+					},
+					"id": 4,
+					"interval": "$Interval",
+					"legend": {
+						"alignAsTable": true,
+						"avg": true,
+						"current": true,
+						"max": true,
+						"min": true,
+						"show": true,
+						"total": false,
+						"values": true
+					},
+					"lines": true,
+					"linewidth": 2,
+					"links": [],
+					"nullPointMode": "connected",
+					"percentage": false,
+					"pointradius": 5,
+					"points": false,
+					"renderer": "flot",
+					"seriesOverrides": [],
+					"span": 6,
+					"stack": false,
+					"steppedLine": false,
+					"targets": [
+						{
+							"bucketAggs": [
+								{
+									"fake": true,
+									"field": "operation_name",
+									"id": "3",
+									"settings": {
+										"min_doc_count": 0,
+										"order": "desc",
+										"orderBy": "1",
+										"size": "5"
+									},
+									"type": "terms"
+								},
+								{
+									"field": "@timestamp",
+									"id": "2",
+									"settings": {
+										"interval": "$Interval",
+										"min_doc_count": 0,
+										"trimEdges": 0
+									},
+									"type": "date_histogram"
+								}
+							],
+							"dsType": "elasticsearch",
+							"metrics": [
+								{
+									"field": "p95",
+									"id": "1",
+									"meta": {},
+									"settings": {},
+									"type": "avg"
+								}
+							],
+							"query": "name: response_time AND !request_name: All AND operation_type: $operation_type AND application: $Application AND host: $Host AND instance: $Instance",
+							"refId": "A",
+							"timeField": "@timestamp"
+						}
+					],
+					"thresholds": [],
+					"timeFrom": null,
+					"timeShift": null,
+					"title": "Slowest Requests (p95)",
+					"tooltip": {
+						"msResolution": false,
+						"shared": true,
+						"sort": 0,
+						"value_type": "cumulative"
+					},
+					"type": "graph",
+					"x-axis": true,
+					"xaxis": {
+						"mode": "time",
+						"name": null,
+						"show": true,
+						"values": []
+					},
+					"y-axis": true,
+					"y_formats": [
+						"ms",
+						"short"
+					],
+					"yaxes": [
+						{
+							"format": "ms",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": 0,
+							"show": true
+						},
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": null,
+							"show": true
+						}
+					]
+				},
+				{
+					"aliasColors": {},
+					"bars": false,
+					"datasource": "ES stagemonitor",
+					"description": "This panel contains the endpoints with the highest error count.\nA high error count is an indicator for application logic errors.\nYou can use the stagemonitor Kibana Request Analysis Dashboard for a more in-depth analysis of the error cause.",
+					"editable": true,
+					"error": false,
+					"fill": 1,
+					"grid": {
+						"leftLogBase": 1,
+						"leftMax": null,
+						"leftMin": 0,
+						"rightLogBase": 1,
+						"rightMax": null,
+						"rightMin": null
+					},
+					"id": 6,
+					"interval": "$Interval",
+					"legend": {
+						"alignAsTable": true,
+						"avg": true,
+						"current": true,
+						"max": true,
+						"min": true,
+						"show": true,
+						"total": false,
+						"values": true
+					},
+					"lines": true,
+					"linewidth": 2,
+					"links": [],
+					"nullPointMode": "connected",
+					"percentage": false,
+					"pointradius": 5,
+					"points": false,
+					"renderer": "flot",
+					"seriesOverrides": [],
+					"span": 6,
+					"stack": false,
+					"steppedLine": false,
+					"targets": [
+						{
+							"bucketAggs": [
+								{
+									"fake": true,
+									"field": "operation_name",
+									"id": "3",
+									"settings": {
+										"min_doc_count": 0,
+										"order": "desc",
+										"orderBy": "1",
+										"size": "5"
+									},
+									"type": "terms"
+								},
+								{
+									"field": "@timestamp",
+									"id": "2",
+									"settings": {
+										"interval": "$Interval",
+										"min_doc_count": 0,
+										"trimEdges": 0
+									},
+									"type": "date_histogram"
+								}
+							],
+							"dsType": "elasticsearch",
+							"metrics": [
+								{
+									"field": "m1_rate",
+									"id": "1",
+									"meta": {},
+									"settings": {},
+									"type": "avg"
+								}
+							],
+							"query": "name: error_rate AND !operation_name: All AND operation_type: $operation_type AND application: $Application AND host: $Host AND instance: $Instance",
+							"refId": "A",
+							"timeField": "@timestamp"
+						}
+					],
+					"thresholds": [],
+					"timeFrom": null,
+					"timeShift": null,
+					"title": "Most Errors",
+					"tooltip": {
+						"msResolution": false,
+						"shared": true,
+						"sort": 0,
+						"value_type": "cumulative"
+					},
+					"type": "graph",
+					"x-axis": true,
+					"xaxis": {
+						"mode": "time",
+						"name": null,
+						"show": true,
+						"values": []
+					},
+					"y-axis": true,
+					"y_formats": [
+						"short",
+						"short"
+					],
+					"yaxes": [
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": 0,
+							"show": true
+						},
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": null,
+							"show": true
+						}
+					]
+				}
+			],
+			"repeat": null,
+			"repeatIteration": null,
+			"repeatRowId": null,
+			"showTitle": false,
+			"title": "New row",
+			"titleSize": "h6"
+		},
+		{
+			"collapse": false,
+			"height": "450",
+			"panels": [
+				{
+					"aliasColors": {},
+					"bars": false,
+					"datasource": "ES stagemonitor",
+					"description": "This panel shows the operations which issue the most requests to external services\nTry to minimize the number of external requests to save network roundtrip times.\nYou can do so by trying to batch loading resources.\nA high count of jdbc requests could for example indicate a classical n+1 problem.",
+					"editable": true,
+					"error": false,
+					"fill": 1,
+					"grid": {
+						"leftLogBase": 1,
+						"leftMax": null,
+						"leftMin": 0,
+						"rightLogBase": 1,
+						"rightMax": null,
+						"rightMin": null
+					},
+					"id": 8,
+					"interval": "$Interval",
+					"legend": {
+						"alignAsTable": true,
+						"avg": true,
+						"current": true,
+						"max": true,
+						"min": true,
+						"show": true,
+						"total": false,
+						"values": true
+					},
+					"lines": true,
+					"linewidth": 2,
+					"links": [],
+					"nullPointMode": "connected",
+					"percentage": false,
+					"pointradius": 5,
+					"points": false,
+					"renderer": "flot",
+					"seriesOverrides": [],
+					"span": 6,
+					"stack": false,
+					"steppedLine": false,
+					"targets": [
+						{
+							"bucketAggs": [
+								{
+									"fake": true,
+									"field": "operation_name",
+									"id": "3",
+									"settings": {
+										"min_doc_count": 0,
+										"order": "desc",
+										"orderBy": "1",
+										"size": "5"
+									},
+									"type": "terms"
+								},
+								{
+									"field": "@timestamp",
+									"id": "2",
+									"settings": {
+										"interval": "$Interval",
+										"min_doc_count": 0,
+										"trimEdges": 0
+									},
+									"type": "date_histogram"
+								}
+							],
+							"dsType": "elasticsearch",
+							"metrics": [
+								{
+									"field": "m1_rate",
+									"id": "1",
+									"meta": {},
+									"settings": {},
+									"type": "avg"
+								}
+							],
+							"query": "name: external_requests_rate AND !operation_name: All AND application: $Application AND host: $Host AND instance: $Instance",
+							"refId": "A",
+							"timeField": "@timestamp"
+						}
+					],
+					"thresholds": [],
+					"timeFrom": null,
+					"timeShift": null,
+					"title": "Most external requests",
+					"tooltip": {
+						"msResolution": false,
+						"shared": true,
+						"sort": 0,
+						"value_type": "cumulative"
+					},
+					"type": "graph",
+					"x-axis": true,
+					"xaxis": {
+						"mode": "time",
+						"name": null,
+						"show": true,
+						"values": []
+					},
+					"y-axis": true,
+					"y_formats": [
+						"short",
+						"short"
+					],
+					"yaxes": [
+						{
+							"format": "short",
+							"label": "req/s",
+							"logBase": 1,
+							"max": null,
+							"min": 0,
+							"show": true
+						},
+						{
+							"format": "short",
+							"label": null,
+							"logBase": 1,
+							"max": null,
+							"min": null,
+							"show": true
+						}
+					]
+				}
+			],
+			"repeat": null,
+			"repeatIteration": null,
+			"repeatRowId": null,
+			"showTitle": false,
+			"title": "Dashboard Row",
+			"titleSize": "h6"
+		},
+		{
+			"collapse": true,
+			"editable": true,
+			"height": "250px",
+			"panels": [
+				{
+					"content": "$documentation",
+					"editable": true,
+					"error": false,
+					"isNew": true,
+					"links": [],
+					"mode": "markdown",
+					"span": 12,
+					"title": "Documentation",
+					"type": "text"
+				}
+			],
+			"showTitle": false,
+			"title": "Documentation (click me to expand)"
+		}
+	],
+	"schemaVersion": 14,
+	"style": "dark",
+	"tags": [
+		"stagemonitor"
+	],
+	"templating": {
+		"list": [
+			{
+				"allFormat": "lucene",
+				"allValue": null,
+				"datasource": "ES stagemonitor",
+				"hide": 0,
+				"includeAll": false,
+				"label": null,
+				"multi": false,
+				"multiFormat": "lucene",
+				"name": "Application",
+				"options": [],
+				"query": "{\"find\": \"terms\", \"field\": \"application\"}",
+				"refresh": 1,
+				"refresh_on_load": false,
+				"regex": "",
+				"sort": 0,
+				"tagValuesQuery": "",
+				"tags": [],
+				"tagsQuery": "",
+				"type": "query",
+				"useTags": false
+			},
+			{
+				"allFormat": "lucene",
+				"allValue": null,
+				"current": {
+					"selected": true,
+					"text": "All",
+					"value": "$__all"
+				},
+				"datasource": "ES stagemonitor",
+				"hide": 0,
+				"includeAll": true,
+				"label": null,
+				"multi": true,
+				"multiFormat": "lucene",
+				"name": "Host",
+				"options": [],
+				"query": "{\"find\": \"terms\", \"field\": \"host\"}",
+				"refresh": 1,
+				"refresh_on_load": false,
+				"regex": "",
+				"sort": 0,
+				"tagValuesQuery": "",
+				"tags": [],
+				"tagsQuery": "",
+				"type": "query",
+				"useTags": false
+			},
+			{
+				"allFormat": "lucene",
+				"allValue": null,
+				"current": {
+					"selected": true,
+					"text": "All",
+					"value": "$__all"
+				},
+				"datasource": "ES stagemonitor",
+				"hide": 0,
+				"includeAll": true,
+				"label": null,
+				"multi": true,
+				"multiFormat": "lucene",
+				"name": "Instance",
+				"options": [],
+				"query": "{\"find\": \"terms\", \"field\": \"instance\"}",
+				"refresh": 1,
+				"refresh_on_load": false,
+				"regex": "",
+				"sort": 0,
+				"tagValuesQuery": "",
+				"tags": [],
+				"tagsQuery": "",
+				"type": "query",
+				"useTags": false
+			},
+			{
+				"allFormat": "lucene",
+				"allValue": null,
+				"datasource": "ES stagemonitor",
+				"hide": 0,
+				"includeAll": false,
+				"label": "Operation Type",
+				"multi": false,
+				"multiFormat": "lucene",
+				"name": "operation_type",
+				"options": [],
+				"query": "{\"find\": \"terms\", \"field\": \"operation_type\"}",
+				"refresh": 1,
+				"refresh_on_load": false,
+				"regex": "",
+				"sort": 0,
+				"tagValuesQuery": "",
+				"tags": [],
+				"tagsQuery": "",
+				"type": "query",
+				"useTags": false
+			},
+			{
+				"allFormat": "lucene",
+				"allValue": null,
+				"current": {
+					"selected": true,
+					"text": "All",
+					"value": "All"
+				},
+				"datasource": "ES stagemonitor",
+				"hide": 0,
+				"includeAll": false,
+				"label": "Operation Name",
+				"multi": false,
+				"multiFormat": "lucene",
+				"name": "operation_name",
+				"options": [],
+				"query": "{\"find\": \"terms\", \"field\": \"operation_name\", \"query\": \"operation_type: $operation_type\"}",
+				"refresh": 1,
+				"refresh_on_load": false,
+				"regex": "",
+				"sort": 0,
+				"tagValuesQuery": "",
+				"tags": [],
+				"tagsQuery": "",
+				"type": "query",
+				"useTags": false
+			},
+			{
+				"allFormat": "glob",
+				"auto": true,
+				"auto_count": 200,
+				"auto_min": "10s",
+				"current": {
+					"text": "$__auto_interval",
+					"value": "$__auto_interval"
+				},
+				"datasource": null,
+				"hide": 2,
+				"includeAll": false,
+				"label": "",
+				"multi": false,
+				"name": "Interval",
+				"options": [],
+				"query": "",
+				"refresh": 2,
+				"type": "interval"
+			}
+		]
+	},
+	"time": {
+		"from": "now-1h",
+		"to": "now"
+	},
+	"timepicker": {
+		"collapse": false,
+		"enable": true,
+		"notice": false,
+		"now": true,
+		"refresh_intervals": [
+			"5s",
+			"10s",
+			"30s",
+			"1m",
+			"5m",
+			"15m",
+			"30m",
+			"1h",
+			"2h",
+			"1d"
+		],
+		"status": "Stable",
+		"time_options": [
+			"5m",
+			"15m",
+			"1h",
+			"6h",
+			"12h",
+			"24h",
+			"2d",
+			"7d",
+			"30d"
+		],
+		"type": "timepicker"
+	},
+	"timezone": "browser",
+	"title": "Request Metrics",
+	"version": 6
 }

@@ -67,7 +67,7 @@
           "linewidth": 2,
           "links": [],
           "nullPointMode": "connected",
-          "percentage": false,
+			"percentage": true,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -675,7 +675,7 @@
             {
               "show": true,
               "min": 0,
-              "max": null,
+				"max": 100,
               "logBase": 1,
               "format": "percent"
             },
