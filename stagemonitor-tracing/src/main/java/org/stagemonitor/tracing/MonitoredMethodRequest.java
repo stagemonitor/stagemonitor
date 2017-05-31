@@ -52,19 +52,18 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 	@Override
 	public Span createSpan() {
 		final Tracer tracer = tracingPlugin.getTracer();
-		final Span span;
+		final Tracer.SpanBuilder spanBuilder;
 		if (!TracingUtils.getTraceContext().isEmpty()) {
-			span = tracer.buildSpan(methodSignature)
+			spanBuilder = tracer.buildSpan(methodSignature)
 					.asChildOf(TracingUtils.getTraceContext().getCurrentSpan())
-					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-					.start();
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
 		} else {
-			span = tracer.buildSpan(methodSignature)
-					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-					.start();
+			spanBuilder = tracer.buildSpan(methodSignature)
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
 		}
+		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, OP_TYPE_METHOD_INVOCATION);
+		final Span span = spanBuilder.start();
 		SpanUtils.setParameters(span, safeParameters);
-		span.setTag(SpanUtils.OPERATION_TYPE, OP_TYPE_METHOD_INVOCATION);
 		return span;
 	}
 

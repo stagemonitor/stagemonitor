@@ -25,22 +25,20 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 	}
 
 	public Span createSpan() {
-		final Span span;
+		final Tracer.SpanBuilder spanBuilder;
 		if (!TracingUtils.getTraceContext().isEmpty()) {
 			final Span currentSpan = TracingUtils.getTraceContext().getCurrentSpan();
-			span = tracer.buildSpan(operationName)
+			spanBuilder = tracer.buildSpan(operationName)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-					.asChildOf(currentSpan)
-					.start();
+					.asChildOf(currentSpan);
 		} else {
 			// client spans should not be root spans
-			span = tracer.buildSpan(operationName)
+			spanBuilder = tracer.buildSpan(operationName)
 					.withTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0)
-					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-					.start();
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 		}
-		span.setTag(SpanUtils.OPERATION_TYPE, getType());
-		return span;
+		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, getType());
+		return spanBuilder.start();
 	}
 
 	protected abstract String getType();
