@@ -9,6 +9,7 @@ import net.bytebuddy.utility.JavaModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
@@ -62,14 +63,16 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 		@Override
 		public void onStart(SpanWrapper spanWrapper) {
-			if (connectionMonitorThreadLocal != null) {
+			final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(spanWrapper);
+			if (spanContextInformation.getParent() == null && connectionMonitorThreadLocal != null) {
 				connectionMonitorThreadLocal.set(new Object[]{connectionMonitor, monitorGetConnectionMethod});
 			}
 		}
 
 		@Override
 		public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-			if (connectionMonitorThreadLocal != null) {
+			final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(spanWrapper);
+			if (spanContextInformation.getParent() == null && connectionMonitorThreadLocal != null) {
 				connectionMonitorThreadLocal.remove();
 			}
 		}

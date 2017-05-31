@@ -84,7 +84,7 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 
 	@Override
 	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
-		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled()) {
+		if (DEBUG_INSTRUMENTATION) {
 			logger.info("TRANSFORM DataSource {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}
 	}

@@ -47,6 +47,7 @@ public class ReadbackSpanEventListener implements SpanEventListener {
 			readbackSpan = null;
 		}
 		if (readbackSpan != null) {
+			SpanContextInformation.forSpan(spanWrapper).setReadbackSpan(readbackSpan);
 			tracingPlugin.getTracer().inject(spanWrapper.context(), B3HeaderFormat.INSTANCE, new B3HeaderFormat.B3InjectAdapter() {
 				@Override
 				public void setParentId(String value) {
@@ -99,7 +100,6 @@ public class ReadbackSpanEventListener implements SpanEventListener {
 			readbackSpan.setDuration(durationNanos / MILLISECOND_IN_NANOS);
 			final String timestamp = StringUtils.timestampAsIsoString(spanWrapper.getStartTimestampMillis());
 			readbackSpan.setTimestamp(timestamp);
-			SpanContextInformation.forSpan(spanWrapper).setReadbackSpan(readbackSpan);
 		}
 	}
 
