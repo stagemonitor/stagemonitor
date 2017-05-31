@@ -38,7 +38,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -67,26 +66,23 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Activate stagemonitor")
 			.description("If set to `false` stagemonitor will be completely deactivated.")
-			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Boolean> internalMonitoring = ConfigurationOption.booleanOption()
 			.key("stagemonitor.internal.monitoring")
 			.dynamic(true)
 			.label("Internal monitoring")
 			.description("If active, stagemonitor will collect internal performance data")
-			.defaultValue(false)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Integer> reportingIntervalConsole = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.interval.console")
 			.dynamic(false)
 			.label("Reporting interval console")
 			.description("The amount of time between console reports (in seconds). " +
 					"To deactivate console reports, set this to a value below 1.")
-			.defaultValue(0)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(0);
 	private final ConfigurationOption<Integer> reportingIntervalAggregation = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.interval.aggregation")
 			.dynamic(false)
@@ -94,17 +90,15 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("The amount of time between all registered metrics are aggregated for a report on server " +
 					"shutdown that shows aggregated values for all metrics of the measurement session. " +
 					"To deactivate a aggregate report on shutdown, set this to a value below 1.")
-			.defaultValue(0)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(0);
 	private final ConfigurationOption<Boolean> reportingJmx = ConfigurationOption.booleanOption()
 			.key("stagemonitor.reporting.jmx")
 			.dynamic(false)
 			.label("Expose MBeans")
 			.description("Whether or not to expose all metrics as MBeans.")
-			.defaultValue(false)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Integer> reportingIntervalGraphite = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.interval.graphite")
 			.dynamic(false)
@@ -112,17 +106,15 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("The amount of time between the metrics are reported to graphite (in seconds).\n" +
 					"To deactivate graphite reporting, set this to a value below 1, or don't provide " +
 					"stagemonitor.reporting.graphite.hostName.")
-			.defaultValue(60)
 			.tags(METRICS_STORE, "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(60);
 	private final ConfigurationOption<String> graphiteHostName = ConfigurationOption.stringOption()
 			.key("stagemonitor.reporting.graphite.hostName")
 			.dynamic(false)
 			.label("Graphite host name")
 			.description("The name of the host where graphite is running. This setting is mandatory, if you want " +
 					"to use the grafana dashboards.")
-			.defaultValue(null)
 			.tags(METRICS_STORE, "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -131,16 +123,14 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Carbon port")
 			.description("The port where carbon is listening.")
-			.defaultValue(2003)
 			.tags(METRICS_STORE, "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(2003);
 	private final ConfigurationOption<String> influxDbUrl = ConfigurationOption.stringOption()
 			.key("stagemonitor.reporting.influxdb.url")
 			.dynamic(true)
 			.label("InfluxDB URL")
 			.description("The URL of your InfluxDB installation.")
-			.defaultValue(null)
 			.tags(METRICS_STORE, "influx-db")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -149,28 +139,25 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("InfluxDB database")
 			.description("The target database")
-			.defaultValue("stagemonitor")
 			.tags(METRICS_STORE, "influx-db")
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault("stagemonitor");
 	private final ConfigurationOption<Integer> reportingIntervalInfluxDb = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.interval.influxdb")
 			.dynamic(false)
 			.label("Reporting interval InfluxDb")
 			.description("The amount of time between the metrics are reported to InfluxDB (in seconds).")
-			.defaultValue(60)
 			.tags(METRICS_STORE, "influx-db")
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(60);
 	private final ConfigurationOption<Integer> reportingIntervalElasticsearch = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.interval.elasticsearch")
 			.dynamic(false)
 			.label("Reporting interval Elasticsearch")
 			.description("The amount of time between the metrics are reported to Elasticsearch (in seconds).")
-			.defaultValue(60)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(60);
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchMetricReports = ConfigurationOption.booleanOption()
 			.key("stagemonitor.reporting.elasticsearch.onlyLogElasticsearchMetricReports")
 			.dynamic(false)
@@ -178,19 +165,17 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description(String.format("If set to true, the metrics won't be reported to elasticsearch but instead logged in bulk format. " +
 					"The name of the logger is %s. That way you can redirect the reporting to a separate log file and use logstash or a " +
 					"different external process to send the metrics to elasticsearch.", ElasticsearchReporter.ES_METRICS_LOGGER))
-			.defaultValue(false)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Integer> deleteElasticsearchMetricsAfterDays = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.elasticsearch.deleteMetricsAfterDays")
 			.dynamic(false)
 			.label("Delete ES metrics after (days)")
 			.description("The number of days after the metrics stored in elasticsearch should be deleted. Set below 1 to deactivate.")
-			.defaultValue(-1)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(-1);
 	private final ConfigurationOption<Integer> moveToColdNodesAfterDays = ConfigurationOption.integerOption()
 			.key("stagemonitor.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays")
 			.dynamic(false)
@@ -200,16 +185,14 @@ public class CorePlugin extends StagemonitorPlugin {
 					"When the indexes reach a certain age, they are allocated on cold nodes. For this to work, you have to tag your " +
 					"beefy nodes with node.box_type: hot (either in elasticsearch.yml or start the node using ./bin/elasticsearch --node.box_type hot)" +
 					"and your historical nodes with node.box_type: cold.")
-			.defaultValue(-1)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(-1);
 	private final ConfigurationOption<Integer> numberOfReplicas = ConfigurationOption.integerOption()
 			.key("stagemonitor.elasticsearch.numberOfReplicas")
 			.dynamic(false)
 			.label("Number of ES Replicas")
 			.description("Sets the number of replicas of the Elasticsearch index templates.")
-			.defaultValue(null)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -218,7 +201,6 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Number of ES Shards")
 			.description("Sets the number of shards of the Elasticsearch index templates.")
-			.defaultValue(null)
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
@@ -228,7 +210,6 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Application name")
 			.description("The name of the application.\n" +
 					"Either this property or the display-name in web.xml is mandatory!")
-			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
 			.build();
@@ -240,7 +221,6 @@ public class CorePlugin extends StagemonitorPlugin {
 					"If this property is not set, the instance name set to the first request's " +
 					"javax.servlet.ServletRequest#getServerName()\n" +
 					"That means that the collection of metrics does not start before the first request is executed!")
-			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
 			.build();
@@ -251,19 +231,17 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("The host name.\n" +
 					"If this property is not set, the host name will default to resolving the host name for localhost, " +
 					"if this fails it will be loaded from the environment, either from COMPUTERNAME or HOSTNAME.")
-			.defaultValue(getNameOfLocalHost())
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(getNameOfLocalHost());
 	private final ConfigurationOption<List<String>> elasticsearchUrls = ConfigurationOption.builder(ListValueConverter.STRINGS_VALUE_CONVERTER, List.class)
 			.key("stagemonitor.elasticsearch.url")
 			.dynamic(true)
 			.label("Elasticsearch URL")
 			.description("A comma separated list of the Elasticsearch URLs that store spans and metrics. " +
 					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com.")
-			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(ELASTICSEARCH)
-			.build();
+			.buildWithDefault(Collections.<String>emptyList());
 	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceProfiles = ConfigurationOption.stringsOption()
 			.key("stagemonitor.elasticsearch.configurationSourceProfiles")
 			.dynamic(false)
@@ -272,9 +250,8 @@ public class CorePlugin extends StagemonitorPlugin {
 					"that can be shared between multiple server instances. Set the profiles appropriate to the current " +
 					"environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under " +
 					"`{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceProfile}`.")
-			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<String>emptyList());
 	private final ConfigurationOption<Boolean> deactivateStagemonitorIfEsConfigSourceIsDown = ConfigurationOption.booleanOption()
 			.key("stagemonitor.elasticsearch.configurationSource.deactivateStagemonitorIfEsIsDown")
 			.dynamic(false)
@@ -283,58 +260,46 @@ public class CorePlugin extends StagemonitorPlugin {
 					"stagemonitor.elasticsearch.configurationSourceProfiles is set but elasticsearch can't be reached " +
 					"under stagemonitor.elasticsearch.url. Defaults to true to prevent starting stagemonitor with " +
 					"wrong configuration.")
-			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Collection<MetricName>> excludedMetrics = ConfigurationOption
 			.builder(new SetValueConverter<MetricName>(new MetricNameValueConverter()), Collection.class)
 			.key("stagemonitor.metrics.excluded.pattern")
 			.dynamic(false)
 			.label("Excluded metric names")
 			.description("A comma separated list of metric names that should not be collected.")
-			.defaultValue(Collections.<MetricName>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<MetricName>emptyList());
 	private final ConfigurationOption<Collection<String>> disabledPlugins = ConfigurationOption.stringsOption()
 			.key("stagemonitor.plugins.disabled")
 			.dynamic(false)
 			.label("Disabled plugins")
 			.description("A comma separated list of plugin names (the simple class name) that should not be active.")
-			.defaultValue(Collections.<String>emptyList())
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<String>emptyList());
 	private final ConfigurationOption<Integer> reloadConfigurationInterval = ConfigurationOption.integerOption()
 			.key("stagemonitor.configuration.reload.interval")
 			.dynamic(false)
 			.label("Configuration reload interval")
 			.description("The interval in seconds a reload of all configuration sources is performed. " +
 					"Set to a value below `1` to deactivate periodic reloading the configuration.")
-			.defaultValue(60)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(60);
 	private final ConfigurationOption<Collection<String>> excludePackages = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.exclude")
 			.dynamic(false)
 			.label("Excluded packages")
 			.description("Exclude packages and their sub-packages from the instrumentation (for example the profiler).")
-			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<String>emptySet());
 	private final ConfigurationOption<Collection<String>> excludeContaining = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.excludeContaining")
 			.dynamic(false)
 			.label("Exclude containing")
 			.description("Exclude classes from the instrumentation (for example from profiling) that contain one of the " +
 					"following strings as part of their class name.")
-			.defaultValue(new LinkedHashSet<String>() {{
-				add("$JaxbAccessor");
-				add("$$");
-				add("CGLIB");
-				add("EnhancerBy");
-				add("$Proxy");
-			}})
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(SetValueConverter.immutableSet("$JaxbAccessor", "$$", "CGLIB", "EnhancerBy", "$Proxy"));
 	private final ConfigurationOption<Collection<String>> includePackages = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.include")
 			.dynamic(false)
@@ -343,17 +308,15 @@ public class CorePlugin extends StagemonitorPlugin {
 					"If this property is required if you want to use the profiler, the @MonitorRequests annotation, the " +
 					"com.codahale.metrics.annotation.* annotations or similar features. " +
 					"You can exclude subpackages of a included package via `stagemonitor.instrument.exclude`.")
-			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<String>emptySet());
 	private final ConfigurationOption<Boolean> attachAgentAtRuntime = ConfigurationOption.booleanOption()
 			.key("stagemonitor.instrument.runtimeAttach")
 			.dynamic(false)
 			.label("Attach agent at runtime")
 			.description("Attaches the agent via the Attach API at runtime and retransforms all currently loaded classes.")
-			.defaultValue(true)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Collection<String>> exportClassesWithName = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.exportGeneratedClassesWithName")
 			.dynamic(false)
@@ -362,31 +325,27 @@ public class CorePlugin extends StagemonitorPlugin {
 					"modified by Byte Buddy. This option is useful to debug problems inside the generated class. " +
 					"Classes are exported to a temporary directory. The logs contain the information where the files " +
 					"are stored.")
-			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<String>emptySet());
 	private final ConfigurationOption<Boolean> debugInstrumentation = ConfigurationOption.booleanOption()
 			.key("stagemonitor.instrument.debug")
 			.dynamic(false)
 			.label("Debug instrumentation")
 			.description("Set to true to log additional information and warnings during the instrumentation process.")
-			.defaultValue(false)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<String>> excludedInstrumenters = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.excludedInstrumenter")
 			.dynamic(false)
 			.label("Excluded Instrumenters")
 			.description("A list of the simple class names of StagemonitorByteBuddyTransformers that should not be applied")
-			.defaultValue(Collections.<String>emptySet())
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<String>emptySet());
 	private final ConfigurationOption<String> grafanaUrl = ConfigurationOption.stringOption()
 			.key("stagemonitor.grafana.url")
 			.dynamic(true)
 			.label("Grafana URL")
 			.description("The URL of your Grafana 2.0 installation")
-			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("grafana")
 			.build();
@@ -398,7 +357,6 @@ public class CorePlugin extends StagemonitorPlugin {
 					"See http://docs.grafana.org/reference/http_api/#create-api-token how to create a key. " +
 					"The key has to have the admin role. This is necessary so that stagemonitor can automatically add " +
 					"datasources and dashboards to Grafana.")
-			.defaultValue(null)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("grafana")
 			.sensitive()
@@ -411,20 +369,18 @@ public class CorePlugin extends StagemonitorPlugin {
 					"These are thread pools that are used for example to report spans to elasticsearch. " +
 					"If elasticsearch is unreachable or your application encounters a spike in incoming requests this limit could be reached. " +
 					"It is used to prevent the queue from growing indefinitely. ")
-			.defaultValue(1000)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("advanced")
-			.build();
+			.buildWithDefault(1000);
 	private final ConfigurationOption<String> metricsIndexTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.reporting.elasticsearch.metricsIndexTemplate")
 			.dynamic(true)
 			.label("ES Metrics Index Template")
 			.description("The classpath location of the index template that is used for the stagemonitor-metrics-* indices. " +
 					"By specifying the location to your own template, you can fully customize the index template.")
-			.defaultValue("stagemonitor-elasticsearch-metrics-index-template.json")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(METRICS_STORE, ELASTICSEARCH)
-			.build();
+			.buildWithDefault("stagemonitor-elasticsearch-metrics-index-template.json");
 	private final ConfigurationOption<Integer> elasticsearchAvailabilityCheckPeriodSec = ConfigurationOption.integerOption()
 			.key("stagemonitor.elasticsearch.availabilityCheckPeriodSec")
 			.dynamic(false)
@@ -433,10 +389,9 @@ public class CorePlugin extends StagemonitorPlugin {
 					"When not available, stagemonitor won't try send documents to Elasticsearch which would " +
 					"fail anyway. This reduces heap usage as the documents won't be queued up. " +
 					"It also avoids the logging of warnings when the queue is filled up to the limit (see '" + POOLS_QUEUE_CAPACITY_LIMIT_KEY + "')")
-			.defaultValue(5)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("elasticsearch", "advanced")
-			.build();
+			.buildWithDefault(5);
 
 	private MetricsAggregationReporter aggregationReporter;
 
