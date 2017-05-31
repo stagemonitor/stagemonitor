@@ -67,7 +67,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 
 		if (!context.isReport()) {
 			spanContext.setSampled(false);
-			Tags.SAMPLING_PRIORITY.set(spanWrapper, (short) 0);
+			Tags.SAMPLING_PRIORITY.set(spanWrapper, 0);
 		}
 	}
 
@@ -88,7 +88,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 		info.setPostExecutionInterceptorContext(context);
 		if (!context.isReport()) {
 			info.setSampled(false);
-			Tags.SAMPLING_PRIORITY.set(spanWrapper, (short) 0);
+			Tags.SAMPLING_PRIORITY.set(spanWrapper, 0);
 		}
 	}
 

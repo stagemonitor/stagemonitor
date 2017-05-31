@@ -1,8 +1,5 @@
 package org.stagemonitor.tracing;
 
-import java.util.Collections;
-import java.util.Map;
-
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
@@ -71,11 +68,6 @@ public final class NoopTracer implements Tracer {
 		@Override
 		public Span start() {
 			return NoopSpan.INSTANCE;
-		}
-
-		@Override
-		public Iterable<Map.Entry<String, String>> baggageItems() {
-			return Collections.emptyList();
 		}
 	}
 

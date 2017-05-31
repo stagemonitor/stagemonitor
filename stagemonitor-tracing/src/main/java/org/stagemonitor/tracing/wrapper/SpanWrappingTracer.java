@@ -3,7 +3,6 @@ package org.stagemonitor.tracing.wrapper;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -70,10 +69,6 @@ public class SpanWrappingTracer implements Tracer {
 			this.operationName = operationName;
 			this.delegate = delegate;
 			this.spanEventListeners = spanEventListeners;
-		}
-
-		public Iterable<Map.Entry<String, String>> baggageItems() {
-			return delegate.baggageItems();
 		}
 
 		public SpanBuilder asChildOf(SpanContext parent) {

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.StagemonitorPlugin;
 
+@Deprecated
 public class DeprecatedRequestMonitorPlugin extends StagemonitorPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(DeprecatedRequestMonitorPlugin.class);
