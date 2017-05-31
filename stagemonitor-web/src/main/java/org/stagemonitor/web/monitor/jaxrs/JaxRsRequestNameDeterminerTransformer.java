@@ -7,7 +7,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.tracing.AbstractMonitorRequestsTransformer;
+import org.stagemonitor.tracing.AbstractTracingTransformer;
 import org.stagemonitor.tracing.TracingPlugin;
 
 import java.util.Collections;
@@ -40,7 +40,7 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 
 	@Override
 	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Collections.<StagemonitorDynamicValue<?>>singletonList(new AbstractMonitorRequestsTransformer.RequestNameDynamicValue());
+		return Collections.<StagemonitorDynamicValue<?>>singletonList(new AbstractTracingTransformer.RequestNameDynamicValue());
 	}
 
 	@Override
@@ -49,7 +49,7 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 	}
 
 	@Advice.OnMethodEnter(inline = false)
-	public static void setRequestName(@AbstractMonitorRequestsTransformer.RequestName String requestName) {
+	public static void setRequestName(@AbstractTracingTransformer.RequestName String requestName) {
 		TracingPlugin.getCurrentSpan().setOperationName(requestName);
 	}
 }

@@ -13,12 +13,12 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static org.stagemonitor.core.instrument.OverridesMethodElementMatcher.overridesSuperMethodThat;
 import static org.stagemonitor.core.instrument.StagemonitorClassNameMatcher.isInsideMonitoredProject;
 
-public class MethodLevelMonitorRequestsTransformer extends AbstractMonitorRequestsTransformer {
+public class MethodLevelTracingTransformer extends AbstractTracingTransformer {
 
 	private final Set<Class<? extends Annotation>> asyncCallAnnotations = new HashSet<Class<? extends Annotation>>();
 
 	@SuppressWarnings("unchecked")
-	public MethodLevelMonitorRequestsTransformer() {
+	public MethodLevelTracingTransformer() {
 		final TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
 		if (tracingPlugin.isMonitorAsyncInvocations()) {
 			asyncCallAnnotations.add((Class<? extends Annotation>) ClassUtils.forNameOrNull("org.springframework.scheduling.annotation.Async"));
@@ -35,11 +35,11 @@ public class MethodLevelMonitorRequestsTransformer extends AbstractMonitorReques
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
-		ElementMatcher.Junction<MethodDescription> matcher = isAnnotatedWith(MonitorRequests.class)
+		ElementMatcher.Junction<MethodDescription> matcher = isAnnotatedWith(Traced.class)
 				// TODO maybe add a configuration to disable super method search as it is relatively costly
 				// InstrumentationPerformanceTest without: ~20ms with: ~420ms
 				// 0,5s is relatively much compared to other matchers but not really noticeable on startup
-				.or(overridesSuperMethodThat(isAnnotatedWith(MonitorRequests.class)).onSuperClassesThat(isInsideMonitoredProject()));
+				.or(overridesSuperMethodThat(isAnnotatedWith(Traced.class)).onSuperClassesThat(isInsideMonitoredProject()));
 
 		for (Class<? extends Annotation> annotation : asyncCallAnnotations) {
 			matcher = matcher.or(isAnnotatedWith(annotation));

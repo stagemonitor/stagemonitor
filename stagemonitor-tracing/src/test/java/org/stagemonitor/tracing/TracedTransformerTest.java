@@ -27,7 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class MonitorRequestsTransformerTest {
+public class TracedTransformerTest {
 
 	private TestClass testClass;
 	private TestClassLevelAnnotationClass testClassLevelAnnotationClass;
@@ -46,7 +46,7 @@ public class MonitorRequestsTransformerTest {
 		metricRegistry = Stagemonitor.getMetric2Registry();
 		testClassLevelAnnotationClass = new TestClassLevelAnnotationClass();
 		metricRegistry.removeMatching(Metric2Filter.ALL);
-		Stagemonitor.setMeasurementSession(new MeasurementSession("MonitorRequestsTransformerTest", "test", "test"));
+		Stagemonitor.setMeasurementSession(new MeasurementSession("TracedTransformerTest", "test", "test"));
 		Stagemonitor.startMonitoring();
 		spanCapturingReporter = new SpanCapturingReporter();
 		tags = new HashMap<>();
@@ -65,26 +65,26 @@ public class MonitorRequestsTransformerTest {
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorMe", spanContext.getOperationName());
+		assertEquals("TracedTransformerTest$TestClass#monitorMe", spanContext.getOperationName());
 		assertEquals(1, spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass.monitorMe"));
+		assertTrue(signature, signature.contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass.monitorMe"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#monitorMe").operationType("method_invocation").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("TracedTransformerTest$TestClass#monitorMe").operationType("method_invocation").build()));
 	}
 
 	@Test
 	public void testMonitorAsyncMethods() throws Exception {
 		testClass.asyncMethod();
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
-		assertEquals("MonitorRequestsTransformerTest$TestClass#asyncMethod", spanContext.getOperationName());
+		assertEquals("TracedTransformerTest$TestClass#asyncMethod", spanContext.getOperationName());
 		assertEquals(1, spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass.asyncMethod"));
+		assertTrue(signature, signature.contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass.asyncMethod"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#asyncMethod").operationType("method_invocation").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("TracedTransformerTest$TestClass#asyncMethod").operationType("method_invocation").build()));
 	}
 
 	@Test
@@ -104,34 +104,34 @@ public class MonitorRequestsTransformerTest {
 		assertEquals(NullPointerException.class.getName(), tags.get("exception.class"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass#monitorThrowException").operationType("method_invocation").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("TracedTransformerTest$TestClass#monitorThrowException").operationType("method_invocation").build()));
 	}
 
 	@Test
 	public void testMonitorRequestsAnnonymousInnerClass() throws Exception {
 		testClass.monitorAnnonymousInnerClass();
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
-		assertEquals("MonitorRequestsTransformerTest$TestClass$1#run", spanContext.getOperationName());
+		assertEquals("TracedTransformerTest$TestClass$1#run", spanContext.getOperationName());
 		assertEquals(1, spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClass$1.run"));
+		assertTrue(signature, signature.contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass$1.run"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("MonitorRequestsTransformerTest$TestClass$1#run").operationType("method_invocation").build()));
+		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("TracedTransformerTest$TestClass$1#run").operationType("method_invocation").build()));
 	}
 
 	@Test
 	public void testMonitorRequestsResolvedAtRuntime() throws Exception {
 		testClass.resolveNameAtRuntime();
 		final String operationName = spanCapturingReporter.get().getOperationName();
-		assertEquals("MonitorRequestsTransformerTest$TestSubClass#resolveNameAtRuntime", operationName);
+		assertEquals("TracedTransformerTest$TestSubClass#resolveNameAtRuntime", operationName);
 	}
 
 	@Test
 	public void testMonitorStaticMethod() throws Exception {
 		TestClass.monitorStaticMethod();
 		final String operationName = spanCapturingReporter.get().getOperationName();
-		assertEquals("MonitorRequestsTransformerTest$TestClass#monitorStaticMethod", operationName);
+		assertEquals("TracedTransformerTest$TestClass#monitorStaticMethod", operationName);
 	}
 
 	@Test
@@ -142,7 +142,7 @@ public class MonitorRequestsTransformerTest {
 	}
 
 	private static abstract class SuperAbstractTestClass {
-		@MonitorRequests
+		@Traced
 		public abstract int monitorMe(int i) throws Exception;
 	}
 
@@ -151,7 +151,7 @@ public class MonitorRequestsTransformerTest {
 	}
 
 	private static class TestClass extends AbstractTestClass {
-		@MonitorRequests
+		@Traced
 		public int monitorMe(int i) throws Exception {
 			return i;
 		}
@@ -160,29 +160,29 @@ public class MonitorRequestsTransformerTest {
 		public void dontMonitorMe() throws Exception {
 		}
 
-		@MonitorRequests(resolveNameAtRuntime = true)
+		@Traced(resolveNameAtRuntime = true)
 		public void resolveNameAtRuntime() throws Exception {
 		}
 
-		@MonitorRequests
+		@Traced
 		public static void monitorStaticMethod() {
 		}
 
-		@MonitorRequests(requestName = "My Cool Method")
+		@Traced(requestName = "My Cool Method")
 		public void doFancyStuff() throws Exception {
 		}
 
 		public void monitorAnnonymousInnerClass() {
 			new Runnable() {
 				@Override
-				@MonitorRequests
+				@Traced
 				public void run() {
 
 				}
 			}.run();
 		}
 
-		@MonitorRequests
+		@Traced
 		public int monitorThrowException() throws Exception {
 			throw null;
 		}
@@ -203,16 +203,16 @@ public class MonitorRequestsTransformerTest {
 
 		// either parameters.arg0 or parameters.s
 		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe", spanContext.getOperationName());
+		assertEquals("TracedTransformerTest$TestClassLevelAnnotationClass#monitorMe", spanContext.getOperationName());
 		assertEquals(1, spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
-		assertThat(signature).contains("org.stagemonitor.tracing.MonitorRequestsTransformerTest$TestClassLevelAnnotationClass.monitorMe");
+		assertThat(signature).contains("org.stagemonitor.tracing.TracedTransformerTest$TestClassLevelAnnotationClass.monitorMe");
 
 		final Map<MetricName, Timer> timers = metricRegistry.getTimers();
-		assertThat(timers).containsKey(name("response_time").operationName("MonitorRequestsTransformerTest$TestClassLevelAnnotationClass#monitorMe").operationType("method_invocation").build());
+		assertThat(timers).containsKey(name("response_time").operationName("TracedTransformerTest$TestClassLevelAnnotationClass#monitorMe").operationType("method_invocation").build());
 	}
 
-	@MonitorRequests
+	@Traced
 	private static class SuperTestClassLevelAnnotationClass {
 	}
 

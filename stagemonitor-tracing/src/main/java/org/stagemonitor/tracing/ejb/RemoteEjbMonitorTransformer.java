@@ -5,7 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.tracing.AbstractMonitorRequestsTransformer;
+import org.stagemonitor.tracing.AbstractTracingTransformer;
 
 import javax.ejb.Remote;
 
@@ -20,7 +20,7 @@ import static org.stagemonitor.tracing.ejb.RemoteInterfaceMethodMatcher.override
  * <p/>
  * It detects classes that are either annotated with @{@link Remote} or implement an interface which is annotated with @{@link Remote}
  */
-public class RemoteEjbMonitorTransformer extends AbstractMonitorRequestsTransformer {
+public class RemoteEjbMonitorTransformer extends AbstractTracingTransformer {
 
 	@Override
 	protected ElementMatcher.Junction<TypeDescription> getNarrowTypesMatcher() {

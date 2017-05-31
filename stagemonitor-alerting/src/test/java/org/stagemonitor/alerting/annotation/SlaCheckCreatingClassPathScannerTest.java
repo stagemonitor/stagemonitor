@@ -15,7 +15,7 @@ import org.stagemonitor.alerting.check.Threshold;
 import org.stagemonitor.alerting.incident.Incident;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.tracing.MonitorRequests;
+import org.stagemonitor.tracing.Traced;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 				@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0}),
 				@SLA(errorRateThreshold = 0)
 		})
-		@MonitorRequests
+		@Traced
 		void monitorSla() {
 			throw null;
 		}
@@ -44,17 +44,17 @@ public class SlaCheckCreatingClassPathScannerTest {
 		void monitorRequestsAnnotationMissing() {
 		}
 
-		@MonitorRequests
+		@Traced
 		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = 0)
 		void tooFewThresholds() {
 		}
 
-		@MonitorRequests(resolveNameAtRuntime = true)
+		@Traced(resolveNameAtRuntime = true)
 		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaMonitorRequestsResolveAtRuntime() {
 		}
 
-		@MonitorRequests(requestName = "monitor requests custom name")
+		@Traced(requestName = "monitor requests custom name")
 		@SLA(metric = {MetricValueType.P95, MetricValueType.MAX}, threshold = {0, 0})
 		void slaMonitorRequestsCustomName() {
 		}
@@ -169,7 +169,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 				name("response_time").operationName("Sla Monitor Requests Class Level").operationType("method_invocation").build());
 	}
 
-	@MonitorRequests
+	@Traced
 	private static class ClassLevelMonitorRequestsTestClass {
 		static void makeSureClassIsLoaded() {
 		}

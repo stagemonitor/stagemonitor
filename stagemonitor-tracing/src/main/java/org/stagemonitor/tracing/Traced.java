@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * By annotating a type with {@link MonitorRequests}, a Timer will be created for all its public methods and the call stack
+ * By annotating a type with {@link Traced}, a Timer will be created for all its public methods and the call stack
  * of these methods will be recorded. It is also possible to annotate at method level.
  * <p/>
  * This annotation is inherited, that means that any subtype of an annotated class or method will also be monitored.
@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-public @interface MonitorRequests {
+public @interface Traced {
 
 	/**
 	 * Customizes {@link io.opentracing.Span#setOperationName(String)}.

@@ -9,16 +9,16 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
-public class ClassLevelMonitorRequestsTransformer extends AbstractMonitorRequestsTransformer {
+public class ClassLevelTracingTransformer extends AbstractTracingTransformer {
 
 	@Override
 	protected ElementMatcher.Junction<TypeDescription> getNarrowTypesMatcher() {
-		return inheritsAnnotation(MonitorRequests.class);
+		return inheritsAnnotation(Traced.class);
 	}
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
-		return isPublic().and(not(isAnnotatedWith(MonitorRequests.class)));
+		return isPublic().and(not(isAnnotatedWith(Traced.class)));
 	}
 
 }

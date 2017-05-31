@@ -18,8 +18,8 @@ import org.stagemonitor.core.instrument.AbstractClassPathScanner;
 import org.stagemonitor.core.metrics.annotations.ExceptionMeteredTransformer;
 import org.stagemonitor.core.metrics.annotations.TimedTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.tracing.AbstractMonitorRequestsTransformer;
-import org.stagemonitor.tracing.MonitorRequests;
+import org.stagemonitor.tracing.AbstractTracingTransformer;
+import org.stagemonitor.tracing.Traced;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 
 import java.io.IOException;
@@ -69,8 +69,8 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
 	private TimerNames getTimerNames(MethodDescription.InDefinedShape methodDescription, AnnotationList declaredAnnotations) {
 		TimerNames timerNames = new TimerNames();
-		if (declaredAnnotations.isAnnotationPresent(MonitorRequests.class)) {
-			timerNames.timerName = AbstractMonitorRequestsTransformer.getRequestName(methodDescription);
+		if (declaredAnnotations.isAnnotationPresent(Traced.class)) {
+			timerNames.timerName = AbstractTracingTransformer.getRequestName(methodDescription);
 			if (timerNames.timerName != null) {
 				timerNames.timerMetricName = MetricsSpanEventListener.getResponseTimeMetricName(timerNames.timerName, OP_TYPE_METHOD_INVOCATION);
 				timerNames.errorRequestName = timerNames.timerName;
@@ -117,8 +117,8 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 			return;
 		}
 		if (timerNames.timerName == null) {
-			logger.warn("To create a timer SLA for the method {}, it also has to be annotated with @MonitorRequests or " +
-					" @Timed. When using @MonitorRequests, resolveNameAtRuntime must not be set to true.", fullMethodSignature);
+			logger.warn("To create a timer SLA for the method {}, it also has to be annotated with @Traced or " +
+					" @Timed. When using @Traced, resolveNameAtRuntime must not be set to true.", fullMethodSignature);
 			return;
 		}
 
@@ -135,8 +135,8 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
 	private static void addErrorRateCheck(SLA slaAnnotation, String fullMethodSignature, TimerNames timerNames) {
 		if (timerNames.errorRequestName == null) {
-			logger.warn("To create an error SLA for the method {}, it also has to be annotated with @MonitorRequests or " +
-					" @ExceptionMetered. When using @MonitorRequests, resolveNameAtRuntime must not be set to true.", fullMethodSignature);
+			logger.warn("To create an error SLA for the method {}, it also has to be annotated with @Traced or " +
+					" @ExceptionMetered. When using @Traced, resolveNameAtRuntime must not be set to true.", fullMethodSignature);
 			return;
 		}
 		final Check check = createCheck(slaAnnotation, fullMethodSignature, timerNames.errorRequestName, timerNames.errorMetricName, " (errors)", "errors");

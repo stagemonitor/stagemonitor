@@ -19,11 +19,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTransformer {
+public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Override
 	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
-		return AbstractMonitorRequestsTransformer.class;
+		return AbstractTracingTransformer.class;
 	}
 
 	@Advice.OnMethodEnter(inline = false)
@@ -88,15 +88,15 @@ public class AbstractMonitorRequestsTransformer extends StagemonitorByteBuddyTra
 	}
 
 	public static String getRequestName(MethodDescription instrumentedMethod) {
-		final AnnotationDescription.Loadable<MonitorRequests> monitorRequestsLoadable = instrumentedMethod
+		final AnnotationDescription.Loadable<Traced> monitorRequestsLoadable = instrumentedMethod
 				.getDeclaredAnnotations()
-				.ofType(MonitorRequests.class);
+				.ofType(Traced.class);
 		if (monitorRequestsLoadable != null) {
-			final MonitorRequests monitorRequests = monitorRequestsLoadable.loadSilent();
-			if (!monitorRequests.requestName().isEmpty()) {
-				return monitorRequests.requestName();
+			final Traced traced = monitorRequestsLoadable.loadSilent();
+			if (!traced.requestName().isEmpty()) {
+				return traced.requestName();
 			}
-			if (monitorRequests.resolveNameAtRuntime()) {
+			if (traced.resolveNameAtRuntime()) {
 				return null;
 			}
 		}

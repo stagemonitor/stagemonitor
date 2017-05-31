@@ -58,7 +58,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Business Transaction naming strategy")
 			.description("Defines how to name a business transaction that was detected by a method call. " +
-					"For example a Spring-MVC controller method or a method that is annotated with @" + MonitorRequests.class.getSimpleName() + ". " +
+					"For example a Spring-MVC controller method or a method that is annotated with @" + Traced.class.getSimpleName() + ". " +
 					BusinessTransactionNamingStrategy.METHOD_NAME_SPLIT_CAMEL_CASE + ": Say Hello " +
 					BusinessTransactionNamingStrategy.CLASS_NAME_DOT_METHOD_NAME + ": HelloController.sayHello " +
 					BusinessTransactionNamingStrategy.CLASS_NAME_HASH_METHOD_NAME + ": HelloController#sayHello ")
@@ -87,7 +87,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.label("Confidential parameters (regex)")
 			.description("A list of request parameter name patterns that should not be collected.\n" +
 					"In the context of a HTTP request, a request parameter is either a query string or a application/x-www-form-urlencoded request " +
-					"body (POST form content). In the context of a method invocation monitored with @MonitorRequests," +
+					"body (POST form content). In the context of a method invocation monitored with @Traced," +
 					"this refers to the parameter name of the monitored method. Note that you have to compile your classes" +
 					"with 'vars' debug information.")
 			.tags("security-relevant")
