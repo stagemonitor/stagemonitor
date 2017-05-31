@@ -94,7 +94,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("The amount of time between all registered metrics are aggregated for a report on server " +
 					"shutdown that shows aggregated values for all metrics of the measurement session. " +
 					"To deactivate a aggregate report on shutdown, set this to a value below 1.")
-			.defaultValue(30)
+			.defaultValue(0)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Boolean> reportingJmx = ConfigurationOption.booleanOption()
