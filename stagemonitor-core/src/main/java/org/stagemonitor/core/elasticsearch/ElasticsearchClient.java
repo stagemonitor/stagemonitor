@@ -68,7 +68,7 @@ public class ElasticsearchClient {
 
 		if (esAvailabilityCheckIntervalSec > 0) {
 			final long period = TimeUnit.SECONDS.toMillis(esAvailabilityCheckIntervalSec);
-			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin), period, period);
+			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin), 0, period);
 		}
 	}
 
