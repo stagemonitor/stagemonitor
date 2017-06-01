@@ -1,4 +1,4 @@
 dependencies {
-	compile project(":stagemonitor-core")
+	compile project(":stagemonitor-tracing")
 	provided 'net.sf.ehcache:ehcache-core:2.6.6'
 }

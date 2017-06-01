@@ -4,14 +4,25 @@ import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.wrapper.FirstOperationEventListener;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
+
+import java.util.Collections;
+import java.util.List;
 
 public class EhCachePlugin extends StagemonitorPlugin {
+
+	private static final Logger logger = LoggerFactory.getLogger(EhCachePlugin.class);
 
 	private final ConfigurationOption<String> ehCacheNameOption = ConfigurationOption.stringOption()
 			.key("stagemonitor.ehcache.name")
@@ -19,7 +30,6 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			.label("EhCache cache name")
 			.description("The name of the ehcache to instrument (the value of the `name` attribute of the " +
 					"`ehcache` tag in ehcache.xml)")
-			.defaultValue(null)
 			.configurationCategory("EhCache Plugin")
 			.build();
 	private final ConfigurationOption<Boolean> timeGet = ConfigurationOption.booleanOption()
@@ -29,17 +39,26 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			.description("If set to true, a timer for each cache will be created which measures the time to get a " +
 					"element from the cache. If you have a lot of caches, that could lead to a increased network and " +
 					"disk utilisation. If set to false, only a meter (which measures the rate) will be created")
-			.defaultValue(false)
 			.configurationCategory("EhCache Plugin")
-			.build();
+			.buildWithDefault(false);
 
 	private Metric2Registry metricRegistry;
 
+	/*
+	 * TODO monitor caches by instrumenting the constructor of net.sf.ehcache.Cache
+	 *
+	 * handle the case where one constructor calls another -> make sure cache is not monitored twice
+	 */
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
 		this.metricRegistry = initArguments.getMetricRegistry();
-		final EhCachePlugin ehCacheConfig = initArguments.getPlugin(EhCachePlugin.class);
-		monitorCaches(CacheManager.getCacheManager(ehCacheConfig.ehCacheNameOption.getValue()));
+		TracingPlugin tracingPlugin = initArguments.getPlugin(TracingPlugin.class);
+		final CacheManager cacheManager = CacheManager.getCacheManager(ehCacheNameOption.getValue());
+		if (cacheManager == null) {
+			tryAgainWhenFirstRequestComesIn(tracingPlugin);
+		} else {
+			monitorCaches(cacheManager);
+		}
 
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
@@ -48,6 +67,30 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchEhCache.json");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/EhCache.bulk");
 		}
+	}
+
+	private void tryAgainWhenFirstRequestComesIn(TracingPlugin tracingPlugin) {
+		logger.info("Can't monitor EhCache as the CacheManager could not be found. " +
+				"Check the config for 'stagemonitor.ehcache.name'. " +
+				"It could also be possible that cache manager is not initialized yet. " +
+				"Stagemonitor will try to initialize again when the application serves the first request.");
+		tracingPlugin.addSpanInterceptor(new FirstOperationEventListener() {
+			@Override
+			public void onFirstOperation(SpanWrapper spanWrapper) {
+				monitorCaches(CacheManager.getCacheManager(ehCacheNameOption.getValue()));
+			}
+
+			@Override
+			public boolean customCondition(SpanWrapper spanWrapper) {
+				// TODO what if the application is not a server application?
+				return SpanContextInformation.forSpan(spanWrapper).isServerRequest();
+			}
+		});
+	}
+
+	@Override
+	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
+		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(TracingPlugin.class);
 	}
 
 	/**
@@ -62,6 +105,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	 */
 	public void monitorCaches(CacheManager cacheManager) {
 		if (cacheManager == null) {
+			logger.warn("EhCache can't be monitored; CacheManager is null");
 			return;
 		}
 		for (String cacheName : cacheManager.getCacheNames()) {
