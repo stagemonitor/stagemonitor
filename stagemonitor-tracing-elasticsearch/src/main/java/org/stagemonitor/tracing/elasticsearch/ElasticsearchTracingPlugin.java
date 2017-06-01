@@ -36,7 +36,7 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 			.tags("elasticsearch")
 			.buildWithDefault("stagemonitor-elasticsearch-span-index-template.json");
 	private final ConfigurationOption<Integer> deleteSpansAfterDays = ConfigurationOption.integerOption()
-			.key("stagemonitor.tracing.elasticsearch.deleteRequestTracesAfterDays")
+			.key("stagemonitor.tracing.elasticsearch.deleteSpansAfterDays")
 			.aliasKeys("stagemonitor.requestmonitor.deleteRequestTracesAfterDays")
 			.dynamic(true)
 			.label("Delete spans after (days)")
