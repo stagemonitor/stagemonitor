@@ -2,6 +2,10 @@ package org.stagemonitor.zipkin;
 
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.StagemonitorPlugin;
+import org.stagemonitor.tracing.TracingPlugin;
+
+import java.util.Collections;
+import java.util.List;
 
 public final class ZipkinPlugin extends StagemonitorPlugin {
 
@@ -36,6 +40,11 @@ public final class ZipkinPlugin extends StagemonitorPlugin {
 			.tags("reporting", "zipkin")
 			.configurationCategory(ZIPKIN_PLUGIN)
 			.build();
+
+	@Override
+	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
+		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(TracingPlugin.class);
+	}
 
 	String getZipkinEndpoint() {
 		return zipkinEndpoint.get();

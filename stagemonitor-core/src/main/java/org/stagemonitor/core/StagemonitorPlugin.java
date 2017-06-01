@@ -1,9 +1,12 @@
 package org.stagemonitor.core;
 
-import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOptionProvider;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -14,6 +17,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * for plugins.
  */
 public abstract class StagemonitorPlugin extends ConfigurationOptionProvider implements StagemonitorSPI {
+
+	private static final Logger logger = LoggerFactory.getLogger(StagemonitorPlugin.class);
 
 	volatile boolean initialized;
 	List<Runnable> onInitCallbacks = new CopyOnWriteArrayList<Runnable>();
@@ -85,6 +90,17 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 		}
 	}
 
+	/**
+	 * Plugins can define dependencies on other plugins.
+	 * <p/>
+	 * This makes sure that the dependant plugins are initialized first.
+	 *
+	 * @return the plugins this plugin depends on
+	 */
+	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
+		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(CorePlugin.class);
+	}
+
 	public static class InitArguments {
 		private final Metric2Registry metricRegistry;
 		private final ConfigurationRegistry configuration;
@@ -104,8 +120,13 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 			return configuration;
 		}
 
-		public <T extends StagemonitorPlugin> T getPlugin(Class<T> plugin) {
-			return configuration.getConfig(plugin);
+		public <T extends StagemonitorPlugin> T getPlugin(Class<T> pluginClass) {
+			final T plugin = configuration.getConfig(pluginClass);
+			if (!plugin.isInitialized()) {
+				logger.warn("The plugin " + plugin.getClass().getSimpleName() + " has not been initialized yet. " +
+						"You should define a dependency via StagemonitorPlugin#dependsOn to " + getClass().getSimpleName());
+			}
+			return plugin;
 		}
 
 		public MeasurementSession getMeasurementSession() {

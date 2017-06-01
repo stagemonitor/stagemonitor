@@ -15,15 +15,17 @@ import org.stagemonitor.alerting.check.Check;
 import org.stagemonitor.alerting.incident.ConcurrentMapIncidentRepository;
 import org.stagemonitor.alerting.incident.ElasticsearchIncidentRepository;
 import org.stagemonitor.alerting.incident.IncidentRepository;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.configuration.ConfigurationOption;
-import org.stagemonitor.configuration.source.SimpleSource;
+import org.stagemonitor.tracing.TracingPlugin;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -218,7 +220,6 @@ public class AlertingPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) throws Exception {
-		final AlertingPlugin alertingPlugin = initArguments.getPlugin(AlertingPlugin.class);
 		alertSender = new AlertSender(initArguments.getConfiguration());
 		CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
@@ -229,13 +230,18 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		logger.info("Using {} for storing incidents.", incidentRepository.getClass().getSimpleName());
 
 		thresholdMonitoringReporter = ThresholdMonitoringReporter.forRegistry(initArguments.getMetricRegistry())
-				.alertingPlugin(alertingPlugin)
+				.alertingPlugin(this)
 				.alertSender(alertSender)
 				.incidentRepository(incidentRepository)
 				.measurementSession(initArguments.getMeasurementSession())
 				.build();
-		thresholdMonitoringReporter.start(alertingPlugin.checkFrequency.getValue(), TimeUnit.SECONDS);
+		thresholdMonitoringReporter.start(checkFrequency.getValue(), TimeUnit.SECONDS);
 		SlaCheckCreatingClassPathScanner.onStart(initArguments.getMeasurementSession());
+	}
+
+	@Override
+	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
+		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(TracingPlugin.class);
 	}
 
 	@Override

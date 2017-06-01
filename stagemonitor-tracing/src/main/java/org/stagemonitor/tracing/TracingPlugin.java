@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.regex.Pattern;
@@ -393,6 +394,11 @@ public class TracingPlugin extends StagemonitorPlugin {
 			logger.debug("If this exception occurs outside of stagemonitor's unit tests it indicates a programming " +
 					"error. Make sure you don't call Stagemonitor.reset()", e);
 		}
+	}
+
+	@Override
+	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
+		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(CorePlugin.class);
 	}
 
 	private Tracer getTracerImpl(InitArguments initArguments) {

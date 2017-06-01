@@ -20,6 +20,7 @@ import org.stagemonitor.tracing.Traced;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -95,6 +96,8 @@ public class SlaCheckCreatingClassPathScannerTest {
 	@Before
 	public void setUp() throws Exception {
 		checks = alertingPlugin.getChecks();
+		assertThat(alertingPlugin.isInitialized()).isTrue();
+		assertThat(alertingPlugin.getThresholdMonitoringReporter()).isNotNull();
 	}
 
 	@Test

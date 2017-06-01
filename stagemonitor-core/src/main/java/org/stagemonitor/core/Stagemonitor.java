@@ -14,8 +14,11 @@ import org.stagemonitor.core.util.ClassUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class Stagemonitor {
@@ -108,18 +111,49 @@ public final class Stagemonitor {
 		final Collection<String> disabledPlugins = corePlugin.getDisabledPlugins();
 		pathsOfWidgetMetricTabPlugins = new CopyOnWriteArrayList<String>();
 		pathsOfWidgetTabPlugins = new CopyOnWriteArrayList<String>();
-		for (StagemonitorPlugin stagemonitorPlugin : plugins) {
-			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 
-			if (disabledPlugins.contains(pluginName)) {
-				logger.info("Not initializing disabled plugin {}", pluginName);
-			} else {
-				initializePlugin(stagemonitorPlugin, pluginName);
+		initializePluginsInOrder(disabledPlugins, plugins);
+	}
+
+	static void initializePluginsInOrder(Collection<String> disabledPlugins, Iterable<StagemonitorPlugin> plugins) {
+		Set<Class<? extends StagemonitorPlugin>> alreadyInitialized = new HashSet<Class<? extends StagemonitorPlugin>>();
+		Set<StagemonitorPlugin> notYetInitialized = getPluginsToInit(disabledPlugins, plugins);
+		while (!notYetInitialized.isEmpty()) {
+			int countNotYetInitialized = notYetInitialized.size();
+			// try to init plugins which are
+			for (Iterator<StagemonitorPlugin> iterator = notYetInitialized.iterator(); iterator.hasNext(); ) {
+				StagemonitorPlugin stagemonitorPlugin = iterator.next();
+				{
+					final List<Class<? extends StagemonitorPlugin>> dependencies = stagemonitorPlugin.dependsOn();
+					if (dependencies.isEmpty() || alreadyInitialized.containsAll(dependencies)) {
+						initializePlugin(stagemonitorPlugin);
+						iterator.remove();
+						alreadyInitialized.add(stagemonitorPlugin.getClass());
+					}
+				}
+			}
+			if (countNotYetInitialized == notYetInitialized.size()) {
+				// no plugins could be initialized in this try. this probably means there is a cyclic dependency
+				throw new IllegalStateException("Cyclic dependencies detected: " + notYetInitialized);
 			}
 		}
 	}
 
-	private static void initializePlugin(final StagemonitorPlugin stagemonitorPlugin, String pluginName) {
+	private static Set<StagemonitorPlugin> getPluginsToInit(Collection<String> disabledPlugins, Iterable<StagemonitorPlugin> plugins) {
+		Set<StagemonitorPlugin> notYetInitialized = new HashSet<StagemonitorPlugin>();
+		for (StagemonitorPlugin stagemonitorPlugin : plugins) {
+			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
+			if (disabledPlugins.contains(pluginName)) {
+				logger.info("Not initializing disabled plugin {}", pluginName);
+			} else {
+				notYetInitialized.add(stagemonitorPlugin);
+			}
+		}
+		return notYetInitialized;
+	}
+
+	private static void initializePlugin(final StagemonitorPlugin stagemonitorPlugin) {
+		String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 		logger.info("Initializing plugin {}", pluginName);
 		try {
 			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession));
@@ -215,6 +249,7 @@ public final class Stagemonitor {
 	public static List<String> getPathsOfWidgetTabPlugins() {
 		return Collections.unmodifiableList(pathsOfWidgetTabPlugins);
 	}
+
 	/**
 	 * @see org.stagemonitor.core.StagemonitorPlugin#getPathsOfWidgetMetricTabPlugins()
 	 */

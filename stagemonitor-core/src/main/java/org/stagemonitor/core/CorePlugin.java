@@ -435,6 +435,11 @@ public class CorePlugin extends StagemonitorPlugin {
 		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
 	}
 
+	@Override
+	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
+		return Collections.emptyList();
+	}
+
 	void registerReporters(Metric2Registry metric2Registry, ConfigurationRegistry configuration, MeasurementSession measurementSession) {
 		Metric2Filter regexFilter = Metric2Filter.ALL;
 		Collection<MetricName> excludedMetricsPatterns = getExcludedMetricsPatterns();

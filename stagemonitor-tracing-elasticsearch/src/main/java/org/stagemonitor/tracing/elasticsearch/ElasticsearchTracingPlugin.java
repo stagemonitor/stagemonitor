@@ -4,6 +4,10 @@ import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.tracing.TracingPlugin;
+
+import java.util.Collections;
+import java.util.List;
 
 public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 
@@ -58,6 +62,11 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteSpansAfterDays.getValue());
 		}
+	}
+
+	@Override
+	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
+		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(TracingPlugin.class);
 	}
 
 	public boolean isOnlyLogElasticsearchSpanReports() {

@@ -11,6 +11,7 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.configuration.ConfigurationServlet;
 import org.stagemonitor.web.init.ServletContainerInitializerUtil;
@@ -26,6 +27,7 @@ import org.stagemonitor.web.session.SessionCounter;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -230,6 +232,11 @@ public class WebPlugin extends StagemonitorPlugin implements ServletContainerIni
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk");
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		}
+	}
+
+	@Override
+	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
+		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(TracingPlugin.class);
 	}
 
 	@Override
