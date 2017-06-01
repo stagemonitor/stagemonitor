@@ -57,7 +57,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 		Assert.assertTrue(reporter.isActive(info));
 		Assert.assertFalse(info.isSampled());
-		assertEquals((short) 0, tags.get(Tags.SAMPLING_PRIORITY.getKey()));
+		assertEquals(0, tags.get(Tags.SAMPLING_PRIORITY.getKey()));
 	}
 
 	@Test

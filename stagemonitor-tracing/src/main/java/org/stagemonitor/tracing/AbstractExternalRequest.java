@@ -34,7 +34,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 		} else {
 			// client spans should not be root spans
 			spanBuilder = tracer.buildSpan(operationName)
-					.withTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0)
+					.withTag(Tags.SAMPLING_PRIORITY.getKey(), 0)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 		}
 		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, getType());

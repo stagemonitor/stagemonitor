@@ -59,7 +59,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
 				mock(FilterChain.class), configuration).createSpan();
 
-		verify(span).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
+		verify(span).setTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}
 
 	@Test
@@ -70,7 +70,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
 				mock(FilterChain.class), configuration).createSpan();
 
-		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
+		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}
 
 	@Test
@@ -80,7 +80,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
 				mock(FilterChain.class), configuration).createSpan();
 
-		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
+		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}
 
 	@Test
@@ -91,7 +91,7 @@ public class DoNotTrackPostExecutionInterceptorTest {
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
 				mock(FilterChain.class), configuration).createSpan();
 
-		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
+		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}
 
 }

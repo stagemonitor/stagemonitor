@@ -85,7 +85,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			spanBuilder = spanBuilder.withTag(WIDGET_ALLOWED_ATTRIBUTE, (String) null);
 		}
 		if (!sample) {
-			spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), (short) 0);
+			spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 		}
 		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, "http");
 		final Span span = spanBuilder.start();
