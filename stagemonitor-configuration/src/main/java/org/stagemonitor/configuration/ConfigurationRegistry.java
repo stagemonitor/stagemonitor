@@ -3,6 +3,7 @@ package org.stagemonitor.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.source.ConfigurationSource;
+import org.stagemonitor.util.CollectionUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -280,6 +281,13 @@ public class ConfigurationRegistry {
 	 */
 	public void addConfigurationSource(ConfigurationSource configurationSource) {
 		addConfigurationSource(configurationSource, true);
+	}
+
+	public void addConfigurationSourceAfter(ConfigurationSource configurationSource, Class<? extends ConfigurationSource> addAfter) {
+		if (configurationSource == null) {
+			return;
+		}
+		CollectionUtils.addAfter(configurationSources, addAfter, configurationSource);
 	}
 
 	/**

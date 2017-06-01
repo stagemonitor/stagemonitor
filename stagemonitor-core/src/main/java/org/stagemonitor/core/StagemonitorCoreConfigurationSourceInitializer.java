@@ -1,8 +1,5 @@
 package org.stagemonitor.core;
 
-import java.io.IOException;
-import java.util.Collection;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
@@ -12,6 +9,9 @@ import org.stagemonitor.configuration.source.PropertyFileConfigurationSource;
 import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.configuration.source.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+
+import java.io.IOException;
+import java.util.Collection;
 
 public class StagemonitorCoreConfigurationSourceInitializer extends StagemonitorConfigurationSourceInitializer {
 
@@ -48,7 +48,8 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 		}
 
 		for (String configurationId : elasticsearchConfigurationSourceIds) {
-			configuration.addConfigurationSource(new ElasticsearchConfigurationSource(elasticsearchClient, configurationId), false);
+			final ElasticsearchConfigurationSource esSource = new ElasticsearchConfigurationSource(elasticsearchClient, configurationId);
+			configuration.addConfigurationSourceAfter(esSource, SimpleSource.class);
 		}
 		configuration.reloadAllConfigurationOptions();
 	}
