@@ -17,7 +17,6 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.MetricNameFilter;
-import org.stagemonitor.core.metrics.MetricsAggregationReporter;
 import org.stagemonitor.core.metrics.MetricsWithCountFilter;
 import org.stagemonitor.core.metrics.SortedTableLogReporter;
 import org.stagemonitor.core.metrics.metrics2.AndMetric2Filter;
@@ -27,7 +26,6 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.metrics.metrics2.MetricNameValueConverter;
-import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.util.IOUtils;
@@ -39,7 +37,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
@@ -83,15 +80,6 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Reporting interval console")
 			.description("The amount of time between console reports (in seconds). " +
 					"To deactivate console reports, set this to a value below 1.")
-			.configurationCategory(CORE_PLUGIN_NAME)
-			.buildWithDefault(0);
-	private final ConfigurationOption<Integer> reportingIntervalAggregation = ConfigurationOption.integerOption()
-			.key("stagemonitor.reporting.interval.aggregation")
-			.dynamic(false)
-			.label("Metrics aggregation interval")
-			.description("The amount of time between all registered metrics are aggregated for a report on server " +
-					"shutdown that shows aggregated values for all metrics of the measurement session. " +
-					"To deactivate a aggregate report on shutdown, set this to a value below 1.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(0);
 	private final ConfigurationOption<Boolean> reportingJmx = ConfigurationOption.booleanOption()
@@ -395,8 +383,6 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags("elasticsearch", "advanced")
 			.buildWithDefault(5);
 
-	private MetricsAggregationReporter aggregationReporter;
-
 	private List<Closeable> reporters = new CopyOnWriteArrayList<Closeable>();
 
 	private ElasticsearchClient elasticsearchClient;
@@ -465,13 +451,10 @@ public class CorePlugin extends StagemonitorPlugin {
 		MetricRegistry legacyMetricRegistry = metric2Registry.getMetricRegistry();
 
 		reportToGraphite(legacyMetricRegistry, getGraphiteReportingInterval(), measurementSession);
-		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(),
-				measurementSession);
+		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(), measurementSession);
 		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(), measurementSession);
+		reportToConsole(metric2Registry, getConsoleReportingInterval(), allFilters);
 
-		List<ScheduledMetrics2Reporter> onShutdownReporters = new LinkedList<ScheduledMetrics2Reporter>();
-		onShutdownReporters.add(reportToConsole(metric2Registry, getConsoleReportingInterval(), allFilters));
-		registerAggregationReporter(metric2Registry, onShutdownReporters, getAggregationReportingInterval());
 		if (configuration.getConfig(CorePlugin.class).isReportToJMX()) {
 			// Because JMX reporter is on registration and not periodic only the
 			// regex filter is applicable here (not filtering metrics by count)
@@ -479,15 +462,6 @@ public class CorePlugin extends StagemonitorPlugin {
 		}
 	}
 
-	private void registerAggregationReporter(Metric2Registry metricRegistry,
-											 List<ScheduledMetrics2Reporter> onShutdownReporters, long reportingInterval) {
-		if (reportingInterval > 0) {
-			aggregationReporter = MetricsAggregationReporter.forRegistry(metricRegistry).onShutdownReporters(onShutdownReporters).build();
-			aggregationReporter.start(reportingInterval, TimeUnit.SECONDS);
-			aggregationReporter.report();
-			reporters.add(aggregationReporter);
-		}
-	}
 
 	private void reportToGraphite(MetricRegistry metricRegistry, long reportingInterval, MeasurementSession measurementSession) {
 		if (isReportToGraphite()) {
@@ -549,7 +523,7 @@ public class CorePlugin extends StagemonitorPlugin {
 				sanitizeGraphiteMetricSegment(measurementSession.getHostName()));
 	}
 
-	private SortedTableLogReporter reportToConsole(Metric2Registry metric2Registry, long reportingInterval, Metric2Filter filter) {
+	private void reportToConsole(Metric2Registry metric2Registry, long reportingInterval, Metric2Filter filter) {
 		final SortedTableLogReporter reporter = SortedTableLogReporter.forRegistry(metric2Registry)
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.MILLISECONDS)
@@ -559,7 +533,6 @@ public class CorePlugin extends StagemonitorPlugin {
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
 		}
-		return reporter;
 	}
 
 	private void reportToJMX(MetricRegistry metricRegistry) {
@@ -570,13 +543,6 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	@Override
 	public void onShutDown() {
-		if (aggregationReporter != null) {
-			logger.info("\n####################################################\n" +
-					"## Aggregated report for this measurement session ##\n" +
-					"####################################################\n");
-			aggregationReporter.onShutDown();
-		}
-
 		for (Closeable reporter : reporters) {
 			try {
 				reporter.close();
@@ -650,10 +616,6 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public long getConsoleReportingInterval() {
 		return reportingIntervalConsole.getValue();
-	}
-
-	public long getAggregationReportingInterval() {
-		return reportingIntervalAggregation.getValue();
 	}
 
 	public boolean isReportToJMX() {
