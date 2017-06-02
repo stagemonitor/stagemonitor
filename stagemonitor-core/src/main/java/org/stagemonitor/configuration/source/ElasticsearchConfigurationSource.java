@@ -25,7 +25,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 public class ElasticsearchConfigurationSource extends AbstractConfigurationSource {
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchConfigurationSource.class);
 	private final String path;
 	private final ElasticsearchClient elasticsearchClient;
 	private final String configurationId;
@@ -34,7 +34,7 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 	public ElasticsearchConfigurationSource(ElasticsearchClient elasticsearchClient, String configurationId) {
 		this.elasticsearchClient = elasticsearchClient;
 		this.configurationId = configurationId;
-		this.path = "/stagemonitor/configuration-v2/" + this.configurationId;
+		this.path = "/stagemonitor-configuration/configuration/" + this.configurationId;
 		try {
 			reload();
 		} catch (IOException e) {

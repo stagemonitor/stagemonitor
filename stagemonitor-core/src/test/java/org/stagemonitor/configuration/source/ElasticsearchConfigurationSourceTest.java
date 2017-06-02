@@ -8,11 +8,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.stagemonitor.AbstractElasticsearchTest;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
-
-import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -22,7 +21,6 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 
 	private ElasticsearchConfigurationSource configurationSource;
 
-
 	@AfterClass
 	public static void reset() {
 		Stagemonitor.reset();
@@ -31,9 +29,7 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 
 	@Before
 	public void setUp() throws Exception {
-		InputStream resourceAsStream = ElasticsearchConfigurationSourceTest.class.getClassLoader()
-				.getResourceAsStream("stagemonitor-elasticsearch-mapping.json");
-		elasticsearchClient.sendAsJson("PUT", "/stagemonitor", resourceAsStream);
+		CorePlugin.sendConfigurationMappingAsync(elasticsearchClient).get();
 		configurationSource = new ElasticsearchConfigurationSource(elasticsearchClient, "test");
 	}
 
@@ -66,12 +62,15 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 		configurationSource.save("foo", "bar");
 		refresh();
 
-		final GetMappingsResponse mappings = client.admin().indices().prepareGetMappings("stagemonitor").setTypes("configuration").get();
+		final GetMappingsResponse mappings = client.admin().indices().prepareGetMappings("stagemonitor-configuration").setTypes("configuration").get();
 		assertEquals(1, mappings.getMappings().size());
 		assertEquals("{\"configuration\":{" +
 						"\"_all\":{\"enabled\":false}," +
-						"\"dynamic_templates\":[{\"fields\":{\"match\":\"*\",\"mapping\":{\"type\":\"keyword\"}}}]" +
-						"}}",
-				mappings.getMappings().get("stagemonitor").get("configuration").source().toString());
+						"\"properties\":{\"configuration\":{\"properties\":{" +
+						"\"key\":{\"type\":\"keyword\"}," +
+						"\"value\":{\"type\":\"keyword\"}}}}" +
+						"}" +
+						"}",
+				mappings.getMappings().get("stagemonitor-configuration").get("configuration").source().toString());
 	}
 }

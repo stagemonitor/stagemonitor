@@ -1,0 +1,20 @@
+{
+	"template": "stagemonitor-configuration",
+	"mappings" : {
+		"configuration": {
+			"_all" : { "enabled" : false },
+			"properties": {
+				"configuration": {
+					"properties": {
+						"key": {
+							"type": "keyword"
+						},
+						"value": {
+							"type": "keyword"
+						}
+					}
+				}
+			}
+		}
+	}
+}

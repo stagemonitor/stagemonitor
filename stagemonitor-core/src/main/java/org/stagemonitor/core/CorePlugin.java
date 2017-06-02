@@ -28,6 +28,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.metrics.metrics2.MetricNameValueConverter;
 import org.stagemonitor.core.metrics.metrics2.ScheduledMetrics2Reporter;
+import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
@@ -41,6 +42,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -59,7 +61,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private static final String ELASTICSEARCH = "elasticsearch";
 	private static final String METRICS_STORE = "metrics-store";
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(CorePlugin.class);
 
 	private final ConfigurationOption<Boolean> stagemonitorActive = ConfigurationOption.booleanOption()
 			.key("stagemonitor.active")
@@ -426,13 +428,25 @@ public class CorePlugin extends StagemonitorPlugin {
 		});
 
 		ElasticsearchClient elasticsearchClient = getElasticsearchClient();
-		elasticsearchClient.createIndex("stagemonitor", IOUtils.getResourceAsStream("stagemonitor-elasticsearch-mapping.json"));
+		sendConfigurationMappingAsync(elasticsearchClient);
+
 		if (isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = getGrafanaClient();
 			grafanaClient.createElasticsearchDatasource(getElasticsearchUrl());
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchCustomMetricsDashboard.json");
 		}
 		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
+	}
+
+	public static Future<?> sendConfigurationMappingAsync(ElasticsearchClient elasticsearchClient) {
+		final String mappingJson;
+		try {
+			mappingJson = IOUtils.toString(IOUtils.getResourceAsStream("stagemonitor-configuration-elasticsearch-mapping.json"));
+			return elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
+		} catch (IOException e) {
+			logger.warn("Suppressed exception:", e);
+			return new CompletedFuture<Object>(null);
+		}
 	}
 
 	@Override

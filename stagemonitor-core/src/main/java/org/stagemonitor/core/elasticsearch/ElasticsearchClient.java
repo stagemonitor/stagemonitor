@@ -41,8 +41,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.stagemonitor.util.StringUtils.slugify;
-
 public class ElasticsearchClient {
 
 	public static final Map<String, String> CONTENT_TYPE_JSON = Collections.singletonMap("Content-Type", "application/json");
@@ -141,10 +139,6 @@ public class ElasticsearchClient {
 		json.setAll(newProperties);
 	}
 
-	public void createIndex(final String index, final InputStream mapping) {
-		sendAsJsonAsync("PUT", "/" + index, mapping);
-	}
-
 	private Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
 		if (isElasticsearchAvailable()) {
 			try {
@@ -156,27 +150,6 @@ public class ElasticsearchClient {
 				});
 			} catch (RejectedExecutionException e) {
 				ExecutorUtils.logRejectionWarning(e);
-			}
-		}
-		return new CompletedFuture<Object>(null);
-	}
-
-	public Future<?> sendGrafana1DashboardAsync(String dashboardPath) {
-		return sendDashboardAsync("/grafana-dash/dashboard/", dashboardPath);
-	}
-
-	public Future<?> sendKibanaDashboardAsync(String dashboardPath) {
-		return sendDashboardAsync("/kibana-int/dashboard/", dashboardPath);
-	}
-
-	public Future<?> sendDashboardAsync(String path, String dashboardPath) {
-		if (isElasticsearchAvailable()) {
-			try {
-				ObjectNode dashboard = getDashboardForElasticsearch(dashboardPath);
-				final String titleSlug = slugify(dashboard.get(TITLE).asText());
-				return sendAsJsonAsync("PUT", path + titleSlug, dashboard);
-			} catch (IOException e) {
-				logger.warn(e.getMessage(), e);
 			}
 		}
 		return new CompletedFuture<Object>(null);
