@@ -37,7 +37,7 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 
 	/**
 	 * This method is called when stagemonitor shuts down.
-	 * The shutdown is triggered by {@link org.stagemonitor.web.monitor.filter.HttpRequestMonitorFilter#destroy()},
+	 * The shutdown is triggered by {@link org.stagemonitor.web.servlet.filter.HttpRequestMonitorFilter#destroy()},
 	 * for example. In non-servlet applications this method has to be called manually.
 	 * <p>
 	 * Note that this method will be called even if {@link #initializePlugin(InitArguments)} has not been called.

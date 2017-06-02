@@ -1,0 +1,5 @@
+org.stagemonitor.web.servlet.ServletProfilingTransformer
+org.stagemonitor.web.servlet.spring.SpringMvcRequestNameDeterminerTransformer
+org.stagemonitor.web.servlet.jaxrs.JaxRsRequestNameDeterminerTransformer
+org.stagemonitor.web.servlet.spring.SpringRestTemplateContextPropagatingTransformer
+org.stagemonitor.web.servlet.spring.SpringBootWebPluginInitializer

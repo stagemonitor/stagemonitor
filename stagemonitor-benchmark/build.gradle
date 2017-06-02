@@ -19,7 +19,7 @@ jmh {
 }
 
 dependencies {
-	compile project(":stagemonitor-web")
+	compile project(":stagemonitor-web-servlet")
 	compile project(":stagemonitor-logging")
 	compile project(":stagemonitor-ehcache")
 	compile project(":stagemonitor-alerting")

@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.org/stagemonitor/stagemonitor.svg?branch=master)](https://travis-ci.org/stagemonitor/stagemonitor)
 [![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 [![Coverage Status](https://coveralls.io/repos/stagemonitor/stagemonitor/badge.svg?branch=master&service=github)](https://coveralls.io/github/stagemonitor/stagemonitor?branch=master)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.stagemonitor/stagemonitor-web/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.stagemonitor/stagemonitor-web)
-[![Release](https://jitpack.io/v/stagemonitor/stagemonitor.svg)](https://jitpack.io/#com.github.stagemonitor.stagemonitor/stagemonitor-web)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.stagemonitor/stagemonitor-web-servlet/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.stagemonitor/stagemonitor-web-servlet)
+[![Release](https://jitpack.io/v/stagemonitor/stagemonitor.svg)](https://jitpack.io/#com.github.stagemonitor.stagemonitor/stagemonitor-web-servlet)
 
 
 ---
@@ -27,7 +27,7 @@ If you encounter any issues or if you have a question, don't hesitate to create 
 The mailing list can be found at https://github.com/stagemonitor/stagemonitor-mailinglist
 
 ## Snapshots
-Use [JitPack](https://jitpack.io/#com.github.stagemonitor.stagemonitor/stagemonitor-web/master-SNAPSHOT) to get the latest snapshots from master. When using gradle, add the `--refresh-dependencies` flag to ensure you always check for an updated snapshot version.
+Use [JitPack](https://jitpack.io/#com.github.stagemonitor.stagemonitor/stagemonitor-web-servlet/master-SNAPSHOT) to get the latest snapshots from master. When using gradle, add the `--refresh-dependencies` flag to ensure you always check for an updated snapshot version.
 
 ## Build Locally
 To build this project locally, clone the repo and execute `./gradlew install` (Linux) `gradlew.bat install` (Windows) to install stagemonitor to your local maven repo (`~/.m2/repository/org/stagemonitor/`).
