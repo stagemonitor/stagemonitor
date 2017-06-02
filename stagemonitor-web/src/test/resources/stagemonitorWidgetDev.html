@@ -78,7 +78,42 @@
 					var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow,
 							stagemonitorOverlayShow = document.getElementById("stagemonitor-overlay-show"),
 							stagemonitorOverlay = document.getElementById("stagemonitor-overlay"),
-							data = {"duration_cpu_ms":7,"measurement_start":"1481290332082","instance":"test","session_id":"EA0EFA54520C177883744D7F8DEA2D8B","type":"http","tracking":{"unique_visitor_id":"08ab0bc8717ab83953a48a035c76c591add9eb04"},"jaeger":{"version":"Java-0.17.0","hostname":"N51.local"},"sampler":{"type":"const","param":true},"application":"Spring-PetClinic","call_tree_json":"{\"signature\":\"GET /\",\"executionTime\":7005708,\"children\":[{\"signature\":\"void org.springframework.web.servlet.FrameworkServlet.service(HttpServletRequest,HttpServletResponse)\",\"executionTime\":6004907,\"children\":[{\"signature\":\"void org.springframework.web.servlet.DispatcherServlet.render(ModelAndView,HttpServletRequest,HttpServletResponse)\",\"executionTime\":5259759,\"children\":[],\"shortSignature\":\"DispatcherServlet#render\",\"ioquery\":false,\"netExecutionTime\":5259759}],\"shortSignature\":\"FrameworkServlet#service\",\"ioquery\":false,\"netExecutionTime\":745148}],\"shortSignature\":null,\"ioquery\":false,\"netExecutionTime\":1000801}","duration_cpu":7435,"host":"N51.local","http":{"headers":{"connection":"keep-alive","referer":"http://localhost:8881/petclinic/oups.html","host":"localhost:8881","pragma":"no-cache","upgrade-insecure-requests":"1","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36","cache-control":"no-cache","accept-language":"de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8","accept-encoding":"gzip, deflate, sdch, br"},"url":"/petclinic/","method":"GET","referring_site":null},"name":"GET /","duration":7811,"duration_ms":7,"@timestamp":"2016-12-09T15:35:17.934+0100","id":"552474fa6c0630a3","trace_id":"552474fa6c0630a3","parent_id":"0","sampled":true,"debug":false},
+							data = {
+								"duration_cpu_ms": 7,
+								"instance": "test",
+								"session_id": "EA0EFA54520C177883744D7F8DEA2D8B",
+								"type": "http",
+								"tracking": {"unique_visitor_id": "08ab0bc8717ab83953a48a035c76c591add9eb04"},
+								"jaeger": {"version": "Java-0.17.0", "hostname": "N51.local"},
+								"sampler": {"type": "const", "param": true},
+								"application": "Spring-PetClinic",
+								"call_tree_json": "{\"signature\":\"GET /\",\"executionTime\":7005708,\"children\":[{\"signature\":\"void org.springframework.web.servlet.FrameworkServlet.service(HttpServletRequest,HttpServletResponse)\",\"executionTime\":6004907,\"children\":[{\"signature\":\"void org.springframework.web.servlet.DispatcherServlet.render(ModelAndView,HttpServletRequest,HttpServletResponse)\",\"executionTime\":5259759,\"children\":[],\"shortSignature\":\"DispatcherServlet#render\",\"ioquery\":false,\"netExecutionTime\":5259759}],\"shortSignature\":\"FrameworkServlet#service\",\"ioquery\":false,\"netExecutionTime\":745148}],\"shortSignature\":null,\"ioquery\":false,\"netExecutionTime\":1000801}",
+								"duration_cpu": 7435,
+								"host": "N51.local",
+								"http": {
+									"headers": {
+										"connection": "keep-alive",
+										"referer": "http://localhost:8881/petclinic/oups.html",
+										"host": "localhost:8881",
+										"pragma": "no-cache",
+										"upgrade-insecure-requests": "1",
+										"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36",
+										"cache-control": "no-cache",
+										"accept-language": "de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4",
+										"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+										"accept-encoding": "gzip, deflate, sdch, br"
+									}, "url": "/petclinic/", "method": "GET", "referring_site": null
+								},
+								"name": "GET /",
+								"duration": 7811,
+								"duration_ms": 7,
+								"@timestamp": "2016-12-09T15:35:17.934+0100",
+								"id": "552474fa6c0630a3",
+								"trace_id": "552474fa6c0630a3",
+								"parent_id": "0",
+								"sampled": true,
+								"debug": false
+							},
 							configurationSources = {"Transient Configuration Source":true,"Java System Properties":false,"stagemonitor.properties":true},
 							configurationOptions = {
 								"Web Plugin": [{

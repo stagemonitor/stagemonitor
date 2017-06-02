@@ -1,20 +1,21 @@
 package org.stagemonitor.core;
 
 
-import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
-import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
-import static org.stagemonitor.util.StringUtils.replaceWhitespacesWithDash;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.stagemonitor.util.StringUtils;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.stagemonitor.util.StringUtils;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+import static org.stagemonitor.util.StringUtils.replaceWhitespacesWithDash;
 
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = ANY, setterVisibility = NONE)
 public class MeasurementSession {
@@ -105,7 +106,6 @@ public class MeasurementSession {
 	@JsonIgnore
 	public Map<String, String> asMap() {
 		final TreeMap<String, String> result = new TreeMap<String, String>();
-		result.put("measurement_start", Long.toString(startTimestamp));
 		result.put("application", applicationName);
 		result.put("host", hostName);
 		result.put("instance", instanceName);

@@ -29,27 +29,12 @@
       "_source" :              { "excludes" : ["call_tree_json"] },
       "properties": {
         "@timestamp":          {"type": "date" },
-        "measurement_start":   {"type": "date" },
-		  "call_tree_ascii": {
-			  "type": "keyword",
-			  "index": false,
-			  "doc_values": false
-		  },
-		  "call_tree_json": {
-			  "type": "keyword",
-			  "index": false,
-			  "store": true,
-			  "doc_values": false
-		  },
+        "call_tree_ascii":     {"type": "keyword", "index": false, "doc_values": false },
+        "call_tree_json":      {"type": "keyword", "index": false, "doc_values": false, "store": true },
         "exception":           {"type": "object", "properties": {
             "classType":       {"type": "keyword" },
             "message":         {"type": "keyword" },
-			"stackTrace": {
-				"type": "keyword",
-				"index": false,
-				"store": true,
-				"doc_values": false
-			}
+            "stackTrace":      {"type": "keyword", "index": false, "doc_values": false, "store": true }
           }
         },
         "name":                {"type": "text",  "analyzer": "standard",
