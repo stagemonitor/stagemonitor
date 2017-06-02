@@ -2,7 +2,7 @@
 	plugins.push(
 		{
 			id: "request-metrics",
-			label: "Requests",
+			label: "HTTP Requests",
 			table: {
 				bindto: "#request-table",
 				nameLabel: "Name",
@@ -11,7 +11,7 @@
 						metricMatcher: {
 							name: "response_time",
 							tags: {
-								layer: "All"
+								operation_type: "http"
 							}
 						},
 						groupBy: "operation_name",
@@ -22,7 +22,7 @@
 						metricMatcher: {
 							name: "response_time",
 							tags: {
-								layer: "All"
+								operation_type: "http"
 							}
 						},
 						groupBy: "operation_name",
@@ -33,7 +33,7 @@
 						metricMatcher: {
 							name: "response_time",
 							tags: {
-								layer: "All"
+								operation_type: "http"
 							}
 						},
 						groupBy: "operation_name",
@@ -44,7 +44,7 @@
 						metricMatcher: {
 							name: "response_time",
 							tags: {
-								layer: "All"
+								operation_type: "http"
 							}
 						},
 						groupBy: "operation_name",
@@ -55,7 +55,7 @@
 						metricMatcher: {
 							name: "response_time",
 							tags: {
-								layer: "All"
+								operation_type: "http"
 							}
 						},
 						groupBy: "operation_name",
@@ -66,7 +66,7 @@
 						metricMatcher: {
 							name: "response_time",
 							tags: {
-								layer: "All"
+								operation_type: "http"
 							}
 						},
 						groupBy: "operation_name",
@@ -77,7 +77,7 @@
 						metricMatcher: {
 							name: "response_time",
 							tags: {
-								layer: "All"
+								operation_type: "http"
 							}
 						},
 						groupBy: "operation_name",
@@ -86,14 +86,11 @@
 					},
 					{
 						metricMatcher: {
-							name: "external_requests_rate",
-							tags: {
-								type: "jdbc"
-							}
+							name: "external_requests_rate"
 						},
 						groupBy: "operation_name",
 						metric: "m1_rate",
-						title: "SQLs/sec"
+						title: "External Requests/sec"
 					}
 				],
 				graphTemplates: {
@@ -110,7 +107,7 @@
 										metricMatcher: {
 											name: "response_time",
 											tags: {
-												layer: "All",
+												operation_type: "http",
 												operation_name: "${rowName}"
 											}
 										},
@@ -131,7 +128,7 @@
 										metricMatcher: {
 											name: "response_time",
 											tags: {
-												layer: "All",
+												operation_type: "http",
 												operation_name: "${rowName}"
 											}
 										},

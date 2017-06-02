@@ -9,78 +9,78 @@
 				columns: [
 					{
 						metricMatcher: {
-							name: "external_request_response_time",
+							name: "response_time",
 							tags: {
-								type: "jdbc"
+								operation_type: "jdbc"
 							}
 						},
-						groupBy: "signature",
+						groupBy: "operation_name",
 						metric: "m1_rate",
 						title: "Requests/s"
 					},
 					{
 						metricMatcher: {
-							name: "external_request_response_time",
+							name: "response_time",
 							tags: {
-								type: "jdbc"
+								operation_type: "jdbc"
 							}
 						},
-						groupBy: "signature",
+						groupBy: "operation_name",
 						metric: "max",
 						title: "Max"
 					},
 					{
 						metricMatcher: {
-							name: "external_request_response_time",
+							name: "response_time",
 							tags: {
-								type: "jdbc"
+								operation_type: "jdbc"
 							}
 						},
-						groupBy: "signature",
+						groupBy: "operation_name",
 						metric: "mean",
 						title: "Mean"
 					},
 					{
 						metricMatcher: {
-							name: "external_request_response_time",
+							name: "response_time",
 							tags: {
-								type: "jdbc"
+								operation_type: "jdbc"
 							}
 						},
-						groupBy: "signature",
+						groupBy: "operation_name",
 						metric: "min",
 						title: "Min"
 					},
 					{
 						metricMatcher: {
-							name: "external_request_response_time",
+							name: "response_time",
 							tags: {
-								type: "jdbc"
+								operation_type: "jdbc"
 							}
 						},
-						groupBy: "signature",
+						groupBy: "operation_name",
 						metric: "p50",
 						title: "p50"
 					},
 					{
 						metricMatcher: {
-							name: "external_request_response_time",
+							name: "response_time",
 							tags: {
-								type: "jdbc"
+								operation_type: "jdbc"
 							}
 						},
-						groupBy: "signature",
+						groupBy: "operation_name",
 						metric: "p95",
 						title: "p95"
 					},
 					{
 						metricMatcher: {
-							name: "external_request_response_time",
+							name: "response_time",
 							tags: {
-								type: "jdbc"
+								operation_type: "jdbc"
 							}
 						},
-						groupBy: "signature",
+						groupBy: "operation_name",
 						metric: "std",
 						title: "Std. Dev."
 					}
@@ -97,13 +97,13 @@
 								columns: [
 									{
 										metricMatcher: {
-											name: "external_request_response_time",
+											name: "response_time",
 											tags: {
-												type: "jdbc",
-												signature: "${rowName}"
+												operation_type: "jdbc",
+												operation_name: "${rowName}"
 											}
 										},
-										groupBy: "signature",
+										groupBy: "operation_name",
 										metric: "mean"
 									}
 								]
@@ -118,13 +118,13 @@
 								columns: [
 									{
 										metricMatcher: {
-											name: "external_request_response_time",
+											name: "response_time",
 											tags: {
-												type: "jdbc",
-												signature: "${rowName}"
+												operation_type: "jdbc",
+												operation_name: "${rowName}"
 											}
 										},
-										groupBy: "signature",
+										groupBy: "operation_name",
 										metric: "m1_rate"
 									}
 								]
