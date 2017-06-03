@@ -44,7 +44,7 @@ public class ConfigurationOptionTest {
 	private ConfigurationRegistry configuration;
 	private SimpleSource configSource = SimpleSource
 			.forTest("invalidLong", "two")
-			.add("stagemonitor.elasticsearch.url", "foo/")
+			.add("stagemonitor.reporting.elasticsearch.url", "foo/")
 			.add("invalidPatternMap", "(.*).js: *.js (.*).css:  *.css")
 			.add("invalidPatternSyntax", "(.*.js")
 			.add("long", "2")

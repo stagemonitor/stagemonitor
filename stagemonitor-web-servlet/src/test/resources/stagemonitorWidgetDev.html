@@ -1190,7 +1190,7 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays",
+									"key": "stagemonitor.reporting.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays",
 									"aliasKeys": [],
 									"label": "Activate Hot-Cold Architecture",
 									"description": "Setting this to a value > 1 activates the hot-cold architecture described in https://www.elastic.co/blog/hot-warm-architecture where new data that is more frequently queried and updated is stored on beefy nodes (SSDs, more RAM and CPU). When the indexes reach a certain age, they are allocated on cold nodes. For this to work, you have to tag your beefy nodes with node.box_type: hot (either in elasticsearch.yml or start the node using ./bin/elasticsearch --node.box_type hot)and your historical nodes with node.box_type: cold.",
@@ -1204,7 +1204,7 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.numberOfReplicas",
+									"key": "stagemonitor.reporting.elasticsearch.numberOfReplicas",
 									"aliasKeys": [],
 									"label": "Number of ES Replicas",
 									"description": "Sets the number of replicas of the Elasticsearch index templates.",
@@ -1218,7 +1218,7 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.numberOfShards",
+									"key": "stagemonitor.reporting.elasticsearch.numberOfShards",
 									"aliasKeys": [],
 									"label": "Number of ES Shards",
 									"description": "Sets the number of shards of the Elasticsearch index templates.",
@@ -1274,7 +1274,7 @@
 								}, {
 									"dynamic": true,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.url",
+									"key": "stagemonitor.reporting.elasticsearch.url",
 									"aliasKeys": [],
 									"label": "Elasticsearch URL",
 									"description": "A comma separated list of the Elasticsearch URLs that store spans and metrics. If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com.",
@@ -1288,10 +1288,10 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.configurationSourceProfiles",
+									"key": "stagemonitor.configuration.elasticsearch.configurationSourceProfiles",
 									"aliasKeys": [],
 									"label": "Elasticsearch configuration source profiles",
-									"description": "Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source that can be shared between multiple server instances. Set the profiles appropriate to the current environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under `{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceProfile}`.",
+									"description": "Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source that can be shared between multiple server instances. Set the profiles appropriate to the current environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under `{stagemonitor.reporting.elasticsearch.url}/stagemonitor-configuration/configuration/{configurationSourceProfile}`.",
 									"tags": [],
 									"defaultValueAsString": "",
 									"configurationCategory": "Core",
@@ -1302,10 +1302,10 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.configurationSource.deactivateStagemonitorIfEsIsDown",
+									"key": "stagemonitor.configuration.elasticsearch.deactivateStagemonitorIfEsIsDown",
 									"aliasKeys": [],
 									"label": "Deactivate stagemonitor if elasticsearch configuration source is down",
-									"description": "Set to true if stagemonitor should be deactivated if stagemonitor.elasticsearch.configurationSourceProfiles is set but elasticsearch can't be reached under stagemonitor.elasticsearch.url. Defaults to true to prevent starting stagemonitor with wrong configuration.",
+									"description": "Set to true if stagemonitor should be deactivated if stagemonitor.reporting.elasticsearch.configurationSourceProfiles is set but elasticsearch can't be reached under stagemonitor.reporting.elasticsearch.url. Defaults to true to prevent starting stagemonitor with wrong configuration.",
 									"tags": [],
 									"defaultValueAsString": "true",
 									"configurationCategory": "Core",
@@ -1512,7 +1512,7 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.availabilityCheckPeriodSec",
+									"key": "stagemonitor.reporting.elasticsearch.availabilityCheckPeriodSec",
 									"aliasKeys": [],
 									"label": "Elasticsearch availability check period (sec)",
 									"description": "When set to a value > 0 stagemonitor periodically checks if Elasticsearch is available. When not available, stagemonitor won't try send documents to Elasticsearch which would fail anyway. This reduces heap usage as the documents won't be queued up. It also avoids the logging of warnings when the queue is filled up to the limit (see 'stagemonitor.threadPools.queueCapacityLimit')",
@@ -2523,7 +2523,7 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays",
+									"key": "stagemonitor.reporting.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays",
 									"label": "Activate Hot-Cold Architecture",
 									"description": "Setting this to a value > 1 activates the hot-cold architecture described in https://www.elastic.co/blog/hot-warm-architecture where new data that is more frequently queried and updated is stored on beefy nodes (SSDs, more RAM and CPU). When the indexes reach a certain age, they are allocated on cold nodes. For this to work, you have to tag your beefy nodes with node.box_type: hot (either in elasticsearch.yml or start the node using ./bin/elasticsearch --node.box_type hot)and your historical nodes with node.box_type: cold.",
 									"tags": ["metrics-store", "elasticsearch"],
@@ -2536,7 +2536,7 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.numberOfReplicas",
+									"key": "stagemonitor.reporting.elasticsearch.numberOfReplicas",
 									"label": "Number of ES Replicas",
 									"description": "Sets the number of replicas of the Elasticsearch index templates.",
 									"tags": ["metrics-store", "elasticsearch"],
@@ -2549,7 +2549,7 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.numberOfShards",
+									"key": "stagemonitor.reporting.elasticsearch.numberOfShards",
 									"label": "Number of ES Shards",
 									"description": "Sets the number of shards of the Elasticsearch index templates.",
 									"tags": ["metrics-store", "elasticsearch"],
@@ -2601,7 +2601,7 @@
 								}, {
 									"dynamic": true,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.url",
+									"key": "stagemonitor.reporting.elasticsearch.url",
 									"label": "Elasticsearch URL",
 									"description": "A comma separated list of the Elasticsearch URLs that store spans and metrics. If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com.",
 									"tags": ["elasticsearch"],
@@ -2614,9 +2614,9 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.configurationSourceProfiles",
+									"key": "stagemonitor.configuration.elasticsearch.configurationSourceProfiles",
 									"label": "Elasticsearch configuration source profiles",
-									"description": "Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source that can be shared between multiple server instances. Set the profiles appropriate to the current environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under `{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceProfile}`.",
+									"description": "Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source that can be shared between multiple server instances. Set the profiles appropriate to the current environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under `{stagemonitor.reporting.elasticsearch.url}/stagemonitor-configuration/configuration/{configurationSourceProfile}`.",
 									"tags": [],
 									"defaultValueAsString": "",
 									"configurationCategory": "Core",
@@ -2627,9 +2627,9 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.configurationSource.deactivateStagemonitorIfEsIsDown",
+									"key": "stagemonitor.configuration.elasticsearch.deactivateStagemonitorIfEsIsDown",
 									"label": "Deactivate stagemonitor if elasticsearch configuration source is down",
-									"description": "Set to true if stagemonitor should be deactivated if stagemonitor.elasticsearch.configurationSourceProfiles is set but elasticsearch can't be reached under stagemonitor.elasticsearch.url. Defaults to true to prevent starting stagemonitor with wrong configuration.",
+									"description": "Set to true if stagemonitor should be deactivated if stagemonitor.configuration.elasticsearch.configurationSourceProfiles is set but elasticsearch can't be reached under stagemonitor.reporting.elasticsearch.url. Defaults to true to prevent starting stagemonitor with wrong configuration.",
 									"tags": [],
 									"defaultValueAsString": "true",
 									"configurationCategory": "Core",
@@ -2822,7 +2822,7 @@
 								}, {
 									"dynamic": false,
 									"sensitive": false,
-									"key": "stagemonitor.elasticsearch.availabilityCheckPeriodSec",
+									"key": "stagemonitor.reporting.elasticsearch.availabilityCheckPeriodSec",
 									"label": "Elasticsearch availability check period (sec)",
 									"description": "When set to a value > 0 stagemonitor periodically checks if Elasticsearch is available. When not available, stagemonitor won't try send documents to Elasticsearch which would fail anyway. This reduces heap usage as the documents won't be queued up. It also avoids the logging of warnings when the queue is filled up to the limit (see 'stagemonitor.threadPools.queueCapacityLimit')",
 									"tags": ["elasticsearch", "advanced"],

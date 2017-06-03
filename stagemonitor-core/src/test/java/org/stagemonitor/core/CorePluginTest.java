@@ -1,22 +1,20 @@
 package org.stagemonitor.core;
 
-import java.io.Closeable;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import java.util.Collections;
 import org.junit.Assert;
-
 import org.junit.Test;
-
-import static org.mockito.Mockito.mock;
-
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+
+import java.io.Closeable;
+import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
 
 public class CorePluginTest {
 
@@ -25,7 +23,7 @@ public class CorePluginTest {
 		CorePlugin corePlugin = new ConfigurationRegistry(
 				Collections.singletonList(new CorePlugin()),
 				Collections.<ConfigurationSource>singletonList(new SimpleSource("test")
-						.add("stagemonitor.elasticsearch.url", "http://bla:1/,http://bla:2,http://bla:3")),
+						.add("stagemonitor.reporting.elasticsearch.url", "http://bla:1/,http://bla:2,http://bla:3")),
 				null).getConfig(CorePlugin.class);
 
 		assertEquals("http://bla:1", corePlugin.getElasticsearchUrl());

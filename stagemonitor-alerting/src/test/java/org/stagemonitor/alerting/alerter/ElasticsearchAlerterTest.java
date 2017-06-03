@@ -1,14 +1,14 @@
 package org.stagemonitor.alerting.alerter;
 
-import java.util.Collection;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.AbstractElasticsearchTest;
 import org.stagemonitor.alerting.check.CheckResult;
 import org.stagemonitor.alerting.incident.Incident;
-import org.stagemonitor.AbstractElasticsearchTest;
 import org.stagemonitor.core.util.HttpClient;
+
+import java.util.Collection;
 
 public class ElasticsearchAlerterTest extends AbstractElasticsearchTest {
 
@@ -19,7 +19,7 @@ public class ElasticsearchAlerterTest extends AbstractElasticsearchTest {
 
 	@Before
 	public void setUp() throws Exception {
-		abstractAlerterTest.configurationSource.add("stagemonitor.elasticsearch.url", elasticsearchUrl);
+		abstractAlerterTest.configurationSource.add("stagemonitor.reporting.elasticsearch.url", elasticsearchUrl);
 		abstractAlerterTest.configuration.reloadDynamicConfigurationOptions();
 		elasticsearchAlerter = new ElasticsearchAlerter(abstractAlerterTest.configuration, new HttpClient());
 		this.alertSender = abstractAlerterTest.createAlertSender(elasticsearchAlerter);

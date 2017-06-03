@@ -167,7 +167,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(-1);
 	private final ConfigurationOption<Integer> moveToColdNodesAfterDays = ConfigurationOption.integerOption()
-			.key("stagemonitor.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays")
+			.key("stagemonitor.reporting.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays")
+			.aliasKeys("stagemonitor.elasticsearch.hotColdArchitecture.moveToColdNodesAfterDays")
 			.dynamic(false)
 			.label("Activate Hot-Cold Architecture")
 			.description("Setting this to a value > 1 activates the hot-cold architecture described in https://www.elastic.co/blog/hot-warm-architecture " +
@@ -179,7 +180,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(-1);
 	private final ConfigurationOption<Integer> numberOfReplicas = ConfigurationOption.integerOption()
-			.key("stagemonitor.elasticsearch.numberOfReplicas")
+			.key("stagemonitor.reporting.elasticsearch.numberOfReplicas")
+			.aliasKeys("stagemonitor.elasticsearch.numberOfReplicas")
 			.dynamic(false)
 			.label("Number of ES Replicas")
 			.description("Sets the number of replicas of the Elasticsearch index templates.")
@@ -187,7 +189,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.build();
 	private final ConfigurationOption<Integer> numberOfShards = ConfigurationOption.integerOption()
-			.key("stagemonitor.elasticsearch.numberOfShards")
+			.key("stagemonitor.reporting.elasticsearch.numberOfShards")
+			.aliasKeys("stagemonitor.elasticsearch.numberOfShards")
 			.dynamic(false)
 			.label("Number of ES Shards")
 			.description("Sets the number of shards of the Elasticsearch index templates.")
@@ -224,7 +227,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(getNameOfLocalHost());
 	private final ConfigurationOption<List<String>> elasticsearchUrls = ConfigurationOption.builder(ListValueConverter.STRINGS_VALUE_CONVERTER, List.class)
-			.key("stagemonitor.elasticsearch.url")
+			.key("stagemonitor.reporting.elasticsearch.url")
+			.aliasKeys("stagemonitor.elasticsearch.url")
 			.dynamic(true)
 			.label("Elasticsearch URL")
 			.description("A comma separated list of the Elasticsearch URLs that store spans and metrics. " +
@@ -233,22 +237,24 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags(ELASTICSEARCH)
 			.buildWithDefault(Collections.<String>emptyList());
 	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceProfiles = ConfigurationOption.stringsOption()
-			.key("stagemonitor.elasticsearch.configurationSourceProfiles")
+			.key("stagemonitor.configuration.elasticsearch.configurationSourceProfiles")
+			.aliasKeys("stagemonitor.elasticsearch.configurationSourceProfiles")
 			.dynamic(false)
 			.label("Elasticsearch configuration source profiles")
 			.description("Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source " +
 					"that can be shared between multiple server instances. Set the profiles appropriate to the current " +
 					"environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under " +
-					"`{stagemonitor.elasticsearch.url}/stagemonitor/configuration/{configurationSourceProfile}`.")
+					"`{stagemonitor.reporting.elasticsearch.url}/stagemonitor-configuration/configuration/{configurationSourceProfile}`.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(Collections.<String>emptyList());
 	private final ConfigurationOption<Boolean> deactivateStagemonitorIfEsConfigSourceIsDown = ConfigurationOption.booleanOption()
-			.key("stagemonitor.elasticsearch.configurationSource.deactivateStagemonitorIfEsIsDown")
+			.key("stagemonitor.configuration.elasticsearch.deactivateStagemonitorIfEsIsDown")
+			.aliasKeys("stagemonitor.elasticsearch.configurationSource.deactivateStagemonitorIfEsIsDown")
 			.dynamic(false)
 			.label("Deactivate stagemonitor if elasticsearch configuration source is down")
 			.description("Set to true if stagemonitor should be deactivated if " +
-					"stagemonitor.elasticsearch.configurationSourceProfiles is set but elasticsearch can't be reached " +
-					"under stagemonitor.elasticsearch.url. Defaults to true to prevent starting stagemonitor with " +
+					"stagemonitor.configuration.elasticsearch.configurationSourceProfiles is set but elasticsearch can't be reached " +
+					"under stagemonitor.reporting.elasticsearch.url. Defaults to true to prevent starting stagemonitor with " +
 					"wrong configuration.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(true);
@@ -372,7 +378,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.buildWithDefault("stagemonitor-elasticsearch-metrics-index-template.json");
 	private final ConfigurationOption<Integer> elasticsearchAvailabilityCheckPeriodSec = ConfigurationOption.integerOption()
-			.key("stagemonitor.elasticsearch.availabilityCheckPeriodSec")
+			.key("stagemonitor.reporting.elasticsearch.availabilityCheckPeriodSec")
+			.aliasKeys("stagemonitor.elasticsearch.availabilityCheckPeriodSec")
 			.dynamic(false)
 			.label("Elasticsearch availability check period (sec)")
 			.description("When set to a value > 0 stagemonitor periodically checks if Elasticsearch is available. " +

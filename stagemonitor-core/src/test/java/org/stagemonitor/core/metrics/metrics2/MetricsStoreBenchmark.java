@@ -33,7 +33,7 @@ public class MetricsStoreBenchmark {
 		this.gauges = gauges;
 		this.timers = timers;
 		this.meters = meters;
-		System.setProperty("stagemonitor.elasticsearch.url", "http://192.168.99.100:9200");
+		System.setProperty("stagemonitor.reporting.elasticsearch.url", "http://192.168.99.100:9200");
 		System.setProperty("stagemonitor.reporting.interval.elasticsearch", reportingInterval.toString());
 		System.setProperty("stagemonitor.reporting.influxdb.url", "http://192.168.99.100:8086");
 		System.setProperty("stagemonitor.reporting.interval.influxdb", reportingInterval.toString());
