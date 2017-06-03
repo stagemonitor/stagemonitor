@@ -13,25 +13,24 @@ public class JdbcPlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Collect SQLs in call tree")
 			.description("Whether or not sql statements should be included in the call stack.")
-			.defaultValue(true)
 			.configurationCategory(JDBC_PLUGIN)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Boolean> collectPreparedStatementParameters = ConfigurationOption.booleanOption()
 			.key("stagemonitor.profiler.jdbc.collectPreparedStatementParameters")
 			.dynamic(true)
 			.label("Collect prepared statement parameters")
 			.description("Whether or not the prepared statement placeholders (?) should be replaced with the actual parameters.")
-			.defaultValue(true)
 			.tags("security-relevant")
 			.configurationCategory(JDBC_PLUGIN)
-			.build();
+			.buildWithDefault(true);
 	private final ConfigurationOption<Collection<String>> dataSourceImplementations = ConfigurationOption.stringsOption()
 			.key("stagemonitor.instrument.jdbc.dataSource.implementations")
 			.dynamic(false)
 			.label("Class name of DataSource implementations")
 			.description("The class name of all known javax.sql.DataSource implementations. If your favourite implementation is " +
 					"not listed here, just add it to the list.")
-			.defaultValue(SetValueConverter.immutableSet(
+			.configurationCategory(JDBC_PLUGIN)
+			.buildWithDefault(SetValueConverter.immutableSet(
 					"org.apache.tomcat.jdbc.pool.DataSource",
 					"org.apache.tomcat.dbcp.dbcp.PoolingDataSource",
 					"org.apache.tomcat.jdbc.pool.DataSourceProxy",
@@ -45,9 +44,7 @@ public class JdbcPlugin extends StagemonitorPlugin {
 					"com.zaxxer.hikari.HikariDataSource",
 					"org.jboss.jca.adapters.jdbc.WrapperDataSource",
 					"org.springframework.jdbc.datasource.AbstractDriverBasedDataSource"
-			))
-			.configurationCategory(JDBC_PLUGIN)
-			.build();
+			));
 
 	@Override
 	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {

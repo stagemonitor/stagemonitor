@@ -25,7 +25,7 @@ public class ConfigurationOptionTest {
 	private final ConfigurationOption<Map<Pattern,String>> invalidPatternMap = ConfigurationOption.regexMapOption().key("invalidPatternMap").build();
 	private final ConfigurationOption<Collection<Pattern>> invalidPatternSyntax = ConfigurationOption.regexListOption().key("invalidPatternSyntax").build();
 	private final ConfigurationOption<Long> aLong = ConfigurationOption.longOption().key("long").build();
-	private final ConfigurationOption<Long> invalidLong = ConfigurationOption.longOption().key("invalidLong").defaultValue(2L).build();
+	private final ConfigurationOption<Long> invalidLong = ConfigurationOption.longOption().key("invalidLong").buildWithDefault(2L);
 	private final ConfigurationOption<String> string = ConfigurationOption.stringOption().key("string").buildRequired();
 	private final ConfigurationOption<Collection<String>> lowerStrings = ConfigurationOption.lowerStringsOption().key("lowerStrings").build();
 	private final ConfigurationOption<Collection<String>> strings = ConfigurationOption.stringsOption().key("strings").build();
@@ -36,7 +36,7 @@ public class ConfigurationOptionTest {
 	private final ConfigurationOption<String> testUpdate = ConfigurationOption.stringOption().key("testUpdate").dynamic(true).build();
 	private final ConfigurationOption<Optional<String>> testOptionalWithValue = ConfigurationOption.stringOption().key("testOptionalWithValue").dynamic(true).buildOptional();
 	private final ConfigurationOption<Optional<String>> testOptionalWithoutValue = ConfigurationOption.stringOption().key("testOptionalWithoutValue").dynamic(true).buildOptional();
-	ConfigurationOption<String> testAlternateKeys = ConfigurationOption.stringOption()
+	private ConfigurationOption<String> testAlternateKeys = ConfigurationOption.stringOption()
 			.key("primaryKey")
 			.aliasKeys("alternateKey1", "alternateKey2")
 			.dynamic(true)

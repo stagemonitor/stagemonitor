@@ -44,35 +44,31 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Mute alerts")
 			.description("If set to `true`, alerts will be muted.")
-			.defaultValue(false)
 			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(false);
 	private final ConfigurationOption<Long> checkFrequency = ConfigurationOption.longOption()
 			.key("stagemonitor.alerts.frequency")
 			.dynamic(false)
 			.label("Threshold check frequency (sec)")
 			.description("The threshold check frequency in seconds.")
-			.defaultValue(60L)
 			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(60L);
 	private final ConfigurationOption<Map<String, Subscription>> subscriptions = ConfigurationOption
 			.jsonOption(new TypeReference<Map<String, Subscription>>() {}, Map.class)
 			.key("stagemonitor.alerts.subscriptions")
 			.dynamic(true)
 			.label("Alert Subscriptions")
 			.description("The alert subscriptions.")
-			.defaultValue(Collections.<String, Subscription>emptyMap())
 			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<String, Subscription>emptyMap());
 	private final ConfigurationOption<Map<String, Check>> checks = ConfigurationOption
 			.jsonOption(new TypeReference<Map<String, Check>>() {}, Map.class)
 			.key("stagemonitor.alerts.checks")
 			.dynamic(true)
 			.label("Check Groups")
 			.description("The check groups that contain thresholds for metrics.")
-			.defaultValue(Collections.<String, Check>emptyMap())
 			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(Collections.<String, Check>emptyMap());
 
 	private ConfigurationOption<String> smtpHost = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.smtp.host")
@@ -96,39 +92,36 @@ public class AlertingPlugin extends StagemonitorPlugin {
 	private ConfigurationOption<String> smtpProtocol = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.smtp.protocol")
 			.dynamic(true)
-			.defaultValue("smtp")
 			.label("SMTP-Protocol")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+			.buildWithDefault("smtp");
 	private ConfigurationOption<Integer> smtpPort = ConfigurationOption.integerOption()
 			.key("stagemonitor.alerts.smtp.port")
 			.dynamic(true)
-			.defaultValue(25)
 			.label("SMTP-Port")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(25);
 	private ConfigurationOption<String> smtpFrom = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.smtp.from")
 			.dynamic(true)
 			.label("SMTP-From")
 			.description("The from email address for sending notifications.")
-			.defaultValue("alert@stagemonitor.org")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+			.buildWithDefault("alert@stagemonitor.org");
 	private ConfigurationOption<String> pushbulletAccessToken = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.pushbullet.accessToken")
 			.dynamic(true)
 			.label("Pushbullet Access Token")
 			.description("The Access Token for the Pushbullet API. You can find it in your Pushbullet account settings.")
-			.defaultValue(null)
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.sensitive()
-			.build();
+			.buildWithDefault(null);
 	private ConfigurationOption<String> htmlAlertTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.template.html")
 			.dynamic(true)
 			.label("Alerts HTML freemarker template")
-			.defaultValue("<#-- @ftlvariable name=\"incident\" type=\"org.stagemonitor.alerting.incident.Incident\" -->\n" +
+			.configurationCategory(ALERTING_PLUGIN_NAME)
+			.buildWithDefault("<#-- @ftlvariable name=\"incident\" type=\"org.stagemonitor.alerting.incident.Incident\" -->\n" +
 					"<h3>Incident for check ${incident.checkName}</h3>\n" +
 					"First failure: ${incident.firstFailureAt?datetime?iso_local}<br>\n" +
 					"<#if incident.resolvedAt??>\n" +
@@ -168,14 +161,13 @@ public class AlertingPlugin extends StagemonitorPlugin {
 					"	</tbody>\n" +
 					"</table>\n" +
 					"	</#if>\n" +
-					"</#if>\n")
-			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+					"</#if>\n");
 	private ConfigurationOption<String> plainTextAlertTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.template.plainText")
 			.dynamic(true)
 			.label("Alerts plain text freemarker template")
-			.defaultValue("<#-- @ftlvariable name=\"incident\" type=\"org.stagemonitor.alerting.incident.Incident\" -->\n" +
+			.configurationCategory(ALERTING_PLUGIN_NAME)
+			.buildWithDefault("<#-- @ftlvariable name=\"incident\" type=\"org.stagemonitor.alerting.incident.Incident\" -->\n" +
 					"Incident for check '${incident.checkName}':\n" +
 					"First failure: ${incident.firstFailureAt?datetime?iso_local}\n" +
 					"<#if incident.resolvedAt??>\n" +
@@ -201,17 +193,14 @@ public class AlertingPlugin extends StagemonitorPlugin {
 					"\n" +
 					"</#list>" +
 					"</#list>" +
-					"</#if>")
-			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+					"</#if>");
 	private ConfigurationOption<String> shortDescriptionAlertTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.template.shortDescription")
 			.dynamic(true)
 			.label("Alerts short description freemarker template")
 			.description("Used for example for the email subject.")
-			.defaultValue("[${incident.oldStatus!'OK'} -> ${incident.newStatus}] ${incident.checkName} has ${incident.failedChecks} failing check<#if incident.failedChecks gt 1>s</#if>")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
-			.build();
+			.buildWithDefault("[${incident.oldStatus!'OK'} -> ${incident.newStatus}] ${incident.checkName} has ${incident.failedChecks} failing check<#if incident.failedChecks gt 1>s</#if>");
 
 	private AlertSender alertSender;
 	private IncidentRepository incidentRepository;
