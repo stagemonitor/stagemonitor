@@ -358,6 +358,9 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	/**
 	 * This is an internal method, use {@link GlobalTracer#get()}
+	 * <p/>
+	 * However, if you are a stagemonitor plugin developer, you should use this method
+	 * as the tracer can be mocked more easily.
 	 */
 	public Tracer getTracer() {
 		if (spanWrappingTracer != null && corePlugin.isStagemonitorActive()) {

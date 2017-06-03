@@ -115,7 +115,7 @@ public class AlertingPlugin extends StagemonitorPlugin {
 			.description("The Access Token for the Pushbullet API. You can find it in your Pushbullet account settings.")
 			.configurationCategory(ALERTING_PLUGIN_NAME)
 			.sensitive()
-			.buildWithDefault(null);
+			.build();
 	private ConfigurationOption<String> htmlAlertTemplate = ConfigurationOption.stringOption()
 			.key("stagemonitor.alerts.template.html")
 			.dynamic(true)
