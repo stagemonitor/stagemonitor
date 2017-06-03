@@ -182,7 +182,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 					"This is handy, if you are not interested in the performance of serving static files. " +
 					"Setting this to true can also significantly reduce the amount of files (and thus storing space) " +
 					"Graphite will allocate.")
-			.configurationCategory("Spring MVC Plugin")
+			.configurationCategory(WEB_PLUGIN)
 			.buildWithDefault(false);
 	private ConfigurationOption<Boolean> monitorOnlyResteasyOption = ConfigurationOption.booleanOption()
 			.key("stagemonitor.requestmonitor.resteasy.monitorOnlyResteasyRequests")
@@ -192,7 +192,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 					"This is handy, if you are not interested in the performance of serving static files. " +
 					"Setting this to true can also significantly reduce the amount of files (and thus storing space) " +
 					"Graphite will allocate.")
-			.configurationCategory("Resteasy Plugin")
+			.configurationCategory(WEB_PLUGIN)
 			.buildWithDefault(false);
 	private ConfigurationOption<Collection<String>> requestExceptionAttributes = ConfigurationOption.stringsOption()
 			.key("stagemonitor.requestmonitor.requestExceptionAttributes")
