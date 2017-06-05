@@ -1,16 +1,16 @@
 package org.stagemonitor;
 
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.StagemonitorPlugin;
+import org.stagemonitor.util.StringUtils;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.ConfigurationOption;
-import org.stagemonitor.util.StringUtils;
 
 public class ConfigurationOptionsMarkdownExporter {
 
@@ -18,8 +18,13 @@ public class ConfigurationOptionsMarkdownExporter {
 	}
 
 	public static void main(String[] args) throws IOException {
+		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(StagemonitorPlugin.class);
+		System.out.println(getMarkdown(configurationRegistry));
+	}
+
+	private static String getMarkdown(ConfigurationRegistry configurationRegistry) {
 		StringBuilder markdown = new StringBuilder();
-		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new ConfigurationRegistry(StagemonitorPlugin.class).getConfigurationOptionsByCategory();
+		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = configurationRegistry.getConfigurationOptionsByCategory();
 
 		MultiValueMap<String, ConfigurationOption<?>> configurationOptionsByTags = new LinkedMultiValueMap<>();
 		configurationOptionsByPlugin.values()
@@ -47,7 +52,7 @@ public class ConfigurationOptionsMarkdownExporter {
 			final String pluginName = entry.getKey();
 			markdown.append("* ").append(linkToHeadline(pluginName)).append('\n');
 			for (ConfigurationOption<?> option : entry.getValue()) {
-				markdown.append(" * ").append(linkToHeadline(option.getLabel())).append('\n');
+				markdown.append("  * ").append(linkToHeadline(option.getLabel())).append('\n');
 			}
 		}
 		markdown.append("\n");
@@ -57,7 +62,7 @@ public class ConfigurationOptionsMarkdownExporter {
 		for (Map.Entry<String, List<ConfigurationOption<?>>> entry : configurationOptionsByTags.entrySet()) {
 			markdown.append("* `").append(entry.getKey()).append("` \n");
 			for (ConfigurationOption<?> option : entry.getValue()) {
-				markdown.append(" * ").append(linkToHeadline(option.getLabel())).append('\n');
+				markdown.append("  * ").append(linkToHeadline(option.getLabel())).append('\n');
 			}}
 		markdown.append("\n");
 
@@ -65,10 +70,19 @@ public class ConfigurationOptionsMarkdownExporter {
 			markdown.append("# ").append(entry.getKey()).append("\n\n");
 			for (ConfigurationOption<?> configurationOption : entry.getValue()) {
 				markdown.append("## ").append(configurationOption.getLabel()).append("\n\n");
-				markdown.append(configurationOption.getDescription()).append("\n\n");
+				if (configurationOption.getDescription() != null) {
+					markdown.append(configurationOption.getDescription()).append("\n\n");
+				}
 				markdown.append("Key: `").append(configurationOption.getKey()).append("`\n\n");
 				markdown.append("Default Value: ");
-				markdown.append('`').append(configurationOption.getDefaultValueAsString()).append("`\n\n");
+				final String defaultValue = configurationOption.getDefaultValueAsString();
+				if (defaultValue == null) {
+					markdown.append("`null`\n\n");
+				} else if (!defaultValue.contains("\n")) {
+					markdown.append('`').append(defaultValue).append("`\n\n");
+				} else {
+					markdown.append("\n\n```\n").append(defaultValue).append("\n```\n\n");
+				}
 				if (!configurationOption.getTags().isEmpty()) {
 					markdown.append("Tags: ");
 					for (String tag : configurationOption.getTags()) {
@@ -79,7 +93,7 @@ public class ConfigurationOptionsMarkdownExporter {
 			}
 			markdown.append("***\n\n");
 		}
-		System.out.println(markdown);
+		return markdown.toString();
 	}
 
 	private static String linkToHeadline(String headline) {
