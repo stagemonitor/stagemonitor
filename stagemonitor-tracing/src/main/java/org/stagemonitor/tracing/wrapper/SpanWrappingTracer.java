@@ -12,9 +12,9 @@ import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 
 /**
- * The purpose of this class is to make it possible to register {@link SpanEventListener}s which are created by
- * {@link SpanEventListenerFactory}s. The {@link SpanEventListener}s are called when certain methods of a
- * {@link SpanBuilder} or {@link Span} are called.
+ * The purpose of this class is to make it possible to register {@link SpanEventListener}s which are created by {@link
+ * SpanEventListenerFactory}s. The {@link SpanEventListener}s are called when certain methods of a {@link SpanBuilder}
+ * or {@link Span} are called.
  */
 public class SpanWrappingTracer implements Tracer {
 
@@ -53,8 +53,17 @@ public class SpanWrappingTracer implements Tracer {
 		return spanEventListeners;
 	}
 
-	public void addSpanInterceptor(SpanEventListenerFactory spanEventListenerFactory) {
+	public void addEventListenerFactory(SpanEventListenerFactory spanEventListenerFactory) {
 		spanInterceptorFactories.add(spanEventListenerFactory);
+	}
+
+	/**
+	 * @throws java.util.ConcurrentModificationException this exception might be thrown if the {@link Collection}
+	 *                                                   implementation of {@link #spanInterceptorFactories} does not
+	 *                                                   support concurrent access and.
+	 */
+	public boolean removeEventListenerFactory(SpanEventListenerFactory spanEventListenerFactory) {
+		return spanInterceptorFactories.remove(spanEventListenerFactory);
 	}
 
 	class SpanWrappingSpanBuilder implements SpanBuilder {

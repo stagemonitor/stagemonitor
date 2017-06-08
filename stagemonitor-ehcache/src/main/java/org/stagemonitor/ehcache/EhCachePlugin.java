@@ -74,7 +74,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 				"Check the config for 'stagemonitor.ehcache.name'. " +
 				"It could also be possible that cache manager is not initialized yet. " +
 				"Stagemonitor will try to initialize again when the application serves the first request.");
-		tracingPlugin.addSpanInterceptor(new FirstOperationEventListener() {
+		tracingPlugin.addSpanEventListenerFactory(new FirstOperationEventListener(tracingPlugin.getSpanWrappingTracer()) {
 			@Override
 			public void onFirstOperation(SpanWrapper spanWrapper) {
 				monitorCaches(CacheManager.getCacheManager(ehCacheNameOption.getValue()));
