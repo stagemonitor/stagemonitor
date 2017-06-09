@@ -1,16 +1,7 @@
 package org.stagemonitor.os;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.util.Map;
-import java.util.Set;
-
 import com.codahale.metrics.Gauge;
+
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
@@ -18,15 +9,25 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
+
+import java.util.Map;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 @RunWith(ConditionalTravisTestRunner.class)
 public class OsPluginTest {
@@ -162,7 +163,6 @@ public class OsPluginTest {
 		assertTrue(getDoubleGauge(name("disk_usage_percent").tag("mountpoint", mountPoint).build()) <= 100);
 		assertTrue(getLongGauge(name("disk_io").tag("mountpoint", mountPoint).type("read").build()) >= 0);
 		assertTrue(getLongGauge(name("disk_io").tag("mountpoint", mountPoint).type("write").build()) >= 0);
-		assertTrue(getDoubleGauge(name("disk_queue").tag("mountpoint", mountPoint).build()) >= -1);
 	}
 
 	private double getDoubleGauge(MetricName gaugeName) {

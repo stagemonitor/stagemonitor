@@ -2,7 +2,6 @@ package org.stagemonitor.web.servlet;
 
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
-import org.stagemonitor.web.servlet.rum.BoomerangJsHtmlInjector;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +18,7 @@ public class StagemonitorFileServlet extends HttpServlet {
 	private final List<String> filesToCacheForever;
 
 	public StagemonitorFileServlet() {
-		this(Collections.singletonList(BoomerangJsHtmlInjector.BOOMERANG_FILENAME));
+		this(Collections.<String>emptyList());
 	}
 
 	public StagemonitorFileServlet(List<String> filesToCacheForever) {

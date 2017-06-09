@@ -192,7 +192,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 				response.getCharacterEncoding());
 		if (content.contains("</body>")) {
 			httpServletRequest.setAttribute("stagemonitorInjected", true);
-			content = getContetToInject(httpServletRequest, spanContext, content);
+			content = getContentToInject(httpServletRequest, spanContext, content);
 			final byte[] bytes = content.getBytes(response.getCharacterEncoding());
 			response.setContentLength(bytes.length);
 			response.getOutputStream().write(bytes);
@@ -206,11 +206,11 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		logger.debug("injectHtmlToWriter - encoding={}", response.getCharacterEncoding());
 		httpServletRequest.setAttribute("stagemonitorInjected", true);
 		String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
-		content = getContetToInject(httpServletRequest, spanContext, content);
+		content = getContentToInject(httpServletRequest, spanContext, content);
 		response.getWriter().write(content);
 	}
 
-	private String getContetToInject(HttpServletRequest httpServletRequest, SpanContextInformation spanContext, String content) {
+	private String getContentToInject(HttpServletRequest httpServletRequest, SpanContextInformation spanContext, String content) {
 		for (HtmlInjector htmlInjector : htmlInjectors) {
 			if (htmlInjector.isActive(new HtmlInjector.IsActiveArguments(httpServletRequest))) {
 				final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(spanContext);
