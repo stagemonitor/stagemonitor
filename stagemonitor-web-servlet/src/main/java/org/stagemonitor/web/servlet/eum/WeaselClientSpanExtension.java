@@ -6,7 +6,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class WeaselClientSpanExtension implements ClientSpanExtensionSPI {
+public class WeaselClientSpanExtension extends ClientSpanExtensionSPI {
 
 	@Override
 	public String getClientTraceExtensionScript() {

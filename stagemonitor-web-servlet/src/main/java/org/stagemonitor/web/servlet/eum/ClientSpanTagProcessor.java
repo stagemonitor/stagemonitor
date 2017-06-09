@@ -33,7 +33,9 @@ abstract class ClientSpanTagProcessor {
 	}
 
 	String getParameterValueOrNull(String key, Map<String, String[]> servletRequestParameters) {
-		if (servletRequestParameters != null && servletRequestParameters.size() > 0) {
+		if (servletRequestParameters != null
+				&& servletRequestParameters.containsKey(key)
+				&& servletRequestParameters.get(key).length > 0) {
 			return servletRequestParameters.get(key)[0];
 		} else {
 			return null;

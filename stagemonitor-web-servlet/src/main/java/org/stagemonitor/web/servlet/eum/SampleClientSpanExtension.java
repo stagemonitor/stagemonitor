@@ -4,7 +4,7 @@ import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-public class SampleClientSpanExtension implements ClientSpanExtensionSPI {
+public class SampleClientSpanExtension extends ClientSpanExtensionSPI {
 	@Override
 	public String getClientTraceExtensionScript() {
 		return "var eum = window.EumObject; (window[eum])('meta', 'sample_span_extension', 'sample_value');";

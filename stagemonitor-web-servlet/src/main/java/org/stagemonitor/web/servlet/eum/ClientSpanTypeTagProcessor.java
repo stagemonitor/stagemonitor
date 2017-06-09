@@ -1,5 +1,7 @@
 package org.stagemonitor.web.servlet.eum;
 
+import org.stagemonitor.tracing.utils.SpanUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +14,7 @@ public class ClientSpanTypeTagProcessor extends ClientSpanTagProcessor {
 	private final Map<String, String> clientSpanType;
 
 	public ClientSpanTypeTagProcessor() {
-		this.tagName = "type";
+		this.tagName = SpanUtils.OPERATION_TYPE;
 		this.requestParameterName = "ty";
 		clientSpanType = new HashMap<String, String>();
 		clientSpanType.put("pl", "client_pageload");
