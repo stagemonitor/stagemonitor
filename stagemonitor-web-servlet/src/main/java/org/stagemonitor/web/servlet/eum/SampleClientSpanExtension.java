@@ -1,8 +1,9 @@
 package org.stagemonitor.web.servlet.eum;
 
-import java.util.List;
+import java.util.Map;
 
-import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
+import static org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.TYPE_STRING;
 
 public class SampleClientSpanExtension extends ClientSpanExtensionSPI {
 	@Override
@@ -11,7 +12,7 @@ public class SampleClientSpanExtension extends ClientSpanExtensionSPI {
 	}
 
 	@Override
-	public List<String> getWhitelistedTags() {
-		return singletonList("sample_span_extension");
+	public Map<String, String> getWhitelistedTags() {
+		return singletonMap("sample_span_extension", TYPE_STRING);
 	}
 }

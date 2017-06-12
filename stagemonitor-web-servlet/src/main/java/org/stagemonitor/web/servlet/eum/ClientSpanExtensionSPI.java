@@ -2,12 +2,12 @@ package org.stagemonitor.web.servlet.eum;
 
 import org.stagemonitor.core.StagemonitorSPI;
 
-import java.util.List;
+import java.util.Map;
 
 public abstract class ClientSpanExtensionSPI implements StagemonitorSPI {
 
 	public abstract String getClientTraceExtensionScript();
 
-	public abstract List<String> getWhitelistedTags();
+	public abstract Map<String, String> getWhitelistedTags();
 
 }

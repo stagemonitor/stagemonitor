@@ -6,13 +6,14 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +21,7 @@ public class ClientSpanServletTest {
 
 	private MockTracer tracer;
 	private ClientSpanServlet servlet;
+	private ServletPlugin servletPlugin;
 
 	@Test
 	public void testConvertWeaselTraceToStagemonitorTrace_withPageLoadBeacon() {
@@ -52,26 +54,78 @@ public class ClientSpanServletTest {
 		servlet.convertWeaselTraceToStagemonitorTrace(mockHttpServletRequest);
 
 		// Then
-		final List<MockSpan> finishedSpans = tracer.finishedSpans();
-		assertThat(finishedSpans).hasSize(1);
-		MockSpan span = finishedSpans.get(0);
-		assertThat(span.operationName()).isEqualTo("pl http://localhost:9966/petclinic/");
-		assertThat(span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + -197L));
-		assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + 518L));
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = tracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+			softly.assertThat(span.operationName()).isEqualTo("pl http://localhost:9966/petclinic/");
+			softly.assertThat(span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + -197L));
+			softly.assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + -197L + 518L));
 
-		assertThat(span.tags().get("type")).isEqualTo("client_pageload");
-		assertThat(span.tags().get("user")).isEqualTo(null); // TODO: test whitelisting of metatags
+			softly.assertThat(span.tags())
+					.containsEntry("type", "client_pageload")
+					.doesNotContainEntry("user", null) // TODO: test whitelisting of metatags
+					.containsEntry("http.url", "http://localhost:9966/petclinic/")
+					.containsEntry("timing.unload", 0L)
+					.containsEntry("timing.redirect", 0L)
+					.containsEntry("timing.app_cache_lookup", 5L)
+					.containsEntry("timing.dns_lookup", 0L)
+					.containsEntry("timing.tcp", 0L)
+					.containsEntry("timing.time_to_first_byte", 38L)
+					.containsEntry("timing.response", 4L)
+					.containsEntry("timing.processing", 471L)
+					.containsEntry("timing.load", 5L)
+					.containsEntry("timing.time_to_first_paint", 151L);
+		});
+	}
 
-		assertThat(span.tags().get("timing.unload")).isEqualTo(0L);
-		assertThat(span.tags().get("timing.redirect")).isEqualTo(0L);
-		assertThat(span.tags().get("timing.app_cache_lookup")).isEqualTo(5L);
-		assertThat(span.tags().get("timing.dns_lookup")).isEqualTo(0L);
-		assertThat(span.tags().get("timing.tcp")).isEqualTo(0L);
-		assertThat(span.tags().get("timing.time_to_first_byte")).isEqualTo(38L);
-		assertThat(span.tags().get("timing.response")).isEqualTo(4L);
-		assertThat(span.tags().get("timing.processing")).isEqualTo(471L);
-		assertThat(span.tags().get("timing.load")).isEqualTo(5L);
-		assertThat(span.tags().get("timing.time_to_first_paint")).isEqualTo(151L);
+	@Test
+	public void testConvertWeaselTraceToStagemonitorTrace_withMetadata() {
+		// Given - normal trace data
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("ty", "pl");
+		mockHttpServletRequest.setParameter("r", "1496751574200");
+		mockHttpServletRequest.setParameter("u", "http://localhost:9966/petclinic/");
+		mockHttpServletRequest.setParameter("m_user", "tom.mason@example.com");
+		mockHttpServletRequest.setParameter("ts", "-197");
+		mockHttpServletRequest.setParameter("d", "518");
+		mockHttpServletRequest.setParameter("t_unl", "0");
+		mockHttpServletRequest.setParameter("t_red", "0");
+		mockHttpServletRequest.setParameter("t_apc", "5");
+		mockHttpServletRequest.setParameter("t_dns", "0");
+		mockHttpServletRequest.setParameter("t_tcp", "0");
+		mockHttpServletRequest.setParameter("t_req", "38");
+		mockHttpServletRequest.setParameter("t_rsp", "4");
+		mockHttpServletRequest.setParameter("t_pro", "471");
+		mockHttpServletRequest.setParameter("t_loa", "5");
+		mockHttpServletRequest.setParameter("t_fp", "151");
+
+		// Given - metadata
+		mockHttpServletRequest.setParameter("m_username", "test string here");
+		mockHttpServletRequest.setParameter("m_age", "26");
+		mockHttpServletRequest.setParameter("m_is_access_allowed", "1");
+		mockHttpServletRequest.setParameter("m_some_not_mapped_property", "this should not exist");
+
+		// When
+		final HashMap<String, String> whitelistedValues = new HashMap<>();
+		whitelistedValues.put("username", "string");
+		whitelistedValues.put("age", "number");
+		whitelistedValues.put("is_access_allowed", "boolean");
+		when(servletPlugin.getWhitelistedClientSpanTags()).thenReturn(whitelistedValues);
+		servlet.convertWeaselTraceToStagemonitorTrace(mockHttpServletRequest);
+
+		// Then
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = tracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+
+			softly.assertThat(span.tags())
+					.containsEntry("username", "test string here")
+					.containsEntry("age", 26.)
+					.containsEntry("is_access_allowed", true)
+					.doesNotContainKey("some_not_mapped_property");
+		});
 	}
 
 	@Test
@@ -94,12 +148,20 @@ public class ClientSpanServletTest {
 		servlet.convertWeaselTraceToStagemonitorTrace(mockHttpServletRequest);
 
 		// Then
-		final List<MockSpan> finishedSpans = tracer.finishedSpans();
-		assertThat(finishedSpans).hasSize(1);
-		MockSpan span = finishedSpans.get(0);
-		assertThat(span.tags().get("type")).isEqualTo("client_error");
-		assertThat(span.startMicros()).isEqualTo(1496753245024000L);
-		assertThat(span.operationName()).isEqualTo("err http://localhost:9966/petclinic/");
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = tracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+			softly.assertThat(span.startMicros()).isEqualTo(1496753245024000L);
+			softly.assertThat(span.operationName()).isEqualTo("err http://localhost:9966/petclinic/");
+			softly.assertThat(span.finishMicros()).isEqualTo(1496753245024000L);
+
+			softly.assertThat(span.tags())
+					.containsEntry("http.url", "http://localhost:9966/petclinic/")
+					.containsEntry("type", "client_error")
+					.containsEntry("exception.stack_trace", "at http://localhost:9966/petclinic/ 301:34")
+					.containsEntry("exception.message", "Uncaught null");
+		});
 	}
 
 	@Test
@@ -126,13 +188,23 @@ public class ClientSpanServletTest {
 		servlet.convertWeaselTraceToStagemonitorTrace(mockHttpServletRequest);
 
 		// Then
-		final List<MockSpan> finishedSpans = tracer.finishedSpans();
-		assertThat(finishedSpans).hasSize(1);
-		MockSpan span = finishedSpans.get(0);
-		assertThat(span.tags().get("type")).isEqualTo("client_ajax");
-		assertThat(span.startMicros()).isEqualTo(1496994305977000L);
-		assertThat(span.operationName()).isEqualTo("xhr http://localhost:9966/petclinic/");
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = tracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+			softly.assertThat(span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496994284184L + 21793L));
+			softly.assertThat(span.operationName()).isEqualTo("xhr http://localhost:9966/petclinic/");
+			softly.assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496994284184L + 21793L + 2084L));
 
+			softly.assertThat(span.tags())
+					.containsEntry("type", "client_ajax")
+					.containsEntry("http.status", 200L)
+					.containsEntry("method", "GET")
+					.containsEntry("xhr.requested_url", "owners.html?lastName=")
+					.containsEntry("xhr.requested_from", "http://localhost:9966/petclinic/")
+					.containsEntry("xhr.async", true)
+					.containsEntry("duration_ms", 2084L);
+		});
 	}
 
 	@Before
@@ -140,9 +212,9 @@ public class ClientSpanServletTest {
 		tracer = new MockTracer();
 		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
-		ServletPlugin webPlugin = mock(ServletPlugin.class);
-		when(webPlugin.isParseUserAgent()).thenReturn(false);
-		servlet = new ClientSpanServlet(tracingPlugin, webPlugin);
+		servletPlugin = mock(ServletPlugin.class);
+		when(servletPlugin.isParseUserAgent()).thenReturn(false);
+		servlet = new ClientSpanServlet(tracingPlugin, servletPlugin);
 	}
 
 }

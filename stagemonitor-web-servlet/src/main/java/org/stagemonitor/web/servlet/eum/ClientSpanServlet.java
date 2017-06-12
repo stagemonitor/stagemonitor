@@ -25,6 +25,8 @@ public class ClientSpanServlet extends HttpServlet {
 
 	static final String PARAMETER_TYPE = "ty";
 	static final String TYPE_PAGE_LOAD = "pl";
+	static final String TYPE_ERROR = "err";
+	static final String TYPE_XHR = "xhr";
 	private static final String PARAMETER_TIME_STAMP = "ts";
 	private static final String PARAMETER_REFERENCE_TIMESTAMP = "r";
 	private static final String PARAMETER_DURATION = "d";
@@ -35,15 +37,15 @@ public class ClientSpanServlet extends HttpServlet {
 	private final TracingPlugin tracingPlugin;
 	private final List<ClientSpanTagProcessor> tagProcessors;
 	private final UserAgentParser userAgentParser;
-	private final ServletPlugin webPlugin;
+	private final ServletPlugin servletPlugin;
 
 	public ClientSpanServlet() {
 		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(ServletPlugin.class));
 	}
 
-	ClientSpanServlet(TracingPlugin tracingPlugin, ServletPlugin webPlugin) {
+	ClientSpanServlet(TracingPlugin tracingPlugin, ServletPlugin servletPlugin) {
 		this.tracingPlugin = tracingPlugin;
-		this.webPlugin = webPlugin;
+		this.servletPlugin = servletPlugin;
 		userAgentParser = new UserAgentParser();
 		tagProcessors = new ArrayList<ClientSpanTagProcessor>();
 		initializeDefaultTagProcessors();
@@ -51,7 +53,7 @@ public class ClientSpanServlet extends HttpServlet {
 
 	private void initializeDefaultTagProcessors() {
 		addTagProcessor(new ClientSpanTypeTagProcessor());
-		addTagProcessor(new ClientSpanMetadataTagProcessor());
+		addTagProcessor(new ClientSpanMetadataTagProcessor(servletPlugin));
 
 		// have a look at the weasel source [0] and the w3c spec for window.performance.timing [1]
 		// [0]: https://github.com/instana/weasel/blob/master/lib/timings.js
@@ -66,6 +68,16 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.processing", "t_pro"));
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.load", "t_loa"));
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.time_to_first_paint", "t_fp"));
+
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ERROR, "exception.stack_trace", "st"));
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ERROR, "exception.message", "e"));
+
+		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_XHR, "http.status", "st"));
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "method", "m"));
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_url", "u"));
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_from", "l"));
+		addTagProcessor(new ClientSpanBooleanTagProcessor(TYPE_XHR, "xhr.async", "a"));
+		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_XHR, "duration_ms", "d"));
 	}
 
 	@Override
@@ -79,7 +91,7 @@ public class ClientSpanServlet extends HttpServlet {
 	}
 
 	private void handleRequest(HttpServletRequest req, HttpServletResponse resp) {
-		if (webPlugin.isClientSpanCollectionEnabled()) {
+		if (servletPlugin.isClientSpanCollectionEnabled()) {
 			convertWeaselTraceToStagemonitorTrace(req);
 			resp.setHeader(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
@@ -94,16 +106,16 @@ public class ClientSpanServlet extends HttpServlet {
 		final Map<String, String[]> servletParameters = httpServletRequest.getParameterMap();
 		final long startTimeStampInMilliseconds;
 		final long possiblyOffsettedStartTimeStampInMilliseconds = Long.parseLong(httpServletRequest.getParameter(PARAMETER_TIME_STAMP));
-		final Long durationInMilliseconds;
+		final Long finishTimestampInMilliseconds;
 		final String referenceTimestampParameter = httpServletRequest.getParameter(PARAMETER_REFERENCE_TIMESTAMP);
 		if (referenceTimestampParameter == null) {
 			startTimeStampInMilliseconds = possiblyOffsettedStartTimeStampInMilliseconds;
-			durationInMilliseconds = 0L;
+			finishTimestampInMilliseconds = possiblyOffsettedStartTimeStampInMilliseconds;
 		} else {
 			final long referenceTimeStampInMilliseconds = Long.parseLong(referenceTimestampParameter);
 			startTimeStampInMilliseconds = possiblyOffsettedStartTimeStampInMilliseconds + referenceTimeStampInMilliseconds;
 			final Long durationOffset = Long.valueOf(httpServletRequest.getParameter(PARAMETER_DURATION));
-			durationInMilliseconds = durationOffset + referenceTimeStampInMilliseconds;
+			finishTimestampInMilliseconds = durationOffset + startTimeStampInMilliseconds;
 		}
 
 		final String httpUrl = getHttpUrl(httpServletRequest);
@@ -122,14 +134,14 @@ public class ClientSpanServlet extends HttpServlet {
 			tagProcessor.processSpan(span, servletParameters);
 		}
 
-		if (webPlugin.isParseUserAgent()) {
+		if (servletPlugin.isParseUserAgent()) {
 			userAgentParser.setUserAgentInformation(span, httpServletRequest.getHeader("user-agent"));
 		}
 		SpanUtils.setClientIp(span, httpServletRequest.getRemoteAddr());
 
 		// TODO: extract backend trace id (if sent) and attach span to that trace id
 
-		span.finish(MILLISECONDS.toMicros(durationInMilliseconds));
+		span.finish(MILLISECONDS.toMicros(finishTimestampInMilliseconds));
 	}
 
 	private String getHttpUrl(HttpServletRequest httpServletRequest) {

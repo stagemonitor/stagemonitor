@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.converter.SetValueConverter;
+import org.stagemonitor.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -61,7 +63,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		Stagemonitor.init();
 	}
 
-	private List<String> whitelistedClientSpanTagsFromSPI;
+	private Map<String, String> whitelistedClientSpanTagsFromSPI;
 
 	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
 			.key("stagemonitor.requestmonitor.http.requestparams.confidential.regex")
@@ -226,15 +228,16 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 					"to the server. Servlet API 3.0 or higher is required for this.")
 			.configurationCategory(WEB_PLUGIN)
 			.buildWithDefault(true);
-	private ConfigurationOption<Collection<String>> whitelistedClientSpanTags = ConfigurationOption.stringsOption()
+	private ConfigurationOption<Map<String, String>> whitelistedClientSpanTags = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, StringValueConverter.INSTANCE)
 			.key("stagemonitor.eum.whitelistedClientSpanTags")
 			.dynamic(true)
 			.label("Whitelisted client span tags")
 			.description("Defines the list of client span tags, which a client shall be allowed to sent. Tags may be added by" +
 					" plugins and this configuration option. Tags neither provided by a plugin nor added by this" +
-					" configuration option are ignored.")
+					" configuration option are ignored. Syntax is `key: type`. Valid types are string, boolean and number." +
+					" Example: `user: string, logged_in: boolean, age: number`")
 			.configurationCategory(WEB_PLUGIN)
-			.buildWithDefault(Collections.<String>emptyList());
+			.buildWithDefault(Collections.<String, String>emptyMap());
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
@@ -358,25 +361,25 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		return honorDoNotTrackHeader.getValue();
 	}
 
-	public List<String> getWhitelistedClientSpanTags() {
-		List<String> allWhitelistedTags = getWhitelistedClientSpanTagsFromSPI();
-		allWhitelistedTags.addAll(whitelistedClientSpanTags.get());
+	public Map<String, String> getWhitelistedClientSpanTags() {
+		Map<String, String> allWhitelistedTags = getWhitelistedClientSpanTagsFromSPI();
+		allWhitelistedTags.putAll(whitelistedClientSpanTags.get());
 		return allWhitelistedTags;
 	}
 
-	private List<String> getWhitelistedClientSpanTagsFromSPI() {
+	private Map<String, String> getWhitelistedClientSpanTagsFromSPI() {
 		if (whitelistedClientSpanTagsFromSPI == null) {
-			List<String> whitelistedTagsFromSPI = new ArrayList<String>();
+			HashMap<String, String> whitelistedTagsFromSPI = new HashMap<String, String>();
 
 			for (ClientSpanExtensionSPI clientSpanExtensionSPI : getClientSpanExtenders()) {
-				final List<String> whitelistedTags = clientSpanExtensionSPI.getWhitelistedTags();
-				whitelistedTagsFromSPI.addAll(whitelistedTags);
+				final Map<String, String> whitelistedTags = clientSpanExtensionSPI.getWhitelistedTags();
+				whitelistedTagsFromSPI.putAll(whitelistedTags);
 			}
 
 			this.whitelistedClientSpanTagsFromSPI = whitelistedTagsFromSPI;
 		}
 
-		return new ArrayList<String>(whitelistedClientSpanTagsFromSPI);
+		return new HashMap<String, String>(whitelistedClientSpanTagsFromSPI);
 	}
 
 	public List<ClientSpanExtensionSPI> getClientSpanExtenders() {

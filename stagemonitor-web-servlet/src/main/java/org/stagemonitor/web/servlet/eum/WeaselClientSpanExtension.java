@@ -2,9 +2,9 @@ package org.stagemonitor.web.servlet.eum;
 
 import org.stagemonitor.util.IOUtils;
 
-import java.util.List;
+import java.util.Map;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 public class WeaselClientSpanExtension extends ClientSpanExtensionSPI {
 
@@ -14,8 +14,8 @@ public class WeaselClientSpanExtension extends ClientSpanExtensionSPI {
 	}
 
 	@Override
-	public List<String> getWhitelistedTags() {
-		return emptyList();
+	public Map<String, String> getWhitelistedTags() {
+		return emptyMap();
 	}
 
 }
