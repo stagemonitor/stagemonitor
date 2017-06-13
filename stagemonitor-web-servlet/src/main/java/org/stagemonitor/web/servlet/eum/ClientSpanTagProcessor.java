@@ -7,6 +7,7 @@ import io.opentracing.Tracer;
 
 abstract class ClientSpanTagProcessor {
 
+	private static final int MAX_LENGTH = 255;
 	private final String typeToProcess;
 
 	protected ClientSpanTagProcessor(String weaselOperationTypeToProcess) {
@@ -50,6 +51,14 @@ abstract class ClientSpanTagProcessor {
 
 	protected void processSpanImpl(Span span, Map<String, String[]> servletRequestParameters) {
 		// default no-op
+	}
+
+	protected String trimStringToMaxLength(String string) {
+		if (string == null || string.length() <= MAX_LENGTH) {
+			return string;
+		} else {
+			return string.substring(0, MAX_LENGTH);
+		}
 	}
 
 

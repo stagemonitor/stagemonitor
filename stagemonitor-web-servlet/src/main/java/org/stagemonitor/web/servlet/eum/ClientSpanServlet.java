@@ -7,6 +7,8 @@ import org.stagemonitor.web.servlet.ServletPlugin;
 import org.stagemonitor.web.servlet.useragent.UserAgentParser;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -118,11 +120,9 @@ public class ClientSpanServlet extends HttpServlet {
 			finishTimestampInMilliseconds = durationOffset + startTimeStampInMilliseconds;
 		}
 
-		final String httpUrl = getHttpUrl(httpServletRequest);
-		final String operationName = httpServletRequest.getParameter(PARAMETER_TYPE) + " " + httpUrl;
-		final SpanBuilder spanBuilder = tracingPlugin.getTracer().buildSpan(operationName)
+		final SpanBuilder spanBuilder = tracingPlugin.getTracer().buildSpan(getOperationName(httpServletRequest))
 				.withStartTimestamp(MILLISECONDS.toMicros(startTimeStampInMilliseconds))
-				.withTag("http.url", httpUrl);
+				.withTag("http.url", getHttpUrl(httpServletRequest));
 
 		for (ClientSpanTagProcessor tagProcessor : tagProcessors) {
 			tagProcessor.processSpanBuilder(spanBuilder, servletParameters);
@@ -142,6 +142,16 @@ public class ClientSpanServlet extends HttpServlet {
 		// TODO: extract backend trace id (if sent) and attach span to that trace id
 
 		span.finish(MILLISECONDS.toMicros(finishTimestampInMilliseconds));
+	}
+
+	private String getOperationName(HttpServletRequest httpServletRequest) {
+		String httpUrl = getHttpUrl(httpServletRequest);
+		try {
+			URL url = new URL(httpUrl);
+			return url.getPath();
+		} catch (MalformedURLException e) {
+			return httpUrl;
+		}
 	}
 
 	private String getHttpUrl(HttpServletRequest httpServletRequest) {

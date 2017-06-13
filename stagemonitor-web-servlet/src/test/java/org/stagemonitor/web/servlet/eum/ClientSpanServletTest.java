@@ -3,12 +3,16 @@ package org.stagemonitor.web.servlet.eum;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import javax.servlet.ServletException;
 
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
@@ -24,7 +28,7 @@ public class ClientSpanServletTest {
 	private ServletPlugin servletPlugin;
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withPageLoadBeacon() {
+	public void testConvertWeaselTraceToStagemonitorTrace_withPageLoadBeacon() throws ServletException, IOException {
 		// Given
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("ty", "pl");
@@ -51,20 +55,20 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("res", "{\"http://localhost:9966/petclinic/\":{\"webjars/\":{\"bootstrap/2.3.0/\":{\"css/bootstrap.min.css\":[\"-136,10,2,1,105939\"],\"img/glyphicons-halflings.png\":[\"-48,0,4,1,12799\"]},\"jquery\":{\"/2.0.3/jquery.js\":[\"-136,0,3,1,242142\"],\"-ui/1.10.3/\":{\"ui/jquery.ui.\":{\"core.js\":[\"-136,0,3,1,8198\"],\"datepicker.js\":[\"-136,0,3,1,76324\"]},\"themes/base/jquery-ui.css\":[\"-136,8,2,1,32456\"]}}},\"resources/\":{\"css/petclinic.css\":[\"-136,8,2,1,243\"],\"images/\":{\"banner-graphic.png\":[\"-136,0,1,1,13773\"],\"pets.png\":[\"-136,0,1,1,55318\"],\"spring-pivotal-logo.png\":[\"-136,0,1,1,2818\"]}},\"stagemonitor/\":{\"public/static/\":{\"rum/boomerang-56c823668fc.min.js\":[\"-136,0,3,1,12165\"],\"eum.debug.js\":[\"-32,12,3,3,23798\"]},\"static/stagemonitor\":{\".png\":[\"-136,16,1,3,1694\"],\"-modal.html\":[\"-33,9,5,3,10538\"]}}}}");
 
 		// When
-		servlet.convertWeaselTraceToStagemonitorTrace(mockHttpServletRequest);
+		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
 
 		// Then
 		assertSoftly(softly -> {
 			final List<MockSpan> finishedSpans = tracer.finishedSpans();
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
-			softly.assertThat(span.operationName()).isEqualTo("pl http://localhost:9966/petclinic/");
+			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
 			softly.assertThat(span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + -197L));
 			softly.assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + -197L + 518L));
 
 			softly.assertThat(span.tags())
 					.containsEntry("type", "client_pageload")
-					.doesNotContainEntry("user", null) // TODO: test whitelisting of metatags
+					.doesNotContainKey("user") // TODO: test whitelisting of metatags
 					.containsEntry("http.url", "http://localhost:9966/petclinic/")
 					.containsEntry("timing.unload", 0L)
 					.containsEntry("timing.redirect", 0L)
@@ -80,7 +84,7 @@ public class ClientSpanServletTest {
 	}
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withMetadata() {
+	public void testConvertWeaselTraceToStagemonitorTrace_withMetadata() throws ServletException, IOException {
 		// Given - normal trace data
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("ty", "pl");
@@ -111,8 +115,9 @@ public class ClientSpanServletTest {
 		whitelistedValues.put("username", "string");
 		whitelistedValues.put("age", "number");
 		whitelistedValues.put("is_access_allowed", "boolean");
+		whitelistedValues.put("parameter_not_sent", "string");
 		when(servletPlugin.getWhitelistedClientSpanTags()).thenReturn(whitelistedValues);
-		servlet.convertWeaselTraceToStagemonitorTrace(mockHttpServletRequest);
+		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
 
 		// Then
 		assertSoftly(softly -> {
@@ -120,16 +125,19 @@ public class ClientSpanServletTest {
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
 
+			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
+
 			softly.assertThat(span.tags())
 					.containsEntry("username", "test string here")
 					.containsEntry("age", 26.)
 					.containsEntry("is_access_allowed", true)
+					.doesNotContainKey("parameter_not_sent")
 					.doesNotContainKey("some_not_mapped_property");
 		});
 	}
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withErrorBeacon() {
+	public void testConvertWeaselTraceToStagemonitorTrace_withErrorBeacon() throws ServletException, IOException {
 		// Given
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("k", "someKey");
@@ -145,7 +153,7 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("m_user", "tom.mason@example.com");
 
 		// When
-		servlet.convertWeaselTraceToStagemonitorTrace(mockHttpServletRequest);
+		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
 
 		// Then
 		assertSoftly(softly -> {
@@ -153,7 +161,7 @@ public class ClientSpanServletTest {
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
 			softly.assertThat(span.startMicros()).isEqualTo(1496753245024000L);
-			softly.assertThat(span.operationName()).isEqualTo("err http://localhost:9966/petclinic/");
+			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
 			softly.assertThat(span.finishMicros()).isEqualTo(1496753245024000L);
 
 			softly.assertThat(span.tags())
@@ -165,7 +173,51 @@ public class ClientSpanServletTest {
 	}
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withXHRBeacon() {
+	public void testConvertWeaselTraceToStagemonitorTrace_withErrorBeaconTrimsTooLongStackTraces() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("k", "someKey");
+		mockHttpServletRequest.setParameter("s", "3776086ebf658768");
+		mockHttpServletRequest.setParameter("t", "3776086ebf658768");
+		mockHttpServletRequest.setParameter("ts", "1496753245024");
+		mockHttpServletRequest.setParameter("ty", "err");
+		mockHttpServletRequest.setParameter("pl", "e6bf60fdf2672398");
+		mockHttpServletRequest.setParameter("l", "http://localhost:9966/petclinic/");
+		mockHttpServletRequest.setParameter("e", "Uncaught null");
+		final StringBuilder stacktrace = new StringBuilder();
+		for (int i = 0; i < 100; i++) {
+			stacktrace.append("at http://localhost:9966/petclinic/ 301:34\n");
+		}
+		mockHttpServletRequest.setParameter("st", stacktrace.toString());
+		mockHttpServletRequest.setParameter("c", "1");
+		mockHttpServletRequest.setParameter("m_user", "tom.mason@example.com");
+
+		// When
+		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = tracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+			softly.assertThat(span.startMicros()).isEqualTo(1496753245024000L);
+			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
+			softly.assertThat(span.finishMicros()).isEqualTo(1496753245024000L);
+
+			softly.assertThat(span.tags())
+					.containsEntry("http.url", "http://localhost:9966/petclinic/")
+					.containsEntry("type", "client_error")
+					.containsKey("exception.stack_trace")
+					.containsEntry("exception.message", "Uncaught null");
+
+			softly.assertThat(((String) span.tags().get("exception.stack_trace")).length())
+					.isLessThan(stacktrace.length())
+					.isGreaterThan(0);
+		});
+	}
+
+	@Test
+	public void testConvertWeaselTraceToStagemonitorTrace_withXHRBeacon() throws ServletException, IOException {
 		// Given
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("r", "1496994284184");
@@ -185,7 +237,7 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("s", "2d371455215c504");
 
 		// When
-		servlet.convertWeaselTraceToStagemonitorTrace(mockHttpServletRequest);
+		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
 
 		// Then
 		assertSoftly(softly -> {
@@ -193,7 +245,7 @@ public class ClientSpanServletTest {
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
 			softly.assertThat(span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496994284184L + 21793L));
-			softly.assertThat(span.operationName()).isEqualTo("xhr http://localhost:9966/petclinic/");
+			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
 			softly.assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496994284184L + 21793L + 2084L));
 
 			softly.assertThat(span.tags())
@@ -213,6 +265,7 @@ public class ClientSpanServletTest {
 		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
 		servletPlugin = mock(ServletPlugin.class);
+		when(servletPlugin.isClientSpanCollectionEnabled()).thenReturn(true);
 		when(servletPlugin.isParseUserAgent()).thenReturn(false);
 		servlet = new ClientSpanServlet(tracingPlugin, servletPlugin);
 	}

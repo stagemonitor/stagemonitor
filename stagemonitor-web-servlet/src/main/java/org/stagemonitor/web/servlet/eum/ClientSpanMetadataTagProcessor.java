@@ -33,7 +33,7 @@ public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 				final String type = whitelistedClientSpanTags.get(metadataNameWithoutPrefix);
 
 				if (TYPE_STRING.equalsIgnoreCase(type) || parameterValueOrNull == null) {
-					spanBuilder.withTag(metadataNameWithoutPrefix, parameterValueOrNull);
+					spanBuilder.withTag(metadataNameWithoutPrefix, trimStringToMaxLength(parameterValueOrNull));
 				} else if (TYPE_NUMBER.equalsIgnoreCase(type)) {
 					final Double value = DoubleValueConverter.INSTANCE.convert(parameterValueOrNull);
 					spanBuilder.withTag(metadataNameWithoutPrefix, value);

@@ -31,8 +31,8 @@ public class ClientSpanJavaScriptHtmlInjector extends HtmlInjector {
 						"  \n" +
 						"  ineum('reportingUrl', '" + contextPath + "/stagemonitor/public/eum');\n" +
 						//"  ineum('apiKey', 'someKey');\n" + // TODO
-						"  ineum('meta', 'user', 'tom.mason@example.com');\n" + // TODO
-						"  window.setTimeout(function() { throw null; }, 1500); \n" + // TODO
+						//"  ineum('meta', 'user', 'tom.mason@example.com');\n" + // TODO
+						//"  window.setTimeout(function() { throw null; }, 1500); \n" + // TODO
 						"</script>\n");
 	}
 

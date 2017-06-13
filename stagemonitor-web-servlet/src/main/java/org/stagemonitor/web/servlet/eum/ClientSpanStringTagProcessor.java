@@ -17,6 +17,6 @@ public class ClientSpanStringTagProcessor extends ClientSpanTagProcessor {
 	@Override
 	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletRequestParameters) {
 		final String valueOrNull = getParameterValueOrNull(requestParameterName, servletRequestParameters);
-		spanBuilder.withTag(tagName, valueOrNull);
+		spanBuilder.withTag(tagName, trimStringToMaxLength(valueOrNull));
 	}
 }
