@@ -219,7 +219,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + "(this exception was suppressed)", e);
 				}
-				content = injectBeforeClosingBody(content, injectArguments);
+				content = injectBefore("</body>", content, injectArguments.getContentToInjectBeforeClosingBody());
+				content = injectBefore("</head>", content, injectArguments.getContentToInjectBeforeClosingHead());
 			}
 		}
 		return content;
@@ -237,17 +238,17 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 	}
 
-	private String injectBeforeClosingBody(String unmodifiedContent, HtmlInjector.InjectArguments injectArguments) {
-		final int lastClosingBodyIndex = unmodifiedContent.lastIndexOf("</body>");
+	private String injectBefore(String tag, String unmodifiedContent, final String contentToInject) {
+		final int lastTagIndex = unmodifiedContent.lastIndexOf(tag);
 		final String modifiedContent;
-		if (injectArguments.getContentToInjectBeforeClosingBody() != null && lastClosingBodyIndex > -1) {
-			final StringBuilder modifiedContentStringBuilder = new StringBuilder(unmodifiedContent.length() + injectArguments.getContentToInjectBeforeClosingBody().length());
-			modifiedContentStringBuilder.append(unmodifiedContent.substring(0, lastClosingBodyIndex));
-			modifiedContentStringBuilder.append(injectArguments.getContentToInjectBeforeClosingBody());
-			modifiedContentStringBuilder.append(unmodifiedContent.substring(lastClosingBodyIndex));
+		if (contentToInject != null && lastTagIndex > -1) {
+			final StringBuilder modifiedContentStringBuilder = new StringBuilder(unmodifiedContent.length() + contentToInject.length());
+			modifiedContentStringBuilder.append(unmodifiedContent.substring(0, lastTagIndex));
+			modifiedContentStringBuilder.append(contentToInject);
+			modifiedContentStringBuilder.append(unmodifiedContent.substring(lastTagIndex));
 			modifiedContent = modifiedContentStringBuilder.toString();
 		} else {
-			// no body close tag found - pass through without injection
+			// tag not found or no content to inject - pass through without injection
 			modifiedContent = unmodifiedContent;
 		}
 		return modifiedContent;

@@ -15,7 +15,7 @@ import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.servlet.configuration.ConfigurationServlet;
-import org.stagemonitor.web.servlet.eum.ClientSpanExtensionSPI;
+import org.stagemonitor.web.servlet.eum.ClientSpanExtension;
 import org.stagemonitor.web.servlet.eum.ClientSpanJavaScriptServlet;
 import org.stagemonitor.web.servlet.eum.ClientSpanServlet;
 import org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension;
@@ -228,6 +228,13 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 					"to the server. Servlet API 3.0 or higher is required for this.")
 			.configurationCategory(WEB_PLUGIN)
 			.buildWithDefault(true);
+	private ConfigurationOption<Boolean> clientSpanInjectionEnabled = ConfigurationOption.booleanOption()
+			.key("stagemonitor.eum.injection.enabled")
+			.dynamic(true)
+			.label("Enable End User script injection")
+			.description("If enabled, stagemonitor will inject the client span collection scripts in the loaded page.")
+			.configurationCategory(WEB_PLUGIN)
+			.buildWithDefault(false);
 	private ConfigurationOption<Map<String, String>> whitelistedClientSpanTags = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, StringValueConverter.INSTANCE)
 			.key("stagemonitor.eum.whitelistedClientSpanTags")
 			.dynamic(true)
@@ -296,6 +303,10 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 
 	public boolean isClientSpanCollectionEnabled() {
 		return clientSpansEnabled.getValue();
+	}
+
+	public boolean isClientSpanCollectionInjectionEnabled() {
+		return clientSpanInjectionEnabled.getValue();
 	}
 
 	public boolean isCollectPageLoadTimesPerRequest() {
@@ -371,8 +382,8 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		if (whitelistedClientSpanTagsFromSPI == null) {
 			HashMap<String, String> whitelistedTagsFromSPI = new HashMap<String, String>();
 
-			for (ClientSpanExtensionSPI clientSpanExtensionSPI : getClientSpanExtenders()) {
-				final Map<String, String> whitelistedTags = clientSpanExtensionSPI.getWhitelistedTags();
+			for (ClientSpanExtension clientSpanExtension : getClientSpanExtenders()) {
+				final Map<String, String> whitelistedTags = clientSpanExtension.getWhitelistedTags();
 				whitelistedTagsFromSPI.putAll(whitelistedTags);
 			}
 
@@ -382,13 +393,13 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		return new HashMap<String, String>(whitelistedClientSpanTagsFromSPI);
 	}
 
-	public List<ClientSpanExtensionSPI> getClientSpanExtenders() {
-		List<ClientSpanExtensionSPI> clientSpanExtensionSPIS = new ArrayList<ClientSpanExtensionSPI>();
-		for (ClientSpanExtensionSPI clientSpanExtensionSPI : ServiceLoader.load(ClientSpanExtensionSPI.class)) {
-			clientSpanExtensionSPIS.add(clientSpanExtensionSPI);
+	public List<ClientSpanExtension> getClientSpanExtenders() {
+		List<ClientSpanExtension> clientSpanExtensions = new ArrayList<ClientSpanExtension>();
+		for (ClientSpanExtension clientSpanExtension : ServiceLoader.load(ClientSpanExtension.class)) {
+			clientSpanExtensions.add(clientSpanExtension);
 		}
-		clientSpanExtensionSPIS.add(new WeaselClientSpanExtension());
-		return clientSpanExtensionSPIS;
+		clientSpanExtensions.add(new WeaselClientSpanExtension());
+		return clientSpanExtensions;
 	}
 
 	@Override

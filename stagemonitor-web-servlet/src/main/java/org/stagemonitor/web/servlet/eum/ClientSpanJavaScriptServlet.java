@@ -23,8 +23,8 @@ public class ClientSpanJavaScriptServlet extends HttpServlet {
 	private final String javaScriptEtag;
 
 	public ClientSpanJavaScriptServlet() {
-		List<ClientSpanExtensionSPI> clientSpanExtensionSPIS = Stagemonitor.getPlugin(ServletPlugin.class).getClientSpanExtenders();
-		javaScript = buildJavaScript(clientSpanExtensionSPIS);
+		List<ClientSpanExtension> clientSpanExtensions = Stagemonitor.getPlugin(ServletPlugin.class).getClientSpanExtenders();
+		javaScript = buildJavaScript(clientSpanExtensions);
 		javaScriptEtag = generateEtag(javaScript);
 	}
 
@@ -32,9 +32,9 @@ public class ClientSpanJavaScriptServlet extends HttpServlet {
 		return String.format("\"%d\"", javaScript.hashCode());
 	}
 
-	private String buildJavaScript(List<ClientSpanExtensionSPI> clientSpanExtensionSPIS) {
+	private String buildJavaScript(List<ClientSpanExtension> clientSpanExtensions) {
 		StringBuilder javaScriptBuilder = new StringBuilder();
-		for (ClientSpanExtensionSPI contributor : clientSpanExtensionSPIS) {
+		for (ClientSpanExtension contributor : clientSpanExtensions) {
 			javaScriptBuilder.append(wrapImmediateInvokedFunctionExpression(contributor.getClientTraceExtensionScript()));
 		}
 		return javaScriptBuilder.toString();

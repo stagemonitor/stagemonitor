@@ -67,7 +67,7 @@ public class ClientSpanServletTest {
 			softly.assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + -197L + 518L));
 
 			softly.assertThat(span.tags())
-					.containsEntry("type", "client_pageload")
+					.containsEntry("type", "pageload")
 					.doesNotContainKey("user") // TODO: test whitelisting of metatags
 					.containsEntry("http.url", "http://localhost:9966/petclinic/")
 					.containsEntry("timing.unload", 0L)
@@ -166,7 +166,7 @@ public class ClientSpanServletTest {
 
 			softly.assertThat(span.tags())
 					.containsEntry("http.url", "http://localhost:9966/petclinic/")
-					.containsEntry("type", "client_error")
+					.containsEntry("type", "js_error")
 					.containsEntry("exception.stack_trace", "at http://localhost:9966/petclinic/ 301:34")
 					.containsEntry("exception.message", "Uncaught null");
 		});
@@ -206,7 +206,7 @@ public class ClientSpanServletTest {
 
 			softly.assertThat(span.tags())
 					.containsEntry("http.url", "http://localhost:9966/petclinic/")
-					.containsEntry("type", "client_error")
+					.containsEntry("type", "js_error")
 					.containsKey("exception.stack_trace")
 					.containsEntry("exception.message", "Uncaught null");
 
@@ -249,7 +249,7 @@ public class ClientSpanServletTest {
 			softly.assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496994284184L + 21793L + 2084L));
 
 			softly.assertThat(span.tags())
-					.containsEntry("type", "client_ajax")
+					.containsEntry("type", "ajax")
 					.containsEntry("http.status", 200L)
 					.containsEntry("method", "GET")
 					.containsEntry("xhr.requested_url", "owners.html?lastName=")

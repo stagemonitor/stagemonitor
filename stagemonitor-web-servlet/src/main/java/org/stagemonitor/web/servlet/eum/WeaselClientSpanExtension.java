@@ -6,7 +6,7 @@ import java.util.Map;
 
 import static java.util.Collections.emptyMap;
 
-public class WeaselClientSpanExtension extends ClientSpanExtensionSPI {
+public class WeaselClientSpanExtension extends ClientSpanExtension {
 
 	@Override
 	public String getClientTraceExtensionScript() {

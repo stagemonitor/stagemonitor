@@ -17,7 +17,7 @@ public class ClientSpanJavaScriptHtmlInjector extends HtmlInjector {
 	@Override
 	public void injectHtml(InjectArguments injectArguments) {
 		final String contextPath = initArguments.getServletContext().getContextPath();
-		injectArguments.setContentToInjectBeforeClosingBody(
+		injectArguments.setContentToInjectBeforeClosingHead(
 				"<script type='text/javascript'>\n" +
 						"  (function(i,s,o,g,r,a,m) {\n" +
 						"    i['EumObject']=r;\n" +
@@ -38,6 +38,6 @@ public class ClientSpanJavaScriptHtmlInjector extends HtmlInjector {
 
 	@Override
 	public boolean isActive(IsActiveArguments isActiveArguments) {
-		return servletPlugin.isClientSpanCollectionEnabled();
+		return servletPlugin.isClientSpanCollectionEnabled() && servletPlugin.isClientSpanCollectionInjectionEnabled();
 	}
 }

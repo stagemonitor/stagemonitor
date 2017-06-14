@@ -15,7 +15,10 @@ public class CpuTimeTrackingSpanEventListener extends StatelessSpanEventListener
 
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
-		SpanContextInformation.forSpan(spanWrapper).addRequestAttribute(CPU_TIME_ATTRIBUTE, TimeUtils.getCpuTime());
+		final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(spanWrapper);
+		if (!spanContextInformation.isExternalRequest()) {
+			spanContextInformation.addRequestAttribute(CPU_TIME_ATTRIBUTE, TimeUtils.getCpuTime());
+		}
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer.SpanBuilder;
+import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -111,6 +112,7 @@ public class ClientSpanServlet extends HttpServlet {
 		final Long finishTimestampInMilliseconds;
 		final String referenceTimestampParameter = httpServletRequest.getParameter(PARAMETER_REFERENCE_TIMESTAMP);
 		if (referenceTimestampParameter == null) {
+			// in case of error beacons no duration is existent, therefore start equals end
 			startTimeStampInMilliseconds = possiblyOffsettedStartTimeStampInMilliseconds;
 			finishTimestampInMilliseconds = possiblyOffsettedStartTimeStampInMilliseconds;
 		} else {
@@ -122,7 +124,8 @@ public class ClientSpanServlet extends HttpServlet {
 
 		final SpanBuilder spanBuilder = tracingPlugin.getTracer().buildSpan(getOperationName(httpServletRequest))
 				.withStartTimestamp(MILLISECONDS.toMicros(startTimeStampInMilliseconds))
-				.withTag("http.url", getHttpUrl(httpServletRequest));
+				.withTag(Tags.HTTP_URL.getKey(), getHttpUrl(httpServletRequest))
+				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 
 		for (ClientSpanTagProcessor tagProcessor : tagProcessors) {
 			tagProcessor.processSpanBuilder(spanBuilder, servletParameters);
