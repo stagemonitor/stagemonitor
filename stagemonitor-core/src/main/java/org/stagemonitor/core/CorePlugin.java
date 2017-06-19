@@ -421,6 +421,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		});
 
 		ElasticsearchClient elasticsearchClient = getElasticsearchClient();
+		createKibanaIndexAndMappings(elasticsearchClient);
 		sendConfigurationMappingAsync(elasticsearchClient);
 
 		if (isReportToElasticsearch()) {
@@ -429,6 +430,17 @@ public class CorePlugin extends StagemonitorPlugin {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchCustomMetricsDashboard.json");
 		}
 		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
+	}
+
+	private void createKibanaIndexAndMappings(ElasticsearchClient elasticsearchClient) {
+		// makes sure the .kibana index is present and has the right mapping.
+		// otherwise it leads to problems if stagemonitor sends the dashboards to the
+		// .kibana index before it has been properly created by kibana
+		elasticsearchClient.sendRequest("PUT", "/.kibana");
+		elasticsearchClient.sendAsJson("PUT", "/.kibana/_mapping/index-pattern", IOUtils.getResourceAsStream("kibana/kibana-index-index-pattern.json"));
+		elasticsearchClient.sendAsJson("PUT", "/.kibana/_mapping/search", IOUtils.getResourceAsStream("kibana/kibana-index-search.json"));
+		elasticsearchClient.sendAsJson("PUT", "/.kibana/_mapping/dashboard", IOUtils.getResourceAsStream("kibana/kibana-index-dashboard.json"));
+		elasticsearchClient.sendAsJson("PUT", "/.kibana/_mapping/visualization", IOUtils.getResourceAsStream("kibana/kibana-index-visualization.json"));
 	}
 
 	public static Future<?> sendConfigurationMappingAsync(ElasticsearchClient elasticsearchClient) {

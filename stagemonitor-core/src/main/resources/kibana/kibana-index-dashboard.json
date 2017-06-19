@@ -1,0 +1,57 @@
+{
+	"properties": {
+		"description": {
+			"type": "text"
+		},
+		"hits": {
+			"type": "integer"
+		},
+		"kibanaSavedObjectMeta": {
+			"properties": {
+				"searchSourceJSON": {
+					"type": "text"
+				}
+			}
+		},
+		"optionsJSON": {
+			"type": "text"
+		},
+		"panelsJSON": {
+			"type": "text"
+		},
+		"refreshInterval": {
+			"properties": {
+				"display": {
+					"type": "text"
+				},
+				"pause": {
+					"type": "boolean"
+				},
+				"section": {
+					"type": "integer"
+				},
+				"value": {
+					"type": "integer"
+				}
+			}
+		},
+		"timeFrom": {
+			"type": "text"
+		},
+		"timeRestore": {
+			"type": "boolean"
+		},
+		"timeTo": {
+			"type": "text"
+		},
+		"title": {
+			"type": "text"
+		},
+		"uiStateJSON": {
+			"type": "text"
+		},
+		"version": {
+			"type": "integer"
+		}
+	}
+}

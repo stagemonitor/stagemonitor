@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class ConfigurationOptionsMarkdownExporter {
 
@@ -24,7 +26,7 @@ public class ConfigurationOptionsMarkdownExporter {
 
 	private static String getMarkdown(ConfigurationRegistry configurationRegistry) {
 		StringBuilder markdown = new StringBuilder();
-		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = configurationRegistry.getConfigurationOptionsByCategory();
+		final Map<String, List<ConfigurationOption<?>>> configurationOptionsByPlugin = new TreeMap<>(configurationRegistry.getConfigurationOptionsByCategory());
 
 		MultiValueMap<String, ConfigurationOption<?>> configurationOptionsByTags = new LinkedMultiValueMap<>();
 		configurationOptionsByPlugin.values()
@@ -37,12 +39,12 @@ public class ConfigurationOptionsMarkdownExporter {
 
 		markdown.append("# Overview\n");
 		markdown.append("## All Plugins\n");
-		for (String plugin : configurationOptionsByPlugin.keySet()) {
+		for (String plugin : new TreeSet<>(configurationOptionsByPlugin.keySet())) {
 			markdown.append("* ").append(linkToHeadline(plugin)).append('\n');
 		}
 		markdown.append("\n");
 		markdown.append("## Available Tags\n");
-		for (String tag : configurationOptionsByTags.keySet()) {
+		for (String tag : new TreeSet<>(configurationOptionsByTags.keySet())) {
 			markdown.append("`").append(tag).append("` ");
 		}
 		markdown.append("\n");

@@ -434,18 +434,18 @@ public class TracingPlugin extends StagemonitorPlugin {
 															  final ReportingSpanEventListener reportingSpanEventListener) {
 		final TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
-		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanContextSpanEventListener());
-		spanWrappingTracer.addSpanInterceptor(samplePriorityDeterminingSpanInterceptor);
-		spanWrappingTracer.addSpanInterceptor(new AnonymizingSpanEventListener.MySpanEventListenerFactory(tracingPlugin));
-		spanWrappingTracer.addSpanInterceptor(new MDCSpanEventListener(configuration.getConfig(CorePlugin.class), tracingPlugin));
+		spanWrappingTracer.addEventListenerFactory(new SpanContextInformation.SpanContextSpanEventListener());
+		spanWrappingTracer.addEventListenerFactory(samplePriorityDeterminingSpanInterceptor);
+		spanWrappingTracer.addEventListenerFactory(new AnonymizingSpanEventListener.MySpanEventListenerFactory(tracingPlugin));
+		spanWrappingTracer.addEventListenerFactory(new MDCSpanEventListener(configuration.getConfig(CorePlugin.class), tracingPlugin));
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
-			spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
+			spanWrappingTracer.addEventListenerFactory(spanEventListenerFactory);
 		}
-		spanWrappingTracer.addSpanInterceptor(new MetricsSpanEventListener(metricRegistry));
-		spanWrappingTracer.addSpanInterceptor(new CallTreeSpanEventListener(tracingPlugin));
-		spanWrappingTracer.addSpanInterceptor(new ReadbackSpanEventListener.Factory(reportingSpanEventListener, tracingPlugin));
-		spanWrappingTracer.addSpanInterceptor(reportingSpanEventListener);
-		spanWrappingTracer.addSpanInterceptor(new SpanContextInformation.SpanFinalizer());
+		spanWrappingTracer.addEventListenerFactory(new MetricsSpanEventListener(metricRegistry));
+		spanWrappingTracer.addEventListenerFactory(new CallTreeSpanEventListener(tracingPlugin));
+		spanWrappingTracer.addEventListenerFactory(new ReadbackSpanEventListener.Factory(reportingSpanEventListener, tracingPlugin));
+		spanWrappingTracer.addEventListenerFactory(reportingSpanEventListener);
+		spanWrappingTracer.addEventListenerFactory(new SpanContextInformation.SpanFinalizer());
 		return spanWrappingTracer;
 	}
 
@@ -607,8 +607,14 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return monitorAsyncInvocations.getValue();
 	}
 
-	public void addSpanInterceptor(SpanEventListenerFactory spanEventListenerFactory) {
-		spanWrappingTracer.addSpanInterceptor(spanEventListenerFactory);
+	public void addSpanEventListenerFactory(SpanEventListenerFactory spanEventListenerFactory) {
+		if (spanWrappingTracer != null) {
+			spanWrappingTracer.addEventListenerFactory(spanEventListenerFactory);
+		}
+	}
+
+	public SpanWrappingTracer getSpanWrappingTracer() {
+		return spanWrappingTracer;
 	}
 
 	public Collection<String> getExcludedTags() {

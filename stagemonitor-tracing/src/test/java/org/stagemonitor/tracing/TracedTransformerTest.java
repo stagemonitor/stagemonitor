@@ -50,7 +50,7 @@ public class TracedTransformerTest {
 		Stagemonitor.startMonitoring();
 		spanCapturingReporter = new SpanCapturingReporter();
 		tags = new HashMap<>();
-		Stagemonitor.getPlugin(TracingPlugin.class).addSpanInterceptor(new TagRecordingSpanEventListener(tags));
+		Stagemonitor.getPlugin(TracingPlugin.class).addSpanEventListenerFactory(new TagRecordingSpanEventListener(tags));
 		Stagemonitor.getPlugin(TracingPlugin.class).addReporter(spanCapturingReporter);
 	}
 
