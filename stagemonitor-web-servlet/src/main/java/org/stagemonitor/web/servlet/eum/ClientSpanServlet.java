@@ -39,7 +39,7 @@ public class ClientSpanServlet extends HttpServlet {
 
 	private final TracingPlugin tracingPlugin;
 	private final List<ClientSpanTagProcessor> tagProcessors;
-	private final UserAgentParser userAgentParser;
+	private UserAgentParser userAgentParser;
 	private final ServletPlugin servletPlugin;
 
 	public ClientSpanServlet() {
@@ -49,7 +49,6 @@ public class ClientSpanServlet extends HttpServlet {
 	ClientSpanServlet(TracingPlugin tracingPlugin, ServletPlugin servletPlugin) {
 		this.tracingPlugin = tracingPlugin;
 		this.servletPlugin = servletPlugin;
-		userAgentParser = new UserAgentParser();
 		tagProcessors = new ArrayList<ClientSpanTagProcessor>();
 		initializeDefaultTagProcessors();
 	}
@@ -138,6 +137,9 @@ public class ClientSpanServlet extends HttpServlet {
 		}
 
 		if (servletPlugin.isParseUserAgent()) {
+			if (userAgentParser == null) {
+				userAgentParser = new UserAgentParser();
+			}
 			userAgentParser.setUserAgentInformation(span, httpServletRequest.getHeader("user-agent"));
 		}
 		SpanUtils.setClientIp(span, httpServletRequest.getRemoteAddr());
