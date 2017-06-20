@@ -12,6 +12,7 @@ import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.web.servlet.filter.StatusExposingByteCountingServletResponse;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
 
 import javax.servlet.FilterChain;
 
@@ -55,7 +56,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "1");
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration).createSpan();
+				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
 
 		verify(span).setTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}
@@ -66,7 +67,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "0");
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration).createSpan();
+				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
 
 		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}
@@ -76,7 +77,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		when(servletPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration).createSpan();
+				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
 
 		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}
@@ -87,7 +88,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "1");
 		final io.opentracing.Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration).createSpan();
+				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
 
 		verify(span, never()).setTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}

@@ -29,9 +29,9 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 	public ReportingSpanEventListener(ConfigurationRegistry configuration) {
 		this.configuration = configuration;
 		this.tracingPlugin = configuration.getConfig(TracingPlugin.class);
-		final int threadPoolQueueCapacityLimit = configuration.getConfig(CorePlugin.class).getThreadPoolQueueCapacityLimit();
+		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
 		this.asyncSpanReporterPool = ExecutorUtils
-				.createSingleThreadDeamonPool("async-request-reporter", threadPoolQueueCapacityLimit);
+				.createSingleThreadDeamonPool("async-request-reporter", corePlugin.getThreadPoolQueueCapacityLimit(), corePlugin);
 	}
 
 	@Override

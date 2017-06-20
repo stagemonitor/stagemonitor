@@ -1,5 +1,7 @@
 package org.stagemonitor.web.servlet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.MonitoredRequest;
@@ -23,6 +25,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
@@ -36,9 +42,11 @@ import io.opentracing.tag.Tags;
 
 public class MonitoredHttpRequest extends MonitoredRequest {
 
+	private static final Logger logger = LoggerFactory.getLogger(MonitoredHttpRequest.class);
 	public static final String CONNECTION_ID_ATTRIBUTE = "connectionId";
 	public static final String WIDGET_ALLOWED_ATTRIBUTE = "showWidgetAllowed";
 	public static final String MONITORED_HTTP_REQUEST_ATTRIBUTE = "MonitoredHttpRequest";
+	public static final String USER_AGENT_PARSED_FUTURE_ATTRIBUTE = MonitoredHttpRequest.class.getName() + ".userAgentParsedFuture";
 	// has to be static so that the cache is shared between different requests
 	private static UserAgentParser userAgentParser;
 	protected final HttpServletRequest httpServletRequest;
@@ -50,10 +58,11 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	private final String connectionId;
 	private final boolean widgetAndStagemonitorEndpointsAllowed;
 	private final String clientIp;
+	private final ExecutorService userAgentParsingExecutor;
 
 	public MonitoredHttpRequest(HttpServletRequest httpServletRequest,
 								StatusExposingByteCountingServletResponse responseWrapper,
-								FilterChain filterChain, ConfigurationRegistry configuration) {
+								FilterChain filterChain, ConfigurationRegistry configuration, ExecutorService userAgentParsingExecutor) {
 		this.httpServletRequest = httpServletRequest;
 		this.filterChain = filterChain;
 		this.responseWrapper = responseWrapper;
@@ -61,6 +70,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		tracingPlugin = configuration.getConfig(TracingPlugin.class);
 		userAgentHeader = httpServletRequest.getHeader("user-agent");
 		connectionId = httpServletRequest.getHeader(WidgetAjaxSpanReporter.CONNECTION_ID);
+		this.userAgentParsingExecutor = userAgentParsingExecutor;
 		widgetAndStagemonitorEndpointsAllowed = servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
 		clientIp = getClientIp(httpServletRequest);
 	}
@@ -96,7 +106,26 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		SpanContextInformation info = SpanContextInformation.forSpan(span);
 		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
 		info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
+		if (info.isSampled() && servletPlugin.isParseUserAgent() && StringUtils.isNotEmpty(userAgentHeader)) {
+			parseUserAgentAsync(span, info);
+		}
 		return span;
+	}
+
+	private void parseUserAgentAsync(final Span span, SpanContextInformation info) {
+		try {
+			final Future<Void> future = userAgentParsingExecutor.submit(new Callable<Void>() {
+				@Override
+				public Void call() throws Exception {
+					setUserAgentInformation(span, userAgentHeader);
+					return null;
+				}
+			});
+			info.addRequestAttribute(USER_AGENT_PARSED_FUTURE_ATTRIBUTE, future);
+		} catch (RejectedExecutionException e) {
+			// pool is exhausted
+			logger.warn("Failed to parse the User-Agent header as the thread pool is exhausted");
+		}
 	}
 
 	private String getReferringSite() {
@@ -182,6 +211,14 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		filterChain.doFilter(httpServletRequest, responseWrapper);
 	}
 
+	private void setUserAgentInformation(Span span, String userAgenHeader) {
+		// this is safe even though userAgentParser is static because onBeforeReport is not executed concurrently
+		if (userAgentParser == null) {
+			userAgentParser = new UserAgentParser();
+		}
+		userAgentParser.setUserAgentInformation(span, userAgenHeader);
+	}
+
 	public static class HttpSpanEventListener extends StatelessSpanEventListener {
 
 		private final ServletPlugin servletPlugin;
@@ -198,7 +235,8 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		@Override
 		public void onFinish(SpanWrapper span, String operationName, long durationNanos) {
-			final MonitoredHttpRequest monitoredHttpRequest = SpanContextInformation.forSpan(span)
+			final SpanContextInformation contextInfo = SpanContextInformation.forSpan(span);
+			final MonitoredHttpRequest monitoredHttpRequest = contextInfo
 					.getRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE);
 			if (monitoredHttpRequest == null) {
 				return;
@@ -208,8 +246,13 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			setTrackingInformation(span, monitoredHttpRequest.httpServletRequest, monitoredHttpRequest.clientIp, monitoredHttpRequest.userAgentHeader);
 			setStatus(span, monitoredHttpRequest.responseWrapper.getStatus());
 			span.setTag("bytes_written", monitoredHttpRequest.responseWrapper.getContentLength());
-			if (servletPlugin.isParseUserAgent()) {
-				setUserAgentInformation(span, monitoredHttpRequest.userAgentHeader);
+			final Future<Void> userAgentParsedFuture = contextInfo.getRequestAttribute(USER_AGENT_PARSED_FUTURE_ATTRIBUTE);
+			if (userAgentParsedFuture != null) {
+				try {
+					userAgentParsedFuture.get();
+				} catch (Exception e) {
+					logger.warn("Suppressed exception", e);
+				}
 			}
 		}
 
@@ -218,14 +261,6 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			if (status >= 400) {
 				Tags.ERROR.set(span, true);
 			}
-		}
-
-		private void setUserAgentInformation(Span span, String userAgenHeader) {
-			// this is safe even though userAgentParser is static because onBeforeReport is not executed concurrently
-			if (userAgentParser == null) {
-				userAgentParser = new UserAgentParser();
-			}
-			userAgentParser.setUserAgentInformation(span, userAgenHeader);
 		}
 
 		private void setTrackingInformation(Span span, HttpServletRequest httpServletRequest, String clientIp, String userAgenHeader) {

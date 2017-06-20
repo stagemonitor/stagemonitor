@@ -783,6 +783,10 @@ public class CorePlugin extends StagemonitorPlugin {
 		return numberOfShards.getValue();
 	}
 
+	public void closeOnShutdown(Closeable closeable) {
+		reporters.add(closeable);
+	}
+
 	List<Closeable> getReporters() {
 		return reporters;
 	}

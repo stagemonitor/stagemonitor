@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.ServiceLoader;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -91,7 +92,7 @@ public class SpanServletTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test");
 		request.addHeader(WidgetAjaxSpanReporter.CONNECTION_ID, connectionId);
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request,
-				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration);
+				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration, mock(ExecutorService.class));
 
 		Span span = monitoredHttpRequest.createSpan();
 		spanContext = SpanContextInformation.forSpan(span);

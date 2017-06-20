@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
@@ -43,7 +43,7 @@ public class GrafanaClient {
 		this.corePlugin = corePlugin;
 		this.httpClient = httpClient;
 		asyncRestPool = ExecutorUtils
-				.createSingleThreadDeamonPool("async-grafana", corePlugin.getThreadPoolQueueCapacityLimit());
+				.createSingleThreadDeamonPool("async-grafana", corePlugin.getThreadPoolQueueCapacityLimit(), corePlugin);
 	}
 
 	public void createElasticsearchDatasource(final String url) {

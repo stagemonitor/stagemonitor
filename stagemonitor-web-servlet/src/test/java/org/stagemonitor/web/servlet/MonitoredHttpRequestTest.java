@@ -20,15 +20,19 @@ import org.stagemonitor.web.servlet.filter.StatusExposingByteCountingServletResp
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import io.opentracing.Span;
 import io.opentracing.mock.MockSpan;
 import io.opentracing.tag.Tags;
 
 import static junit.framework.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class MonitoredHttpRequestTest {
@@ -36,12 +40,13 @@ public class MonitoredHttpRequestTest {
 	private ConfigurationRegistry configuration;
 	private String operationName;
 	private io.opentracing.mock.MockTracer tracer;
+	private ServletPlugin servletPlugin;
 
 	@Before
 	public void setUp() throws Exception {
 		configuration = mock(ConfigurationRegistry.class);
 		final TracingPlugin tracingPlugin = mock(TracingPlugin.class);
-		final ServletPlugin servletPlugin = new ServletPlugin();
+		servletPlugin = spy(new ServletPlugin());
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);
 		final List<SpanEventListenerFactory> spanEventListenerFactories = new ArrayList<>();
@@ -128,11 +133,25 @@ public class MonitoredHttpRequestTest {
 		assertNull(mockSpan.tags().get("http.referring_site"));
 	}
 
+	@Test
+	public void testParseUserAgent() throws Exception {
+		doReturn(true).when(servletPlugin).isParseUserAgent();
+		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
+		request.addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+
+		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
+
+		monitoredHttpRequest.createSpan().finish();
+		assertEquals(1, tracer.finishedSpans().size());
+		final MockSpan mockSpan = tracer.finishedSpans().get(0);
+		assertThat(mockSpan.tags()).containsEntry("user_agent.browser", "Chrome");
+	}
+
 	private MonitoredHttpRequest createMonitoredHttpRequest(MockHttpServletRequest request) throws IOException {
 		return new MonitoredHttpRequest(
 				request,
 				new StatusExposingByteCountingServletResponse(new MockHttpServletResponse()),
 				new MockFilterChain(),
-				configuration);
+				configuration, Executors.newSingleThreadScheduledExecutor());
 	}
 }

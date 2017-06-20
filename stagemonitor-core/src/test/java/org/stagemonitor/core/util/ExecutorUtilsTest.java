@@ -1,13 +1,17 @@
 package org.stagemonitor.core.util;
 
+import org.junit.Test;
+import org.stagemonitor.core.CorePlugin;
+
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import org.junit.Test;
+import static org.mockito.Mockito.mock;
 
 public class ExecutorUtilsTest {
 
-	final ThreadPoolExecutor lowCapacityPool = ExecutorUtils.createSingleThreadDeamonPool("test-pool", 1);
+	private final ThreadPoolExecutor lowCapacityPool = ExecutorUtils.createSingleThreadDeamonPool("test-pool", 1, mock(CorePlugin.class));
+
 	private Runnable sleepABit = new Runnable() {
 		@Override
 		public void run() {
@@ -25,5 +29,4 @@ public class ExecutorUtilsTest {
 			lowCapacityPool.submit(sleepABit);
 		}
 	}
-
 }

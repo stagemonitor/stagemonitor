@@ -15,6 +15,7 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.tracing.anonymization.AnonymizingSpanEventListener;
 import org.stagemonitor.tracing.mdc.MDCSpanEventListener;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
@@ -38,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 
 import io.opentracing.NoopTracerFactory;
@@ -207,7 +209,16 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.description("Set to true to report collected spans asynchronously. It's recommended to always set this to " +
 					"true. Otherwise the performance of your requests will suffer as spans are reported in band.")
 			.configurationCategory(TRACING_PLUGIN)
-			.tags("reporting")
+			.tags("reporting", "advanced")
+			.buildWithDefault(true);
+
+	private final ConfigurationOption<Boolean> trackMetricsAsync = ConfigurationOption.booleanOption()
+			.key("stagemonitor.tracing.metrics.async")
+			.dynamic(true)
+			.label("Track Metrics Async")
+			.description("Set to true to track response time metrics asynchronously.")
+			.configurationCategory(TRACING_PLUGIN)
+			.tags("metircs", "advanced")
 			.buildWithDefault(true);
 
 	/* Exceptions */
@@ -432,17 +443,20 @@ public class TracingPlugin extends StagemonitorPlugin {
 															  final Iterable<SpanEventListenerFactory> spanInterceptorFactories,
 															  final SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor,
 															  final ReportingSpanEventListener reportingSpanEventListener) {
+		final CorePlugin corePlugin = configuration.getConfig(CorePlugin.class);
 		final TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
 		spanWrappingTracer.addEventListenerFactory(new SpanContextInformation.SpanContextSpanEventListener());
 		spanWrappingTracer.addEventListenerFactory(samplePriorityDeterminingSpanInterceptor);
 		spanWrappingTracer.addEventListenerFactory(new AnonymizingSpanEventListener.MySpanEventListenerFactory(tracingPlugin));
-		spanWrappingTracer.addEventListenerFactory(new MDCSpanEventListener(configuration.getConfig(CorePlugin.class), tracingPlugin));
+		spanWrappingTracer.addEventListenerFactory(new MDCSpanEventListener(corePlugin, tracingPlugin));
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
 			spanWrappingTracer.addEventListenerFactory(spanEventListenerFactory);
 		}
-		spanWrappingTracer.addEventListenerFactory(new MetricsSpanEventListener(metricRegistry));
-		spanWrappingTracer.addEventListenerFactory(new CallTreeSpanEventListener(tracingPlugin));
+		final ThreadPoolExecutor singleThreadDeamonPool = ExecutorUtils.createSingleThreadDeamonPool("metric-tracking", 1000, corePlugin);
+		final MetricsSpanEventListener spanEventListener = new MetricsSpanEventListener(metricRegistry, singleThreadDeamonPool, tracingPlugin);
+		spanWrappingTracer.addEventListenerFactory(spanEventListener);
+		spanWrappingTracer.addEventListenerFactory(new CallTreeSpanEventListener(corePlugin.getMetricRegistry(), tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(new ReadbackSpanEventListener.Factory(reportingSpanEventListener, tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(reportingSpanEventListener);
 		spanWrappingTracer.addEventListenerFactory(new SpanContextInformation.SpanFinalizer());
@@ -641,5 +655,9 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	public void addReporter(SpanReporter spanReporter) {
 		reportingSpanEventListener.addReporter(spanReporter);
+	}
+
+	public boolean isTrackMetricsAsync() {
+		return trackMetricsAsync.getValue();
 	}
 }
