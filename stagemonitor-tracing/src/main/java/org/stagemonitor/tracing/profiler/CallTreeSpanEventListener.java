@@ -4,9 +4,11 @@ import com.codahale.metrics.Timer;
 
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.metrics.MetricUtils;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.tracing.sampling.RateLimitingPreExecutionInterceptor;
 import org.stagemonitor.tracing.utils.RateLimiter;
@@ -21,9 +23,11 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 
 	private final TracingPlugin tracingPlugin;
 	private RateLimiter rateLimiter;
+	private Metric2Registry metricRegistry;
 
-	public CallTreeSpanEventListener(TracingPlugin tracingPlugin) {
+	public CallTreeSpanEventListener(Metric2Registry metricRegistry, TracingPlugin tracingPlugin) {
 		this.tracingPlugin = tracingPlugin;
+		this.metricRegistry = metricRegistry;
 		rateLimiter = RateLimitingPreExecutionInterceptor.getRateLimiter(tracingPlugin.getProfilerRateLimitPerMinute());
 		tracingPlugin.getProfilerRateLimitPerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Double>() {
 			@Override
@@ -80,7 +84,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 
 	private void determineIfExcludeCallTree(SpanContextInformation contextInfo) {
 		final double percentileLimit = tracingPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests();
-		final Timer timer = contextInfo.getTimerForThisRequest();
+		final Timer timer = MetricsSpanEventListener.getTimer(metricRegistry, contextInfo);
 		if (timer != null && !MetricUtils.isFasterThanXPercentOfAllRequests(contextInfo.getDurationNanos(), percentileLimit, timer)) {
 			contextInfo.getPostExecutionInterceptorContext().excludeCallTree("the duration of this request is faster than the percentile limit");
 		}

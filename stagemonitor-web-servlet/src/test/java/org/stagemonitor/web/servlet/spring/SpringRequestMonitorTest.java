@@ -38,6 +38,7 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
@@ -189,10 +190,6 @@ public class SpringRequestMonitorTest {
 		assertFalse(spanContext.isSampled());
 	}
 
-	private SpanContextInformation anyRequestInformation() {
-		return any();
-	}
-
 	private MonitoredHttpRequest createMonitoredHttpRequest(HttpServletRequest request) throws Exception {
 		final StatusExposingByteCountingServletResponse response = mock(StatusExposingByteCountingServletResponse.class);
 		final FilterChain filterChain = mock(FilterChain.class);
@@ -200,7 +197,7 @@ public class SpringRequestMonitorTest {
 			dispatcherServlet.service(request, response);
 			return null;
 		}).when(filterChain).doFilter(any(), any());
-		return Mockito.spy(new MonitoredHttpRequest(request, response, filterChain, configuration));
+		return Mockito.spy(new MonitoredHttpRequest(request, response, filterChain, configuration, mock(ExecutorService.class)));
 	}
 
 	@Test

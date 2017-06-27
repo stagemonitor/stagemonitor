@@ -128,14 +128,6 @@ public class SpanContextInformation {
 		return requestAttributes;
 	}
 
-	public void setTimerForThisRequest(Timer timerForThisRequest) {
-		this.timerForThisRequest = timerForThisRequest;
-	}
-
-	public Timer getTimerForThisRequest() {
-		return timerForThisRequest;
-	}
-
 	public SpanContextInformation getParent() {
 		return parent;
 	}

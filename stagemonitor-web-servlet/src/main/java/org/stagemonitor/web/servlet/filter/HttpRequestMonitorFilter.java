@@ -60,7 +60,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 		final Iterator<MonitoredHttpRequestFactory> requestFactoryIterator = ServiceLoader.load(MonitoredHttpRequestFactory.class).iterator();
 		if (!requestFactoryIterator.hasNext()) {
-			this.monitoredHttpRequestFactory = new DefaultMonitoredHttpRequestFactory();
+			this.monitoredHttpRequestFactory = new DefaultMonitoredHttpRequestFactory(corePlugin);
 		} else {
 			this.monitoredHttpRequestFactory = requestFactoryIterator.next();
 		}

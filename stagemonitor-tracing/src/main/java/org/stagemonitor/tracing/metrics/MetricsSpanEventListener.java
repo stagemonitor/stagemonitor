@@ -2,13 +2,20 @@ package org.stagemonitor.tracing.metrics;
 
 import com.codahale.metrics.Timer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.util.StringUtils;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
@@ -16,8 +23,9 @@ import io.opentracing.Span;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class MetricsSpanEventListener extends StatelessSpanEventListener {
+public class MetricsSpanEventListener extends StatelessSpanEventListener implements Closeable {
 
+	private static final Logger logger = LoggerFactory.getLogger(MetricsSpanEventListener.class);
 	private static final double MILLISECOND_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
 	private static final MetricName.MetricNameTemplate responseTimeTemplate = name("response_time")
@@ -28,17 +36,38 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener {
 			.templateFor("operation_name");
 
 	private final Metric2Registry metricRegistry;
+	private final ThreadPoolExecutor executorService;
+	private final TracingPlugin tracingPlugin;
 
-	public MetricsSpanEventListener(Metric2Registry metricRegistry) {
+	public MetricsSpanEventListener(Metric2Registry metricRegistry, ThreadPoolExecutor executorService, TracingPlugin tracingPlugin) {
 		this.metricRegistry = metricRegistry;
+		this.executorService = executorService;
+		this.tracingPlugin = tracingPlugin;
 	}
 
 	@Override
-	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
+	public void onFinish(final SpanWrapper spanWrapper, final String operationName, final long durationNanos) {
 		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(spanWrapper);
 		final String operationType = contextInformation.getOperationType();
+
 		if (StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(operationType)) {
-			trackMetrics(contextInformation, operationName, durationNanos, operationType);
+			try {
+				// tracking metrics in a single thread to reduce latency and contention of the locks in ExponentiallyDecayingReservoir
+				if (tracingPlugin.isTrackMetricsAsync() && executorService.getQueue().remainingCapacity() != 0) {
+					executorService.submit(new Runnable() {
+						@Override
+						public void run() {
+							trackMetrics(contextInformation, operationName, durationNanos, operationType);
+						}
+					});
+				} else {
+					trackMetrics(contextInformation, operationName, durationNanos, operationType);
+				}
+			} catch (RejectedExecutionException e) {
+				// race condition
+				logger.warn("Queue for metric tracking executor service is full, tracking metric synchronously");
+				trackMetrics(contextInformation, operationName, durationNanos, operationType);
+			}
 			if (contextInformation.isServerRequest()) {
 				trackExternalRequestRate(spanWrapper, operationName, contextInformation);
 			} else if (contextInformation.isExternalRequest()) {
@@ -48,10 +77,7 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener {
 	}
 
 	private void trackMetrics(SpanContextInformation contextInformation, String operationName, long durationNanos, String operationType) {
-		final Timer timer = metricRegistry.timer(getResponseTimeMetricName(operationName, operationType));
-		timer.update(durationNanos, NANOSECONDS);
-		contextInformation.setTimerForThisRequest(timer);
-
+		metricRegistry.timer(getResponseTimeMetricName(operationName, operationType)).update(durationNanos, NANOSECONDS);
 		metricRegistry.timer(getResponseTimeMetricName("All", operationType)).update(durationNanos, NANOSECONDS);
 
 		if (contextInformation.isError()) {
@@ -96,4 +122,17 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener {
 		return responseTimeTemplate.build(operationName, operationType);
 	}
 
+	public static Timer getTimer(Metric2Registry metricRegistry, SpanContextInformation contextInformation) {
+		final String operationName = contextInformation.getOperationName();
+		final String operationType = contextInformation.getOperationType();
+		if (StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(operationType)) {
+			return (Timer) metricRegistry.getMetrics().get(getResponseTimeMetricName(operationName, operationType));
+		}
+		return null;
+	}
+
+	@Override
+	public void close() throws IOException {
+		executorService.shutdown();
+	}
 }

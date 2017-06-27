@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -21,9 +23,18 @@ public final class ExecutorUtils {
 		// don't instantiate
 	}
 
-	public static ThreadPoolExecutor createSingleThreadDeamonPool(final String threadName, int queueCapacity) {
+	public static ThreadPoolExecutor createSingleThreadDeamonPool(final String threadName, int queueCapacity, CorePlugin corePlugin) {
 		final ThreadFactory daemonThreadFactory = new NamedThreadFactory(threadName);
-		return new MyThreadPoolExecutor(queueCapacity, daemonThreadFactory, threadName);
+		final MyThreadPoolExecutor executor = new MyThreadPoolExecutor(queueCapacity, daemonThreadFactory, threadName);
+		// makes sure that the thread pool is always shut down properly
+		// so that there are no ClassLoaderLeaks when redeploying
+		corePlugin.closeOnShutdown(new Closeable() {
+			@Override
+			public void close() throws IOException {
+				executor.shutdown();
+			}
+		});
+		return executor;
 	}
 
 	public static void logRejectionWarning(RejectedExecutionException e) {

@@ -3,6 +3,7 @@ package org.stagemonitor.tracing.profiler;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
@@ -77,7 +78,7 @@ public class CallTreeSpanEventListenerTest {
 	}
 
 	private SpanContextInformation invokeEventListener(boolean sampled) {
-		CallTreeSpanEventListener eventListener = new CallTreeSpanEventListener(tracingPlugin);
+		CallTreeSpanEventListener eventListener = new CallTreeSpanEventListener(mock(Metric2Registry.class), tracingPlugin);
 		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(span);
 		contextInformation.setSampled(sampled);
 		contextInformation.setPreExecutionInterceptorContext(new PreExecutionInterceptorContext(contextInformation));
