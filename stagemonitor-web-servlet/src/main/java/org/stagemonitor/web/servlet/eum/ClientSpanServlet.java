@@ -65,7 +65,7 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.app_cache_lookup", "t_apc"));
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.dns_lookup", "t_dns"));
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.tcp", "t_tcp"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.time_to_first_byte", "t_req"));
+		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.request", "t_req"));
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.response", "t_rsp"));
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.processing", "t_pro"));
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.load", "t_loa"));
