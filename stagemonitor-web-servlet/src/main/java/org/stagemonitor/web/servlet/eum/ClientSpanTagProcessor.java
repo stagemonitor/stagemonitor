@@ -1,5 +1,9 @@
 package org.stagemonitor.web.servlet.eum;
 
+import org.stagemonitor.util.StringUtils;
+
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import io.opentracing.Span;
@@ -9,13 +13,19 @@ abstract class ClientSpanTagProcessor {
 
 	private static final int MAX_LENGTH = 255;
 	private final String typeToProcess;
-
-	protected ClientSpanTagProcessor(String weaselOperationTypeToProcess) {
-		this.typeToProcess = weaselOperationTypeToProcess;
-	}
+	private final Collection<String> requiredParams;
 
 	protected ClientSpanTagProcessor() {
-		typeToProcess = null; // process all types
+		this(null); // process all types
+	}
+
+	protected ClientSpanTagProcessor(String weaselOperationTypeToProcess) {
+		this(weaselOperationTypeToProcess, Collections.<String>emptyList());
+	}
+
+	protected ClientSpanTagProcessor(String weaselOperationTypeToProcess, Collection<String> requiredParams) {
+		this.typeToProcess = weaselOperationTypeToProcess;
+		this.requiredParams = requiredParams;
 	}
 
 	public void processSpanBuilder(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletRequestParameters) {
@@ -28,12 +38,17 @@ abstract class ClientSpanTagProcessor {
 		// default no-op
 	}
 
-	private boolean shouldProcess(Map<String, String[]> servletRequestParameters) {
+	protected boolean shouldProcess(Map<String, String[]> servletRequestParameters) {
+		for (String requiredParam : requiredParams) {
+			if (StringUtils.isEmpty(getParameterValueOrNull(requiredParam, servletRequestParameters))) {
+				return false;
+			}
+		}
 		final String type = getParameterValueOrNull(ClientSpanServlet.PARAMETER_TYPE, servletRequestParameters);
-		return typeToProcess == null || typeToProcess.equals(type);
+		return typeToProcess != null && typeToProcess.equals(type);
 	}
 
-	String getParameterValueOrNull(String key, Map<String, String[]> servletRequestParameters) {
+	public final String getParameterValueOrNull(String key, Map<String, String[]> servletRequestParameters) {
 		if (servletRequestParameters != null
 				&& servletRequestParameters.containsKey(key)
 				&& servletRequestParameters.get(key).length > 0) {
@@ -43,7 +58,7 @@ abstract class ClientSpanTagProcessor {
 		}
 	}
 
-	public void processSpan(Span span, Map<String, String[]> servletRequestParameters) {
+	public final void processSpan(Span span, Map<String, String[]> servletRequestParameters) {
 		if (shouldProcess(servletRequestParameters)) {
 			processSpanImpl(span, servletRequestParameters);
 		}
@@ -53,7 +68,7 @@ abstract class ClientSpanTagProcessor {
 		// default no-op
 	}
 
-	protected String trimStringToMaxLength(String string) {
+	protected final String trimStringToMaxLength(String string) {
 		if (string == null || string.length() <= MAX_LENGTH) {
 			return string;
 		} else {

@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.eum;
 
+import java.util.Collections;
 import java.util.Map;
 
 import io.opentracing.Tracer;
@@ -10,7 +11,7 @@ class ClientSpanLongTagProcessor extends ClientSpanTagProcessor {
 	private final String requestParameterName;
 
 	ClientSpanLongTagProcessor(String type, String tagName, String requestParameterName) {
-		super(type);
+		super(type, Collections.singletonList(requestParameterName));
 		this.tagName = tagName;
 		this.requestParameterName = requestParameterName;
 	}
