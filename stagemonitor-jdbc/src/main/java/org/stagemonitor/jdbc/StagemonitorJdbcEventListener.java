@@ -4,7 +4,8 @@ import com.p6spy.engine.common.ConnectionInformation;
 import com.p6spy.engine.common.StatementInformation;
 import com.p6spy.engine.event.SimpleJdbcEventListener;
 import com.uber.jaeger.context.TracingUtils;
-
+import io.opentracing.Span;
+import io.opentracing.tag.Tags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
@@ -13,10 +14,12 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.AbstractExternalRequest;
+import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.profiler.Profiler;
 import org.stagemonitor.util.StringUtils;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -24,17 +27,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-import javax.sql.DataSource;
-
-import io.opentracing.Span;
-import io.opentracing.tag.Tags;
-
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(StagemonitorJdbcEventListener.class);
 	private static final String DB_STATEMENT = "db.statement";
+	private static final double MILLISECOND_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
+
+	private static final String CONNECTION_WRAPPED_COUNT_ATTRIBUTE = StagemonitorJdbcEventListener.class.getName() + ".wrappedCount";
+	private static final String TIME_TO_GET_CONNECTION_MS_ATTRIBUTE = StagemonitorJdbcEventListener.class.getName() + ".getTimeToGetConnect";
 
 	private final JdbcPlugin jdbcPlugin;
 
@@ -64,7 +66,36 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 			ensureUrlExistsForDataSource(dataSource, connectionInformation.getConnection());
 			MetaData metaData = dataSourceUrlMap.get(dataSource);
 			metricRegistry.timer(getConnectionTemplate.build(metaData.serviceName)).update(connectionInformation.getTimeToGetConnectionNs(), TimeUnit.NANOSECONDS);
+
+			final Span span = TracingPlugin.getCurrentSpan();
+			final Long connectionWrappedCountSum = incrementAndGetContextValue(span, CONNECTION_WRAPPED_COUNT_ATTRIBUTE, 1L);
+			span.setTag("jdbc_get_connection_count", connectionWrappedCountSum);
+
+			final double timeToGetConnectionMs = connectionInformation.getTimeToGetConnectionNs() / MILLISECOND_IN_NANOS;
+			final Double connectionWaitTimeMsSum = incrementAndGetContextValue(span, TIME_TO_GET_CONNECTION_MS_ATTRIBUTE, timeToGetConnectionMs);
+
+			span.setTag("jdbc_connection_wait_time_ms", connectionWaitTimeMsSum);
 		}
+	}
+
+	private static <T extends Number> T incrementAndGetContextValue(final Span span, final String contextAttributeName, final T incrementValue) {
+		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(span);
+
+		T contextValue = contextInformation.getRequestAttribute(contextAttributeName);
+		if (contextValue == null) {
+			contextValue = incrementValue;
+		} else {
+			if (contextValue instanceof Long) {
+				contextValue = (T)Long.valueOf(contextValue.longValue() + incrementValue.longValue());
+			} else if (contextValue instanceof Double) {
+				contextValue = (T)Double.valueOf(contextValue.doubleValue() + incrementValue.doubleValue());
+			} else {
+				throw new IllegalArgumentException(contextValue.getClass() + " can not be added");
+			}
+		}
+
+		contextInformation.addRequestAttribute(contextAttributeName, contextValue);
+		return contextValue;
 	}
 
 	private DataSource ensureUrlExistsForDataSource(DataSource dataSource, Connection connection) {
