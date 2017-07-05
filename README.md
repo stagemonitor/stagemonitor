@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/stagemonitor/stagemonitor/badge.svg?branch=master&service=github)](https://coveralls.io/github/stagemonitor/stagemonitor?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.stagemonitor/stagemonitor-web-servlet/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.stagemonitor/stagemonitor-web-servlet)
 [![Release](https://jitpack.io/v/stagemonitor/stagemonitor.svg)](https://jitpack.io/#com.github.stagemonitor.stagemonitor/stagemonitor-web-servlet)
-
+[![Chat on Gitter](https://img.shields.io/gitter/room/TechnologyAdvice/Stardust.svg)](https://gitter.im/stagemonitor/stagemonitor)
 
 ---
 
