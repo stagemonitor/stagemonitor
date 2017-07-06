@@ -15,7 +15,6 @@ import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.web.servlet.ServletPlugin;
-import org.stagemonitor.web.servlet.rum.BoomerangJsHtmlInjector;
 
 import java.io.IOException;
 
@@ -118,7 +117,7 @@ public class HttpRequestMonitorFilterTest {
 
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
-		when(servletPlugin.isRealUserMonitoringEnabled()).thenReturn(false);
+		when(servletPlugin.isClientSpanCollectionEnabled()).thenReturn(false);
 		when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(false);
 		when(servletPlugin.isWidgetEnabled()).thenReturn(false);
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
@@ -184,27 +183,6 @@ public class HttpRequestMonitorFilterTest {
 			}
 		}).when(filterChain).doFilter(any(ServletRequest.class), any(ServletResponse.class));
 		return filterChain;
-	}
-
-	@Test
-	public void testRUM() throws Exception {
-		when(servletPlugin.isRealUserMonitoringEnabled()).thenReturn(true);
-		when(servletPlugin.isWidgetEnabled()).thenReturn(false);
-		when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(false);
-		initFilter();
-
-		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
-		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
-
-		Assert.assertEquals("<html><body><script src=\"/stagemonitor/public/static/rum/" + BoomerangJsHtmlInjector.BOOMERANG_FILENAME + "\"></script>\n" +
-				"<script>\n" +
-				"   BOOMR.init({\n" +
-				"      beacon_url: '/stagemonitor/public/rum',\n" +
-				"      log: null\n" +
-				"   });\n" +
-				"   BOOMR.addVar(\"requestName\", \"testName\");\n" +
-				"   BOOMR.addVar(\"serverTime\", 0);\n" +
-				"</script></body></html>", servletResponse.getContentAsString());
 	}
 
 }

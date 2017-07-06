@@ -53,7 +53,7 @@ public class ServletPluginConfigurationTest {
 
 		assertEquals(expectedMap, groupUrlsAsString);
 
-		assertEquals(true, config.isRealUserMonitoringEnabled());
+		assertEquals(true, config.isClientSpanCollectionEnabled());
 		assertEquals(false, config.isCollectPageLoadTimesPerRequest());
 		assertEquals(false, config.isMonitorOnlySpringMvcRequests());
 

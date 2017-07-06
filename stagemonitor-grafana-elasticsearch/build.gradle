@@ -9,7 +9,9 @@ dependencies {
 	// dashboard files for grafana include documentation which is injected in the dashboard when the corresponding project is built.
 	// Therefore stagmeonitor-grafana-elasticsearch depends on them.
 	getProjectsToRelease().each {
-		compile it
+		if (it.name != "stagemonitor-eum-server") {
+			compile it
+		}
 	}
 }
 
@@ -43,14 +45,14 @@ def getDashboardsJson() {
 	def dashboards = []
 
 	file("$buildDir/dashboards/").listFiles().each {
-		def relativePathToDashboard = it.canonicalPath - (project.buildDir.canonicalPath + '/');
+		def relativePathToDashboard = it.canonicalPath - (project.buildDir.canonicalPath + '/')
 		def originalDashboardPath = project.parent.fileTree(".") {
 			include "*/src/**/grafana/Elasticsearch*.json"
 		}.find({ file ->
 			file.canonicalPath.toLowerCase().endsWith(it.name)
 		}).canonicalPath
 		def relativeOriginalDashboardPath = originalDashboardPath.replace(rootDir.canonicalPath + '/', '')
-		def projectName = relativeOriginalDashboardPath.substring(0, relativeOriginalDashboardPath.indexOf("/"));
+		def projectName = relativeOriginalDashboardPath.substring(0, relativeOriginalDashboardPath.indexOf("/"))
 
 		dashboards << [
 				'type'              : "dashboard",

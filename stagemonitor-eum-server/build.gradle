@@ -1,0 +1,16 @@
+plugins {
+	id 'org.springframework.boot' version '1.5.3.RELEASE'
+	id 'java'
+}
+
+apply plugin: 'war'
+
+dependencies {
+	compile 'org.springframework.boot:spring-boot-starter-web'
+	compile 'net.sf.uadetector:uadetector-resources:2014.10'
+	compile project(':stagemonitor-web-servlet')
+	compile project(':stagemonitor-tracing-elasticsearch')
+
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+	testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
