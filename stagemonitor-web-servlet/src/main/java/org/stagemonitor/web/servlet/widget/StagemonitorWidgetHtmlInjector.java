@@ -3,8 +3,6 @@ package org.stagemonitor.web.servlet.widget;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.tracing.B3HeaderFormat;
-import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.IOUtils;
@@ -13,19 +11,18 @@ import org.stagemonitor.web.servlet.filter.HtmlInjector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 
 	/**
-	 * Whether the in browser widget should be opened automatically
-	 * (without needing to click on the speaker icon)
+	 * Whether the in browser widget should be opened automatically (without needing to click on the speaker icon)
 	 */
 	private final boolean openImmediately;
 	private ServletPlugin servletPlugin;
 	private ConfigurationRegistry configuration;
 	private String widgetTemplate;
 	private String contextPath;
-	private TracingPlugin tracingPlugin;
 
 	public StagemonitorWidgetHtmlInjector() {
 		this(false);
@@ -41,7 +38,6 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 		this.servletPlugin = initArguments.getConfiguration().getConfig(ServletPlugin.class);
 		contextPath = initArguments.getServletContext().getContextPath();
 		this.widgetTemplate = buildWidgetTemplate(contextPath);
-		tracingPlugin = initArguments.getConfiguration().getConfig(TracingPlugin.class);
 	}
 
 	private String buildWidgetTemplate(String contextPath) {
@@ -76,6 +72,6 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 				.replace("@@MEASUREMENT_SESSION@@", JsonUtils.toJson(Stagemonitor.getMeasurementSession()))
 				.replace("@@PATHS_OF_TAB_PLUGINS@@", JsonUtils.toJson(pathsOfWidgetTabPlugins))
 				.replace("@@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@", JsonUtils.toJson(pathsOfWidgetMetricTabPlugins))
-				.replace("@@CONNECTION_ID@@", B3HeaderFormat.getSpanId(tracingPlugin.getTracer(), span)));
+				.replace("@@CONNECTION_ID@@", UUID.randomUUID().toString()));
 	}
 }
