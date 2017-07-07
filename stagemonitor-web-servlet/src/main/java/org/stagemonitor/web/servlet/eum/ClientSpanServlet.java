@@ -36,6 +36,7 @@ public class ClientSpanServlet extends HttpServlet {
 	private static final String PARAMETER_URL = "u";
 	private static final String PARAMETER_LOCATION = "l";
 	private static final String ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
+	private static final String ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods";
 
 	private final TracingPlugin tracingPlugin;
 	private final List<ClientSpanTagProcessor> tagProcessors;
@@ -92,19 +93,32 @@ public class ClientSpanServlet extends HttpServlet {
 		handleRequest(req, resp);
 	}
 
-	private void handleRequest(HttpServletRequest req, HttpServletResponse resp) {
+	@Override
+	protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		setCorsHeaders(resp);
+		resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+	}
+
+	private void handleRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (servletPlugin.isClientSpanCollectionEnabled()) {
-			convertWeaselTraceToStagemonitorTrace(req);
-			resp.setHeader(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+			convertWeaselBeaconToSpan(req);
+			setCorsHeaders(resp);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+		} else {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
+	}
+
+	private void setCorsHeaders(HttpServletResponse resp) {
+		resp.setHeader(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		resp.setHeader(ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS");
 	}
 
 	private void addTagProcessor(ClientSpanTagProcessor tagProcessor) {
 		tagProcessors.add(tagProcessor);
 	}
 
-	void convertWeaselTraceToStagemonitorTrace(HttpServletRequest httpServletRequest) {
+	void convertWeaselBeaconToSpan(HttpServletRequest httpServletRequest) {
 		final Map<String, String[]> servletParameters = httpServletRequest.getParameterMap();
 		final long startTimeStampInMilliseconds;
 		final long possiblyOffsettedStartTimeStampInMilliseconds = Long.parseLong(httpServletRequest.getParameter(PARAMETER_TIME_STAMP));

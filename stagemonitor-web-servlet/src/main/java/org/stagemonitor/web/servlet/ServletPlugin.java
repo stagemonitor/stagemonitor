@@ -17,6 +17,8 @@ import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.servlet.configuration.ConfigurationServlet;
 import org.stagemonitor.web.servlet.eum.ClientSpanExtension;
 import org.stagemonitor.web.servlet.eum.ClientSpanJavaScriptServlet;
+import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataConverter;
+import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataDefinition;
 import org.stagemonitor.web.servlet.eum.ClientSpanServlet;
 import org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension;
 import org.stagemonitor.web.servlet.filter.HttpRequestMonitorFilter;
@@ -63,7 +65,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		Stagemonitor.init();
 	}
 
-	private Map<String, String> whitelistedClientSpanTagsFromSPI;
+	private Map<String, ClientSpanMetadataDefinition> whitelistedClientSpanTagsFromSPI;
 
 	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
 			.key("stagemonitor.requestmonitor.http.requestparams.confidential.regex")
@@ -222,20 +224,19 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 			.key("stagemonitor.eum.enabled")
 			.dynamic(true)
 			.label("Enable End User Spans")
-			.description("The End User Monitoring feature collects the browser, network and overall percieved " +
-					"execution time from the user's perspective. When activated, a piece of javascript will be " +
-					"injected to each html page that collects the data from real users and sends it back " +
-					"to the server. Servlet API 3.0 or higher is required for this.")
+			.description("The End User Monitoring feature collects the browser, network and overall perceived " +
+					"execution time from the user's perspective. When activated, this application will be able to " +
+					"receive client spans. You probably want to enable `stagemonitor.eum.injection.enabled` too.")
 			.configurationCategory(WEB_PLUGIN)
-			.buildWithDefault(true);
+			.buildWithDefault(false);
 	private ConfigurationOption<Boolean> clientSpanInjectionEnabled = ConfigurationOption.booleanOption()
 			.key("stagemonitor.eum.injection.enabled")
 			.dynamic(true)
 			.label("Enable End User script injection")
 			.description("If enabled, stagemonitor will inject the client span collection scripts in the loaded page.")
 			.configurationCategory(WEB_PLUGIN)
-			.buildWithDefault(false);
-	private ConfigurationOption<Map<String, String>> whitelistedClientSpanTags = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, StringValueConverter.INSTANCE)
+			.buildWithDefault(true);
+	private ConfigurationOption<Map<String, ClientSpanMetadataDefinition>> whitelistedClientSpanTags = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, new ClientSpanMetadataConverter())
 			.key("stagemonitor.eum.whitelistedClientSpanTags")
 			.dynamic(true)
 			.label("Whitelisted client span tags")
@@ -244,7 +245,26 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 					" configuration option are ignored. Syntax is `key: type`. Valid types are string, boolean and number." +
 					" Example: `user: string, logged_in: boolean, age: number`")
 			.configurationCategory(WEB_PLUGIN)
-			.buildWithDefault(Collections.<String, String>emptyMap());
+			.buildWithDefault(Collections.<String, ClientSpanMetadataDefinition>emptyMap());
+	private ConfigurationOption<Boolean> minifyClientSpanScript = ConfigurationOption.booleanOption()
+			.key("stagemonitor.eum.debugCollectionScript")
+			.dynamic(true)
+			.label("Use debug build of weasel")
+			.description("If set, stagemonitor will serve the debug build of weasel for end user monitoring." +
+					" This should only be set to true, if you debug errors in the end user monitoring.")
+			.configurationCategory(WEB_PLUGIN)
+			.tags("advanced")
+			.buildWithDefault(false);
+	private ConfigurationOption<Integer> clientSpanScriptCacheDuration = ConfigurationOption.integerOption()
+			.key("stagemonitor.eum.clientSpanScriptCacheDuration")
+			.dynamic(true)
+			.label("Client Span Script Cache Duration")
+			.description("This configuration option sets how long" +
+					" the script shall be cached by browsers. The value entered is the cache duration in minutes." +
+					" Entering 0 or a negative value will result in transmitting 'Cache-Control: no-cache'.")
+			.configurationCategory(WEB_PLUGIN)
+			.tags("advanced")
+			.buildWithDefault(5);
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
@@ -309,6 +329,18 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		return clientSpanInjectionEnabled.getValue();
 	}
 
+	public boolean getMinifyClientSpanScript() {
+		return minifyClientSpanScript.getValue();
+	}
+
+	public void registerMinifyClientSpanScriptOptionChangedListener(ConfigurationOption.ChangeListener<Boolean> listener) {
+		minifyClientSpanScript.addChangeListener(listener);
+	}
+
+	public int getClientSpanScriptCacheDuration() {
+		return clientSpanScriptCacheDuration.getValue();
+	}
+
 	public boolean isCollectPageLoadTimesPerRequest() {
 		return collectPageLoadTimesPerRequest.getValue();
 	}
@@ -363,7 +395,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 	public boolean isMonitorOnlyResteasyRequests() {
 		return monitorOnlyResteasyOption.getValue();
 	}
-	
+
 	public Collection<String> getRequestExceptionAttributes() {
 		return requestExceptionAttributes.getValue();
 	}
@@ -372,25 +404,26 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		return honorDoNotTrackHeader.getValue();
 	}
 
-	public Map<String, String> getWhitelistedClientSpanTags() {
-		Map<String, String> allWhitelistedTags = getWhitelistedClientSpanTagsFromSPI();
-		allWhitelistedTags.putAll(whitelistedClientSpanTags.get());
-		return allWhitelistedTags;
+	public Map<String, ClientSpanMetadataDefinition> getWhitelistedClientSpanTags() {
+		HashMap<String, ClientSpanMetadataDefinition> allWhitelistedClientSpanTags = new HashMap<String, ClientSpanMetadataDefinition>();
+		allWhitelistedClientSpanTags.putAll(getWhitelistedClientSpanTagsFromSPI());
+		allWhitelistedClientSpanTags.putAll(whitelistedClientSpanTags.get());
+		return Collections.unmodifiableMap(allWhitelistedClientSpanTags);
 	}
 
-	private Map<String, String> getWhitelistedClientSpanTagsFromSPI() {
+	private Map<String, ClientSpanMetadataDefinition> getWhitelistedClientSpanTagsFromSPI() {
 		if (whitelistedClientSpanTagsFromSPI == null) {
-			HashMap<String, String> whitelistedTagsFromSPI = new HashMap<String, String>();
+			HashMap<String, ClientSpanMetadataDefinition> whitelistedTagsFromSPI = new HashMap<String, ClientSpanMetadataDefinition>();
 
 			for (ClientSpanExtension clientSpanExtension : getClientSpanExtenders()) {
-				final Map<String, String> whitelistedTags = clientSpanExtension.getWhitelistedTags();
+				final Map<String, ClientSpanMetadataDefinition> whitelistedTags = clientSpanExtension.getWhitelistedTags();
 				whitelistedTagsFromSPI.putAll(whitelistedTags);
 			}
 
-			this.whitelistedClientSpanTagsFromSPI = whitelistedTagsFromSPI;
+			this.whitelistedClientSpanTagsFromSPI = Collections.unmodifiableMap(whitelistedTagsFromSPI);
 		}
 
-		return new HashMap<String, String>(whitelistedClientSpanTagsFromSPI);
+		return whitelistedClientSpanTagsFromSPI;
 	}
 
 	public List<ClientSpanExtension> getClientSpanExtenders() {
@@ -398,7 +431,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		for (ClientSpanExtension clientSpanExtension : ServiceLoader.load(ClientSpanExtension.class)) {
 			clientSpanExtensions.add(clientSpanExtension);
 		}
-		clientSpanExtensions.add(new WeaselClientSpanExtension());
+		clientSpanExtensions.add(new WeaselClientSpanExtension(this));
 		return clientSpanExtensions;
 	}
 
@@ -411,7 +444,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 				.addMapping("/stagemonitor/metrics");
 		ctx.addServlet(ClientSpanServlet.class.getSimpleName(), new ClientSpanServlet())
 				.addMapping("/stagemonitor/public/eum");
-		ctx.addServlet(ClientSpanJavaScriptServlet.class.getSimpleName(), new ClientSpanJavaScriptServlet())
+		ctx.addServlet(ClientSpanJavaScriptServlet.class.getSimpleName(), new ClientSpanJavaScriptServlet(this))
 				.addMapping("/stagemonitor/public/eum.js");
 		ctx.addServlet(StagemonitorFileServlet.class.getSimpleName(), new StagemonitorFileServlet())
 				.addMapping("/stagemonitor/static/*", "/stagemonitor/public/static/*");

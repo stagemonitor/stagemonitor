@@ -11,13 +11,10 @@ import io.opentracing.tag.Tags;
 public class ClientSpanTypeTagProcessor extends ClientSpanTagProcessor {
 
 	private static final String JS_ERROR = "js_error";
-	private final String tagName;
-	private final String requestParameterName;
+	private static final String TYPE_PARAMETER_NAME = "ty";
 	private final Map<String, String> clientSpanType;
 
 	public ClientSpanTypeTagProcessor() {
-		this.tagName = SpanUtils.OPERATION_TYPE;
-		this.requestParameterName = "ty";
 		clientSpanType = new HashMap<String, String>();
 		clientSpanType.put("pl", "pageload");
 		clientSpanType.put("err", JS_ERROR);
@@ -25,10 +22,15 @@ public class ClientSpanTypeTagProcessor extends ClientSpanTagProcessor {
 	}
 
 	@Override
+	protected boolean shouldProcess(Map<String, String[]> servletRequestParameters) {
+		return true;
+	}
+
+	@Override
 	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletRequestParameters) {
-		final String clientSubmittedType = getParameterValueOrNull(requestParameterName, servletRequestParameters);
+		final String clientSubmittedType = getParameterValueOrNull(TYPE_PARAMETER_NAME, servletRequestParameters);
 		final String spanType = clientSpanType.get(clientSubmittedType);
-		spanBuilder.withTag(tagName, spanType);
+		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, spanType);
 		if (JS_ERROR.equals(spanType)) {
 			spanBuilder.withTag(Tags.ERROR.getKey(), true);
 		}

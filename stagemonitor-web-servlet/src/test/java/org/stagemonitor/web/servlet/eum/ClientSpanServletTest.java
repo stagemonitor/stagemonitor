@@ -6,6 +6,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.web.servlet.ServletPlugin;
+import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataDefinition;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,7 +29,7 @@ public class ClientSpanServletTest {
 	private ServletPlugin servletPlugin;
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withPageLoadBeacon() throws ServletException, IOException {
+	public void testConvertWeaselBeaconToSpan_withPageLoadBeacon() throws ServletException, IOException {
 		// Given
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("ty", "pl");
@@ -68,14 +69,14 @@ public class ClientSpanServletTest {
 
 			softly.assertThat(span.tags())
 					.containsEntry("type", "pageload")
-					.doesNotContainKey("user") // TODO: test whitelisting of metatags
+					.doesNotContainKey("user")
 					.containsEntry("http.url", "http://localhost:9966/petclinic/")
 					.containsEntry("timing.unload", 0L)
 					.containsEntry("timing.redirect", 0L)
 					.containsEntry("timing.app_cache_lookup", 5L)
 					.containsEntry("timing.dns_lookup", 0L)
 					.containsEntry("timing.tcp", 0L)
-					.containsEntry("timing.time_to_first_byte", 38L)
+					.containsEntry("timing.request", 38L)
 					.containsEntry("timing.response", 4L)
 					.containsEntry("timing.processing", 471L)
 					.containsEntry("timing.load", 5L)
@@ -84,7 +85,7 @@ public class ClientSpanServletTest {
 	}
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withMetadata() throws ServletException, IOException {
+	public void testConvertWeaselBeaconToSpan_withMetadata() throws ServletException, IOException {
 		// Given - normal trace data
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("ty", "pl");
@@ -111,11 +112,11 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("m_some_not_mapped_property", "this should not exist");
 
 		// When
-		final HashMap<String, String> whitelistedValues = new HashMap<>();
-		whitelistedValues.put("username", "string");
-		whitelistedValues.put("age", "number");
-		whitelistedValues.put("is_access_allowed", "boolean");
-		whitelistedValues.put("parameter_not_sent", "string");
+		final HashMap<String, ClientSpanMetadataDefinition> whitelistedValues = new HashMap<>();
+		whitelistedValues.put("username", new ClientSpanMetadataDefinition("string"));
+		whitelistedValues.put("age", new ClientSpanMetadataDefinition("number"));
+		whitelistedValues.put("is_access_allowed", new ClientSpanMetadataDefinition("boolean"));
+		whitelistedValues.put("parameter_not_sent", new ClientSpanMetadataDefinition("string"));
 		when(servletPlugin.getWhitelistedClientSpanTags()).thenReturn(whitelistedValues);
 		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
 
@@ -128,6 +129,7 @@ public class ClientSpanServletTest {
 			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
 
 			softly.assertThat(span.tags())
+					.containsEntry("type", "pageload")
 					.containsEntry("username", "test string here")
 					.containsEntry("age", 26.)
 					.containsEntry("is_access_allowed", true)
@@ -137,7 +139,7 @@ public class ClientSpanServletTest {
 	}
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withErrorBeacon() throws ServletException, IOException {
+	public void testConvertWeaselBeaconToSpan_withErrorBeacon() throws ServletException, IOException {
 		// Given
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("k", "someKey");
@@ -173,7 +175,7 @@ public class ClientSpanServletTest {
 	}
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withErrorBeaconTrimsTooLongStackTraces() throws ServletException, IOException {
+	public void testConvertWeaselBeaconToSpan_withErrorBeaconTrimsTooLongStackTraces() throws ServletException, IOException {
 		// Given
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("k", "someKey");
@@ -217,7 +219,7 @@ public class ClientSpanServletTest {
 	}
 
 	@Test
-	public void testConvertWeaselTraceToStagemonitorTrace_withXHRBeacon() throws ServletException, IOException {
+	public void testConvertWeaselBeaconToSpan_withXHRBeacon() throws ServletException, IOException {
 		// Given
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("r", "1496994284184");

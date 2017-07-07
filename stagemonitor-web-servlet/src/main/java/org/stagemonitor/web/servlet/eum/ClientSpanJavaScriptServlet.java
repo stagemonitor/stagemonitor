@@ -1,5 +1,8 @@
 package org.stagemonitor.web.servlet.eum;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
@@ -12,27 +15,38 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class ClientSpanJavaScriptServlet extends HttpServlet {
+public class ClientSpanJavaScriptServlet extends HttpServlet implements ConfigurationOption.ChangeListener<Boolean> {
 
 	private static final String MIME_APPLICATION_JAVASCRIPT = "application/javascript";
 	private static final String ETAG = "etag";
 	private static final String IF_NONE_MATCH = "if-none-match";
 	private static final String MAX_AGE = "max-age=";
-	private static final String CACHE_CONTROL = "Cache-Control";
-	private final String javaScript;
-	private final String javaScriptEtag;
+	private static final String NO_CACHE = "no-cache";
+	static final String CACHE_CONTROL = "Cache-Control";
+	private static final Logger log = LoggerFactory.getLogger(ClientSpanJavaScriptServlet.class);
 
-	public ClientSpanJavaScriptServlet() {
+	private final ServletPlugin servletPlugin;
+	private String javaScript;
+	private String javaScriptEtag;
+
+	public ClientSpanJavaScriptServlet(ServletPlugin servletPlugin) {
+		this.servletPlugin = servletPlugin;
+		servletPlugin.registerMinifyClientSpanScriptOptionChangedListener(this);
+		buildJavaScriptAndEtag();
+	}
+
+	private void buildJavaScriptAndEtag() {
 		List<ClientSpanExtension> clientSpanExtensions = Stagemonitor.getPlugin(ServletPlugin.class).getClientSpanExtenders();
-		javaScript = buildJavaScript(clientSpanExtensions);
+		javaScript = concatenateJavaScript(clientSpanExtensions);
 		javaScriptEtag = generateEtag(javaScript);
+		log.info("built new end user monitoring JavaScript, size={} bytes, etag={}", javaScript.length(), javaScriptEtag);
 	}
 
 	private String generateEtag(String javaScript) {
 		return String.format("\"%d\"", javaScript.hashCode());
 	}
 
-	private String buildJavaScript(List<ClientSpanExtension> clientSpanExtensions) {
+	private String concatenateJavaScript(List<ClientSpanExtension> clientSpanExtensions) {
 		StringBuilder javaScriptBuilder = new StringBuilder();
 		for (ClientSpanExtension contributor : clientSpanExtensions) {
 			javaScriptBuilder.append(wrapImmediateInvokedFunctionExpression(contributor.getClientTraceExtensionScript()));
@@ -42,13 +56,17 @@ public class ClientSpanJavaScriptServlet extends HttpServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		resp.setHeader(ETAG, javaScriptEtag);
-		resp.setHeader(CACHE_CONTROL, getCacheControlMaxAge());
-		if (isInClientCache(req)) {
-			resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+		if (servletPlugin.isClientSpanCollectionEnabled()) {
+			resp.setHeader(ETAG, javaScriptEtag);
+			resp.setHeader(CACHE_CONTROL, getCacheControlMaxAge());
+			if (isInClientCache(req)) {
+				resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+			} else {
+				resp.setContentType(MIME_APPLICATION_JAVASCRIPT);
+				resp.getWriter().write(javaScript);
+			}
 		} else {
-			resp.setContentType(MIME_APPLICATION_JAVASCRIPT);
-			resp.getWriter().write(javaScript);
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
 	}
 
@@ -61,6 +79,16 @@ public class ClientSpanJavaScriptServlet extends HttpServlet {
 	}
 
 	private String getCacheControlMaxAge() {
-		return MAX_AGE + String.valueOf(TimeUnit.MINUTES.toSeconds(5)); // TODO configurable?
+		int cachingDurationInMinutes = servletPlugin.getClientSpanScriptCacheDuration();
+		if (cachingDurationInMinutes <= 0) {
+			return NO_CACHE;
+		} else {
+			return MAX_AGE + String.valueOf(TimeUnit.MINUTES.toSeconds(cachingDurationInMinutes));
+		}
+	}
+
+	@Override
+	public void onChange(ConfigurationOption<?> configurationOption, Boolean oldValue, Boolean newValue) {
+		buildJavaScriptAndEtag();
 	}
 }

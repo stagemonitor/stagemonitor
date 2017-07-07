@@ -19,16 +19,17 @@ class ClientSpanLongTagProcessor extends ClientSpanTagProcessor {
 	@Override
 	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletRequestParameters) {
 		final String valueOrNull = getParameterValueOrNull(requestParameterName, servletRequestParameters);
-		spanBuilder.withTag(tagName, parsedLongOrNull(valueOrNull));
+		final Long parsedLongOrNull = parsedLongOrNull(valueOrNull);
+		if (parsedLongOrNull != null) {
+			spanBuilder.withTag(tagName, parsedLongOrNull);
+		}
 	}
 
 	private Long parsedLongOrNull(String valueOrNull) {
-		Long parsedValue;
 		try {
-			parsedValue = Long.parseLong(valueOrNull);
+			return Long.parseLong(valueOrNull);
 		} catch (NumberFormatException e) {
-			parsedValue = null;
+			return null;
 		}
-		return parsedValue;
 	}
 }

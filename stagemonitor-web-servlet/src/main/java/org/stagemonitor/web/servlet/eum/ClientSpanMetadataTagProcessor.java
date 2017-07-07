@@ -3,19 +3,23 @@ package org.stagemonitor.web.servlet.eum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.converter.DoubleValueConverter;
+import org.stagemonitor.configuration.converter.ValueConverter;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.opentracing.Tracer;
 
 public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 
-	public static final String TYPE_STRING = "string";
-	public static final String TYPE_NUMBER = "number";
-	public static final String TYPE_BOOLEAN = "boolean";
+	static final String TYPE_STRING = "string";
+	static final String TYPE_NUMBER = "number";
+	static final String TYPE_BOOLEAN = "boolean";
+	private static final String REQUEST_PARAMETER_METADATA_PREFIX = "m_";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private ServletPlugin servletPlugin;
+	private final ServletPlugin servletPlugin;
 
 	protected ClientSpanMetadataTagProcessor(ServletPlugin servletPlugin) {
 		super(ClientSpanServlet.TYPE_PAGE_LOAD);
@@ -24,38 +28,94 @@ public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 
 	@Override
 	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletParameters) {
-		for (String parameterName : servletParameters.keySet()) {
-			String metadataNameWithoutPrefix = stripMetadataPrefix(parameterName);
-			if (isParameterWhitelisted(metadataNameWithoutPrefix)) {
+		final Map<String, ClientSpanMetadataDefinition> whitelistedClientSpanTags = servletPlugin.getWhitelistedClientSpanTags();
+		for (String originalParameterName : servletParameters.keySet()) {
+			final String parameterNameWithoutPrefix = stripMetadataPrefix(originalParameterName);
+			if (originalParameterName.startsWith(REQUEST_PARAMETER_METADATA_PREFIX) && isParameterWhitelisted(whitelistedClientSpanTags, parameterNameWithoutPrefix)) {
+				final String parameterValueOrNull = getParameterValueOrNull(originalParameterName, servletParameters);
+				final ClientSpanMetadataDefinition clientSpanTagDefinition = whitelistedClientSpanTags.get(parameterNameWithoutPrefix);
 
-				final Map<String, String> whitelistedClientSpanTags = servletPlugin.getWhitelistedClientSpanTags();
-				final String parameterValueOrNull = getParameterValueOrNull(parameterName, servletParameters);
-				final String type = whitelistedClientSpanTags.get(metadataNameWithoutPrefix);
-
-				if (TYPE_STRING.equalsIgnoreCase(type) || parameterValueOrNull == null) {
-					spanBuilder.withTag(metadataNameWithoutPrefix, trimStringToMaxLength(parameterValueOrNull));
-				} else if (TYPE_NUMBER.equalsIgnoreCase(type)) {
-					final Double value = DoubleValueConverter.INSTANCE.convert(parameterValueOrNull);
-					spanBuilder.withTag(metadataNameWithoutPrefix, value);
-				} else if (TYPE_BOOLEAN.equalsIgnoreCase(type)) {
-					final Boolean value = ClientSpanBooleanTagProcessor.parseBooleanOrFalse(parameterValueOrNull);
-					spanBuilder.withTag(metadataNameWithoutPrefix, value);
-				} else {
-					logger.error(
-							"{} is not a valid type for client span metadata values. Valid ones are: {}, {} and {}",
-							type, TYPE_STRING, TYPE_BOOLEAN, TYPE_NUMBER);
+				try {
+					if (TYPE_STRING.equalsIgnoreCase(clientSpanTagDefinition.getType()) || parameterValueOrNull == null) {
+						final String value = trimStringToLength(parameterValueOrNull, clientSpanTagDefinition.getLength());
+						spanBuilder.withTag(parameterNameWithoutPrefix, value);
+					} else if (TYPE_NUMBER.equalsIgnoreCase(clientSpanTagDefinition.getType())) {
+						final Double value = DoubleValueConverter.INSTANCE.convert(parameterValueOrNull);
+						spanBuilder.withTag(parameterNameWithoutPrefix, value);
+					} else if (TYPE_BOOLEAN.equalsIgnoreCase(clientSpanTagDefinition.getType())) {
+						final Boolean value = ClientSpanBooleanTagProcessor.parseBooleanOrFalse(parameterValueOrNull);
+						spanBuilder.withTag(parameterNameWithoutPrefix, value);
+					}
+				} catch (IllegalArgumentException e) {
+					// skip this metadata as it has either an invalid name or is not parsable
+					logger.warn("error while parsing parameter name {} with value {}", parameterNameWithoutPrefix, parameterValueOrNull);
 				}
-
 			}
 		}
 	}
 
 	private String stripMetadataPrefix(String parameterName) {
-		return parameterName.startsWith("m_") ? parameterName.substring(2) : "";
+		if (parameterName.startsWith(REQUEST_PARAMETER_METADATA_PREFIX)) {
+			return parameterName.substring(2);
+		} else {
+			return parameterName;
+		}
 	}
 
-	private boolean isParameterWhitelisted(String parameterName) {
-		return servletPlugin.getWhitelistedClientSpanTags().containsKey(parameterName);
+	private boolean isParameterWhitelisted(Map<String, ClientSpanMetadataDefinition> whitelistedClientSpanTags, String parameterName) {
+		return whitelistedClientSpanTags.containsKey(parameterName);
 	}
 
+	/**
+	 * This class represents a client span metadata definition (e.g. <code>string(100)</code> or <code>boolean</code>,
+	 * see stagemonitor configuration option <code>stagemonitor.eum.whitelistedClientSpanTags</code>.
+	 */
+	public static class ClientSpanMetadataDefinition {
+		private static final Pattern typeAndLengthPattern = Pattern.compile("\\s*(string|number|boolean)\\s*(\\(\\s*([0-9]+)\\s*\\))?\\s*");
+		private final String type;
+		private final Integer length;
+		private final String definition;
+
+		public ClientSpanMetadataDefinition(String definition) {
+			this.definition = definition;
+			final Matcher matcher = typeAndLengthPattern.matcher(definition);
+			if (matcher.matches()) {
+				this.type = matcher.group(1);
+				String lengthOrNull = matcher.group(3);
+				if (lengthOrNull == null) {
+					length = MAX_LENGTH;
+				} else {
+					length = Integer.parseInt(lengthOrNull);
+				}
+			} else {
+				throw new IllegalArgumentException("invalid client span metadata definition: " + definition);
+			}
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public Integer getLength() {
+			return length;
+		}
+
+		public String getDefinition() {
+			return definition;
+		}
+	}
+
+	public static class ClientSpanMetadataConverter implements ValueConverter<ClientSpanMetadataDefinition>	{
+
+		@Override
+		public ClientSpanMetadataDefinition convert(String definition) throws IllegalArgumentException {
+			return new ClientSpanMetadataDefinition(definition);
+		}
+
+		@Override
+		public String toString(ClientSpanMetadataDefinition value) {
+			return value.getDefinition();
+		}
+
+	}
 }

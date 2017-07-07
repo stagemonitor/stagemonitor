@@ -1,5 +1,5 @@
 plugins {
-	id 'org.springframework.boot' version '1.5.3.RELEASE'
+	id 'org.springframework.boot' version '1.5.2.RELEASE'
 	id 'java'
 }
 
@@ -18,3 +18,5 @@ dependencies {
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
+
+war.finalizedBy bootRepackage

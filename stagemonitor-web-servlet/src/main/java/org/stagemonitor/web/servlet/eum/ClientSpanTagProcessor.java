@@ -11,12 +11,12 @@ import io.opentracing.Tracer;
 
 abstract class ClientSpanTagProcessor {
 
-	private static final int MAX_LENGTH = 255;
+	static final int MAX_LENGTH = 255;
 	private final String typeToProcess;
 	private final Collection<String> requiredParams;
 
 	protected ClientSpanTagProcessor() {
-		this(null); // process all types
+		this(null);
 	}
 
 	protected ClientSpanTagProcessor(String weaselOperationTypeToProcess) {
@@ -69,10 +69,14 @@ abstract class ClientSpanTagProcessor {
 	}
 
 	protected final String trimStringToMaxLength(String string) {
-		if (string == null || string.length() <= MAX_LENGTH) {
+		return trimStringToLength(string, MAX_LENGTH);
+	}
+
+	protected final String trimStringToLength(String string, int length) {
+		if (string == null || string.length() <= length) {
 			return string;
 		} else {
-			return string.substring(0, MAX_LENGTH);
+			return string.substring(0, length);
 		}
 	}
 

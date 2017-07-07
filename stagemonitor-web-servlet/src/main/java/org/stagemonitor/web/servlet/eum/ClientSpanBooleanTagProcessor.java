@@ -22,11 +22,7 @@ public class ClientSpanBooleanTagProcessor extends ClientSpanTagProcessor {
 	}
 
 	public static Boolean parseBooleanOrFalse(String valueOrNull) {
-		try {
-			return valueOrNull.equals("1") || Boolean.parseBoolean(valueOrNull);
-		} catch (Exception e) {
-			return false;
-		}
+		return "1".equals(valueOrNull) || Boolean.parseBoolean(valueOrNull);
 	}
 
 }
