@@ -4,6 +4,7 @@ import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.IPAnonymizationUtils;
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.AbstractSpanEventListener;
+import org.stagemonitor.tracing.wrapper.NoopSpanEventListener;
 import org.stagemonitor.tracing.wrapper.SpanEventListener;
 import org.stagemonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
@@ -61,16 +62,22 @@ public class AnonymizingSpanEventListener extends AbstractSpanEventListener {
 		}
 	}
 
-	public static class MySpanEventListenerFactory implements SpanEventListenerFactory {
+	public static class AnonymizingSpanEventListenerFactory implements SpanEventListenerFactory {
 		private final TracingPlugin tracingPlugin;
 
-		public MySpanEventListenerFactory(TracingPlugin tracingPlugin) {
+		public AnonymizingSpanEventListenerFactory(TracingPlugin tracingPlugin) {
 			this.tracingPlugin = tracingPlugin;
 		}
 
 		@Override
 		public SpanEventListener create() {
-			return new AnonymizingSpanEventListener(tracingPlugin);
+			boolean pseudonymizeUserNames = tracingPlugin.isPseudonymizeUserNames();
+			boolean anonymizeIPs = tracingPlugin.isAnonymizeIPs();
+			if (anonymizeIPs || pseudonymizeUserNames) {
+				return new AnonymizingSpanEventListener(tracingPlugin);
+			} else {
+				return NoopSpanEventListener.INSTANCE;
+			}
 		}
 	}
 }

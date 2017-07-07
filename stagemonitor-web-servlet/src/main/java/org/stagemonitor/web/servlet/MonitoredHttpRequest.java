@@ -88,6 +88,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 				.asChildOf(spanCtx)
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
 		if (widgetAndStagemonitorEndpointsAllowed) {
+			// use null as value so that the tag is not really set
 			spanBuilder = spanBuilder.withTag(WIDGET_ALLOWED_ATTRIBUTE, (String) null);
 		}
 		if (!sample) {

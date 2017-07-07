@@ -240,9 +240,6 @@ public class SpanContextInformation {
 	public static class SpanContextSpanEventListener extends AbstractSpanEventListener implements SpanEventListenerFactory {
 
 		private SpanContextInformation info;
-		private String spanKind;
-		private Number samplingPriority;
-		private String operationType;
 
 		@Override
 		public void onStart(SpanWrapper spanWrapper) {
@@ -255,18 +252,21 @@ public class SpanContextInformation {
 				spanWrapper.setTag(entry.getKey(), entry.getValue());
 			}
 
-			handleTagsSetBeforeSpanStarted();
+			handleTagsSetBeforeSpanStarted(spanWrapper);
 		}
 
-		private void handleTagsSetBeforeSpanStarted() {
+		private void handleTagsSetBeforeSpanStarted(SpanWrapper spanWrapper) {
+			final String spanKind = spanWrapper.getStringTag(Tags.SPAN_KIND.getKey());
+			final Number samplingPriority = spanWrapper.getNumberTag(Tags.SAMPLING_PRIORITY.getKey());
+			final String operationType = spanWrapper.getStringTag(SpanUtils.OPERATION_TYPE);
 			if (spanKind != null) {
-				onSetTag(Tags.SPAN_KIND.getKey(), spanKind);
+				setSpanKind(spanKind);
 			}
 			if (samplingPriority != null) {
-				onSetTag(Tags.SAMPLING_PRIORITY.getKey(), samplingPriority);
+				setSamplingPriority(samplingPriority);
 			}
 			if (operationType != null) {
-				onSetTag(SpanUtils.OPERATION_TYPE, operationType);
+				info.operationType = operationType;
 			}
 		}
 
@@ -274,35 +274,33 @@ public class SpanContextInformation {
 		public String onSetTag(String key, String value) {
 			if (key.equals(Tags.SPAN_KIND.getKey())) {
 				if (info != null) {
-					info.setExternalRequest(Tags.SPAN_KIND_CLIENT.equals(value));
-					info.setServerRequest(Tags.SPAN_KIND_SERVER.equals(value));
-				} else {
-					// span.kind was set before the span has been started
-					// store in instance variable and set again if a SpanContextInformation is available
-					spanKind = value;
+					setSpanKind(value);
 				}
 			} else if (SpanUtils.OPERATION_TYPE.equals(key)) {
 				if (info != null) {
 					info.operationType = value;
-				} else {
-					operationType = value;
 				}
 			}
 			return value;
+		}
+
+		private void setSpanKind(String value) {
+			info.setExternalRequest(Tags.SPAN_KIND_CLIENT.equals(value));
+			info.setServerRequest(Tags.SPAN_KIND_SERVER.equals(value));
 		}
 
 		@Override
 		public Number onSetTag(String key, Number value) {
 			if (Tags.SAMPLING_PRIORITY.getKey().equals(key)) {
 				if (info != null) {
-					info.setSampled(value.shortValue() > 0);
-				} else {
-					// sampling.priority was set before the span has been started
-					// store in instance variable and set again if a SpanContextInformation is available
-					samplingPriority = value;
+					setSamplingPriority(value);
 				}
 			}
 			return value;
+		}
+
+		private void setSamplingPriority(Number value) {
+			info.setSampled(value.intValue() > 0);
 		}
 
 		@Override

@@ -169,6 +169,49 @@ public class SpanWrapper implements Span {
 		return tags;
 	}
 
+	/**
+	 * This method returns the tag value, associated with the supplied key, if it exists and has a {@link String} type.
+	 *
+	 * @param key The tag key
+	 * @return The value, if exists and is a {@link String} type, otherwise null
+	 */
+	public String getStringTag(String key) {
+		Object value = tags.get(key);
+		if (value instanceof String) {
+			return (String) value;
+		}
+		return null;
+	}
+
+	/**
+	 * This method returns the tag value, associated with the supplied key, if it exists and has a {@link Number} type.
+	 *
+	 * @param key The tag key
+	 * @return The value, if exists and is a {@link Number} type, otherwise null
+	 */
+	public Number getNumberTag(String key) {
+		Object value = tags.get(key);
+		if (value instanceof Number) {
+			return (Number) value;
+		}
+		return null;
+	}
+
+	/**
+	 * This method returns the tag value, associated with the supplied key, if it exists and has a {@link Boolean}
+	 * type.
+	 *
+	 * @param key The tag key
+	 * @return The value, if exists and is a {@link Boolean} type, otherwise null
+	 */
+	public Boolean getBooleanTag(String key) {
+		Object value = tags.get(key);
+		if (value instanceof Boolean) {
+			return (Boolean) value;
+		}
+		return null;
+	}
+
 	public long getDurationNanos() {
 		return durationNanos;
 	}
