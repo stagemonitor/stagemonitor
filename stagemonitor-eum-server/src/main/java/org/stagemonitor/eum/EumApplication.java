@@ -1,6 +1,5 @@
 package org.stagemonitor.eum;
 
-import org.springframework.boot.Banner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
@@ -20,7 +19,7 @@ public class EumApplication extends SpringBootServletInitializer {
 
 	private static SpringApplicationBuilder configureApplication(SpringApplicationBuilder builder) {
 		Stagemonitor.init();
-		return builder.sources(EumApplication.class).bannerMode(Banner.Mode.OFF);
+		return builder.sources(EumApplication.class);
 	}
 
 }
