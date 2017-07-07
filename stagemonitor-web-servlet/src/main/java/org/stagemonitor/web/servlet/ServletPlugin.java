@@ -148,7 +148,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<String>> excludedRequestPaths = ConfigurationOption.stringsOption()
 			.key("stagemonitor.web.paths.excluded")
-			.dynamic(false)
+			.dynamic(true)
 			.label("Excluded paths")
 			.description("Request paths that should not be monitored. " +
 					"A value of `/aaa` means, that all paths starting with `/aaa` should not be monitored." +
@@ -345,8 +345,8 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		return collectPageLoadTimesPerRequest.getValue();
 	}
 
-	public Collection<String> getExcludedRequestPaths() {
-		return excludedRequestPaths.getValue();
+	public ConfigurationOption<Collection<String>> getExcludedRequestPaths() {
+		return excludedRequestPaths;
 	}
 
 	public String getMetricsServletAllowedOrigin() {

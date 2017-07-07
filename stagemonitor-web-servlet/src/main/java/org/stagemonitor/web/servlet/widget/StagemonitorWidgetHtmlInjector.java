@@ -3,8 +3,10 @@ package org.stagemonitor.web.servlet.widget;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
+import org.stagemonitor.tracing.B3HeaderFormat;
+import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.web.servlet.ServletPlugin;
 import org.stagemonitor.web.servlet.filter.HtmlInjector;
@@ -23,6 +25,7 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 	private ConfigurationRegistry configuration;
 	private String widgetTemplate;
 	private String contextPath;
+	private TracingPlugin tracingPlugin;
 
 	public StagemonitorWidgetHtmlInjector() {
 		this(false);
@@ -38,6 +41,7 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 		this.servletPlugin = initArguments.getConfiguration().getConfig(ServletPlugin.class);
 		contextPath = initArguments.getServletContext().getContextPath();
 		this.widgetTemplate = buildWidgetTemplate(contextPath);
+		tracingPlugin = initArguments.getConfiguration().getConfig(TracingPlugin.class);
 	}
 
 	private String buildWidgetTemplate(String contextPath) {
@@ -54,10 +58,6 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 
 	@Override
 	public void injectHtml(HtmlInjector.InjectArguments injectArguments) {
-		ReadbackSpan span = null;
-		if (injectArguments.getSpanContext() != null) {
-			span = injectArguments.getSpanContext().getReadbackSpan();
-		}
 		final List<String> pathsOfWidgetTabPlugins = new ArrayList<String>();
 		for (String path : Stagemonitor.getPathsOfWidgetTabPlugins()) {
 			pathsOfWidgetTabPlugins.add(contextPath + path);
@@ -67,7 +67,7 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 		for (String path : Stagemonitor.getPathsOfWidgetMetricTabPlugins()) {
 			pathsOfWidgetMetricTabPlugins.add(contextPath + path);
 		}
-
+		final SpanWrapper span = injectArguments.getSpanWrapper();
 		injectArguments.setContentToInjectBeforeClosingBody(widgetTemplate
 				.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", span != null ? JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII) : "null")
 				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByCategory()))
@@ -75,6 +75,7 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()))
 				.replace("@@MEASUREMENT_SESSION@@", JsonUtils.toJson(Stagemonitor.getMeasurementSession()))
 				.replace("@@PATHS_OF_TAB_PLUGINS@@", JsonUtils.toJson(pathsOfWidgetTabPlugins))
-				.replace("@@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@", JsonUtils.toJson(pathsOfWidgetMetricTabPlugins)));
+				.replace("@@PATHS_OF_WIDGET_METRIC_TAB_PLUGINS@@", JsonUtils.toJson(pathsOfWidgetMetricTabPlugins))
+				.replace("@@CONNECTION_ID@@", B3HeaderFormat.getSpanId(tracingPlugin.getTracer(), span)));
 	}
 }

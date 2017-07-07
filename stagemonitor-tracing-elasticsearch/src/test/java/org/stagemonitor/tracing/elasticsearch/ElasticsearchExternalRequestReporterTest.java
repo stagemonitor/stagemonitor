@@ -9,8 +9,6 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.RequestMonitor;
-import org.stagemonitor.tracing.SpanContextInformation;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
 import java.util.Collections;
@@ -103,12 +101,6 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		reportSpan(250);
 		Mockito.verifyNoMoreInteractions(spanLogger);
 		verifyTimerCreated(2);
-	}
-
-	private void report(ReadbackSpan span) {
-		if (reporter.isActive(null)) {
-			reporter.report(mock(SpanContextInformation.class), span);
-		}
 	}
 
 	@Test

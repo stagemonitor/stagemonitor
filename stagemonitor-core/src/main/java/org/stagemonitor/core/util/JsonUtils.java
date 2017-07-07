@@ -4,6 +4,7 @@ import com.codahale.metrics.json.MetricsModule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
 public class JsonUtils {
@@ -28,6 +30,9 @@ public class JsonUtils {
 		}
 		MAPPER.registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, false));
 		MAPPER.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+		for (StagemonitorJacksonModule module : ServiceLoader.load(StagemonitorJacksonModule.class, JsonUtils.class.getClassLoader())) {
+			MAPPER.registerModule(module);
+		}
 	}
 
 	private JsonUtils() {
@@ -96,5 +101,15 @@ public class JsonUtils {
 				MAPPER.registerModule(afterburnerModule);
 			}
 		}
+	}
+
+	/**
+	 * Helper class which allows to register all implementations via {@link ServiceLoader},
+	 * without picking up all {@link Module} implementations from the class path.
+	 * <p/>
+	 * For example the {@link AfterburnerModule} has to be registered with care
+	 * (see {@link AfterburnerModuleRegisterer}).
+	 */
+	public static abstract class StagemonitorJacksonModule extends Module {
 	}
 }

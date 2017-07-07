@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.wrapper;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +13,8 @@ import io.opentracing.SpanContext;
  */
 public class SpanWrapper implements Span {
 
+	private static final double MILLISECOND_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
+
 	/**
 	 * The actual span to be invoked
 	 */
@@ -23,13 +23,16 @@ public class SpanWrapper implements Span {
 	private final long startTimestampNanos;
 	private final long startTimestampMillis;
 	private final List<SpanEventListener> spanEventListeners;
+	private final Map<String, Object> tags;
+	private long durationNanos;
 
-	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, long startTimestampMillis, List<SpanEventListener> spanEventListeners) {
+	public SpanWrapper(Span delegate, String operationName, long startTimestampNanos, long startTimestampMillis, List<SpanEventListener> spanEventListeners, Map<String, Object> tags) {
 		this.delegate = delegate;
 		this.operationName = operationName;
 		this.startTimestampNanos = startTimestampNanos;
 		this.startTimestampMillis = startTimestampMillis;
 		this.spanEventListeners = spanEventListeners;
+		this.tags = tags;
 	}
 
 	public SpanContext context() {
@@ -37,7 +40,7 @@ public class SpanWrapper implements Span {
 	}
 
 	public void close() {
-		final long durationNanos = System.nanoTime() - startTimestampNanos;
+		durationNanos = System.nanoTime() - startTimestampNanos;
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			spanEventListener.onFinish(this, operationName, durationNanos);
 		}
@@ -45,7 +48,7 @@ public class SpanWrapper implements Span {
 	}
 
 	public void finish() {
-		final long durationNanos = System.nanoTime() - startTimestampNanos;
+		durationNanos = System.nanoTime() - startTimestampNanos;
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			spanEventListener.onFinish(this, operationName, durationNanos);
 		}
@@ -53,7 +56,7 @@ public class SpanWrapper implements Span {
 	}
 
 	public void finish(long finishMicros) {
-		final long durationNanos = TimeUnit.MICROSECONDS.toNanos(finishMicros) - startTimestampNanos;
+		durationNanos = TimeUnit.MICROSECONDS.toNanos(finishMicros) - startTimestampNanos;
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			spanEventListener.onFinish(this, operationName, durationNanos);
 		}
@@ -66,6 +69,7 @@ public class SpanWrapper implements Span {
 		}
 		if (value != null) {
 			delegate = delegate.setTag(key, value);
+			tags.put(key, value);
 		}
 		return this;
 	}
@@ -75,6 +79,7 @@ public class SpanWrapper implements Span {
 			value = spanEventListener.onSetTag(key, value);
 		}
 		delegate = delegate.setTag(key, value);
+		tags.put(key, value);
 		return this;
 	}
 
@@ -84,6 +89,7 @@ public class SpanWrapper implements Span {
 		}
 		if (value != null) {
 			delegate = delegate.setTag(key, value);
+			tags.put(key, value);
 		}
 		return this;
 	}
@@ -137,7 +143,6 @@ public class SpanWrapper implements Span {
 		return this;
 	}
 
-	@JsonValue
 	public Span getDelegate() {
 		return delegate;
 	}
@@ -158,5 +163,17 @@ public class SpanWrapper implements Span {
 		} else {
 			return null;
 		}
+	}
+
+	public Map<String, Object> getTags() {
+		return tags;
+	}
+
+	public long getDurationNanos() {
+		return durationNanos;
+	}
+
+	public double getDurationMs() {
+		return durationNanos / MILLISECOND_IN_NANOS;
 	}
 }

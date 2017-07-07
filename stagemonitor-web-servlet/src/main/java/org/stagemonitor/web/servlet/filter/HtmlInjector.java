@@ -2,7 +2,7 @@ package org.stagemonitor.web.servlet.filter;
 
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.StagemonitorSPI;
-import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -62,19 +62,16 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	}
 
 	public static class InjectArguments {
-		private final SpanContextInformation spanContext;
 		private String contentToInjectBeforeClosingBody;
 		private String contentToInjectBeforeClosingHead;
+		private final SpanWrapper spanWrapper;
 
-		/**
-		 * @param spanContext information about the current request
-		 */
-		public InjectArguments(SpanContextInformation spanContext) {
-			this.spanContext = spanContext;
+		public InjectArguments(SpanWrapper spanWrapper) {
+			this.spanWrapper = spanWrapper;
 		}
 
-		public SpanContextInformation getSpanContext() {
-			return spanContext;
+		public SpanWrapper getSpanWrapper() {
+			return spanWrapper;
 		}
 
 		public void setContentToInjectBeforeClosingBody(String contentToInject) {

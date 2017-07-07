@@ -10,10 +10,11 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.tracing.MonitoredRequest;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.RequestMonitor;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.tracing.B3Propagator;
+import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
 import java.io.IOException;
@@ -28,6 +29,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import io.opentracing.mock.MockTracer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -45,13 +48,12 @@ public class HttpRequestMonitorFilterTest {
 	private ServletPlugin servletPlugin = mock(ServletPlugin.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private TracingPlugin tracingPlugin = mock(TracingPlugin.class);
-	private SpanContextInformation spanContext = mock(SpanContextInformation.class);
 	private HttpRequestMonitorFilter httpRequestMonitorFilter;
 	private String testHtml = "<html><body></body></html>";
 
 	@Before
 	public void before() throws Exception {
-		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
+		/*
 		when(requestMonitor.monitor(any(MonitoredRequest.class))).then(new Answer<SpanContextInformation>() {
 			@Override
 			public SpanContextInformation answer(InvocationOnMock invocation) throws Throwable {
@@ -61,6 +63,7 @@ public class HttpRequestMonitorFilterTest {
 				return spanContext;
 			}
 		});
+		*/
 
 		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
@@ -69,7 +72,14 @@ public class HttpRequestMonitorFilterTest {
 		when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(true);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(tracingPlugin.getProfilerRateLimitPerMinute()).thenReturn(1000000d);
+		final RequestMonitor requestMonitor = new RequestMonitor(configuration, mock(Metric2Registry.class));
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(new MockTracer(new B3Propagator()));
+		doAnswer(invocation -> {
+			spanWrappingTracer.addEventListenerFactory(invocation.getArgument(0));
+			return null;
+		}).when(tracingPlugin).addSpanEventListenerFactory(any());
+		when(tracingPlugin.getTracer()).thenReturn(spanWrappingTracer);
 		when(corePlugin.getApplicationName()).thenReturn("testApplication");
 		when(corePlugin.getInstanceName()).thenReturn("testInstance");
 
@@ -103,14 +113,14 @@ public class HttpRequestMonitorFilterTest {
 	public void testBinaryData() throws IOException, ServletException {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse,
-				writeBinaryDataInResponseWhenCallingDoFilter(new byte[] {1}));
+				writeBinaryDataInResponseWhenCallingDoFilter(new byte[]{1}));
 
 		assertEquals(1, servletResponse.getContentAsByteArray().length);
 		assertEquals(1, servletResponse.getContentAsByteArray()[0]);
 	}
 
 	private MockHttpServletRequest requestWithAccept(String accept) {
-		final MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		final MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest("GET", "/test");
 		mockHttpServletRequest.addHeader("accept", accept);
 		return mockHttpServletRequest;
 	}

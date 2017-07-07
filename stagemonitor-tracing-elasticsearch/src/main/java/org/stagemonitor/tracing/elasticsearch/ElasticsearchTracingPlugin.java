@@ -43,7 +43,7 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 			.description("When set, spans will be deleted automatically after the specified days. " +
 					"Set to a negative value to never delete spans.")
 			.configurationCategory(ELASTICSEARCH_TRACING_PLUGIN)
-			.buildWithDefault(7);
+			.buildWithDefault(-1);
 
 	@Override
 	public void initializePlugin(InitArguments initArguments) throws Exception {
@@ -59,7 +59,7 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Analysis.bulk");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk");
 
-			elasticsearchClient.scheduleIndexManagement("stagemonitor-external-requests-",
+			elasticsearchClient.scheduleIndexManagement("stagemonitor-spans-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteSpansAfterDays.getValue());
 		}
 	}

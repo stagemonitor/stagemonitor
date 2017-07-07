@@ -1,7 +1,7 @@
 package org.stagemonitor.tracing;
 
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.reporter.SpanReporter;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -11,8 +11,8 @@ public class SpanCapturingReporter extends SpanReporter {
 	private final BlockingQueue<SpanContextInformation> spans = new LinkedBlockingQueue<>();
 
 	@Override
-	public void report(SpanContextInformation spanContext, ReadbackSpan readbackSpan) throws Exception {
-		spans.add(spanContext);
+	public void report(SpanContextInformation spanContext, SpanWrapper spanWrapper) throws Exception {
+		spans.add(SpanContextInformation.forSpan(spanWrapper));
 	}
 
 	@Override

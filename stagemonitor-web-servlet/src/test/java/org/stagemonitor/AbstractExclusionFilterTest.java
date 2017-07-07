@@ -2,12 +2,15 @@ package org.stagemonitor;
 
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.web.servlet.filter.AbstractExclusionFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,11 +23,14 @@ import static org.mockito.Mockito.when;
 
 public class AbstractExclusionFilterTest {
 
-	private AbstractExclusionFilter testFilter = Mockito.spy(new TestExclusionFilter());
-	private FilterConfig filterConfigMock = mock(FilterConfig.class);
+	private AbstractExclusionFilter testFilter;
 	private HttpServletRequest mockRequest = mock(HttpServletRequest.class);
 
 	private static class TestExclusionFilter extends AbstractExclusionFilter {
+		protected TestExclusionFilter(ConfigurationOption<Collection<String>> excludedPaths) {
+			super(excludedPaths);
+		}
+
 		@Override
 		public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 		}
@@ -32,8 +38,7 @@ public class AbstractExclusionFilterTest {
 
 	@Test
 	public void testExclude() throws Exception {
-		when(filterConfigMock.getInitParameter("exclude")).thenReturn("exclude1,/exclude2,  /exclude3/");
-		testFilter.init(filterConfigMock);
+		testFilter = Mockito.spy(new TestExclusionFilter(ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/exclude1", "/exclude2", "/exclude3/"))));
 		assertExcludes("/context-path/exclude1");
 		assertExcludes("/context-path/exclude2/bla/blubb");
 		assertExcludes("/context-path/exclude3/");
@@ -46,7 +51,7 @@ public class AbstractExclusionFilterTest {
 
 	@Test
 	public void testNotExclude() throws Exception {
-		testFilter.init(filterConfigMock);
+		testFilter = Mockito.spy(new TestExclusionFilter(ConfigurationOption.stringsOption().buildWithDefault(Collections.emptyList())));
 		assertIncludes("/exclude3");
 	}
 
@@ -67,6 +72,6 @@ public class AbstractExclusionFilterTest {
 		when(mockRequest.getRequestURI()).thenReturn(url);
 		when(mockRequest.getContextPath()).thenReturn("/context-path");
 		testFilter.doFilter(mockRequest, mock(HttpServletResponse.class), mock(FilterChain.class));
-		verify(testFilter, times(notExclutedCount)).doFilterInternal((HttpServletRequest) any(), (HttpServletResponse) any(), (FilterChain) any());
+		verify(testFilter, times(notExclutedCount)).doFilterInternal(any(), any(), any());
 	}
 }
