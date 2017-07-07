@@ -3,6 +3,8 @@ package org.stagemonitor.tracing.wrapper;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -70,6 +72,7 @@ public class SpanWrappingTracer implements Tracer {
 
 		private final String operationName;
 		private final List<SpanEventListener> spanEventListeners;
+		private final ConcurrentMap<String, Object> tags = new ConcurrentHashMap<String, Object>();
 		private SpanBuilder delegate;
 		private long startTimestampNanos;
 		private long startTimestampMillis;
@@ -101,6 +104,7 @@ public class SpanWrappingTracer implements Tracer {
 			}
 			if (value != null) {
 				delegate = delegate.withTag(key, value);
+				tags.put(key, value);
 			}
 			return this;
 		}
@@ -110,6 +114,7 @@ public class SpanWrappingTracer implements Tracer {
 				value = spanEventListener.onSetTag(key, value);
 			}
 			delegate = delegate.withTag(key, value);
+			tags.put(key, value);
 			return this;
 		}
 
@@ -119,6 +124,7 @@ public class SpanWrappingTracer implements Tracer {
 			}
 			if (value != null) {
 				delegate = delegate.withTag(key, value);
+				tags.put(key, value);
 			}
 			return this;
 		}
@@ -135,7 +141,7 @@ public class SpanWrappingTracer implements Tracer {
 				startTimestampNanos = System.nanoTime();
 				startTimestampMillis = System.currentTimeMillis();
 			}
-			final SpanWrapper spanWrapper = new SpanWrapper(delegate.start(), operationName, startTimestampNanos, startTimestampMillis, spanEventListeners);
+			final SpanWrapper spanWrapper = new SpanWrapper(delegate.start(), operationName, startTimestampNanos, startTimestampMillis, spanEventListeners, tags);
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				spanEventListener.onStart(spanWrapper);
 			}

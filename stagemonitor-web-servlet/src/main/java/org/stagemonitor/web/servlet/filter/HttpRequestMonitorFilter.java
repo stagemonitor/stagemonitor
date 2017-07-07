@@ -7,7 +7,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.RequestMonitor;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.servlet.DefaultMonitoredHttpRequestFactory;
@@ -45,6 +44,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	private boolean atLeastServletApi3 = false;
 	private final MonitoredHttpRequestFactory monitoredHttpRequestFactory;
 	private final AtomicBoolean firstRequest = new AtomicBoolean(true);
+	private final SpanWrapperCaptor spanWrapperCaptor;
 
 	public HttpRequestMonitorFilter() {
 		this(Stagemonitor.getConfiguration());
@@ -64,6 +64,8 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		} else {
 			this.monitoredHttpRequestFactory = requestFactoryIterator.next();
 		}
+		spanWrapperCaptor = new SpanWrapperCaptor();
+		configuration.getConfig(TracingPlugin.class).addSpanEventListenerFactory(spanWrapperCaptor);
 	}
 
 	@Override
@@ -99,7 +101,11 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 		if (corePlugin.isStagemonitorActive() && !isInternalRequest(request) &&
 				request.getDispatcherType() == REQUEST) {
-			doMonitor(request, response, filterChain);
+			try {
+				doMonitor(request, response, filterChain);
+			} finally {
+				spanWrapperCaptor.clear();
+			}
 		} else {
 			filterChain.doFilter(request, response);
 		}
@@ -126,9 +132,9 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 
 		try {
-			final SpanContextInformation spanContext = monitorRequest(filterChain, request, responseWrapper);
+			monitorRequest(filterChain, request, responseWrapper);
 			if (isInjectContentToHtml(request)) {
-				injectHtml(response, request, httpServletResponseBufferWrapper, spanContext);
+				injectHtml(response, request, httpServletResponseBufferWrapper);
 			}
 		} catch (Exception e) {
 			handleException(e);
@@ -161,22 +167,21 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		return request.getRequestURI().startsWith(request.getContextPath() + "/stagemonitor");
 	}
 
-	protected SpanContextInformation monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
+	protected void monitorRequest(FilterChain filterChain, HttpServletRequest httpServletRequest, StatusExposingByteCountingServletResponse responseWrapper) throws Exception {
 		final MonitoredHttpRequest monitoredRequest = monitoredHttpRequestFactory.createMonitoredHttpRequest(httpServletRequest, responseWrapper, filterChain, configuration);
-		return requestMonitor.monitor(monitoredRequest);
+		requestMonitor.monitor(monitoredRequest);
 	}
 
 	protected void injectHtml(HttpServletResponse response, HttpServletRequest httpServletRequest,
-							  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
-							  SpanContextInformation spanContext) throws IOException {
+							  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper) throws IOException {
 		logger.debug("injectHtml: contentType={}", httpServletResponseBufferWrapper.getContentType());
 		if (httpServletResponseBufferWrapper.getContentType() != null
 				&& httpServletResponseBufferWrapper.getContentType().contains("text/html")
 				&& httpServletRequest.getAttribute("stagemonitorInjected") == null) {
 			if (httpServletResponseBufferWrapper.isUsingWriter()) {
-				injectHtmlToWriter(response, httpServletRequest, httpServletResponseBufferWrapper, spanContext);
+				injectHtmlToWriter(response, httpServletRequest, httpServletResponseBufferWrapper);
 			} else {
-				injectHtmlToOutputStream(response, httpServletRequest, httpServletResponseBufferWrapper, spanContext);
+				injectHtmlToOutputStream(response, httpServletRequest, httpServletResponseBufferWrapper);
 			}
 		} else {
 			passthrough(response, httpServletResponseBufferWrapper);
@@ -184,15 +189,14 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	private void injectHtmlToOutputStream(HttpServletResponse response, HttpServletRequest httpServletRequest,
-										  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper,
-										  SpanContextInformation spanContext) throws IOException {
+										  HttpServletResponseBufferWrapper httpServletResponseBufferWrapper) throws IOException {
 
 		logger.debug("injectHtmlToOutputStream - encoding={}", response.getCharacterEncoding());
 		String content = new String(httpServletResponseBufferWrapper.getOutputStream().getOutput().toByteArray(),
 				response.getCharacterEncoding());
 		if (content.contains("</body>")) {
 			httpServletRequest.setAttribute("stagemonitorInjected", true);
-			content = getContetToInject(httpServletRequest, spanContext, content);
+			content = getContetToInject(httpServletRequest, content);
 			final byte[] bytes = content.getBytes(response.getCharacterEncoding());
 			response.setContentLength(bytes.length);
 			response.getOutputStream().write(bytes);
@@ -202,18 +206,18 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		}
 	}
 
-	private void injectHtmlToWriter(ServletResponse response, HttpServletRequest httpServletRequest, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper, SpanContextInformation spanContext) throws IOException {
+	private void injectHtmlToWriter(ServletResponse response, HttpServletRequest httpServletRequest, HttpServletResponseBufferWrapper httpServletResponseBufferWrapper) throws IOException {
 		logger.debug("injectHtmlToWriter - encoding={}", response.getCharacterEncoding());
 		httpServletRequest.setAttribute("stagemonitorInjected", true);
 		String content = httpServletResponseBufferWrapper.getWriter().getOutput().toString();
-		content = getContetToInject(httpServletRequest, spanContext, content);
+		content = getContetToInject(httpServletRequest, content);
 		response.getWriter().write(content);
 	}
 
-	private String getContetToInject(HttpServletRequest httpServletRequest, SpanContextInformation spanContext, String content) {
+	private String getContetToInject(HttpServletRequest httpServletRequest, String content) {
 		for (HtmlInjector htmlInjector : htmlInjectors) {
 			if (htmlInjector.isActive(new HtmlInjector.IsActiveArguments(httpServletRequest))) {
-				final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(spanContext);
+				final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(spanWrapperCaptor.getSpanWrapper());
 				try {
 					htmlInjector.injectHtml(injectArguments);
 				} catch (Exception e) {

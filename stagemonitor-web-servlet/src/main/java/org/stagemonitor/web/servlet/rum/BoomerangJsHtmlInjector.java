@@ -1,11 +1,9 @@
 package org.stagemonitor.web.servlet.rum;
 
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.web.servlet.ServletPlugin;
 import org.stagemonitor.web.servlet.filter.HtmlInjector;
-
-import java.util.concurrent.TimeUnit;
 
 public class BoomerangJsHtmlInjector extends HtmlInjector {
 
@@ -44,13 +42,13 @@ public class BoomerangJsHtmlInjector extends HtmlInjector {
 
 	@Override
 	public void injectHtml(HtmlInjector.InjectArguments injectArguments) {
-		final SpanContextInformation spanContext = injectArguments.getSpanContext();
-		if (spanContext == null) {
+		final SpanWrapper span = injectArguments.getSpanWrapper();
+		if (span == null) {
 			return;
 		}
 		injectArguments.setContentToInjectBeforeClosingBody(boomerangTemplate
-				.replace("${requestName}", String.valueOf(spanContext.getOperationName()))
-				.replace("${serverTime}", Long.toString(TimeUnit.NANOSECONDS.toMillis(spanContext.getDurationNanos()))));
+				.replace("${requestName}", String.valueOf(span.getOperationName()))
+				.replace("${serverTime}", Double.toString(span.getDurationMs())));
 	}
 
 }

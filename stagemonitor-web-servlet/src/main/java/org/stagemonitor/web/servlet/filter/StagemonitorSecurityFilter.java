@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.filter;
 
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.web.servlet.ServletPlugin;
@@ -37,7 +38,7 @@ public class StagemonitorSecurityFilter extends AbstractExclusionFilter {
 	}
 
 	public StagemonitorSecurityFilter(ConfigurationRegistry configuration) {
-		super(Arrays.asList("/stagemonitor/public", "/stagemonitor/configuration"));
+		super(ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/stagemonitor/public", "/stagemonitor/configuration")));
 		this.configuration = configuration;
 		this.servletPlugin = configuration.getConfig(ServletPlugin.class);
 	}

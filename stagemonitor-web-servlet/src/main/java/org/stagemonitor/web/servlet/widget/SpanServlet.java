@@ -7,8 +7,8 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.core.util.Pair;
 import org.stagemonitor.tracing.TracingPlugin;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class SpanServlet extends HttpServlet {
 		}
 	}
 
-	private void writeSpansToResponse(HttpServletResponse response, Collection<Pair<Long, ReadbackSpan>> spans)
+	private void writeSpansToResponse(HttpServletResponse response, Collection<Pair<Long, SpanWrapper>> spans)
 			throws IOException {
 		if (spans == null) {
 			spans = Collections.emptyList();
@@ -67,7 +67,7 @@ public class SpanServlet extends HttpServlet {
 		response.setCharacterEncoding("UTF-8");
 
 		final ArrayList<String> jsonResponse = new ArrayList<String>(spans.size());
-		for (Pair<Long, ReadbackSpan> spanPair : spans) {
+		for (Pair<Long, SpanWrapper> spanPair : spans) {
 			logger.debug("writeSpansToResponse {}", spanPair);
 			jsonResponse.add(JsonUtils.toJson(spanPair.getB(), SpanUtils.CALL_TREE_ASCII));
 		}

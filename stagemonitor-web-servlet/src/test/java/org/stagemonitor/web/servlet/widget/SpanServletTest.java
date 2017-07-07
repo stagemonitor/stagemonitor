@@ -13,7 +13,6 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.RequestMonitor;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
@@ -48,12 +47,11 @@ import static org.mockito.Mockito.when;
 
 public class SpanServletTest {
 
-	private WidgetAjaxSpanReporter reporter;
 	private SpanServlet spanServlet;
 	private String connectionId;
 	private ServletPlugin servletPlugin;
-	private SpanContextInformation spanContext;
 	private ConfigurationRegistry configuration;
+	private Span span;
 
 	@Before
 	public void setUp() throws Exception {
@@ -72,7 +70,7 @@ public class SpanServletTest {
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 
-		reporter = new WidgetAjaxSpanReporter();
+		WidgetAjaxSpanReporter reporter = new WidgetAjaxSpanReporter();
 		spanServlet = new SpanServlet(configuration, reporter, 1500);
 		spanServlet.init();
 		connectionId = UUID.randomUUID().toString();
@@ -94,8 +92,7 @@ public class SpanServletTest {
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request,
 				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration, mock(ExecutorService.class));
 
-		Span span = monitoredHttpRequest.createSpan();
-		spanContext = SpanContextInformation.forSpan(span);
+		span = monitoredHttpRequest.createSpan();
 		span.setOperationName("test");
 		span.finish();
 	}
@@ -136,7 +133,7 @@ public class SpanServletTest {
 	}
 
 	private String spanAsJson() {
-		return JsonUtils.toJson(spanContext.getReadbackSpan(), SpanUtils.CALL_TREE_ASCII);
+		return JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII);
 	}
 
 	private void performNonBlockingRequest(final HttpServletRequest request, final MockHttpServletResponse response) throws Exception {

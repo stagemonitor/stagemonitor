@@ -10,6 +10,7 @@ import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.opentracing.Span;
 
@@ -144,7 +145,7 @@ public class AnonymisationTest {
 	}
 
 	private Span createSpan(String username, String ip) {
-		final Span span = new SpanWrapper(spy(NoopSpan.INSTANCE), "", 0, 0, Collections.singletonList(new AnonymizingSpanEventListener(tracingPlugin)));
+		final Span span = new SpanWrapper(spy(NoopSpan.INSTANCE), "", 0, 0, Collections.singletonList(new AnonymizingSpanEventListener(tracingPlugin)), new ConcurrentHashMap<>());
 		span.setTag(SpanUtils.USERNAME, username);
 		SpanUtils.setClientIp(span, ip);
 		final Span mockSpan = ((SpanWrapper) span).getDelegate();

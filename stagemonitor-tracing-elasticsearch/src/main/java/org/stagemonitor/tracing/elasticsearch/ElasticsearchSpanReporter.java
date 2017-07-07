@@ -7,8 +7,8 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.SpanContextInformation;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.reporter.SpanReporter;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.StringUtils;
 
 public class ElasticsearchSpanReporter extends SpanReporter {
@@ -38,12 +38,12 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(SpanContextInformation spanContext, ReadbackSpan readbackSpan) {
+	public void report(SpanContextInformation spanContext, SpanWrapper spanWrapper) {
 		final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 		if (elasticsearchTracingPlugin.isOnlyLogElasticsearchSpanReports()) {
-			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(readbackSpan));
+			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(spanWrapper));
 		} else {
-			elasticsearchClient.index(spansIndex, SPANS_TYPE, readbackSpan);
+			elasticsearchClient.index(spansIndex, SPANS_TYPE, spanWrapper);
 		}
 	}
 

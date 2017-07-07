@@ -20,7 +20,6 @@ import org.stagemonitor.tracing.anonymization.AnonymizingSpanEventListener;
 import org.stagemonitor.tracing.mdc.MDCSpanEventListener;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallTreeSpanEventListener;
-import org.stagemonitor.tracing.reporter.ReadbackSpanEventListener;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.sampling.PostExecutionSpanInterceptor;
@@ -450,6 +449,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 		spanWrappingTracer.addEventListenerFactory(samplePriorityDeterminingSpanInterceptor);
 		spanWrappingTracer.addEventListenerFactory(new AnonymizingSpanEventListener.MySpanEventListenerFactory(tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(new MDCSpanEventListener(corePlugin, tracingPlugin));
+		spanWrappingTracer.addEventListenerFactory(new B3IdentifierTagger(tracingPlugin));
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
 			spanWrappingTracer.addEventListenerFactory(spanEventListenerFactory);
 		}
@@ -457,7 +457,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 		final MetricsSpanEventListener spanEventListener = new MetricsSpanEventListener(metricRegistry, singleThreadDeamonPool, tracingPlugin);
 		spanWrappingTracer.addEventListenerFactory(spanEventListener);
 		spanWrappingTracer.addEventListenerFactory(new CallTreeSpanEventListener(corePlugin.getMetricRegistry(), tracingPlugin));
-		spanWrappingTracer.addEventListenerFactory(new ReadbackSpanEventListener.Factory(reportingSpanEventListener, tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(reportingSpanEventListener);
 		spanWrappingTracer.addEventListenerFactory(new SpanContextInformation.SpanFinalizer());
 		return spanWrappingTracer;
@@ -621,10 +620,15 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return monitorAsyncInvocations.getValue();
 	}
 
-	public void addSpanEventListenerFactory(SpanEventListenerFactory spanEventListenerFactory) {
-		if (spanWrappingTracer != null) {
-			spanWrappingTracer.addEventListenerFactory(spanEventListenerFactory);
-		}
+	public void addSpanEventListenerFactory(final SpanEventListenerFactory spanEventListenerFactory) {
+		onInit(new Runnable() {
+			@Override
+			public void run() {
+				if (spanWrappingTracer != null) {
+					spanWrappingTracer.addEventListenerFactory(spanEventListenerFactory);
+				}
+			}
+		});
 	}
 
 	public SpanWrappingTracer getSpanWrappingTracer() {

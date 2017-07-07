@@ -4,8 +4,8 @@ import org.junit.Test;
 import org.springframework.mock.web.MockServletContext;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.tracing.MockTracer;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
 import org.stagemonitor.web.servlet.ServletPlugin;
@@ -42,10 +42,10 @@ public class BoomerangJsHtmlInjectorTest {
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		injector.init(new HtmlInjector.InitArguments(configuration, new MockServletContext()));
 
-		final SpanContextInformation spanContext = mock(SpanContextInformation.class);
-		when(spanContext.getOperationName()).thenReturn("GET /index.html");
+		final SpanWrapper span = mock(SpanWrapper.class);
+		when(span.getOperationName()).thenReturn("GET /index.html");
 
-		final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(spanContext);
+		final HtmlInjector.InjectArguments injectArguments = new HtmlInjector.InjectArguments(span);
 		injector.injectHtml(injectArguments);
 		assertEquals("<script src=\"/stagemonitor/public/static/rum/boomerang-56c823668fc.min.js\"></script>\n" +
 				"<script>\n" +
@@ -53,7 +53,7 @@ public class BoomerangJsHtmlInjectorTest {
 				"      log: null\n" +
 				"   });\n" +
 				"   BOOMR.addVar(\"requestName\", \"GET /index.html\");\n" +
-				"   BOOMR.addVar(\"serverTime\", 0);\n" +
+				"   BOOMR.addVar(\"serverTime\", 0.0);\n" +
 				"</script>", injectArguments.getContentToInjectBeforeClosingBody());
 	}
 

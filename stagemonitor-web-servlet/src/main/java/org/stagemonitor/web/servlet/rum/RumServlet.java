@@ -40,7 +40,7 @@ public class RumServlet extends HttpServlet {
 			resp.setContentType("image/png");
 
 			final String requestName = getRequiredParam(req, "requestName");
-			final long serverTime = Long.parseLong(getRequiredParam(req, "serverTime"));
+			final long serverTime = Math.round(Double.parseDouble(getRequiredParam(req, "serverTime")));
 			final long timeToFirstByte = Long.parseLong(getRequiredParam(req, "timeToFirstByte"));
 			final long domProcessing = Long.parseLong(getRequiredParam(req, "domProcessing"));
 			final long pageRendering = Long.parseLong(getRequiredParam(req, "pageRendering"));

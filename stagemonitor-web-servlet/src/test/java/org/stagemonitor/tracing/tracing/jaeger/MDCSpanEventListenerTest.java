@@ -15,6 +15,7 @@ import org.stagemonitor.tracing.tracing.B3Propagator;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.opentracing.mock.MockTracer;
 
@@ -44,7 +45,7 @@ public class MDCSpanEventListenerTest {
 
 		mdcSpanInterceptor = new MDCSpanEventListener(corePlugin, tracingPlugin);
 		spanWrapper = new SpanWrapper(tracer.buildSpan("operation name").start(),"operation name",
-				1, 1, Collections.emptyList());
+				1, 1, Collections.emptyList(), new ConcurrentHashMap<>());
 	}
 
 	@After

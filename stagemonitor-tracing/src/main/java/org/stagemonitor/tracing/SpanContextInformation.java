@@ -1,13 +1,11 @@
 package org.stagemonitor.tracing;
 
-import com.codahale.metrics.Timer;
 import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.WeakConcurrentMap;
 import org.stagemonitor.tracing.profiler.CallStackElement;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.sampling.PostExecutionInterceptorContext;
 import org.stagemonitor.tracing.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.tracing.utils.SpanUtils;
@@ -38,14 +36,12 @@ public class SpanContextInformation {
 	private long duration;
 	private boolean externalRequest;
 	private boolean serverRequest;
-	private Timer timerForThisRequest;
 	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 	private PostExecutionInterceptorContext postExecutionInterceptorContext;
 	private boolean sampled = true;
 	private boolean error = false;
 	private PreExecutionInterceptorContext preExecutionInterceptorContext;
 	private String operationType;
-	private ReadbackSpan readbackSpan;
 
 	public static SpanContextInformation getCurrent() {
 		final TraceContext traceContext = TracingUtils.getTraceContext();
@@ -200,18 +196,6 @@ public class SpanContextInformation {
 
 	public String getOperationType() {
 		return operationType;
-	}
-
-	public void setReadbackSpan(ReadbackSpan readbackSpan) {
-		this.readbackSpan = readbackSpan;
-	}
-
-	/**
-	 * @deprecated {@link ReadbackSpan}s should only be used in {@link org.stagemonitor.tracing.reporter.SpanReporter}s
-	 */
-	@Deprecated
-	public ReadbackSpan getReadbackSpan() {
-		return readbackSpan;
 	}
 
 	public boolean isError() {

@@ -1,8 +1,8 @@
 package org.stagemonitor.web.servlet.filter;
 
+import org.stagemonitor.configuration.ConfigurationOption;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
 import javax.servlet.Filter;
@@ -17,41 +17,18 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Adds support for excluding specific url prefixes of a filter-mapping.
  * <p/>
- * Example:
- * <pre>
- *   &lt;filter>
- *      &lt;filter-name>theFilter&lt;/filter-name>
- *      &lt;filter-class>some filter exdending {@link AbstractExclusionFilter}&lt;/filter-class>
- *      &lt;init-param>
- *           &lt;param-name>exclude&lt;/param-name>
- *           &lt;param-value>rest, /picture/&lt;/param-value>
- *      &lt;/init-param>
- *   &lt;/filter>
- * </pre>
- * <p/>
- * In this example, the filter won't be executed for all URIs starting with /rest or /picture
- * <p/>
- * In other words, the following will be checked for each exclude prefix: {@code httpServletRequest.getRequestURI().startsWith(excludedPath)}
- *
- * @author fbarnsteiner
+ * The following will be checked for each exclude prefix: {@code httpServletRequest.getRequestURI().startsWith(excludedPath)}
  */
 public abstract class AbstractExclusionFilter implements Filter {
 
-	private Collection<String> excludedPaths;
+	private ConfigurationOption<Collection<String>> excludedPaths;
 
-	protected AbstractExclusionFilter() {
-	}
-
-	protected AbstractExclusionFilter(Collection<String> excludedPaths) {
-		setExcludedPaths(excludedPaths);
+	protected AbstractExclusionFilter(ConfigurationOption<Collection<String>> excludedPaths) {
+		this.excludedPaths = excludedPaths;
 	}
 
 	@Override
 	public final void init(FilterConfig filterConfig) throws ServletException {
-		String excludeParam = filterConfig.getInitParameter("exclude");
-		if (excludeParam != null && !excludeParam.isEmpty()) {
-			setExcludedPaths(Arrays.asList(excludeParam.split(",")));
-		}
 		initInternal(filterConfig);
 	}
 
@@ -84,7 +61,7 @@ public abstract class AbstractExclusionFilter implements Filter {
 		if (excludedPaths == null) {
 			return false;
 		}
-		for (String excludedPath : excludedPaths) {
+		for (String excludedPath : excludedPaths.get()) {
 			if (request.getRequestURI().substring(request.getContextPath().length()).startsWith(excludedPath)) {
 				return true;
 			}
@@ -98,19 +75,6 @@ public abstract class AbstractExclusionFilter implements Filter {
 
 	public abstract void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
 										  FilterChain filterChain) throws IOException, ServletException;
-
-	private void setExcludedPaths(Collection<String> excludedPaths) {
-		this.excludedPaths = new ArrayList<String>(excludedPaths.size());
-		for (String exclude : excludedPaths) {
-			exclude = exclude.trim();
-			if (exclude != null && !exclude.isEmpty()) {
-				if (!exclude.startsWith("/")) {
-					exclude = "/" + exclude;
-				}
-				this.excludedPaths.add(exclude);
-			}
-		}
-	}
 
 
 }

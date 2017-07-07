@@ -37,26 +37,26 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
-		if (info.isSampled() && info.getReadbackSpan() != null) {
+		if (info.isSampled()) {
 			try {
-				report(info, info.getReadbackSpan());
+				report(info, spanWrapper);
 			} catch (Exception e) {
 				logger.warn(e.getMessage() + " (this exception is ignored) " + info.toString(), e);
 			}
 		}
 	}
 
-	private Future<?> report(final SpanContextInformation spanContext, final ReadbackSpan readbackSpan) {
+	private Future<?> report(final SpanContextInformation spanContext, final SpanWrapper spanWrapper) {
 		try {
 			if (tracingPlugin.isReportAsync()) {
 				return asyncSpanReporterPool.submit(new Runnable() {
 					@Override
 					public void run() {
-						doReport(spanContext, readbackSpan);
+						doReport(spanContext, spanWrapper);
 					}
 				});
 			} else {
-				doReport(spanContext, readbackSpan);
+				doReport(spanContext, spanWrapper);
 				return new CompletedFuture<Object>(null);
 			}
 		} catch (RejectedExecutionException e) {
@@ -65,11 +65,11 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 		}
 	}
 
-	private void doReport(SpanContextInformation spanContext, ReadbackSpan readbackSpan) {
+	private void doReport(SpanContextInformation spanContext, SpanWrapper spanWrapper) {
 		for (SpanReporter spanReporter : spanReporters) {
 			if (spanReporter.isActive(spanContext)) {
 				try {
-					spanReporter.report(spanContext, readbackSpan);
+					spanReporter.report(spanContext, spanWrapper);
 				} catch (Exception e) {
 					logger.warn(e.getMessage() + " (this exception is ignored)", e);
 				}
@@ -94,12 +94,4 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 		spanReporter.init(configuration);
 	}
 
-	boolean isAnyReporterActive(SpanContextInformation spanContext) {
-		for (SpanReporter spanReporter : spanReporters) {
-			if (spanReporter.isActive(spanContext)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

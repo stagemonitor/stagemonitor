@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.util.Pair;
 import org.stagemonitor.tracing.SpanContextInformation;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
 import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.tracing.wrapper.SpanEventListener;
@@ -35,8 +34,8 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 	private static final long MAX_REQUEST_TRACE_BUFFERING_TIME = 60 * 1000;
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private ConcurrentMap<String, ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>>> connectionIdToSpanMap =
-			new ConcurrentHashMap<String, ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>>>();
+	private ConcurrentMap<String, ConcurrentLinkedQueue<Pair<Long, SpanWrapper>>> connectionIdToSpanMap =
+			new ConcurrentHashMap<String, ConcurrentLinkedQueue<Pair<Long, SpanWrapper>>>();
 	private ConcurrentMap<String, Object> connectionIdToLockMap = new ConcurrentHashMap<String, Object>();
 
 	/**
@@ -62,9 +61,9 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 				MAX_REQUEST_TRACE_BUFFERING_TIME, MAX_REQUEST_TRACE_BUFFERING_TIME, TimeUnit.MILLISECONDS);
 	}
 
-	Collection<Pair<Long, ReadbackSpan>> getSpans(String connectionId, long requestTimeout) throws IOException {
+	Collection<Pair<Long, SpanWrapper>> getSpans(String connectionId, long requestTimeout) throws IOException {
 		if (connectionId != null && !connectionId.trim().isEmpty()) {
-			final ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>> traces = connectionIdToSpanMap.remove(connectionId);
+			final ConcurrentLinkedQueue<Pair<Long, SpanWrapper>> traces = connectionIdToSpanMap.remove(connectionId);
 			if (traces != null) {
 				logger.debug("picking up buffered requests");
 				return traces;
@@ -76,7 +75,7 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 		}
 	}
 
-	private ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>> blockingWaitForSpan(String connectionId, Long requestTimeout) throws IOException {
+	private ConcurrentLinkedQueue<Pair<Long, SpanWrapper>> blockingWaitForSpan(String connectionId, Long requestTimeout) throws IOException {
 		Object lock = new Object();
 		synchronized (lock) {
 			connectionIdToLockMap.put(connectionId, lock);
@@ -92,13 +91,13 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 	}
 
 	@Override
-	public void report(SpanContextInformation spanContext, ReadbackSpan readbackSpan) throws IOException {
+	public void report(SpanContextInformation spanContext, SpanWrapper spanWrapper) throws IOException {
 		if (isActive(spanContext)) {
 
 			final String connectionId = (String) spanContext.getRequestAttributes().get(MonitoredHttpRequest.CONNECTION_ID_ATTRIBUTE);
 			if (connectionId != null && !connectionId.trim().isEmpty()) {
-				logger.debug("buffering span '{}'", spanContext.getOperationName());
-				bufferSpan(connectionId, spanContext.getReadbackSpan());
+				logger.debug("buffering span '{}'", spanWrapper.getOperationName());
+				bufferSpan(connectionId, spanWrapper);
 
 				final Object lock = connectionIdToLockMap.remove(connectionId);
 				if (lock != null) {
@@ -110,12 +109,12 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 		}
 	}
 
-	private void bufferSpan(String connectionId, ReadbackSpan span) {
+	private void bufferSpan(String connectionId, SpanWrapper span) {
 		logger.debug("bufferSpan {}", span);
-		ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>> httpSpans = new ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>>();
+		ConcurrentLinkedQueue<Pair<Long, SpanWrapper>> httpSpans = new ConcurrentLinkedQueue<Pair<Long, SpanWrapper>>();
 		httpSpans.add(Pair.of(System.currentTimeMillis(), span));
 
-		final ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>> alreadyAssociatedValue = connectionIdToSpanMap
+		final ConcurrentLinkedQueue<Pair<Long, SpanWrapper>> alreadyAssociatedValue = connectionIdToSpanMap
 				.putIfAbsent(connectionId, httpSpans);
 		if (alreadyAssociatedValue != null) {
 			alreadyAssociatedValue.add(Pair.of(System.currentTimeMillis(), span));
@@ -135,8 +134,8 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 	private class OldSpanRemover implements Runnable {
 		@Override
 		public void run() {
-			for (Map.Entry<String, ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>>> entry : connectionIdToSpanMap.entrySet()) {
-				final ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>> httpSpans = entry.getValue();
+			for (Map.Entry<String, ConcurrentLinkedQueue<Pair<Long, SpanWrapper>>> entry : connectionIdToSpanMap.entrySet()) {
+				final ConcurrentLinkedQueue<Pair<Long, SpanWrapper>> httpSpans = entry.getValue();
 				removeOldSpans(httpSpans);
 				if (httpSpans.isEmpty()) {
 					removeOrphanEntry(entry);
@@ -144,9 +143,9 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 			}
 		}
 
-		private void removeOldSpans(ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>> httpSpans) {
-			for (Iterator<Pair<Long, ReadbackSpan>> iterator = httpSpans.iterator(); iterator.hasNext(); ) {
-				Pair<Long, ReadbackSpan> httpSpan = iterator.next();
+		private void removeOldSpans(ConcurrentLinkedQueue<Pair<Long, SpanWrapper>> httpSpans) {
+			for (Iterator<Pair<Long, SpanWrapper>> iterator = httpSpans.iterator(); iterator.hasNext(); ) {
+				Pair<Long, SpanWrapper> httpSpan = iterator.next();
 				final long timeInBuffer = System.currentTimeMillis() - httpSpan.getA();
 				if (timeInBuffer > MAX_REQUEST_TRACE_BUFFERING_TIME) {
 					iterator.remove();
@@ -154,7 +153,7 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 			}
 		}
 
-		private void removeOrphanEntry(Map.Entry<String, ConcurrentLinkedQueue<Pair<Long, ReadbackSpan>>> entry) {
+		private void removeOrphanEntry(Map.Entry<String, ConcurrentLinkedQueue<Pair<Long, SpanWrapper>>> entry) {
 			// to eliminate race conditions remove only if queue is still empty
 			connectionIdToSpanMap.remove(entry.getKey(), new ConcurrentLinkedQueue<Span>());
 		}

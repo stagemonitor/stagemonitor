@@ -183,28 +183,35 @@ public class SlaCheckCreatingClassPathScannerTest {
 
 	@Test
 	public void testTriggersResponseTimeIncident() throws Exception {
+		final String checkId = "void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().responseTime";
+		assertThat(checks).containsKey(checkId);
 		try {
 			new SlaTestClass().monitorSla();
 		} catch (Exception e) {
 			// ignore
 		}
+		assertThat(Stagemonitor.getMetric2Registry().getTimers()).containsKey(MetricName.name("response_time").operationName("Monitor Sla").operationType("method_invocation").build());
+
 		alertingPlugin.getThresholdMonitoringReporter().report();
 		final Incident incident = alertingPlugin.getIncidentRepository()
-				.getIncidentByCheckId("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().responseTime");
-		assertNotNull(incident);
+				.getIncidentByCheckId(checkId);
+		assertThat(incident).isNotNull();
 	}
 
 	@Test
 	public void testTriggersErrorRateIncident() throws Exception {
+		final String checkId = "void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().errors";
+		assertThat(checks).containsKey(checkId);
 		try {
 			new SlaTestClass().monitorSla();
 		} catch (Exception e) {
 			// ignore
 		}
+		assertThat(Stagemonitor.getMetric2Registry().getMeters()).containsKey(MetricName.name("error_rate").operationName("Monitor Sla").operationType("method_invocation").build());
 
 		alertingPlugin.getThresholdMonitoringReporter().report();
 		final Incident incident = alertingPlugin.getIncidentRepository()
-				.getIncidentByCheckId("void org.stagemonitor.alerting.annotation.SlaCheckCreatingClassPathScannerTest$SlaTestClass.monitorSla().errors");
-		assertNotNull(incident);
+				.getIncidentByCheckId(checkId);
+		assertThat(incident).isNotNull();
 	}
 }

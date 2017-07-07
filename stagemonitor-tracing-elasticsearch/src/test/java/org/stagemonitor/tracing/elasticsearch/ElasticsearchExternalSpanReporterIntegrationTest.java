@@ -11,9 +11,15 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
-import org.stagemonitor.tracing.reporter.ReadbackSpan;
+import org.stagemonitor.tracing.tracing.B3Propagator;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.IOUtils;
 
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
+import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
@@ -24,6 +30,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 	protected ElasticsearchSpanReporter reporter;
 	protected TracingPlugin tracingPlugin;
 	protected ConfigurationRegistry configuration;
+	protected final MockTracer mockTracer = new MockTracer(new B3Propagator());
 
 	@Before
 	public void setUp() throws Exception {
@@ -40,6 +47,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		final String mappingTemplate = IOUtils.getResourceAsString("stagemonitor-elasticsearch-span-index-template.json");
 		elasticsearchClient.sendMappingTemplateAsync(mappingTemplate, "stagemonitor-spans");
 		elasticsearchClient.waitForCompletion();
+		when(tracingPlugin.getTracer()).thenReturn(mockTracer);
 	}
 
 	@Test
@@ -64,14 +72,14 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		Assert.assertEquals("ElasticsearchExternalSpanReporterIntegrationTest#test", spanJson.get("name").asText());
 	}
 
-	private ReadbackSpan getSpan(long executionTimeMillis) {
-		final ReadbackSpan readbackSpan = new ReadbackSpan();
-		readbackSpan.setName("ElasticsearchExternalSpanReporterIntegrationTest#test");
-		readbackSpan.setDuration(executionTimeMillis);
-		readbackSpan.setTag("type", "jdbc");
-		readbackSpan.setTag("method", "SELECT");
-		readbackSpan.setTag("db.statement", "SELECT * from STAGEMONITOR where 1 < 2");
-		readbackSpan.setTag(Tags.PEER_SERVICE.getKey(), "foo@jdbc:bar");
-		return readbackSpan;
+	private SpanWrapper getSpan(long executionTimeMillis) {
+		final SpanWrapper span = new SpanWrapper(mockTracer.buildSpan("test").start(), "test", 0, 0, Collections.emptyList(), new ConcurrentHashMap<>());
+		span.setOperationName("ElasticsearchExternalSpanReporterIntegrationTest#test");
+		span.setTag("type", "jdbc");
+		span.setTag("method", "SELECT");
+		span.setTag("db.statement", "SELECT * from STAGEMONITOR where 1 < 2");
+		span.setTag(Tags.PEER_SERVICE.getKey(), "foo@jdbc:bar");
+		span.finish(TimeUnit.MILLISECONDS.toMicros(executionTimeMillis));
+		return span;
 	}
 }

@@ -3,6 +3,7 @@ package org.stagemonitor.tracing.reporter;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import io.opentracing.Span;
 
@@ -15,9 +16,9 @@ public abstract class SpanReporter implements StagemonitorSPI {
 	 * Callback method that is called when a {@link Span} was created and is ready to be reported
 	 *
 	 * @param spanContext context information about the span
-	 * @param readbackSpan
+	 * @param spanWrapper
 	 */
-	public abstract void report(SpanContextInformation spanContext, ReadbackSpan readbackSpan) throws Exception;
+	public abstract void report(SpanContextInformation spanContext, SpanWrapper spanWrapper) throws Exception;
 
 	/**
 	 * Whether this {@link SpanReporter} is active
