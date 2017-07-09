@@ -20,11 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class TracedTransformerTest {
@@ -64,81 +60,76 @@ public class TracedTransformerTest {
 		testClass.monitorMe(1);
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("TracedTransformerTest$TestClass#monitorMe", spanContext.getOperationName());
-		assertEquals(1, spanContext.getCallTree().getChildren().size());
+		assertThat("1").isEqualTo(getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
+		assertThat("TracedTransformerTest$TestClass#monitorMe").isEqualTo(spanContext.getOperationName());
+		assertThat(1).isEqualTo(spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass.monitorMe"));
+		assertThat(signature).contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass.monitorMe");
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("TracedTransformerTest$TestClass#monitorMe").operationType("method_invocation").build()));
+		assertThat(timers).containsKey(name("response_time").operationName("TracedTransformerTest$TestClass#monitorMe").operationType("method_invocation").build());
 	}
 
 	@Test
 	public void testMonitorAsyncMethods() throws Exception {
 		testClass.asyncMethod();
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
-		assertEquals("TracedTransformerTest$TestClass#asyncMethod", spanContext.getOperationName());
-		assertEquals(1, spanContext.getCallTree().getChildren().size());
+		assertThat("TracedTransformerTest$TestClass#asyncMethod").isEqualTo(spanContext.getOperationName());
+		assertThat(1).isEqualTo(spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass.asyncMethod"));
+		assertThat(signature).contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass.asyncMethod");
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("TracedTransformerTest$TestClass#asyncMethod").operationType("method_invocation").build()));
+		assertThat(timers).containsKey(name("response_time").operationName("TracedTransformerTest$TestClass#asyncMethod").operationType("method_invocation").build());
 	}
 
 	@Test
 	public void testDontMonitorAnySuperMethod() throws Exception {
 		testClass.dontMonitorMe();
-		assertNull(spanCapturingReporter.get());
+		assertThat(spanCapturingReporter.get()).isNull();
 	}
 
 	@Test
 	public void testMonitorRequestsThrowingException() throws Exception {
-		try {
-			testClass.monitorThrowException();
-			fail();
-		} catch (NullPointerException e) {
-			// expected
-		}
-		assertEquals(NullPointerException.class.getName(), tags.get("exception.class"));
+		assertThatThrownBy(() -> testClass.monitorThrowException()).isInstanceOf(NullPointerException.class);
+		assertThat(NullPointerException.class.getName()).isEqualTo(tags.get("exception.class"));
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("TracedTransformerTest$TestClass#monitorThrowException").operationType("method_invocation").build()));
+		assertThat(timers).containsKey(name("response_time").operationName("TracedTransformerTest$TestClass#monitorThrowException").operationType("method_invocation").build());
 	}
 
 	@Test
 	public void testMonitorRequestsAnnonymousInnerClass() throws Exception {
 		testClass.monitorAnnonymousInnerClass();
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
-		assertEquals("TracedTransformerTest$TestClass$1#run", spanContext.getOperationName());
-		assertEquals(1, spanContext.getCallTree().getChildren().size());
+		assertThat("TracedTransformerTest$TestClass$1#run").isEqualTo(spanContext.getOperationName());
+		assertThat(1).isEqualTo(spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
-		assertTrue(signature, signature.contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass$1.run"));
+		assertThat(signature).contains("org.stagemonitor.tracing.TracedTransformerTest$TestClass$1.run");
 
 		final Map<MetricName,Timer> timers = metricRegistry.getTimers();
-		assertNotNull(timers.keySet().toString(), timers.get(name("response_time").operationName("TracedTransformerTest$TestClass$1#run").operationType("method_invocation").build()));
+		assertThat(timers).containsKey(name("response_time").operationName("TracedTransformerTest$TestClass$1#run").operationType("method_invocation").build());
 	}
 
 	@Test
 	public void testMonitorRequestsResolvedAtRuntime() throws Exception {
 		testClass.resolveNameAtRuntime();
 		final String operationName = spanCapturingReporter.get().getOperationName();
-		assertEquals("TracedTransformerTest$TestSubClass#resolveNameAtRuntime", operationName);
+		assertThat("TracedTransformerTest$TestSubClass#resolveNameAtRuntime").isEqualTo(operationName);
 	}
 
 	@Test
 	public void testMonitorStaticMethod() throws Exception {
 		TestClass.monitorStaticMethod();
 		final String operationName = spanCapturingReporter.get().getOperationName();
-		assertEquals("TracedTransformerTest$TestClass#monitorStaticMethod", operationName);
+		assertThat("TracedTransformerTest$TestClass#monitorStaticMethod").isEqualTo(operationName);
 	}
 
 	@Test
 	public void testMonitorRequestsCustomName() throws Exception {
 		testClass.doFancyStuff();
 		final String operationName = spanCapturingReporter.get().getOperationName();
-		assertEquals("My Cool Method", operationName);
+		assertThat("My Cool Method").isEqualTo(operationName);
 	}
 
 	private static abstract class SuperAbstractTestClass {
@@ -202,9 +193,9 @@ public class TracedTransformerTest {
 		final SpanContextInformation spanContext = spanCapturingReporter.get();
 
 		// either parameters.arg0 or parameters.s
-		assertEquals("1", getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
-		assertEquals("TracedTransformerTest$TestClassLevelAnnotationClass#monitorMe", spanContext.getOperationName());
-		assertEquals(1, spanContext.getCallTree().getChildren().size());
+		assertThat("1").isEqualTo(getTagsStartingWith(tags, SpanUtils.PARAMETERS_PREFIX).iterator().next());
+		assertThat("TracedTransformerTest$TestClassLevelAnnotationClass#monitorMe").isEqualTo(spanContext.getOperationName());
+		assertThat(1).isEqualTo(spanContext.getCallTree().getChildren().size());
 		final String signature = spanContext.getCallTree().getChildren().get(0).getSignature();
 		assertThat(signature).contains("org.stagemonitor.tracing.TracedTransformerTest$TestClassLevelAnnotationClass.monitorMe");
 
