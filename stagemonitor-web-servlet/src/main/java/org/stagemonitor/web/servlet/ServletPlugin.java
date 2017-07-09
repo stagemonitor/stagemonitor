@@ -444,7 +444,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 				.addMapping("/stagemonitor/metrics");
 		ctx.addServlet(ClientSpanServlet.class.getSimpleName(), new ClientSpanServlet())
 				.addMapping("/stagemonitor/public/eum");
-		ctx.addServlet(ClientSpanJavaScriptServlet.class.getSimpleName(), new ClientSpanJavaScriptServlet(this))
+		ctx.addServlet(ClientSpanJavaScriptServlet.class.getSimpleName(), new ClientSpanJavaScriptServlet())
 				.addMapping("/stagemonitor/public/eum.js");
 		ctx.addServlet(StagemonitorFileServlet.class.getSimpleName(), new StagemonitorFileServlet())
 				.addMapping("/stagemonitor/static/*", "/stagemonitor/public/static/*");

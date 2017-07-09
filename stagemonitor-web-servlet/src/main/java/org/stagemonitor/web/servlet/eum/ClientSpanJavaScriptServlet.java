@@ -29,6 +29,10 @@ public class ClientSpanJavaScriptServlet extends HttpServlet implements Configur
 	private String javaScript;
 	private String javaScriptEtag;
 
+	public ClientSpanJavaScriptServlet() {
+		this(Stagemonitor.getPlugin(ServletPlugin.class));
+	}
+
 	public ClientSpanJavaScriptServlet(ServletPlugin servletPlugin) {
 		this.servletPlugin = servletPlugin;
 		servletPlugin.registerMinifyClientSpanScriptOptionChangedListener(this);
