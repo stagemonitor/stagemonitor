@@ -23,6 +23,8 @@ import io.opentracing.Tracer.SpanBuilder;
 import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.stagemonitor.tracing.B3IdentifierTagger.SPAN_ID;
+import static org.stagemonitor.tracing.B3IdentifierTagger.TRACE_ID;
 
 public class ClientSpanServlet extends HttpServlet {
 
@@ -81,6 +83,9 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_from", "l"));
 		addTagProcessor(new ClientSpanBooleanTagProcessor(TYPE_XHR, "xhr.async", "a"));
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_XHR, "duration_ms", "d"));
+		// The OT-API does not allow to set the SpanContext for the current span, so just set the ids as tags
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, SPAN_ID, "s", false));
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, TRACE_ID, "t", false));
 	}
 
 	@Override

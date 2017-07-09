@@ -252,12 +252,14 @@ public class ClientSpanServletTest {
 
 			softly.assertThat(span.tags())
 					.containsEntry("type", "ajax")
-					.containsEntry("http.status", 200L)
+					.containsEntry("http.status_code", 200L)
 					.containsEntry("method", "GET")
 					.containsEntry("xhr.requested_url", "owners.html?lastName=")
 					.containsEntry("xhr.requested_from", "http://localhost:9966/petclinic/")
 					.containsEntry("xhr.async", true)
-					.containsEntry("duration_ms", 2084L);
+					.containsEntry("duration_ms", 2084L)
+					.containsEntry("id", "2d371455215c504")
+					.containsEntry("trace_id", "2d371455215c504");
 		});
 	}
 

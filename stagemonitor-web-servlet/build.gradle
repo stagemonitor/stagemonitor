@@ -18,3 +18,17 @@ dependencies {
 	testCompile "org.eclipse.jetty:jetty-server:$jettyVersion"
 	testCompile "io.opentracing:opentracing-mock:$opentracingVersion"
 }
+
+processResources {
+	filesMatching('/eum.*.js') {
+		def replaceTokens = ['X-INSTANA-T': 'X-B3-TraceId',
+							 'X-INSTANA-S': 'X-B3-SpanId',
+							 'X-INSTANA-L': 'X-B3-Sampled']
+		filter { String line ->
+			replaceTokens.each {
+				line = line.replace(it.key, it.value)
+			}
+			return line
+		}
+	}
+}
