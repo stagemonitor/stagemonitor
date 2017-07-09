@@ -75,7 +75,7 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ERROR, "exception.stack_trace", "st"));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ERROR, "exception.message", "e"));
 
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_XHR, "http.status", "st"));
+		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_XHR, Tags.HTTP_STATUS.getKey(), "st"));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "method", "m"));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_url", "u"));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_from", "l"));
