@@ -63,6 +63,7 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 
 	public static class InjectArguments {
 		private String contentToInjectBeforeClosingBody;
+		private String contentToInjectBeforeClosingHead;
 		private final SpanWrapper spanWrapper;
 
 		public InjectArguments(SpanWrapper spanWrapper) {
@@ -79,6 +80,14 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 
 		public String getContentToInjectBeforeClosingBody() {
 			return contentToInjectBeforeClosingBody;
+		}
+
+		public void setContentToInjectBeforeClosingHead(String contentToInjectBeforeClosingHead) {
+			this.contentToInjectBeforeClosingHead = contentToInjectBeforeClosingHead;
+		}
+
+		public String getContentToInjectBeforeClosingHead() {
+			return contentToInjectBeforeClosingHead;
 		}
 	}
 

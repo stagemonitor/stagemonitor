@@ -22,12 +22,13 @@ if (options.type) {
 }
 
 private void exportTypes(addr, type, format) {
-	println "Exporting ${type}s"
+	println "# Exporting ${type}s"
 	new File("export/$type").mkdirs()
-	def dashboards = new JsonSlurper().parse("$addr/.kibana/${type}/_search?q=*&stored_fields=&size=100".toURL())
+	def dashboards = new JsonSlurper().parse("$addr/.kibana/${type}/_search?q=*&size=100".toURL())
 	dashboards.hits.hits.each {
-		println it._id
-		def out = new FileOutputStream("export/$type/${it._id}.$format")
+		def title = it._source.title.replace(" ", "-")
+		println " - $title"
+		def out = new FileOutputStream("export/$type/$title.$format")
 		if (format == "json") {
 			out << "[\n"
 		}
