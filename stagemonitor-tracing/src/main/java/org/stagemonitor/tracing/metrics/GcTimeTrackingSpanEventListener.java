@@ -32,7 +32,10 @@ public class GcTimeTrackingSpanEventListener extends StatelessSpanEventListener 
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		Long startGcTime = SpanContextInformation.forSpan(spanWrapper).getRequestAttribute(GC_TIME_ATTRIBUTE);
 		if (startGcTime != null) {
-			spanWrapper.setTag("gc_time_ms", collectGcTimeMs() - startGcTime);
+			final long gcTime = collectGcTimeMs() - startGcTime;
+			if (gcTime > 0) {
+				spanWrapper.setTag("gc_time_ms", gcTime);
+			}
 		}
 	}
 }
