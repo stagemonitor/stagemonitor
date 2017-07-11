@@ -25,9 +25,16 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MetricsSpanEventListener extends StatelessSpanEventListener implements Closeable {
 
+	/**
+	 * Only if a spans has this special tag, a timer for it's operation name will be created.
+	 * <p/>
+	 * That makes sure that a timer is only created if the request name is meaningful enough. Otherwise, a timer could
+	 * be created for each distinct url of the application which would result in too many timers being created.
+	 */
+	public static final String ENABLE_TRACKING_METRICS_TAG = SpanWrapper.INTERNAL_TAG_PREFIX + "track_metrics_per_operation_name";
+
 	private static final Logger logger = LoggerFactory.getLogger(MetricsSpanEventListener.class);
 	private static final double MILLISECOND_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
-
 	private static final MetricName.MetricNameTemplate responseTimeTemplate = name("response_time")
 			.templateFor("operation_name", "operation_type");
 	private static final MetricName.MetricNameTemplate errorRateTemplate = name("error_rate")
@@ -50,41 +57,52 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener impleme
 		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(spanWrapper);
 		final String operationType = contextInformation.getOperationType();
 
+		final boolean trackMetricsByOperationName = spanWrapper.getBooleanTag(ENABLE_TRACKING_METRICS_TAG, false);
 		if (StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(operationType)) {
-			try {
-				// tracking metrics in a single thread to reduce latency and contention of the locks in ExponentiallyDecayingReservoir
-				if (tracingPlugin.isTrackMetricsAsync() && executorService.getQueue().remainingCapacity() != 0) {
-					executorService.submit(new Runnable() {
-						@Override
-						public void run() {
-							trackMetrics(contextInformation, operationName, durationNanos, operationType);
-						}
-					});
-				} else {
-					trackMetrics(contextInformation, operationName, durationNanos, operationType);
-				}
-			} catch (RejectedExecutionException e) {
-				// race condition
-				logger.warn("Queue for metric tracking executor service is full, tracking metric synchronously");
-				trackMetrics(contextInformation, operationName, durationNanos, operationType);
-			}
+			trackResponseTimeMetricsAsync(operationName, durationNanos, contextInformation, operationType, trackMetricsByOperationName);
 			if (contextInformation.isServerRequest()) {
-				trackExternalRequestRate(spanWrapper, operationName, contextInformation);
+				trackExternalRequestRate(spanWrapper, operationName, contextInformation, trackMetricsByOperationName);
 			} else if (contextInformation.isExternalRequest()) {
 				addExternalRequestToParent(durationNanos, contextInformation, operationType);
 			}
 		}
 	}
 
-	private void trackMetrics(SpanContextInformation contextInformation, String operationName, long durationNanos, String operationType) {
-		metricRegistry.timer(getResponseTimeMetricName(operationName, operationType)).update(durationNanos, NANOSECONDS);
+	private void trackResponseTimeMetricsAsync(final String operationName, final long durationNanos, final SpanContextInformation contextInformation, final String operationType, final boolean trackMetricsByOperationName) {
+		try {
+			// tracking metrics in a single thread to reduce latency and contention of the locks in ExponentiallyDecayingReservoir
+			if (tracingPlugin.isTrackMetricsAsync() && executorService.getQueue().remainingCapacity() != 0) {
+				executorService.submit(new Runnable() {
+					@Override
+					public void run() {
+						trackResponseTimeMetrics(contextInformation, operationName, durationNanos, operationType, trackMetricsByOperationName);
+					}
+				});
+			} else {
+				trackResponseTimeMetrics(contextInformation, operationName, durationNanos, operationType, trackMetricsByOperationName);
+			}
+		} catch (RejectedExecutionException e) {
+			// race condition
+			logger.warn("Queue for metric tracking executor service is full, tracking metric synchronously");
+			trackResponseTimeMetrics(contextInformation, operationName, durationNanos, operationType, trackMetricsByOperationName);
+		}
+	}
+
+	private void trackResponseTimeMetrics(SpanContextInformation contextInformation, String operationName, long durationNanos, String operationType, boolean trackMetricsByOperationName) {
+		if (trackMetricsByOperationName) {
+			metricRegistry.timer(getResponseTimeMetricName(operationName, operationType)).update(durationNanos, NANOSECONDS);
+		}
 		metricRegistry.timer(getResponseTimeMetricName("All", operationType)).update(durationNanos, NANOSECONDS);
 
 		if (contextInformation.isError()) {
-			metricRegistry.meter(getErrorMetricName(operationName, operationType)).mark();
+			if (trackMetricsByOperationName) {
+				metricRegistry.meter(getErrorMetricName(operationName, operationType)).mark();
+			}
 			metricRegistry.meter(getErrorMetricName("All", operationType)).mark();
 		} else {
-			metricRegistry.meter(getErrorMetricName(operationName, operationType)).mark(0);
+			if (trackMetricsByOperationName) {
+				metricRegistry.meter(getErrorMetricName(operationName, operationType)).mark(0);
+			}
 			metricRegistry.meter(getErrorMetricName("All", operationType)).mark(0);
 		}
 	}
@@ -93,7 +111,7 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener impleme
 	 * tracks the external requests grouped by the parent request name
 	 * this helps to analyze which requests issue a lot of external requests like jdbc calls
 	 */
-	private void trackExternalRequestRate(Span span, String operationName, SpanContextInformation spanContext) {
+	private void trackExternalRequestRate(Span span, String operationName, SpanContextInformation spanContext, boolean trackMetricsByOperationName) {
 		int totalCount = 0;
 		for (SpanContextInformation.ExternalRequestStats externalRequestStats : spanContext.getExternalRequestStats()) {
 			long durationNanos = externalRequestStats.getExecutionTimeNanos();
@@ -102,9 +120,11 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener impleme
 			span.setTag("external_requests." + requestType + ".count", externalRequestStats.getExecutionCount());
 			totalCount += externalRequestStats.getExecutionCount();
 		}
-		metricRegistry.meter(externalRequestRateTemplate
-				.build(operationName))
-				.mark(totalCount);
+		if (trackMetricsByOperationName) {
+			metricRegistry.meter(externalRequestRateTemplate
+					.build(operationName))
+					.mark(totalCount);
+		}
 	}
 
 	private void addExternalRequestToParent(long durationNanos, SpanContextInformation contextInformation, String operationType) {

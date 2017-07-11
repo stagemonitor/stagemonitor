@@ -9,6 +9,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -18,6 +19,8 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.opentracing.Span;
 
 public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -39,11 +42,11 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 		final MonitoredMethodRequest monitoredRequest = new MonitoredMethodRequest(Stagemonitor.getConfiguration(), requestName, null, params);
 		final TracingPlugin tracingPlugin = Stagemonitor.getPlugin(TracingPlugin.class);
 		tracingPlugin.getRequestMonitor().monitorStart(monitoredRequest);
+		final Span span = TracingPlugin.getCurrentSpan();
 		if (requestName == null) {
-			TracingPlugin
-					.getCurrentSpan()
-					.setOperationName(getBusinessTransationName(thiz != null ? thiz.getClass().getName() : className, methodName));
+			span.setOperationName(getBusinessTransationName(thiz != null ? thiz.getClass().getName() : className, methodName));
 		}
+		span.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 	}
 
 	@Advice.OnMethodExit(onThrowable = Throwable.class, inline = false)

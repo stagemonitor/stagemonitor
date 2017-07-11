@@ -16,6 +16,7 @@ import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TagRecordingSpanEventListener;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallStackElement;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
@@ -125,6 +126,7 @@ public class AbstractElasticsearchSpanReporterTest {
 	protected Tracer.SpanBuilder setStartTags(Tracer.SpanBuilder spanBuilder) {
 		return spanBuilder
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-				.withTag(SpanUtils.OPERATION_TYPE, "http");
+				.withTag(SpanUtils.OPERATION_TYPE, "http")
+				.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 	}
 }

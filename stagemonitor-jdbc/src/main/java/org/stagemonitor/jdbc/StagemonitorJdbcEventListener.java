@@ -4,8 +4,7 @@ import com.p6spy.engine.common.ConnectionInformation;
 import com.p6spy.engine.common.StatementInformation;
 import com.p6spy.engine.event.SimpleJdbcEventListener;
 import com.uber.jaeger.context.TracingUtils;
-import io.opentracing.Span;
-import io.opentracing.tag.Tags;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
@@ -19,13 +18,17 @@ import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.profiler.Profiler;
 import org.stagemonitor.util.StringUtils;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+
+import javax.sql.DataSource;
+
+import io.opentracing.Span;
+import io.opentracing.tag.Tags;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
@@ -170,5 +173,9 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 			return "jdbc";
 		}
 
+		@Override
+		protected boolean trackMetricsPerOperationName() {
+			return true;
+		}
 	}
 }

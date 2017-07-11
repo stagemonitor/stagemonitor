@@ -171,8 +171,8 @@ public class SpringRequestMonitorTest {
 
 		assertEquals("GET *.js", spanContext.getOperationName());
 		assertEquals("GET *.js", spanContext.getOperationName());
-		assertThat(registry.getTimers()).containsKey(name("response_time").operationName("GET *.js").operationType("http").build());
-		assertEquals(1, registry.timer(getResponseTimeMetricName(spanContext.getOperationName(), "http")).getCount());
+		assertThat(registry.getTimers()).doesNotContainKey(getResponseTimeMetricName(spanContext.getOperationName(), "http"));
+		assertThat(registry.getTimers()).containsKey(getResponseTimeMetricName("All", "http"));
 		verify(monitoredRequest, times(1)).getRequestName();
 		assertTrue(spanContext.isSampled());
 	}

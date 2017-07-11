@@ -86,6 +86,9 @@ public class SpanJsonModule extends JsonUtils.StagemonitorJacksonModule  {
 	private Map<String, Object> convertDottedKeysIntoNestedObject(Map<String, Object> tags) {
 		Map<String, Object> nestedTags = new HashMap<String, Object>();
 		for (Map.Entry<String, Object> entry : tags.entrySet()) {
+			if (entry.getKey().startsWith(SpanWrapper.INTERNAL_TAG_PREFIX)) {
+				continue;
+			}
 			if (entry.getKey().indexOf('.') >= 0) {
 				doConvertDots(nestedTags, entry.getKey(), entry.getValue());
 			} else {
