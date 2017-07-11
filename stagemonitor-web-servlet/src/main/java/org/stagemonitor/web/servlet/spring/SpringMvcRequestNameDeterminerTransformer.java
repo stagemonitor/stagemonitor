@@ -13,6 +13,9 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.tracing.BusinessTransactionNamingStrategy;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
+
+import io.opentracing.Span;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.returns;
@@ -42,7 +45,9 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 					.getBusinessTransactionNamingStrategy();
 			final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
 			if (requestNameFromHandler != null) {
-				TracingPlugin.getCurrentSpan().setOperationName(requestNameFromHandler);
+				final Span span = TracingPlugin.getCurrentSpan();
+				span.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
+				span.setOperationName(requestNameFromHandler);
 			}
 		}
 	}

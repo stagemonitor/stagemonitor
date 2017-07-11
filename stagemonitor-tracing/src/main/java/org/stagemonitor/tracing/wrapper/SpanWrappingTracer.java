@@ -13,6 +13,8 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 
+import static org.stagemonitor.tracing.wrapper.SpanWrapper.INTERNAL_TAG_PREFIX;
+
 /**
  * The purpose of this class is to make it possible to register {@link SpanEventListener}s which are created by {@link
  * SpanEventListenerFactory}s. The {@link SpanEventListener}s are called when certain methods of a {@link SpanBuilder}
@@ -103,7 +105,9 @@ public class SpanWrappingTracer implements Tracer {
 				value = spanEventListener.onSetTag(key, value);
 			}
 			if (value != null) {
-				delegate = delegate.withTag(key, value);
+				if (!key.startsWith(INTERNAL_TAG_PREFIX)) {
+					delegate = delegate.withTag(key, value);
+				}
 				tags.put(key, value);
 			}
 			return this;
@@ -113,7 +117,9 @@ public class SpanWrappingTracer implements Tracer {
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				value = spanEventListener.onSetTag(key, value);
 			}
-			delegate = delegate.withTag(key, value);
+			if (!key.startsWith(INTERNAL_TAG_PREFIX)) {
+				delegate = delegate.withTag(key, value);
+			}
 			tags.put(key, value);
 			return this;
 		}
@@ -123,7 +129,9 @@ public class SpanWrappingTracer implements Tracer {
 				value = spanEventListener.onSetTag(key, value);
 			}
 			if (value != null) {
-				delegate = delegate.withTag(key, value);
+				if (!key.startsWith(INTERNAL_TAG_PREFIX)) {
+					delegate = delegate.withTag(key, value);
+				}
 				tags.put(key, value);
 			}
 			return this;

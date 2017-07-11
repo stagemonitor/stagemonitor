@@ -9,6 +9,7 @@ import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.tracing.AbstractTracingTransformer;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +20,8 @@ import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+
+import io.opentracing.Span;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 
@@ -50,6 +53,8 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 
 	@Advice.OnMethodEnter(inline = false)
 	public static void setRequestName(@AbstractTracingTransformer.RequestName String requestName) {
-		TracingPlugin.getCurrentSpan().setOperationName(requestName);
+		final Span span = TracingPlugin.getCurrentSpan();
+		span.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
+		span.setOperationName(requestName);
 	}
 }

@@ -9,6 +9,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
 import java.util.Collections;
@@ -117,7 +118,8 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	protected Tracer.SpanBuilder setStartTags(Tracer.SpanBuilder spanBuilder) {
 		return spanBuilder
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-				.withTag(SpanUtils.OPERATION_TYPE, "jdbc");
+				.withTag(SpanUtils.OPERATION_TYPE, "jdbc")
+				.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 	}
 
 	private void verifyTimerCreated(int count) {

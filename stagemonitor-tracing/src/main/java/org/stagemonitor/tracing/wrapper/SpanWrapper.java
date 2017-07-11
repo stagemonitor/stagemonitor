@@ -13,6 +13,11 @@ import io.opentracing.SpanContext;
  */
 public class SpanWrapper implements Span {
 
+	/**
+	 * Tags which start with this value won't be set on the delegate
+	 */
+	public static final String INTERNAL_TAG_PREFIX = "internal_";
+
 	private static final double MILLISECOND_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
 	/**
@@ -68,7 +73,9 @@ public class SpanWrapper implements Span {
 			value = spanEventListener.onSetTag(key, value);
 		}
 		if (value != null) {
-			delegate = delegate.setTag(key, value);
+			if (!key.startsWith(INTERNAL_TAG_PREFIX)) {
+				delegate = delegate.setTag(key, value);
+			}
 			tags.put(key, value);
 		}
 		return this;
@@ -78,7 +85,9 @@ public class SpanWrapper implements Span {
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			value = spanEventListener.onSetTag(key, value);
 		}
-		delegate = delegate.setTag(key, value);
+		if (!key.startsWith(INTERNAL_TAG_PREFIX)) {
+			delegate = delegate.setTag(key, value);
+		}
 		tags.put(key, value);
 		return this;
 	}
@@ -88,7 +97,9 @@ public class SpanWrapper implements Span {
 			value = spanEventListener.onSetTag(key, value);
 		}
 		if (value != null) {
-			delegate = delegate.setTag(key, value);
+			if (!key.startsWith(INTERNAL_TAG_PREFIX)) {
+				delegate = delegate.setTag(key, value);
+			}
 			tags.put(key, value);
 		}
 		return this;
@@ -210,6 +221,14 @@ public class SpanWrapper implements Span {
 			return (Boolean) value;
 		}
 		return null;
+	}
+
+	public boolean getBooleanTag(String key, boolean defaultIfNull) {
+		Object value = tags.get(key);
+		if (value instanceof Boolean) {
+			return (Boolean) value;
+		}
+		return defaultIfNull;
 	}
 
 	public long getDurationNanos() {

@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import io.opentracing.Span;
 import io.opentracing.mock.MockTracer;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -46,6 +47,13 @@ public class SpanJsonModuleTest {
 		final SpanWrapper span = createTestSpan(1, s -> s.setTag("duration_ms", "foo"));
 		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
 		assertEquals(jsonSpan.toString(), 1, jsonSpan.get("duration_ms").intValue());
+	}
+
+	@Test
+	public void testIgnoreInternalTags() {
+		final SpanWrapper span = createTestSpan(1, s -> s.setTag("internal_foo", "bar"));
+		final ObjectNode jsonSpan = JsonUtils.toObjectNode(span);
+		assertThat(jsonSpan.get("internal_foo")).isNull();
 	}
 
 	@Test

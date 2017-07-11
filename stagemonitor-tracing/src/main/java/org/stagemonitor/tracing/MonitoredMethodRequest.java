@@ -3,6 +3,7 @@ package org.stagemonitor.tracing;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
 import java.util.LinkedHashMap;
@@ -61,8 +62,10 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 			spanBuilder = tracer.buildSpan(methodSignature)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
 		}
-		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, OP_TYPE_METHOD_INVOCATION);
-		final Span span = spanBuilder.start();
+		final Span span = spanBuilder
+				.withTag(SpanUtils.OPERATION_TYPE, OP_TYPE_METHOD_INVOCATION)
+				.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true)
+				.start();
 		SpanUtils.setParameters(span, safeParameters);
 		return span;
 	}
