@@ -17,6 +17,7 @@ import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.profiler.Profiler;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 
 		@Override
 		public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-			final Span span = new ExternalHttpRequest(tracingPlugin.getTracer(), request.getMethod().toString(), request.getURI().toString(), request.getURI().getHost(), request.getURI().getPort()).createSpan();
+			final Span span = new ExternalHttpRequest(tracingPlugin.getTracer(), request.getMethod().toString(), removeQuery(request.getURI()), request.getURI().getHost(), request.getURI().getPort()).createSpan();
 			try {
 				Profiler.start(request.getMethod().toString() + " " + request.getURI() + " ");
 				tracingPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
@@ -63,6 +64,16 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 			} finally {
 				Profiler.stop();
 				span.finish();
+			}
+		}
+
+		static String removeQuery(URI uri) {
+			final String uriString = uri.toString();
+			final int indexOfQuery = uriString.lastIndexOf('?');
+			if (indexOfQuery > 0) {
+				return uriString.substring(0, indexOfQuery);
+			} else {
+				return uriString;
 			}
 		}
 	}

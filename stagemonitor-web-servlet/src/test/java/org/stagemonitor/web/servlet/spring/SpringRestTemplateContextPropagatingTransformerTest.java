@@ -22,18 +22,18 @@ import java.util.List;
 import io.opentracing.mock.MockTracer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class SpringRestTemplateContextPropagatingTransformerTest {
 
+	private final MockTracer mockTracer = new MockTracer(new B3Propagator());
 	private TracingPlugin tracingPlugin;
 
 	@Before
 	public void setUp() throws Exception {
 		tracingPlugin = mock(TracingPlugin.class);
-		when(tracingPlugin.getTracer()).thenReturn(new MockTracer(new B3Propagator()));
+		when(tracingPlugin.getTracer()).thenReturn(mockTracer);
 	}
 
 
@@ -51,12 +51,20 @@ public class SpringRestTemplateContextPropagatingTransformerTest {
 
 	@Test
 	public void testB3HeaderContextPropagation() throws Exception {
-		HttpRequest httpRequest = new MockClientHttpRequest(HttpMethod.GET, new URI("http://example.com"));
+		HttpRequest httpRequest = new MockClientHttpRequest(HttpMethod.GET, new URI("http://example.com/foo?bar=baz"));
 
 		new SpringRestTemplateContextPropagatingInterceptor(tracingPlugin)
 				.intercept(httpRequest, null, mock(ClientHttpRequestExecution.class));
 
-		assertTrue(httpRequest.getHeaders().containsKey(B3HeaderFormat.SPAN_ID_NAME));
-		assertTrue(httpRequest.getHeaders().containsKey(B3HeaderFormat.TRACE_ID_NAME));
+		assertThat(httpRequest.getHeaders()).containsKey(B3HeaderFormat.SPAN_ID_NAME);
+		assertThat(httpRequest.getHeaders()).containsKey(B3HeaderFormat.TRACE_ID_NAME);
+		assertThat(mockTracer.finishedSpans()).hasSize(1);
+		assertThat(mockTracer.finishedSpans().get(0).operationName()).isEqualTo("GET http://example.com/foo");
+	}
+
+	@Test
+	public void testRemoveQuery() throws Exception {
+		assertThat(SpringRestTemplateContextPropagatingInterceptor.removeQuery(new URI("http://example.com/foo"))).isEqualTo("http://example.com/foo");
+		assertThat(SpringRestTemplateContextPropagatingInterceptor.removeQuery(new URI("http://example.com/foo?bar=baz"))).isEqualTo("http://example.com/foo");
 	}
 }
