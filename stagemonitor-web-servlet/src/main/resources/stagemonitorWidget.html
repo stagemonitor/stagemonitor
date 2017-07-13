@@ -4,22 +4,6 @@
 
 <script type="text/javascript">
 	(function () {
-		if (typeof(BOOMR) != 'undefined') {
-			BOOMR.subscribe('before_beacon', function(data) {
-				if (data.totalPageLoadTime) {
-					var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
-					if (stagemonitorWindow.stagemonitor) {
-						stagemonitorWindow.stagemonitor.renderPageLoadTime(data);
-					} else {
-						stagemonitorWindow.pageLoadTime = data;
-					}
-					var thresholdExceeded = stagemonitorWindow.stagemonitor.thresholdExceeded;
-					var clazz = thresholdExceeded ? "stagemonitor-threshold-exceeded" : "stagemonitor-threshold-ok";
-					document.getElementById("stagemonitor-overlay-show").className = clazz;
-				}
-			});
-		}
-
 		var stagemonitorWindow = document.getElementById("stagemonitor-modal").contentWindow;
 		var contextPath = "@@CONTEXT_PREFIX_PATH@@";
 

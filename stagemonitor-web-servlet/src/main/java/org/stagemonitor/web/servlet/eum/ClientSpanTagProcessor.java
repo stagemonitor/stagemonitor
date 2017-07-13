@@ -8,6 +8,7 @@ import java.util.Map;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.tag.Tags;
 
 abstract class ClientSpanTagProcessor {
 
@@ -80,5 +81,15 @@ abstract class ClientSpanTagProcessor {
 		}
 	}
 
+	protected void discardSpan(Span span) {
+		Tags.SAMPLING_PRIORITY.set(span, 0);
+	}
 
+	protected Long parsedLongOrNull(String valueOrNull) {
+		try {
+			return Long.parseLong(valueOrNull);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
 }
