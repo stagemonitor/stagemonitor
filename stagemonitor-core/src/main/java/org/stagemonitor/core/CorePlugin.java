@@ -35,6 +35,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -515,7 +518,7 @@ public class CorePlugin extends StagemonitorPlugin {
 									   final MeasurementSession measurementSession) {
 		if (isReportToElasticsearch()) {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("stagemonitor-metrics-kibana-index-pattern.bulk");
-			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrls(), reportingInterval);
+			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrlsWithoutAuthenticationInformation(), reportingInterval);
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
 					metricsIndexTemplate.getValue(), moveToColdNodesAfterDays.getValue(), getNumberOfReplicas(), getNumberOfShards());
 			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
@@ -531,7 +534,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			reporter.start(reportingInterval, TimeUnit.SECONDS);
 			reporters.add(reporter);
 		} else {
-			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrls(), reportingInterval);
+			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrlsWithoutAuthenticationInformation(), reportingInterval);
 		}
 	}
 
@@ -681,6 +684,29 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public Collection<String> getElasticsearchUrls() {
 		return elasticsearchUrls.getValue();
+	}
+
+	public Collection<String> getElasticsearchUrlsWithoutAuthenticationInformation() {
+		final List<String> urls = elasticsearchUrls.getValue();
+		final ArrayList<String> result = new ArrayList<String>(urls.size());
+		for (String url : urls) {
+			if (url.contains("@")) {
+				result.add(removeUserInfo(url));
+			} else {
+				result.add(url);
+			}
+		}
+		return result;
+	}
+
+	private String removeUserInfo(String url) {
+		String userInfo = "";
+		try {
+			userInfo = new URL(url).getUserInfo();
+		} catch (MalformedURLException e) {
+			logger.warn("Suppressed exception", e);
+		}
+		return url.replace(userInfo, "XXXX:XXXX");
 	}
 
 	public Collection<String> getElasticsearchConfigurationSourceProfiles() {
