@@ -1,6 +1,9 @@
 package org.stagemonitor.web.servlet.eum;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.web.servlet.ServletPlugin;
@@ -12,6 +15,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -25,6 +29,17 @@ import io.opentracing.tag.Tags;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.stagemonitor.tracing.B3IdentifierTagger.SPAN_ID;
 import static org.stagemonitor.tracing.B3IdentifierTagger.TRACE_ID;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_APP_CACHE_LOOKUP;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_DNS_LOOKUP;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_LOAD;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_PROCESSING;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_REDIRECT;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_REQUEST;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_RESPONSE;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_TCP;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_TIME_TO_FIRST_PAINT;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_UNLOAD;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.getWeaselRequestParameterName;
 
 public class ClientSpanServlet extends HttpServlet {
 
@@ -39,6 +54,7 @@ public class ClientSpanServlet extends HttpServlet {
 	private static final String PARAMETER_LOCATION = "l";
 	private static final String ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
 	private static final String ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods";
+	private static final Logger logger = LoggerFactory.getLogger(ClientSpanServlet.class);
 
 	private final TracingPlugin tracingPlugin;
 	private final List<ClientSpanTagProcessor> tagProcessors;
@@ -63,16 +79,17 @@ public class ClientSpanServlet extends HttpServlet {
 		// have a look at the weasel source [0] and the w3c spec for window.performance.timing [1]
 		// [0]: https://github.com/instana/weasel/blob/master/lib/timings.js
 		// [1]: https://w3c.github.io/navigation-timing/#processing-model
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.unload", "t_unl"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.redirect", "t_red"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.app_cache_lookup", "t_apc"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.dns_lookup", "t_dns"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.tcp", "t_tcp"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.request", "t_req"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.response", "t_rsp"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.processing", "t_pro"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.load", "t_loa"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, "timing.time_to_first_paint", "t_fp"));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_UNLOAD));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_REDIRECT));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_APP_CACHE_LOOKUP));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_DNS_LOOKUP));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_TCP));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_REQUEST));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_RESPONSE));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_PROCESSING));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_LOAD));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_TIME_TO_FIRST_PAINT));
+		addTagProcessor(new ResourceTimingProcessor());
 
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ERROR, "exception.stack_trace", "st"));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ERROR, "exception.message", "e"));
@@ -82,10 +99,21 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_url", "u"));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_from", "l"));
 		addTagProcessor(new ClientSpanBooleanTagProcessor(TYPE_XHR, "xhr.async", "a"));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_XHR, "duration_ms", "d"));
+		addTagProcessor(durationProcessor(TYPE_XHR, "duration_ms", "d"));
 		// The OT-API does not allow to set the SpanContext for the current span, so just set the ids as tags
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, SPAN_ID, "s", false));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, TRACE_ID, "t", false));
+	}
+
+	private ClientSpanTagProcessor durationProcessor(String typePageLoad, String tagName) {
+		return durationProcessor(typePageLoad, tagName, getWeaselRequestParameterName(tagName));
+	}
+
+	private ClientSpanLongTagProcessor durationProcessor(String beaconType, String tagName, String requestParameterName) {
+		return new ClientSpanLongTagProcessor(beaconType, tagName, requestParameterName)
+				.lowerBound(0)
+				.upperBound(TimeUnit.MINUTES.toMillis(10))
+				.discardSpanOnBoundViolation(true);
 	}
 
 	@Override
@@ -106,7 +134,13 @@ public class ClientSpanServlet extends HttpServlet {
 
 	private void handleRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (servletPlugin.isClientSpanCollectionEnabled()) {
-			convertWeaselBeaconToSpan(req);
+			try {
+				convertWeaselBeaconToSpan(req);
+			} catch (Exception e) {
+				// e.g. non numeric timing values
+				logger.info("error handling client span beacon: {}", e.getMessage());
+			}
+			// always respond with success status code
 			setCorsHeaders(resp);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} else {
@@ -150,22 +184,23 @@ public class ClientSpanServlet extends HttpServlet {
 		}
 
 		final Span span = spanBuilder.start();
-
-		for (ClientSpanTagProcessor tagProcessor : tagProcessors) {
-			tagProcessor.processSpan(span, servletParameters);
-		}
-
-		if (servletPlugin.isParseUserAgent()) {
-			if (userAgentParser == null) {
-				userAgentParser = new UserAgentParser();
+		if (SpanContextInformation.forSpan(span).isSampled()) {
+			for (ClientSpanTagProcessor tagProcessor : tagProcessors) {
+				tagProcessor.processSpan(span, servletParameters);
 			}
-			userAgentParser.setUserAgentInformation(span, httpServletRequest.getHeader("user-agent"));
+
+			if (servletPlugin.isParseUserAgent()) {
+				if (userAgentParser == null) {
+					userAgentParser = new UserAgentParser();
+				}
+				userAgentParser.setUserAgentInformation(span, httpServletRequest.getHeader("user-agent"));
+			}
+			SpanUtils.setClientIp(span, httpServletRequest.getRemoteAddr());
 		}
-		SpanUtils.setClientIp(span, httpServletRequest.getRemoteAddr());
 
 		// TODO: extract backend trace id (if sent) and attach span to that trace id
-
 		span.finish(MILLISECONDS.toMicros(finishTimestampInMilliseconds));
+
 	}
 
 	private String getOperationName(HttpServletRequest httpServletRequest) {

@@ -25,9 +25,6 @@ stagemonitor-web-servlet/src/main/resources/stagemonitor/static/jquery.1.11.1.mi
 This product bundles jQuery serializeObject, which is available under the "BSD" license. For details, see
 stagemonitor-web-servlet/src/main/resources/stagemonitor/static/jquery.serialize-object.min.js
 
-This product bundles boomerang 0.9, which is available under the "BSD" license. For details, see
-stagemonitor-web-servlet/src/main/resources/stagemonitor/public/static/rum/bommerang.js
-
 This product bundles Bootstrap Growl 2.0.1, which is available under the "MIT" license. For details, see
 stagemonitor-web-servlet/src/main/resources/stagemonitor/static/bootstrap/bootstrap-growl.min.js
 
@@ -54,6 +51,9 @@ stagemonitor-web-servlet/src/main/resources/stagemonitor/static/flot/jquery.flot
 
 This product bundles Flot tooltip plugin, which is available under the "MIT" license. For details, see
 stagemonitor-web-servlet/src/main/resources/stagemonitor/static/flot/jquery.flot.tooltip.min.js
+
+This product bundles weasel, which is available under the "MIT" license. For details, see
+stagemonitor-web-servlet/src/main/resources/eum.debug.js
 
 This product includes code derived from the Metrics project, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-web-servlet/src/main/java/org/stagemonitor/web/metrics/StagemonitorMetricsServlet.java
