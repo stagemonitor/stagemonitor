@@ -192,7 +192,8 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "3.5"
+	gradleVersion = "4.0.1"
+	distributionType = "all"
 }
 
 task printProjectsToTest() {
