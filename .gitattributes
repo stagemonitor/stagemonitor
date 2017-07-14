@@ -7,3 +7,4 @@ gradlew eol=lf
 *.dylib binary
 *.png binary
 *.ttf binary
+*.jar binary
