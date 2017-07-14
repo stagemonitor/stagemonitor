@@ -190,7 +190,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("Sets the number of replicas of the Elasticsearch index templates.")
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(0);
 	private final ConfigurationOption<Integer> numberOfShards = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.elasticsearch.numberOfShards")
 			.aliasKeys("stagemonitor.elasticsearch.numberOfShards")
@@ -199,7 +199,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("Sets the number of shards of the Elasticsearch index templates.")
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(1);
 	private final ConfigurationOption<String> applicationName = ConfigurationOption.stringOption()
 			.key("stagemonitor.applicationName")
 			.dynamic(false)
