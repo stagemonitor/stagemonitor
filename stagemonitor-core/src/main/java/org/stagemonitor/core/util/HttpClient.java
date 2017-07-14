@@ -1,22 +1,20 @@
 package org.stagemonitor.core.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.util.IOUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 import javax.xml.bind.DatatypeConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.util.IOUtils;
 
 // TODO create HttpRequest POJO
 // method, url, headers, outputStreamHandler, responseHandler
@@ -72,7 +70,7 @@ public class HttpClient {
 	}
 
 	public int send(final String method, final String url, final Map<String, String> headerFields, OutputStreamHandler outputStreamHandler) {
-		Integer result = send(method, url, headerFields, outputStreamHandler, new ErrorLoggingResponseHandler(url));
+		Integer result = send(method, url, headerFields, outputStreamHandler, new ErrorLoggingResponseHandler(removeUserInfo(url)));
 		return result == null ? -1 : result;
 	}
 
@@ -81,6 +79,7 @@ public class HttpClient {
 
 		HttpURLConnection connection = null;
 		InputStream inputStream = null;
+		String urlWithoutAuthInfo = removeUserInfo(url);
 		try {
 			URL parsedUrl = new URL(url);
 			connection = (HttpURLConnection) parsedUrl.openConnection();
@@ -111,8 +110,8 @@ public class HttpClient {
 				try {
 					return responseHandler.handleResponse(inputStream, getResponseCodeIfPossible(connection), e);
 				} catch (IOException e1) {
-					logger.warn("Error sending {} request to url {}: {}", method, url, e.getMessage(), e);
-					logger.warn("Error handling error response for {} request to url {}: {}", method, url, e1.getMessage(), e1);
+					logger.warn("Error sending {} request to url {}: {}", method, urlWithoutAuthInfo, e.getMessage(), e);
+					logger.warn("Error handling error response for {} request to url {}: {}", method, urlWithoutAuthInfo, e1.getMessage(), e1);
 					try {
 						logger.trace(new String(IOUtils.readToBytes(inputStream), "UTF-8"));
 					} catch (IOException e2) {
@@ -120,7 +119,7 @@ public class HttpClient {
 					}
 				}
 			} else {
-				logger.warn("Error sending {} request to url {}: {}", method, url, e.getMessage(), e);
+				logger.warn("Error sending {} request to url {}: {}", method, urlWithoutAuthInfo, e.getMessage(), e);
 			}
 
 			return null;
@@ -182,4 +181,14 @@ public class HttpClient {
 			return statusCode;
 		}
 	}
+
+  	private String removeUserInfo(String url) {
+	  	String userInfo = "";
+		try {
+	  		userInfo = new URL(url).getUserInfo();
+		} catch (MalformedURLException e) {
+	  		logger.warn("Suppressed exception", e);
+		}
+		return url.replace(userInfo, "XXXX:XXXX");
+  	}
 }

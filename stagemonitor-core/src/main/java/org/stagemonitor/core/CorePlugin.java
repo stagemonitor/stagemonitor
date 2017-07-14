@@ -1,36 +1,14 @@
 package org.stagemonitor.core;
 
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.configuration.ConfigurationOption;
-import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.converter.ListValueConverter;
-import org.stagemonitor.configuration.converter.SetValueConverter;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.elasticsearch.IndexSelector;
-import org.stagemonitor.core.grafana.GrafanaClient;
-import org.stagemonitor.core.metrics.MetricNameFilter;
-import org.stagemonitor.core.metrics.MetricsWithCountFilter;
-import org.stagemonitor.core.metrics.SortedTableLogReporter;
-import org.stagemonitor.core.metrics.metrics2.AndMetric2Filter;
-import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
-import org.stagemonitor.core.metrics.metrics2.InfluxDbReporter;
-import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
-import org.stagemonitor.core.metrics.metrics2.MetricNameValueConverter;
-import org.stagemonitor.core.util.CompletedFuture;
-import org.stagemonitor.core.util.HttpClient;
-import org.stagemonitor.util.IOUtils;
-import org.stagemonitor.util.StringUtils;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -45,9 +23,23 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.converter.ListValueConverter;
+import org.stagemonitor.configuration.converter.SetValueConverter;
+import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.elasticsearch.IndexSelector;
+import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.metrics.MetricNameFilter;
+import org.stagemonitor.core.metrics.MetricsWithCountFilter;
+import org.stagemonitor.core.metrics.SortedTableLogReporter;
+import org.stagemonitor.core.metrics.metrics2.*;
+import org.stagemonitor.core.util.CompletedFuture;
+import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.util.IOUtils;
+import org.stagemonitor.util.StringUtils;
 
 /**
  * This class contains the configuration options for stagemonitor's core functionality
@@ -699,7 +691,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		return result;
 	}
 
-	private String removeUserInfo(String url) {
+	public String removeUserInfo(String url) {
 		String userInfo = "";
 		try {
 			userInfo = new URL(url).getUserInfo();
