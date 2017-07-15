@@ -213,8 +213,8 @@ public class ElasticsearchClient {
 		execute("DELETE", indexPattern + "?timeout=20m&ignore_unavailable=true", "Deleting indices: {}");
 	}
 
-	public void optimizeIndices(String indexPattern) {
-		execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h&ignore_unavailable=true", "Optimizing indices: {}");
+	public void forceMergeIndices(String indexPattern) {
+		execute("POST", indexPattern + "/_forcemerge?max_num_segments=1&ignore_unavailable=true", "Force merging indices: {}");
 	}
 
 	public void updateIndexSettings(String indexPattern, Map<String, ?> settings) {
@@ -289,7 +289,7 @@ public class ElasticsearchClient {
 		}
 
 		if (optimizeAndMoveIndicesToColdNodesOlderThanDays > 0) {
-			final TimerTask optimizeIndicesTask = new OptimizeIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
+			final TimerTask optimizeIndicesTask = new ForceMergeIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
 					optimizeAndMoveIndicesToColdNodesOlderThanDays, this);
 			timer.schedule(optimizeIndicesTask, DateUtils.getNextDateAtHour(3), DateUtils.getDayInMillis());
 		}
