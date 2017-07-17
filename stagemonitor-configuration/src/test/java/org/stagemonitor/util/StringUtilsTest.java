@@ -2,9 +2,17 @@ package org.stagemonitor.util;
 
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 public class StringUtilsTest {
+
+	@Test
+	public void testToCommaSeparatedString() {
+		assertThat(StringUtils.toCommaSeparatedString("foo", "bar")).isEqualTo("foo,bar");
+		assertThat(StringUtils.toCommaSeparatedString("foo")).isEqualTo("foo");
+		assertThat(StringUtils.toCommaSeparatedString()).isEqualTo("");
+	}
 
 	@Test
 	public void testRemoveStart() {

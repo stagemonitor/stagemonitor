@@ -147,10 +147,13 @@ public class StringUtils {
 
 	public static String toCommaSeparatedString(String... strings) {
 		StringBuilder sb = new StringBuilder();
-		for (String value : strings) {
-			sb.append(value).append(",");
+		for (int i = 0; i < strings.length; i++) {
+			String value = strings[i];
+			if (i > 0) {
+				sb.append(",");
+			}
+			sb.append(value);
 		}
-		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
 	}
 
