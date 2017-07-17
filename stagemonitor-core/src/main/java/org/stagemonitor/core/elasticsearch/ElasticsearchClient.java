@@ -222,7 +222,7 @@ public class ElasticsearchClient {
 			return;
 		}
 		final String url = corePlugin.getElasticsearchUrl() + "/" + indexPattern + "/_settings?ignore_unavailable=true";
-		logger.info("Updating index settings {}\n{}", corePlugin.removeUserInfo(url), settings);
+		logger.info("Updating index settings {}\n{}", HttpClient.removeUserInfo(url), settings);
 		httpClient.sendAsJson("PUT", url, settings, CONTENT_TYPE_JSON);
 	}
 
@@ -231,7 +231,7 @@ public class ElasticsearchClient {
 			return;
 		}
 		final String url = corePlugin.getElasticsearchUrl() + "/" + path;
-		String urlWithoutAuthInfo = corePlugin.removeUserInfo(url);
+		String urlWithoutAuthInfo = HttpClient.removeUserInfo(url);
 		logger.info(logMessage, urlWithoutAuthInfo);
 		try {
 			httpClient.send(method, url);

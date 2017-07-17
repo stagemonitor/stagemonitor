@@ -79,10 +79,9 @@ public class HttpClient {
 
 		HttpURLConnection connection = null;
 		InputStream inputStream = null;
-		String urlWithoutAuthInfo = removeUserInfo(url);
 		try {
-			URL parsedUrl = new URL(url);
-			connection = (HttpURLConnection) parsedUrl.openConnection();
+		  	URL parsedUrl = new URL(url);
+		  	connection = (HttpURLConnection) parsedUrl.openConnection();
 			if (parsedUrl.getUserInfo() != null) {
 				String basicAuth = "Basic " + DatatypeConverter.printBase64Binary(parsedUrl.getUserInfo().getBytes());
 				connection.setRequestProperty("Authorization", basicAuth);
@@ -110,8 +109,8 @@ public class HttpClient {
 				try {
 					return responseHandler.handleResponse(inputStream, getResponseCodeIfPossible(connection), e);
 				} catch (IOException e1) {
-					logger.warn("Error sending {} request to url {}: {}", method, urlWithoutAuthInfo, e.getMessage(), e);
-					logger.warn("Error handling error response for {} request to url {}: {}", method, urlWithoutAuthInfo, e1.getMessage(), e1);
+					logger.warn("Error sending {} request to url {}: {}", method, removeUserInfo(url), e.getMessage(), e);
+					logger.warn("Error handling error response for {} request to url {}: {}", method, removeUserInfo(url), e1.getMessage(), e1);
 					try {
 						logger.trace(new String(IOUtils.readToBytes(inputStream), "UTF-8"));
 					} catch (IOException e2) {
@@ -119,7 +118,7 @@ public class HttpClient {
 					}
 				}
 			} else {
-				logger.warn("Error sending {} request to url {}: {}", method, urlWithoutAuthInfo, e.getMessage(), e);
+				logger.warn("Error sending {} request to url {}: {}", method, removeUserInfo(url), e.getMessage(), e);
 			}
 
 			return null;
@@ -182,7 +181,8 @@ public class HttpClient {
 		}
 	}
 
-  	private String removeUserInfo(String url) {
+  	public static String removeUserInfo(String url) {
+	  	Logger logger = LoggerFactory.getLogger("HttpClient");
 	  	String userInfo = "";
 		try {
 	  		userInfo = new URL(url).getUserInfo();
