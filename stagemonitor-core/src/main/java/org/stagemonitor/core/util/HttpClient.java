@@ -189,6 +189,9 @@ public class HttpClient {
 		} catch (MalformedURLException e) {
 	  		logger.warn("Suppressed exception", e);
 		}
+		if (null == userInfo || userInfo.isEmpty()){
+		  return url;
+		}
 		return url.replace(userInfo, "XXXX:XXXX");
   	}
 }
