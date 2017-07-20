@@ -62,9 +62,9 @@ public class ConfigurationOptionsMarkdownExporter {
 		markdown.append("# Options by Tag\n");
 		markdown.append("\n");
 		for (Map.Entry<String, List<ConfigurationOption<?>>> entry : configurationOptionsByTags.entrySet()) {
-			markdown.append("* `").append(entry.getKey()).append("` \n");
+			markdown.append("## `").append(entry.getKey()).append("` \n");
 			for (ConfigurationOption<?> option : entry.getValue()) {
-				markdown.append("  * ").append(linkToHeadline(option.getLabel())).append('\n');
+				markdown.append(" * ").append(linkToHeadline(option.getLabel())).append('\n');
 			}}
 		markdown.append("\n");
 

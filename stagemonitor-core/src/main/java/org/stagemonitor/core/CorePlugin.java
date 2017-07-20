@@ -6,6 +6,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.health.HealthCheck;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -423,9 +424,19 @@ public class CorePlugin extends StagemonitorPlugin {
 			}
 		});
 
-		ElasticsearchClient elasticsearchClient = getElasticsearchClient();
+		final ElasticsearchClient elasticsearchClient = getElasticsearchClient();
 		createKibanaIndexAndMappings(elasticsearchClient);
 		sendConfigurationMappingAsync(elasticsearchClient);
+		initArguments.getHealthCheckRegistry().register("elasticsearch", new HealthCheck() {
+			@Override
+			protected Result check() throws Exception {
+				if (elasticsearchClient.isElasticsearchAvailable()) {
+					return Result.healthy();
+				} else {
+					return Result.unhealthy("Elasticsearch is not available");
+				}
+			}
+		});
 
 		if (isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = getGrafanaClient();
