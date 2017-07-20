@@ -2,12 +2,16 @@ package org.stagemonitor.core;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
+import org.stagemonitor.core.metrics.health.ImmediateResult;
+import org.stagemonitor.core.metrics.health.OverridableHealthCheckRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
 
@@ -17,6 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -34,6 +39,7 @@ public final class Stagemonitor {
 	private static Iterable<StagemonitorPlugin> plugins;
 	private static List<Runnable> onShutdownActions = new CopyOnWriteArrayList<Runnable>();
 	private static Metric2Registry metric2Registry = new Metric2Registry(SharedMetricRegistries.getOrCreate("stagemonitor"));
+	private static HealthCheckRegistry healthCheckRegistry = new OverridableHealthCheckRegistry();
 
 	static {
 		try {
@@ -104,6 +110,14 @@ public final class Stagemonitor {
 				}
 			}));
 		}
+
+		logger.info("# stagemonitor status");
+		for (Map.Entry<String, HealthCheck.Result> entry : healthCheckRegistry.runHealthChecks().entrySet()) {
+			String status = entry.getValue().isHealthy() ? "OK  " : "FAIL";
+			String message = entry.getValue().getMessage() == null ? "" : "(" + entry.getValue().getMessage() + ")";
+			final String checkName = entry.getKey();
+			logger.info("{} - {} {}", status, checkName, message);
+		}
 	}
 
 	private static void initializePlugins() {
@@ -153,17 +167,19 @@ public final class Stagemonitor {
 	}
 
 	private static void initializePlugin(final StagemonitorPlugin stagemonitorPlugin) {
-		String pluginName = stagemonitorPlugin.getClass().getSimpleName();
+		final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 		logger.info("Initializing plugin {}", pluginName);
 		try {
-			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession));
+			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession, healthCheckRegistry));
 			stagemonitorPlugin.initialized = true;
 			for (Runnable onInitCallback : stagemonitorPlugin.onInitCallbacks) {
 				onInitCallback.run();
 			}
 			stagemonitorPlugin.registerWidgetTabPlugins(new StagemonitorPlugin.WidgetTabPluginsRegistry(pathsOfWidgetTabPlugins));
 			stagemonitorPlugin.registerWidgetMetricTabPlugins(new StagemonitorPlugin.WidgetMetricTabPluginsRegistry(pathsOfWidgetMetricTabPlugins));
-		} catch (Exception e) {
+			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.healthy(pluginName + " is initialized")));
+		} catch (final Exception e) {
+			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.unhealthy(e)));
 			logger.warn("Error while initializing plugin " + pluginName + " (this exception is ignored)", e);
 		}
 	}
@@ -205,6 +221,10 @@ public final class Stagemonitor {
 
 	public static Metric2Registry getMetric2Registry() {
 		return metric2Registry;
+	}
+
+	public static HealthCheckRegistry getHealthCheckRegistry() {
+		return healthCheckRegistry;
 	}
 
 	public static ConfigurationRegistry getConfiguration() {
@@ -269,6 +289,16 @@ public final class Stagemonitor {
 		}
 		tryStartMonitoring();
 		onShutdownActions.add(AgentAttacher.performRuntimeAttachment());
+		healthCheckRegistry.register("startup", new HealthCheck() {
+			@Override
+			protected Result check() throws Exception {
+				if (started) {
+					return Result.healthy();
+				} else {
+					return Result.unhealthy("stagemonitor is not started");
+				}
+			}
+		});
 	}
 
 	private static void tryStartMonitoring() {

@@ -23,6 +23,7 @@ import org.stagemonitor.web.servlet.eum.ClientSpanServlet;
 import org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension;
 import org.stagemonitor.web.servlet.filter.HttpRequestMonitorFilter;
 import org.stagemonitor.web.servlet.filter.StagemonitorSecurityFilter;
+import org.stagemonitor.web.servlet.health.HealthCheckServlet;
 import org.stagemonitor.web.servlet.session.SessionCounter;
 import org.stagemonitor.web.servlet.util.ServletContainerInitializerUtil;
 import org.stagemonitor.web.servlet.widget.SpanServlet;
@@ -472,5 +473,9 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		} catch (IllegalArgumentException e) {
 			// embedded servlet containers like jetty don't necessarily support sessions
 		}
+
+		final ServletRegistration.Dynamic healthServlet = ctx.addServlet(HealthCheckServlet.class.getSimpleName(), new HealthCheckServlet(Stagemonitor.getHealthCheckRegistry()));
+		healthServlet.addMapping("/stagemonitor/status");
+		healthServlet.setAsyncSupported(true);
 	}
 }

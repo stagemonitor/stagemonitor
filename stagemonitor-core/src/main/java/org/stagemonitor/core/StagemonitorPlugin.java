@@ -1,5 +1,7 @@
 package org.stagemonitor.core;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOptionProvider;
@@ -105,11 +107,13 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 		private final Metric2Registry metricRegistry;
 		private final ConfigurationRegistry configuration;
 		private final MeasurementSession measurementSession;
+		private final HealthCheckRegistry healthCheckRegistry;
 
-		public InitArguments(Metric2Registry metricRegistry, ConfigurationRegistry configuration, MeasurementSession measurementSession) {
+		public InitArguments(Metric2Registry metricRegistry, ConfigurationRegistry configuration, MeasurementSession measurementSession, HealthCheckRegistry healthCheckRegistry) {
 			this.metricRegistry = metricRegistry;
 			this.configuration = configuration;
 			this.measurementSession = measurementSession;
+			this.healthCheckRegistry = healthCheckRegistry;
 		}
 
 		public Metric2Registry getMetricRegistry() {
@@ -131,6 +135,10 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 
 		public MeasurementSession getMeasurementSession() {
 			return measurementSession;
+		}
+
+		public HealthCheckRegistry getHealthCheckRegistry() {
+			return healthCheckRegistry;
 		}
 	}
 
