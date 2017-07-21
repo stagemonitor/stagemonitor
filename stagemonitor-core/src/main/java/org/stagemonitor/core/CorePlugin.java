@@ -36,8 +36,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -702,22 +700,12 @@ public class CorePlugin extends StagemonitorPlugin {
 		final ArrayList<String> result = new ArrayList<String>(urls.size());
 		for (String url : urls) {
 			if (url.contains("@")) {
-				result.add(removeUserInfo(url));
+				result.add(HttpClient.removeUserInfo(url));
 			} else {
 				result.add(url);
 			}
 		}
 		return result;
-	}
-
-	private String removeUserInfo(String url) {
-		String userInfo = "";
-		try {
-			userInfo = new URL(url).getUserInfo();
-		} catch (MalformedURLException e) {
-			logger.warn("Suppressed exception", e);
-		}
-		return url.replace(userInfo, "XXXX:XXXX");
 	}
 
 	public Collection<String> getElasticsearchConfigurationSourceProfiles() {
