@@ -27,6 +27,7 @@ import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsearchTest {
@@ -42,7 +43,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		this.tracingPlugin = mock(TracingPlugin.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
-		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(mock(ElasticsearchTracingPlugin.class));
+		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(spy(new ElasticsearchTracingPlugin()));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1000000d);
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));

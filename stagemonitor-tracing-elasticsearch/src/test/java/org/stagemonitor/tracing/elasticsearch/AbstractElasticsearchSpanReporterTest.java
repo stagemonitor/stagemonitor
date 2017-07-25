@@ -33,6 +33,7 @@ import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class AbstractElasticsearchSpanReporterTest {
@@ -51,7 +52,7 @@ public class AbstractElasticsearchSpanReporterTest {
 		configuration = mock(ConfigurationRegistry.class);
 		corePlugin = mock(CorePlugin.class);
 		tracingPlugin = mock(TracingPlugin.class);
-		elasticsearchTracingPlugin = mock(ElasticsearchTracingPlugin.class);
+		elasticsearchTracingPlugin = spy(new ElasticsearchTracingPlugin());
 
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
