@@ -11,7 +11,6 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.tracing.MockTracer;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TagRecordingSpanEventListener;
@@ -30,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
@@ -46,6 +46,7 @@ public class AbstractElasticsearchSpanReporterTest {
 	protected CorePlugin corePlugin;
 	protected Map<String, Object> tags;
 	protected ReportingSpanEventListener reportingSpanEventListener;
+	protected MockTracer mockTracer;
 
 	@Before
 	public void setUp() throws Exception {
@@ -80,7 +81,8 @@ public class AbstractElasticsearchSpanReporterTest {
 		tags = new HashMap<>();
 		when(tracingPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
 		reportingSpanEventListener = new ReportingSpanEventListener(configuration);
-		final SpanWrappingTracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(),
+		mockTracer = new MockTracer();
+		final SpanWrappingTracer tracer = TracingPlugin.createSpanWrappingTracer(mockTracer,
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
