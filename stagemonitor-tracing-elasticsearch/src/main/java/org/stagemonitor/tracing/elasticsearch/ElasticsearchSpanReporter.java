@@ -1,5 +1,7 @@
 package org.stagemonitor.tracing.elasticsearch;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
@@ -90,9 +92,11 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		elasticsearchClient.sendBulk("/stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "/" + SPANS_TYPE, new HttpClient.OutputStreamHandler() {
 			@Override
 			public void withHttpURLConnection(OutputStream os) throws IOException {
+				final JsonGenerator jsonGenerator = JsonUtils.getMapper().getFactory().createGenerator(os);
 				for (SpanWrapper span : spansBatch) {
-					writeSpanToOutputStream(os, span);
+					writeSpanToOutputStream(jsonGenerator, os, span);
 				}
+				jsonGenerator.close();
 				os.close();
 			}
 		});
@@ -103,24 +107,23 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 
 	@Override
 	public void report(SpanContextInformation spanContext, final SpanWrapper spanWrapper) {
-		final boolean addedToQueue = spansQueue.offer(spanWrapper);
-		if (!addedToQueue) {
-			metricRegistry.counter(spansDroppedMetricName).inc();
-		}
-		if (!tracingPlugin.isReportAsync()) {
-			flush();
-		}
-		flushAsyncIfSpanQueueExceedsMaxBatchSize();
-
-		final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 		if (elasticsearchTracingPlugin.isOnlyLogElasticsearchSpanReports()) {
+			final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(spanWrapper));
 		} else {
-			elasticsearchClient.index(spansIndex, SPANS_TYPE, spanWrapper);
+			final boolean addedToQueue = spansQueue.offer(spanWrapper);
+			if (!addedToQueue) {
+				metricRegistry.counter(spansDroppedMetricName).inc();
+			}
+			if (!tracingPlugin.isReportAsync()) {
+				flush();
+			} else {
+				scheduleFlushIfSpanQueueExceedsMaxBatchSize();
+			}
 		}
 	}
 
-	private void flushAsyncIfSpanQueueExceedsMaxBatchSize() {
+	private void scheduleFlushIfSpanQueueExceedsMaxBatchSize() {
 		if (spansQueue.size() > elasticsearchTracingPlugin.getMaxBatchSize() && scheduler.getQueue().isEmpty()) {
 			synchronized (this) {
 				if (scheduler.getQueue().isEmpty()) {
@@ -130,9 +133,9 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		}
 	}
 
-	private void writeSpanToOutputStream(OutputStream outstream, SpanWrapper spanWrapper) throws IOException {
+	private void writeSpanToOutputStream(JsonGenerator jsonGenerator, OutputStream outstream, SpanWrapper spanWrapper) throws IOException {
 		outstream.write(indexHeader);
-		JsonUtils.writeJsonToOutputStream(spanWrapper, outstream);
+		jsonGenerator.writeObject(spanWrapper);
 		outstream.write('\n');
 	}
 
