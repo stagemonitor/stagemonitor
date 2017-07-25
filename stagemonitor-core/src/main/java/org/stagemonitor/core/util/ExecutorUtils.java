@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +22,20 @@ public final class ExecutorUtils {
 
 	private ExecutorUtils() {
 		// don't instantiate
+	}
+
+	public static ScheduledThreadPoolExecutor createSingleThreadSchedulingDeamonPool(final String threadName, int queueCapacity, CorePlugin corePlugin) {
+		final ThreadFactory daemonThreadFactory = new NamedThreadFactory(threadName);
+		final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(queueCapacity, daemonThreadFactory);
+		// makes sure that the thread pool is always shut down properly
+		// so that there are no ClassLoaderLeaks when redeploying
+		corePlugin.closeOnShutdown(new Closeable() {
+			@Override
+			public void close() throws IOException {
+				executor.shutdown();
+			}
+		});
+		return executor;
 	}
 
 	public static ThreadPoolExecutor createSingleThreadDeamonPool(final String threadName, int queueCapacity, CorePlugin corePlugin) {

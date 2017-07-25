@@ -9,6 +9,9 @@ import org.stagemonitor.tracing.TracingPlugin;
 import java.util.Collections;
 import java.util.List;
 
+import static org.stagemonitor.tracing.elasticsearch.ElasticsearchSpanReporter.bulkSizeMetricName;
+import static org.stagemonitor.tracing.elasticsearch.ElasticsearchSpanReporter.spansDroppedMetricName;
+
 public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 
 	public static final String ELASTICSEARCH_TRACING_PLUGIN = "Elasticsearch trace storage plugin";
@@ -44,6 +47,31 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 					"Set to a negative value to never delete spans.")
 			.configurationCategory(ELASTICSEARCH_TRACING_PLUGIN)
 			.buildWithDefault(-1);
+	private final ConfigurationOption<Integer> maxBatchSize = ConfigurationOption.integerOption()
+			.key("stagemonitor.tracing.elasticsearch.reporter.maxBatchSize")
+			.dynamic(true)
+			.label("Max batch size")
+			.description("The maximum number of spans which are batched into a single _bulk request to elasticsearch. " +
+					"If the span queue size exceeds the max batch size, a flush will be scheduled immediately. " +
+					"You can monitor the amount of reported spans and the actual batch sizes via the histogram " + bulkSizeMetricName.getName())
+			.configurationCategory(ELASTICSEARCH_TRACING_PLUGIN)
+			.buildWithDefault(100);
+	private final ConfigurationOption<Integer> flushDelayMs = ConfigurationOption.integerOption()
+			.key("stagemonitor.tracing.elasticsearch.reporter.flushDelayMs")
+			.dynamic(true)
+			.label("Flush delay (ms)")
+			.description("The maximum amount of time between two flushes.")
+			.configurationCategory(ELASTICSEARCH_TRACING_PLUGIN)
+			.buildWithDefault(1000);
+	private final ConfigurationOption<Integer> maxQueueSize = ConfigurationOption.integerOption()
+			.key("stagemonitor.tracing.elasticsearch.reporter.maxSpanQueueSize")
+			.dynamic(false)
+			.label("Max span queue size")
+			.description("The maximum amount of elements in the span queue. " +
+					"If the queue is full and new spans arrive, they are dropped. " +
+					"You can monitor the amount of dropped spans via the counter " + spansDroppedMetricName.getName())
+			.configurationCategory(ELASTICSEARCH_TRACING_PLUGIN)
+			.buildWithDefault(1000);
 
 	@Override
 	public void initializePlugin(InitArguments initArguments) throws Exception {
@@ -73,4 +101,15 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 		return onlyLogElasticsearchSpanReports.getValue();
 	}
 
+	public int getMaxBatchSize() {
+		return maxBatchSize.getValue();
+	}
+
+	public int getFlushDelayMs() {
+		return flushDelayMs.getValue();
+	}
+
+	public int getMaxQueueSize() {
+		return maxQueueSize.getValue();
+	}
 }
