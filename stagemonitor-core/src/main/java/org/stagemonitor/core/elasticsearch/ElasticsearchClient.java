@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ElasticsearchClient {
 
 	public static final Map<String, String> CONTENT_TYPE_JSON = Collections.singletonMap("Content-Type", "application/json");
+	public static final Map<String, String> CONTENT_TYPE_NDJSON = Collections.singletonMap("Content-Type", "application/x-ndjson");
 	private final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
@@ -206,7 +207,7 @@ public class ElasticsearchClient {
 		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", CONTENT_TYPE_JSON, outputStreamHandler, new BulkErrorReportingResponseHandler());
+		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", CONTENT_TYPE_NDJSON, outputStreamHandler, new BulkErrorReportingResponseHandler());
 	}
 
 	public void deleteIndices(String indexPattern) {
