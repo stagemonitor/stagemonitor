@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -89,6 +91,13 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 			return false;
 		}
 		metricRegistry.histogram(bulkSizeMetricName).update(spansBatch.size());
+		sendSpansAsBulk(spansBatch);
+		// reusing the batch list is safe as this method is executed single threaded
+		spansBatch.clear();
+		return spansQueue.size() >= maxBatchSize;
+	}
+
+	private void sendSpansAsBulk(final List<SpanWrapper> spansBatch) {
 		elasticsearchClient.sendBulk("/stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "/" + SPANS_TYPE, new HttpClient.OutputStreamHandler() {
 			@Override
 			public void withHttpURLConnection(OutputStream os) throws IOException {
@@ -100,9 +109,6 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 				os.close();
 			}
 		});
-		// reusing the batch list is safe as this method is executed single threaded
-		spansBatch.clear();
-		return spansQueue.size() >= maxBatchSize;
 	}
 
 	@Override
@@ -111,13 +117,13 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 			final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(spanWrapper));
 		} else {
-			final boolean addedToQueue = spansQueue.offer(spanWrapper);
-			if (!addedToQueue) {
-				metricRegistry.counter(spansDroppedMetricName).inc();
-			}
 			if (!tracingPlugin.isReportAsync()) {
-				flush();
+				sendSpansAsBulk(Collections.singletonList(spanWrapper));
 			} else {
+				final boolean addedToQueue = spansQueue.offer(spanWrapper);
+				if (!addedToQueue) {
+					metricRegistry.counter(spansDroppedMetricName).inc();
+				}
 				scheduleFlushIfSpanQueueExceedsMaxBatchSize();
 			}
 		}
