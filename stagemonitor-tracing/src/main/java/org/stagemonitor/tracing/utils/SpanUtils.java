@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.utils;
 
-import org.stagemonitor.util.StringUtils;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.Inet4Address;
@@ -57,7 +55,7 @@ public class SpanUtils {
 			return;
 		}
 		for (Map.Entry<String, String> entry : parameters.entrySet()) {
-			span.setTag(PARAMETERS_PREFIX + StringUtils.deDot(entry.getKey()), entry.getValue());
+			span.setTag(PARAMETERS_PREFIX + entry.getKey(), entry.getValue());
 		}
 	}
 
