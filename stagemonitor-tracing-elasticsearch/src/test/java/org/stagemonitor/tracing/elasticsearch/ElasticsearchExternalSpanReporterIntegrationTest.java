@@ -69,8 +69,6 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		assertThat(spanJson.get("type").asText()).as(spanJson.toString()).isEqualTo("jdbc");
 		assertThat(spanJson.get("method").asText()).as(spanJson.toString()).isEqualTo("SELECT");
 		assertThat(spanJson.get("duration_ms").asInt()).as(spanJson.toString()).isEqualTo(100);
-		assertThat(spanJson.get("db.statement")).as(spanJson.toString()).isNotNull();
-		assertThat(spanJson.get("db.statement").asText()).as(spanJson.toString()).isEqualTo("SELECT * from STAGEMONITOR where 1 < 2");
 		assertThat(spanJson.get("name").asText()).as(spanJson.toString()).isEqualTo("ElasticsearchExternalSpanReporterIntegrationTest#test");
 	}
 
