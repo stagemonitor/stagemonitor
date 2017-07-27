@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.utils;
 
-import org.stagemonitor.util.StringUtils;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.Inet4Address;
@@ -21,7 +19,7 @@ public class SpanUtils {
 	public static final String CALL_TREE_JSON = "call_tree_json";
 	public static final String HTTP_HEADERS_PREFIX = "http.headers.";
 	public static final String USERNAME = "username";
-	public static final String PARAMETERS_PREFIX = "parameters.";
+	public static final String PARAMETERS_PREFIX = "params.";
 	public static final String OPERATION_TYPE = "type";
 
 	private SpanUtils() {
@@ -57,7 +55,7 @@ public class SpanUtils {
 			return;
 		}
 		for (Map.Entry<String, String> entry : parameters.entrySet()) {
-			span.setTag(PARAMETERS_PREFIX + StringUtils.deDot(entry.getKey()), entry.getValue());
+			span.setTag(PARAMETERS_PREFIX + entry.getKey(), entry.getValue());
 		}
 	}
 
