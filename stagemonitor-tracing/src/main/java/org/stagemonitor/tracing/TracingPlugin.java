@@ -84,7 +84,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
 			.key("stagemonitor.tracing.params.confidential.regex")
-			.aliasKeys("stagemonitor.requestmonitor.params.confidential.regex")
+			.aliasKeys("stagemonitor.requestmonitor.requestparams.confidential.regex", "stagemonitor.requestmonitor.params.confidential.regex")
 			.dynamic(true)
 			.label("Confidential parameters (regex)")
 			.description("A list of request parameter name patterns that should not be collected.\n" +

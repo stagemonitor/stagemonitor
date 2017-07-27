@@ -72,7 +72,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 			.key("stagemonitor.requestmonitor.http.requestparams.confidential.regex")
 			.dynamic(true)
 			.label("Deprecated: Confidential request parameters (regex)")
-			.description("Deprecated, use stagemonitor.requestmonitor.requestparams.confidential.regex instead." +
+			.description("Deprecated, use stagemonitor.tracing.params.confidential.regex instead." +
 					"A list of request parameter name patterns that should not be collected.\n" +
 					"A request parameter is either a query string or a application/x-www-form-urlencoded request " +
 					"body (POST form content)")
