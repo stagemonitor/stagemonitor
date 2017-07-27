@@ -19,7 +19,7 @@ public class SpanUtils {
 	public static final String CALL_TREE_JSON = "call_tree_json";
 	public static final String HTTP_HEADERS_PREFIX = "http.headers.";
 	public static final String USERNAME = "username";
-	public static final String PARAMETERS_PREFIX = "parameters.";
+	public static final String PARAMETERS_PREFIX = "params.";
 	public static final String OPERATION_TYPE = "type";
 
 	private SpanUtils() {

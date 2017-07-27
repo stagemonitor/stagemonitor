@@ -43,7 +43,7 @@
             "executionTime":     {"type": "double" }
           }
         },
-        "parameters":{
+        "params":{
           "type": "object",
           "properties": {
             "key":         {"type": "keyword" },
