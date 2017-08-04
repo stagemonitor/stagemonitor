@@ -1,6 +1,7 @@
 package org.stagemonitor.web.servlet.eum;
 
 import org.stagemonitor.core.StagemonitorSPI;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataDefinition;
 
 import java.util.Map;
@@ -11,11 +12,15 @@ import java.util.Map;
 public abstract class ClientSpanExtension implements StagemonitorSPI {
 
 	/**
-	 * This method returns the script, which shall be included in the end user monitoring script bundle.
+	 * This method returns the script, which shall be included in the /stagemonitor/public/eum.js script bundle.
 	 *
 	 * @return the end user monitoring script
 	 */
-	public abstract String getClientTraceExtensionScript();
+	public abstract String getClientTraceExtensionScriptStaticPart();
+
+	public String getClientTraceExtensionScriptDynamicPart(SpanWrapper spanWrapper) {
+		return null;
+	}
 
 	/**
 	 * Returns a map of auto whitelisted tags.

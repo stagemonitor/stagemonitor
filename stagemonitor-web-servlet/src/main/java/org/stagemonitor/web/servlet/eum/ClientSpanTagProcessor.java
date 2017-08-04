@@ -10,6 +10,8 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
+import static org.stagemonitor.web.servlet.eum.ClientSpanServlet.PARAMETER_TYPE;
+
 abstract class ClientSpanTagProcessor {
 
 	static final int MAX_LENGTH = 255;
@@ -29,24 +31,23 @@ abstract class ClientSpanTagProcessor {
 		this.requiredParams = requiredParams;
 	}
 
-	public void processSpanBuilder(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletRequestParameters) {
-		if (shouldProcess(servletRequestParameters)) {
-			processSpanBuilderImpl(spanBuilder, servletRequestParameters);
+	public void processSpanBuilder(Tracer.SpanBuilder spanBuilder, Map<String, String[]> requestParameters) {
+		if (shouldProcess(requestParameters)) {
+			processSpanBuilderImpl(spanBuilder, requestParameters);
 		}
 	}
 
-	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletRequestParameters) {
+	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> requestParameters) {
 		// default no-op
 	}
 
-	protected boolean shouldProcess(Map<String, String[]> servletRequestParameters) {
+	protected boolean shouldProcess(Map<String, String[]> requestParams) {
 		for (String requiredParam : requiredParams) {
-			if (StringUtils.isEmpty(getParameterValueOrNull(requiredParam, servletRequestParameters))) {
+			if (StringUtils.isEmpty(getParameterValueOrNull(requiredParam, requestParams))) {
 				return false;
 			}
 		}
-		final String type = getParameterValueOrNull(ClientSpanServlet.PARAMETER_TYPE, servletRequestParameters);
-		return typeToProcess != null && typeToProcess.equals(type);
+		return typeToProcess == null || typeToProcess.equals(getParameterValueOrNull(PARAMETER_TYPE, requestParams));
 	}
 
 	public final String getParameterValueOrNull(String key, Map<String, String[]> servletRequestParameters) {

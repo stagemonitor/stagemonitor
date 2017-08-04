@@ -4,8 +4,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
+import org.stagemonitor.tracing.tracing.B3Propagator;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
@@ -13,6 +16,7 @@ import org.stagemonitor.web.servlet.ServletPlugin;
 import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataDefinition;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -24,8 +28,13 @@ import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
 import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_APP_CACHE_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_DNS_LOOKUP;
@@ -45,6 +54,30 @@ public class ClientSpanServletTest {
 	private ClientSpanServlet servlet;
 	private ServletPlugin servletPlugin;
 	private Integer samplingPriority;
+	private ReportingSpanEventListener reportingSpanEventListener;
+
+	@Before
+	public void setUp() {
+		samplingPriority = 1;
+		mockTracer = new MockTracer(new B3Propagator());
+		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
+		SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(mockTracer, asList(
+				new SpanContextInformation.SpanContextSpanEventListener(),
+				new SpanContextInformation.SpanFinalizer(),
+				new StatelessSpanEventListener() {
+					@Override
+					public void onStart(SpanWrapper spanWrapper) {
+						Tags.SAMPLING_PRIORITY.set(spanWrapper, samplingPriority);
+					}
+				}));
+		when(tracingPlugin.getTracer()).thenReturn(spanWrappingTracer);
+		reportingSpanEventListener = mock(ReportingSpanEventListener.class);
+		when(tracingPlugin.getReportingSpanEventListener()).thenReturn(reportingSpanEventListener);
+		servletPlugin = mock(ServletPlugin.class);
+		when(servletPlugin.isClientSpanCollectionEnabled()).thenReturn(true);
+		when(servletPlugin.isParseUserAgent()).thenReturn(false);
+		servlet = new ClientSpanServlet(tracingPlugin, servletPlugin);
+	}
 
 	@Test
 	public void testConvertWeaselBeaconToSpan_withPageLoadBeacon() throws ServletException, IOException {
@@ -70,13 +103,13 @@ public class ClientSpanServletTest {
 		// TODO, ignore for now
 		mockHttpServletRequest.setParameter("k", "someKey"); // not necessary
 		mockHttpServletRequest.setParameter("t", "a6b5fd025be24191"); // trace id -> opentracing does not specify this yet
-		mockHttpServletRequest.setParameter("bt", "null"); // not sure if necessary
 		mockHttpServletRequest.setParameter("res", "{\"http://localhost:9966/petclinic/\":{\"webjars/\":{\"bootstrap/2.3.0/\":{\"css/bootstrap.min.css\":[\"-136,10,2,1,105939\"],\"img/glyphicons-halflings.png\":[\"-48,0,4,1,12799\"]},\"jquery\":{\"/2.0.3/jquery.js\":[\"-136,0,3,1,242142\"],\"-ui/1.10.3/\":{\"ui/jquery.ui.\":{\"core.js\":[\"-136,0,3,1,8198\"],\"datepicker.js\":[\"-136,0,3,1,76324\"]},\"themes/base/jquery-ui.css\":[\"-136,8,2,1,32456\"]}}},\"resources/\":{\"css/petclinic.css\":[\"-136,8,2,1,243\"],\"images/\":{\"banner-graphic.png\":[\"-136,0,1,1,13773\"],\"pets.png\":[\"-136,0,1,1,55318\"],\"spring-pivotal-logo.png\":[\"-136,0,1,1,2818\"]}},\"stagemonitor/\":{\"public/static/\":{\"rum/boomerang-56c823668fc.min.js\":[\"-136,0,3,1,12165\"],\"eum.debug.js\":[\"-32,12,3,3,23798\"]},\"static/stagemonitor\":{\".png\":[\"-136,16,1,3,1694\"],\"-modal.html\":[\"-33,9,5,3,10538\"]}}}}");
 
 		// When
 		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
 
 		// Then
+		verify(reportingSpanEventListener, never()).update(any(), newSpanIdentifiers, any());
 		assertSoftly(softly -> {
 			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
 			softly.assertThat(finishedSpans).hasSize(1);
@@ -108,6 +141,38 @@ public class ClientSpanServletTest {
 					.containsEntry("timing.time_to_first_paint", 151L)
 					.containsEntry("timing.resource", redirect + appCacheLookup + dns + tcp + request + response);
 		});
+	}
+
+	@Test
+	public void testConvertWeaselBeaconToSpan_withPageLoadBeacon_withBackendTraceId() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("ty", "pl");
+		mockHttpServletRequest.setParameter("d", "518");
+		mockHttpServletRequest.setParameter("r", "1496751574200");
+		mockHttpServletRequest.setParameter("ts", "-197");
+
+		mockHttpServletRequest.setParameter("t", "a6b5fd025be24191"); // trace id -> opentracing does not specify this yet
+		mockHttpServletRequest.setParameter("bt", "6210be349041096e");
+
+		// When
+		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
+		assertThat(finishedSpans).hasSize(1);
+		MockSpan span = finishedSpans.get(0);
+		final String spanIdOfPageloadTrace = B3HeaderFormat.getB3Identifiers(mockTracer, span).getSpanId();
+		final B3HeaderFormat.B3Identifiers traceIdsOfServerSpan = B3HeaderFormat.B3Identifiers.builder()
+				.traceId("6210be349041096e")
+				.spanId("6210be349041096e")
+				.build();
+		verify(reportingSpanEventListener).update(eq(traceIdsOfServerSpan), newSpanIdentifiers, eq(Collections.singletonMap("parent_id", spanIdOfPageloadTrace)));
+		assertSoftly(softly -> softly.assertThat(span.tags())
+				.containsEntry("type", "pageload")
+				// TODO test via B3HeaderFormat.getTraceId(mockTracer, span); when https://github.com/opentracing/specification/issues/81 is resolved
+				.containsEntry("trace_id", "6210be349041096e")
+				.doesNotContainEntry(Tags.SAMPLING_PRIORITY.getKey(), 0));
 	}
 
 	@Test
@@ -365,27 +430,6 @@ public class ClientSpanServletTest {
 					.containsEntry("id", "2d371455215c504")
 					.containsEntry("trace_id", "2d371455215c504");
 		});
-	}
-
-	@Before
-	public void setUp() {
-		samplingPriority = 1;
-		mockTracer = new MockTracer();
-		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
-		SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(mockTracer, asList(
-				new SpanContextInformation.SpanContextSpanEventListener(),
-				new SpanContextInformation.SpanFinalizer(),
-				new StatelessSpanEventListener() {
-					@Override
-					public void onStart(SpanWrapper spanWrapper) {
-						Tags.SAMPLING_PRIORITY.set(spanWrapper, samplingPriority);
-					}
-				}));
-		when(tracingPlugin.getTracer()).thenReturn(spanWrappingTracer);
-		servletPlugin = mock(ServletPlugin.class);
-		when(servletPlugin.isClientSpanCollectionEnabled()).thenReturn(true);
-		when(servletPlugin.isParseUserAgent()).thenReturn(false);
-		servlet = new ClientSpanServlet(tracingPlugin, servletPlugin);
 	}
 
 }

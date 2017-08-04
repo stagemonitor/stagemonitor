@@ -11,6 +11,7 @@ import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
@@ -141,5 +142,12 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		List<Class<? extends SpanReporter>> spanReporters = new ArrayList<>();
 		ServiceLoader.load(SpanReporter.class).forEach(reporter -> spanReporters.add(reporter.getClass()));
 		Assert.assertTrue(spanReporters.contains(ElasticsearchSpanReporter.class));
+	}
+
+	@Test
+	public void testToBulkUpdateBytes() throws Exception {
+		assertThat(new String(ElasticsearchUpdateSpanReporter.toBulkUpdateBytes("test-id", Collections.singletonMap("foo", "bar"))))
+				.isEqualTo("{\"update\":{\"_id\":\"test-id\"}}\n" +
+						"{\"doc\":{\"foo\":\"bar\"}}\n");
 	}
 }

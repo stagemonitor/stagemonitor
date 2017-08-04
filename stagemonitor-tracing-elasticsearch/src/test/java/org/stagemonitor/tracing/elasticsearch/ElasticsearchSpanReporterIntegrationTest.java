@@ -10,6 +10,7 @@ import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
@@ -81,6 +82,43 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
 		assertThat(hits.get("total").intValue()).as(hits.toString()).isEqualTo(1);
 		validateSpanJson(hits.get("hits").elements().next().get("_source"));
+	}
+
+	@Test
+	public void testUpdateSpan() throws Exception {
+		final Span span = tracer.buildSpan("Test#test")
+				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+				.start();
+		span.finish();
+		elasticsearchClient.waitForCompletion();
+
+		refresh();
+		reporter.updateSpan(B3HeaderFormat.getB3Identifiers(tracer, span), null, Collections.singletonMap("foo", "bar"));
+		refresh();
+		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
+		assertThat(hits.get("total").intValue()).as(hits.toString()).isEqualTo(1);
+		final JsonNode spanJson = hits.get("hits").elements().next().get("_source");
+		assertThat(spanJson.get("foo").asText()).as(spanJson.toString()).isEqualTo("bar");
+	}
+
+	@Test
+	public void testUpdateNotYetExistentSpan_eventuallyUpdates() throws Exception {
+		final Span span = tracer.buildSpan("Test#test")
+				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+				.start();
+		reporter.updateSpan(B3HeaderFormat.getB3Identifiers(tracer, span), null, Collections.singletonMap("foo", "bar"));
+
+		span.finish();
+		elasticsearchClient.waitForCompletion();
+		refresh();
+
+		reporter.getUpdateReporter().flush();
+		refresh();
+
+		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
+		assertThat(hits.get("total").intValue()).as(hits.toString()).isEqualTo(1);
+		final JsonNode spanJson = hits.get("hits").elements().next().get("_source");
+		assertThat(spanJson.get("foo").asText()).as(spanJson.toString()).isEqualTo("bar");
 	}
 
 	private void validateSpanJson(JsonNode spanJson) {

@@ -661,6 +661,10 @@ public class TracingPlugin extends StagemonitorPlugin {
 		reportingSpanEventListener.addReporter(spanReporter);
 	}
 
+	public ReportingSpanEventListener getReportingSpanEventListener() {
+		return reportingSpanEventListener;
+	}
+
 	public boolean isTrackMetricsAsync() {
 		return trackMetricsAsync.getValue();
 	}

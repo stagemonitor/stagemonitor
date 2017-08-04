@@ -6,12 +6,14 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.ExecutorUtils;
+import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -94,4 +96,13 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 		spanReporter.init(configuration);
 	}
 
+	public void update(B3HeaderFormat.B3Identifiers spanIdentifiers, B3HeaderFormat.B3Identifiers newSpanIdentifiers, Map<String, Object> tags) {
+		for (SpanReporter spanReporter : spanReporters) {
+			try {
+				spanReporter.updateSpan(spanIdentifiers, newSpanIdentifiers, tags);
+			} catch (Exception e) {
+				logger.warn(e.getMessage() + " (this exception is ignored)", e);
+			}
+		}
+	}
 }

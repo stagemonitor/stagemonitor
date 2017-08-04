@@ -1,5 +1,7 @@
 package org.stagemonitor.web.servlet.eum;
 
+import org.stagemonitor.tracing.B3HeaderFormat;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.web.servlet.ServletPlugin;
 import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataDefinition;
@@ -17,7 +19,7 @@ public class WeaselClientSpanExtension extends ClientSpanExtension {
 	}
 
 	@Override
-	public String getClientTraceExtensionScript() {
+	public String getClientTraceExtensionScriptStaticPart() {
 		if (servletPlugin.getMinifyClientSpanScript()) {
 			return IOUtils.getResourceAsString("eum.debug.js");
 		} else {
@@ -30,4 +32,8 @@ public class WeaselClientSpanExtension extends ClientSpanExtension {
 		return emptyMap();
 	}
 
+	@Override
+	public String getClientTraceExtensionScriptDynamicPart(SpanWrapper spanWrapper) {
+		return "ineum('traceId', '" + B3HeaderFormat.getTraceId(spanWrapper) + "');";
+	}
 }
