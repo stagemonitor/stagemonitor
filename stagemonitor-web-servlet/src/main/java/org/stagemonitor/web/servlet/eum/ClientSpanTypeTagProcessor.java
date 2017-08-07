@@ -23,11 +23,6 @@ public class ClientSpanTypeTagProcessor extends ClientSpanTagProcessor {
 	}
 
 	@Override
-	protected boolean shouldProcess(Map<String, String[]> requestParams) {
-		return true;
-	}
-
-	@Override
 	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> requestParameters) {
 		final String clientSubmittedType = getParameterValueOrNull(TYPE_PARAMETER_NAME, requestParameters);
 		final String spanType = clientSpanType.get(clientSubmittedType);

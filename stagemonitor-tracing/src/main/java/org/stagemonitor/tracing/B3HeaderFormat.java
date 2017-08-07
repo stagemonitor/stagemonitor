@@ -24,7 +24,7 @@ public final class B3HeaderFormat implements Format<TextMap> {
 	private B3HeaderFormat() {
 	}
 
-	public static class B3Identifiers implements SpanIdentifiers {
+	public static class B3Identifiers {
 		private final String traceId;
 		private final String spanId;
 		private final String parentSpanId;
@@ -39,12 +39,10 @@ public final class B3HeaderFormat implements Format<TextMap> {
 			return new Builder();
 		}
 
-		@Override
 		public String getTraceId() {
 			return traceId;
 		}
 
-		@Override
 		public String getSpanId() {
 			return spanId;
 		}
@@ -134,6 +132,10 @@ public final class B3HeaderFormat implements Format<TextMap> {
 			}
 		});
 		return spanId[0];
+	}
+
+	public static B3Identifiers getB3Identifiers(final Span span) {
+		return getB3Identifiers(GlobalTracer.get(), span);
 	}
 
 	public static B3Identifiers getB3Identifiers(Tracer tracer, final Span span) {

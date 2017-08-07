@@ -146,7 +146,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testToBulkUpdateBytes() throws Exception {
-		assertThat(new String(ElasticsearchUpdateSpanReporter.toBulkUpdateBytes("test-id", Collections.singletonMap("foo", "bar"))))
+		assertThat(ElasticsearchUpdateSpanReporter.toBulkUpdateBytes("test-id", Collections.singletonMap("foo", "bar")).toString())
 				.isEqualTo("{\"update\":{\"_id\":\"test-id\"}}\n" +
 						"{\"doc\":{\"foo\":\"bar\"}}\n");
 	}

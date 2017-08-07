@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.eum;
 
+import org.stagemonitor.core.util.Assert;
 import org.stagemonitor.util.StringUtils;
 
 import java.util.Collection;
@@ -10,16 +11,15 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
-import static org.stagemonitor.web.servlet.eum.ClientSpanServlet.PARAMETER_TYPE;
-
 abstract class ClientSpanTagProcessor {
 
+	static final String TYPE_ALL = "_all_";
 	static final int MAX_LENGTH = 255;
 	private final String typeToProcess;
 	private final Collection<String> requiredParams;
 
 	protected ClientSpanTagProcessor() {
-		this(null);
+		this(TYPE_ALL);
 	}
 
 	protected ClientSpanTagProcessor(String weaselOperationTypeToProcess) {
@@ -27,6 +27,7 @@ abstract class ClientSpanTagProcessor {
 	}
 
 	protected ClientSpanTagProcessor(String weaselOperationTypeToProcess, Collection<String> requiredParams) {
+		Assert.hasText(weaselOperationTypeToProcess, "weaselOperationTypeToProcess must not be null");
 		this.typeToProcess = weaselOperationTypeToProcess;
 		this.requiredParams = requiredParams;
 	}
@@ -47,7 +48,12 @@ abstract class ClientSpanTagProcessor {
 				return false;
 			}
 		}
-		return typeToProcess == null || typeToProcess.equals(getParameterValueOrNull(PARAMETER_TYPE, requestParams));
+		if (typeToProcess.equals(TYPE_ALL)) {
+			return true;
+		}
+		final String type = getParameterValueOrNull(ClientSpanServlet.PARAMETER_TYPE, requestParams);
+		return typeToProcess.equals(type);
+
 	}
 
 	public final String getParameterValueOrNull(String key, Map<String, String[]> servletRequestParameters) {

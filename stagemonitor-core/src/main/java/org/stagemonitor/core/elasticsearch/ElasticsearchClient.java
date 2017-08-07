@@ -320,7 +320,7 @@ public class ElasticsearchClient {
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
 
 		private static final int MAX_BULK_ERROR_LOG_SIZE = 256;
-		private static final String ERROR_PREFIX = "Error {} while sending a _bulk request to elasticsearch: {}";
+		private static final String ERROR_PREFIX = "Error(s) while sending a _bulk request to elasticsearch: {}";
 
 		private static final Logger logger = LoggerFactory.getLogger(BulkErrorReportingResponseHandler.class);
 

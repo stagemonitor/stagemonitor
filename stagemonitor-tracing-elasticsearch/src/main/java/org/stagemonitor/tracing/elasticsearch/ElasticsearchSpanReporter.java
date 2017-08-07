@@ -40,11 +40,12 @@ import static org.stagemonitor.tracing.B3IdentifierTagger.SPAN_ID;
 import static org.stagemonitor.tracing.B3IdentifierTagger.TRACE_ID;
 
 /**
- * Holds spans in a {@link BlockingQueue} and flushes them asynchronously via a bulk request to Elasticsearch based on
- * three conditions: <ul> <li>Periodically, after the flush interval (defaults to 1 sec)</li> <li>When the span queue
- * exceeds the max batch size and there is currently no flush scheduled, a immediate async flush is scheduled</li>
- * <li>If the span queue size is still higher than the max batch size after a flush, spans are flushed again</li> </ul>
- *
+ * Holds spans in a {@link BlockingQueue} and flushes them asynchronously via a bulk request to Elasticsearch based on three conditions:
+ * <ul>
+ *     <li>Periodically, after the flush interval (defaults to 1 sec)</li>
+ *     <li>When the span queue exceeds the max batch size and there is currently no flush scheduled, a immediate async flush is scheduled</li>
+ *     <li>If the span queue size is still higher than the max batch size after a flush, spans are flushed again</li>
+ * </ul>
  * If the queue is full, spans are dropped to prevent excessive heap usage and {@link OutOfMemoryError}s
  */
 public class ElasticsearchSpanReporter extends SpanReporter {
@@ -52,9 +53,9 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 	static final MetricName spansDroppedMetricName = name("elasticsearch_spans_dropped").build();
 	static final MetricName bulkSizeMetricName = name("elasticsearch_spans_bulk_size").build();
 	static final String ES_SPAN_LOGGER = "ElasticsearchSpanReporter";
-	private static final byte[] indexHeader = "{\"index\":{}}\n".getBytes(Charset.forName("UTF-8"));
-	private static final String SPANS_TYPE = "spans";
 	static final Charset UTF_8 = Charset.forName("UTF-8");
+	private static final byte[] indexHeader = "{\"index\":{}}\n".getBytes(UTF_8);
+	private static final String SPANS_TYPE = "spans";
 	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchSpanReporter.class);
 
 	private final Logger spanLogger;
@@ -62,8 +63,7 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 
 	private ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 	private ElasticsearchClient elasticsearchClient;
-	private BlockingQueue<byte[]> bulkQueue;
-	private List<byte[]> currentBulk;
+	private BlockingQueue<ByteArrayOutputStream> bulkQueue;
 	private TracingPlugin tracingPlugin;
 	private Metric2Registry metricRegistry;
 	private ScheduledThreadPoolExecutor scheduler;
@@ -88,17 +88,16 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		spanFlushingRunnable = new SpanFlushingRunnable(new FlushCallable());
 		scheduler.scheduleWithFixedDelay(spanFlushingRunnable, elasticsearchTracingPlugin.getFlushDelayMs(),
 				elasticsearchTracingPlugin.getFlushDelayMs(), TimeUnit.MILLISECONDS);
-		currentBulk = new ArrayList<byte[]>(elasticsearchTracingPlugin.getMaxBatchSize());
-		bulkQueue = new ArrayBlockingQueue<byte[]>(elasticsearchTracingPlugin.getMaxQueueSize());
+		bulkQueue = new ArrayBlockingQueue<ByteArrayOutputStream>(elasticsearchTracingPlugin.getMaxQueueSize());
 		this.updateReporter = new ElasticsearchUpdateSpanReporter(corePlugin, tracingPlugin, elasticsearchTracingPlugin, this);
 	}
 
-	private void sendSpansAsBulk(final List<byte[]> bulkBytes) {
+	private void sendBulkRequest(final List<ByteArrayOutputStream> bulkBytes) {
 		elasticsearchClient.sendBulk("/stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "/" + SPANS_TYPE + "/_bulk", new HttpClient.OutputStreamHandler() {
 			@Override
 			public void withHttpURLConnection(OutputStream os) throws IOException {
-				for (byte[] bulkLine : bulkBytes) {
-					os.write(bulkLine);
+				for (ByteArrayOutputStream bulkLine : bulkBytes) {
+					bulkLine.writeTo(os);
 				}
 				os.close();
 			}
@@ -116,22 +115,22 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		}
 	}
 
-	void scheduleSendBulk(byte[] bulkBytes) {
+	void scheduleSendBulk(ByteArrayOutputStream bulkBytes) {
 		if (logger.isDebugEnabled()) {
-			logger.debug("Scheduling bulk request\n{}", new String(bulkBytes));
+			logger.debug("Scheduling bulk request\n{}", bulkBytes.toString());
 		}
 		if (!tracingPlugin.isReportAsync()) {
-			sendSpansAsBulk(Collections.singletonList(bulkBytes));
+			sendBulkRequest(Collections.singletonList(bulkBytes));
 		} else {
 			final boolean addedToQueue = bulkQueue.offer(bulkBytes);
 			if (!addedToQueue) {
 				metricRegistry.counter(spansDroppedMetricName).inc();
 			}
-			scheduleFlushIfSpanQueueExceedsMaxBatchSize();
+			scheduleFlushIfBulkQueueExceedsMaxBatchSize();
 		}
 	}
 
-	private void scheduleFlushIfSpanQueueExceedsMaxBatchSize() {
+	private void scheduleFlushIfBulkQueueExceedsMaxBatchSize() {
 		if (bulkQueue.size() > elasticsearchTracingPlugin.getMaxBatchSize() && scheduler.getQueue().isEmpty()) {
 			synchronized (this) {
 				if (scheduler.getQueue().isEmpty()) {
@@ -141,8 +140,8 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		}
 	}
 
-	private byte[] toBulkBytes(SpanWrapper spanWrapper) {
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
+	private ByteArrayOutputStream toBulkBytes(SpanWrapper spanWrapper) {
+		ByteArrayOutputStream os = new ByteArrayOutputStream(1024);
 		try {
 			os.write(indexHeader);
 			final JsonGenerator generator = JsonUtils.getMapper().getFactory().createGenerator(os);
@@ -150,13 +149,15 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 			os.write('\n');
 			generator.close();
 			os.close();
-			return os.toByteArray();
+			return os;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private class FlushCallable implements Callable<Boolean> {
+
+		private final List<ByteArrayOutputStream> currentBulk = new ArrayList<ByteArrayOutputStream>(elasticsearchTracingPlugin.getMaxBatchSize());
 
 		@Override
 		public Boolean call() throws Exception {
@@ -169,7 +170,7 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 			}
 			logger.debug("Flushing {} span batch requests", currentBulk.size());
 			metricRegistry.histogram(bulkSizeMetricName).update(currentBulk.size());
-			sendSpansAsBulk(currentBulk);
+			sendBulkRequest(currentBulk);
 			// reusing the batch list is safe as this method is executed single threaded
 			currentBulk.clear();
 			return bulkQueue.size() >= maxBatchSize;

@@ -46,14 +46,13 @@ class ElasticsearchUpdateSpanReporter {
 	private final Runnable updateRunnable;
 	private final ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 
-	private BlockingQueue<UpdateDescription> updateDescriptionQueue;
-	private List<UpdateDescription> updateBatch;
-	private Map<Object, UpdateDescription> updateDescriptionByTraceId = new HashMap<Object, UpdateDescription>();
-	private ElasticsearchSpanReporter elasticsearchSpanReporter;
-	private CorePlugin corePlugin;
-	private ElasticsearchClient elasticsearchClient;
-	private HttpClient httpClient;
-	private TracingPlugin tracingPlugin;
+	private final BlockingQueue<UpdateDescription> updateDescriptionQueue;
+	private final List<UpdateDescription> updateBatch;
+	private final ElasticsearchSpanReporter elasticsearchSpanReporter;
+	private final CorePlugin corePlugin;
+	private final ElasticsearchClient elasticsearchClient;
+	private final HttpClient httpClient;
+	private final TracingPlugin tracingPlugin;
 
 	public ElasticsearchUpdateSpanReporter(CorePlugin corePlugin, TracingPlugin tracingPlugin,
 										   ElasticsearchTracingPlugin elasticsearchTracingPlugin,
@@ -109,7 +108,7 @@ class ElasticsearchUpdateSpanReporter {
 		private Map<String, Object> tagsToUpdate;
 	}
 
-	static byte[] toBulkUpdateBytes(String id, Object partialDocument) {
+	static ByteArrayOutputStream toBulkUpdateBytes(String id, Object partialDocument) {
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
 			os.write("{\"update\":{\"_id\":\"".getBytes(ElasticsearchSpanReporter.UTF_8));
@@ -122,13 +121,16 @@ class ElasticsearchUpdateSpanReporter {
 			os.write('\n');
 			generator.close();
 			os.close();
-			return os.toByteArray();
+			return os;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private class UpdateCallable implements Callable<Boolean> {
+
+		private final Map<Object, UpdateDescription> updateDescriptionByTraceId = new HashMap<Object, UpdateDescription>();
+
 		@Override
 		public Boolean call() throws Exception {
 			try {

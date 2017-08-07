@@ -109,7 +109,7 @@ public class ClientSpanServletTest {
 		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
 
 		// Then
-		verify(reportingSpanEventListener, never()).update(any(), newSpanIdentifiers, any());
+		verify(reportingSpanEventListener, never()).update(any(), any(), any());
 		assertSoftly(softly -> {
 			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
 			softly.assertThat(finishedSpans).hasSize(1);
@@ -153,7 +153,10 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("ts", "-197");
 
 		mockHttpServletRequest.setParameter("t", "a6b5fd025be24191"); // trace id -> opentracing does not specify this yet
-		mockHttpServletRequest.setParameter("bt", "6210be349041096e");
+		final String backendTraceId = "6210be349041096e";
+		mockHttpServletRequest.setParameter("bt", backendTraceId);
+		final String backendSpanId = "6210be349041096e";
+		mockHttpServletRequest.setParameter("m_bs", backendSpanId);
 
 		// When
 		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
@@ -164,14 +167,19 @@ public class ClientSpanServletTest {
 		MockSpan span = finishedSpans.get(0);
 		final String spanIdOfPageloadTrace = B3HeaderFormat.getB3Identifiers(mockTracer, span).getSpanId();
 		final B3HeaderFormat.B3Identifiers traceIdsOfServerSpan = B3HeaderFormat.B3Identifiers.builder()
-				.traceId("6210be349041096e")
-				.spanId("6210be349041096e")
+				.traceId(backendTraceId)
+				.spanId(backendSpanId)
 				.build();
-		verify(reportingSpanEventListener).update(eq(traceIdsOfServerSpan), newSpanIdentifiers, eq(Collections.singletonMap("parent_id", spanIdOfPageloadTrace)));
+		final B3HeaderFormat.B3Identifiers newSpanIdentifiers = B3HeaderFormat.B3Identifiers.builder()
+				.traceId(backendTraceId)
+				.spanId(backendSpanId)
+				.parentSpanId(spanIdOfPageloadTrace)
+				.build();
+		verify(reportingSpanEventListener).update(eq(traceIdsOfServerSpan), eq(newSpanIdentifiers), eq(Collections.emptyMap()));
 		assertSoftly(softly -> softly.assertThat(span.tags())
 				.containsEntry("type", "pageload")
 				// TODO test via B3HeaderFormat.getTraceId(mockTracer, span); when https://github.com/opentracing/specification/issues/81 is resolved
-				.containsEntry("trace_id", "6210be349041096e")
+				.containsEntry("trace_id", backendTraceId)
 				.doesNotContainEntry(Tags.SAMPLING_PRIORITY.getKey(), 0));
 	}
 

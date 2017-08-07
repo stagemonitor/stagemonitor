@@ -31,9 +31,7 @@ public class ClientSpanJavaScriptHtmlInjector extends HtmlInjector {
 				.append(contextPath)
 				.append("/stagemonitor/public/eum.js','ineum');\n")
 				.append("  \n")
-				.append("  ineum('reportingUrl', '")
-				.append(contextPath)
-				.append("/stagemonitor/public/eum');\n");
+				.append("  ineum('reportingUrl', '").append(contextPath).append("/stagemonitor/public/eum');\n");
 		for (ClientSpanExtension clientSpanExtension : servletPlugin.getClientSpanExtenders()) {
 			sb.append(clientSpanExtension.getClientTraceExtensionScriptDynamicPart(injectArguments.getSpanWrapper()));
 		}

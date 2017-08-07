@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import io.opentracing.tag.Tags;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.stagemonitor.tracing.B3IdentifierTagger.SPAN_ID;
 import static org.stagemonitor.tracing.B3IdentifierTagger.TRACE_ID;
+import static org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension.METADATA_BACKEND_SPAN_ID;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_APP_CACHE_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_DNS_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_LOAD;
@@ -103,23 +105,21 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(new ClientSpanBooleanTagProcessor(TYPE_XHR, "xhr.async", "a"));
 		addTagProcessor(durationProcessor(TYPE_XHR, "duration_ms", "d"));
 		// The OT-API does not allow to set the SpanContext for the current span, so just set the ids as tags
-		addTagProcessor(new ClientSpanStringTagProcessor(null, SPAN_ID, "s", false));
-		addTagProcessor(new ClientSpanStringTagProcessor(null, TRACE_ID, "t", false));
+		addTagProcessor(new ClientSpanStringTagProcessor(ClientSpanTagProcessor.TYPE_ALL, SPAN_ID, "s", false));
+		addTagProcessor(new ClientSpanStringTagProcessor(ClientSpanTagProcessor.TYPE_ALL, TRACE_ID, "t", false));
 		// bt = backend trace id
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_PAGE_LOAD, TRACE_ID, "bt", false));
-		addTagProcessor(new ClientSpanTagProcessor(TYPE_PAGE_LOAD, Collections.singletonList("bt")) {
+		addTagProcessor(new ClientSpanTagProcessor(TYPE_PAGE_LOAD, Arrays.asList("bt", METADATA_BACKEND_SPAN_ID)) {
 			@Override
 			protected void processSpanImpl(Span span, Map<String, String[]> requestParameters) {
-				final String backendTraceId = getParameterValueOrNull("bt", requestParameters);
-				final B3HeaderFormat.B3Identifiers b3Identifiers = B3HeaderFormat.B3Identifiers.builder()
-						.traceId(backendTraceId)
-						.spanId(backendTraceId) // TODO get from meta attribute
+				final B3HeaderFormat.B3Identifiers backendSpanIds = B3HeaderFormat.B3Identifiers.builder()
+						.traceId(getParameterValueOrNull("bt", requestParameters))
+						.spanId(getParameterValueOrNull(METADATA_BACKEND_SPAN_ID, requestParameters))
 						.build();
-				final B3HeaderFormat.B3Identifiers backendSpanIds = B3HeaderFormat.getB3Identifiers(tracingPlugin.getTracer(), span);
-				final String pageloadSpanId = backendSpanIds.getSpanId();
+				final String pageloadSpanId = B3HeaderFormat.getB3Identifiers(tracingPlugin.getTracer(), span).getSpanId();
 				// adds the spanId of the pageload span to the parentId of the backend span
 				final B3HeaderFormat.B3Identifiers newBackendSpanIds = new B3HeaderFormat.B3Identifiers(backendSpanIds.getTraceId(), backendSpanIds.getSpanId(), pageloadSpanId);
-				tracingPlugin.getReportingSpanEventListener().update(b3Identifiers, newBackendSpanIds, Collections.<String, Object>emptyMap());
+				tracingPlugin.getReportingSpanEventListener().update(backendSpanIds, newBackendSpanIds, Collections.<String, Object>emptyMap());
 			}
 		});
 	}

@@ -9,9 +9,12 @@ import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpa
 import java.util.Map;
 
 import static java.util.Collections.emptyMap;
+import static org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.REQUEST_PARAMETER_METADATA_PREFIX;
 
 public class WeaselClientSpanExtension extends ClientSpanExtension {
 
+	static final String METADATA_BACKEND_SPAN_ID = REQUEST_PARAMETER_METADATA_PREFIX + WeaselClientSpanExtension.BACKEND_SPAN_ID;
+	private static final String BACKEND_SPAN_ID = "bs";
 	private final ServletPlugin servletPlugin;
 
 	public WeaselClientSpanExtension(ServletPlugin servletPlugin) {
@@ -34,6 +37,8 @@ public class WeaselClientSpanExtension extends ClientSpanExtension {
 
 	@Override
 	public String getClientTraceExtensionScriptDynamicPart(SpanWrapper spanWrapper) {
-		return "ineum('traceId', '" + B3HeaderFormat.getTraceId(spanWrapper) + "');";
+		final B3HeaderFormat.B3Identifiers b3Identifiers = B3HeaderFormat.getB3Identifiers(spanWrapper);
+		return "ineum('traceId', '" + b3Identifiers.getTraceId() + "');\n"
+				+ "  ineum('meta', '" + BACKEND_SPAN_ID + "', '" + b3Identifiers.getSpanId() + "');\n";
 	}
 }
