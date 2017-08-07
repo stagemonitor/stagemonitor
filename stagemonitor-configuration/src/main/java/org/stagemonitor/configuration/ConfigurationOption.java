@@ -491,6 +491,16 @@ public class ConfigurationOption<T> {
 		this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
 	}
 
+	/**
+	 * Returns true if the current value is equal to the default value
+	 *
+	 * @return true if the current value is equal to the default value
+	 */
+	public boolean isDefault() {
+		return (valueAsString != null && valueAsString.equals(defaultValueAsString)) ||
+				(valueAsString == null && defaultValueAsString == null);
+	}
+
 	public void addChangeListener(ChangeListener<T> changeListener) {
 		changeListeners.add(changeListener);
 	}

@@ -4,9 +4,9 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
@@ -111,6 +111,11 @@ public final class Stagemonitor {
 			}));
 		}
 
+		logStatus();
+		logConfiguration();
+	}
+
+	private static void logStatus() {
 		logger.info("# stagemonitor status");
 		for (Map.Entry<String, HealthCheck.Result> entry : healthCheckRegistry.runHealthChecks().entrySet()) {
 			String status = entry.getValue().isHealthy() ? "OK  " : "FAIL";
@@ -121,6 +126,38 @@ public final class Stagemonitor {
 			if (error != null) {
 				logger.warn("Exception thrown while initializing plugin", error);
 			}
+		}
+	}
+
+	private static void logConfiguration() {
+		logger.info("# stagemonitor configuration, listing non-default values:");
+		boolean hasOnlyDefaultOptions = true;
+
+		for (List<ConfigurationOption<?>> options : configuration.getConfigurationOptionsByCategory().values()) {
+			for (ConfigurationOption<?> option : options) {
+				if (!option.isDefault()) {
+					hasOnlyDefaultOptions = false;
+					String trimmedValue;
+					if (option.isSensitive()) {
+						trimmedValue = "XXXX";
+					} else {
+						trimmedValue = option.getValueAsString().replace("\n", "");
+						int maximumLineLength = 55;
+						if (trimmedValue.length() > maximumLineLength) {
+							trimmedValue = trimmedValue.substring(0, maximumLineLength - 3) + "...";
+						}
+					}
+					logger.info("{}: {} (source: {})", option.getKey(), trimmedValue, option.getNameOfCurrentConfigurationSource());
+				}
+			}
+		}
+
+		if (hasOnlyDefaultOptions) {
+			logger.warn("stagemonitor has not been configured. Have a look at");
+			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/How-should-I-configure-stagemonitor%3F");
+			logger.warn("and");
+			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/Configuration-Options");
+			logger.warn("for further instructions");
 		}
 	}
 
