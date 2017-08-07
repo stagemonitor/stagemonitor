@@ -1,6 +1,7 @@
 package org.stagemonitor.core.util;
 
 import com.codahale.metrics.json.MetricsModule;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -66,6 +67,14 @@ public class JsonUtils {
 		MAPPER.writeValue(os, o);
 	}
 
+	public static void writeWithoutClosingStream(OutputStream os, Object pojo) throws IOException {
+		final JsonGenerator generator = JsonUtils.getMapper().getFactory().createGenerator(os);
+		generator.disable(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT);
+		generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+		generator.writeObject(pojo);
+		generator.close();
+	}
+
 	public static ObjectMapper getMapper() {
 		return MAPPER;
 	}
@@ -84,7 +93,6 @@ public class JsonUtils {
 		}
 		return objectReader;
 	}
-
 	private static class AfterburnerModuleRegisterer {
 		private static void registerAfterburnerModule() {
 			/*
@@ -101,6 +109,7 @@ public class JsonUtils {
 				MAPPER.registerModule(afterburnerModule);
 			}
 		}
+
 	}
 
 	/**

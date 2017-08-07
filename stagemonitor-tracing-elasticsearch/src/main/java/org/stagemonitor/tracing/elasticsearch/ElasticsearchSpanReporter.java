@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.elasticsearch;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
@@ -11,6 +9,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.HttpClient.OutputStreamHandler;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.SpanContextInformation;
@@ -19,7 +18,6 @@ import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.StringUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -63,7 +61,7 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 
 	private ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 	private ElasticsearchClient elasticsearchClient;
-	private BlockingQueue<ByteArrayOutputStream> bulkQueue;
+	private BlockingQueue<OutputStreamHandler> bulkQueue;
 	private TracingPlugin tracingPlugin;
 	private Metric2Registry metricRegistry;
 	private ScheduledThreadPoolExecutor scheduler;
@@ -88,16 +86,16 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		spanFlushingRunnable = new SpanFlushingRunnable(new FlushCallable());
 		scheduler.scheduleWithFixedDelay(spanFlushingRunnable, elasticsearchTracingPlugin.getFlushDelayMs(),
 				elasticsearchTracingPlugin.getFlushDelayMs(), TimeUnit.MILLISECONDS);
-		bulkQueue = new ArrayBlockingQueue<ByteArrayOutputStream>(elasticsearchTracingPlugin.getMaxQueueSize());
+		bulkQueue = new ArrayBlockingQueue<OutputStreamHandler>(elasticsearchTracingPlugin.getMaxQueueSize());
 		this.updateReporter = new ElasticsearchUpdateSpanReporter(corePlugin, tracingPlugin, elasticsearchTracingPlugin, this);
 	}
 
-	private void sendBulkRequest(final List<ByteArrayOutputStream> bulkBytes) {
+	private void sendBulkRequest(final List<OutputStreamHandler> bulkBytes) {
 		elasticsearchClient.sendBulk("/stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "/" + SPANS_TYPE + "/_bulk", new HttpClient.OutputStreamHandler() {
 			@Override
 			public void withHttpURLConnection(OutputStream os) throws IOException {
-				for (ByteArrayOutputStream bulkLine : bulkBytes) {
-					bulkLine.writeTo(os);
+				for (OutputStreamHandler bulkLine : bulkBytes) {
+					bulkLine.withHttpURLConnection(os);
 				}
 				os.close();
 			}
@@ -111,11 +109,11 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 			final String spansIndex = "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
 			spanLogger.info(ElasticsearchClient.getBulkHeader("index", spansIndex, SPANS_TYPE) + JsonUtils.toJson(spanWrapper));
 		} else {
-			scheduleSendBulk(toBulkBytes(spanWrapper));
+			scheduleSendBulk(new SpanBulkIndexOutputStreamHandler(spanWrapper));
 		}
 	}
 
-	void scheduleSendBulk(ByteArrayOutputStream bulkBytes) {
+	void scheduleSendBulk(OutputStreamHandler bulkBytes) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Scheduling bulk request\n{}", bulkBytes.toString());
 		}
@@ -140,24 +138,25 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		}
 	}
 
-	private ByteArrayOutputStream toBulkBytes(SpanWrapper spanWrapper) {
-		ByteArrayOutputStream os = new ByteArrayOutputStream(1024);
-		try {
+	private static class SpanBulkIndexOutputStreamHandler implements OutputStreamHandler {
+
+		private final SpanWrapper spanWrapper;
+
+		private SpanBulkIndexOutputStreamHandler(SpanWrapper spanWrapper) {
+			this.spanWrapper = spanWrapper;
+		}
+
+		@Override
+		public void withHttpURLConnection(OutputStream os) throws IOException {
 			os.write(indexHeader);
-			final JsonGenerator generator = JsonUtils.getMapper().getFactory().createGenerator(os);
-			generator.writeObject(spanWrapper);
+			JsonUtils.writeWithoutClosingStream(os, spanWrapper);
 			os.write('\n');
-			generator.close();
-			os.close();
-			return os;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 
 	private class FlushCallable implements Callable<Boolean> {
 
-		private final List<ByteArrayOutputStream> currentBulk = new ArrayList<ByteArrayOutputStream>(elasticsearchTracingPlugin.getMaxBatchSize());
+		private final List<OutputStreamHandler> currentBulk = new ArrayList<OutputStreamHandler>(elasticsearchTracingPlugin.getMaxBatchSize());
 
 		@Override
 		public Boolean call() throws Exception {

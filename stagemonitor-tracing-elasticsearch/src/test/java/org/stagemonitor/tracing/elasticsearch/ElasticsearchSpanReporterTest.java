@@ -10,6 +10,7 @@ import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -146,7 +147,11 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 	@Test
 	public void testToBulkUpdateBytes() throws Exception {
-		assertThat(ElasticsearchUpdateSpanReporter.toBulkUpdateBytes("test-id", Collections.singletonMap("foo", "bar")).toString())
+		final ElasticsearchUpdateSpanReporter.BulkUpdateOutputStreamHandler bulkUpdateOutputStreamHandler =
+				new ElasticsearchUpdateSpanReporter.BulkUpdateOutputStreamHandler("test-id", Collections.singletonMap("foo", "bar"));
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		bulkUpdateOutputStreamHandler.withHttpURLConnection(output);
+		assertThat(output.toString())
 				.isEqualTo("{\"update\":{\"_id\":\"test-id\"}}\n" +
 						"{\"doc\":{\"foo\":\"bar\"}}\n");
 	}

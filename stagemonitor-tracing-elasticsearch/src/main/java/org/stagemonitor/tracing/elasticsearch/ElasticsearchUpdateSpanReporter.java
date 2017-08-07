@@ -1,6 +1,5 @@
 package org.stagemonitor.tracing.elasticsearch;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.TracingPlugin;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -108,22 +106,24 @@ class ElasticsearchUpdateSpanReporter {
 		private Map<String, Object> tagsToUpdate;
 	}
 
-	static ByteArrayOutputStream toBulkUpdateBytes(String id, Object partialDocument) {
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		try {
+	static class BulkUpdateOutputStreamHandler implements HttpClient.OutputStreamHandler {
+		private final String id;
+		private final Object partialDocument;
+
+		BulkUpdateOutputStreamHandler(String id, Object partialDocument) {
+			this.id = id;
+			this.partialDocument = partialDocument;
+		}
+
+		@Override
+		public void withHttpURLConnection(OutputStream os) throws IOException {
 			os.write("{\"update\":{\"_id\":\"".getBytes(ElasticsearchSpanReporter.UTF_8));
 			os.write(id.getBytes(ElasticsearchSpanReporter.UTF_8));
 			os.write("\"}}\n".getBytes(ElasticsearchSpanReporter.UTF_8));
 			os.write("{\"doc\":".getBytes(ElasticsearchSpanReporter.UTF_8));
-			final JsonGenerator generator = JsonUtils.getMapper().getFactory().createGenerator(os);
-			generator.writeObject(partialDocument);
+			JsonUtils.writeWithoutClosingStream(os, partialDocument);
 			os.write('}');
 			os.write('\n');
-			generator.close();
-			os.close();
-			return os;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 
@@ -189,7 +189,7 @@ class ElasticsearchUpdateSpanReporter {
 					}
 				} else {
 					logger.debug("Scheduling update for span {}", updateDescription.spanIdentifiers);
-					elasticsearchSpanReporter.scheduleSendBulk(toBulkUpdateBytes(updateDescription.id, updateDescription.tagsToUpdate));
+					elasticsearchSpanReporter.scheduleSendBulk(new BulkUpdateOutputStreamHandler(updateDescription.id, updateDescription.tagsToUpdate));
 				}
 			}
 		}
