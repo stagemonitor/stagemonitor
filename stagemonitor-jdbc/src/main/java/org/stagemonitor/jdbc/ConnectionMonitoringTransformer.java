@@ -34,7 +34,7 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 
 	private static final HealthCheckRegistry healthCheckRegistry;
 
-	private static final String INSTRUMENTATION_DATASOURCE = "instrumentation_datasource";
+	private static final String INSTRUMENTATION_DATASOURCE = "DataSource instrumentation";
 
 	static {
 		active = ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class));
@@ -95,7 +95,7 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 
 	@Override
 	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
-		healthCheckRegistry.register(INSTRUMENTATION_DATASOURCE, ImmediateResult.of(HealthCheck.Result.healthy()));
+		healthCheckRegistry.register(INSTRUMENTATION_DATASOURCE, ImmediateResult.of(HealthCheck.Result.healthy("JDBC spans working")));
 		if (DEBUG_INSTRUMENTATION) {
 			logger.info("TRANSFORM DataSource {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}

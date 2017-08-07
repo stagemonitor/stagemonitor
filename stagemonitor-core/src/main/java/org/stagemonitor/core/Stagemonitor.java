@@ -168,7 +168,6 @@ public final class Stagemonitor {
 
 	private static void initializePlugin(final StagemonitorPlugin stagemonitorPlugin) {
 		final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
-		logger.info("Initializing plugin {}", pluginName);
 		try {
 			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession, healthCheckRegistry));
 			stagemonitorPlugin.initialized = true;
@@ -287,8 +286,8 @@ public final class Stagemonitor {
 		if (configuration == null) {
 			reloadPluginsAndConfiguration();
 		}
-		tryStartMonitoring();
 		onShutdownActions.add(AgentAttacher.performRuntimeAttachment());
+		tryStartMonitoring();
 		healthCheckRegistry.register("startup", new HealthCheck() {
 			@Override
 			protected Result check() throws Exception {
