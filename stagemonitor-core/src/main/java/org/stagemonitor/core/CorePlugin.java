@@ -245,7 +245,9 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Elasticsearch configuration source profiles")
 			.description("Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source " +
 					"that can be shared between multiple server instances. Set the profiles appropriate to the current " +
-					"environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under " +
+					"environment e.g. `common,prod`, `local`, `test`, ..." +
+					"When you provide multiple profiles, the later ones have precedence over the first ones. " +
+					"The configuration will be stored under " +
 					"`{stagemonitor.reporting.elasticsearch.url}/stagemonitor-configuration/configuration/{configurationSourceProfile}`.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(Collections.<String>emptyList());
