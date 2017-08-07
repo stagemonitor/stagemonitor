@@ -10,7 +10,9 @@ import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
@@ -141,5 +143,16 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		List<Class<? extends SpanReporter>> spanReporters = new ArrayList<>();
 		ServiceLoader.load(SpanReporter.class).forEach(reporter -> spanReporters.add(reporter.getClass()));
 		Assert.assertTrue(spanReporters.contains(ElasticsearchSpanReporter.class));
+	}
+
+	@Test
+	public void testToBulkUpdateBytes() throws Exception {
+		final ElasticsearchUpdateSpanReporter.BulkUpdateOutputStreamHandler bulkUpdateOutputStreamHandler =
+				new ElasticsearchUpdateSpanReporter.BulkUpdateOutputStreamHandler("test-id", Collections.singletonMap("foo", "bar"));
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		bulkUpdateOutputStreamHandler.withHttpURLConnection(output);
+		assertThat(output.toString())
+				.isEqualTo("{\"update\":{\"_id\":\"test-id\"}}\n" +
+						"{\"doc\":{\"foo\":\"bar\"}}\n");
 	}
 }

@@ -3,6 +3,7 @@ package org.stagemonitor.tracing;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
+@Deprecated
 public class B3IdentifierTagger extends StatelessSpanEventListener {
 	public static final String SPAN_ID = "id";
 	public static final String TRACE_ID = "trace_id";

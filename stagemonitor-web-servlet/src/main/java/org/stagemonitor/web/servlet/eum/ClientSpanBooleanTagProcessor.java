@@ -16,8 +16,8 @@ public class ClientSpanBooleanTagProcessor extends ClientSpanTagProcessor {
 	}
 
 	@Override
-	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletRequestParameters) {
-		final String valueOrNull = getParameterValueOrNull(requestParameterName, servletRequestParameters);
+	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> requestParameters) {
+		final String valueOrNull = getParameterValueOrNull(requestParameterName, requestParameters);
 		spanBuilder.withTag(tagName, parseBooleanOrFalse(valueOrNull));
 	}
 

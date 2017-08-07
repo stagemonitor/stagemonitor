@@ -9,7 +9,7 @@ import static org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.TY
 
 public class SampleClientSpanExtension extends ClientSpanExtension {
 	@Override
-	public String getClientTraceExtensionScript() {
+	public String getClientTraceExtensionScriptStaticPart() {
 		return "var eum = window.EumObject; (window[eum])('meta', 'sample_span_extension', 'sample_value');";
 	}
 

@@ -55,7 +55,7 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 					"If the span queue size exceeds the max batch size, a flush will be scheduled immediately. " +
 					"You can monitor the amount of reported spans and the actual batch sizes via the histogram " + bulkSizeMetricName.getName())
 			.configurationCategory(ELASTICSEARCH_TRACING_PLUGIN)
-			.buildWithDefault(100);
+			.buildWithDefault(250);
 	private final ConfigurationOption<Integer> flushDelayMs = ConfigurationOption.integerOption()
 			.key("stagemonitor.tracing.elasticsearch.reporter.flushDelayMs")
 			.dynamic(true)

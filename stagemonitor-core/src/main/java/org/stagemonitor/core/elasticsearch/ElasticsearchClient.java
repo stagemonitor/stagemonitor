@@ -45,6 +45,7 @@ public class ElasticsearchClient {
 
 	public static final Map<String, String> CONTENT_TYPE_JSON = Collections.singletonMap("Content-Type", "application/json");
 	public static final Map<String, String> CONTENT_TYPE_NDJSON = Collections.singletonMap("Content-Type", "application/x-ndjson");
+	private static final String BULK = "/_bulk";
 	private final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
@@ -207,7 +208,10 @@ public class ElasticsearchClient {
 		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", CONTENT_TYPE_NDJSON, outputStreamHandler, new BulkErrorReportingResponseHandler());
+		if (!endpoint.contains(BULK)) {
+			endpoint = endpoint + BULK;
+		}
+		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint, CONTENT_TYPE_NDJSON, outputStreamHandler, new BulkErrorReportingResponseHandler());
 	}
 
 	public void deleteIndices(String indexPattern) {
@@ -309,6 +313,10 @@ public class ElasticsearchClient {
 		return !corePlugin.getElasticsearchUrls().isEmpty() && elasticsearchAvailable.get();
 	}
 
+	public HttpClient getHttpClient() {
+		return httpClient;
+	}
+
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
 
 		private static final int MAX_BULK_ERROR_LOG_SIZE = 256;
@@ -325,9 +333,9 @@ public class ElasticsearchClient {
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
 			final JsonNode errors = bulkResponse.get("errors");
 			if (errors != null && errors.booleanValue()) {
-				logger.warn(ERROR_PREFIX, reportBulkErrors(bulkResponse.get("items")));
+				logger.warn(ERROR_PREFIX, statusCode, reportBulkErrors(bulkResponse.get("items")));
 			} else if (bulkResponse.get("error") != null) {
-				logger.warn(ERROR_PREFIX, bulkResponse);
+				logger.warn(ERROR_PREFIX, statusCode, bulkResponse);
 			}
 			return null;
 		}

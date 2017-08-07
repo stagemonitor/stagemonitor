@@ -22,9 +22,9 @@ public class ClientSpanStringTagProcessor extends ClientSpanTagProcessor {
 	}
 
 	@Override
-	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletRequestParameters) {
+	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> requestParameters) {
 		if (addTagsOnSpanBuilder) {
-			final String valueOrNull = getParameterValueOrNull(requestParameterName, servletRequestParameters);
+			final String valueOrNull = getParameterValueOrNull(requestParameterName, requestParameters);
 			spanBuilder.withTag(tagName, trimStringToMaxLength(valueOrNull));
 		}
 	}
@@ -35,5 +35,14 @@ public class ClientSpanStringTagProcessor extends ClientSpanTagProcessor {
 			final String valueOrNull = getParameterValueOrNull(requestParameterName, servletRequestParameters);
 			span.setTag(tagName, trimStringToMaxLength(valueOrNull));
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "ClientSpanStringTagProcessor{" +
+				"tagName='" + tagName + '\'' +
+				", requestParameterName='" + requestParameterName + '\'' +
+				", addTagsOnSpanBuilder=" + addTagsOnSpanBuilder +
+				'}';
 	}
 }
