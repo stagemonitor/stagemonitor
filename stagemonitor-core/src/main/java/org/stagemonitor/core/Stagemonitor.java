@@ -14,7 +14,10 @@ import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.metrics.health.OverridableHealthCheckRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.HttpClient;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -137,17 +140,8 @@ public final class Stagemonitor {
 			for (ConfigurationOption<?> option : options) {
 				if (!option.isDefault()) {
 					hasOnlyDefaultOptions = false;
-					String trimmedValue;
-					if (option.isSensitive()) {
-						trimmedValue = "XXXX";
-					} else {
-						trimmedValue = option.getValueAsString().replace("\n", "");
-						int maximumLineLength = 55;
-						if (trimmedValue.length() > maximumLineLength) {
-							trimmedValue = trimmedValue.substring(0, maximumLineLength - 3) + "...";
-						}
-					}
-					logger.info("{}: {} (source: {})", option.getKey(), trimmedValue, option.getNameOfCurrentConfigurationSource());
+					logger.info("{}: {} (source: {})",
+							option.getKey(), prepareOptionValueForLog(option), option.getNameOfCurrentConfigurationSource());
 				}
 			}
 		}
@@ -158,6 +152,29 @@ public final class Stagemonitor {
 			logger.warn("and");
 			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/Configuration-Options");
 			logger.warn("for further instructions");
+		}
+	}
+
+	private static String prepareOptionValueForLog(ConfigurationOption<?> option) {
+		if (option.isSensitive()) {
+			return "XXXX";
+		} else {
+			String trimmedValue;
+
+			try {
+				new URL(option.getValueAsString()); // prevent logging of exception in removeUserInfo
+				trimmedValue = HttpClient.removeUserInfo(option.getValueAsString());
+			} catch (MalformedURLException e) {
+				trimmedValue = option.getValueAsString();
+			}
+
+			trimmedValue = trimmedValue.replace("\n", "");
+
+			int maximumLineLength = 55;
+			if (trimmedValue.length() > maximumLineLength) {
+				trimmedValue = trimmedValue.substring(0, maximumLineLength - 3) + "...";
+			}
+			return trimmedValue;
 		}
 	}
 
