@@ -4,9 +4,9 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
@@ -14,7 +14,10 @@ import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.metrics.health.OverridableHealthCheckRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.HttpClient;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -111,6 +114,11 @@ public final class Stagemonitor {
 			}));
 		}
 
+		logStatus();
+		logConfiguration();
+	}
+
+	private static void logStatus() {
 		logger.info("# stagemonitor status");
 		for (Map.Entry<String, HealthCheck.Result> entry : healthCheckRegistry.runHealthChecks().entrySet()) {
 			String status = entry.getValue().isHealthy() ? "OK  " : "FAIL";
@@ -121,6 +129,52 @@ public final class Stagemonitor {
 			if (error != null) {
 				logger.warn("Exception thrown while initializing plugin", error);
 			}
+		}
+	}
+
+	private static void logConfiguration() {
+		logger.info("# stagemonitor configuration, listing non-default values:");
+		boolean hasOnlyDefaultOptions = true;
+
+		for (List<ConfigurationOption<?>> options : configuration.getConfigurationOptionsByCategory().values()) {
+			for (ConfigurationOption<?> option : options) {
+				if (!option.isDefault()) {
+					hasOnlyDefaultOptions = false;
+					logger.info("{}: {} (source: {})",
+							option.getKey(), prepareOptionValueForLog(option), option.getNameOfCurrentConfigurationSource());
+				}
+			}
+		}
+
+		if (hasOnlyDefaultOptions) {
+			logger.warn("stagemonitor has not been configured. Have a look at");
+			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/How-should-I-configure-stagemonitor%3F");
+			logger.warn("and");
+			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/Configuration-Options");
+			logger.warn("for further instructions");
+		}
+	}
+
+	private static String prepareOptionValueForLog(ConfigurationOption<?> option) {
+		if (option.isSensitive()) {
+			return "XXXX";
+		} else {
+			String trimmedValue;
+
+			try {
+				new URL(option.getValueAsString()); // prevent logging of exception in removeUserInfo
+				trimmedValue = HttpClient.removeUserInfo(option.getValueAsString());
+			} catch (MalformedURLException e) {
+				trimmedValue = option.getValueAsString();
+			}
+
+			trimmedValue = trimmedValue.replace("\n", "");
+
+			int maximumLineLength = 55;
+			if (trimmedValue.length() > maximumLineLength) {
+				trimmedValue = trimmedValue.substring(0, maximumLineLength - 3) + "...";
+			}
+			return trimmedValue;
 		}
 	}
 
