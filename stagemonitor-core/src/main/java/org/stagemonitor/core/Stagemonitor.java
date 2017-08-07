@@ -117,6 +117,10 @@ public final class Stagemonitor {
 			String message = entry.getValue().getMessage() == null ? "" : "(" + entry.getValue().getMessage() + ")";
 			final String checkName = entry.getKey();
 			logger.info("{} - {} {}", status, checkName, message);
+			final Throwable error = entry.getValue().getError();
+			if (error != null) {
+				logger.warn("Exception thrown while initializing plugin", error);
+			}
 		}
 	}
 
@@ -159,6 +163,7 @@ public final class Stagemonitor {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 			if (disabledPlugins.contains(pluginName)) {
 				logger.info("Not initializing disabled plugin {}", pluginName);
+				healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.unhealthy("disabled via configuration")));
 			} else {
 				notYetInitialized.add(stagemonitorPlugin);
 			}
@@ -176,7 +181,7 @@ public final class Stagemonitor {
 			}
 			stagemonitorPlugin.registerWidgetTabPlugins(new StagemonitorPlugin.WidgetTabPluginsRegistry(pathsOfWidgetTabPlugins));
 			stagemonitorPlugin.registerWidgetMetricTabPlugins(new StagemonitorPlugin.WidgetMetricTabPluginsRegistry(pathsOfWidgetMetricTabPlugins));
-			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.healthy(pluginName + " is initialized")));
+			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.healthy("initialized successfully")));
 		} catch (final Exception e) {
 			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.unhealthy(e)));
 			logger.warn("Error while initializing plugin " + pluginName + " (this exception is ignored)", e);
@@ -288,7 +293,7 @@ public final class Stagemonitor {
 		}
 		onShutdownActions.add(AgentAttacher.performRuntimeAttachment());
 		tryStartMonitoring();
-		healthCheckRegistry.register("startup", new HealthCheck() {
+		healthCheckRegistry.register("Startup", new HealthCheck() {
 			@Override
 			protected Result check() throws Exception {
 				if (started) {

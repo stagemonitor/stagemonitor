@@ -101,7 +101,7 @@ public class AgentAttacher {
 	}
 
 	private static boolean initInstrumentation() {
-		healthCheckRegistry.register("instrumentation", ImmediateResult.of(HealthCheck.Result.unhealthy("Unknown error")));
+		healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy("Unknown error")));
 		try {
 			try {
 				instrumentation = ByteBuddyAgent.getInstrumentation();
@@ -111,7 +111,7 @@ public class AgentAttacher {
 								new EhCacheAttachmentProvider(),
 								ByteBuddyAgent.AttachmentProvider.DEFAULT));
 			}
-			healthCheckRegistry.register("instrumentation", ImmediateResult.of(HealthCheck.Result.healthy()));
+			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.healthy()));
 			ensureDispatcherIsAppendedToBootstrapClasspath(instrumentation);
 			if (!Dispatcher.getValues().containsKey(IGNORED_CLASSLOADERS_KEY)) {
 				Dispatcher.put(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
@@ -123,7 +123,7 @@ public class AgentAttacher {
 					"application with a JDK (not a JRE)." +
 					"To make stagemonitor work with a JRE, you have to add the following command line argument to the " +
 					"start of the JVM: -javaagent:/path/to/byte-buddy-agent-<version>.jar";
-			healthCheckRegistry.register("instrumentation", ImmediateResult.of(HealthCheck.Result.unhealthy(msg)));
+			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy(msg)));
 			logger.warn(msg, e);
 			return false;
 		}

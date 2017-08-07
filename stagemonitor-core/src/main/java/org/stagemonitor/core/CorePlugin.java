@@ -425,7 +425,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		final ElasticsearchClient elasticsearchClient = getElasticsearchClient();
 		createKibanaIndexAndMappings(elasticsearchClient);
 		sendConfigurationMappingAsync(elasticsearchClient);
-		initArguments.getHealthCheckRegistry().register("elasticsearch", new HealthCheck() {
+		initArguments.getHealthCheckRegistry().register("Elasticsearch", new HealthCheck() {
 			@Override
 			protected Result check() throws Exception {
 				if (elasticsearchClient.isElasticsearchAvailable()) {
