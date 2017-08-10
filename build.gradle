@@ -133,6 +133,10 @@ subprojects {
 	}
 
 	processResources {
+		sourceSets.main.output.resourcesDir.mkdirs()
+		def versionFile = new File(sourceSets.main.output.resourcesDir, "version.properties")
+		versionFile.text = "version=$version"
+
 		eachFile { resource ->
 			def filePath = resource.file.canonicalPath
 			def isGrafanaDashboard = filePath.endsWith(".json") && filePath.contains("grafana/") && filePath.contains("Elasticsearch") && !resource.path.contains("Grafana1")

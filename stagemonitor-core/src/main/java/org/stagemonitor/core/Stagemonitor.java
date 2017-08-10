@@ -235,7 +235,7 @@ public final class Stagemonitor {
 			}
 			stagemonitorPlugin.registerWidgetTabPlugins(new StagemonitorPlugin.WidgetTabPluginsRegistry(pathsOfWidgetTabPlugins));
 			stagemonitorPlugin.registerWidgetMetricTabPlugins(new StagemonitorPlugin.WidgetMetricTabPluginsRegistry(pathsOfWidgetMetricTabPlugins));
-			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.healthy("initialized successfully")));
+			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.healthy("version " + stagemonitorPlugin.getVersion())));
 		} catch (final Exception e) {
 			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.unhealthy(e)));
 			logger.warn("Error while initializing plugin " + pluginName + " (this exception is ignored)", e);
@@ -351,10 +351,15 @@ public final class Stagemonitor {
 			@Override
 			protected Result check() throws Exception {
 				if (started) {
-					return Result.healthy();
+					return Result.healthy(getJvmAndOsVersionString());
 				} else {
 					return Result.unhealthy("stagemonitor is not started");
 				}
+			}
+
+			private String getJvmAndOsVersionString() {
+				return System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " " +
+						System.getProperty("os.name") + " " + System.getProperty("os.version");
 			}
 		});
 	}

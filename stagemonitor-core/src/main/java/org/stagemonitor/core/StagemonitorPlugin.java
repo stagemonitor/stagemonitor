@@ -6,10 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.PropertyFileConfigurationSource;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -24,6 +26,16 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 
 	volatile boolean initialized;
 	List<Runnable> onInitCallbacks = new CopyOnWriteArrayList<Runnable>();
+	private final String version;
+
+	protected StagemonitorPlugin() {
+		final Properties properties = PropertyFileConfigurationSource.getFromClasspath("version.properties", getClass().getClassLoader());
+		if (properties != null) {
+			version = properties.getProperty("version");
+		} else {
+			version = null;
+		}
+	}
 
 	public boolean isInitialized() {
 		return initialized;
@@ -90,6 +102,10 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 		} else {
 			onInitCallbacks.add(onInitCallback);
 		}
+	}
+
+	public String getVersion() {
+		return version;
 	}
 
 	/**
