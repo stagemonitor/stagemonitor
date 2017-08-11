@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +31,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static org.stagemonitor.core.elasticsearch.ElasticsearchClient.CONTENT_TYPE_NDJSON;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 import static org.stagemonitor.tracing.B3IdentifierTagger.PARENT_ID;
 import static org.stagemonitor.tracing.B3IdentifierTagger.SPAN_ID;
@@ -90,18 +90,6 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		this.updateReporter = new ElasticsearchUpdateSpanReporter(corePlugin, tracingPlugin, elasticsearchTracingPlugin, this);
 	}
 
-	private void sendBulkRequest(final List<OutputStreamHandler> bulkBytes) {
-		elasticsearchClient.sendBulk("/stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "/" + SPANS_TYPE + "/_bulk", new HttpClient.OutputStreamHandler() {
-			@Override
-			public void withHttpURLConnection(OutputStream os) throws IOException {
-				for (OutputStreamHandler bulkLine : bulkBytes) {
-					bulkLine.withHttpURLConnection(os);
-				}
-				os.close();
-			}
-		});
-	}
-
 	@Override
 	public void report(SpanContextInformation spanContext, final SpanWrapper spanWrapper) {
 		logger.debug("Reporting span");
@@ -117,14 +105,13 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Scheduling bulk request\n{}", bulkBytes.toString());
 		}
+		final boolean addedToQueue = bulkQueue.offer(bulkBytes);
+		if (!addedToQueue) {
+			metricRegistry.counter(spansDroppedMetricName).inc();
+		}
+		scheduleFlushIfBulkQueueExceedsMaxBatchSize();
 		if (!tracingPlugin.isReportAsync()) {
-			sendBulkRequest(Collections.singletonList(bulkBytes));
-		} else {
-			final boolean addedToQueue = bulkQueue.offer(bulkBytes);
-			if (!addedToQueue) {
-				metricRegistry.counter(spansDroppedMetricName).inc();
-			}
-			scheduleFlushIfBulkQueueExceedsMaxBatchSize();
+			spanFlushingRunnable.run();
 		}
 	}
 
@@ -155,8 +142,10 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 	}
 
 	private class FlushCallable implements Callable<Boolean> {
-
 		private final List<OutputStreamHandler> currentBulk = new ArrayList<OutputStreamHandler>(elasticsearchTracingPlugin.getMaxBatchSize());
+		private final BulkErrorCountingResponseHandler responseHandler = new BulkErrorCountingResponseHandler(metricRegistry);
+		private final BulkWritingOutputStreamHandler outputStreamHandler = new BulkWritingOutputStreamHandler();
+		private HttpClient httpClient = elasticsearchClient.getHttpClient();
 
 		@Override
 		public Boolean call() throws Exception {
@@ -169,10 +158,41 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 			}
 			logger.debug("Flushing {} span batch requests", currentBulk.size());
 			metricRegistry.histogram(bulkSizeMetricName).update(currentBulk.size());
-			sendBulkRequest(currentBulk);
+			sendBulkRequest();
 			// reusing the batch list is safe as this method is executed single threaded
 			currentBulk.clear();
 			return bulkQueue.size() >= maxBatchSize;
+		}
+
+		private void sendBulkRequest() {
+			if (!elasticsearchClient.isElasticsearchAvailable()) {
+				return;
+			}
+			final String url = elasticsearchClient.getElasticsearchUrl() + "/stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "/" + SPANS_TYPE + "/_bulk";
+			httpClient.send("POST", url, CONTENT_TYPE_NDJSON, outputStreamHandler, responseHandler);
+		}
+
+		private class BulkWritingOutputStreamHandler implements OutputStreamHandler {
+			@Override
+			public void withHttpURLConnection(OutputStream os) throws IOException {
+				for (OutputStreamHandler bulkLine : currentBulk) {
+					bulkLine.withHttpURLConnection(os);
+				}
+				os.close();
+			}
+		}
+
+		private class BulkErrorCountingResponseHandler extends ElasticsearchClient.BulkErrorCountingResponseHandler {
+			private final Metric2Registry metricRegistry;
+
+			private BulkErrorCountingResponseHandler(Metric2Registry metricRegistry) {
+				this.metricRegistry = metricRegistry;
+			}
+
+			@Override
+			public void onBulkError(int errorCount) {
+				metricRegistry.counter(spansDroppedMetricName).inc(errorCount);
+			}
 		}
 	}
 
@@ -202,4 +222,5 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 	ElasticsearchUpdateSpanReporter getUpdateReporter() {
 		return updateReporter;
 	}
+
 }

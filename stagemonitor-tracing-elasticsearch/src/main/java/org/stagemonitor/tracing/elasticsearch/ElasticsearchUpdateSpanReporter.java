@@ -11,6 +11,7 @@ import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.util.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -243,14 +244,13 @@ class ElasticsearchUpdateSpanReporter {
 	}
 
 	private static class JsonNodeResponseHandler implements HttpClient.ResponseHandler<JsonNode> {
-		private final ElasticsearchClient.BulkErrorReportingResponseHandler errorHandler = new ElasticsearchClient.BulkErrorReportingResponseHandler();
 
 		@Override
 		public JsonNode handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
 			if (statusCode == 200) {
 				return JsonUtils.getMapper().readTree(is);
 			} else {
-				errorHandler.handleResponse(is, statusCode, e);
+				IOUtils.consumeAndClose(is);
 				return null;
 			}
 		}

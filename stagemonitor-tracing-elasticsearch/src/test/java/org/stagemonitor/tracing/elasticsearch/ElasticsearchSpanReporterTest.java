@@ -23,7 +23,6 @@ import io.opentracing.tag.Tags;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 
 public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanReporterTest {
 
@@ -44,7 +43,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 		final List<MockSpan> sampledSpans = getSampledSpans();
 		assertThat(sampledSpans).hasSize(1);
-		Mockito.verify(elasticsearchClient).sendBulk(anyString(), any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 		Assert.assertTrue(reporter.isActive(spanContext));
 	}
 
@@ -55,7 +54,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 		final List<MockSpan> sampledSpans = getSampledSpans();
 		assertThat(sampledSpans).hasSize(1);
-		Mockito.verify(elasticsearchClient, Mockito.times(0)).sendBulk(anyString(), any());
+		Mockito.verify(httpClient, Mockito.times(0)).send(any(), any(), any(), any(), any());
 		Mockito.verify(spanLogger).info(ArgumentMatchers.startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "\",\"_type\":\"spans\"}}\n"));
 		Assert.assertTrue(reporter.isActive(spanContext));
 	}

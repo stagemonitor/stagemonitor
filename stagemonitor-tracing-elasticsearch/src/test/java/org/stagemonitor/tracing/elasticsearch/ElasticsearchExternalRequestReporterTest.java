@@ -47,7 +47,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(elasticsearchTracingPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(false);
 		reportSpan();
 
-		Mockito.verify(elasticsearchClient).sendBulk(ArgumentMatchers.startsWith("/stagemonitor-spans-"), any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 		Assert.assertTrue(reporter.isActive(null));
 		verifyTimerCreated(1);
 	}
@@ -59,7 +59,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(corePlugin.getElasticsearchUrl()).thenReturn(null);
 		reportSpan();
 
-		Mockito.verify(elasticsearchClient, times(0)).sendBulk(anyString(), any());
+		Mockito.verify(httpClient, times(0)).send(any(), any(), any(), any(), any());
 		Mockito.verify(spanLogger, times(0)).info(anyString());
 		Assert.assertFalse(reporter.isActive(null));
 		verifyTimerCreated(1);
@@ -70,7 +70,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(elasticsearchTracingPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(true);
 
 		reportSpan();
-		Mockito.verify(elasticsearchClient, times(0)).sendBulk(anyString(), any());
+		Mockito.verify(httpClient, times(0)).send(any(), any(), any(), any(), any());
 		Mockito.verify(spanLogger).info(ArgumentMatchers.startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
 	}
 
@@ -78,7 +78,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void reportSpanRateLimited() throws Exception {
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1d);
 		reportSpan();
-		Mockito.verify(elasticsearchClient).sendBulk(anyString(), any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 		reportSpan();
 		Mockito.verifyNoMoreInteractions(spanLogger);
 		verifyTimerCreated(2);
@@ -89,7 +89,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(tracingPlugin.getExcludeExternalRequestsFasterThan()).thenReturn(100d);
 
 		reportSpan(100);
-		Mockito.verify(elasticsearchClient).sendBulk(anyString(), any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 
 		reportSpan(99);
 		Mockito.verifyNoMoreInteractions(spanLogger);
@@ -101,7 +101,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(tracingPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
 
 		reportSpan(1000);
-		Mockito.verify(elasticsearchClient).sendBulk(anyString(), any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 		reportSpan(250);
 		Mockito.verifyNoMoreInteractions(spanLogger);
 		verifyTimerCreated(2);
@@ -114,7 +114,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		reportSpan(250);
 		reportSpan(1000);
 
-		Mockito.verify(elasticsearchClient, times(2)).sendBulk(anyString(), any());
+		Mockito.verify(httpClient, times(2)).send(any(), any(), any(), any(), any());
 		verifyTimerCreated(2);
 	}
 

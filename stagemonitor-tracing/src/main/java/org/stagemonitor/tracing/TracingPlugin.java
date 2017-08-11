@@ -387,7 +387,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Metrics.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Metrics.bulk", true);
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 		}
 

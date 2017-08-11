@@ -7,12 +7,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.AbstractElasticsearchTest;
-import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -22,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.stagemonitor.core.elasticsearch.ElasticsearchClient.CONTENT_TYPE_NDJSON;
 import static org.stagemonitor.core.elasticsearch.ElasticsearchClient.modifyIndexTemplate;
 
 public class ElasticsearchClientTest extends AbstractElasticsearchTest {
@@ -82,8 +81,8 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 		refresh();
 		final JsonNode indexSettings = elasticsearchClient.getJson("/stagemonitor-metrics-test/_settings")
 				.get("stagemonitor-metrics-test").get("settings").get("index");
-		assertEquals(indexSettings.toString(),1, indexSettings.get("number_of_replicas").asInt());
-		assertEquals(indexSettings.toString(),2, indexSettings.get("number_of_shards").asInt());
+		assertEquals(indexSettings.toString(), 1, indexSettings.get("number_of_replicas").asInt());
+		assertEquals(indexSettings.toString(), 2, indexSettings.get("number_of_shards").asInt());
 	}
 
 	@Test
@@ -94,12 +93,8 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testBulkNoRequest() {
-		elasticsearchClient.sendBulk("", new HttpClient.OutputStreamHandler() {
-			@Override
-			public void withHttpURLConnection(OutputStream os) throws IOException {
-				os.write(("").getBytes("UTF-8"));
-			}
-		});
+		elasticsearchClient.sendBulk(os ->
+				os.write(("").getBytes("UTF-8")), true);
 		assertThat(testAppender.list).hasSize(1);
 		final ILoggingEvent event = testAppender.list.get(0);
 		assertThat(event.getLevel().toString()).isEqualTo("WARN");
@@ -108,13 +103,9 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testBulkErrorInvalidRequest() {
-		elasticsearchClient.sendBulk("", new HttpClient.OutputStreamHandler() {
-			@Override
-			public void withHttpURLConnection(OutputStream os) throws IOException {
+		elasticsearchClient.sendBulk(os ->
 				os.write(("{ \"update\" : {\"_id\" : \"1\", \"_type\" : \"type1\", \"_index\" : \"index1\", \"_retry_on_conflict\" : 3} }\n" +
-						"{ \"doc\" : {\"field\" : \"value\"} }\n").getBytes("UTF-8"));
-			}
-		});
+						"{ \"doc\" : {\"field\" : \"value\"} }\n").getBytes("UTF-8")), true);
 		assertThat(testAppender.list).hasSize(1);
 		final ILoggingEvent event = testAppender.list.get(0);
 		assertThat(event.getLevel().toString()).isEqualTo("WARN");
@@ -123,14 +114,27 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testSuccessfulBulkRequest() {
-		elasticsearchClient.sendBulk("", new HttpClient.OutputStreamHandler() {
-			@Override
-			public void withHttpURLConnection(OutputStream os) throws IOException {
+		elasticsearchClient.sendBulk(os ->
 				os.write(("{ \"index\" : { \"_index\" : \"test\", \"_type\" : \"type1\", \"_id\" : \"1\" } }\n" +
-						"{ \"field1\" : \"value1\" }\n").getBytes("UTF-8"));
+						"{ \"field1\" : \"value1\" }\n").getBytes("UTF-8")), true);
+		assertThat(testAppender.list).hasSize(0);
+	}
+
+	@Test
+	public void testCountBulkErrors() {
+		AtomicInteger errors = new AtomicInteger();
+		elasticsearchClient.getHttpClient().send("POST", elasticsearchUrl + "/_bulk", CONTENT_TYPE_NDJSON, os ->
+				os.write(("{ \"index\" : { \"_index\" : \"test\", \"_type\" : \"type1\", \"_id\" : \"1\" } }\n" +
+						"{ \"field1\" : \"value1\" }\n" +
+						"{ \"update\" : {\"_id\" : \"42\", \"_type\" : \"type1\", \"_index\" : \"index1\"} }\n" +
+						"{ \"doc\" : {\"field\" : \"value\"} }\n"
+				).getBytes("UTF-8")), new ElasticsearchClient.BulkErrorCountingResponseHandler() {
+			@Override
+			public void onBulkError(int errorCount) {
+				errors.set(errorCount);
 			}
 		});
-		assertThat(testAppender.list).hasSize(0);
+		assertThat(errors.get()).isEqualTo(1);
 	}
 
 }

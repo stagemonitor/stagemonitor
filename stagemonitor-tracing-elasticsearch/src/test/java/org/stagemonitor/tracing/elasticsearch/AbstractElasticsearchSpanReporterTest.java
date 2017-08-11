@@ -11,6 +11,7 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TagRecordingSpanEventListener;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.when;
 
 public class AbstractElasticsearchSpanReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
+	protected HttpClient httpClient = mock(HttpClient.class);
 	protected TracingPlugin tracingPlugin;
 	protected ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 	protected Logger spanLogger;
@@ -75,6 +77,7 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
+		when(elasticsearchClient.getHttpClient()).thenReturn(httpClient);
 		registry = new Metric2Registry();
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		spanLogger = mock(Logger.class);

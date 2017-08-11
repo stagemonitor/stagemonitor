@@ -74,7 +74,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			}
 
 			httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", CONTENT_TYPE_JSON,
-					metricsOutputStreamHandler, new ElasticsearchClient.BulkErrorReportingResponseHandler());
+					metricsOutputStreamHandler, HttpClient.NoopResponseHandler.INSTANCE);
 		} else {
 			try {
 				final ByteArrayOutputStream os = new ByteArrayOutputStream();

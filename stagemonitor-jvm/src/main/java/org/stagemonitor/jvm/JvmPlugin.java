@@ -62,7 +62,7 @@ public class JvmPlugin extends StagemonitorPlugin {
 		ElasticsearchClient elasticsearchClient = config.getElasticsearchClient();
 		final GrafanaClient grafanaClient = config.getGrafanaClient();
 		if (config.isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/JVM.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/JVM.bulk", true);
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchJvm.json");
 		}
 	}

@@ -1,6 +1,11 @@
 package org.stagemonitor.core.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.util.IOUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,10 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import javax.xml.bind.DatatypeConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.util.IOUtils;
 
 // TODO create HttpRequest POJO
 // method, url, headers, outputStreamHandler, responseHandler
@@ -157,6 +160,20 @@ public class HttpClient {
 		T handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException;
 	}
 
+	public static class NoopResponseHandler implements ResponseHandler<Void> {
+		public static NoopResponseHandler INSTANCE = new NoopResponseHandler();
+
+		private NoopResponseHandler() {
+		}
+
+		@Override
+		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
+			// we have to read the whole response, otherwise bad things happen
+			IOUtils.consumeAndClose(is);
+			return null;
+		}
+	}
+
 	private static class ErrorLoggingResponseHandler implements ResponseHandler<Integer> {
 
 		private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -181,7 +198,7 @@ public class HttpClient {
 		}
 	}
 
-  	public static String removeUserInfo(String url) {
+	public static String removeUserInfo(String url) {
 	  	Logger logger = LoggerFactory.getLogger("HttpClient");
 	  	String userInfo = "";
 		try {

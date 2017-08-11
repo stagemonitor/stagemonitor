@@ -37,7 +37,7 @@ public class OsPlugin extends StagemonitorPlugin  {
 		if (corePlugin.isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchHostDashboard.json");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Host.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Host.bulk", true);
 		}
 
 		if (sigar == null) {

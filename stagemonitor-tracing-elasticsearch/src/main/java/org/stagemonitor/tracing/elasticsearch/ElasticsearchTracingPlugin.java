@@ -83,9 +83,9 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
 
 		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/stagemonitor-spans-kibana-index-pattern.bulk");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Analysis.bulk");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/stagemonitor-spans-kibana-index-pattern.bulk", false);
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Analysis.bulk", true);
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk", true);
 
 			elasticsearchClient.scheduleIndexManagement("stagemonitor-spans-",
 					corePlugin.getMoveToColdNodesAfterDays(), deleteSpansAfterDays.getValue());

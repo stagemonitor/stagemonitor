@@ -274,7 +274,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		if (corePlugin.isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk", true);
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		}
 	}
