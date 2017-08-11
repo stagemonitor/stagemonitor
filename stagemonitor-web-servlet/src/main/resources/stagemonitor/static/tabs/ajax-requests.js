@@ -18,9 +18,13 @@ $(document).ready(function () {
 		"columns": [
 			{ "data": "@timestamp" },
 			{ "data": "name" },
-			{"data": "http.url"},
+			{"data": function data(row, type, set, meta) {
+				return row["http.url"];
+			}},
 			{"data": "duration_ms"},
-			{"data": "http.status_code"},
+			{"data": function data(row, type, set, meta) {
+				return row["http.status_code"];
+			}},
 			{ "data": "method" }
 		]
 	});
