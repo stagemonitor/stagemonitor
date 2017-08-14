@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -120,6 +121,7 @@ public final class Stagemonitor {
 
 	private static void logStatus() {
 		logger.info("# stagemonitor status");
+		logger.info("System information: {}", getJvmAndOsVersionString());
 		for (Map.Entry<String, HealthCheck.Result> entry : healthCheckRegistry.runHealthChecks().entrySet()) {
 			String status = entry.getValue().isHealthy() ? "OK  " : "FAIL";
 			String message = entry.getValue().getMessage() == null ? "" : "(" + entry.getValue().getMessage() + ")";
@@ -130,6 +132,11 @@ public final class Stagemonitor {
 				logger.warn("Exception thrown while initializing plugin", error);
 			}
 		}
+	}
+
+	private static String getJvmAndOsVersionString() {
+		return "Java " + System.getProperty("java.version") + " (" + System.getProperty("java.vendor") + ") " +
+				System.getProperty("os.name") + " " + System.getProperty("os.version");
 	}
 
 	private static void logConfiguration() {
@@ -351,15 +358,10 @@ public final class Stagemonitor {
 			@Override
 			protected Result check() throws Exception {
 				if (started) {
-					return Result.healthy(getJvmAndOsVersionString());
+					return Result.healthy();
 				} else {
 					return Result.unhealthy("stagemonitor is not started");
 				}
-			}
-
-			private String getJvmAndOsVersionString() {
-				return System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " " +
-						System.getProperty("os.name") + " " + System.getProperty("os.version");
 			}
 		});
 	}
