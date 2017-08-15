@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.opentracing.Span;
+import org.stagemonitor.tracing.profiler.NestCall;
 
 public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer {
 
@@ -33,6 +34,11 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 	public static void monitorStart(@ParameterNames String parameterNames, @Advice.AllArguments Object[] args,
 									@RequestName String requestName, @Advice.Origin("#t") String className,
 									@Advice.Origin("#m") String methodName, @Advice.This(optional = true) Object thiz) {
+
+		/*add by simon*/
+		NestCall.StoreSpot();//store the spot of calltree
+		/*add by simon*/
+
 		final String[] paramNames = parameterNames.split(",");
 		Map<String, Object> params = new LinkedHashMap<String, Object>();
 		for (int i = 0; i < args.length; i++) {
