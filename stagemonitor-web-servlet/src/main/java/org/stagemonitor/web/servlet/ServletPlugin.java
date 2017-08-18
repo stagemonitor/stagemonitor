@@ -23,6 +23,7 @@ import org.stagemonitor.web.servlet.eum.ClientSpanServlet;
 import org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension;
 import org.stagemonitor.web.servlet.filter.HttpRequestMonitorFilter;
 import org.stagemonitor.web.servlet.filter.StagemonitorSecurityFilter;
+import org.stagemonitor.web.servlet.health.HealthCheckServlet;
 import org.stagemonitor.web.servlet.session.SessionCounter;
 import org.stagemonitor.web.servlet.util.ServletContainerInitializerUtil;
 import org.stagemonitor.web.servlet.widget.SpanServlet;
@@ -71,7 +72,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 			.key("stagemonitor.requestmonitor.http.requestparams.confidential.regex")
 			.dynamic(true)
 			.label("Deprecated: Confidential request parameters (regex)")
-			.description("Deprecated, use stagemonitor.requestmonitor.requestparams.confidential.regex instead." +
+			.description("Deprecated, use stagemonitor.tracing.params.confidential.regex instead." +
 					"A list of request parameter name patterns that should not be collected.\n" +
 					"A request parameter is either a query string or a application/x-www-form-urlencoded request " +
 					"body (POST form content)")
@@ -273,7 +274,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		if (corePlugin.isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk", true);
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		}
 	}
@@ -472,5 +473,9 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		} catch (IllegalArgumentException e) {
 			// embedded servlet containers like jetty don't necessarily support sessions
 		}
+
+		final ServletRegistration.Dynamic healthServlet = ctx.addServlet(HealthCheckServlet.class.getSimpleName(), new HealthCheckServlet(Stagemonitor.getHealthCheckRegistry()));
+		healthServlet.addMapping("/stagemonitor/status");
+		healthServlet.setAsyncSupported(true);
 	}
 }

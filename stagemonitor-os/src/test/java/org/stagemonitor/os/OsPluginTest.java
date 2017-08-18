@@ -1,6 +1,7 @@
 package org.stagemonitor.os;
 
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.health.HealthCheckRegistry;
 
 import org.hyperic.sigar.FileSystem;
 import org.hyperic.sigar.Sigar;
@@ -48,7 +49,7 @@ public class OsPluginTest {
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		osPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metricRegistry, configuration, mock(MeasurementSession.class)));
+		osPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metricRegistry, configuration, mock(MeasurementSession.class), mock(HealthCheckRegistry.class)));
 		this.sigar = osPlugin.getSigar();
 	}
 

@@ -3,22 +3,26 @@ package org.stagemonitor.tracing.elasticsearch;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.utils.SpanUtils;
-import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
+import io.opentracing.mock.MockSpan;
 import io.opentracing.tag.Tags;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 
 public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanReporterTest {
 
@@ -37,7 +41,9 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 	public void testReportSpan() throws Exception {
 		final SpanContextInformation spanContext = reportSpanWithCallTree(1000, "Report Me");
 
-		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
+		final List<MockSpan> sampledSpans = getSampledSpans();
+		assertThat(sampledSpans).hasSize(1);
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 		Assert.assertTrue(reporter.isActive(spanContext));
 	}
 
@@ -46,7 +52,9 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		Mockito.when(elasticsearchTracingPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(true);
 		final SpanContextInformation spanContext = reportSpanWithCallTree(1000, "Report Me");
 
-		Mockito.verify(elasticsearchClient, Mockito.times(0)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
+		final List<MockSpan> sampledSpans = getSampledSpans();
+		assertThat(sampledSpans).hasSize(1);
+		Mockito.verify(httpClient, Mockito.times(0)).send(any(), any(), any(), any(), any());
 		Mockito.verify(spanLogger).info(ArgumentMatchers.startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "\",\"_type\":\"spans\"}}\n"));
 		Assert.assertTrue(reporter.isActive(spanContext));
 	}
@@ -68,11 +76,16 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		reportSpanWithCallTree(500, "Report Me");
 		reportSpanWithCallTree(250, "Report Me");
 
-		ArgumentCaptor<SpanWrapper> spanCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
-		Mockito.verify(elasticsearchClient, Mockito.times(3)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), spanCaptor.capture());
-		SpanWrapper span = spanCaptor.getValue();
-		Assert.assertNull(span.getTags().get(SpanUtils.CALL_TREE_ASCII));
-		Assert.assertNull(span.getTags().get(SpanUtils.CALL_TREE_JSON));
+		final List<MockSpan> sampledSpans = getSampledSpans();
+		assertThat(sampledSpans).hasSize(3);
+		sampledSpans.forEach(span -> assertThat(span.tags()).doesNotContainKeys(SpanUtils.CALL_TREE_ASCII, SpanUtils.CALL_TREE_JSON));
+	}
+
+	private List<MockSpan> getSampledSpans() {
+		return mockTracer.finishedSpans()
+				.stream()
+				.filter(span -> !Integer.valueOf(0).equals(span.tags().get(Tags.SAMPLING_PRIORITY.getKey())))
+				.collect(Collectors.toList());
 	}
 
 	@Test
@@ -83,26 +96,24 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		reportSpanWithCallTree(500, "Report Me");
 		reportSpanWithCallTree(1000, "Report Me");
 
-		ArgumentCaptor<SpanWrapper> spanCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
-		Mockito.verify(elasticsearchClient, Mockito.times(3)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), spanCaptor.capture());
-		verifyContainsCallTree(spanCaptor.getValue(), true);
-	}
-
-	private void verifyContainsCallTree(SpanWrapper span, boolean contains) {
-		assertEquals(contains, span.getTags().get(SpanUtils.CALL_TREE_ASCII) != null);
-		assertEquals(contains, span.getTags().get(SpanUtils.CALL_TREE_JSON) != null);
+		final List<MockSpan> sampledSpans = getSampledSpans();
+		assertThat(sampledSpans).hasSize(3);
+		sampledSpans.forEach(span -> assertThat(span.tags()).containsKeys(SpanUtils.CALL_TREE_ASCII, SpanUtils.CALL_TREE_JSON));
 	}
 
 	@Test
 	public void testElasticsearchExcludeFastCallTree() throws Exception {
 		Mockito.when(tracingPlugin.getExcludeCallTreeFromReportWhenFasterThanXPercentOfRequests()).thenReturn(0.85d);
 
-		SpanContextInformation spanContext = reportSpanWithCallTree(1000, "Report Me");
-		Assert.assertFalse(spanContext.getPostExecutionInterceptorContext().isExcludeCallTree());
+		reportSpanWithCallTree(1000, "Report Me");
+		assertThat(mockTracer.finishedSpans()).hasSize(1);
+		assertThat(mockTracer.finishedSpans().get(0).tags()).containsKeys(SpanUtils.CALL_TREE_ASCII, SpanUtils.CALL_TREE_JSON);
 
-		spanContext = reportSpanWithCallTree(250, "Report Me");
+		mockTracer.reset();
 
-		Assert.assertTrue(spanContext.getPostExecutionInterceptorContext().isExcludeCallTree());
+		reportSpanWithCallTree(250, "Report Me");
+		assertThat(mockTracer.finishedSpans()).hasSize(1);
+		assertThat(mockTracer.finishedSpans().get(0).tags()).doesNotContainKeys(SpanUtils.CALL_TREE_ASCII, SpanUtils.CALL_TREE_JSON);
 	}
 
 	@Test
@@ -112,7 +123,7 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		reportSpanWithCallTree(250, "Report Me");
 		reportSpanWithCallTree(1000, "Report Me");
 
-		Mockito.verify(elasticsearchClient, Mockito.times(2)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.isA(SpanWrapper.class));
+		assertThat(getSampledSpans()).hasSize(2);
 	}
 
 	@Test
@@ -121,10 +132,9 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 
 		reportSpanWithCallTree(250, "Report Me");
 
-		ArgumentCaptor<SpanWrapper> spanCaptor = ArgumentCaptor.forClass(SpanWrapper.class);
-		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), spanCaptor.capture());
-		SpanWrapper span = spanCaptor.getValue();
-		Assert.assertTrue((Boolean) span.getTags().get("serviceLoaderWorks"));
+		final List<MockSpan> sampledSpans = getSampledSpans();
+		assertThat(sampledSpans).hasSize(1);
+		assertThat(sampledSpans.get(0).tags()).containsEntry("serviceLoaderWorks", true);
 	}
 
 	@Test
@@ -132,5 +142,16 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		List<Class<? extends SpanReporter>> spanReporters = new ArrayList<>();
 		ServiceLoader.load(SpanReporter.class).forEach(reporter -> spanReporters.add(reporter.getClass()));
 		Assert.assertTrue(spanReporters.contains(ElasticsearchSpanReporter.class));
+	}
+
+	@Test
+	public void testToBulkUpdateBytes() throws Exception {
+		final ElasticsearchUpdateSpanReporter.BulkUpdateOutputStreamHandler bulkUpdateOutputStreamHandler =
+				new ElasticsearchUpdateSpanReporter.BulkUpdateOutputStreamHandler("test-id", Collections.singletonMap("foo", "bar"));
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		bulkUpdateOutputStreamHandler.withHttpURLConnection(output);
+		assertThat(output.toString())
+				.isEqualTo("{\"update\":{\"_id\":\"test-id\"}}\n" +
+						"{\"doc\":{\"foo\":\"bar\"}}\n");
 	}
 }

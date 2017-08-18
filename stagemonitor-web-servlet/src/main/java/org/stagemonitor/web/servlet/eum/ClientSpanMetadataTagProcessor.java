@@ -17,7 +17,7 @@ public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 	static final String TYPE_STRING = "string";
 	static final String TYPE_NUMBER = "number";
 	static final String TYPE_BOOLEAN = "boolean";
-	private static final String REQUEST_PARAMETER_METADATA_PREFIX = "m_";
+	public static final String REQUEST_PARAMETER_METADATA_PREFIX = "m_";
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final ServletPlugin servletPlugin;
 

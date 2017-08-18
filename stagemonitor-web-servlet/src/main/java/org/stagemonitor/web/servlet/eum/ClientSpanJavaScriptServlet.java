@@ -53,7 +53,7 @@ public class ClientSpanJavaScriptServlet extends HttpServlet implements Configur
 	private String concatenateJavaScript(List<ClientSpanExtension> clientSpanExtensions) {
 		StringBuilder javaScriptBuilder = new StringBuilder();
 		for (ClientSpanExtension contributor : clientSpanExtensions) {
-			javaScriptBuilder.append(wrapImmediateInvokedFunctionExpression(contributor.getClientTraceExtensionScript()));
+			javaScriptBuilder.append(wrapImmediateInvokedFunctionExpression(contributor.getClientTraceExtensionScriptStaticPart()));
 		}
 		return javaScriptBuilder.toString();
 	}

@@ -1,2 +1,3 @@
 org.stagemonitor.tracing.metrics.CpuTimeTrackingSpanEventListener
 org.stagemonitor.tracing.metrics.GcTimeTrackingSpanEventListener
+org.stagemonitor.tracing.VersionTagSpanEventListener

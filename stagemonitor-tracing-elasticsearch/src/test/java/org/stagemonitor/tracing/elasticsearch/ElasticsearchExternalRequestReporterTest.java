@@ -18,7 +18,10 @@ import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
@@ -44,7 +47,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(elasticsearchTracingPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(false);
 		reportSpan();
 
-		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.startsWith("stagemonitor-spans-"), ArgumentMatchers.eq("spans"), ArgumentMatchers.any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 		Assert.assertTrue(reporter.isActive(null));
 		verifyTimerCreated(1);
 	}
@@ -56,8 +59,8 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(corePlugin.getElasticsearchUrl()).thenReturn(null);
 		reportSpan();
 
-		Mockito.verify(elasticsearchClient, Mockito.times(0)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
-		Mockito.verify(spanLogger, Mockito.times(0)).info(ArgumentMatchers.anyString());
+		Mockito.verify(httpClient, times(0)).send(any(), any(), any(), any(), any());
+		Mockito.verify(spanLogger, times(0)).info(anyString());
 		Assert.assertFalse(reporter.isActive(null));
 		verifyTimerCreated(1);
 	}
@@ -67,7 +70,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(elasticsearchTracingPlugin.isOnlyLogElasticsearchSpanReports()).thenReturn(true);
 
 		reportSpan();
-		Mockito.verify(elasticsearchClient, Mockito.times(0)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
+		Mockito.verify(httpClient, times(0)).send(any(), any(), any(), any(), any());
 		Mockito.verify(spanLogger).info(ArgumentMatchers.startsWith("{\"index\":{\"_index\":\"stagemonitor-spans-"));
 	}
 
@@ -75,7 +78,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 	public void reportSpanRateLimited() throws Exception {
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1d);
 		reportSpan();
-		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 		reportSpan();
 		Mockito.verifyNoMoreInteractions(spanLogger);
 		verifyTimerCreated(2);
@@ -86,7 +89,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(tracingPlugin.getExcludeExternalRequestsFasterThan()).thenReturn(100d);
 
 		reportSpan(100);
-		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 
 		reportSpan(99);
 		Mockito.verifyNoMoreInteractions(spanLogger);
@@ -98,7 +101,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		when(tracingPlugin.getExcludeExternalRequestsWhenFasterThanXPercent()).thenReturn(0.85d);
 
 		reportSpan(1000);
-		Mockito.verify(elasticsearchClient).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
+		Mockito.verify(httpClient).send(any(), any(), any(), any(), any());
 		reportSpan(250);
 		Mockito.verifyNoMoreInteractions(spanLogger);
 		verifyTimerCreated(2);
@@ -111,7 +114,7 @@ public class ElasticsearchExternalRequestReporterTest extends AbstractElasticsea
 		reportSpan(250);
 		reportSpan(1000);
 
-		Mockito.verify(elasticsearchClient, Mockito.times(2)).index(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any());
+		Mockito.verify(httpClient, times(2)).send(any(), any(), any(), any(), any());
 		verifyTimerCreated(2);
 	}
 

@@ -44,6 +44,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ElasticsearchClient {
 
 	public static final Map<String, String> CONTENT_TYPE_JSON = Collections.singletonMap("Content-Type", "application/json");
+	public static final Map<String, String> CONTENT_TYPE_NDJSON = Collections.singletonMap("Content-Type", "application/x-ndjson");
+	private static final String BULK = "/_bulk";
 	private final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
@@ -179,22 +181,22 @@ public class ElasticsearchClient {
 		return json.toString();
 	}
 
-	public void sendClassPathRessourceBulkAsync(final String resource) {
-		sendBulkAsync("", new HttpClient.OutputStreamHandler() {
+	public void sendClassPathRessourceBulkAsync(final String resource, boolean logBulkErrors) {
+		sendBulkAsync(new HttpClient.OutputStreamHandler() {
 			@Override
 			public void withHttpURLConnection(OutputStream os) throws IOException {
 				IOUtils.copy(IOUtils.getResourceAsStream(resource), os);
 				os.close();
 			}
-		});
+		}, logBulkErrors);
 	}
 
-	public void sendBulkAsync(final String endpoint, final HttpClient.OutputStreamHandler outputStreamHandler) {
+	private void sendBulkAsync(final HttpClient.OutputStreamHandler outputStreamHandler, final boolean logBulkErrors) {
 		try {
 			asyncESPool.submit(new Runnable() {
 				@Override
 				public void run() {
-					sendBulk(endpoint, outputStreamHandler);
+					sendBulk(outputStreamHandler, logBulkErrors);
 				}
 			});
 		} catch (RejectedExecutionException e) {
@@ -202,19 +204,20 @@ public class ElasticsearchClient {
 		}
 	}
 
-	public void sendBulk(String endpoint, HttpClient.OutputStreamHandler outputStreamHandler) {
+	void sendBulk(HttpClient.OutputStreamHandler outputStreamHandler, boolean logBulkErrors) {
 		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		httpClient.send("POST", corePlugin.getElasticsearchUrl() + endpoint + "/_bulk", CONTENT_TYPE_JSON, outputStreamHandler, new BulkErrorReportingResponseHandler());
+		final HttpClient.ResponseHandler<Void> responseHandler = logBulkErrors ? BulkErrorReportingResponseHandler.INSTANCE : HttpClient.NoopResponseHandler.INSTANCE;
+		httpClient.send("POST", corePlugin.getElasticsearchUrl() + BULK, CONTENT_TYPE_NDJSON, outputStreamHandler, responseHandler);
 	}
 
 	public void deleteIndices(String indexPattern) {
 		execute("DELETE", indexPattern + "?timeout=20m&ignore_unavailable=true", "Deleting indices: {}");
 	}
 
-	public void optimizeIndices(String indexPattern) {
-		execute("POST", indexPattern + "/_optimize?max_num_segments=1&timeout=1h&ignore_unavailable=true", "Optimizing indices: {}");
+	public void forceMergeIndices(String indexPattern) {
+		execute("POST", indexPattern + "/_forcemerge?max_num_segments=1&ignore_unavailable=true", "Force merging indices: {}");
 	}
 
 	public void updateIndexSettings(String indexPattern, Map<String, ?> settings) {
@@ -222,7 +225,7 @@ public class ElasticsearchClient {
 			return;
 		}
 		final String url = corePlugin.getElasticsearchUrl() + "/" + indexPattern + "/_settings?ignore_unavailable=true";
-		logger.info("Updating index settings {}\n{}", url, settings);
+		logger.info("Updating index settings {}\n{}", HttpClient.removeUserInfo(url), settings);
 		httpClient.sendAsJson("PUT", url, settings, CONTENT_TYPE_JSON);
 	}
 
@@ -231,11 +234,12 @@ public class ElasticsearchClient {
 			return;
 		}
 		final String url = corePlugin.getElasticsearchUrl() + "/" + path;
-		logger.info(logMessage, url);
+		String urlWithoutAuthInfo = HttpClient.removeUserInfo(url);
+		logger.info(logMessage, urlWithoutAuthInfo);
 		try {
 			httpClient.send(method, url);
 		} finally {
-			logger.info(logMessage, "Done " + url);
+			logger.info(logMessage, "Done " + urlWithoutAuthInfo);
 		}
 	}
 
@@ -289,7 +293,7 @@ public class ElasticsearchClient {
 		}
 
 		if (optimizeAndMoveIndicesToColdNodesOlderThanDays > 0) {
-			final TimerTask optimizeIndicesTask = new OptimizeIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
+			final TimerTask optimizeIndicesTask = new ForceMergeIndicesTask(corePlugin.getIndexSelector(), indexPrefix,
 					optimizeAndMoveIndicesToColdNodesOlderThanDays, this);
 			timer.schedule(optimizeIndicesTask, DateUtils.getNextDateAtHour(3), DateUtils.getDayInMillis());
 		}
@@ -307,12 +311,25 @@ public class ElasticsearchClient {
 		return !corePlugin.getElasticsearchUrls().isEmpty() && elasticsearchAvailable.get();
 	}
 
+	public HttpClient getHttpClient() {
+		return httpClient;
+	}
+
+	public String getElasticsearchUrl() {
+		return corePlugin.getElasticsearchUrl();
+	}
+
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
+
+		public static BulkErrorReportingResponseHandler INSTANCE = new BulkErrorReportingResponseHandler();
 
 		private static final int MAX_BULK_ERROR_LOG_SIZE = 256;
 		private static final String ERROR_PREFIX = "Error(s) while sending a _bulk request to elasticsearch: {}";
 
 		private static final Logger logger = LoggerFactory.getLogger(BulkErrorReportingResponseHandler.class);
+
+		private BulkErrorReportingResponseHandler() {
+		}
 
 		@Override
 		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
@@ -323,9 +340,9 @@ public class ElasticsearchClient {
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
 			final JsonNode errors = bulkResponse.get("errors");
 			if (errors != null && errors.booleanValue()) {
-				logger.warn(ERROR_PREFIX, reportBulkErrors(bulkResponse.get("items")));
+				logger.warn(ERROR_PREFIX, statusCode, reportBulkErrors(bulkResponse.get("items")));
 			} else if (bulkResponse.get("error") != null) {
-				logger.warn(ERROR_PREFIX, bulkResponse);
+				logger.warn(ERROR_PREFIX, statusCode, bulkResponse);
 			}
 			return null;
 		}
@@ -374,6 +391,38 @@ public class ElasticsearchClient {
 			return sb.toString();
 		}
 
+	}
+
+	public abstract static class BulkErrorCountingResponseHandler implements HttpClient.ResponseHandler<Void> {
+
+		@Override
+		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
+			if (is == null) {
+				return null;
+			}
+			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
+			final JsonNode errors = bulkResponse.get("errors");
+			if (errors != null && errors.booleanValue()) {
+				reportBulkErrors(bulkResponse.get("items"));
+			}
+			return null;
+		}
+
+		private void reportBulkErrors(JsonNode items) {
+			int errorCount = 0;
+			for (JsonNode item : items) {
+				for (JsonNode action : item) {
+					if (action.has("error")) {
+						errorCount++;
+					}
+				}
+			}
+			if (errorCount > 0) {
+				onBulkError(errorCount);
+			}
+		}
+
+		public abstract void onBulkError(int errorCount);
 	}
 
 	private class CheckEsAvailability extends TimerTask {

@@ -17,12 +17,6 @@
             "mapping" : {
               "type": "keyword", "ignore_above" : 256 }
             }
-        },
-        {
-          "parameters": {
-            "path_match": "parameters.*",
-            "mapping": { "type": "keyword" }
-          }
         }
       ],
       "_all":                  { "enabled": false },
@@ -47,6 +41,13 @@
             "requestType":       {"type": "keyword" },
             "executionCount":    {"type": "integer" },
             "executionTime":     {"type": "double" }
+          }
+        },
+        "params":{
+          "type": "object",
+          "properties": {
+            "key":         {"type": "keyword" },
+            "value":       {"type": "keyword" }
           }
         }
       }

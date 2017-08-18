@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -72,9 +73,14 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 
 	@Override
 	public void reload() throws IOException {
-		final JsonNode source = elasticsearchClient.getJson(path).get("_source").get("configuration");
-		List<EsConfigurationDto> configAsList = JsonUtils.getMapper().readValue(source.traverse(), new TypeReference<List<EsConfigurationDto>>() {});
-		configuration = EsConfigurationDto.toMap(configAsList);
+		try {
+			final JsonNode source = elasticsearchClient.getJson(path).get("_source").get("configuration");
+			List<EsConfigurationDto> configAsList = JsonUtils.getMapper().readValue(source.traverse(), new TypeReference<List<EsConfigurationDto>>() {
+			});
+			configuration = EsConfigurationDto.toMap(configAsList);
+		} catch (FileNotFoundException e) {
+			// ignore
+		}
 	}
 
 	@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE)

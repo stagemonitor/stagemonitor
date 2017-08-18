@@ -1,5 +1,8 @@
 package org.stagemonitor.ehcache;
 
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
+
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
@@ -11,6 +14,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
+import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
@@ -43,6 +47,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			.buildWithDefault(false);
 
 	private Metric2Registry metricRegistry;
+	private HealthCheckRegistry healthCheckRegistry;
 
 	/*
 	 * TODO monitor caches by instrumenting the constructor of net.sf.ehcache.Cache
@@ -52,12 +57,14 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
 		this.metricRegistry = initArguments.getMetricRegistry();
+		healthCheckRegistry = initArguments.getHealthCheckRegistry();
 		TracingPlugin tracingPlugin = initArguments.getPlugin(TracingPlugin.class);
 		final CacheManager cacheManager = CacheManager.getCacheManager(ehCacheNameOption.getValue());
 		if (cacheManager == null) {
 			tryAgainWhenFirstRequestComesIn(tracingPlugin);
 		} else {
 			monitorCaches(cacheManager);
+			healthCheckRegistry.register("EhCache CacheManager", ImmediateResult.of(HealthCheck.Result.healthy()));
 		}
 
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
@@ -65,7 +72,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 		if (corePlugin.isReportToElasticsearch()) {
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchEhCache.json");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/EhCache.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/EhCache.bulk", true);
 		}
 	}
 
@@ -77,7 +84,15 @@ public class EhCachePlugin extends StagemonitorPlugin {
 		tracingPlugin.addSpanEventListenerFactory(new FirstOperationEventListener(tracingPlugin.getSpanWrappingTracer()) {
 			@Override
 			public void onFirstOperation(SpanWrapper spanWrapper) {
-				monitorCaches(CacheManager.getCacheManager(ehCacheNameOption.getValue()));
+				final CacheManager cacheManager = CacheManager.getCacheManager(ehCacheNameOption.getValue());
+				final HealthCheck check;
+				if (cacheManager != null) {
+					monitorCaches(cacheManager);
+					check = ImmediateResult.of(HealthCheck.Result.healthy("CacheManager found after first operation"));
+				} else {
+					check = ImmediateResult.of(HealthCheck.Result.unhealthy("CacheManager not found after first operation"));
+				}
+				healthCheckRegistry.register("EhCache CacheManager", check);
 			}
 
 			@Override

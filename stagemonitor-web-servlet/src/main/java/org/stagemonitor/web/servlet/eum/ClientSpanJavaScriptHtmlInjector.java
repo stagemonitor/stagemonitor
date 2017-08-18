@@ -17,21 +17,27 @@ public class ClientSpanJavaScriptHtmlInjector extends HtmlInjector {
 	@Override
 	public void injectHtml(InjectArguments injectArguments) {
 		final String contextPath = initArguments.getServletContext().getContextPath();
+		final StringBuilder sb = new StringBuilder()
+				.append("<script type='text/javascript'>\n")
+				.append("  (function(i,s,o,g,r,a,m) {\n")
+				.append("    i['EumObject']=r;\n")
+				.append("    i[r]=i[r] || function() {\n")
+				.append("      (i[r].q=i[r].q||[]).push(arguments)\n")
+				.append("    }\n")
+				.append("      ,i[r].l=1*new Date();\n")
+				.append("    a=s.createElement(o),\n")
+				.append("    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n")
+				.append("  })(window,document,'script','")
+				.append(contextPath)
+				.append("/stagemonitor/public/eum.js','ineum');\n")
+				.append("  \n")
+				.append("  ineum('reportingUrl', '").append(contextPath).append("/stagemonitor/public/eum');\n");
+		for (ClientSpanExtension clientSpanExtension : servletPlugin.getClientSpanExtenders()) {
+			sb.append(clientSpanExtension.getClientTraceExtensionScriptDynamicPart(injectArguments.getSpanWrapper()));
+		}
+		sb.append("</script>\n");
 		injectArguments.setContentToInjectBeforeClosingHead(
-				"<script type='text/javascript'>\n" +
-						"  (function(i,s,o,g,r,a,m) {\n" +
-						"    i['EumObject']=r;\n" +
-						"    i[r]=i[r] || function() {\n" +
-						"      (i[r].q=i[r].q||[]).push(arguments)\n" +
-						"    }\n" +
-						"      ,i[r].l=1*new Date();\n" +
-						"    a=s.createElement(o),\n" +
-						"    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n" +
-						"  })(window,document,'script','" + contextPath + "/stagemonitor/public/eum.js','ineum');\n" +
-						"  \n" +
-						"  ineum('reportingUrl', '" + contextPath + "/stagemonitor/public/eum');\n" +
-						//"  ineum('meta', 'user', 'tom.mason@example.com');\n" + // example for setting some metadata
-						"</script>\n");
+				sb.toString());
 	}
 
 	@Override

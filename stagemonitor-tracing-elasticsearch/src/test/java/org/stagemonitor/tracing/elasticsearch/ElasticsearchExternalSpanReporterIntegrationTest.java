@@ -2,7 +2,6 @@ package org.stagemonitor.tracing.elasticsearch;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.AbstractElasticsearchTest;
@@ -22,7 +21,9 @@ import java.util.concurrent.TimeUnit;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractElasticsearchTest {
@@ -38,7 +39,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		this.tracingPlugin = mock(TracingPlugin.class);
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
-		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(mock(ElasticsearchTracingPlugin.class));
+		when(configuration.getConfig(ElasticsearchTracingPlugin.class)).thenReturn(spy(new ElasticsearchTracingPlugin()));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1000000d);
@@ -53,8 +54,8 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 	@Test
 	public void reportTemplateCreated() throws Exception {
 		final JsonNode template = elasticsearchClient.getJson("/_template/stagemonitor-spans").get("stagemonitor-spans");
-		Assert.assertEquals("stagemonitor-spans-*", template.get("template").asText());
-		Assert.assertEquals(false, template.get("mappings").get("_default_").get("_all").get("enabled").asBoolean());
+		assertThat(template.get("template").asText()).as(template.toString()).isEqualTo("stagemonitor-spans-*");
+		assertThat(template.get("mappings").get("_default_").get("_all").get("enabled").asBoolean()).as(template.toString()).isEqualTo(false);
 	}
 
 	@Test
@@ -63,13 +64,14 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode hits = elasticsearchClient.getJson("/stagemonitor-spans*/_search").get("hits");
-		Assert.assertEquals(1, hits.get("total").intValue());
+		assertThat(hits.get("total").intValue()).as(hits.toString()).isEqualTo(1);
 		final JsonNode spanJson = hits.get("hits").elements().next().get("_source");
-		Assert.assertEquals("jdbc", spanJson.get("type").asText());
-		Assert.assertEquals("SELECT", spanJson.get("method").asText());
-		Assert.assertEquals(100, spanJson.get("duration_ms").asInt());
-		Assert.assertEquals("SELECT * from STAGEMONITOR where 1 < 2", spanJson.get("db").get("statement").asText());
-		Assert.assertEquals("ElasticsearchExternalSpanReporterIntegrationTest#test", spanJson.get("name").asText());
+		assertThat(spanJson.get("type").asText()).as(spanJson.toString()).isEqualTo("jdbc");
+		assertThat(spanJson.get("method").asText()).as(spanJson.toString()).isEqualTo("SELECT");
+		assertThat(spanJson.get("db.statement")).as(spanJson.toString()).isNotNull();
+		assertThat(spanJson.get("db.statement").asText()).as(spanJson.toString()).isEqualTo("SELECT * from STAGEMONITOR where 1 < 2");
+		assertThat(spanJson.get("duration_ms").asInt()).as(spanJson.toString()).isEqualTo(100);
+		assertThat(spanJson.get("name").asText()).as(spanJson.toString()).isEqualTo("ElasticsearchExternalSpanReporterIntegrationTest#test");
 	}
 
 	private SpanWrapper getSpan(long executionTimeMillis) {

@@ -4,6 +4,7 @@ dependencies {
 	compile "io.dropwizard.metrics:metrics-graphite:$metricsVersion"
 	compile "io.dropwizard.metrics:metrics-annotation:$metricsVersion"
 	compile "io.dropwizard.metrics:metrics-json:$metricsVersion"
+	compile "io.dropwizard.metrics:metrics-healthchecks:$metricsVersion"
 	compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 	compile "com.fasterxml.jackson.module:jackson-module-afterburner:$jacksonVersion"
 	compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"

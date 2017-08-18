@@ -1,5 +1,8 @@
 package org.stagemonitor.core.instrument;
 
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
+
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -11,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.util.IOUtils;
 
@@ -53,7 +57,8 @@ public class AgentAttacher {
 		}
 	};
 
-	private static CorePlugin corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
+	private static final CorePlugin corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
+	private static final HealthCheckRegistry healthCheckRegistry = Stagemonitor.getHealthCheckRegistry();
 	private static boolean runtimeAttached = false;
 	private static Set<String> hashCodesOfClassLoadersToIgnore = Collections.emptySet();
 	private static Instrumentation instrumentation;
@@ -96,6 +101,7 @@ public class AgentAttacher {
 	}
 
 	private static boolean initInstrumentation() {
+		healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy("Unknown error")));
 		try {
 			try {
 				instrumentation = ByteBuddyAgent.getInstrumentation();
@@ -105,6 +111,7 @@ public class AgentAttacher {
 								new EhCacheAttachmentProvider(),
 								ByteBuddyAgent.AttachmentProvider.DEFAULT));
 			}
+			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.healthy()));
 			ensureDispatcherIsAppendedToBootstrapClasspath(instrumentation);
 			if (!Dispatcher.getValues().containsKey(IGNORED_CLASSLOADERS_KEY)) {
 				Dispatcher.put(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
@@ -112,10 +119,12 @@ public class AgentAttacher {
 			hashCodesOfClassLoadersToIgnore = Dispatcher.get(IGNORED_CLASSLOADERS_KEY);
 			return true;
 		} catch (Exception e) {
-			logger.warn("Failed to perform runtime attachment of the stagemonitor agent. Make sure that you run your " +
+			final String msg = "Failed to perform runtime attachment of the stagemonitor agent. Make sure that you run your " +
 					"application with a JDK (not a JRE)." +
 					"To make stagemonitor work with a JRE, you have to add the following command line argument to the " +
-					"start of the JVM: -javaagent:/path/to/byte-buddy-agent-<version>.jar", e);
+					"start of the JVM: -javaagent:/path/to/byte-buddy-agent-<version>.jar";
+			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy(msg)));
+			logger.warn(msg, e);
 			return false;
 		}
 	}

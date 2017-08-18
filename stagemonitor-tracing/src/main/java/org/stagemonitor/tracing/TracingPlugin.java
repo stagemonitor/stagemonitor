@@ -84,7 +84,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.buildWithDefault(false);
 	private final ConfigurationOption<Collection<Pattern>> confidentialParameters = ConfigurationOption.regexListOption()
 			.key("stagemonitor.tracing.params.confidential.regex")
-			.aliasKeys("stagemonitor.requestmonitor.params.confidential.regex")
+			.aliasKeys("stagemonitor.requestmonitor.requestparams.confidential.regex", "stagemonitor.requestmonitor.params.confidential.regex")
 			.dynamic(true)
 			.label("Confidential parameters (regex)")
 			.description("A list of request parameter name patterns that should not be collected.\n" +
@@ -387,7 +387,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
 
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Metrics.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Metrics.bulk", true);
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 		}
 
@@ -659,6 +659,10 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	public void addReporter(SpanReporter spanReporter) {
 		reportingSpanEventListener.addReporter(spanReporter);
+	}
+
+	public ReportingSpanEventListener getReportingSpanEventListener() {
+		return reportingSpanEventListener;
 	}
 
 	public boolean isTrackMetricsAsync() {

@@ -2,6 +2,8 @@ package org.stagemonitor.alerting.incident;
 
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Collection;
 
 public class ElasticsearchIncidentRepository implements IncidentRepository {
@@ -20,12 +22,25 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 
 	@Override
 	public Incident getIncidentByCheckId(String checkId) {
-		return elasticsearchClient.getObject(BASE_URL + "/" + checkId, Incident.class);
+		return elasticsearchClient.getObject(BASE_URL + "/" + getEsId(checkId), Incident.class);
 	}
 
 	@Override
 	public boolean deleteIncident(Incident incident) {
-		return hasNoConflict(elasticsearchClient.sendRequest("DELETE", BASE_URL + "/" + incident.getCheckId() + getVersionParameter(incident)));
+		return hasNoConflict(elasticsearchClient.sendRequest("DELETE", BASE_URL + "/" + getEsId(incident) + getVersionParameter(incident)));
+	}
+
+	private String getEsId(Incident incident) {
+		final String checkId = incident.getCheckId();
+		return getEsId(checkId);
+	}
+
+	private String getEsId(String checkId) {
+		try {
+			return URLEncoder.encode(checkId, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -38,7 +53,7 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 
 	@Override
 	public boolean updateIncident(Incident incident) {
-		return hasNoConflict(elasticsearchClient.sendAsJson("PUT", BASE_URL + "/" + incident.getCheckId() + getVersionParameter(incident), incident));
+		return hasNoConflict(elasticsearchClient.sendAsJson("PUT", BASE_URL + "/" + getEsId(incident) + getVersionParameter(incident), incident));
 	}
 
 	@Override

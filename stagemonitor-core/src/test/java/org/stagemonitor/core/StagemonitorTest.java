@@ -1,11 +1,12 @@
 package org.stagemonitor.core;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 
 import java.util.Arrays;
@@ -18,16 +19,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class StagemonitorTest {
 
 	private static ConfigurationRegistry originalConfiguration;
+	private final HealthCheckRegistry healthCheckRegistry = Stagemonitor.getHealthCheckRegistry();
 	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 	private CorePlugin corePlugin = mock(CorePlugin.class);
-	private Logger logger = mock(Logger.class);
 
 	@BeforeClass
 	public static void beforeClass() {
@@ -46,13 +45,18 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		Stagemonitor.reset();
 		Stagemonitor.setConfiguration(configuration);
-		Stagemonitor.setLogger(logger);
 		assertFalse(Stagemonitor.isStarted());
+		for (String name : healthCheckRegistry.getNames()) {
+			healthCheckRegistry.unregister(name);
+		}
 	}
 
 	@After
 	public void after() {
 		Stagemonitor.reset();
+		for (String name : healthCheckRegistry.getNames()) {
+			healthCheckRegistry.unregister(name);
+		}
 	}
 
 	@Test
@@ -68,8 +72,8 @@ public class StagemonitorTest {
 		assertTrue(Stagemonitor.isStarted());
 		assertTrue(Stagemonitor.getMeasurementSession().isInitialized());
 		assertSame(measurementSession, Stagemonitor.getMeasurementSession());
-		verify(logger).info("Initializing plugin {}", "TestPlugin");
-		verify(logger).info("Initializing plugin {}", "TestExceptionPlugin");
+		assertThat(healthCheckRegistry.runHealthCheck("TestPlugin").isHealthy()).isTrue();
+		assertThat(healthCheckRegistry.runHealthCheck("TestExceptionPlugin").isHealthy()).isFalse();
 	}
 
 	@Test
@@ -82,8 +86,7 @@ public class StagemonitorTest {
 		assertTrue(Stagemonitor.isDisabled());
 		assertFalse(Stagemonitor.isStarted());
 		assertFalse(Stagemonitor.getMeasurementSession().isInitialized());
-		verify(logger, times(0)).info("Initializing plugin {}", "TestPlugin");
-		verify(logger, times(0)).info("Initializing plugin {}", "TestExceptionPlugin");
+		assertThat(healthCheckRegistry.getNames()).doesNotContain("TestPlugin", "TestExceptionPlugin");
 	}
 
 	@Test
@@ -93,9 +96,9 @@ public class StagemonitorTest {
 
 		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance"));
 
-		verify(logger).info("Initializing plugin {}", "TestPlugin");
-		verify(logger).info("Not initializing disabled plugin {}", "TestExceptionPlugin");
-		verify(logger, times(0)).info("Initializing plugin {}", "TestExceptionPlugin");
+		assertThat(healthCheckRegistry.runHealthCheck("TestPlugin").isHealthy()).isTrue();
+		assertThat(healthCheckRegistry.runHealthCheck("TestExceptionPlugin").isHealthy()).isFalse();
+		assertThat(healthCheckRegistry.runHealthCheck("TestExceptionPlugin").getMessage()).isEqualTo("disabled via configuration");
 	}
 
 	@Test

@@ -13,6 +13,9 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -39,6 +42,13 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 		refresh();
 		configurationSource.reload();
 		assertEquals("baz", configurationSource.getValue("foo.bar"));
+	}
+
+	@Test
+	public void testGetFromNonExistingConfigurationProfile() throws Exception {
+		configurationSource = new ElasticsearchConfigurationSource(elasticsearchClient, UUID.randomUUID().toString());
+		configurationSource.reload();
+		assertThat(configurationSource.getValue("foo")).isNull();
 	}
 
 	@Test

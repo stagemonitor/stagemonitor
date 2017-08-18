@@ -1,13 +1,17 @@
 package org.stagemonitor.core;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.PropertyFileConfigurationSource;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -22,6 +26,16 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 
 	volatile boolean initialized;
 	List<Runnable> onInitCallbacks = new CopyOnWriteArrayList<Runnable>();
+	private final String version;
+
+	protected StagemonitorPlugin() {
+		final Properties properties = PropertyFileConfigurationSource.getFromClasspath("version.properties", getClass().getClassLoader());
+		if (properties != null) {
+			version = properties.getProperty("version");
+		} else {
+			version = null;
+		}
+	}
 
 	public boolean isInitialized() {
 		return initialized;
@@ -90,6 +104,10 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 		}
 	}
 
+	public String getVersion() {
+		return version;
+	}
+
 	/**
 	 * Plugins can define dependencies on other plugins.
 	 * <p/>
@@ -105,11 +123,13 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 		private final Metric2Registry metricRegistry;
 		private final ConfigurationRegistry configuration;
 		private final MeasurementSession measurementSession;
+		private final HealthCheckRegistry healthCheckRegistry;
 
-		public InitArguments(Metric2Registry metricRegistry, ConfigurationRegistry configuration, MeasurementSession measurementSession) {
+		public InitArguments(Metric2Registry metricRegistry, ConfigurationRegistry configuration, MeasurementSession measurementSession, HealthCheckRegistry healthCheckRegistry) {
 			this.metricRegistry = metricRegistry;
 			this.configuration = configuration;
 			this.measurementSession = measurementSession;
+			this.healthCheckRegistry = healthCheckRegistry;
 		}
 
 		public Metric2Registry getMetricRegistry() {
@@ -131,6 +151,10 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 
 		public MeasurementSession getMeasurementSession() {
 			return measurementSession;
+		}
+
+		public HealthCheckRegistry getHealthCheckRegistry() {
+			return healthCheckRegistry;
 		}
 	}
 

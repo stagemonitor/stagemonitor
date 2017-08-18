@@ -62,16 +62,16 @@ public final class PropertyFileConfigurationSource extends AbstractConfiguration
 		if (location == null) {
 			return null;
 		}
-		Properties props = getFromClasspath(location);
+		Properties props = getFromClasspath(location, PropertyFileConfigurationSource.class.getClassLoader());
 		if (props == null) {
 			props = getFromFileSystem(location);
 		}
 		return props;
 	}
 
-	private static Properties getFromClasspath(String classpathLocation) {
+	public static Properties getFromClasspath(String classpathLocation, ClassLoader classLoader) {
 		final Properties props = new Properties();
-		InputStream resourceStream = PropertyFileConfigurationSource.class.getClassLoader().getResourceAsStream(classpathLocation);
+		InputStream resourceStream = classLoader.getResourceAsStream(classpathLocation);
 		if (resourceStream != null) {
 			try {
 				props.load(resourceStream);

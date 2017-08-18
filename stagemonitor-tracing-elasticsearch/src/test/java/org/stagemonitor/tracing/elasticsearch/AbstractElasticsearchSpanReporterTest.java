@@ -11,7 +11,7 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.tracing.MockTracer;
+import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TagRecordingSpanEventListener;
@@ -30,13 +30,16 @@ import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class AbstractElasticsearchSpanReporterTest {
 	protected ElasticsearchClient elasticsearchClient;
+	protected HttpClient httpClient = mock(HttpClient.class);
 	protected TracingPlugin tracingPlugin;
 	protected ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 	protected Logger spanLogger;
@@ -45,13 +48,14 @@ public class AbstractElasticsearchSpanReporterTest {
 	protected CorePlugin corePlugin;
 	protected Map<String, Object> tags;
 	protected ReportingSpanEventListener reportingSpanEventListener;
+	protected MockTracer mockTracer;
 
 	@Before
 	public void setUp() throws Exception {
 		configuration = mock(ConfigurationRegistry.class);
 		corePlugin = mock(CorePlugin.class);
 		tracingPlugin = mock(TracingPlugin.class);
-		elasticsearchTracingPlugin = mock(ElasticsearchTracingPlugin.class);
+		elasticsearchTracingPlugin = spy(new ElasticsearchTracingPlugin());
 
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
@@ -73,13 +77,15 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
+		when(elasticsearchClient.getHttpClient()).thenReturn(httpClient);
 		registry = new Metric2Registry();
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		spanLogger = mock(Logger.class);
 		tags = new HashMap<>();
 		when(tracingPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
 		reportingSpanEventListener = new ReportingSpanEventListener(configuration);
-		final SpanWrappingTracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(),
+		mockTracer = new MockTracer();
+		final SpanWrappingTracer tracer = TracingPlugin.createSpanWrappingTracer(mockTracer,
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);

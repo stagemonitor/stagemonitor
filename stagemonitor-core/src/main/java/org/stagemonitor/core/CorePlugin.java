@@ -6,6 +6,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.health.HealthCheck;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +36,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -190,7 +189,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("Sets the number of replicas of the Elasticsearch index templates.")
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(0);
 	private final ConfigurationOption<Integer> numberOfShards = ConfigurationOption.integerOption()
 			.key("stagemonitor.reporting.elasticsearch.numberOfShards")
 			.aliasKeys("stagemonitor.elasticsearch.numberOfShards")
@@ -199,7 +198,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.description("Sets the number of shards of the Elasticsearch index templates.")
 			.tags(METRICS_STORE, ELASTICSEARCH)
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.build();
+			.buildWithDefault(1);
 	private final ConfigurationOption<String> applicationName = ConfigurationOption.stringOption()
 			.key("stagemonitor.applicationName")
 			.dynamic(false)
@@ -246,7 +245,9 @@ public class CorePlugin extends StagemonitorPlugin {
 			.label("Elasticsearch configuration source profiles")
 			.description("Set configuration profiles of configuration stored in elasticsearch as a centralized configuration source " +
 					"that can be shared between multiple server instances. Set the profiles appropriate to the current " +
-					"environment e.g. `production,common`, `local`, `test`, ... The configuration will be stored under " +
+					"environment e.g. `common,prod`, `local`, `test`, ..." +
+					"When you provide multiple profiles, the later ones have precedence over the first ones. " +
+					"The configuration will be stored under " +
 					"`{stagemonitor.reporting.elasticsearch.url}/stagemonitor-configuration/configuration/{configurationSourceProfile}`.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(Collections.<String>emptyList());
@@ -423,9 +424,19 @@ public class CorePlugin extends StagemonitorPlugin {
 			}
 		});
 
-		ElasticsearchClient elasticsearchClient = getElasticsearchClient();
+		final ElasticsearchClient elasticsearchClient = getElasticsearchClient();
 		createKibanaIndexAndMappings(elasticsearchClient);
 		sendConfigurationMappingAsync(elasticsearchClient);
+		initArguments.getHealthCheckRegistry().register("Elasticsearch", new HealthCheck() {
+			@Override
+			protected Result check() throws Exception {
+				if (elasticsearchClient.isElasticsearchAvailable()) {
+					return Result.healthy();
+				} else {
+					return Result.unhealthy("Elasticsearch is not available");
+				}
+			}
+		});
 
 		if (isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = getGrafanaClient();
@@ -517,7 +528,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
 									   final MeasurementSession measurementSession) {
 		if (isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("stagemonitor-metrics-kibana-index-pattern.bulk");
+			elasticsearchClient.sendClassPathRessourceBulkAsync("stagemonitor-metrics-kibana-index-pattern.bulk", false);
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrlsWithoutAuthenticationInformation(), reportingInterval);
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
 					metricsIndexTemplate.getValue(), moveToColdNodesAfterDays.getValue(), getNumberOfReplicas(), getNumberOfShards());
@@ -691,22 +702,12 @@ public class CorePlugin extends StagemonitorPlugin {
 		final ArrayList<String> result = new ArrayList<String>(urls.size());
 		for (String url : urls) {
 			if (url.contains("@")) {
-				result.add(removeUserInfo(url));
+				result.add(HttpClient.removeUserInfo(url));
 			} else {
 				result.add(url);
 			}
 		}
 		return result;
-	}
-
-	private String removeUserInfo(String url) {
-		String userInfo = "";
-		try {
-			userInfo = new URL(url).getUserInfo();
-		} catch (MalformedURLException e) {
-			logger.warn("Suppressed exception", e);
-		}
-		return url.replace(userInfo, "XXXX:XXXX");
 	}
 
 	public Collection<String> getElasticsearchConfigurationSourceProfiles() {

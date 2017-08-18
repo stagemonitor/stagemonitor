@@ -2,21 +2,30 @@ package org.stagemonitor.core;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.core.instrument.AgentAttacher;
+import org.stagemonitor.core.metrics.health.ImmediateResult;
+import org.stagemonitor.core.metrics.health.OverridableHealthCheckRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.HttpClient;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -34,6 +43,7 @@ public final class Stagemonitor {
 	private static Iterable<StagemonitorPlugin> plugins;
 	private static List<Runnable> onShutdownActions = new CopyOnWriteArrayList<Runnable>();
 	private static Metric2Registry metric2Registry = new Metric2Registry(SharedMetricRegistries.getOrCreate("stagemonitor"));
+	private static HealthCheckRegistry healthCheckRegistry = new OverridableHealthCheckRegistry();
 
 	static {
 		try {
@@ -104,6 +114,75 @@ public final class Stagemonitor {
 				}
 			}));
 		}
+
+		logStatus();
+		logConfiguration();
+	}
+
+	private static void logStatus() {
+		logger.info("# stagemonitor status");
+		logger.info("System information: {}", getJvmAndOsVersionString());
+		for (Map.Entry<String, HealthCheck.Result> entry : healthCheckRegistry.runHealthChecks().entrySet()) {
+			String status = entry.getValue().isHealthy() ? "OK  " : "FAIL";
+			String message = entry.getValue().getMessage() == null ? "" : "(" + entry.getValue().getMessage() + ")";
+			final String checkName = entry.getKey();
+			logger.info("{} - {} {}", status, checkName, message);
+			final Throwable error = entry.getValue().getError();
+			if (error != null) {
+				logger.warn("Exception thrown while initializing plugin", error);
+			}
+		}
+	}
+
+	private static String getJvmAndOsVersionString() {
+		return "Java " + System.getProperty("java.version") + " (" + System.getProperty("java.vendor") + ") " +
+				System.getProperty("os.name") + " " + System.getProperty("os.version");
+	}
+
+	private static void logConfiguration() {
+		logger.info("# stagemonitor configuration, listing non-default values:");
+		boolean hasOnlyDefaultOptions = true;
+
+		for (List<ConfigurationOption<?>> options : configuration.getConfigurationOptionsByCategory().values()) {
+			for (ConfigurationOption<?> option : options) {
+				if (!option.isDefault()) {
+					hasOnlyDefaultOptions = false;
+					logger.info("{}: {} (source: {})",
+							option.getKey(), prepareOptionValueForLog(option), option.getNameOfCurrentConfigurationSource());
+				}
+			}
+		}
+
+		if (hasOnlyDefaultOptions) {
+			logger.warn("stagemonitor has not been configured. Have a look at");
+			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/How-should-I-configure-stagemonitor%3F");
+			logger.warn("and");
+			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/Configuration-Options");
+			logger.warn("for further instructions");
+		}
+	}
+
+	private static String prepareOptionValueForLog(ConfigurationOption<?> option) {
+		if (option.isSensitive()) {
+			return "XXXX";
+		} else {
+			String trimmedValue;
+
+			try {
+				new URL(option.getValueAsString()); // prevent logging of exception in removeUserInfo
+				trimmedValue = HttpClient.removeUserInfo(option.getValueAsString());
+			} catch (MalformedURLException e) {
+				trimmedValue = option.getValueAsString();
+			}
+
+			trimmedValue = trimmedValue.replace("\n", "");
+
+			int maximumLineLength = 55;
+			if (trimmedValue.length() > maximumLineLength) {
+				trimmedValue = trimmedValue.substring(0, maximumLineLength - 3) + "...";
+			}
+			return trimmedValue;
+		}
 	}
 
 	private static void initializePlugins() {
@@ -145,6 +224,7 @@ public final class Stagemonitor {
 			final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 			if (disabledPlugins.contains(pluginName)) {
 				logger.info("Not initializing disabled plugin {}", pluginName);
+				healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.unhealthy("disabled via configuration")));
 			} else {
 				notYetInitialized.add(stagemonitorPlugin);
 			}
@@ -153,17 +233,18 @@ public final class Stagemonitor {
 	}
 
 	private static void initializePlugin(final StagemonitorPlugin stagemonitorPlugin) {
-		String pluginName = stagemonitorPlugin.getClass().getSimpleName();
-		logger.info("Initializing plugin {}", pluginName);
+		final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 		try {
-			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession));
+			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession, healthCheckRegistry));
 			stagemonitorPlugin.initialized = true;
 			for (Runnable onInitCallback : stagemonitorPlugin.onInitCallbacks) {
 				onInitCallback.run();
 			}
 			stagemonitorPlugin.registerWidgetTabPlugins(new StagemonitorPlugin.WidgetTabPluginsRegistry(pathsOfWidgetTabPlugins));
 			stagemonitorPlugin.registerWidgetMetricTabPlugins(new StagemonitorPlugin.WidgetMetricTabPluginsRegistry(pathsOfWidgetMetricTabPlugins));
-		} catch (Exception e) {
+			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.healthy("version " + stagemonitorPlugin.getVersion())));
+		} catch (final Exception e) {
+			healthCheckRegistry.register(pluginName, ImmediateResult.of(HealthCheck.Result.unhealthy(e)));
 			logger.warn("Error while initializing plugin " + pluginName + " (this exception is ignored)", e);
 		}
 	}
@@ -205,6 +286,10 @@ public final class Stagemonitor {
 
 	public static Metric2Registry getMetric2Registry() {
 		return metric2Registry;
+	}
+
+	public static HealthCheckRegistry getHealthCheckRegistry() {
+		return healthCheckRegistry;
 	}
 
 	public static ConfigurationRegistry getConfiguration() {
@@ -267,8 +352,18 @@ public final class Stagemonitor {
 		if (configuration == null) {
 			reloadPluginsAndConfiguration();
 		}
-		tryStartMonitoring();
 		onShutdownActions.add(AgentAttacher.performRuntimeAttachment());
+		tryStartMonitoring();
+		healthCheckRegistry.register("Startup", new HealthCheck() {
+			@Override
+			protected Result check() throws Exception {
+				if (started) {
+					return Result.healthy();
+				} else {
+					return Result.unhealthy("stagemonitor is not started");
+				}
+			}
+		});
 	}
 
 	private static void tryStartMonitoring() {

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -72,7 +73,7 @@ public class HttpClient {
 	}
 
 	public int send(final String method, final String url, final Map<String, String> headerFields, OutputStreamHandler outputStreamHandler) {
-		Integer result = send(method, url, headerFields, outputStreamHandler, new ErrorLoggingResponseHandler(url));
+		Integer result = send(method, url, headerFields, outputStreamHandler, new ErrorLoggingResponseHandler(removeUserInfo(url)));
 		return result == null ? -1 : result;
 	}
 
@@ -82,8 +83,8 @@ public class HttpClient {
 		HttpURLConnection connection = null;
 		InputStream inputStream = null;
 		try {
-			URL parsedUrl = new URL(url);
-			connection = (HttpURLConnection) parsedUrl.openConnection();
+		  	URL parsedUrl = new URL(url);
+		  	connection = (HttpURLConnection) parsedUrl.openConnection();
 			if (parsedUrl.getUserInfo() != null) {
 				String basicAuth = "Basic " + DatatypeConverter.printBase64Binary(parsedUrl.getUserInfo().getBytes());
 				connection.setRequestProperty("Authorization", basicAuth);
@@ -111,8 +112,8 @@ public class HttpClient {
 				try {
 					return responseHandler.handleResponse(inputStream, getResponseCodeIfPossible(connection), e);
 				} catch (IOException e1) {
-					logger.warn("Error sending {} request to url {}: {}", method, url, e.getMessage(), e);
-					logger.warn("Error handling error response for {} request to url {}: {}", method, url, e1.getMessage(), e1);
+					logger.warn("Error sending {} request to url {}: {}", method, removeUserInfo(url), e.getMessage(), e);
+					logger.warn("Error handling error response for {} request to url {}: {}", method, removeUserInfo(url), e1.getMessage(), e1);
 					try {
 						logger.trace(new String(IOUtils.readToBytes(inputStream), "UTF-8"));
 					} catch (IOException e2) {
@@ -120,7 +121,7 @@ public class HttpClient {
 					}
 				}
 			} else {
-				logger.warn("Error sending {} request to url {}: {}", method, url, e.getMessage(), e);
+				logger.warn("Error sending {} request to url {}: {}", method, removeUserInfo(url), e.getMessage(), e);
 			}
 
 			return null;
@@ -159,6 +160,20 @@ public class HttpClient {
 		T handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException;
 	}
 
+	public static class NoopResponseHandler implements ResponseHandler<Void> {
+		public static NoopResponseHandler INSTANCE = new NoopResponseHandler();
+
+		private NoopResponseHandler() {
+		}
+
+		@Override
+		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
+			// we have to read the whole response, otherwise bad things happen
+			IOUtils.consumeAndClose(is);
+			return null;
+		}
+	}
+
 	private static class ErrorLoggingResponseHandler implements ResponseHandler<Integer> {
 
 		private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -182,4 +197,18 @@ public class HttpClient {
 			return statusCode;
 		}
 	}
+
+	public static String removeUserInfo(String url) {
+	  	Logger logger = LoggerFactory.getLogger("HttpClient");
+	  	String userInfo = "";
+		try {
+	  		userInfo = new URL(url).getUserInfo();
+		} catch (MalformedURLException e) {
+	  		logger.warn("Suppressed exception", e);
+		}
+		if (null == userInfo || userInfo.isEmpty()){
+		  return url;
+		}
+		return url.replace(userInfo, "XXXX:XXXX");
+  	}
 }
