@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link Collector} implementation for stagemonitor's {@link Metric2Registry}.
@@ -55,6 +56,9 @@ import java.util.TreeMap;
  * </p>
  */
 public class StagemonitorPrometheusCollector extends Collector {
+
+	private static final double SECONDS_IN_NANOS = TimeUnit.SECONDS.toNanos(1);
+
 	private static final Logger logger = LoggerFactory.getLogger(StagemonitorPrometheusCollector.class);
 	private Metric2Registry registry;
 
@@ -99,24 +103,26 @@ public class StagemonitorPrometheusCollector extends Collector {
 
 	/**
 	 * Export a histogram snapshot as a prometheus SUMMARY.
-	 *
+	 *  @param factor   a factor to apply to histogram values.
 	 * @param name     metric name.
+	 * @param nameExtra
 	 * @param snapshot the histogram snapshot.
 	 * @param count    the total sample count for this snapshot.
-	 * @param factor   a factor to apply to histogram values.
+	 * @param conversionFactor
 	 */
-	MetricFamilySamples fromSnapshotAndCount(MetricName name, Snapshot snapshot, long count, String helpMessage) {
+	MetricFamilySamples fromSnapshotAndCount(MetricName name, final String nameExtra, Snapshot snapshot, long count, String helpMessage, final double conversionFactor) {
 		List<String> labelKeys = addToList(name.getTagKeys(), "quantile");
+		final String fullName = name.getName() + nameExtra;
 		List<MetricFamilySamples.Sample> samples = Arrays.asList(
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.5"), snapshot.getMedian()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.75"), snapshot.get75thPercentile()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.95"), snapshot.get95thPercentile()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.98"), snapshot.get98thPercentile()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.99"), snapshot.get99thPercentile()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.999"), snapshot.get999thPercentile()),
-				new MetricFamilySamples.Sample(name.getName() + "_count", name.getTagKeys(), name.getTagValues(), count)
+				new MetricFamilySamples.Sample(fullName, labelKeys, addToList(name.getTagValues(), "0.5"), snapshot.getMedian() / conversionFactor),
+				new MetricFamilySamples.Sample(fullName, labelKeys, addToList(name.getTagValues(), "0.75"), snapshot.get75thPercentile() / conversionFactor),
+				new MetricFamilySamples.Sample(fullName, labelKeys, addToList(name.getTagValues(), "0.95"), snapshot.get95thPercentile() / conversionFactor),
+				new MetricFamilySamples.Sample(fullName, labelKeys, addToList(name.getTagValues(), "0.98"), snapshot.get98thPercentile() / conversionFactor),
+				new MetricFamilySamples.Sample(fullName, labelKeys, addToList(name.getTagValues(), "0.99"), snapshot.get99thPercentile() / conversionFactor),
+				new MetricFamilySamples.Sample(fullName, labelKeys, addToList(name.getTagValues(), "0.999"), snapshot.get999thPercentile() / conversionFactor),
+				new MetricFamilySamples.Sample(fullName + "_count", name.getTagKeys(), name.getTagValues(), count)
 		);
-		return new MetricFamilySamples(name.getName(), Type.SUMMARY, helpMessage, samples);
+		return new MetricFamilySamples(fullName, Type.SUMMARY, helpMessage, samples);
 	}
 
 	private List<String> addToList(List<String> list, String additional) {
@@ -129,16 +135,18 @@ public class StagemonitorPrometheusCollector extends Collector {
 	 * Convert histogram snapshot.
 	 */
 	MetricFamilySamples fromHistogram(MetricName name, Histogram histogram) {
-		return fromSnapshotAndCount(name, histogram.getSnapshot(), histogram.getCount(),
-				getHelpMessage(name, histogram));
+		final Snapshot snapshot = histogram.getSnapshot();
+		return fromSnapshotAndCount(name, "", snapshot,
+				snapshot.size(), getHelpMessage(name, histogram), 1.0D);
 	}
 
 	/**
 	 * Export dropwizard Timer as a histogram. Use TIME_UNIT as time unit.
 	 */
 	MetricFamilySamples fromTimer(MetricName name, Timer timer) {
-		return fromSnapshotAndCount(name, timer.getSnapshot(), timer.getCount(),
-				getHelpMessage(name, timer));
+		final Snapshot snapshot = timer.getSnapshot();
+		return fromSnapshotAndCount(name, "_seconds", snapshot,
+				snapshot.size(), getHelpMessage(name, timer), SECONDS_IN_NANOS);
 	}
 
 	/**
