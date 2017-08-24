@@ -17,4 +17,8 @@ public final class CollectionUtils {
 	public static <T> void addAfter(List<T> list, Class<? extends T> clazz, T toInsert) {
 		list.add(getIndexOf(list, clazz) + 1, toInsert);
 	}
+
+	public static int getMapCapacityForExpectedSize(int expectedSize) {
+		return (int) Math.ceil(expectedSize / 0.75);
+	}
 }

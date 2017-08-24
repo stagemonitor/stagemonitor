@@ -1,21 +1,25 @@
 package org.stagemonitor.core.metrics.prometheus;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
-
-import java.io.IOException;
-import java.util.Arrays;
-
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
-import io.prometheus.client.CollectorRegistry;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Arrays;
+
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class StagemonitorPrometheusCollectorTest {
 
@@ -131,9 +135,28 @@ public class StagemonitorPrometheusCollectorTest {
 		Thread.sleep(1L);
 		time.stop();
 		// We slept for 1Ms so we ensure that all timers are above 1ms:
-		assertTrue(registry.getSampleValue("timer", new String[]{"foo", "quantile"}, new String[]{"bar", "0.99"}) > 1000000);
-		assertEquals(Double.valueOf(1.0D), registry.getSampleValue("timer_count", new String[]{"foo"}, new String[]{"bar"}));
-		assertNotNull("Metric timer_count should exist", registry.getSampleValue("timer_count", new String[]{"foo"}, new String[]{"bar"}));
+		assertThat(registry.getSampleValue("timer_seconds", new String[]{"foo", "quantile"}, new String[]{"bar", "0.99"})).isGreaterThan(1 / 1000);
+		assertEquals(Double.valueOf(1.0D), registry.getSampleValue("timer_seconds_count", new String[]{"foo"}, new String[]{"bar"}));
+		assertNotNull("Metric timer_seconds_count should exist", registry.getSampleValue("timer_seconds_count", new String[]{"foo"}, new String[]{"bar"}));
+
+		assertHelpAndTypeOnlyOccursOnce();
 	}
 
+	@Test
+	public void testSameMetricNameDifferentTags() throws Exception {
+		metricRegistry.register(name("jvm_memory_pools").tag("memory_pool", "PS-Survivor-Space").tag("type", "usage").build(),
+				(Gauge<Double>) () -> 0.6795399983723959);
+
+		metricRegistry.register(name("jvm_memory_pools").tag("memory_pool", "PS-Survivor-Space").tag("type", "used").build(),
+				(Gauge<Long>) () -> 2137648L);
+
+		assertHelpAndTypeOnlyOccursOnce();
+	}
+
+	private void assertHelpAndTypeOnlyOccursOnce() throws IOException {
+		final StringWriter stringWriter = new StringWriter();
+		TextFormat.write004(stringWriter, registry.metricFamilySamples());
+		assertThat(stringWriter.toString()).containsOnlyOnce("# HELP");
+		assertThat(stringWriter.toString()).containsOnlyOnce("# TYPE");
+	}
 }
