@@ -100,7 +100,7 @@ public class StagemonitorPrometheusCollectorTest {
 			}
 		};
 		metricRegistry.register(name("invalid_gauge").build(), invalidGauge);
-		assertEquals(null, registry.getSampleValue("invalid_gauge"));
+		assertThat(registry.getSampleValue("invalid_gauge")).isEqualTo(-1);
 	}
 
 	@Test
@@ -136,10 +136,37 @@ public class StagemonitorPrometheusCollectorTest {
 		time.stop();
 		// We slept for 1Ms so we ensure that all timers are above 1ms:
 		assertThat(registry.getSampleValue("timer_seconds", new String[]{"foo", "quantile"}, new String[]{"bar", "0.99"})).isGreaterThan(1 / 1000);
+		assertThat(registry.getSampleValue("timer_seconds_count", new String[]{"foo"}, new String[]{"bar"})).isEqualTo(1);
+		assertThat(registry.getSampleValue("timer_seconds_sum", new String[]{"foo"}, new String[]{"bar"})).isEqualTo(-1);
+		assertThat(registry.getSampleValue("timer_meter_m1", new String[]{"foo"}, new String[]{"bar"})).isNotNull();
+		assertThat(registry.getSampleValue("timer_meter_total", new String[]{"foo"}, new String[]{"bar"})).isNotNull();
 		assertEquals(Double.valueOf(1.0D), registry.getSampleValue("timer_seconds_count", new String[]{"foo"}, new String[]{"bar"}));
 		assertNotNull("Metric timer_seconds_count should exist", registry.getSampleValue("timer_seconds_count", new String[]{"foo"}, new String[]{"bar"}));
 
-		assertHelpAndTypeOnlyOccursOnce();
+		assertTypeHelpTimer("timer");
+	}
+
+	@Test
+	public void testTwoTimers() throws IOException, InterruptedException {
+		Timer t = metricRegistry.timer(name("response_time").tag("foo", "bar").build());
+		Timer.Context time = t.time();
+		Thread.sleep(1L);
+		time.stop();
+		Timer t2 = metricRegistry.timer(name("response_time").tag("foo", "baz").build());
+		Timer.Context time2 = t2.time();
+		Thread.sleep(1L);
+		time2.stop();
+
+		assertTypeHelpTimer("response_time");
+	}
+
+	private void assertTypeHelpTimer(String timerName) throws IOException {
+		final StringWriter stringWriter = new StringWriter();
+		TextFormat.write004(stringWriter, registry.metricFamilySamples());
+		assertThat(stringWriter.toString()).containsOnlyOnce("# HELP " + timerName + "_seconds ");
+		assertThat(stringWriter.toString()).containsOnlyOnce("# TYPE " + timerName + "_seconds ");
+		assertThat(stringWriter.toString()).containsOnlyOnce("# HELP " + timerName + "_meter ");
+		assertThat(stringWriter.toString()).containsOnlyOnce("# TYPE " + timerName + "_meter ");
 	}
 
 	@Test
@@ -150,13 +177,10 @@ public class StagemonitorPrometheusCollectorTest {
 		metricRegistry.register(name("jvm_memory_pools").tag("memory_pool", "PS-Survivor-Space").tag("type", "used").build(),
 				(Gauge<Long>) () -> 2137648L);
 
-		assertHelpAndTypeOnlyOccursOnce();
-	}
-
-	private void assertHelpAndTypeOnlyOccursOnce() throws IOException {
 		final StringWriter stringWriter = new StringWriter();
 		TextFormat.write004(stringWriter, registry.metricFamilySamples());
 		assertThat(stringWriter.toString()).containsOnlyOnce("# HELP");
 		assertThat(stringWriter.toString()).containsOnlyOnce("# TYPE");
 	}
+
 }
