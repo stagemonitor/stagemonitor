@@ -1,23 +1,30 @@
 package org.stagemonitor.core.metrics.prometheus;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.SortedMap;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
-import io.prometheus.client.Collector;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import io.prometheus.client.Collector;
+import io.prometheus.client.CounterMetricFamily;
+import io.prometheus.client.GaugeMetricFamily;
+import io.prometheus.client.SummaryMetricFamily;
 
 /**
  * A {@link Collector} implementation for stagemonitor's {@link Metric2Registry}.
@@ -50,6 +57,9 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
  * </p>
  */
 public class StagemonitorPrometheusCollector extends Collector {
+
+	private static final double SECONDS_IN_NANOS = TimeUnit.SECONDS.toNanos(1);
+
 	private static final Logger logger = LoggerFactory.getLogger(StagemonitorPrometheusCollector.class);
 	private Metric2Registry registry;
 
@@ -63,10 +73,14 @@ public class StagemonitorPrometheusCollector extends Collector {
 	/**
 	 * Export counter as prometheus counter.
 	 */
-	MetricFamilySamples fromCounter(MetricName name, Counter counter) {
-		MetricFamilySamples.Sample sample = new MetricFamilySamples.Sample(name.getName(), name.getTagKeys(), name.getTagValues(),
-				(double) counter.getCount());
-		return new MetricFamilySamples(name.getName(), Type.GAUGE, getHelpMessage(name, counter), Collections.singletonList(sample));
+	private CounterMetricFamily fromCounter(List<Map.Entry<MetricName, Counter>> countersWithSameName) {
+		final Map.Entry<MetricName, Counter> first = countersWithSameName.get(0);
+		final MetricName firstName = first.getKey();
+		final CounterMetricFamily metricFamily = new CounterMetricFamily(firstName.getName(), getHelpMessage(firstName, first.getValue()), firstName.getTagKeys());
+		for (Map.Entry<MetricName, Counter> entry : countersWithSameName) {
+			metricFamily.addMetric(entry.getKey().getTagValues(), entry.getValue().getCount());
+		}
+		return metricFamily;
 	}
 
 	private static String getHelpMessage(MetricName metricName, Metric metric) {
@@ -77,95 +91,113 @@ public class StagemonitorPrometheusCollector extends Collector {
 	/**
 	 * Export gauge as a prometheus gauge.
 	 */
-	MetricFamilySamples fromGauge(MetricName name, Gauge gauge) {
-		Object obj = gauge.getValue();
-		double value;
-		if (obj instanceof Number) {
-			value = ((Number) obj).doubleValue();
-		} else if (obj instanceof Boolean) {
-			value = ((Boolean) obj) ? 1 : 0;
-		} else {
-			logger.debug("Invalid type for Gauge {}: {}", name, obj.getClass().getName());
-			return null;
+	private GaugeMetricFamily fromGauge(List<Map.Entry<MetricName, Gauge>> gaugesWithSameName) {
+		final Map.Entry<MetricName, Gauge> first = gaugesWithSameName.get(0);
+		final MetricName firstName = first.getKey();
+		final GaugeMetricFamily gaugeMetricFamily = new GaugeMetricFamily(firstName.getName(), getHelpMessage(first.getKey(), first.getValue()), first.getKey().getTagKeys());
+		for (Map.Entry<MetricName, Gauge> entry : gaugesWithSameName) {
+			gaugeMetricFamily.addMetric(entry.getKey().getTagValues(), getDoubleFromGauge(entry.getValue()));
 		}
-		MetricFamilySamples.Sample sample = new MetricFamilySamples.Sample(name.getName(), name.getTagKeys(), name.getTagValues(), value);
-		return new MetricFamilySamples(name.getName(), Type.GAUGE, getHelpMessage(name, gauge), Collections.singletonList(sample));
+		return gaugeMetricFamily;
 	}
 
-	/**
-	 * Export a histogram snapshot as a prometheus SUMMARY.
-	 *
-	 * @param name     metric name.
-	 * @param snapshot the histogram snapshot.
-	 * @param count    the total sample count for this snapshot.
-	 * @param factor   a factor to apply to histogram values.
-	 */
-	MetricFamilySamples fromSnapshotAndCount(MetricName name, Snapshot snapshot, long count, String helpMessage) {
-		List<String> labelKeys = addToList(name.getTagKeys(), "quantile");
-		List<MetricFamilySamples.Sample> samples = Arrays.asList(
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.5"), snapshot.getMedian()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.75"), snapshot.get75thPercentile()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.95"), snapshot.get95thPercentile()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.98"), snapshot.get98thPercentile()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.99"), snapshot.get99thPercentile()),
-				new MetricFamilySamples.Sample(name.getName(), labelKeys, addToList(name.getTagValues(), "0.999"), snapshot.get999thPercentile()),
-				new MetricFamilySamples.Sample(name.getName() + "_count", name.getTagKeys(), name.getTagValues(), count)
-		);
-		return new MetricFamilySamples(name.getName(), Type.SUMMARY, helpMessage, samples);
-	}
-
-	private List<String> addToList(List<String> list, String additional) {
-		final List<String> newList = new ArrayList<String>(list);
-		newList.add(additional);
-		return newList;
+	private Double getDoubleFromGauge(Gauge gauge) {
+		if (gauge.getValue() instanceof Number) {
+			return ((Number) gauge.getValue()).doubleValue();
+		} else if (gauge.getValue() instanceof Boolean) {
+			return ((Boolean) gauge.getValue()) ? 1.0 : 0;
+		} else {
+			return -1d;
+		}
 	}
 
 	/**
 	 * Convert histogram snapshot.
 	 */
-	MetricFamilySamples fromHistogram(MetricName name, Histogram histogram) {
-		return fromSnapshotAndCount(name, histogram.getSnapshot(), histogram.getCount(),
-				getHelpMessage(name, histogram));
+	private SummaryMetricFamily fromHistogram(List<Map.Entry<MetricName, Histogram>> histogramsWithSameName) {
+		final SummaryMetricFamily summaryMetricFamily = getSummaryMetricFamily(histogramsWithSameName, "");
+		for (Map.Entry<MetricName, Histogram> entry : histogramsWithSameName) {
+			addSummaryMetric(summaryMetricFamily, entry.getKey(), entry.getValue().getSnapshot(), 1.0D, entry.getValue().getCount());
+		}
+		return summaryMetricFamily;
 	}
 
 	/**
 	 * Export dropwizard Timer as a histogram. Use TIME_UNIT as time unit.
 	 */
-	MetricFamilySamples fromTimer(MetricName name, Timer timer) {
-		return fromSnapshotAndCount(name, timer.getSnapshot(), timer.getCount(),
-				getHelpMessage(name, timer));
+	private MetricFamilySamples fromTimer(List<Map.Entry<MetricName, Timer>> histogramsWithSameName) {
+		final SummaryMetricFamily summaryMetricFamily = getSummaryMetricFamily(histogramsWithSameName, "_seconds");
+		for (Map.Entry<MetricName, Timer> entry : histogramsWithSameName) {
+			addSummaryMetric(summaryMetricFamily, entry.getKey(), entry.getValue().getSnapshot(), SECONDS_IN_NANOS, entry.getValue().getCount());
+		}
+		return summaryMetricFamily;
 	}
 
-	/**
-	 * Export a Meter as as prometheus COUNTER.
-	 */
-	MetricFamilySamples fromMeter(MetricName name, Meter meter) {
-		return new MetricFamilySamples(name.getName() + "_total", Type.COUNTER, getHelpMessage(name, meter),
-				Collections.singletonList(new MetricFamilySamples.Sample(name.getName() + "_total", name.getTagKeys(),
-						name.getTagValues(), meter.getCount())));
+	private void addSummaryMetric(SummaryMetricFamily summaryMetricFamily, MetricName name, Snapshot snapshot, double conversionFactor, long count) {
+		summaryMetricFamily.addMetric(name.getTagValues(), count, -1, Arrays.asList(snapshot.getMedian() / conversionFactor,
+				snapshot.get75thPercentile() / conversionFactor,
+				snapshot.get95thPercentile() / conversionFactor,
+				snapshot.get98thPercentile() / conversionFactor,
+				snapshot.get99thPercentile() / conversionFactor,
+				snapshot.get999thPercentile() / conversionFactor));
+	}
+
+	private <T extends Metric> SummaryMetricFamily getSummaryMetricFamily(List<Map.Entry<MetricName, T>> summariesWithSameName, String nameSuffix) {
+		final Map.Entry<MetricName, T> first = summariesWithSameName.get(0);
+		final MetricName firstName = first.getKey();
+		final String fullName = firstName.getName() + nameSuffix;
+		return new SummaryMetricFamily(fullName, getHelpMessage(first.getKey(), first.getValue()), firstName.getTagKeys(), Arrays.asList(0.5, 0.75, 0.95, 0.98, 0.99, 0.999));
+	}
+
+	private <M extends Metered> MetricFamilySamples fromMeter(List<Map.Entry<MetricName, M>> metersWithSameName, String suffix) {
+		final Map.Entry<MetricName, M> first = metersWithSameName.get(0);
+		final MetricName firstName = first.getKey();
+		ArrayList<MetricFamilySamples.Sample> sampleList = new ArrayList<MetricFamilySamples.Sample>(metersWithSameName.size());
+		final String name = firstName.getName() + suffix;
+		for (Map.Entry<MetricName, M> entry : metersWithSameName) {
+			final M metered = entry.getValue();
+			sampleList.add(new MetricFamilySamples.Sample(name + "_total", entry.getKey().getTagKeys(), entry.getKey().getTagValues(), metered.getCount()));
+			sampleList.add(new MetricFamilySamples.Sample(name + "_m1", entry.getKey().getTagKeys(), entry.getKey().getTagValues(), metered.getOneMinuteRate()));
+			sampleList.add(new MetricFamilySamples.Sample(name + "_m5", entry.getKey().getTagKeys(), entry.getKey().getTagValues(), metered.getFiveMinuteRate()));
+			sampleList.add(new MetricFamilySamples.Sample(name + "_m15", entry.getKey().getTagKeys(), entry.getKey().getTagValues(), metered.getFifteenMinuteRate()));
+		}
+		return new MetricFamilySamples(name, Type.UNTYPED, getHelpMessage(firstName, first.getValue()), sampleList);
 	}
 
 	@Override
 	public List<MetricFamilySamples> collect() {
+		groupByName(registry.getMetrics());
 		ArrayList<MetricFamilySamples> mfSamples = new ArrayList<MetricFamilySamples>(registry.getMetrics().size());
-		for (SortedMap.Entry<MetricName, Gauge> entry : registry.getGauges().entrySet()) {
-			final MetricFamilySamples metricFamilySamples = fromGauge(entry.getKey(), entry.getValue());
-			if (metricFamilySamples != null) {
-				mfSamples.add(metricFamilySamples);
-			}
+		for (List<Map.Entry<MetricName, Gauge>> entry : groupByName(registry.getGauges()).values()) {
+			mfSamples.add(fromGauge(entry));
 		}
-		for (SortedMap.Entry<MetricName, Counter> entry : registry.getCounters().entrySet()) {
-			mfSamples.add(fromCounter(entry.getKey(), entry.getValue()));
+		for (List<Map.Entry<MetricName, Counter>> entry : groupByName(registry.getCounters()).values()) {
+			mfSamples.add(fromCounter(entry));
 		}
-		for (SortedMap.Entry<MetricName, Histogram> entry : registry.getHistograms().entrySet()) {
-			mfSamples.add(fromHistogram(entry.getKey(), entry.getValue()));
+		for (List<Map.Entry<MetricName, Histogram>> entry : groupByName(registry.getHistograms()).values()) {
+			mfSamples.add(fromHistogram(entry));
 		}
-		for (SortedMap.Entry<MetricName, Timer> entry : registry.getTimers().entrySet()) {
-			mfSamples.add(fromTimer(entry.getKey(), entry.getValue()));
+		for (List<Map.Entry<MetricName, Timer>> entry : groupByName(registry.getTimers()).values()) {
+			mfSamples.add(fromTimer(entry));
+			mfSamples.add(fromMeter(entry, "_meter"));
 		}
-		for (SortedMap.Entry<MetricName, Meter> entry : registry.getMeters().entrySet()) {
-			mfSamples.add(fromMeter(entry.getKey(), entry.getValue()));
+		for (List<Map.Entry<MetricName, Meter>> entry : groupByName(registry.getMeters()).values()) {
+			mfSamples.add(fromMeter(entry, ""));
 		}
 		return mfSamples;
+	}
+
+	private <T extends Metric> Map<String, List<Map.Entry<MetricName, T>>> groupByName(Map<MetricName, T> metrics) {
+		Map<String, List<Map.Entry<MetricName, T>>> metricsByName = new HashMap<String, List<Map.Entry<MetricName, T>>>();
+		for (Map.Entry<MetricName, T> entry : metrics.entrySet()) {
+			if (metricsByName.containsKey(entry.getKey().getName())) {
+				metricsByName.get(entry.getKey().getName()).add(entry);
+			} else {
+				final ArrayList<Map.Entry<MetricName, T>> values = new ArrayList<Map.Entry<MetricName, T>>();
+				values.add(entry);
+				metricsByName.put(entry.getKey().getName(), values);
+			}
+		}
+		return metricsByName;
 	}
 }
