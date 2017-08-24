@@ -132,6 +132,30 @@ public class TracedTransformerTest {
 		assertThat("My Cool Method").isEqualTo(operationName);
 	}
 
+	@Test
+	public void testNestedTracing() throws Exception {
+		final TracedNestedTestClass testClass = new TracedNestedTestClass();
+		testClass.foo();
+		final SpanContextInformation barInfo = spanCapturingReporter.get();
+		final SpanContextInformation fooInfo = spanCapturingReporter.get();
+		assertThat(fooInfo.getOperationName()).contains("foo").doesNotContain("bar");
+		assertThat(fooInfo.getCallTree().getSignature()).contains("foo").doesNotContain("bar");
+		assertThat(fooInfo.getCallTree().getChildren().get(0).getChildren().get(0).getSignature()).contains("bar()");
+		assertThat(barInfo.getCallTree()).isNull();
+	}
+
+	public static class TracedNestedTestClass {
+
+		@Traced
+		public void foo() {
+			bar();
+		}
+
+		@Traced
+		public void bar() {
+		}
+	}
+
 	private static abstract class SuperAbstractTestClass {
 		@Traced
 		public abstract int monitorMe(int i) throws Exception;
