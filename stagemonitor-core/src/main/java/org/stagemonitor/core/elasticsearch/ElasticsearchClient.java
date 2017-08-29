@@ -340,9 +340,9 @@ public class ElasticsearchClient {
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
 			final JsonNode errors = bulkResponse.get("errors");
 			if (errors != null && errors.booleanValue()) {
-				logger.warn(ERROR_PREFIX, statusCode, reportBulkErrors(bulkResponse.get("items")));
+				logger.warn(ERROR_PREFIX, reportBulkErrors(bulkResponse.get("items")));
 			} else if (bulkResponse.get("error") != null) {
-				logger.warn(ERROR_PREFIX, statusCode, bulkResponse);
+				logger.warn(ERROR_PREFIX, bulkResponse);
 			}
 			return null;
 		}

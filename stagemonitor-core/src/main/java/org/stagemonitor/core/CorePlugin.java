@@ -204,28 +204,29 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Application name")
 			.description("The name of the application.\n" +
-					"Either this property or the display-name in web.xml is mandatory!")
+					"It is highly recommended to set this to a short and descriptive name of you application. " +
+					"The dashboards provide a filter for the application name.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
-			.build();
+			.buildWithDefault("My Application");
 	private final ConfigurationOption<String> instanceName = ConfigurationOption.stringOption()
 			.key("stagemonitor.instanceName")
 			.dynamic(false)
 			.label("Instance name")
 			.description("The instance name.\n" +
-					"If this property is not set, the instance name set to the first request's " +
-					"javax.servlet.ServletRequest#getServerName()\n" +
-					"That means that the collection of metrics does not start before the first request is executed!")
+					"The instance or stage of your application. For example prod, test, test1, dev. " +
+					"It's important to set this to a useful value because the dashboards provide filters for the instance.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("important")
-			.build();
+			.buildWithDefault("My Instance");
 	private final ConfigurationOption<String> hostName = ConfigurationOption.stringOption()
 			.key("stagemonitor.hostName")
 			.dynamic(false)
 			.label("Host name")
 			.description("The host name.\n" +
 					"If this property is not set, the host name will default to resolving the host name for localhost, " +
-					"if this fails it will be loaded from the environment, either from COMPUTERNAME or HOSTNAME.")
+					"if this fails it will be loaded from the environment, either from COMPUTERNAME, HOSTNAME or HOST. " +
+					"The dashboards provide a filter for the host name.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(getNameOfLocalHost());
 	private final ConfigurationOption<List<String>> elasticsearchUrls = ConfigurationOption.builder(ListValueConverter.STRINGS_VALUE_CONVERTER, List.class)
@@ -629,14 +630,13 @@ public class CorePlugin extends StagemonitorPlugin {
 	static String getHostNameFromEnv() {
 		// try environment properties.
 		String host = System.getenv("COMPUTERNAME");
-		if (host != null) {
-			return host;
+		if (host == null) {
+			host = System.getenv("HOSTNAME");
 		}
-		host = System.getenv("HOSTNAME");
-		if (host != null) {
-			return host;
+		if (host == null) {
+			host = System.getenv("HOST");
 		}
-		return null;
+		return host;
 	}
 
 	public boolean isStagemonitorActive() {

@@ -6,7 +6,6 @@ import org.hyperic.sigar.Sigar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -103,17 +102,11 @@ public class OsPlugin extends StagemonitorPlugin  {
 
 	public static void main(String[] args) throws InterruptedException {
 		OsConfigurationSourceInitializer.addConfigurationSource(args);
-		Stagemonitor.startMonitoring(getMeasurementSession());
+		Stagemonitor.init();
 		System.out.println("Interrupt (Ctrl + C) to exit");
 		Thread.currentThread().join();
 	}
 
-	static MeasurementSession getMeasurementSession() {
-		final CorePlugin corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
-		String applicationName = corePlugin.getApplicationName() != null ? corePlugin.getApplicationName() : "os";
-		String instanceName = corePlugin.getInstanceName() != null ? corePlugin.getInstanceName() : "host";
-		return new MeasurementSession(applicationName, corePlugin.getHostName(), instanceName);
-	}
 
 	@Override
 	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {

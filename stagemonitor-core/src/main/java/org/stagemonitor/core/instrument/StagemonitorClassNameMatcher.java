@@ -1,14 +1,18 @@
 package org.stagemonitor.core.instrument;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * An {@link ElementMatcher} with the following logic:
@@ -31,7 +35,7 @@ public class StagemonitorClassNameMatcher extends ElementMatcher.Junction.Abstra
 	public static final StagemonitorClassNameMatcher INSTANCE = new StagemonitorClassNameMatcher();
 
 	public static ElementMatcher.Junction<TypeDescription> isInsideMonitoredProject() {
-		return INSTANCE;
+		return INSTANCE.and(not(isSubTypeOf(StagemonitorByteBuddyTransformer.class)));
 	}
 
 	private StagemonitorClassNameMatcher() {
@@ -45,20 +49,14 @@ public class StagemonitorClassNameMatcher extends ElementMatcher.Junction.Abstra
 		CorePlugin corePlugin = Stagemonitor.getPlugin(CorePlugin.class);
 
 		excludeContaining = new ArrayList<String>(corePlugin.getExcludeContaining().size());
-		for (String exclude : corePlugin.getExcludeContaining()) {
-			excludeContaining.add(exclude);
-		}
+		excludeContaining.addAll(corePlugin.getExcludeContaining());
 
 		excludes = new ArrayList<String>(corePlugin.getExcludePackages().size());
 		excludes.add("org.stagemonitor");
-		for (String exclude : corePlugin.getExcludePackages()) {
-			excludes.add(exclude);
-		}
+		excludes.addAll(corePlugin.getExcludePackages());
 
 		includes = new ArrayList<String>(corePlugin.getIncludePackages().size());
-		for (String include : corePlugin.getIncludePackages()) {
-			includes.add(include);
-		}
+		includes.addAll(corePlugin.getIncludePackages());
 		if (includes.isEmpty()) {
 			logger.warn("No includes for instrumentation configured. Please set the stagemonitor.instrument.include property.");
 		}

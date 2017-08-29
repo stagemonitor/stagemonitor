@@ -57,7 +57,7 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 
 	@Before
 	public void before() throws Exception {
-		Stagemonitor.startMonitoring(new MeasurementSession("JaxRsRequestNameDeterminerTransformerTest", "testHost", "testInstance"));
+		Stagemonitor.reset(new MeasurementSession("JaxRsRequestNameDeterminerTransformerTest", "testHost", "testInstance"));
 		registry.removeMatching(Metric2Filter.ALL);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);

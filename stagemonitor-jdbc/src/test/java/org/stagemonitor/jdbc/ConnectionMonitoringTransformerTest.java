@@ -97,7 +97,7 @@ public class ConnectionMonitoringTransformerTest {
 
 	@BeforeClass
 	public static void attachProfiler() throws Exception {
-		Stagemonitor.startMonitoring(new MeasurementSession("ConnectionMonitoringTransformerTest", "test", "test"));
+		Stagemonitor.reset(new MeasurementSession("ConnectionMonitoringTransformerTest", "test", "test"));
 	}
 
 	@Before

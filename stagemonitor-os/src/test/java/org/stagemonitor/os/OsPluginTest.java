@@ -113,14 +113,6 @@ public class OsPluginTest {
 	}
 
 	@Test
-	public void testGetMeasurementSession() {
-		final MeasurementSession measurementSession = OsPlugin.getMeasurementSession();
-		assertEquals("os", measurementSession.getApplicationName());
-		assertEquals("host", measurementSession.getInstanceName());
-		assertNotNull(measurementSession.getHostName());
-	}
-
-	@Test
 	@ExcludeOnTravis
 	public void testNetworkMetrics() throws Exception {
 		final String ifname = sigar.getNetRouteList()[0].getIfname();

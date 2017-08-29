@@ -42,8 +42,7 @@ public class TracedTransformerTest {
 		metricRegistry = Stagemonitor.getMetric2Registry();
 		testClassLevelAnnotationClass = new TestClassLevelAnnotationClass();
 		metricRegistry.removeMatching(Metric2Filter.ALL);
-		Stagemonitor.setMeasurementSession(new MeasurementSession("TracedTransformerTest", "test", "test"));
-		Stagemonitor.startMonitoring();
+		Stagemonitor.reset(new MeasurementSession("TracedTransformerTest", "test", "test"));
 		spanCapturingReporter = new SpanCapturingReporter();
 		tags = new HashMap<>();
 		Stagemonitor.getPlugin(TracingPlugin.class).addSpanEventListenerFactory(new TagRecordingSpanEventListener(tags));

@@ -90,7 +90,6 @@ public class SlaCheckCreatingClassPathScannerTest {
 		Stagemonitor.init();
 		SlaTestClass.makeSureClassIsLoaded();
 		ClassLevelMonitorRequestsTestClass.makeSureClassIsLoaded();
-		Stagemonitor.startMonitoring();
 	}
 
 	@Before

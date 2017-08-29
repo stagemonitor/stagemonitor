@@ -56,7 +56,7 @@ public class MDCSpanEventListenerTest {
 
 	@Test
 	public void testMdc() throws Exception {
-		Stagemonitor.startMonitoring(new MeasurementSession("MDCSpanEventListenerTest", "testHost", "testInstance"));
+		Stagemonitor.reset(new MeasurementSession("MDCSpanEventListenerTest", "testHost", "testInstance"));
 		when(corePlugin.getMeasurementSession())
 				.thenReturn(new MeasurementSession("MDCSpanEventListenerTest", "testHost", "testInstance"));
 		mdcSpanInterceptor.onStart(spanWrapper);
@@ -76,8 +76,9 @@ public class MDCSpanEventListenerTest {
 
 	@Test
 	public void testMdcStagemonitorNotStarted() throws Exception {
-		when(corePlugin.getMeasurementSession())
-				.thenReturn(new MeasurementSession("MDCSpanEventListenerTest", "testHost", null));
+		final MeasurementSession measurementSession = new MeasurementSession("MDCSpanEventListenerTest", "testHost", null);
+		Stagemonitor.reset(measurementSession);
+		when(corePlugin.getMeasurementSession()).thenReturn(measurementSession);
 
 		mdcSpanInterceptor.onStart(spanWrapper);
 		assertEquals("testHost", MDC.get("host"));

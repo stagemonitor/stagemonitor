@@ -1,8 +1,5 @@
 package org.stagemonitor.jdbc;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheckRegistry;
-
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -10,9 +7,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
-import org.stagemonitor.core.metrics.health.ImmediateResult;
 
 import java.sql.Connection;
 import java.util.Collection;
@@ -32,14 +27,8 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 
 	private static final boolean active;
 
-	private static final HealthCheckRegistry healthCheckRegistry;
-
-	private static final String INSTRUMENTATION_DATASOURCE = "DataSource instrumentation";
-
 	static {
 		active = ConnectionMonitor.isActive(configuration.getConfig(CorePlugin.class));
-		healthCheckRegistry = Stagemonitor.getHealthCheckRegistry();
-		healthCheckRegistry.register(INSTRUMENTATION_DATASOURCE, ImmediateResult.of(HealthCheck.Result.unhealthy(active ? "No DataSource instrumented" : "disabled")));
 		connectionMonitor = new ConnectionMonitor(configuration);
 	}
 
@@ -95,9 +84,6 @@ public class ConnectionMonitoringTransformer extends StagemonitorByteBuddyTransf
 
 	@Override
 	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
-		healthCheckRegistry.register(INSTRUMENTATION_DATASOURCE, ImmediateResult.of(HealthCheck.Result.healthy("JDBC spans working")));
-		if (DEBUG_INSTRUMENTATION) {
-			logger.info("TRANSFORM DataSource {} ({})", typeDescription.getName(), getClass().getSimpleName());
-		}
+		logger.info("TRANSFORM DataSource {} ({})", typeDescription.getName(), getClass().getSimpleName());
 	}
 }

@@ -35,9 +35,10 @@ public final class Stagemonitor {
 	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
 	private static Logger logger = LoggerFactory.getLogger(Stagemonitor.class);
 	private static ConfigurationRegistry configuration;
-	private static volatile boolean started;
-	private static volatile boolean disabled;
-	private static volatile MeasurementSession measurementSession;
+	private static boolean initialized;
+	private static boolean started;
+	private static boolean disabled;
+	private static MeasurementSession measurementSession = new MeasurementSession(null, null, null);
 	private static List<String> pathsOfWidgetMetricTabPlugins = Collections.emptyList();
 	private static List<String> pathsOfWidgetTabPlugins = Collections.emptyList();
 	private static Iterable<StagemonitorPlugin> plugins;
@@ -45,7 +46,18 @@ public final class Stagemonitor {
 	private static Metric2Registry metric2Registry = new Metric2Registry(SharedMetricRegistries.getOrCreate("stagemonitor"));
 	private static HealthCheckRegistry healthCheckRegistry = new OverridableHealthCheckRegistry();
 
+	private Stagemonitor() {
+	}
+
 	static {
+		reloadPluginsAndConfiguration();
+	}
+
+	public static synchronized void init() {
+		if (initialized) {
+			return;
+		}
+		initialized = true;
 		try {
 			reset();
 		} catch (Throwable e) {
@@ -54,17 +66,7 @@ public final class Stagemonitor {
 		}
 	}
 
-	private Stagemonitor() {
-	}
-
-	/**
-	 * Just makes sure the static initializer is executed
-	 */
-	public static void init() {
-		// intentionally left blank
-	}
-
-	public static synchronized void setMeasurementSession(MeasurementSession measurementSession) {
+	private static void startMonitoring(MeasurementSession measurementSession) {
 		if (!getPlugin(CorePlugin.class).isStagemonitorActive()) {
 			logger.info("stagemonitor is deactivated");
 			disabled = true;
@@ -73,18 +75,10 @@ public final class Stagemonitor {
 			return;
 		}
 		Stagemonitor.measurementSession = measurementSession;
-	}
-
-	public static void startMonitoring() {
 		doStartMonitoring();
 	}
 
-	public static synchronized void startMonitoring(MeasurementSession measurementSession) {
-		setMeasurementSession(measurementSession);
-		startMonitoring();
-	}
-
-	private static synchronized void doStartMonitoring() {
+	private static void doStartMonitoring() {
 		if (started) {
 			return;
 		}
@@ -114,9 +108,6 @@ public final class Stagemonitor {
 				}
 			}));
 		}
-
-		logStatus();
-		logConfiguration();
 	}
 
 	private static void logStatus() {
@@ -345,15 +336,28 @@ public final class Stagemonitor {
 	/**
 	 * Should only be used outside of this class by the internal unit tests
 	 */
+	@Deprecated
 	public static void reset() {
+		reset(null);
+	}
+
+	/**
+	 * Should only be used outside of this class by the internal unit tests
+	 */
+	@Deprecated
+	public static void reset(MeasurementSession measurementSession) {
 		started = false;
 		disabled = false;
-		measurementSession = new MeasurementSession(null, null, null);
 		if (configuration == null) {
 			reloadPluginsAndConfiguration();
 		}
+		if (measurementSession == null) {
+			CorePlugin corePlugin = getPlugin(CorePlugin.class);
+			measurementSession = new MeasurementSession(corePlugin.getApplicationName(),
+					corePlugin.getHostName(), corePlugin.getInstanceName());
+		}
 		onShutdownActions.add(AgentAttacher.performRuntimeAttachment());
-		tryStartMonitoring();
+		startMonitoring(measurementSession);
 		healthCheckRegistry.register("Startup", new HealthCheck() {
 			@Override
 			protected Result check() throws Exception {
@@ -364,13 +368,8 @@ public final class Stagemonitor {
 				}
 			}
 		});
-	}
-
-	private static void tryStartMonitoring() {
-		CorePlugin corePlugin = getPlugin(CorePlugin.class);
-		MeasurementSession session = new MeasurementSession(corePlugin.getApplicationName(),
-				corePlugin.getHostName(), corePlugin.getInstanceName());
-		startMonitoring(session);
+		logStatus();
+		logConfiguration();
 	}
 
 	private static void reloadPluginsAndConfiguration() {

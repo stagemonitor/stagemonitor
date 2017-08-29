@@ -45,7 +45,7 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		Stagemonitor.reset();
 		Stagemonitor.setConfiguration(configuration);
-		assertFalse(Stagemonitor.isStarted());
+//		assertFalse(Stagemonitor.isStarted());
 		for (String name : healthCheckRegistry.getNames()) {
 			healthCheckRegistry.unregister(name);
 		}
@@ -66,8 +66,7 @@ public class StagemonitorTest {
 		Stagemonitor.reset();
 
 		final MeasurementSession measurementSession = new MeasurementSession("StagemonitorTest", "testHost", "testInstance");
-		Stagemonitor.startMonitoring(measurementSession);
-		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest2", "testHost2", "testInstance2"));
+		Stagemonitor.reset(measurementSession);
 
 		assertTrue(Stagemonitor.isStarted());
 		assertTrue(Stagemonitor.getMeasurementSession().isInitialized());
@@ -81,11 +80,11 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(false);
 
 		final MeasurementSession measurementSession = new MeasurementSession("StagemonitorTest", "testHost", "testInstance");
-		Stagemonitor.startMonitoring(measurementSession);
+		Stagemonitor.reset(measurementSession);
 
 		assertTrue(Stagemonitor.isDisabled());
 		assertFalse(Stagemonitor.isStarted());
-		assertFalse(Stagemonitor.getMeasurementSession().isInitialized());
+		assertTrue(Stagemonitor.getMeasurementSession().isInitialized());
 		assertThat(healthCheckRegistry.getNames()).doesNotContain("TestPlugin", "TestExceptionPlugin");
 	}
 
@@ -94,7 +93,7 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(corePlugin.getDisabledPlugins()).thenReturn(Collections.singletonList("TestExceptionPlugin"));
 
-		Stagemonitor.startMonitoring(new MeasurementSession("StagemonitorTest", "testHost", "testInstance"));
+		Stagemonitor.reset(new MeasurementSession("StagemonitorTest", "testHost", "testInstance"));
 
 		assertThat(healthCheckRegistry.runHealthCheck("TestPlugin").isHealthy()).isTrue();
 		assertThat(healthCheckRegistry.runHealthCheck("TestExceptionPlugin").isHealthy()).isFalse();
@@ -106,7 +105,7 @@ public class StagemonitorTest {
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 
 		final MeasurementSession measurementSession = new MeasurementSession(null, "testHost", "testInstance");
-		Stagemonitor.startMonitoring(measurementSession);
+		Stagemonitor.reset(measurementSession);
 
 		assertFalse(Stagemonitor.isStarted());
 	}
