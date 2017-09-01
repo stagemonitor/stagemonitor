@@ -115,8 +115,7 @@ public class ClientSpanServletTest {
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
 			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
-			softly.assertThat(span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + -197L));
-			softly.assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496751574200L + -197L + 518L));
+			softly.assertThat(span.finishMicros() - span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(518L));
 
 			final long redirect = 0L;
 			final long appCacheLookup = 5L;
@@ -336,9 +335,8 @@ public class ClientSpanServletTest {
 			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
-			softly.assertThat(span.startMicros()).isEqualTo(1496753245024000L);
 			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
-			softly.assertThat(span.finishMicros()).isEqualTo(1496753245024000L);
+			softly.assertThat(span.finishMicros() - span.startMicros()).isZero();
 
 			softly.assertThat(span.tags())
 					.doesNotContainEntry(Tags.SAMPLING_PRIORITY.getKey(), 0)
@@ -377,9 +375,8 @@ public class ClientSpanServletTest {
 			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
-			softly.assertThat(span.startMicros()).isEqualTo(1496753245024000L);
 			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
-			softly.assertThat(span.finishMicros()).isEqualTo(1496753245024000L);
+			softly.assertThat(span.finishMicros() - span.startMicros()).isZero();
 
 			softly.assertThat(span.tags())
 					.doesNotContainEntry(Tags.SAMPLING_PRIORITY.getKey(), 0)
@@ -422,9 +419,8 @@ public class ClientSpanServletTest {
 			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
-			softly.assertThat(span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496994284184L + 21793L));
 			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
-			softly.assertThat(span.finishMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(1496994284184L + 21793L + 2084L));
+			softly.assertThat(span.finishMicros() - span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(2084L));
 
 			softly.assertThat(span.tags())
 					.doesNotContainEntry(Tags.SAMPLING_PRIORITY.getKey(), 0)

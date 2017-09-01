@@ -178,24 +178,20 @@ public class ClientSpanServlet extends HttpServlet {
 
 	void convertWeaselBeaconToSpan(HttpServletRequest httpServletRequest) {
 		final Map<String, String[]> servletParameters = httpServletRequest.getParameterMap();
-		final long startTimeStampInMilliseconds;
-		final long possiblyOffsettedStartTimeStampInMilliseconds = Long.parseLong(httpServletRequest.getParameter(PARAMETER_TIME_STAMP));
-		final Long finishTimestampInMilliseconds;
-		final String referenceTimestampParameter = httpServletRequest.getParameter(PARAMETER_REFERENCE_TIMESTAMP);
-		if (referenceTimestampParameter == null) {
+		final long durationInMillis;
+		if (httpServletRequest.getParameter(PARAMETER_REFERENCE_TIMESTAMP) == null) {
 			// in case of error beacons no duration is existent, therefore start equals end
-			startTimeStampInMilliseconds = possiblyOffsettedStartTimeStampInMilliseconds;
-			finishTimestampInMilliseconds = possiblyOffsettedStartTimeStampInMilliseconds;
+			durationInMillis = 0;
 		} else {
-			final long referenceTimeStampInMilliseconds = Long.parseLong(referenceTimestampParameter);
-			startTimeStampInMilliseconds = possiblyOffsettedStartTimeStampInMilliseconds + referenceTimeStampInMilliseconds;
-			final Long durationOffset = Long.valueOf(httpServletRequest.getParameter(PARAMETER_DURATION));
-			finishTimestampInMilliseconds = durationOffset + startTimeStampInMilliseconds;
+			durationInMillis = Long.valueOf(httpServletRequest.getParameter(PARAMETER_DURATION));
 		}
 
+		// use local timestamp to deal with wrong user clocks.
+		// this allows better insight into the time component (when are high response times high)
+		long startInMillis = System.currentTimeMillis();
 		final SpanBuilder spanBuilder = tracingPlugin.getTracer()
 				.buildSpan(getOperationName(httpServletRequest))
-				.withStartTimestamp(MILLISECONDS.toMicros(startTimeStampInMilliseconds))
+				.withStartTimestamp(MILLISECONDS.toMicros(startInMillis))
 				.withTag(Tags.HTTP_URL.getKey(), getHttpUrl(httpServletRequest))
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 
@@ -219,7 +215,7 @@ public class ClientSpanServlet extends HttpServlet {
 		}
 
 		// TODO: extract backend trace id (if sent) and attach span to that trace id
-		span.finish(MILLISECONDS.toMicros(finishTimestampInMilliseconds));
+		span.finish(MILLISECONDS.toMicros(startInMillis + durationInMillis));
 
 	}
 
