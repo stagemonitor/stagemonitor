@@ -186,9 +186,11 @@ public class ClientSpanServlet extends HttpServlet {
 			durationInMillis = Long.valueOf(httpServletRequest.getParameter(PARAMETER_DURATION));
 		}
 
-		// use local timestamp to deal with wrong user clocks.
-		// this allows better insight into the time component (when are high response times high)
-		long startInMillis = System.currentTimeMillis();
+		// use server timestamp to deal with wrong user clocks.
+		// this allows better insight into the time component (when are response times high)
+		// approximate real start by subtracting the client duration from the current server time stamp
+		long startInMillis = System.currentTimeMillis() - durationInMillis;
+		long finishInMillis = startInMillis + durationInMillis;
 		final SpanBuilder spanBuilder = tracingPlugin.getTracer()
 				.buildSpan(getOperationName(httpServletRequest))
 				.withStartTimestamp(MILLISECONDS.toMicros(startInMillis))
@@ -215,7 +217,7 @@ public class ClientSpanServlet extends HttpServlet {
 		}
 
 		// TODO: extract backend trace id (if sent) and attach span to that trace id
-		span.finish(MILLISECONDS.toMicros(startInMillis + durationInMillis));
+		span.finish(MILLISECONDS.toMicros(finishInMillis));
 
 	}
 
