@@ -28,7 +28,7 @@ buildscript {
 		classpath 'net.saliman:gradle-cobertura-plugin:2.3.0'
 		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.6.3'
 		classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
-		classpath 'com.github.ben-manes:gradle-versions-plugin:0.12.0'
+		classpath 'com.github.ben-manes:gradle-versions-plugin:0.15.0'
 	}
 }
 
@@ -50,9 +50,9 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 }
 
 ext {
-	metricsVersion = '3.1.2'
-	slf4jVersion = '1.7.21'
-	jacksonVersion = '2.7.4'
+	metricsVersion = '3.2.4'
+	slf4jVersion = '1.7.25'
+	jacksonVersion = '2.9.0'
 	esVersion = '5.1.2'
 	byteBuddyVersion = '1.6.13'
 	opentracingVersion = '0.22.0'
@@ -104,7 +104,7 @@ subprojects {
 		testCompile 'ch.qos.logback:logback-classic:1.1.7'
 		testCompile 'org.apache.logging.log4j:log4j-core:2.7'
 		testCompile 'commons-io:commons-io:2.5'
-		testCompile 'org.assertj:assertj-core:3.7.0'
+		testCompile 'org.assertj:assertj-core:3.8.0'
 	}
 
 	test.testLogging.exceptionFormat = 'full'

@@ -171,7 +171,7 @@ public class InfluxDbReporterTest {
 				metricNameMap(name("response_time").build(), timer(400)));
 
 		verify(httpClient).send(eq("POST"), eq("http://localhost:8086/write?precision=ms&db=stm"),
-				eq(singletonList(format("response_time,app=test count=1i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=0.4,max=0.2,mean=0.4,p50=0.6,std=0.5,p25=0.0,p75=0.7000000000000001,p95=0.8,p98=0.9,p99=1.0,p999=1.1 %d", timestamp))));
+				eq(singletonList(format("response_time,app=test count=1i,m1_rate=3.0,m5_rate=4.0,m15_rate=5.0,mean_rate=2.0,min=0.4,max=0.2,mean=0.4,p50=0.6,std=0.5,p25=0.0,p75=0.7,p95=0.8,p98=0.9,p99=1.0,p999=1.1 %d", timestamp))));
 	}
 
 	@Test
