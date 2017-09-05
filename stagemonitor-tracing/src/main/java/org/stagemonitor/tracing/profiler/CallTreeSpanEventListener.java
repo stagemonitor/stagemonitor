@@ -78,6 +78,10 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 				}
 			} finally {
 				Profiler.clearMethodCallParent();
+
+				/*add by simon*/
+				NestCall.RecoverSpot(contextInfo.getCallTree());//recover the spot
+				/*add by simon*/
 			}
 		}
 	}

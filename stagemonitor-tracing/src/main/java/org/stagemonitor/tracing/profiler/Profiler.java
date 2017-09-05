@@ -66,4 +66,8 @@ public final class Profiler {
 	public static void clearMethodCallParent() {
 		methodCallParent.remove();
 	}
+
+	public static void setMethodCallParent(CallStackElement ce){
+		methodCallParent.set(ce);
+	}
 }
