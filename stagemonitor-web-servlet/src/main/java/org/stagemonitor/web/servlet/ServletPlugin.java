@@ -62,10 +62,6 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 
 	private static final Logger logger = LoggerFactory.getLogger(ServletPlugin.class);
 
-	static  {
-		Stagemonitor.init();
-	}
-
 	private Map<String, ClientSpanMetadataDefinition> whitelistedClientSpanTagsFromSPI;
 
 	private final ConfigurationOption<Collection<Pattern>> requestParamsConfidential = ConfigurationOption.regexListOption()
@@ -438,6 +434,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 
 	@Override
 	public void onStartup(Set<Class<?>> c, ServletContext ctx) {
+		Stagemonitor.init();
 		if (ServletContainerInitializerUtil.avoidDoubleInit(this, ctx)) return;
 		ctx.addServlet(ConfigurationServlet.class.getSimpleName(), new ConfigurationServlet())
 				.addMapping(ConfigurationServlet.CONFIGURATION_ENDPOINT);
