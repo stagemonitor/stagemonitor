@@ -1,5 +1,7 @@
 package org.stagemonitor.tracing.elasticsearch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
@@ -15,6 +17,7 @@ import static org.stagemonitor.tracing.elasticsearch.ElasticsearchSpanReporter.s
 public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 
 	public static final String ELASTICSEARCH_TRACING_PLUGIN = "Elasticsearch trace storage plugin";
+	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchTracingPlugin.class);
 
 	private final ConfigurationOption<Boolean> onlyLogElasticsearchSpanReports = ConfigurationOption.booleanOption()
 			.key("stagemonitor.tracing.elasticsearch.onlyLogElasticsearchRequestTraceReports")
@@ -83,7 +86,8 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
 
 		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/stagemonitor-spans-kibana-index-pattern.bulk", false);
+			elasticsearchClient.updateKibanaIndexPatternAsync("kibana/stagemonitor-spans-kibana-index-pattern.json",
+					"/.kibana/index-pattern/stagemonitor-spans-*");
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Analysis.bulk", true);
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk", true);
 

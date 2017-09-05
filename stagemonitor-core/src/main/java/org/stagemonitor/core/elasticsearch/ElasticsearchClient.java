@@ -15,6 +15,7 @@ import org.stagemonitor.core.util.CompletedFuture;
 import org.stagemonitor.core.util.DateUtils;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.JsonMerger;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
@@ -40,6 +41,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.stagemonitor.core.util.JsonMerger.mergeStrategy;
 
 public class ElasticsearchClient {
 
@@ -139,6 +142,36 @@ public class ElasticsearchClient {
 		}
 		json.remove(toRemove);
 		json.setAll(newProperties);
+	}
+
+	public void updateKibanaIndexPatternAsync(final String indexPatternLocation, final String elasticsearchKibanaIndexPatternPath) {
+		asyncESPool.submit(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					JsonNode stagemonitorPattern = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(indexPatternLocation));
+					JsonNode currentPattern = fetchCurrentKibanaIndexPatternConfiguration(elasticsearchKibanaIndexPatternPath);
+					JsonNode mergedDefinition = JsonMerger.merge(currentPattern, stagemonitorPattern,
+							mergeStrategy().mergeEncodedObjects("fieldFormatMap").encodedArrayWithKey("fields", "name"));
+					sendAsJson("PUT", elasticsearchKibanaIndexPatternPath, mergedDefinition);
+				} catch (IOException e) {
+					logger.error("Error while updating kibana index pattern, definition = {}, pattern path = {}",
+							e, indexPatternLocation, elasticsearchKibanaIndexPatternPath);
+				} catch (IllegalArgumentException e) {
+					logger.error("Error while preparing data for kibana index pattern update, definition = {}, pattern path = {}",
+							e, indexPatternLocation, elasticsearchKibanaIndexPatternPath);
+				}
+			}
+
+			private JsonNode fetchCurrentKibanaIndexPatternConfiguration(String elasticsearchKibanaIndexPatternPath) throws IOException {
+				try {
+					return getJson(elasticsearchKibanaIndexPatternPath).get("_source");
+				} catch (FileNotFoundException e) {
+					// kibana returned 404 -> document does not yet exist -> merge stagemonitor configuration with empty object
+					return JsonUtils.getMapper().createObjectNode();
+				}
+			}
+		});
 	}
 
 	private Future<?> sendAsJsonAsync(final String method, final String path, final Object requestBody) {
