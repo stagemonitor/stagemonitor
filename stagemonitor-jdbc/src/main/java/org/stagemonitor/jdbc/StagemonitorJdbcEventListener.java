@@ -146,12 +146,22 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 				if (StringUtils.isNotEmpty(statementInformation.getSql())) {
 					String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
 					Profiler.addIOCall(sql, timeElapsedNanos);
-					span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, sql.substring(0, sql.indexOf(' ')).toUpperCase());
+					span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, getMethod(sql));
 					span.setTag(DB_STATEMENT, sql);
 				}
 
 			}
 			tracingPlugin.getRequestMonitor().monitorStop();
+		}
+	}
+
+	static String getMethod(String sql) {
+		final int indexOfWhitespace = sql.indexOf(' ');
+		if (indexOfWhitespace > 0) {
+			return sql.substring(0, indexOfWhitespace).toUpperCase();
+		} else {
+			// for example COMMIT
+			return sql.toUpperCase();
 		}
 	}
 
