@@ -156,6 +156,10 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 	}
 
 	static String getMethod(String sql) {
+		if (sql == null) {
+			return null;
+		}
+		sql = sql.trim();
 		final int indexOfWhitespace = sql.indexOf(' ');
 		if (indexOfWhitespace > 0) {
 			return sql.substring(0, indexOfWhitespace).toUpperCase();
