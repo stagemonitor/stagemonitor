@@ -249,6 +249,7 @@ public final class Stagemonitor {
 			// shutDown has already been called
 			return;
 		}
+		logger.info("Shutting down stagemonitor");
 		measurementSession.setEndTimestamp(System.currentTimeMillis());
 		for (Runnable onShutdownAction : onShutdownActions) {
 			try {
