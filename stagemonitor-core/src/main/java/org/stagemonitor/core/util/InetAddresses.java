@@ -308,11 +308,7 @@ public final class InetAddresses {
 
 
 	public static int inetAddressToInt(Inet4Address clientIp) {
-		int intIP = 0;
-		for (byte octet : clientIp.getAddress()) {
-			intIP = (intIP << 8) | (octet);
-		}
-		return intIP;
+		return ByteBuffer.wrap(clientIp.getAddress()).getInt();
 	}
 
 	private static IllegalArgumentException formatIllegalArgumentException(String format, Object... args) {
