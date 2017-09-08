@@ -38,7 +38,6 @@ public class SpanUtils {
 		}
 		if (inetAddress instanceof Inet4Address) {
 			Tags.PEER_HOST_IPV4.set(span, InetAddresses.inetAddressToInt((Inet4Address) inetAddress));
-			span.setTag(IPV4_STRING, clientIp);
 		} else if (inetAddress instanceof Inet6Address) {
 			Tags.PEER_HOST_IPV6.set(span, clientIp);
 		}
