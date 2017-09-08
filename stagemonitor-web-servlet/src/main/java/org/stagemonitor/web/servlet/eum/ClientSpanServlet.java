@@ -7,6 +7,7 @@ import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.web.servlet.MonitoredHttpRequest;
 import org.stagemonitor.web.servlet.ServletPlugin;
 import org.stagemonitor.web.servlet.useragent.UserAgentParser;
 
@@ -213,10 +214,9 @@ public class ClientSpanServlet extends HttpServlet {
 				}
 				userAgentParser.setUserAgentInformation(span, httpServletRequest.getHeader("user-agent"));
 			}
-			SpanUtils.setClientIp(span, httpServletRequest.getRemoteAddr());
+			SpanUtils.setClientIp(span, MonitoredHttpRequest.getClientIp(httpServletRequest));
 		}
 
-		// TODO: extract backend trace id (if sent) and attach span to that trace id
 		span.finish(MILLISECONDS.toMicros(finishInMillis));
 
 	}
@@ -240,6 +240,5 @@ public class ClientSpanServlet extends HttpServlet {
 		}
 		return operationName;
 	}
-
 
 }

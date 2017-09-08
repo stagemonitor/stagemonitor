@@ -59,7 +59,7 @@ This product includes code derived from the Metrics project, which is available 
 stagemonitor-web-servlet/src/main/java/org/stagemonitor/web/metrics/StagemonitorMetricsServlet.java
 
 This product includes code derived from Apache httpclient, which is available under the "Apache 2.0" license. For details, see
-stagemonitor-requestmonitor/src/main/java/org/stagemonitor/requestmonitor/utils/InetAddressUtils.java
+stagemonitor-tracing/src/main/java/org/stagemonitor/tracing/utils/InetAddressUtils.java
 
 This product includes code derived from https://github.com/raphw/weak-lock-free/, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-core/src/main/java/org/stagemonitor/core/instrument/WeakConcurrentMap.java
@@ -69,3 +69,8 @@ stagemonitor-core/src/main/java/org/stagemonitor/core/metrics/prometheus/Stagemo
 
 This product includes code from https://github.com/uber/jaeger-client-java, which is available under the "MIT" license.
 stagemonitor/stagemonitor-tracing/src/main/java/org/stagemonitor/tracing/utils/RateLimiter.java
+
+This product includes code derived from Google Guava, which is available under the "Apache 2.0" license. For details, see
+stagemonitor-core/src/main/java/org/stagemonitor/core/util/InetAddresses.java
+stagemonitor-core/src/main/java/org/stagemonitor/core/util/Ints.java
+stagemonitor-core/src/main/java/org/stagemonitor/core/util/Assert.java

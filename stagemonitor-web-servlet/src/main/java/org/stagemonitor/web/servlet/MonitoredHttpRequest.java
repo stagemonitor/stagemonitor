@@ -157,6 +157,19 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
 			ip = request.getRemoteAddr();
 		}
+		return getFirstIp(ip);
+	}
+
+	/*
+	 * Can be a comma separated list if there are multiple devices in the forwarding chain
+	 */
+	private static String getFirstIp(String ip) {
+		if (ip != null) {
+			final int indexOfFirstComma = ip.indexOf(',');
+			if (indexOfFirstComma != -1) {
+				ip = ip.substring(0, indexOfFirstComma);
+			}
+		}
 		return ip;
 	}
 

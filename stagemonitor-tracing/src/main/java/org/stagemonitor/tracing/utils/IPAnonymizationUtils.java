@@ -2,6 +2,7 @@ package org.stagemonitor.tracing.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.util.InetAddresses;
 
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -19,40 +20,67 @@ public final class IPAnonymizationUtils {
 		// don't instantiate
 	}
 
+	public static String anonymize(String ip) {
+		InetAddress inetAddress;
+		try {
+			inetAddress = InetAddresses.forString(ip);
+		} catch (IllegalArgumentException e) {
+			logger.warn(e.getMessage(), e);
+			inetAddress = null;
+		}
+		InetAddress anonymized = null;
+		if (inetAddress instanceof Inet4Address) {
+			anonymized = anonymizeIpV4Address((Inet4Address) inetAddress);
+		} else if (inetAddress instanceof Inet6Address) {
+			anonymized = anonymizeIpV6Address((Inet6Address) inetAddress);
+		}
+		if (anonymized != null) {
+			return anonymized.getHostAddress();
+		} else {
+			return null;
+		}
+	}
+
 	/**
 	 * Anonymizes IPv4 and IPv6 addresses
 	 * <p/>
-	 * For IPv4 addresses, the last octet is set to zero.
-	 * If the address is a IPv6 address, the last 80 bits (10 bytes) are set to zero.
+	 * For IPv4 addresses, the last octet is set to zero. If the address is a IPv6 address, the last 80 bits (10 bytes)
+	 * are set to zero.
+	 * <p/>
+	 * This is just like Google Analytics handles IP anonymization: https://support.google.com/analytics/answer/2763052
+	 *
+	 * @param inetAddress the full IPv4 or IPv6 address
+	 * @return the anonymized IP address or null, if the provided ip address is invalid
+	 */
+	public static Inet4Address anonymizeIpV4Address(Inet4Address inetAddress) {
+		try {
+			final byte[] address = inetAddress.getAddress();
+			anonymizeLastBytes(address, ANONYMIZED_IPV4_OCTETS);
+			return (Inet4Address) InetAddress.getByAddress(address);
+		} catch (UnknownHostException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	/**
+	 * Anonymizes IPv4 and IPv6 addresses
+	 * <p/>
+	 * For IPv4 addresses, the last octet is set to zero. If the address is a IPv6 address, the last 80 bits (10 bytes)
+	 * are set to zero.
 	 * <p/>
 	 * This is just like Google Analytics handles IP anonymization: https://support.google.com/analytics/answer/2763052
 	 *
 	 * @param clientIp the full IPv4 or IPv6 address
 	 * @return the anonymized IP address or null, if the provided ip address is invalid
 	 */
-	public static String anonymize(String clientIp) {
-		// prevents DNS lookups
-		if (clientIp == null || (!InetAddressUtils.isIPv4Address(clientIp) && !InetAddressUtils.isIPv6Address(clientIp))) {
-			return null;
-		}
+	public static Inet6Address anonymizeIpV6Address(Inet6Address inet6Address) {
+		final byte[] address = inet6Address.getAddress();
+		anonymizeLastBytes(address, ANONYMIZED_IPV6_OCTETS);
 		try {
-			// if clientIp is not a ip address, that would perform a DNS lookup
-			final InetAddress inetAddress = InetAddress.getByName(clientIp);
-			if (inetAddress instanceof Inet4Address) {
-				final Inet4Address inet4Address = (Inet4Address) inetAddress;
-				final byte[] address = inet4Address.getAddress();
-				anonymizeLastBytes(address, ANONYMIZED_IPV4_OCTETS);
-				return InetAddress.getByAddress(address).toString().substring(1);
-			} else if (inetAddress instanceof Inet6Address) {
-				final Inet6Address inet6Address = (Inet6Address) inetAddress;
-				final byte[] address = inet6Address.getAddress();
-				anonymizeLastBytes(address, ANONYMIZED_IPV6_OCTETS);
-				return InetAddress.getByAddress(address).toString().substring(1);
-			}
+			return (Inet6Address) InetAddress.getByAddress(address);
 		} catch (UnknownHostException e) {
-			logger.warn(e.getMessage(), e);
+			throw new AssertionError(e);
 		}
-		return null;
 	}
 
 	private static void anonymizeLastBytes(final byte[] address, final int bytesToAnonymize) {

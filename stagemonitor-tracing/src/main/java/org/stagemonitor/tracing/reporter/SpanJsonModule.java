@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
+import org.stagemonitor.core.util.InetAddresses;
 import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.util.StringUtils;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 import io.opentracing.tag.Tags;
 
+import static org.stagemonitor.tracing.utils.SpanUtils.IPV4_STRING;
 import static org.stagemonitor.tracing.utils.SpanUtils.PARAMETERS_PREFIX;
 
 public class SpanJsonModule extends JsonUtils.StagemonitorJacksonModule {
@@ -40,17 +42,19 @@ public class SpanJsonModule extends JsonUtils.StagemonitorJacksonModule {
 			public void serialize(SpanWrapper span, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 				gen.writeStartObject();
 				Map<String, Object> parameters = null;
-				for (Map.Entry<String, Object> entry : span.getTags().entrySet()) {
-					if (entry.getKey().startsWith(SpanWrapper.INTERNAL_TAG_PREFIX)) {
+				for (Map.Entry<String, Object> tag : span.getTags().entrySet()) {
+					if (tag.getKey().startsWith(SpanWrapper.INTERNAL_TAG_PREFIX)) {
 						continue;
 					}
-					if (entry.getKey().startsWith(PARAMETERS_PREFIX)) {
+					if (tag.getKey().startsWith(PARAMETERS_PREFIX)) {
 						if (parameters == null) {
 							parameters = new HashMap<String, Object>();
 						}
-						parameters.put(entry.getKey().replace(PARAMETERS_PREFIX, ""), entry.getValue());
+						parameters.put(tag.getKey().replace(PARAMETERS_PREFIX, ""), tag.getValue());
+					} else if (tag.getKey().equals(Tags.PEER_HOST_IPV4.getKey()) && tag.getValue() instanceof Integer) {
+						gen.writeStringField(IPV4_STRING, InetAddresses.fromInteger((Integer) tag.getValue()).getHostAddress());
 					} else {
-						gen.writeObjectField(entry.getKey(), entry.getValue());
+						gen.writeObjectField(tag.getKey(), tag.getValue());
 					}
 				}
 				if (parameters != null && !parameters.isEmpty()) {
