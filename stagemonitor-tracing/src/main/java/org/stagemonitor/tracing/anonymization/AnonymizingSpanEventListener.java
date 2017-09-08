@@ -1,83 +1,52 @@
 package org.stagemonitor.tracing.anonymization;
 
+import org.stagemonitor.core.util.InetAddresses;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.IPAnonymizationUtils;
 import org.stagemonitor.tracing.utils.SpanUtils;
-import org.stagemonitor.tracing.wrapper.AbstractSpanEventListener;
-import org.stagemonitor.tracing.wrapper.NoopSpanEventListener;
-import org.stagemonitor.tracing.wrapper.SpanEventListener;
-import org.stagemonitor.tracing.wrapper.SpanEventListenerFactory;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.util.StringUtils;
+
+import java.net.Inet4Address;
 
 import io.opentracing.tag.Tags;
 
-public class AnonymizingSpanEventListener extends AbstractSpanEventListener {
+public class AnonymizingSpanEventListener extends StatelessSpanEventListener {
 
 	private final TracingPlugin tracingPlugin;
-	public String username;
-	public String ip;
-	private final boolean pseudonymizeUserNames;
-	private final boolean anonymizeIPs;
-	private final boolean active;
 
 	public AnonymizingSpanEventListener(TracingPlugin tracingPlugin) {
 		this.tracingPlugin = tracingPlugin;
-		pseudonymizeUserNames = tracingPlugin.isPseudonymizeUserNames();
-		anonymizeIPs = tracingPlugin.isAnonymizeIPs();
-		active = anonymizeIPs || pseudonymizeUserNames;
-	}
-
-	@Override
-	public String onSetTag(String key, String value) {
-		if (!active) {
-			return super.onSetTag(key, value);
-		}
-		if (SpanUtils.USERNAME.equals(key)) {
-			username = value;
-		} else if (SpanUtils.IPV4_STRING.equals(key)) {
-			ip = value;
-		} else if (Tags.PEER_HOST_IPV6.getKey().equals(key)) {
-			ip = value;
-		}
-		return value;
 	}
 
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-		if (!active) {
+		final boolean pseudonymizeUserNames = tracingPlugin.isPseudonymizeUserNames();
+		final boolean anonymizeIPs = tracingPlugin.isAnonymizeIPs();
+		if (!anonymizeIPs && !pseudonymizeUserNames) {
 			return;
 		}
+		final String username = spanWrapper.getStringTag(SpanUtils.USERNAME);
 		String hashedUserName = username;
 		if (pseudonymizeUserNames) {
 			hashedUserName = StringUtils.sha1Hash(username);
-			spanWrapper.getDelegate().setTag(SpanUtils.USERNAME, hashedUserName);
+			spanWrapper.setTag(SpanUtils.USERNAME, hashedUserName);
 		}
 		final boolean disclose = tracingPlugin.getDiscloseUsers().contains(hashedUserName);
 		if (disclose) {
-			spanWrapper.getDelegate().setTag("username_disclosed", username);
+			spanWrapper.setTag("username_disclosed", username);
 		}
-		if (anonymizeIPs && ip != null && !disclose) {
-			SpanUtils.setClientIp(spanWrapper, IPAnonymizationUtils.anonymize(ip));
-		}
-	}
-
-	public static class AnonymizingSpanEventListenerFactory implements SpanEventListenerFactory {
-		private final TracingPlugin tracingPlugin;
-
-		public AnonymizingSpanEventListenerFactory(TracingPlugin tracingPlugin) {
-			this.tracingPlugin = tracingPlugin;
-		}
-
-		@Override
-		public SpanEventListener create() {
-			boolean pseudonymizeUserNames = tracingPlugin.isPseudonymizeUserNames();
-			boolean anonymizeIPs = tracingPlugin.isAnonymizeIPs();
-			if (anonymizeIPs || pseudonymizeUserNames) {
-				return new AnonymizingSpanEventListener(tracingPlugin);
-			} else {
-				return NoopSpanEventListener.INSTANCE;
+		if (anonymizeIPs && !disclose) {
+			final String ipV6Address = spanWrapper.getStringTag(Tags.PEER_HOST_IPV6.getKey());
+			final Number ipV4Address = spanWrapper.getNumberTag(Tags.PEER_HOST_IPV4.getKey());
+			if (ipV6Address != null) {
+				Tags.PEER_HOST_IPV6.set(spanWrapper, IPAnonymizationUtils.anonymize(ipV6Address));
+			} else if (ipV4Address != null) {
+				final Inet4Address anonymizedIp = IPAnonymizationUtils.anonymizeIpV4Address(InetAddresses.fromInteger(ipV4Address.intValue()));
+				Tags.PEER_HOST_IPV4.set(spanWrapper, InetAddresses.inetAddressToInt(anonymizedIp));
 			}
 		}
 	}
+
 }

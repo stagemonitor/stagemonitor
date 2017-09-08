@@ -154,4 +154,12 @@ public class MonitoredHttpRequestTest {
 				new MockFilterChain(),
 				configuration, Executors.newSingleThreadScheduledExecutor());
 	}
+
+	@Test
+	public void testGetClientIp() {
+		final MockHttpServletRequest request = new MockHttpServletRequest();
+		request.setRemoteAddr("10.1.1.3");
+		request.addHeader("x-forwarded-for", "10.1.1.1, 10.1.1.2, 10.1.1.3");
+		assertThat(MonitoredHttpRequest.getClientIp(request)).isEqualTo("10.1.1.1");
+	}
 }

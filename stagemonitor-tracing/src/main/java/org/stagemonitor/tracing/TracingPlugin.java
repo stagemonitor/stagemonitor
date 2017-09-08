@@ -447,7 +447,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
 		spanWrappingTracer.addEventListenerFactory(new SpanContextInformation.SpanContextSpanEventListener());
 		spanWrappingTracer.addEventListenerFactory(samplePriorityDeterminingSpanInterceptor);
-		spanWrappingTracer.addEventListenerFactory(new AnonymizingSpanEventListener.AnonymizingSpanEventListenerFactory(tracingPlugin));
+		spanWrappingTracer.addEventListenerFactory(new AnonymizingSpanEventListener(tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(new MDCSpanEventListener(corePlugin, tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(new B3IdentifierTagger(tracingPlugin));
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
