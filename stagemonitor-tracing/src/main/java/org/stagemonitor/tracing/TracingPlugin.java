@@ -447,7 +447,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(delegate);
 		spanWrappingTracer.addEventListenerFactory(new SpanContextInformation.SpanContextSpanEventListener());
 		spanWrappingTracer.addEventListenerFactory(samplePriorityDeterminingSpanInterceptor);
-		spanWrappingTracer.addEventListenerFactory(new AnonymizingSpanEventListener.AnonymizingSpanEventListenerFactory(tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(new MDCSpanEventListener(corePlugin, tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(new B3IdentifierTagger(tracingPlugin));
 		for (SpanEventListenerFactory spanEventListenerFactory : spanInterceptorFactories) {
@@ -457,6 +456,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 		final MetricsSpanEventListener spanEventListener = new MetricsSpanEventListener(metricRegistry, singleThreadDeamonPool, tracingPlugin);
 		spanWrappingTracer.addEventListenerFactory(spanEventListener);
 		spanWrappingTracer.addEventListenerFactory(new CallTreeSpanEventListener(corePlugin.getMetricRegistry(), tracingPlugin));
+		spanWrappingTracer.addEventListenerFactory(new AnonymizingSpanEventListener(tracingPlugin));
 		spanWrappingTracer.addEventListenerFactory(reportingSpanEventListener);
 		spanWrappingTracer.addEventListenerFactory(new SpanContextInformation.SpanFinalizer());
 		return spanWrappingTracer;

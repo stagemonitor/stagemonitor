@@ -1,11 +1,12 @@
 package org.stagemonitor.tracing.utils;
 
+import org.stagemonitor.core.util.InetAddresses;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -29,25 +30,17 @@ public class SpanUtils {
 		if (clientIp == null) {
 			return;
 		}
+		final InetAddress inetAddress;
 		try {
-			final InetAddress inetAddress = InetAddress.getByName(clientIp);
-			if (inetAddress instanceof Inet4Address) {
-				Tags.PEER_HOST_IPV4.set(span, inetAddressToInt((Inet4Address) inetAddress));
-				span.setTag(IPV4_STRING, clientIp);
-			} else if (inetAddress instanceof Inet6Address) {
-				Tags.PEER_HOST_IPV6.set(span, clientIp);
-			}
-		} catch (UnknownHostException e) {
-			// ignore
+			inetAddress = InetAddresses.forString(clientIp);
+		} catch (IllegalArgumentException e) {
+			return;
 		}
-	}
-
-	private static int inetAddressToInt(Inet4Address clientIp) {
-		int intIP = 0;
-		for (byte octet : clientIp.getAddress()) {
-			intIP = (intIP << 8) | (octet);
+		if (inetAddress instanceof Inet4Address) {
+			Tags.PEER_HOST_IPV4.set(span, InetAddresses.inetAddressToInt((Inet4Address) inetAddress));
+		} else if (inetAddress instanceof Inet6Address) {
+			Tags.PEER_HOST_IPV6.set(span, clientIp);
 		}
-		return intIP;
 	}
 
 	public static void setParameters(Span span, Map<String, String> parameters) {
