@@ -1,6 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-tracing")
-	compile 'p6spy:p6spy:3.2.0'
+	compile 'p6spy:p6spy:3.0.0'
 
 	testCompile 'org.apache.tomcat:tomcat-jdbc:8.5.0'
 	testCompile 'org.hsqldb:hsqldb:2.3.3'
