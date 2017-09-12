@@ -189,7 +189,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertThat(Stagemonitor.getMetric2Registry().getTimers()).containsKey(MetricName.name("response_time").operationName("Monitor Sla").operationType("method_invocation").build());
+		assertThat(Stagemonitor.getMetric2Registry().getTimers()).containsKey(name("response_time").operationName("Monitor Sla").operationType("method_invocation").build());
 
 		alertingPlugin.getThresholdMonitoringReporter().report();
 		final Incident incident = alertingPlugin.getIncidentRepository()
@@ -206,7 +206,7 @@ public class SlaCheckCreatingClassPathScannerTest {
 		} catch (Exception e) {
 			// ignore
 		}
-		assertThat(Stagemonitor.getMetric2Registry().getMeters()).containsKey(MetricName.name("error_rate").operationName("Monitor Sla").operationType("method_invocation").build());
+		assertThat(Stagemonitor.getMetric2Registry().getMeters()).containsKey(name("error_rate").operationName("Monitor Sla").operationType("method_invocation").build());
 
 		alertingPlugin.getThresholdMonitoringReporter().report();
 		final Incident incident = alertingPlugin.getIncidentRepository()

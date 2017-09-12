@@ -11,9 +11,9 @@ import net.bytebuddy.utility.JavaModule;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.configuration.ConfigurationRegistry;
 
 import java.lang.annotation.Annotation;
 import java.security.ProtectionDomain;
@@ -118,22 +118,22 @@ public abstract class StagemonitorByteBuddyTransformer {
 					.to(getAdviceClass())
 					.on(timed("method", transformerName, getMethodElementMatcher()));
 		} catch (NoClassDefFoundError error) {
-			logger.debug("Error while creating advice. This usually means that a optional type is not present " +
+			logger.debug("Error while creating advice. This usually means that an optional type is not present " +
 					"so this is nothing wo worry about. Error message: {}", error.getMessage());
 			return null;
 		}
 	}
 
 	private Advice.WithCustomMapping registerDynamicValues() {
-		List<StagemonitorDynamicValue<?>> dynamicValues = getDynamicValues();
+		List<Advice.OffsetMapping.Factory<? extends Annotation>> offsetMappingFactories = getOffsetMappingFactories();
 		Advice.WithCustomMapping withCustomMapping = Advice.withCustomMapping();
-		for (StagemonitorDynamicValue dynamicValue : dynamicValues) {
-			withCustomMapping = withCustomMapping.bind(dynamicValue.getAnnotationClass(), dynamicValue);
+		for (Advice.OffsetMapping.Factory<? extends Annotation> offsetMappingFactory : offsetMappingFactories) {
+			withCustomMapping = withCustomMapping.bind((Advice.OffsetMapping.Factory<? super Annotation>) offsetMappingFactory);
 		}
 		return withCustomMapping;
 	}
 
-	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
+	protected List<Advice.OffsetMapping.Factory<? extends Annotation>> getOffsetMappingFactories() {
 		return Collections.emptyList();
 	}
 
@@ -153,10 +153,6 @@ public abstract class StagemonitorByteBuddyTransformer {
 
 	protected Class<? extends StagemonitorByteBuddyTransformer> getAdviceClass() {
 		return getClass();
-	}
-
-	public static abstract class StagemonitorDynamicValue<T extends Annotation> extends Advice.DynamicValue.ForFixedValue<T> {
-		public abstract Class<T> getAnnotationClass();
 	}
 
 	/**

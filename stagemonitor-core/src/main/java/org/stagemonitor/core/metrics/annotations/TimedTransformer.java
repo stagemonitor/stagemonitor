@@ -11,6 +11,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -34,8 +35,8 @@ public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Collections.<StagemonitorDynamicValue<?>>singletonList(new TimedSignatureDynamicValue());
+	protected List<Advice.OffsetMapping.Factory<? extends Annotation>> getOffsetMappingFactories() {
+		return Collections.<Advice.OffsetMapping.Factory<?>>singletonList(new TimedSignatureDynamicValue());
 	}
 
 	@Advice.OnMethodEnter
@@ -70,7 +71,7 @@ public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 		}
 
 		@Override
-		public Class<TimedSignature> getAnnotationClass() {
+		public Class<TimedSignature> getAnnotationType() {
 			return TimedSignature.class;
 		}
 	}

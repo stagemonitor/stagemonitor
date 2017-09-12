@@ -11,6 +11,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -60,8 +61,8 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	}
 
 	@Override
-	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Collections.<StagemonitorDynamicValue<?>>singletonList(new ProfilerDynamicValue());
+	protected List<Advice.OffsetMapping.Factory<? extends Annotation>> getOffsetMappingFactories() {
+		return Collections.<Advice.OffsetMapping.Factory<?>>singletonList(new ProfilerDynamicValue());
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -69,22 +70,24 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 	public @interface ProfilerSignature {
 	}
 
-	public static class ProfilerDynamicValue extends StagemonitorDynamicValue<ProfilerSignature> {
+	public static class ProfilerDynamicValue implements Advice.OffsetMapping.Factory<ProfilerSignature> {
 
 		@Override
-		public Class<ProfilerSignature> getAnnotationClass() {
+		public Class<ProfilerSignature> getAnnotationType() {
 			return ProfilerSignature.class;
 		}
 
 		@Override
-		protected Object doResolve(TypeDescription instrumentedType,
-								   MethodDescription method,
-								   ParameterDescription.InDefinedShape target,
-								   AnnotationDescription.Loadable<ProfilerSignature> annotation,
-								   Assigner assigner, boolean initialized) {
-			final String returnType = method.getReturnType().asErasure().getSimpleName();
-			final String className = method.getDeclaringType().getTypeName();
-			return String.format("%s %s.%s(%s)", returnType, className, method.getName(), getSignature(method));
+		public Advice.OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<ProfilerSignature> annotation, AdviceType adviceType) {
+			return new Advice.OffsetMapping() {
+				@Override
+				public Target resolve(TypeDescription instrumentedType, MethodDescription method, Assigner assigner, Context context) {
+					final String returnType = method.getReturnType().asErasure().getSimpleName();
+					final String className = method.getDeclaringType().getTypeName();
+					final String signature = String.format("%s %s.%s(%s)", returnType, className, method.getName(), getSignature(method));
+					return Target.ForStackManipulation.of(signature);
+				}
+			};
 		}
 
 		public String getSignature(MethodDescription instrumentedMethod) {
