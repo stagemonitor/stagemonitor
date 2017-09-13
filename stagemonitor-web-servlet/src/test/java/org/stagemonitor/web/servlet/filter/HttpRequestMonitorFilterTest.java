@@ -1,6 +1,5 @@
 package org.stagemonitor.web.servlet.filter;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -32,9 +31,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import io.opentracing.mock.MockTracer;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -49,7 +47,7 @@ public class HttpRequestMonitorFilterTest {
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 	private HttpRequestMonitorFilter httpRequestMonitorFilter;
-	private String testHtml = "<html><body></body></html>";
+	private String testHtml = "<html><head></head><body></body></html>";
 
 	@Before
 	public void before() throws Exception {
@@ -70,6 +68,8 @@ public class HttpRequestMonitorFilterTest {
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		when(servletPlugin.isWidgetEnabled()).thenReturn(true);
 		when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(true);
+		when(servletPlugin.isClientSpanCollectionEnabled()).thenReturn(true);
+		when(servletPlugin.isClientSpanCollectionInjectionEnabled()).thenReturn(true);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		when(tracingPlugin.getProfilerRateLimitPerMinute()).thenReturn(1000000d);
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, mock(Metric2Registry.class));
@@ -103,10 +103,11 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		assertTrue(servletResponse.getContentAsString().startsWith("<html><body>"));
-		assertTrue(servletResponse.getContentAsString().endsWith("</body></html>"));
-		assertFalse(servletResponse.getContentAsString().contains("beacon_url"));
-		assertTrue(servletResponse.getContentAsString().contains("window.StagemonitorLoaded"));
+		final String response = servletResponse.getContentAsString();
+		assertThat(response).startsWith("<html><head><script");
+		assertThat(response).endsWith("</body></html>");
+		assertThat(response).contains("window.StagemonitorLoaded");
+		assertThat(response).contains("'/stagemonitor/public/eum.js'");
 	}
 
 	@Test
@@ -133,8 +134,7 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		final String expected = "<html><body></body></html>";
-		Assert.assertEquals(expected, servletResponse.getContentAsString());
+		assertThat(servletResponse.getContentAsString()).isEqualTo(testHtml);
 	}
 
 	@Test
@@ -142,8 +142,7 @@ public class HttpRequestMonitorFilterTest {
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("application/json"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 
-		final String expected = "<html><body></body></html>";
-		Assert.assertEquals(expected, servletResponse.getContentAsString());
+		assertThat(servletResponse.getContentAsString()).isEqualTo(testHtml);
 	}
 
 	@Test
@@ -153,10 +152,22 @@ public class HttpRequestMonitorFilterTest {
 
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(html));
 
-		assertTrue(servletResponse.getContentAsString().startsWith("<html><body></body><body></body><body></body><body>asdf"));
-		assertTrue(servletResponse.getContentAsString().endsWith("</body></html>"));
-		assertFalse(servletResponse.getContentAsString().contains("beacon_url"));
-		assertTrue(servletResponse.getContentAsString().contains("window.StagemonitorLoaded"));
+		assertThat(servletResponse.getContentAsString()).startsWith("<html><body></body><body></body><body></body><body>asdf");
+		assertThat(servletResponse.getContentAsString()).endsWith("</body></html>");
+		assertThat(servletResponse.getContentAsString()).contains("window.StagemonitorLoaded");
+	}
+
+	@Test
+	public void testWidgetInjectorWithMultipleHeadTags() throws IOException, ServletException {
+		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
+		final String html = "<html><head></head><body><script>var html = '<head></head>'</script></body></html>";
+
+		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(html));
+
+		final String response = servletResponse.getContentAsString();
+		assertThat(response).startsWith("<html><head><script");
+		assertThat(response).endsWith("</body></html>");
+		assertThat(response).contains("window.StagemonitorLoaded");
 	}
 
 	private FilterChain writeInResponseWhenCallingDoFilter(final String html) throws IOException, ServletException {
