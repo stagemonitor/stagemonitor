@@ -1,9 +1,9 @@
 package org.stagemonitor.core.instrument;
 
+import net.bytebuddy.agent.ByteBuddyAgent;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-
-import net.bytebuddy.agent.ByteBuddyAgent;
 
 class EhCacheAttachmentProvider implements ByteBuddyAgent.AttachmentProvider {
 	private Class<?> virtualMachineClass = null;
@@ -33,6 +33,11 @@ class EhCacheAttachmentProvider implements ByteBuddyAgent.AttachmentProvider {
 			@Override
 			public Class<?> getVirtualMachineType() {
 				return virtualMachineClass;
+			}
+
+			@Override
+			public ExternalAttachment getExternalAttachment() {
+				return Unavailable.INSTANCE.getExternalAttachment();
 			}
 		};
 	}

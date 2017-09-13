@@ -14,6 +14,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -45,7 +46,7 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 	}
 
 	@Override
-	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
+	protected List<Advice.OffsetMapping.Factory<? extends Annotation>> getOffsetMappingFactories() {
 		return Arrays.asList(new ExceptionMeteredTransformer.ExceptionMeteredSignatureDynamicValue(),
 				new ExceptionMeteredTransformer.MeterExceptionsForDynamicValue());
 	}
@@ -64,9 +65,10 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 		}
 
 		@Override
-		public Class<ExceptionMeteredSignature> getAnnotationClass() {
+		public Class<ExceptionMeteredSignature> getAnnotationType() {
 			return ExceptionMeteredSignature.class;
 		}
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -74,18 +76,22 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 	public @interface MeterExceptionsFor {
 	}
 
-	public static class MeterExceptionsForDynamicValue extends StagemonitorDynamicValue<MeterExceptionsFor> {
+	public static class MeterExceptionsForDynamicValue implements Advice.OffsetMapping.Factory<MeterExceptionsFor> {
+
 		@Override
-		protected Object doResolve(TypeDescription instrumentedType,
-								   MethodDescription instrumentedMethod,
-								   ParameterDescription.InDefinedShape target,
-								   AnnotationDescription.Loadable<MeterExceptionsFor> annotation,
-								   Assigner assigner, boolean initialized) {
-			return new TypeDescription.ForLoadedType(instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent().cause());
+		public Advice.OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<MeterExceptionsFor> annotation, AdviceType adviceType) {
+			return new Advice.OffsetMapping() {
+				@Override
+				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+					final ExceptionMetered exceptionMetered = instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent();
+					final TypeDescription.ForLoadedType exceptionType = new TypeDescription.ForLoadedType(exceptionMetered.cause());
+					return Target.ForStackManipulation.of(exceptionType);
+				}
+			};
 		}
 
 		@Override
-		public Class<MeterExceptionsFor> getAnnotationClass() {
+		public Class<MeterExceptionsFor> getAnnotationType() {
 			return MeterExceptionsFor.class;
 		}
 	}

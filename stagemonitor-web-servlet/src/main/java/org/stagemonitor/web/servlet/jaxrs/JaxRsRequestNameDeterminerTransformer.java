@@ -11,6 +11,7 @@ import org.stagemonitor.tracing.AbstractTracingTransformer;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 
+import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,8 +43,8 @@ public class JaxRsRequestNameDeterminerTransformer extends StagemonitorByteBuddy
 	}
 
 	@Override
-	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Collections.<StagemonitorDynamicValue<?>>singletonList(new AbstractTracingTransformer.RequestNameDynamicValue());
+	protected List<Advice.OffsetMapping.Factory<? extends Annotation>> getOffsetMappingFactories() {
+		return Collections.<Advice.OffsetMapping.Factory<?>>singletonList(new AbstractTracingTransformer.RequestNameDynamicValue());
 	}
 
 	@Override

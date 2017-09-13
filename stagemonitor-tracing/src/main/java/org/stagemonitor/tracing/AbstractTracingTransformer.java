@@ -6,11 +6,13 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -64,8 +66,9 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 	}
 
 	@Override
-	protected List<StagemonitorDynamicValue<?>> getDynamicValues() {
-		return Arrays.asList(new RequestNameDynamicValue(), new ParameterNamesDynamicValue());
+	protected List<Advice.OffsetMapping.Factory<? extends Annotation>> getOffsetMappingFactories() {
+		final Advice.OffsetMapping.Factory<? extends Annotation> requestNameDynamicValue = new RequestNameDynamicValue();
+		return Arrays.asList(requestNameDynamicValue, new ParameterNamesDynamicValue());
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -73,20 +76,26 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 	public @interface RequestName {
 	}
 
-	public static class RequestNameDynamicValue extends StagemonitorDynamicValue<RequestName> {
+	public static class RequestNameDynamicValue implements Advice.OffsetMapping.Factory<RequestName> {
 
 		@Override
-		public Class<RequestName> getAnnotationClass() {
+		public Class<RequestName> getAnnotationType() {
 			return RequestName.class;
 		}
 
 		@Override
-		protected Object doResolve(TypeDescription instrumentedType,
-								   MethodDescription instrumentedMethod,
-								   ParameterDescription.InDefinedShape target,
-								   AnnotationDescription.Loadable<RequestName> annotation,
-								   Assigner assigner, boolean initialized) {
-			return getRequestName(instrumentedMethod);
+		public Advice.OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<RequestName> annotation, AdviceType adviceType) {
+			return new Advice.OffsetMapping() {
+				@Override
+				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+					final String requestName = getRequestName(instrumentedMethod);
+					if (requestName != null) {
+						return Target.ForStackManipulation.of(requestName);
+					} else {
+						return new Target.ForStackManipulation(NullConstant.INSTANCE);
+					}
+				}
+			};
 		}
 	}
 
@@ -117,26 +126,27 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 	public @interface ParameterNames {
 	}
 
-	public static class ParameterNamesDynamicValue extends StagemonitorDynamicValue<ParameterNames>{
+	public static class ParameterNamesDynamicValue implements Advice.OffsetMapping.Factory<ParameterNames>{
 
 		@Override
-		public Class<ParameterNames> getAnnotationClass() {
+		public Class<ParameterNames> getAnnotationType() {
 			return ParameterNames.class;
 		}
 
 		@Override
-		protected Object doResolve(TypeDescription instrumentedType,
-								   MethodDescription instrumentedMethod,
-								   ParameterDescription.InDefinedShape target,
-								   AnnotationDescription.Loadable<ParameterNames> annotation,
-								   Assigner assigner, boolean initialized) {
-			StringBuilder params = new StringBuilder();
-			for (ParameterDescription param : instrumentedMethod.getParameters()) {
-				params.append(param.getName()).append(',');
-			}
-			return params.toString();
+		public Advice.OffsetMapping make(ParameterDescription.InDefinedShape target,
+										 AnnotationDescription.Loadable<ParameterNames> annotation,
+										 AdviceType adviceType) {
+			return new Advice.OffsetMapping() {
+				@Override
+				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+					final StringBuilder params = new StringBuilder();
+					for (ParameterDescription param : instrumentedMethod.getParameters()) {
+						params.append(param.getName()).append(',');
+					}		return Advice.OffsetMapping.Target.ForStackManipulation.of(params.toString());
+				}
+			};
 		}
-
 	}
 
 }
