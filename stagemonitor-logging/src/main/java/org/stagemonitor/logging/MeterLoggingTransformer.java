@@ -17,7 +17,7 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 /**
  * Tracks the rate of calls to a logger.
- * <p.>
+ * <p>
  * Currently has support for Logback, slf4j's simple logger and JDK14LoggerAdapter, log4j 1.x and 2.x
  */
 public class MeterLoggingTransformer extends StagemonitorByteBuddyTransformer {

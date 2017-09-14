@@ -9,10 +9,10 @@ import org.stagemonitor.core.util.ClassUtils;
 
 /**
  * Only allows transformation of classes if the target {@link ClassLoader} is able to load {@link Stagemonitor}.
- * <p/>
+ * <p>
  * This avoids ClassNotFoundExceptions that can happen when instrumenting classes whose class loaders don't have
  * access to stagemonitor classes, for example the Profiler class.
- * <p/>
+ * <p>
  * Also, this prevents to transform classes that are loaded by another class loader hierarchy and thus avoids
  * interfering with other applications which are deployed on the same application server.
  */

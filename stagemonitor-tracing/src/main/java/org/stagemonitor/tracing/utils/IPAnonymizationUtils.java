@@ -20,6 +20,17 @@ public final class IPAnonymizationUtils {
 		// don't instantiate
 	}
 
+	/**
+	 * Anonymizes IPv4 and IPv6 addresses
+	 * <p>
+	 * For IPv4 addresses, the last octet is set to zero. If the address is a IPv6 address, the last 80 bits (10 bytes)
+	 * are set to zero.
+	 * <p>
+	 * This is just like Google Analytics handles IP anonymization: https://support.google.com/analytics/answer/2763052
+	 *
+	 * @param ip the full IPv4 or IPv6 address
+	 * @return the anonymized IP address or null, if the provided ip address is invalid
+	 */
 	public static String anonymize(String ip) {
 		InetAddress inetAddress;
 		try {
@@ -42,15 +53,14 @@ public final class IPAnonymizationUtils {
 	}
 
 	/**
-	 * Anonymizes IPv4 and IPv6 addresses
-	 * <p/>
-	 * For IPv4 addresses, the last octet is set to zero. If the address is a IPv6 address, the last 80 bits (10 bytes)
-	 * are set to zero.
-	 * <p/>
+	 * Anonymizes IPv4 addresses
+	 * <p>
+	 * The last octet is set to zero.
+	 * <p>
 	 * This is just like Google Analytics handles IP anonymization: https://support.google.com/analytics/answer/2763052
 	 *
-	 * @param inetAddress the full IPv4 or IPv6 address
-	 * @return the anonymized IP address or null, if the provided ip address is invalid
+	 * @param inetAddress the full IPv4 address
+	 * @return the anonymized IP address
 	 */
 	public static Inet4Address anonymizeIpV4Address(Inet4Address inetAddress) {
 		try {
@@ -63,14 +73,13 @@ public final class IPAnonymizationUtils {
 	}
 
 	/**
-	 * Anonymizes IPv4 and IPv6 addresses
-	 * <p/>
-	 * For IPv4 addresses, the last octet is set to zero. If the address is a IPv6 address, the last 80 bits (10 bytes)
-	 * are set to zero.
-	 * <p/>
+	 * Anonymizes IPv6 addresses
+	 * <p>
+	 * The last 80 bits (10 bytes) are set to zero.
+	 * <p>
 	 * This is just like Google Analytics handles IP anonymization: https://support.google.com/analytics/answer/2763052
 	 *
-	 * @param clientIp the full IPv4 or IPv6 address
+	 * @param inet6Address the full IPv6 address
 	 * @return the anonymized IP address or null, if the provided ip address is invalid
 	 */
 	public static Inet6Address anonymizeIpV6Address(Inet6Address inet6Address) {

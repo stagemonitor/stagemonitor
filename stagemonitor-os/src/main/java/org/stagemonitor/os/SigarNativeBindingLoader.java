@@ -1,5 +1,8 @@
 package org.stagemonitor.os;
 
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarLoader;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -7,13 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarLoader;
-
 /**
  * Extracts the native bindings for sigar and tells sigar where to find them.
  * That way, that there is no need to specify the Java library path (<code>-Djava.library.path=/sigar</code>).
- * <p/>
+ * <p>
  * Inspired by http://frommyplayground.com/how-to-load-native-jni-library-from-jar
  *
  * @author Adam Heirnich &lt;adam@adamh.cz&gt;, http://www.adamh.cz
@@ -66,16 +66,17 @@ public final class SigarNativeBindingLoader {
 	}
 
 	/**
-	 * Loads library from current JAR archive
-	 * <p/>
-	 * The file from JAR is copied into system temporary directory and then loaded. The temporary file is deleted after exiting.
-	 * Method uses String as filename because the pathname is "abstract", not system-dependent.
+	 * Loads library from current JAR archive<p>
 	 *
-	 * @param path          The filename inside JAR as absolute path (beginning with '/'), e.g. /package/File.ext
-	 * @param tempDirectory
+	 * The file from JAR is copied into system temporary directory and then loaded. The temporary file is deleted after
+	 * exiting. Method uses String as filename because the pathname is "abstract", not system-dependent.
+	 *
+	 * @param path The filename inside JAR as absolute path (beginning with '/'), e.g. /package/File.ext
 	 * @throws IOException              If temporary file creation or read/write operation fails
 	 * @throws IllegalArgumentException If source file (param path) does not exist
-	 * @throws IllegalArgumentException If the path is not absolute or if the filename is shorter than three characters (restriction of {@see File#createTempFile(java.lang.String, java.lang.String)}).
+	 * @throws IllegalArgumentException If the path is not absolute or if the filename is shorter than three characters
+	 *                                  (see restriction of {@link File#createTempFile(java.lang.String,
+	 *                                  java.lang.String)}).
 	 */
 	public static void extractFromJarToTemp(String path, File tempDirectory) throws IOException {
 		File temp = createTempFile(path, tempDirectory);

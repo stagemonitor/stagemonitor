@@ -90,7 +90,7 @@ public final class ExecutorUtils {
 
 		/**
 		 * Overriding this method makes sure that exceptions thrown by a task are not silently swallowed.
-		 * <p/>
+		 * <p>
 		 * Thanks to nos for this solution: http://stackoverflow.com/a/2248203/1125055
 		 */
 		@Override

@@ -5,11 +5,11 @@ import java.util.TimerTask;
 
 /**
  * A task that runs periodically and changes the required box_type of an index.
- * <p/>
+ * <p>
  * This means that all shards of an index are only allocated on nodes that have a specific box_type.
  * For instance, you could tag the node with node.box_type: hot in elasticsearch.yml,
  * or you could start a node using ./bin/elasticsearch --node.box_type hot
- * <p/>
+ * <p>
  * This implements the hot-cold architecture described in https://www.elastic.co/blog/hot-warm-architecture
  * where new data that is more frequently queried and updated is stored on beefy nodes (SSDs, more RAM and CPU).
  * When the indexes reach a certain age, they are allocated on cold nodes.

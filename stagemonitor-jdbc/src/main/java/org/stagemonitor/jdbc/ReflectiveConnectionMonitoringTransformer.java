@@ -47,7 +47,7 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 
 	/**
 	 * If the ThreadLocal is added, the code added in {@link #addReflectiveMonitorMethodCall} gets active
-	 * <p/>
+	 * <p>
 	 * Using a ThreadLocal ensures that each application invokes its own instance of the ConnectionMonitor and that
 	 * applications which are not monitored by stagemonitor are not influenced
 	 */

@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * An SPI to inject content into all text/html documents
- * <p/>
+ * <p>
  * To register a implementation, create the file
  * src/main/resources/META-INF/services/org.stagemonitor.web.servlet.filter.HtmlInjector
  * and insert the canonical class name of the implementation.

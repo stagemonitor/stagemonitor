@@ -1,12 +1,13 @@
 package org.stagemonitor.core.elasticsearch;
 
+import com.codahale.metrics.Clock;
+
+import org.stagemonitor.util.StringUtils;
+
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-
-import com.codahale.metrics.Clock;
-import org.stagemonitor.util.StringUtils;
 
 public class IndexSelector {
 
@@ -18,9 +19,9 @@ public class IndexSelector {
 
 	/**
 	 * Returns an Elasticsearch index pattern that only includes indices that are older than the specified amount of days
-	 * <p/>
+	 * <p>
 	 * Your indices are ought to have the pattern [prefix]YYYY.MM.DD
-	 * <p/>
+	 * <p>
 	 * See also https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-index.html
 	 * @param prefix the index prefix e.g. 'stagemonitor-metrics-'
 	 * @param days the number days that should be excluded

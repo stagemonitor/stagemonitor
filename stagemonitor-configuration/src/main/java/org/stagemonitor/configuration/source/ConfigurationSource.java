@@ -27,7 +27,7 @@ public interface ConfigurationSource {
 
 	/**
 	 * Returns whether or not it is possible to save values with the {@link #save(String, String)} method.
-	 * <p/>
+	 * <p>
 	 * If this method returns false, {@link #save(String, String)} must throw a {@link UnsupportedOperationException}
 	 *
 	 * @return <code>true</code>, if saving is possible, <code>false</code> otherwise
@@ -37,7 +37,7 @@ public interface ConfigurationSource {
 	/**
 	 *
 	 *
-	 * @return <code>true</code>, if saving to this configuration source is persistent, <false>otherwise</false>
+	 * @return <code>true</code>, if saving to this configuration source is persistent, <code>false</code> otherwise
 	 */
 	boolean isSavingPersistent();
 

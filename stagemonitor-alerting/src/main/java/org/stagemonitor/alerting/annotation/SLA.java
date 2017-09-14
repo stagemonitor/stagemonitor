@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation lets you define service level agreements within the code.
- * <p/>
+ * <p>
  * It automatically creates checks for the annotated method.
  * The method also has to be annotated either with @{@link Traced}
  * ({@link Traced#resolveNameAtRuntime()} must be set to <code>false</code> then) or
@@ -30,14 +30,14 @@ public @interface SLA {
 
 	/**
 	 * The metrics a threshold should be created for
-	 * <p/>
+	 * <p>
 	 * Make sure the number of metrics and thresholds match
 	 */
 	MetricValueType[] metric() default {};
 
 	/**
 	 * The thresholds for the metrics
-	 * <p/>
+	 * <p>
 	 * Make sure the number of metrics and thresholds match.
 	 * Rates are per second and durations are in milliseconds.
 	 */

@@ -4,7 +4,7 @@ import com.codahale.metrics.Clock;
 
 /**
  * The quantized clock always returns a value for {@link #getTime()} that is divisable by {@link #periodInMS}
- * <p/>
+ * <p>
  * This makes all reporters report at the exact same instant. Even if their clocks are slightly different,
  * their reported timestamp is the same.
  */

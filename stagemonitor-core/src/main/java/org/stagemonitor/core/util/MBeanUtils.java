@@ -1,5 +1,12 @@
 package org.stagemonitor.core.util;
 
+import com.codahale.metrics.Gauge;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.core.metrics.metrics2.MetricName;
+
 import java.lang.management.ManagementFactory;
 import java.util.Set;
 
@@ -8,12 +15,6 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.QueryExp;
-
-import com.codahale.metrics.Gauge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.core.metrics.metrics2.MetricName;
 
 public class MBeanUtils {
 
@@ -55,20 +56,18 @@ public class MBeanUtils {
 	}
 
 	/**
-	 * Gets MBeans controlled by the MBean server. This method allows any of the following to be obtained:
-	 * All MBeans, a set of MBeans specified by pattern matching on the ObjectName and/or a Query expression,
-	 * a specific MBean. When the object name is null or no domain and key properties are specified,
-	 * all objects are to be selected (and filtered if a query is specified).
-	 * It returns the set of ObjectInstance objects (containing the ObjectName and the Java Class name)
-	 * for the selected MBeans.
+	 * Gets MBeans controlled by the MBean server. This method allows any of the following to be obtained: All MBeans, a
+	 * set of MBeans specified by pattern matching on the ObjectName and/or a Query expression, a specific MBean. When
+	 * the object name is null or no domain and key properties are specified, all objects are to be selected (and
+	 * filtered if a query is specified). It returns the set of ObjectInstance objects (containing the ObjectName and
+	 * the Java Class name) for the selected MBeans.
 	 *
-	 * @param name  The object name pattern identifying the MBeans to be retrieved.
-	 *              If null or no domain and key properties are specified, all the MBeans registered will
-	 *              be retrieved.
-	 * @param query The query expression to be applied for selecting MBeans.
-	 *              If null no query expression will be applied for selecting MBean
-	 * @return A set containing the ObjectInstance objects for the selected MBeans.
-	 *         If no MBean satisfies the query an empty list is returned.
+	 * @param objectName The object name pattern identifying the MBeans to be retrieved. If null or no domain and key
+	 *                   properties are specified, all the MBeans registered will be retrieved.
+	 * @param queryExp   The query expression to be applied for selecting MBeans. If null no query expression will be
+	 *                   applied for selecting MBean
+	 * @return A set containing the ObjectInstance objects for the selected MBeans. If no MBean satisfies the query an
+	 * empty list is returned.
 	 */
 	public static Set<ObjectInstance> queryMBeans(ObjectName objectName, QueryExp queryExp) {
 		return mbeanServer.queryMBeans(objectName, queryExp);

@@ -33,7 +33,7 @@ public class PostExecutionInterceptorContext extends AbstractInterceptorContext<
 
 	/**
 	 * Makes sure that the call tree can't be {@linkplain #excludeCallTree excluded}
-	 * <p/>
+	 * <p>
 	 * Note: if the call tree has not been collected, calling this method won't restore it.
 	 * See also {@link PreExecutionInterceptorContext#mustCollectCallTree}
 	 *

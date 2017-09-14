@@ -5,11 +5,11 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * This class is injected into the bootstrap classpath and is used to share objects between classloaders.
- * <p/>
+ * <p>
  * The reason why this class is inside the __redirected package is because JBoss' ModuleClassLoader would otherwise not
  * load this class and throw a {@link ClassNotFoundException} when trying to access classes in normal packages from the bootstrap
  * classloader.
- * <p/>
+ * <p>
  * See also https://github.com/jboss-modules/jboss-modules/blob/master/src/main/java/org/jboss/modules/Module.java#L92
  */
 public class Dispatcher {
@@ -28,7 +28,7 @@ public class Dispatcher {
 
 	/**
 	 * Gets a shared value by it's key
-	 * <p/>
+	 * <p>
 	 * Automatically casts the value to the desired type
 	 *
 	 * @param key the key
@@ -43,7 +43,7 @@ public class Dispatcher {
 
 	/**
 	 * Gets a shared value by it's key
-	 * <p/>
+	 * <p>
 	 * Automatically casts the value to the desired type
 	 *
 	 * @param key        the key

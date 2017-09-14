@@ -27,7 +27,7 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener impleme
 
 	/**
 	 * Only if a spans has this special tag, a timer for it's operation name will be created.
-	 * <p/>
+	 * <p>
 	 * That makes sure that a timer is only created if the request name is meaningful enough. Otherwise, a timer could
 	 * be created for each distinct url of the application which would result in too many timers being created.
 	 */

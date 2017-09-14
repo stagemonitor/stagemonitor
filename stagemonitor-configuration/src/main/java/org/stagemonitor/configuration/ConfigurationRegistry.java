@@ -243,7 +243,7 @@ public class ConfigurationRegistry {
 
 	/**
 	 * This method reloads all configuration options - even non {@link ConfigurationOption#dynamic} ones.
-	 * <p/>
+	 * <p>
 	 * Use this method judiciously, because you have to make sure that no one already read from a non dynamic
 	 * {@link ConfigurationOption} before calling this method.
 	 */
@@ -273,7 +273,7 @@ public class ConfigurationRegistry {
 
 	/**
 	 * Adds a configuration source as first priority to the configuration.
-	 * <p/>
+	 * <p>
 	 * Don't forget to call {@link #reloadAllConfigurationOptions()} or {@link #reloadDynamicConfigurationOptions()}
 	 * after adding all configuration sources.
 	 *
@@ -292,7 +292,7 @@ public class ConfigurationRegistry {
 
 	/**
 	 * Adds a configuration source to the configuration.
-	 * <p/>
+	 * <p>
 	 * Don't forget to call {@link #reloadAllConfigurationOptions()} or {@link #reloadDynamicConfigurationOptions()}
 	 * after adding all configuration sources.
 	 *
@@ -322,7 +322,7 @@ public class ConfigurationRegistry {
 
 	/**
 	 * Dynamically updates a configuration key.
-	 * <p/>
+	 * <p>
 	 * Performs a password check.
 	 *
 	 * @param key                         the configuration key
@@ -373,7 +373,7 @@ public class ConfigurationRegistry {
 
 	/**
 	 * Dynamically updates a configuration key.
-	 * <p/>
+	 * <p>
 	 * Does not perform a password check.
 	 *
 	 * @param key                         the configuration key

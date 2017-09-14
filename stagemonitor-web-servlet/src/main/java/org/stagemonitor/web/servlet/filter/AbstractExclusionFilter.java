@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Adds support for excluding specific url prefixes of a filter-mapping.
- * <p/>
+ * <p>
  * The following will be checked for each exclude prefix: {@code httpServletRequest.getRequestURI().startsWith(excludedPath)}
  */
 public abstract class AbstractExclusionFilter implements Filter {

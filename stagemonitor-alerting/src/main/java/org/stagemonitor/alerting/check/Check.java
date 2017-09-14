@@ -19,10 +19,10 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 /**
  * A {@link Check} is a named collection of {@link Threshold}s with the same {@link MetricCategory} and target.
- * <p/>
+ * <p>
  * Example: We have a check group named 'Search response time' with two checks both have the target
  * <code>requests.search.time</code>. The first check is that the 75th
- * percentile shall be < 4sec and the second one says the 99th percentile shall be < 10 sec.
+ * percentile shall be {@code <} 4 sec and the second one says the 99th percentile shall be {@code <} 10 sec.
  */
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE)
 public class Check {

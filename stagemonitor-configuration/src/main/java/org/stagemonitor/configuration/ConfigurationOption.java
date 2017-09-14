@@ -116,9 +116,9 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link String}>
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt;
 	 *
-	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link String}>
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt;
 	 */
 	public static ConfigurationOptionBuilder<Collection<String>> stringsOption() {
 		return new ConfigurationOptionBuilder<Collection<String>>(SetValueConverter.STRINGS_VALUE_CONVERTER, Collection.class)
@@ -126,10 +126,10 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link String}>
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt;
 	 * and all Strings are converted to lower case.
 	 *
-	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link String}>
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt;
 	 */
 	public static ConfigurationOptionBuilder<Collection<String>> lowerStringsOption() {
 		return new ConfigurationOptionBuilder<Collection<String>>(SetValueConverter.LOWER_STRINGS_VALUE_CONVERTER, Collection.class)
@@ -137,18 +137,18 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Set}&lt{@link Integer}>
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Set}&lt;{@link Integer}&gt;
 	 *
-	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Set}&lt{@link Integer}>
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Set}&lt;{@link Integer}&gt;
 	 */
 	public static ConfigurationOption.ConfigurationOptionBuilder<Collection<Integer>> integersOption() {
 		return ConfigurationOption.builder(SetValueConverter.INTEGERS, Collection.class);
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link Pattern}>
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link Pattern}&gt;
 	 *
-	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt{@link Pattern}>
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link Pattern}&gt;
 	 */
 	public static ConfigurationOptionBuilder<Collection<Pattern>> regexListOption() {
 		return new ConfigurationOptionBuilder<Collection<Pattern>>(new SetValueConverter<Pattern>(RegexValueConverter.INSTANCE), Collection.class)
@@ -156,9 +156,9 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt{@link Pattern}, {@link String}>
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link String}&gt;
 	 *
-	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt{@link Pattern}, {@link String}>
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link String}&gt;
 	 */
 	public static ConfigurationOptionBuilder<Map<Pattern, String>> regexMapOption() {
 		return new ConfigurationOptionBuilder<Map<Pattern, String>>(MapValueConverter.REGEX_MAP_VALUE_CONVERTER, Map.class)
@@ -582,7 +582,7 @@ public class ConfigurationOption<T> {
 		/**
 		 * Be aware that when using this method you might have to deal with <code>null</code> values when calling {@link
 		 * #getValue()}.
-		 * <p/> That's why this method is deprecated
+		 * <p> That's why this method is deprecated
 		 *
 		 * @deprecated use {@link #buildRequired()}, {@link #buildWithDefault(Object)} or {@link #buildOptional()}. The
 		 * only valid use of this method is if {@link #buildOptional()} would be the semantically correct option but you
@@ -599,10 +599,10 @@ public class ConfigurationOption<T> {
 
 		/**
 		 * Builds the option and marks it as required.
-		 * <p/>
+		 * <p>
 		 * Use this method if you don't want to provide a default value but setting a value is still required. You
 		 * will have to make sure to provide a value is present on startup.
-		 * <p/>
+		 * <p>
 		 * When a required option does not have a value the behavior depends on
 		 * {@link ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised,
 		 * which can potentially prevent the application form starting or a warning gets logged.
@@ -630,7 +630,7 @@ public class ConfigurationOption<T> {
 
 		/**
 		 * Builds the option and marks it as not required
-		 * <p/>
+		 * <p>
 		 * Use this method if setting this option is not required and to express that it may be <code>null</code>.
 		 */
 		public ConfigurationOption<Optional<T>> buildOptional() {
@@ -700,7 +700,7 @@ public class ConfigurationOption<T> {
 
 		/**
 		 * Marks this ConfigurationOption as sensitive.
-		 * <p/>
+		 * <p>
 		 * If a value has sensitive content (e.g. password), it should be rendered
 		 * as an input of type="password", rather then as type="text".
 		 *
@@ -713,7 +713,7 @@ public class ConfigurationOption<T> {
 
 		/**
 		 * Marks this option as required.
-		 * <p/>
+		 * <p>
 		 * When a required option does not have a value the behavior depends on
 		 * {@link ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised,
 		 * which can potentially prevent the application form starting or a warning gets logged.

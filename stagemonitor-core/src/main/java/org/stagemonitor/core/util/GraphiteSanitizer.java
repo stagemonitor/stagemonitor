@@ -10,10 +10,10 @@ public final class GraphiteSanitizer {
 	}
 
 	/**
-	 * Graphite only supports alphanumeric characters + !#$%&"'*+-.:;<=>?@[\]^_`|~ so each metric name segment has to
+	 * Graphite only supports alphanumeric characters + {@code !#$%&"'*+-.:;<=>?@[\]^_`|~} so each metric name segment has to
 	 * be cleared from other chars.
-	 * <p/>
-	 * <pre>
+	 * <p>
+	 * <pre>{@code
 	 * metric path/segment delimiter
 	 *         _|_
 	 *        |   |
@@ -22,7 +22,7 @@ public final class GraphiteSanitizer {
 	 *    -------------
 	 *          |
 	 *  metric name segments
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @param metricNameSegment the metric name segment (see diagram above for a explanation of what a metric name segment is)
 	 * @return the metricNameSegment that contains only characters that graphite can handle

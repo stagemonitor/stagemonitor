@@ -157,7 +157,7 @@ public abstract class StagemonitorByteBuddyTransformer {
 
 	/**
 	 * Returns the order of this transformer when multiple transformers match a method.
-	 * </p>
+	 * <p>
 	 * Higher orders will be applied first
 	 *
 	 * @return the order
@@ -172,7 +172,6 @@ public abstract class StagemonitorByteBuddyTransformer {
 	 *
 	 * @param typeDescription The type that is being transformed.
 	 * @param classLoader     The class loader which is loading this type.
-	 * @return <code>true</code> to proceed with the transformation, <code>false</code> to stop this transformation
 	 */
 	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
 		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled()) {

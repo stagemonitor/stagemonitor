@@ -17,7 +17,7 @@ import static org.stagemonitor.tracing.ejb.RemoteInterfaceMethodMatcher.override
 
 /**
  * This class is responsible for detecting EJB remote calls
- * <p/>
+ * <p>
  * It detects classes that are either annotated with @{@link Remote} or implement an interface which is annotated with @{@link Remote}
  */
 public class RemoteEjbMonitorTransformer extends AbstractTracingTransformer {

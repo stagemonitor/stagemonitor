@@ -64,7 +64,7 @@ public class StagemonitorClassNameMatcher extends ElementMatcher.Junction.Abstra
 
 	/**
 	 * Checks if a specific class should be instrumented with this instrumenter
-	 * <p/>
+	 * <p>
 	 * The default implementation considers the following properties:
 	 * <ul>
 	 * <li><code>stagemonitor.instrument.excludeContaining</code></li>

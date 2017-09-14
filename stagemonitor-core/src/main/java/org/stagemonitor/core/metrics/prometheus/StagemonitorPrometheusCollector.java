@@ -41,7 +41,7 @@ import io.prometheus.client.SummaryMetricFamily;
  * </pre>
  * Add the io.prometheus.client.exporter.MetricsServlet to your web.xml, and configure your
  * <a href="https://prometheus.io/docs/operating/configuration/#%3Cscrape_config%3E">prometheus scrape</a> accordingly.
- * <p/>
+ * <p>
  *
  * <p>
  * 2. Push metrics to Prometheus push gateway:<br>
@@ -54,7 +54,6 @@ import io.prometheus.client.SummaryMetricFamily;
  *     pg.pushAdd(registry, "my_batch_job");
  * </pre>
  * See also https://prometheus.io/docs/instrumenting/pushing/
- * </p>
  */
 public class StagemonitorPrometheusCollector extends Collector {
 

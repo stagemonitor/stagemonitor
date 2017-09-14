@@ -19,12 +19,12 @@ import javax.servlet.http.HttpServletResponse;
  * the header 'X-Stagemonitor-Show-Widget' is provided with the correct 'stagemonitor.password' as value or
  * stagemonitor.password is set to a empty string. Thus it is possible to deactivate the widget for unauthorized users
  * but still having the option to activate it for authorized users.
- * <p/>
+ * <p>
  * You can use a browser extenstion like Modify Headers to automatically insert the header on each request to your application.
- * <p/>
+ * <p>
  * If you deactivate stagemonitor's built in security by setting stagemonitor.password to an empty string, make sure to
  * secure the endpoints otherwise. For example with spring security.
- * <p/>
+ * <p>
  * For custom control whether the in browser widget should be displayed, set the request attribute
  * 'X-Stagemonitor-Show-Widget' with a Boolean value.
  */

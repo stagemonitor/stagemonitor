@@ -4,10 +4,10 @@ import java.util.Map;
 
 /**
  * This configuration source get its values from the operating system's environment variables.
- * <p/>
+ * <p>
  * Because of the naming restrictions/conventions of environment variables, all dots ('.') are replaced with underscores
  * and all letters are converted to upper case.
- * <p/>
+ * <p>
  * Example: To set the configuration key <code>stagemonitor.active</code>, the environment variable has to be
  * <code>STAGEMONITOR_ACTIVE</code>
  */
@@ -25,10 +25,10 @@ public class EnvironmentVariableConfigurationSource extends AbstractConfiguratio
 
 	/**
 	 * Returns the configuration value from the the operating system's environment variables.
-	 * <p/>
+	 * <p>
 	 * Because of the naming restrictions/conventions of environment variables, all dots ('.') are replaced with underscores
 	 * and all letters are converted to upper case.
-	 * <p/>
+	 * <p>
 	 * Example: To set the configuration key <code>stagemonitor.active</code>, the environment variable has to be
 	 * <code>STAGEMONITOR_ACTIVE</code>
 	 * 

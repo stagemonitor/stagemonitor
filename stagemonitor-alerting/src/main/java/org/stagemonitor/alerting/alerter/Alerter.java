@@ -6,7 +6,7 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 
 /**
  * An alerter reports incidents to some channel like email.
- * <p/>
+ * <p>
  * To add a custom {@link Alerter}, just implement the abstract class and add the full qualified class name to
  * src/main/resources/META-INF/services/org.stagemonitor.alerting.alerter.Alerter.
  * The content of the file has to be the canonical class name of the alerter.
@@ -41,7 +41,7 @@ public abstract class Alerter implements StagemonitorSPI {
 
 	/**
 	 * The label of the target parameter that is used in {@link Subscription#target}
-	 * <p/>
+	 * <p>
 	 * For example "Email address" for the Email alerter. Returning <code>null</code> means that
 	 * this alerter does not have a target parameter.
 	 *

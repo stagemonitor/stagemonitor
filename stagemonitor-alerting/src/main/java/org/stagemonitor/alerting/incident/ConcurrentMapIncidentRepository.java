@@ -6,10 +6,10 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * A simple implementation of {@link IncidentRepository} that uses a map as the storage.
- * <p/>
+ * <p>
  * Although this is a simple and easy-to-use implementation, incidents from different servers can't be aggregated
  * so you will get alerts for each distinct server.
- * <p/>
+ * <p>
  * If you want only one alert per {@link org.stagemonitor.alerting.check.Check}, even for multiple servers,
  * plug in a implementation that uses a common datasource for all servers such as an elasticsearch cluster,
  * a relational database or a clustered hazelcast map.

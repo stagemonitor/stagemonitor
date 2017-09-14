@@ -159,12 +159,6 @@ subprojects {
 		}
 	}
 
-	javadoc {
-		if (JavaVersion.current().isJava8Compatible()) {
-			options.addStringOption('Xdoclint:none', '-quiet')
-		}
-	}
-
 	task copyToLib( type: Copy ) {
 		into "$buildDir/libs/lib"
 		from configurations.runtime - configurations.provided

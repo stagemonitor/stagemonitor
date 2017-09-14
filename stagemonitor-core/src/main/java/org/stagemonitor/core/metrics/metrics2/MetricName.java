@@ -17,17 +17,17 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * Represents a metrics 2.0 name that consists of a name and arbitrary tags (a set of key-value-pairs).
- * <p/>
+ * <p>
  * To create a new {@link MetricName}, use the static {@link MetricName}.{@link #name(String)} method. Example:
  * <code>name("api_request_duration").tag("stage", "transform").build()</code>
- * <p/>
+ * <p>
  * This is needed for example for InfluxDB's data model (see https://influxdb.com/docs/v0.9/concepts/schema_and_data_layout.html)
  * and to store metrics into Elasticsearch (see https://www.elastic.co/blog/elasticsearch-as-a-time-series-data-store).
  * See also http://metrics20.org/
- * <p/>
+ * <p>
  * The cool thing is that it is completely backwards compatible to graphite metric names and can also automatically
  * replace characters disallowed in graphite (see {@link #toGraphiteName()}).
- * <p/>
+ * <p>
  * This class is immutable
  */
 public class MetricName {
@@ -53,7 +53,7 @@ public class MetricName {
 
 	/**
 	 * Returns a copy of this name and appends a single tag
-	 * <p/>
+	 * <p>
 	 * Note that this method does not override existing tags
 	 *
 	 * @param key   the key of the tag
@@ -66,12 +66,12 @@ public class MetricName {
 
 	/**
 	 * Constructs a new {@link Builder} with the provided name.
-	 * <p/>
-	 * After adding tags with {@link Builder#tag(String, Object)}, call {@link Builder#build()} to get the
+	 * <p>
+	 * After adding tags with {@link Builder#tag(String, String)}, call {@link Builder#build()} to get the
 	 * immutable {@link MetricName}
-	 * <p/>
+	 * <p>
 	 * The metric name should only contain alphanumerical chars and underscores.
-	 * <p/>
+	 * <p>
 	 * When in doubt how to name a metic, take a look at https://prometheus.io/docs/practices/naming/
 	 *
 	 * @param name the metric name
@@ -152,9 +152,9 @@ public class MetricName {
 	/**
 	 * A {@link MetricNameTemplate} lets you efficiently create similar {@link MetricName}s so that if a {@link
 	 * MetricName} has already been {@link #build(String)} for the same value(s), the previous instance is reused.
-	 * <p/>
+	 * <p>
 	 * In other words, this is a cache for {@link MetricName}s
-	 * <p/>
+	 * <p>
 	 * Example:
 	 * <pre>
 	 *     MetricName.MetricNameTemplate timerMetricNameTemplate = name("response_time")

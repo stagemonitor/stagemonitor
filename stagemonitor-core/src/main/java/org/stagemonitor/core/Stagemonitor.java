@@ -321,14 +321,14 @@ public final class Stagemonitor {
 	}
 
 	/**
-	 * @see StagemonitorPlugin#getPathsOfWidgetTabPlugins()
+	 * @see StagemonitorPlugin#registerWidgetTabPlugins(StagemonitorPlugin.WidgetTabPluginsRegistry)
 	 */
 	public static List<String> getPathsOfWidgetTabPlugins() {
 		return Collections.unmodifiableList(pathsOfWidgetTabPlugins);
 	}
 
 	/**
-	 * @see org.stagemonitor.core.StagemonitorPlugin#getPathsOfWidgetMetricTabPlugins()
+	 * @see org.stagemonitor.core.StagemonitorPlugin#registerWidgetMetricTabPlugins(StagemonitorPlugin.WidgetMetricTabPluginsRegistry)
 	 */
 	public static List<String> getPathsOfWidgetMetricTabPlugins() {
 		return Collections.unmodifiableList(pathsOfWidgetMetricTabPlugins);

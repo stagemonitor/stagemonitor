@@ -11,7 +11,7 @@ import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
 /**
  * This class adds the {@link MDC} properties requestId, application, host and instance.
- * <p/>
+ * <p>
  * If you are using logback or log4j, you can append this to your pattern to append the properties to each log entry:
  * <code>trace:[%X{traceId}] span:[%X{spanId}] A:[%X{application}] H:[%X{host}] I:[%X{instance}]</code>
  */

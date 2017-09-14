@@ -115,7 +115,7 @@ public class JsonUtils {
 	/**
 	 * Helper class which allows to register all implementations via {@link ServiceLoader},
 	 * without picking up all {@link Module} implementations from the class path.
-	 * <p/>
+	 * <p>
 	 * For example the {@link AfterburnerModule} has to be registered with care
 	 * (see {@link AfterburnerModuleRegisterer}).
 	 */

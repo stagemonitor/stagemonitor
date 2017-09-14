@@ -11,7 +11,7 @@ import io.opentracing.Span;
 
 /**
  * The uadetector library is discontinued as the underlying database is now commercial.
- * <p/>
+ * <p>
  * Consider using the Elasticsearch ingest user agent plugin: https://www.elastic.co/guide/en/elasticsearch/plugins/master/ingest-user-agent.html
  */
 @Deprecated

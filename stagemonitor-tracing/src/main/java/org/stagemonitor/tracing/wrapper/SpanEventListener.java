@@ -6,7 +6,7 @@ import io.opentracing.Tracer;
 /**
  * Provides callbacks for interesting events triggered by calling certain {@link Span} and {@link
  * io.opentracing.Tracer.SpanBuilder} methods.
- * <p/>
+ * <p>
  * Use Cases:
  * <ul>
  * <li>
@@ -28,10 +28,10 @@ import io.opentracing.Tracer;
 public interface SpanEventListener {
 	/**
 	 * Called when a {@link Span} is started ({@link Tracer.SpanBuilder#start()}
-	 * <p/>
+	 * <p>
 	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanEventListener}s are notified.
 	 * If you don't want that, call <code>spanWrapper.getDelegate().setTag(...)</code>.
-	 * <p/>
+	 * <p>
 	 * Note: tags might be set on the span before it has been started
 	 *
 	 * @param spanWrapper the span which was just started
@@ -74,7 +74,7 @@ public interface SpanEventListener {
 	/**
 	 * Callback for {@link Span#finish}. The actual span will be finished after all {@link #onFinish} callbacks have
 	 * been executed.
-	 * <p/>
+	 * <p>
 	 * Note: when calling <code>spanWrapper.setTag(...)</code>, all registered {@link SpanEventListener}s are notified.
 	 * If you don't want that, call <code>spanWrapper.getDelegate().setTag(...)</code>.
 	 *

@@ -22,7 +22,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Utility class for interacting with the Grafana HTTP API
- * <p/>
+ * <p>
  * http://docs.grafana.org/reference/http_api/
  */
 public class GrafanaClient {
@@ -66,7 +66,7 @@ public class GrafanaClient {
 
 	/**
 	 * Saves a dashboard to Grafana
-	 * <p/>
+	 * <p>
 	 * If the Grafana url or the API Key is not configured, this method does nothing.
 	 *
 	 * @param classPathLocation The location of the dashboard

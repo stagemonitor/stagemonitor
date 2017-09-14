@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 /**
  * Can be used to create multiple Checks for a method.
- * <p/>
+ * <p>
  * The method also has to be annotated with @{@link Traced}
  */
 @Retention(RetentionPolicy.RUNTIME)

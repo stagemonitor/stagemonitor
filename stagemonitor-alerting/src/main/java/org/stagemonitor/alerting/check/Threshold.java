@@ -31,7 +31,7 @@ public class Threshold {
 	 * Checks if the threshold is exceeded.
 	 *
 	 * @param actualValue the value to check
-	 * @return <code>true</code>, if the actual value exceeds the threshold, <code>false</code> otherwise
+	 * @return {@code true}, if the actual value exceeds the threshold, {@code false} otherwise
 	 */
 	public boolean isExceeded(double actualValue) {
 		return !operator.check(actualValue, thresholdValue);
@@ -67,7 +67,7 @@ public class Threshold {
 
 	/**
 	 * Represents a boolean operator that can be used to check whether the expression
-	 * <code>actualValue OPERATOR thresholdValue</code> is true or false
+	 * {@code actualValue OPERATOR thresholdValue} is true or false
 	 */
 	public enum Operator {
 
@@ -103,7 +103,7 @@ public class Threshold {
 		}
 
 		/**
-		 * Checks, whether <code>actualValue OPERATOR thresholdValue</code> is true or false
+		 * Checks, whether {@code actualValue OPERATOR thresholdValue} is true or false
 		 *
 		 * @param actualValue
 		 * @param expectedValue
@@ -115,7 +115,7 @@ public class Threshold {
 		 * Gets a operator by its {@link #operatorString}.
 		 *
 		 * @param operatorString the operator string
-		 * @return the operator (e.g. {@link #GREATER_EQUAL} for the operatorString <code>>=</code>)
+		 * @return the operator (e.g. {@link #GREATER_EQUAL} for the operatorString {@code >=})
 		 */
 		public static Operator getByString(String operatorString) {
 			for (Operator operator : Operator.values()) {

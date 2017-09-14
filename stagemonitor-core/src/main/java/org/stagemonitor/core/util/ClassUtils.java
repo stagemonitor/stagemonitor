@@ -49,10 +49,10 @@ public class ClassUtils {
 
 	/**
 	 * Returns the same {@link String} like {@link Object#toString()} would.
-	 * <p/>
+	 * <p>
 	 * This {@link String} is less likely to have collisions as opposed to just using the
 	 * {@link System#identityHashCode(Object)} of the class loader, because the {@link Class#getName()} is also included.
-	 * <p/>
+	 * <p>
 	 * Note that the returned {@link String} is not guaranteed to be collision free. That means that for two different
 	 * {@link Object}s of the same class, there could still be collisions. To minimize the risk of a collision, the
 	 * output of this method should not be used if a lots of unique keys are needed.

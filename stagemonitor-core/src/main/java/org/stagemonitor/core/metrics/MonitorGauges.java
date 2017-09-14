@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * When a type is marked with this annotation, the creation of gauges with
- * @{@link com.codahale.metrics.annotation.Gauge} is activated for that type.
+ * {@link com.codahale.metrics.annotation.Gauge} is activated for that type.
  *
  * <pre><code>
  *     \@MonitorGauges

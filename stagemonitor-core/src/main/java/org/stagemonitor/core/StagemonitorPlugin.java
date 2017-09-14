@@ -51,7 +51,7 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 
 	/**
 	 * This method is called when stagemonitor shuts down.
-	 * The shutdown is triggered by {@link org.stagemonitor.web.servlet.filter.HttpRequestMonitorFilter#destroy()},
+	 * The shutdown is triggered by {@code org.stagemonitor.web.servlet.filter.HttpRequestMonitorFilter#destroy()},
 	 * for example. In non-servlet applications this method has to be called manually.
 	 * <p>
 	 * Note that this method will be called even if {@link #initializePlugin(InitArguments)} has not been called.
@@ -62,11 +62,11 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 	/**
 	 * StagemonitorPlugins can add additional tabs to the in browser widget.
 	 * A tab plugin consists of a javascript file and a html file.
-	 * <p/>
+	 * <p>
 	 * The files should be placed under
 	 * <code>src/main/resources/stagemonitor/static/some/sub/folder/myPlugin[.js|.html]</code>
 	 * if you return the path <code>/stagemonitor/static/some/sub/folder/myPlugin</code>
-	 * <p/>
+	 * <p>
 	 * The FileServlet serves all files under /src/main/resources/stagemonitor/static and
 	 * src/main/resources/stagemonitor/public/static
 	 */
@@ -76,13 +76,13 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 	/**
 	 * StagemonitorPlugins can extend the metrics tab in the in browser widget.
 	 * A widget metrics tab plugin consists of a javascript file and a html file.
-	 * <p/>
+	 * <p>
 	 * The files should be placed under
 	 * <code>/src/main/resources/stagemonitor/static/some/sub/folder/{pluginId}[.js|.html]</code>
-	 * <p/>
+	 * <p>
 	 * The FileServlet serves all files under /src/main/resources/stagemonitor/static and
 	 * /src/main/resources/stagemonitor/public/static
-	 * <p/>
+	 * <p>
 	 * For documentation and a example of how a plugin should look like, see
 	 * <code>stagemonitor-ehcache/src/main/resources/stagemonitor/static/tabs/metrics</code> and
 	 * <code>stagemonitor-jvm/src/main/resources/stagemonitor/static/tabs/metrics</code>
@@ -110,7 +110,7 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 
 	/**
 	 * Plugins can define dependencies on other plugins.
-	 * <p/>
+	 * <p>
 	 * This makes sure that the dependant plugins are initialized first.
 	 *
 	 * @return the plugins this plugin depends on

@@ -10,9 +10,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This {@link net.bytebuddy.agent.builder.AgentBuilder.TypeLocator} caches
+ * This {@link net.bytebuddy.agent.builder.AgentBuilder.PoolStrategy} caches
  * {@link net.bytebuddy.description.type.TypeDescription}s and clears the cache every minute to avoid memory leaks.
- * <p/>
+ * <p>
  * Class loader memory leaks are also avoided by using {@link WeakConcurrentMap}.
  */
 public class AutoEvictingCachingBinaryLocator extends AgentBuilder.PoolStrategy.WithTypePoolCache {

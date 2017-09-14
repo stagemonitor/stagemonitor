@@ -70,7 +70,7 @@ public class SpanContextInformation {
 
 	/**
 	 * Adds an attribute to the request which can later be retrieved by {@link #getRequestAttribute(String)}
-	 * <p/>
+	 * <p>
 	 * The attributes won't be reported
 	 */
 	public void addRequestAttribute(String key, Object value) {

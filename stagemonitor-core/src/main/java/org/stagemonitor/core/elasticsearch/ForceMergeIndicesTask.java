@@ -4,7 +4,7 @@ import java.util.TimerTask;
 
 /**
  * A task that runs periodically and calls _forcemerge on old Elasticsearch logstash-style indices.
- * <p/>
+ * <p>
  * By force merging, we are reducing the index size and make the overall index performance a bit faster.
  * But an optimisation process is I/O heavy.
  */
