@@ -108,7 +108,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 			span.setTag(SpanUtils.CALL_TREE_JSON, JsonUtils.toJson(callTree));
 		}
 		if (!tracingPlugin.getExcludedTags().contains(SpanUtils.CALL_TREE_ASCII)) {
-			span.setTag(SpanUtils.CALL_TREE_ASCII, callTree.toString(true));
+			span.setTag(SpanUtils.CALL_TREE_ASCII, callTree.toString(true, tracingPlugin.getCallTreeAsciiFormatter()));
 		}
 	}
 }

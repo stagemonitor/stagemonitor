@@ -34,6 +34,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import javax.naming.OperationNotSupportedException;
+
 /**
  * Represents a configuration option
  *
@@ -221,11 +223,7 @@ public class ConfigurationOption<T> {
 		validators = new ArrayList<Validator<T>>(validators);
 		if (validOptions != null) {
 			this.validOptions = Collections.unmodifiableMap(new LinkedHashMap<String, String>(validOptions));
-			if (defaultValue instanceof Collection) {
-				validators.add(getCollectionValidator(valueConverter, validOptions.keySet()));
-			} else {
-				validators.add(new ValidOptionValidator<T>(validOptions.keySet()));
-			}
+			validators.add(new ValidOptionValidator<T>(validOptions.keySet()));
 		} else {
 			this.validOptions = null;
 		}
@@ -242,11 +240,6 @@ public class ConfigurationOption<T> {
 		tempAllKeys.add(key);
 		tempAllKeys.addAll(aliasKeys);
 		this.allKeys = Collections.unmodifiableList(tempAllKeys);
-	}
-
-	@SuppressWarnings("unchecked")
-	private Validator<T> getCollectionValidator(ValueConverter<T> valueConverter, Collection<String> validOptions) {
-		return new ValidOptionCollectionValidator(validOptions, valueConverter);
 	}
 
 	/**
@@ -800,10 +793,8 @@ public class ConfigurationOption<T> {
 
 		public ConfigurationOptionBuilder<T> addValidOption(T option) {
 			if (option instanceof Collection) {
-				for (Object o : (Collection<?>) option) {
-					final String validOptionAsString = valueConverter.toString(getSingleValue(o));
-					addValidOptionAsString(validOptionAsString, getLabel(option, validOptionAsString));
-				}
+				throw new UnsupportedOperationException("Adding valid options to a collection option is not supported. " +
+						"If you need this feature");
 			} else {
 				final String validOptionAsString = valueConverter.toString(option);
 				addValidOptionAsString(validOptionAsString, getLabel(option, validOptionAsString));
@@ -890,29 +881,6 @@ public class ConfigurationOption<T> {
 			if (!validOptions.contains(valueAsString)) {
 				throw new IllegalArgumentException("Invalid option '" + valueAsString + "' expecting one of " + validOptions);
 			}
-		}
-	}
-
-	private static class ValidOptionCollectionValidator<T> implements Validator<Collection<T>> {
-		private final Set<String> validOptions;
-		private final ValueConverter<Collection<T>> valueConverter;
-
-		ValidOptionCollectionValidator(Collection<String> validOptions, ValueConverter<Collection<T>> valueConverter) {
-			this.validOptions = new HashSet<String>(validOptions);
-			this.valueConverter = valueConverter;
-		}
-
-		@Override
-		public void assertValid(Collection<T> values, String valueAsString) {
-			for (T value : values) {
-				if (!validOptions.contains(getValueAsString(value))) {
-					throw new IllegalArgumentException("Invalid option '" + valueAsString + "' expecting any of " + validOptions);
-				}
-			}
-		}
-
-		private String getValueAsString(T value) {
-			return valueConverter.toString(Collections.singletonList(value));
 		}
 	}
 }

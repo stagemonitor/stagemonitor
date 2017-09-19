@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.profiler.formatter.AsciiCallTreeSignatureFormatter;
+import org.stagemonitor.tracing.profiler.formatter.ShortSignatureFormatter;
 
 import java.util.Deque;
 import java.util.Iterator;
@@ -208,24 +210,22 @@ public class CallStackElement {
 
 	@Override
 	public String toString() {
-		return toString(false);
+		return toString(false, new ShortSignatureFormatter());
 	}
 
-	public String toString(boolean asciiArt) {
+	public String toString(boolean asciiArt, AsciiCallTreeSignatureFormatter callTreeAsciiFormatter) {
 		final StringBuilder sb = new StringBuilder(3000);
-		logStats(getExecutionTime(), new LinkedList<String>(), sb, asciiArt);
+		sb.append("----------------------------------------------------------------------\n");
+		sb.append("Selftime (ms)              Total (ms)                 Method signature\n");
+		sb.append("----------------------------------------------------------------------\n");
+		logStats(getExecutionTime(), new LinkedList<String>(), sb, asciiArt, callTreeAsciiFormatter);
 		return sb.toString();
 	}
 
-	public void logStats(long totalExecutionTimeNs, Deque<String> indentationStack, StringBuilder sb,
-						 final boolean asciiArt) {
-		if (isRoot()) {
-			sb.append("----------------------------------------------------------------------\n");
-			sb.append("Selftime (ms)              Total (ms)                 Method signature\n");
-			sb.append("----------------------------------------------------------------------\n");
-		}
+	private void logStats(long totalExecutionTimeNs, Deque<String> indentationStack, StringBuilder sb,
+						  final boolean asciiArt, AsciiCallTreeSignatureFormatter callTreeAsciiFormatter) {
 		appendTimesPercentTable(totalExecutionTimeNs, sb, asciiArt);
-		appendCallTree(indentationStack, sb, asciiArt);
+		appendCallTree(indentationStack, sb, asciiArt, callTreeAsciiFormatter);
 
 		for (CallStackElement callStats : getChildren()) {
 			if (!isRoot()) {
@@ -235,7 +235,7 @@ public class CallStackElement {
 					indentationStack.add(asciiArt ? HORIZONTAL : "|   ");
 				}
 			}
-			callStats.logStats(totalExecutionTimeNs, indentationStack, sb, asciiArt);
+			callStats.logStats(totalExecutionTimeNs, indentationStack, sb, asciiArt, callTreeAsciiFormatter);
 			if (!isRoot()) {
 				indentationStack.pollLast();
 			}
@@ -275,7 +275,7 @@ public class CallStackElement {
 		return sb.toString();
 	}
 
-	private void appendCallTree(Deque<String> indentationStack, StringBuilder sb, final boolean asciiArt) {
+	private void appendCallTree(Deque<String> indentationStack, StringBuilder sb, final boolean asciiArt, AsciiCallTreeSignatureFormatter callTreeAsciiFormatter) {
 		for (String indentation : indentationStack) {
 			sb.append(indentation);
 		}
@@ -287,13 +287,7 @@ public class CallStackElement {
 			}
 		}
 
-		final String shortSignature = getShortSignature();
-		if (shortSignature != null) {
-			sb.append(shortSignature);
-		} else {
-			sb.append(getSignature());
-		}
-		sb.append('\n');
+		sb.append(callTreeAsciiFormatter.getSignature(this)).append('\n');
 	}
 
 	private boolean isLastChild() {

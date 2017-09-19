@@ -116,7 +116,7 @@
 									{{#if validOptions}}
 										<select name="value" class="form-control">
 											{{#each validOptionsLabelMap}}
-												<option value="{{@key}}" {{#ifCond this '==' valueAsString}}selected{{/ifCond}}>{{this}}</option>
+												<option value="{{@key}}" {{#ifCond @key '==' ../valueAsString}}selected{{/ifCond}}>{{this}}</option>
 											{{/each}}
 										</select>
 									{{else}}

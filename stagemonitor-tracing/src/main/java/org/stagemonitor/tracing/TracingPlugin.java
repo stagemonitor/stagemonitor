@@ -20,6 +20,8 @@ import org.stagemonitor.tracing.anonymization.AnonymizingSpanEventListener;
 import org.stagemonitor.tracing.mdc.MDCSpanEventListener;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallTreeSpanEventListener;
+import org.stagemonitor.tracing.profiler.formatter.AsciiCallTreeSignatureFormatter;
+import org.stagemonitor.tracing.profiler.formatter.ShortSignatureFormatter;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.reporter.SpanReporter;
 import org.stagemonitor.tracing.sampling.PostExecutionSpanInterceptor;
@@ -156,6 +158,15 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.tags("profiler", "sampling")
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(1000000d);
+	private final ConfigurationOption<AsciiCallTreeSignatureFormatter> callTreeAsciiFormatter = ConfigurationOption.serviceLoaderStategyOption(AsciiCallTreeSignatureFormatter.class)
+			.key("stagemonitor.profiler.formatter")
+			.dynamic(true)
+			.label("Call Tree ASCII formatter")
+			.description("Lets you choose how the method signatures in the ASCII call tree are formatted. " +
+					"It's also possible to supply a custom implementation.")
+			.tags("profiler", "advanced")
+			.configurationCategory(TRACING_PLUGIN)
+			.buildWithDefault(new ShortSignatureFormatter());
 
 	/* Privacy */
 	private final ConfigurationOption<Boolean> anonymizeIPs = ConfigurationOption.booleanOption()
@@ -667,5 +678,9 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	public boolean isTrackMetricsAsync() {
 		return trackMetricsAsync.getValue();
+	}
+
+	public AsciiCallTreeSignatureFormatter getCallTreeAsciiFormatter() {
+		return callTreeAsciiFormatter.getValue();
 	}
 }

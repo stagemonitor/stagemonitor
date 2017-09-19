@@ -267,18 +267,12 @@ public class ConfigurationOptionTest {
 
 	@Test
 	public void testValidOptions_list() throws Exception {
-		final ConfigurationOption<Collection<Integer>> option = ConfigurationOption.integersOption()
+		assertThatThrownBy(() -> ConfigurationOption.integersOption()
 				.key("test.list")
 				.dynamic(true)
 				.addValidOption(Arrays.asList(1, 2))
-				.buildWithDefault(Collections.singleton(1));
-		final ConfigurationRegistry configuration = createConfiguration(Collections.singletonList(option), new SimpleSource());
-		assertThat(option.getValidOptions()).containsExactlyInAnyOrder("1", "2");
-		assertThat(option.getValue()).isEqualTo(Collections.singleton(1));
-		configuration.save("test.list", "1,2", SimpleSource.NAME);
-		assertThat(option.getValue()).containsExactlyInAnyOrder(1, 2);
-		assertThatThrownBy(() -> configuration.save("test.list", "1,2,3", SimpleSource.NAME))
-				.isInstanceOf(IllegalArgumentException.class);
+				.buildWithDefault(Collections.singleton(1)))
+				.isInstanceOf(UnsupportedOperationException.class);
 	}
 
 }
