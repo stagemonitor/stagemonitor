@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.converter.BooleanValueConverter;
+import org.stagemonitor.configuration.converter.ClassInstanceValueConverter;
 import org.stagemonitor.configuration.converter.DoubleValueConverter;
 import org.stagemonitor.configuration.converter.EnumValueConverter;
 import org.stagemonitor.configuration.converter.IntegerValueConverter;
@@ -24,9 +25,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -56,6 +59,7 @@ public class ConfigurationOption<T> {
 	@JsonIgnore
 	private final ValueConverter<T> valueConverter;
 	private final Class<? super T> valueType;
+	private final List<String> validOptions;
 	private String valueAsString;
 	private T value;
 	private List<ConfigurationSource> configurationSources;
@@ -72,7 +76,7 @@ public class ConfigurationOption<T> {
 	 *
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link String}
 	 */
-	public static  ConfigurationOptionBuilder<String> stringOption() {
+	public static ConfigurationOptionBuilder<String> stringOption() {
 		return new ConfigurationOptionBuilder<String>(StringValueConverter.INSTANCE, String.class);
 	}
 
@@ -85,7 +89,7 @@ public class ConfigurationOption<T> {
 	 *
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Boolean}
 	 */
-	public static  ConfigurationOptionBuilder<Boolean> booleanOption() {
+	public static ConfigurationOptionBuilder<Boolean> booleanOption() {
 		return new ConfigurationOptionBuilder<Boolean>(BooleanValueConverter.INSTANCE, Boolean.class);
 	}
 
@@ -94,7 +98,7 @@ public class ConfigurationOption<T> {
 	 *
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Integer}
 	 */
-	public static  ConfigurationOptionBuilder<Integer> integerOption() {
+	public static ConfigurationOptionBuilder<Integer> integerOption() {
 		return new ConfigurationOptionBuilder<Integer>(IntegerValueConverter.INSTANCE, Integer.class);
 	}
 
@@ -106,6 +110,7 @@ public class ConfigurationOption<T> {
 	public static ConfigurationOptionBuilder<Long> longOption() {
 		return new ConfigurationOptionBuilder<Long>(LongValueConverter.INSTANCE, Long.class);
 	}
+
 	/**
 	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Double}
 	 *
@@ -126,8 +131,8 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt;
-	 * and all Strings are converted to lower case.
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt; and all
+	 * Strings are converted to lower case.
 	 *
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt;
 	 */
@@ -156,9 +161,11 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link String}&gt;
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link
+	 * String}&gt;
 	 *
-	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link String}&gt;
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link
+	 * String}&gt;
 	 */
 	public static ConfigurationOptionBuilder<Map<Pattern, String>> regexMapOption() {
 		return new ConfigurationOptionBuilder<Map<Pattern, String>>(MapValueConverter.REGEX_MAP_VALUE_CONVERTER, Map.class)
@@ -181,14 +188,28 @@ public class ConfigurationOption<T> {
 	 * @return a {@link ConfigurationOptionBuilder} whose value is an {@link Enum}
 	 */
 	public static <T extends Enum<T>> ConfigurationOptionBuilder<T> enumOption(Class<T> clazz) {
-		return new ConfigurationOptionBuilder<T>(new EnumValueConverter<T>(clazz), clazz);
+		final ConfigurationOptionBuilder<T> optionBuilder = new ConfigurationOptionBuilder<T>(new EnumValueConverter<T>(clazz), clazz);
+		for (T enumConstant : clazz.getEnumConstants()) {
+			optionBuilder.addValidOptionAsString(enumConstant.name());
+		}
+		optionBuilder.sealValidOptions();
+		return optionBuilder;
+	}
+
+	public static <T> ConfigurationOptionBuilder<T> serviceLoaderStategyOption(Class<T> serviceLoaderInterface) {
+		final ConfigurationOptionBuilder<T> optionBuilder = new ConfigurationOptionBuilder<T>(ClassInstanceValueConverter.of(serviceLoaderInterface), serviceLoaderInterface);
+		for (T impl : ServiceLoader.load(serviceLoaderInterface, ConfigurationOption.class.getClassLoader())) {
+			optionBuilder.addValidOptionAsString(impl.getClass().getName());
+		}
+		optionBuilder.sealValidOptions();
+		return optionBuilder;
 	}
 
 	private ConfigurationOption(boolean dynamic, boolean sensitive, String key, String label, String description,
-								T defaultValue, String configurationCategory, ValueConverter<T> valueConverter,
+								T defaultValue, String configurationCategory, final ValueConverter<T> valueConverter,
 								Class<? super T> valueType, List<String> tags, boolean required,
 								List<ChangeListener<T>> changeListeners, List<Validator<T>> validators,
-								List<String> aliasKeys) {
+								List<String> aliasKeys, final List<String> validOptions) {
 		this.dynamic = dynamic;
 		this.key = key;
 		this.aliasKeys = aliasKeys;
@@ -196,6 +217,18 @@ public class ConfigurationOption<T> {
 		this.description = description;
 		this.defaultValue = defaultValue;
 		this.tags = tags;
+		validators = new ArrayList<Validator<T>>(validators);
+		if (validOptions != null) {
+			this.validOptions = Collections.unmodifiableList(new ArrayList<String>(validOptions));
+			if (defaultValue instanceof Collection) {
+				validators.add(getCollectionValidator(valueConverter, validOptions));
+			} else {
+				validators.add(new ValidOptionValidator<T>(validOptions));
+			}
+		} else {
+			this.validOptions = null;
+		}
+		this.validators = Collections.unmodifiableList(new ArrayList<Validator<T>>(validators));
 		this.defaultValueAsString = valueConverter.toString(defaultValue);
 		this.configurationCategory = configurationCategory;
 		this.valueConverter = valueConverter;
@@ -203,12 +236,16 @@ public class ConfigurationOption<T> {
 		this.sensitive = sensitive;
 		this.required = required;
 		this.changeListeners = new ArrayList<ChangeListener<T>>(changeListeners);
-		this.validators = validators;
 		setToDefault();
 		final ArrayList<String> tempAllKeys = new ArrayList<String>(aliasKeys.size() + 1);
 		tempAllKeys.add(key);
 		tempAllKeys.addAll(aliasKeys);
 		this.allKeys = Collections.unmodifiableList(tempAllKeys);
+	}
+
+	@SuppressWarnings("unchecked")
+	private Validator<T> getCollectionValidator(ValueConverter<T> valueConverter, List<String> validOptions) {
+		return new ValidOptionCollectionValidator(validOptions, valueConverter);
 	}
 
 	/**
@@ -275,9 +312,8 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Returns <code>true</code>, if the value is sensitive, <code>false</code> otherwise.
-	 * If a value has sensitive content (e.g. password), it should be rendered
-	 * as an input of type="password", rather then as type="text".
+	 * Returns <code>true</code>, if the value is sensitive, <code>false</code> otherwise. If a value has sensitive
+	 * content (e.g. password), it should be rendered as an input of type="password", rather then as type="text".
 	 *
 	 * @return Returns <code>true</code>, if the value is sensitive, <code>false</code> otherwise.
 	 */
@@ -363,6 +399,15 @@ public class ConfigurationOption<T> {
 	 */
 	public String getErrorMessage() {
 		return errorMessage;
+	}
+
+	/**
+	 * Returns the valid values for this configuration option
+	 *
+	 * @return the valid values for this configuration option
+	 */
+	public List<String> getValidOptions() {
+		return validOptions;
 	}
 
 	synchronized void reload(boolean reloadNonDynamicValues) {
@@ -461,7 +506,7 @@ public class ConfigurationOption<T> {
 	public void assertValid(String valueAsString) throws IllegalArgumentException {
 		final T value = valueConverter.convert(valueAsString);
 		for (Validator<T> validator : validators) {
-			validator.assertValid(value);
+			validator.assertValid(value, valueAsString);
 		}
 	}
 
@@ -483,7 +528,7 @@ public class ConfigurationOption<T> {
 
 	private void setValue(T value, String valueAsString, String nameOfCurrentConfigurationSource) {
 		for (Validator<T> validator : validators) {
-			validator.assertValid(value);
+			validator.assertValid(value, valueAsString);
 		}
 
 		this.value = value;
@@ -514,10 +559,9 @@ public class ConfigurationOption<T> {
 	 */
 	public interface ChangeListener<T> {
 		/**
-		 *
 		 * @param configurationOption the configuration option which has just changed its value
-		 * @param oldValue the old value
-		 * @param newValue the new value
+		 * @param oldValue            the old value
+		 * @param newValue            the new value
 		 */
 		void onChange(ConfigurationOption<?> configurationOption, T oldValue, T newValue);
 
@@ -539,10 +583,12 @@ public class ConfigurationOption<T> {
 	public interface Validator<T> {
 		/**
 		 * Validates a value
-		 * @param value the value to be validated
+		 *
+		 * @param value         the value to be validated
+		 * @param valueAsString the value to be validated as string
 		 * @throws IllegalArgumentException if the value is invalid
 		 */
-		void assertValid(T value);
+		void assertValid(T value, String valueAsString);
 
 		class OptionalValidatorAdapter<T> implements Validator<Optional<T>> {
 			private final Validator<T> validator;
@@ -552,8 +598,8 @@ public class ConfigurationOption<T> {
 			}
 
 			@Override
-			public void assertValid(Optional<T> value) {
-				validator.assertValid(value.orElse(null));
+			public void assertValid(Optional<T> value, String valueAsString) {
+				validator.assertValid(value.orElse(null), valueAsString);
 			}
 		}
 	}
@@ -573,6 +619,8 @@ public class ConfigurationOption<T> {
 		private List<ChangeListener<T>> changeListeners = new ArrayList<ChangeListener<T>>();
 		private List<Validator<T>> validators = new ArrayList<Validator<T>>();
 		private String[] aliasKeys = new String[0];
+		private List<String> validOptions;
+		private boolean validOptionsSealed = false;
 
 		private ConfigurationOptionBuilder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 			this.valueConverter = valueConverter;
@@ -581,8 +629,7 @@ public class ConfigurationOption<T> {
 
 		/**
 		 * Be aware that when using this method you might have to deal with <code>null</code> values when calling {@link
-		 * #getValue()}.
-		 * <p> That's why this method is deprecated
+		 * #getValue()}. <p> That's why this method is deprecated
 		 *
 		 * @deprecated use {@link #buildRequired()}, {@link #buildWithDefault(Object)} or {@link #buildOptional()}. The
 		 * only valid use of this method is if {@link #buildOptional()} would be the semantically correct option but you
@@ -592,20 +639,17 @@ public class ConfigurationOption<T> {
 		public ConfigurationOption<T> build() {
 			return new ConfigurationOption<T>(dynamic, sensitive, key, label, description, defaultValue, configurationCategory,
 					valueConverter, valueType, Arrays.asList(tags), required,
-					Collections.unmodifiableList(changeListeners),
-					Collections.unmodifiableList(validators),
-					Arrays.asList(aliasKeys));
+					changeListeners,
+					validators,
+					Arrays.asList(aliasKeys), validOptions);
 		}
 
 		/**
-		 * Builds the option and marks it as required.
-		 * <p>
-		 * Use this method if you don't want to provide a default value but setting a value is still required. You
-		 * will have to make sure to provide a value is present on startup.
-		 * <p>
-		 * When a required option does not have a value the behavior depends on
-		 * {@link ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised,
-		 * which can potentially prevent the application form starting or a warning gets logged.
+		 * Builds the option and marks it as required. <p> Use this method if you don't want to provide a default value
+		 * but setting a value is still required. You will have to make sure to provide a value is present on startup.
+		 * <p> When a required option does not have a value the behavior depends on {@link
+		 * ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised, which
+		 * can potentially prevent the application form starting or a warning gets logged.
 		 */
 		public ConfigurationOption<T> buildRequired() {
 			this.required = true;
@@ -629,9 +673,8 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * Builds the option and marks it as not required
-		 * <p>
-		 * Use this method if setting this option is not required and to express that it may be <code>null</code>.
+		 * Builds the option and marks it as not required <p> Use this method if setting this option is not required and
+		 * to express that it may be <code>null</code>.
 		 */
 		public ConfigurationOption<Optional<T>> buildOptional() {
 			required = false;
@@ -646,7 +689,7 @@ public class ConfigurationOption<T> {
 			return new ConfigurationOption<Optional<T>>(dynamic, sensitive, key, label, description,
 					java.util.Optional.ofNullable(defaultValue), configurationCategory,
 					new OptionalValueConverter<T>(valueConverter), java.util.Optional.class, Arrays.asList(this.tags), required,
-					optionalChangeListeners, optionalValidators, Arrays.asList(aliasKeys));
+					optionalChangeListeners, optionalValidators, Arrays.asList(aliasKeys), validOptions);
 		}
 
 		public ConfigurationOptionBuilder<T> dynamic(boolean dynamic) {
@@ -699,10 +742,8 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * Marks this ConfigurationOption as sensitive.
-		 * <p>
-		 * If a value has sensitive content (e.g. password), it should be rendered
-		 * as an input of type="password", rather then as type="text".
+		 * Marks this ConfigurationOption as sensitive. <p> If a value has sensitive content (e.g. password), it should
+		 * be rendered as an input of type="password", rather then as type="text".
 		 *
 		 * @return <code>this</code>, for chaining.
 		 */
@@ -712,9 +753,7 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * Marks this option as required.
-		 * <p>
-		 * When a required option does not have a value the behavior depends on
+		 * Marks this option as required. <p> When a required option does not have a value the behavior depends on
 		 * {@link ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised,
 		 * which can potentially prevent the application form starting or a warning gets logged.
 		 *
@@ -734,6 +773,60 @@ public class ConfigurationOption<T> {
 
 		public ConfigurationOptionBuilder<T> addValidator(Validator<T> validator) {
 			this.validators.add(validator);
+			return this;
+		}
+
+		public ConfigurationOptionBuilder<T> validOptions(List<T> options) {
+			for (T option : options) {
+				addValidOption(option);
+			}
+			return this;
+		}
+
+		public ConfigurationOptionBuilder<T> addValidOptions(T... options) {
+			for (T option : options) {
+				addValidOption(option);
+			}
+			return this;
+		}
+
+		public ConfigurationOptionBuilder<T> addValidOption(T option) {
+			if (option instanceof Collection) {
+				for (Object o : (Collection<?>) option) {
+					addValidOptionAsString(valueConverter.toString(getSingleValue(o)));
+				}
+			} else {
+				addValidOptionAsString(valueConverter.toString(option));
+			}
+			return this;
+		}
+
+		@SuppressWarnings("unchecked")
+		private T getSingleValue(Object o) {
+			return (T) Collections.singletonList(o);
+		}
+
+		private ConfigurationOptionBuilder<T> addValidOptionAsString(String validOption) {
+			if (validOptionsSealed) {
+				throw new IllegalStateException("Options are sealed, you can't add any new ones");
+			}
+			if (validOptions == null) {
+				validOptions = new ArrayList<String>();
+			}
+			validOptions.add(validOption);
+			return this;
+		}
+
+		/**
+		 * Makes sure that no more valid options can be added
+		 *
+		 * @return this, for chaining
+		 */
+		public ConfigurationOptionBuilder<T> sealValidOptions() {
+			this.validOptionsSealed = true;
+			if (validOptions != null) {
+				validOptions = Collections.unmodifiableList(validOptions);
+			}
 			return this;
 		}
 
@@ -757,6 +850,44 @@ public class ConfigurationOption<T> {
 
 		private String getNewConfigurationSourceName() {
 			return newConfigurationSourceName;
+		}
+	}
+
+	private static class ValidOptionValidator<T> implements Validator<T> {
+		private final Set<String> validOptions;
+
+		ValidOptionValidator(Collection<String> validOptions) {
+			this.validOptions = new HashSet<String>(validOptions);
+		}
+
+		@Override
+		public void assertValid(T value, String valueAsString) {
+			if (!validOptions.contains(valueAsString)) {
+				throw new IllegalArgumentException("Invalid option '" + valueAsString + "' expecting one of " + validOptions);
+			}
+		}
+	}
+
+	private static class ValidOptionCollectionValidator<T> implements Validator<Collection<T>> {
+		private final Set<String> validOptions;
+		private final ValueConverter<Collection<T>> valueConverter;
+
+		ValidOptionCollectionValidator(Collection<String> validOptions, ValueConverter<Collection<T>> valueConverter) {
+			this.validOptions = new HashSet<String>(validOptions);
+			this.valueConverter = valueConverter;
+		}
+
+		@Override
+		public void assertValid(Collection<T> values, String valueAsString) {
+			for (T value : values) {
+				if (!validOptions.contains(getValueAsString(value))) {
+					throw new IllegalArgumentException("Invalid option '" + valueAsString + "' expecting any of " + validOptions);
+				}
+			}
+		}
+
+		private String getValueAsString(T value) {
+			return valueConverter.toString(Collections.singletonList(value));
 		}
 	}
 }

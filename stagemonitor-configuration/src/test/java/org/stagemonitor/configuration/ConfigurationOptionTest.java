@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -22,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ConfigurationOptionTest {
 
-	private final ConfigurationOption<Map<Pattern,String>> invalidPatternMap = ConfigurationOption.regexMapOption().key("invalidPatternMap").build();
+	private final ConfigurationOption<Map<Pattern, String>> invalidPatternMap = ConfigurationOption.regexMapOption().key("invalidPatternMap").build();
 	private final ConfigurationOption<Collection<Pattern>> invalidPatternSyntax = ConfigurationOption.regexListOption().key("invalidPatternSyntax").build();
 	private final ConfigurationOption<Long> aLong = ConfigurationOption.longOption().key("long").build();
 	private final ConfigurationOption<Long> invalidLong = ConfigurationOption.longOption().key("invalidLong").buildWithDefault(2L);
@@ -173,6 +175,104 @@ public class ConfigurationOptionTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testDefaultValueNull() {
 		ConfigurationOption.stringOption().key("foo").buildWithDefault(null);
+	}
+
+	@Test
+	public void testWithOptions_valid() {
+		final ConfigurationOption<String> option = ConfigurationOption.stringOption()
+				.key("test.options")
+				.addValidOptions("foo", "bar")
+				.buildWithDefault("foo");
+		final ConfigurationRegistry configuration = createConfiguration(Collections.singletonList(option), SimpleSource.forTest("test.options", "bar"));
+		assertThat(configuration.getConfigurationOptionByKey("test.options").getValueAsString()).isEqualTo("bar");
+		assertThatThrownBy(() -> configuration.save("test.options", "baz", "Test Configuration Source"))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("Invalid option");
+	}
+
+	@Test
+	public void testWithOptions_invalidDefault() {
+		assertThatThrownBy(() -> ConfigurationOption.stringOption()
+				.key("test.options")
+				.addValidOptions("foo", "bar")
+				.buildWithDefault("baz"))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("Invalid option");
+	}
+
+	@Test
+	public void testWithOptions_sealedOptions() {
+		assertThatThrownBy(() -> ConfigurationOption.stringOption()
+				.key("test.options")
+				.addValidOptions("foo", "bar")
+				.sealValidOptions()
+				.addValidOption("baz")
+				.buildWithDefault("baz"))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage("Options are sealed, you can't add any new ones");
+	}
+
+	interface Strategy {
+	}
+
+	public static class DefaultStrategyImpl implements Strategy {
+	}
+
+	public static class SpecialStrategyImpl implements Strategy {
+	}
+
+	public static class NoMetaInfServicesStrategyImpl implements Strategy {
+	}
+
+	@Test
+	public void testServiceLoaderStrategyOption() throws Exception {
+		final ConfigurationOption<Strategy> option = ConfigurationOption.serviceLoaderStategyOption(Strategy.class)
+				.key("test.strategy")
+				.dynamic(true)
+				.buildWithDefault(new DefaultStrategyImpl());
+		final ConfigurationRegistry configuration = createConfiguration(Collections.singletonList(option), new SimpleSource());
+		assertThat(option.getValidOptions()).containsExactlyInAnyOrder(DefaultStrategyImpl.class.getName(), SpecialStrategyImpl.class.getName());
+		assertThat(option.getValue()).isInstanceOf(DefaultStrategyImpl.class);
+		configuration.save("test.strategy", SpecialStrategyImpl.class.getName(), SimpleSource.NAME);
+		assertThat(option.getValue()).isInstanceOf(SpecialStrategyImpl.class);
+		assertThatThrownBy(() -> configuration.save("test.strategy", NoMetaInfServicesStrategyImpl.class.getName(), SimpleSource.NAME))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("Invalid option");
+	}
+
+	enum TestEnum {
+		FOO, BAR
+	}
+
+	@Test
+	public void testEnum() throws Exception {
+		final ConfigurationOption<TestEnum> option = ConfigurationOption.enumOption(TestEnum.class)
+				.key("test.enum")
+				.dynamic(true)
+				.buildWithDefault(TestEnum.FOO);
+		final ConfigurationRegistry configuration = createConfiguration(Collections.singletonList(option), new SimpleSource());
+		assertThat(option.getValidOptions()).containsExactlyInAnyOrder("FOO", "BAR");
+		assertThat(option.getValue()).isEqualTo(TestEnum.FOO);
+		configuration.save("test.enum", "BAR", SimpleSource.NAME);
+		assertThat(option.getValue()).isEqualTo(TestEnum.BAR);
+		assertThatThrownBy(() -> configuration.save("test.enum", "BAZ", SimpleSource.NAME))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void testValidOptions_list() throws Exception {
+		final ConfigurationOption<Collection<Integer>> option = ConfigurationOption.integersOption()
+				.key("test.list")
+				.dynamic(true)
+				.addValidOption(Arrays.asList(1, 2))
+				.buildWithDefault(Collections.singleton(1));
+		final ConfigurationRegistry configuration = createConfiguration(Collections.singletonList(option), new SimpleSource());
+		assertThat(option.getValidOptions()).containsExactlyInAnyOrder("1", "2");
+		assertThat(option.getValue()).isEqualTo(Collections.singleton(1));
+		configuration.save("test.list", "1,2", SimpleSource.NAME);
+		assertThat(option.getValue()).containsExactlyInAnyOrder(1, 2);
+		assertThatThrownBy(() -> configuration.save("test.list", "1,2,3", SimpleSource.NAME))
+				.isInstanceOf(IllegalArgumentException.class);
 	}
 
 }

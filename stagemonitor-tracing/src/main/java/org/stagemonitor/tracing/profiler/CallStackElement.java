@@ -287,7 +287,13 @@ public class CallStackElement {
 			}
 		}
 
-		sb.append(getSignature()).append('\n');
+		final String shortSignature = getShortSignature();
+		if (shortSignature != null) {
+			sb.append(shortSignature);
+		} else {
+			sb.append(getSignature());
+		}
+		sb.append('\n');
 	}
 
 	private boolean isLastChild() {

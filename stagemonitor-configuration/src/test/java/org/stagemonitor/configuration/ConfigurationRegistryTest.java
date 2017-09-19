@@ -83,7 +83,7 @@ public class ConfigurationRegistryTest {
 	public void testValidateConfigurationOption() throws Exception {
 		final ConfigurationOption<Boolean> configurationOption = ConfigurationOption.booleanOption()
 				.key("foo")
-				.addValidator(value -> {
+				.addValidator((value, valueAsString) -> {
 					if (!value) {
 						throw new IllegalArgumentException("Validation failed");
 					}
@@ -106,12 +106,9 @@ public class ConfigurationRegistryTest {
 		try {
 			ConfigurationOption.booleanOption()
 					.key("foo")
-					.addValidator(new ConfigurationOption.Validator<Boolean>() {
-						@Override
-						public void assertValid(Boolean value) {
-							if (!value) {
-								throw new IllegalArgumentException("Validation failed");
-							}
+					.addValidator((value, valueAsString) -> {
+						if (!value) {
+							throw new IllegalArgumentException("Validation failed");
 						}
 					})
 					.buildWithDefault(false);
