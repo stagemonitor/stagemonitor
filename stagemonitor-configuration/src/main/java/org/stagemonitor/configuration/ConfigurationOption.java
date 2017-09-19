@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,7 +60,7 @@ public class ConfigurationOption<T> {
 	@JsonIgnore
 	private final ValueConverter<T> valueConverter;
 	private final Class<? super T> valueType;
-	private final List<String> validOptions;
+	private final Map<String, String> validOptions;
 	private String valueAsString;
 	private T value;
 	private List<ConfigurationSource> configurationSources;
@@ -190,7 +191,7 @@ public class ConfigurationOption<T> {
 	public static <T extends Enum<T>> ConfigurationOptionBuilder<T> enumOption(Class<T> clazz) {
 		final ConfigurationOptionBuilder<T> optionBuilder = new ConfigurationOptionBuilder<T>(new EnumValueConverter<T>(clazz), clazz);
 		for (T enumConstant : clazz.getEnumConstants()) {
-			optionBuilder.addValidOptionAsString(enumConstant.name());
+			optionBuilder.addValidOption(enumConstant);
 		}
 		optionBuilder.sealValidOptions();
 		return optionBuilder;
@@ -199,7 +200,7 @@ public class ConfigurationOption<T> {
 	public static <T> ConfigurationOptionBuilder<T> serviceLoaderStategyOption(Class<T> serviceLoaderInterface) {
 		final ConfigurationOptionBuilder<T> optionBuilder = new ConfigurationOptionBuilder<T>(ClassInstanceValueConverter.of(serviceLoaderInterface), serviceLoaderInterface);
 		for (T impl : ServiceLoader.load(serviceLoaderInterface, ConfigurationOption.class.getClassLoader())) {
-			optionBuilder.addValidOptionAsString(impl.getClass().getName());
+			optionBuilder.addValidOption(impl);
 		}
 		optionBuilder.sealValidOptions();
 		return optionBuilder;
@@ -209,7 +210,7 @@ public class ConfigurationOption<T> {
 								T defaultValue, String configurationCategory, final ValueConverter<T> valueConverter,
 								Class<? super T> valueType, List<String> tags, boolean required,
 								List<ChangeListener<T>> changeListeners, List<Validator<T>> validators,
-								List<String> aliasKeys, final List<String> validOptions) {
+								List<String> aliasKeys, final Map<String, String> validOptions) {
 		this.dynamic = dynamic;
 		this.key = key;
 		this.aliasKeys = aliasKeys;
@@ -219,11 +220,11 @@ public class ConfigurationOption<T> {
 		this.tags = tags;
 		validators = new ArrayList<Validator<T>>(validators);
 		if (validOptions != null) {
-			this.validOptions = Collections.unmodifiableList(new ArrayList<String>(validOptions));
+			this.validOptions = Collections.unmodifiableMap(new LinkedHashMap<String, String>(validOptions));
 			if (defaultValue instanceof Collection) {
-				validators.add(getCollectionValidator(valueConverter, validOptions));
+				validators.add(getCollectionValidator(valueConverter, validOptions.keySet()));
 			} else {
-				validators.add(new ValidOptionValidator<T>(validOptions));
+				validators.add(new ValidOptionValidator<T>(validOptions.keySet()));
 			}
 		} else {
 			this.validOptions = null;
@@ -244,7 +245,7 @@ public class ConfigurationOption<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Validator<T> getCollectionValidator(ValueConverter<T> valueConverter, List<String> validOptions) {
+	private Validator<T> getCollectionValidator(ValueConverter<T> valueConverter, Collection<String> validOptions) {
 		return new ValidOptionCollectionValidator(validOptions, valueConverter);
 	}
 
@@ -406,7 +407,14 @@ public class ConfigurationOption<T> {
 	 *
 	 * @return the valid values for this configuration option
 	 */
-	public List<String> getValidOptions() {
+	public Collection<String> getValidOptions() {
+		if (validOptions == null) {
+			return null;
+		}
+		return validOptions.keySet();
+	}
+
+	public Map<String, String> getValidOptionsLabelMap() {
 		return validOptions;
 	}
 
@@ -619,7 +627,7 @@ public class ConfigurationOption<T> {
 		private List<ChangeListener<T>> changeListeners = new ArrayList<ChangeListener<T>>();
 		private List<Validator<T>> validators = new ArrayList<Validator<T>>();
 		private String[] aliasKeys = new String[0];
-		private List<String> validOptions;
+		private Map<String, String> validOptions;
 		private boolean validOptionsSealed = false;
 
 		private ConfigurationOptionBuilder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
@@ -793,12 +801,29 @@ public class ConfigurationOption<T> {
 		public ConfigurationOptionBuilder<T> addValidOption(T option) {
 			if (option instanceof Collection) {
 				for (Object o : (Collection<?>) option) {
-					addValidOptionAsString(valueConverter.toString(getSingleValue(o)));
+					final String validOptionAsString = valueConverter.toString(getSingleValue(o));
+					addValidOptionAsString(validOptionAsString, getLabel(option, validOptionAsString));
 				}
 			} else {
-				addValidOptionAsString(valueConverter.toString(option));
+				final String validOptionAsString = valueConverter.toString(option);
+				addValidOptionAsString(validOptionAsString, getLabel(option, validOptionAsString));
 			}
 			return this;
+		}
+
+		private String getLabel(Object option, String defaultLabel) {
+			if (overridesToString(option)) {
+				return option.toString();
+			}
+			return defaultLabel;
+		}
+
+		private boolean overridesToString(Object o) {
+			try {
+				return o.getClass().getDeclaredMethod("toString").getDeclaringClass() != Object.class;
+			} catch (NoSuchMethodException e) {
+				return false;
+			}
 		}
 
 		@SuppressWarnings("unchecked")
@@ -806,14 +831,14 @@ public class ConfigurationOption<T> {
 			return (T) Collections.singletonList(o);
 		}
 
-		private ConfigurationOptionBuilder<T> addValidOptionAsString(String validOption) {
+		private ConfigurationOptionBuilder<T> addValidOptionAsString(String validOptionAsString, String label) {
 			if (validOptionsSealed) {
 				throw new IllegalStateException("Options are sealed, you can't add any new ones");
 			}
 			if (validOptions == null) {
-				validOptions = new ArrayList<String>();
+				validOptions = new LinkedHashMap<String, String>();
 			}
-			validOptions.add(validOption);
+			validOptions.put(validOptionAsString, label);
 			return this;
 		}
 
@@ -825,7 +850,7 @@ public class ConfigurationOption<T> {
 		public ConfigurationOptionBuilder<T> sealValidOptions() {
 			this.validOptionsSealed = true;
 			if (validOptions != null) {
-				validOptions = Collections.unmodifiableList(validOptions);
+				validOptions = Collections.unmodifiableMap(validOptions);
 			}
 			return this;
 		}

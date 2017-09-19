@@ -241,7 +241,12 @@ public class ConfigurationOptionTest {
 	}
 
 	enum TestEnum {
-		FOO, BAR
+		FOO, BAR;
+
+		@Override
+		public String toString() {
+			return super.toString().toLowerCase();
+		}
 	}
 
 	@Test
@@ -252,6 +257,7 @@ public class ConfigurationOptionTest {
 				.buildWithDefault(TestEnum.FOO);
 		final ConfigurationRegistry configuration = createConfiguration(Collections.singletonList(option), new SimpleSource());
 		assertThat(option.getValidOptions()).containsExactlyInAnyOrder("FOO", "BAR");
+		assertThat(option.getValidOptionsLabelMap()).containsEntry("FOO", "foo").containsEntry("BAR", "bar");
 		assertThat(option.getValue()).isEqualTo(TestEnum.FOO);
 		configuration.save("test.enum", "BAR", SimpleSource.NAME);
 		assertThat(option.getValue()).isEqualTo(TestEnum.BAR);

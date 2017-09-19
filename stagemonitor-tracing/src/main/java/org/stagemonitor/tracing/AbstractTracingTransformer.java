@@ -118,7 +118,7 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 	private static String getBusinessTransationName(String className, String methodName) {
 		return configuration.getConfig(TracingPlugin.class)
 				.getBusinessTransactionNamingStrategy()
-				.getBusinessTransationName(className, methodName);
+				.getBusinessTransactionName(className, methodName);
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
