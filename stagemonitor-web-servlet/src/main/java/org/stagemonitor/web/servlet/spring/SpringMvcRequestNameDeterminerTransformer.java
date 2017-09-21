@@ -56,7 +56,7 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 		final HandlerExecutionChain handlerExecutionChain = (HandlerExecutionChain) handler;
 		if (handler != null && handlerExecutionChain.getHandler() instanceof HandlerMethod) {
 			HandlerMethod handlerMethod = (HandlerMethod) handlerExecutionChain.getHandler();
-			return businessTransactionNamingStrategy.getBusinessTransationName(handlerMethod.getBeanType().getSimpleName(),
+			return businessTransactionNamingStrategy.getBusinessTransactionName(handlerMethod.getBeanType().getSimpleName(),
 					handlerMethod.getMethod().getName());
 		}
 		return null;

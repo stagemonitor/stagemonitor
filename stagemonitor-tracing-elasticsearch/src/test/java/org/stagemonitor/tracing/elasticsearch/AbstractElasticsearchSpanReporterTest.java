@@ -18,6 +18,7 @@ import org.stagemonitor.tracing.TagRecordingSpanEventListener;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallStackElement;
+import org.stagemonitor.tracing.profiler.formatter.ShortSignatureFormatter;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.tracing.utils.SpanUtils;
@@ -72,6 +73,7 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(tracingPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.singleton("Report Me"));
 		when(tracingPlugin.isProfilerActive()).thenReturn(true);
 		when(tracingPlugin.getProfilerRateLimitPerMinute()).thenReturn(1_000_000d);
+		when(tracingPlugin.getCallTreeAsciiFormatter()).thenReturn(new ShortSignatureFormatter());
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
