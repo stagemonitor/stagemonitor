@@ -7,6 +7,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.profiler.formatter.ShortSignatureFormatter;
 import org.stagemonitor.tracing.sampling.PostExecutionInterceptorContext;
 import org.stagemonitor.tracing.sampling.PreExecutionInterceptorContext;
 import org.stagemonitor.tracing.utils.SpanUtils;
@@ -35,6 +36,7 @@ public class CallTreeSpanEventListenerTest {
 
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.isProfilerActive()).thenReturn(true);
+		when(tracingPlugin.getCallTreeAsciiFormatter()).thenReturn(new ShortSignatureFormatter());
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		doReturn(requestMonitor).when(tracingPlugin).getRequestMonitor();
 		span = mock(SpanWrapper.class);

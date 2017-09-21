@@ -226,7 +226,7 @@ public class ConfigurationOptionTest {
 
 	@Test
 	public void testServiceLoaderStrategyOption() throws Exception {
-		final ConfigurationOption<Strategy> option = ConfigurationOption.serviceLoaderStategyOption(Strategy.class)
+		final ConfigurationOption<Strategy> option = ConfigurationOption.serviceLoaderStrategyOption(Strategy.class)
 				.key("test.strategy")
 				.dynamic(true)
 				.buildWithDefault(new DefaultStrategyImpl());

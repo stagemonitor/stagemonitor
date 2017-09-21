@@ -158,7 +158,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.tags("profiler", "sampling")
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(1000000d);
-	private final ConfigurationOption<AsciiCallTreeSignatureFormatter> callTreeAsciiFormatter = ConfigurationOption.serviceLoaderStategyOption(AsciiCallTreeSignatureFormatter.class)
+	private final ConfigurationOption<AsciiCallTreeSignatureFormatter> callTreeAsciiFormatter = ConfigurationOption.serviceLoaderStrategyOption(AsciiCallTreeSignatureFormatter.class)
 			.key("stagemonitor.profiler.formatter")
 			.dynamic(true)
 			.label("Call Tree ASCII formatter")
@@ -296,7 +296,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.tags("sampling")
 			.addValidator(new ConfigurationOption.Validator<Double>() {
 				@Override
-				public void assertValid(Double rate, String valueAsString) {
+				public void assertValid(Double rate) {
 					checkArgument(rate >= 0.0 && rate <= 1, "rate should be between 0 and 1: was %s", rate);
 				}
 			})
@@ -314,7 +314,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.tags("sampling")
 			.addValidator(new ConfigurationOption.Validator<Map<String, Double>>() {
 				@Override
-				public void assertValid(Map<String, Double> value, String valueAsString) {
+				public void assertValid(Map<String, Double> value) {
 					for (double rate : value.values()) {
 						checkArgument(rate >= 0.0 && rate <= 1, "rate should be between 0 and 1: was %s", rate);
 					}

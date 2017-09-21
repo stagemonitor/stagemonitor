@@ -34,8 +34,6 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javax.naming.OperationNotSupportedException;
-
 /**
  * Represents a configuration option
  *
@@ -62,6 +60,7 @@ public class ConfigurationOption<T> {
 	@JsonIgnore
 	private final ValueConverter<T> valueConverter;
 	private final Class<? super T> valueType;
+	// key: validOptionAsString, value: label
 	private final Map<String, String> validOptions;
 	private String valueAsString;
 	private T value;
@@ -199,7 +198,15 @@ public class ConfigurationOption<T> {
 		return optionBuilder;
 	}
 
-	public static <T> ConfigurationOptionBuilder<T> serviceLoaderStategyOption(Class<T> serviceLoaderInterface) {
+	/**
+	 * Adds a configuration option for intended classes loaded by {@link ServiceLoader}s
+	 *
+	 * <p>Restricts the {@link #validOptions} to the class names of the {@link ServiceLoader} implementations of the
+	 * provided service loader interface.</p>
+	 *
+	 * <p> Note that the implementations have to be registered in {@code META-INF/services/{serviceLoaderInterface.getName()}}</p>
+	 */
+	public static <T> ConfigurationOptionBuilder<T> serviceLoaderStrategyOption(Class<T> serviceLoaderInterface) {
 		final ConfigurationOptionBuilder<T> optionBuilder = new ConfigurationOptionBuilder<T>(ClassInstanceValueConverter.of(serviceLoaderInterface), serviceLoaderInterface);
 		for (T impl : ServiceLoader.load(serviceLoaderInterface, ConfigurationOption.class.getClassLoader())) {
 			optionBuilder.addValidOption(impl);
@@ -223,7 +230,7 @@ public class ConfigurationOption<T> {
 		validators = new ArrayList<Validator<T>>(validators);
 		if (validOptions != null) {
 			this.validOptions = Collections.unmodifiableMap(new LinkedHashMap<String, String>(validOptions));
-			validators.add(new ValidOptionValidator<T>(validOptions.keySet()));
+			validators.add(new ValidOptionValidator<T>(validOptions.keySet(), valueConverter));
 		} else {
 			this.validOptions = null;
 		}
@@ -507,7 +514,7 @@ public class ConfigurationOption<T> {
 	public void assertValid(String valueAsString) throws IllegalArgumentException {
 		final T value = valueConverter.convert(valueAsString);
 		for (Validator<T> validator : validators) {
-			validator.assertValid(value, valueAsString);
+			validator.assertValid(value);
 		}
 	}
 
@@ -529,7 +536,7 @@ public class ConfigurationOption<T> {
 
 	private void setValue(T value, String valueAsString, String nameOfCurrentConfigurationSource) {
 		for (Validator<T> validator : validators) {
-			validator.assertValid(value, valueAsString);
+			validator.assertValid(value);
 		}
 
 		this.value = value;
@@ -585,11 +592,10 @@ public class ConfigurationOption<T> {
 		/**
 		 * Validates a value
 		 *
-		 * @param value         the value to be validated
-		 * @param valueAsString the value to be validated as string
+		 * @param value the value to be validated
 		 * @throws IllegalArgumentException if the value is invalid
 		 */
-		void assertValid(T value, String valueAsString);
+		void assertValid(T value);
 
 		class OptionalValidatorAdapter<T> implements Validator<Optional<T>> {
 			private final Validator<T> validator;
@@ -599,8 +605,8 @@ public class ConfigurationOption<T> {
 			}
 
 			@Override
-			public void assertValid(Optional<T> value, String valueAsString) {
-				validator.assertValid(value.orElse(null), valueAsString);
+			public void assertValid(Optional<T> value) {
+				validator.assertValid(value.orElse(null));
 			}
 		}
 	}
@@ -630,7 +636,7 @@ public class ConfigurationOption<T> {
 
 		/**
 		 * Be aware that when using this method you might have to deal with <code>null</code> values when calling {@link
-		 * #getValue()}. <p> That's why this method is deprecated
+		 * #getValue()}. That's why this method is deprecated
 		 *
 		 * @deprecated use {@link #buildRequired()}, {@link #buildWithDefault(Object)} or {@link #buildOptional()}. The
 		 * only valid use of this method is if {@link #buildOptional()} would be the semantically correct option but you
@@ -646,11 +652,14 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * Builds the option and marks it as required. <p> Use this method if you don't want to provide a default value
-		 * but setting a value is still required. You will have to make sure to provide a value is present on startup.
+		 * Builds the option and marks it as required.
+		 *
+		 * <p> Use this method if you don't want to provide a default value but setting a value is still required. You
+		 * will have to make sure to provide a value is present on startup. </p>
+		 *
 		 * <p> When a required option does not have a value the behavior depends on {@link
 		 * ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised, which
-		 * can potentially prevent the application form starting or a warning gets logged.
+		 * can potentially prevent the application form starting or a warning gets logged. </p>
 		 */
 		public ConfigurationOption<T> buildRequired() {
 			this.required = true;
@@ -674,8 +683,10 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * Builds the option and marks it as not required <p> Use this method if setting this option is not required and
-		 * to express that it may be <code>null</code>.
+		 * Builds the option and marks it as not required
+		 *
+		 * <p> Use this method if setting this option is not required and to express that it may be <code>null</code>.
+		 * </p>
 		 */
 		public ConfigurationOption<Optional<T>> buildOptional() {
 			required = false;
@@ -743,8 +754,10 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * Marks this ConfigurationOption as sensitive. <p> If a value has sensitive content (e.g. password), it should
-		 * be rendered as an input of type="password", rather then as type="text".
+		 * Marks this ConfigurationOption as sensitive.
+		 *
+		 * <p> If a value has sensitive content (e.g. password), it should be rendered as an input of type="password",
+		 * rather then as type="text". </p>
 		 *
 		 * @return <code>this</code>, for chaining.
 		 */
@@ -754,9 +767,11 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * Marks this option as required. <p> When a required option does not have a value the behavior depends on
-		 * {@link ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised,
-		 * which can potentially prevent the application form starting or a warning gets logged.
+		 * Marks this option as required.
+		 *
+		 * <p> When a required option does not have a value the behavior depends on {@link
+		 * ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised, which
+		 * can potentially prevent the application form starting or a warning gets logged. </p>
 		 *
 		 * @return <code>this</code>, for chaining.
 		 * @deprecated use {@link #buildRequired()}
@@ -794,7 +809,7 @@ public class ConfigurationOption<T> {
 		public ConfigurationOptionBuilder<T> addValidOption(T option) {
 			if (option instanceof Collection) {
 				throw new UnsupportedOperationException("Adding valid options to a collection option is not supported. " +
-						"If you need this feature");
+						"If you need this feature please raise an issue describing your use case.");
 			} else {
 				final String validOptionAsString = valueConverter.toString(option);
 				addValidOptionAsString(validOptionAsString, getLabel(option, validOptionAsString));
@@ -871,13 +886,16 @@ public class ConfigurationOption<T> {
 
 	private static class ValidOptionValidator<T> implements Validator<T> {
 		private final Set<String> validOptions;
+		private final ValueConverter<T> valueConverter;
 
-		ValidOptionValidator(Collection<String> validOptions) {
+		ValidOptionValidator(Collection<String> validOptions, ValueConverter<T> valueConverter) {
 			this.validOptions = new HashSet<String>(validOptions);
+			this.valueConverter = valueConverter;
 		}
 
 		@Override
-		public void assertValid(T value, String valueAsString) {
+		public void assertValid(T value) {
+			String valueAsString = valueConverter.toString(value);
 			if (!validOptions.contains(valueAsString)) {
 				throw new IllegalArgumentException("Invalid option '" + valueAsString + "' expecting one of " + validOptions);
 			}
