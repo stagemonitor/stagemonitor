@@ -11,7 +11,7 @@
 			}
 		},
 		"savedSearchId": {
-			"type": "text"
+			"type": "keyword"
 		},
 		"title": {
 			"type": "text"

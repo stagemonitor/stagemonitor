@@ -17,6 +17,9 @@ import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonMerger;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.http.HttpRequest;
+import org.stagemonitor.core.util.http.HttpRequestBuilder;
+import org.stagemonitor.core.util.http.NoopResponseHandler;
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
 
@@ -241,7 +244,7 @@ public class ElasticsearchClient {
 		if (!isElasticsearchAvailable()) {
 			return;
 		}
-		final HttpClient.ResponseHandler<Void> responseHandler = logBulkErrors ? BulkErrorReportingResponseHandler.INSTANCE : HttpClient.NoopResponseHandler.INSTANCE;
+		final HttpClient.ResponseHandler<Void> responseHandler = logBulkErrors ? BulkErrorReportingResponseHandler.INSTANCE : NoopResponseHandler.INSTANCE;
 		httpClient.send("POST", corePlugin.getElasticsearchUrl() + BULK, CONTENT_TYPE_NDJSON, outputStreamHandler, responseHandler);
 	}
 
@@ -350,6 +353,41 @@ public class ElasticsearchClient {
 
 	public String getElasticsearchUrl() {
 		return corePlugin.getElasticsearchUrl();
+	}
+
+	public void createIndexAndSendMappingAsync(final String index, final String type, final InputStream mapping) {
+		asyncESPool.submit(new Runnable() {
+			@Override
+			public void run() {
+				createIndexIfNotExists(index);
+				sendMapping(index, type, mapping);
+			}
+		});
+	}
+
+	private void createIndexIfNotExists(String indexName) {
+		if (!isElasticsearchAvailable()) {
+			return;
+		}
+		HttpRequest put = new HttpRequestBuilder<Void>()
+				.url(getElasticsearchUrl() + "/" + indexName)
+				.method("PUT")
+				.skipErrorLoggingFor(400) // index exists is no real error for us here
+				.build();
+		httpClient.send(put);
+	}
+
+	private void sendMapping(String index, String type, InputStream mapping) {
+		if (!isElasticsearchAvailable()) {
+			return;
+		}
+		HttpRequest request = new HttpRequestBuilder<Void>()
+				.method("PUT")
+				.url(getElasticsearchUrl() + "/" + index + "/_mapping/" + type)
+				.headers(CONTENT_TYPE_JSON)
+				.body(mapping)
+				.build();
+		httpClient.send(request); // log errors here intentionally, as we might need to update the mapping
 	}
 
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
