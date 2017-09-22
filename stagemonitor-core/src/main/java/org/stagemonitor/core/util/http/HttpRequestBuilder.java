@@ -1,6 +1,7 @@
 package org.stagemonitor.core.util.http;
 
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.JsonUtils;
 import org.stagemonitor.util.IOUtils;
 
 import java.io.IOException;
@@ -28,37 +29,49 @@ public class HttpRequestBuilder<T> {
 		errorStatusCodesIgnored = new HashSet<Integer>();
 	}
 
-	public HttpRequestBuilder url(String url) {
+	public HttpRequestBuilder<T> url(String url) {
 		this.url = url;
 		return this;
 	}
 
-	public HttpRequestBuilder method(String method) {
+	public HttpRequestBuilder<T> method(String method) {
 		this.method = method;
 		return this;
 	}
 
-	public HttpRequestBuilder headers(Map<String, String> headers) {
+	public HttpRequestBuilder<T> headers(Map<String, String> headers) {
 		this.headers = headers;
 		return this;
 	}
 
-	public HttpRequestBuilder outputStreamHandler(HttpClient.OutputStreamHandler outputStreamHandler) {
+	public HttpRequestBuilder<T> outputStreamHandler(HttpClient.OutputStreamHandler outputStreamHandler) {
 		this.outputStreamHandler = outputStreamHandler;
 		return this;
 	}
 
-	public HttpRequestBuilder responseHandler(HttpClient.ResponseHandler<T> responseHandler) {
+	public HttpRequestBuilder<T> responseHandler(HttpClient.ResponseHandler<T> responseHandler) {
 		this.responseHandler = responseHandler;
 		return this;
 	}
 
-	public HttpRequestBuilder skipErrorLoggingFor(Integer... errorStatusCodesIgnored) {
+	public HttpRequestBuilder<T> skipErrorLoggingFor(Integer... errorStatusCodesIgnored) {
 		this.errorStatusCodesIgnored = new HashSet<Integer>(Arrays.asList(errorStatusCodesIgnored));
 		return this;
 	}
 
-	public HttpRequestBuilder<T> body(final InputStream inputStream) {
+
+	public HttpRequestBuilder<T> bodyJson(final Object requestBody) {
+		this.addHeader("Content-Type", "application/json");
+		this.outputStreamHandler = new HttpClient.OutputStreamHandler() {
+			@Override
+			public void withHttpURLConnection(OutputStream os) throws IOException {
+				JsonUtils.writeJsonToOutputStream(requestBody, os);
+			}
+		};
+		return this;
+	}
+
+	public HttpRequestBuilder<T> bodyStream(final InputStream inputStream) {
 		this.outputStreamHandler = new HttpClient.OutputStreamHandler() {
 			@Override
 			public void withHttpURLConnection(OutputStream outputStream) throws IOException {
@@ -67,6 +80,11 @@ public class HttpRequestBuilder<T> {
 				outputStream.close();
 			}
 		};
+		return this;
+	}
+
+	public HttpRequestBuilder<T> addHeader(String key, String value) {
+		this.headers.put(key, value);
 		return this;
 	}
 
