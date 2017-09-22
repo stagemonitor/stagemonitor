@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.util.http.ErrorLoggingResponseHandler;
+import org.stagemonitor.core.util.http.HttpRequest;
 import org.stagemonitor.util.IOUtils;
 
 import java.io.IOException;
@@ -19,9 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.xml.bind.DatatypeConverter;
 
-// TODO create HttpRequest POJO
-// method, url, headers, outputStreamHandler, responseHandler
-// builder methods logErrors(int... excludedStatusCodes)
 public class HttpClient {
 
 	private static final long CONNECT_TIMEOUT_SEC = 5;
@@ -56,6 +55,11 @@ public class HttpClient {
 				writeRequestBody(requestBody, os);
 			}
 		});
+	}
+
+	public <T> T send(HttpRequest<T> request) {
+		return send(request.getMethod(), request.getUrl(), request.getHeaders(),
+				request.getOutputStreamHandler(), request.getResponseHandler());
 	}
 
 	public int send(String method, String url, final List<String> requestBodyLines) {
@@ -160,55 +164,17 @@ public class HttpClient {
 		T handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException;
 	}
 
-	public static class NoopResponseHandler implements ResponseHandler<Void> {
-		public static NoopResponseHandler INSTANCE = new NoopResponseHandler();
-
-		private NoopResponseHandler() {
-		}
-
-		@Override
-		public Void handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
-			// we have to read the whole response, otherwise bad things happen
-			IOUtils.consumeAndClose(is);
-			return null;
-		}
-	}
-
-	private static class ErrorLoggingResponseHandler implements ResponseHandler<Integer> {
-
-		private final Logger logger = LoggerFactory.getLogger(getClass());
-
-		private final String url;
-
-		public ErrorLoggingResponseHandler(String url) {
-			this.url = url;
-		}
-
-		@Override
-		public Integer handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
-			if (statusCode == null) {
-				return -1;
-			}
-			if (statusCode >= 400) {
-				logger.warn(url + ": " + statusCode + " " + IOUtils.toString(is));
-			} else {
-				IOUtils.consumeAndClose(is);
-			}
-			return statusCode;
-		}
-	}
-
 	public static String removeUserInfo(String url) {
-	  	Logger logger = LoggerFactory.getLogger("HttpClient");
-	  	String userInfo = "";
+		Logger logger = LoggerFactory.getLogger("HttpClient");
+		String userInfo = "";
 		try {
-	  		userInfo = new URL(url).getUserInfo();
+			userInfo = new URL(url).getUserInfo();
 		} catch (MalformedURLException e) {
-	  		logger.warn("Suppressed exception", e);
+			logger.warn("Suppressed exception", e);
 		}
-		if (null == userInfo || userInfo.isEmpty()){
-		  return url;
+		if (null == userInfo || userInfo.isEmpty()) {
+			return url;
 		}
 		return url.replace(userInfo, "XXXX:XXXX");
-  	}
+	}
 }

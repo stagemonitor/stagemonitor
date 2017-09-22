@@ -15,6 +15,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.http.NoopResponseHandler;
 import org.stagemonitor.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -74,7 +75,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			}
 
 			httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", CONTENT_TYPE_JSON,
-					metricsOutputStreamHandler, HttpClient.NoopResponseHandler.INSTANCE);
+					metricsOutputStreamHandler, NoopResponseHandler.INSTANCE);
 		} else {
 			try {
 				final ByteArrayOutputStream os = new ByteArrayOutputStream();
