@@ -1,7 +1,7 @@
 {
 	"properties": {
 		"columns": {
-			"type": "text"
+			"type": "keyword"
 		},
 		"description": {
 			"type": "text"
@@ -17,7 +17,7 @@
 			}
 		},
 		"sort": {
-			"type": "text"
+			"type": "keyword"
 		},
 		"title": {
 			"type": "text"

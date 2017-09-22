@@ -22,7 +22,7 @@
 		"refreshInterval": {
 			"properties": {
 				"display": {
-					"type": "text"
+					"type": "keyword"
 				},
 				"pause": {
 					"type": "boolean"
@@ -36,13 +36,13 @@
 			}
 		},
 		"timeFrom": {
-			"type": "text"
+			"type": "keyword"
 		},
 		"timeRestore": {
 			"type": "boolean"
 		},
 		"timeTo": {
-			"type": "text"
+			"type": "keyword"
 		},
 		"title": {
 			"type": "text"

@@ -451,6 +451,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		// makes sure the .kibana index is present and has the right mapping.
 		// otherwise it leads to problems if stagemonitor sends the dashboards to the
 		// .kibana index before it has been properly created by kibana
+		// TODO: asynchronize this
 		elasticsearchClient.sendRequest("PUT", "/.kibana");
 		elasticsearchClient.sendAsJson("PUT", "/.kibana/_mapping/index-pattern", IOUtils.getResourceAsStream("kibana/kibana-index-index-pattern.json"));
 		elasticsearchClient.sendAsJson("PUT", "/.kibana/_mapping/search", IOUtils.getResourceAsStream("kibana/kibana-index-search.json"));
