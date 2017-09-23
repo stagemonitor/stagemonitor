@@ -9,11 +9,12 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.http.HttpRequest;
+import org.stagemonitor.core.util.http.HttpRequestBuilder;
 import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -76,8 +77,10 @@ public class GrafanaClient {
 			final ObjectNode dashboard = (ObjectNode) JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(classPathLocation));
 			dashboard.put("editable", false);
 			addMinIntervalToPanels(dashboard, corePlugin.getElasticsearchReportingInterval() + "s");
-			final String requestBody = "{\"dashboard\":" + dashboard + ",\"overwrite\": true}";
-			asyncGrafanaRequest("POST", "/api/dashboards/db", requestBody);
+			Map<String, Object> body = new HashMap<String, Object>();
+			body.put("dashboard", dashboard);
+			body.put("overwrite", true);
+			asyncGrafanaRequest("POST", "/api/dashboards/db", body);
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
 		}
@@ -106,8 +109,15 @@ public class GrafanaClient {
 				asyncRestPool.submit(new Runnable() {
 					@Override
 					public void run() {
-						final Map<String, String> authHeader = Collections.singletonMap("Authorization", "Bearer " + grafanaApiToken);
-						httpClient.sendAsJson(method, grafanaUrl + path, requestBody, authHeader);
+						HttpRequest request = new HttpRequestBuilder<Void>()
+								.method(method)
+								.url(grafanaUrl + path)
+								.skipErrorLoggingFor(409)
+								.addHeader("Authorization", "Bearer " + grafanaApiToken)
+								.bodyJson(requestBody)
+								.build();
+
+						httpClient.send(request);
 					}
 				});
 			} catch (RejectedExecutionException e) {

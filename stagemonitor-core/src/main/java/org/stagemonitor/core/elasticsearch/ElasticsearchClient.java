@@ -385,7 +385,7 @@ public class ElasticsearchClient {
 				.method("PUT")
 				.url(getElasticsearchUrl() + "/" + index + "/_mapping/" + type)
 				.headers(CONTENT_TYPE_JSON)
-				.body(mapping)
+				.bodyStream(mapping)
 				.build();
 		httpClient.send(request); // log errors here intentionally, as we might need to update the mapping
 	}
