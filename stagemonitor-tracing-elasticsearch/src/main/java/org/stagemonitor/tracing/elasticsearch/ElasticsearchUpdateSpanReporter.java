@@ -9,6 +9,7 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.http.HttpRequest;
 import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.util.IOUtils;
@@ -246,7 +247,7 @@ class ElasticsearchUpdateSpanReporter {
 	private static class JsonNodeResponseHandler implements HttpClient.ResponseHandler<JsonNode> {
 
 		@Override
-		public JsonNode handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
+		public JsonNode handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
 			if (statusCode == 200) {
 				return JsonUtils.getMapper().readTree(is);
 			} else {

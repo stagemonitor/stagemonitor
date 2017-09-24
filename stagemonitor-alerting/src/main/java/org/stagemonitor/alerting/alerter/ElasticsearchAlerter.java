@@ -1,8 +1,9 @@
 package org.stagemonitor.alerting.alerter;
 
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.http.HttpRequestBuilder;
 import org.stagemonitor.util.StringUtils;
 
 public class ElasticsearchAlerter extends Alerter {
@@ -21,7 +22,7 @@ public class ElasticsearchAlerter extends Alerter {
 		if (StringUtils.isEmpty(target)) {
 			target = "/stagemonitor/alerts";
 		}
-		httpClient.sendAsJson("POST", corePlugin.getElasticsearchUrl() + target, alertArguments.getIncident());
+		httpClient.send(HttpRequestBuilder.<Integer>jsonRequest("POST", corePlugin.getElasticsearchUrl() + target, alertArguments.getIncident()).build());
 	}
 
 	@Override

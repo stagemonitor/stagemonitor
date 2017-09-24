@@ -1,6 +1,7 @@
 package org.stagemonitor.alerting.alerter;
 
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.http.HttpRequestBuilder;
 
 public class HttpAlerter extends Alerter {
 
@@ -12,7 +13,7 @@ public class HttpAlerter extends Alerter {
 
 	@Override
 	public void alert(AlertArguments alertArguments) {
-		httpClient.sendAsJson("POST", alertArguments.getSubscription().getTarget(), alertArguments.getIncident());
+		httpClient.send(HttpRequestBuilder.<Integer>jsonRequest("POST", alertArguments.getSubscription().getTarget(), alertArguments.getIncident()).build());
 	}
 
 	@Override

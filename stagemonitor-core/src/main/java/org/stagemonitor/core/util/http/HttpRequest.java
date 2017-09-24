@@ -10,4 +10,5 @@ public interface HttpRequest<T> {
 	Map<String, String> getHeaders();
 	HttpClient.OutputStreamHandler getOutputStreamHandler();
 	HttpClient.ResponseHandler<T> getResponseHandler();
+	String getSafeUrl();
 }

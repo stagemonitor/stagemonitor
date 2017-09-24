@@ -1,25 +1,25 @@
 package org.stagemonitor.alerting.alerter;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.stagemonitor.alerting.AlertingPlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.util.HttpClient;
+import org.stagemonitor.core.util.http.HttpRequestBuilder;
 import org.stagemonitor.util.StringUtils;
 
 public class PushbulletAlerter extends Alerter {
 
 	private final AlertTemplateProcessor alertTemplateProcessor;
 	private final AlertingPlugin alertingPlugin;
+	private final HttpClient httpClient;
 
 	public PushbulletAlerter() {
-		this(Stagemonitor.getPlugin(AlertingPlugin.class));
+		this(Stagemonitor.getPlugin(AlertingPlugin.class), new HttpClient());
 	}
 
-	public PushbulletAlerter(AlertingPlugin alertingPlugin) {
+	public PushbulletAlerter(AlertingPlugin alertingPlugin, HttpClient httpClient) {
 		this.alertingPlugin = alertingPlugin;
 		this.alertTemplateProcessor = this.alertingPlugin.getAlertTemplateProcessor();
+		this.httpClient = httpClient;
 	}
 
 	@Override
@@ -29,12 +29,11 @@ public class PushbulletAlerter extends Alerter {
 				alertTemplateProcessor.processPlainTextTemplate(alertArguments.getIncident()));
 	}
 
-	public void sendPushbulletNotification(String channelTag, String subject, String content) {
-		HttpClient client = new HttpClient();
+	private void sendPushbulletNotification(String channelTag, String subject, String content) {
 		PushbulletNotification notification = new PushbulletNotification(subject, content, channelTag);
-		Map<String, String> authorizationHeader = new HashMap<String, String>();
-		authorizationHeader.put("Authorization", "Bearer " + alertingPlugin.getPushbulletAccessToken());
-		client.sendAsJson("POST", "https://api.pushbullet.com/v2/pushes", notification, authorizationHeader);
+		httpClient.send(HttpRequestBuilder.<Integer>jsonRequest("POST", "https://api.pushbullet.com/v2/pushes", notification)
+				.addHeader("Authorization", "Bearer " + alertingPlugin.getPushbulletAccessToken())
+				.build());
 	}
 
 	@Override

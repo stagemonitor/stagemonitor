@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 
-import static org.stagemonitor.core.elasticsearch.ElasticsearchClient.CONTENT_TYPE_JSON;
+import static org.stagemonitor.core.util.http.HttpRequestBuilder.CONTENT_TYPE_JSON;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class ElasticsearchReporter extends ScheduledMetrics2Reporter {

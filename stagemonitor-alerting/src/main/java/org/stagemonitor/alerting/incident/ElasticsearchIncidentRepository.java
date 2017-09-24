@@ -27,7 +27,7 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 
 	@Override
 	public boolean deleteIncident(Incident incident) {
-		return hasNoConflict(elasticsearchClient.sendRequest("DELETE", BASE_URL + "/" + getEsId(incident) + getVersionParameter(incident)));
+		return hasNoConflict(elasticsearchClient.delete(BASE_URL + "/" + getEsId(incident) + getVersionParameter(incident)));
 	}
 
 	private String getEsId(Incident incident) {

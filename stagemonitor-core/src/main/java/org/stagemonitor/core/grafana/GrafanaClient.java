@@ -74,9 +74,7 @@ public class GrafanaClient {
 	 */
 	public void sendGrafanaDashboardAsync(final String classPathLocation) {
 		try {
-			final ObjectNode dashboard = (ObjectNode) JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(classPathLocation));
-			dashboard.put("editable", false);
-			addMinIntervalToPanels(dashboard, corePlugin.getElasticsearchReportingInterval() + "s");
+			final ObjectNode dashboard = getGrafanaDashboard(classPathLocation);
 			Map<String, Object> body = new HashMap<String, Object>();
 			body.put("dashboard", dashboard);
 			body.put("overwrite", true);
@@ -84,6 +82,13 @@ public class GrafanaClient {
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
 		}
+	}
+
+	ObjectNode getGrafanaDashboard(String classPathLocation) throws IOException {
+		final ObjectNode dashboard = (ObjectNode) JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(classPathLocation));
+		dashboard.put("editable", false);
+		addMinIntervalToPanels(dashboard, corePlugin.getElasticsearchReportingInterval() + "s");
+		return dashboard;
 	}
 
 	private void addMinIntervalToPanels(ObjectNode dashboard, String interval) {
@@ -109,10 +114,9 @@ public class GrafanaClient {
 				asyncRestPool.submit(new Runnable() {
 					@Override
 					public void run() {
-						HttpRequest request = new HttpRequestBuilder<Void>()
+						HttpRequest request = HttpRequestBuilder.<Void>forUrl(grafanaUrl + path)
 								.method(method)
-								.url(grafanaUrl + path)
-								.skipErrorLoggingFor(409)
+								.noopForStatus(409)
 								.addHeader("Authorization", "Bearer " + grafanaApiToken)
 								.bodyJson(requestBody)
 								.build();

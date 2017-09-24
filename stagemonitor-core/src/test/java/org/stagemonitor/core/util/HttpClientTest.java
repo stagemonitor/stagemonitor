@@ -4,6 +4,8 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.junit.*;
+import org.stagemonitor.core.util.http.HttpRequestBuilder;
+import org.stagemonitor.core.util.http.StatusCodeResponseHandler;
 
 import java.io.IOException;
 
@@ -30,17 +32,6 @@ public class HttpClientTest {
 	}
 
 	@Test
-	public void testNoNullPointerExceptionOnSend() throws IOException {
-		try {
-			httpClient.send("POST", "incorrect-url", null, null);
-		} catch (NullPointerException t) {
-			org.junit.Assert.fail("Shouldn't throw NPE");
-		} catch (Exception ignore) {
-			//whatever
-		}
-	}
-
-	@Test
 	public void testBasicAuth() throws Exception {
 		final boolean[] handled = {false};
 		server.setHandler(new AbstractHandler() {
@@ -53,7 +44,8 @@ public class HttpClientTest {
 		});
 		server.start();
 
-		assertEquals(200, httpClient.send("GET", "http://user:pass@localhost:41234/"));
+		assertEquals(Integer.valueOf(200), httpClient.send(HttpRequestBuilder.<Integer>forUrl("http://user:pass@localhost:41234/")
+				.successHandler(new StatusCodeResponseHandler()).build()));
 		assertTrue(handled[0]);
 	}
 }

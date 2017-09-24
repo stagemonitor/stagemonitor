@@ -8,26 +8,26 @@ import org.stagemonitor.util.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ErrorLoggingResponseHandler implements HttpClient.ResponseHandler<Integer> {
+public class ErrorLoggingResponseHandler<T> implements HttpClient.ResponseHandler<T> {
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(ErrorLoggingResponseHandler.class);
 
-	private final String url;
+	private static final ErrorLoggingResponseHandler INSTANCE = new ErrorLoggingResponseHandler();
 
-	public ErrorLoggingResponseHandler(String url) {
-		this.url = url;
+	public static <T> ErrorLoggingResponseHandler<T> getInstance() {
+		return INSTANCE;
+	}
+
+	public ErrorLoggingResponseHandler() {
 	}
 
 	@Override
-	public Integer handleResponse(InputStream is, Integer statusCode, IOException e) throws IOException {
-		if (statusCode == null) {
-			return -1;
-		}
-		if (statusCode >= 400) {
-			logger.warn(url + ": " + statusCode + " " + IOUtils.toString(is));
+	public T handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
+		if (statusCode != null && statusCode >= 400) {
+			logger.warn(httpRequest.getSafeUrl() + ": " + statusCode + " " + IOUtils.toString(is));
 		} else {
 			IOUtils.consumeAndClose(is);
 		}
-		return statusCode;
+		return null;
 	}
 }

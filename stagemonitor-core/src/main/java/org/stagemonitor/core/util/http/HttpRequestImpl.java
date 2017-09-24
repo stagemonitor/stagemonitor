@@ -4,7 +4,7 @@ import org.stagemonitor.core.util.HttpClient;
 
 import java.util.Map;
 
-public class HttpRequestImpl<T> implements HttpRequest<T> {
+class HttpRequestImpl<T> implements HttpRequest<T> {
 
 	private final String url;
 	private final String method;
@@ -12,8 +12,8 @@ public class HttpRequestImpl<T> implements HttpRequest<T> {
 	private final HttpClient.OutputStreamHandler outputStreamHandler;
 	private final HttpClient.ResponseHandler<T> responseHandler;
 
-	public HttpRequestImpl(String url, String method, Map<String, String> headers,
-						   HttpClient.OutputStreamHandler outputStreamHandler, HttpClient.ResponseHandler<T> responseHandler) {
+	HttpRequestImpl(String url, String method, Map<String, String> headers,
+					HttpClient.OutputStreamHandler outputStreamHandler, HttpClient.ResponseHandler<T> responseHandler) {
 		this.url = url;
 		this.method = method;
 		this.headers = headers;
@@ -43,5 +43,10 @@ public class HttpRequestImpl<T> implements HttpRequest<T> {
 	@Override
 	public HttpClient.ResponseHandler<T> getResponseHandler() {
 		return responseHandler;
+	}
+
+	@Override
+	public String getSafeUrl() {
+		return HttpClient.removeUserInfo(url);
 	}
 }
