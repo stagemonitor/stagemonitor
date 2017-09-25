@@ -103,11 +103,12 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 
 		try {
 			monitorRequest(filterChain, request, responseWrapper);
+		} catch (Exception e) {
+			handleException(e);
+		} finally {
 			if (isInjectContentToHtml(request)) {
 				injectHtml(response, request, httpServletResponseBufferWrapper);
 			}
-		} catch (Exception e) {
-			handleException(e);
 		}
 	}
 

@@ -16,6 +16,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.VersionUtils;
 import org.stagemonitor.util.IOUtils;
 
 import java.io.File;
@@ -122,11 +123,19 @@ public class AgentAttacher {
 			final String msg = "Failed to perform runtime attachment of the stagemonitor agent. Make sure that you run your " +
 					"application with a JDK (not a JRE)." +
 					"To make stagemonitor work with a JRE, you have to add the following command line argument to the " +
-					"start of the JVM: -javaagent:/path/to/byte-buddy-agent-<version>.jar";
+					"start of the JVM: -javaagent:/path/to/byte-buddy-agent-<version>.jar. " +
+					"The version of the agent depends on the version of stagemonitor. " +
+					"You can download the appropriate agent for the stagemonitor version you are using here: " + getByteBuddyAgentDownloadUrl();
 			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy(msg)));
 			logger.warn(msg, e);
 			return false;
 		}
+	}
+
+	private static String getByteBuddyAgentDownloadUrl() {
+		final String groupId = "net.bytebuddy";
+		final String byteBuddyVersion = VersionUtils.getVersionFromPomProperties(ByteBuddy.class, groupId, "byte-buddy");
+		return VersionUtils.getMavenCentralDownloadLink(groupId, "byte-buddy-agent", byteBuddyVersion);
 	}
 
 	private static void ensureDispatcherIsAppendedToBootstrapClasspath(Instrumentation instrumentation)
