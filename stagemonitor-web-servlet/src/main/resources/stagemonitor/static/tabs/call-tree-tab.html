@@ -1,4 +1,29 @@
 <script type="text/x-handlebars-template">
+	<div class="alert alert-info {{#if hideInfo}}hidden{{/if}}">
+		<div class="tip pull-right" data-toggle="tooltip" data-placement="left" title="Don't show again" >
+			<button id="hide-call-tree-info" type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<p>
+			<span class="glyphicon glyphicon-exclamation-sign"></span><strong>&nbsp;The call tree might not contain all
+			executed methods.</strong>
+		</p>
+		<p>
+			Showing all methods can result in performance problems when rendering and
+			navigating the call tree. That's why by default, only methods are shown which took longer than 0.5% of the
+			total
+			execution time. To change this, go to the configuration tab, open <i>Tracing Plugin Configuration</i> and
+			edit
+			the value for <i>Min execution time (%)</i>. Alternatively, directly add the desired value
+			to <code>stagemonitor.properties</code> with the key
+			<code>stagemonitor.profiler.minExecutionTimePercent</code>.
+		</p>
+		<p>
+			There is another configuration option (<code>stagemonitor.profiler.minExecutionTimeNanos</code>) which
+			excludes very fast method invocations, as these are typically not very interesting.
+		</p>
+	</div>
 	<table id="stagemonitor-calltree" class="table">
 		<thead>
 		<tr>

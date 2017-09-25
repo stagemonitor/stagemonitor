@@ -18,8 +18,11 @@ function renderCallTree() {
 			var callTreeRows = [];
 			processCallTree(callTreeRows, [callTree], null, 1, callTree.executionTime);
 			$stagemonitorHome.html("");
-			$stagemonitorHome.html(callTreeTemplate({callTreeRows: callTreeRows}));
+			$stagemonitorHome.html(callTreeTemplate({hideInfo: localStorage.getItem("hide-call-tree-info"), callTreeRows: callTreeRows}));
 			$(".tip").tooltip();
+			$("#hide-call-tree-info").click(function() {
+				localStorage.setItem("hide-call-tree-info", true);
+			});
 			var $calltree = $("#stagemonitor-calltree");
 			$calltree.treetable({
 				expandable: true,
