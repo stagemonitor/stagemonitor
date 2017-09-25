@@ -1,4 +1,4 @@
-package org.stagemonitor.tracing.jaeger;
+package org.stagemonitor.tracing.elasticsearch.impl;
 
 import com.uber.jaeger.metrics.Counter;
 import com.uber.jaeger.metrics.Gauge;

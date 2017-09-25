@@ -1,4 +1,4 @@
-package org.stagemonitor.tracing.jaeger;
+package org.stagemonitor.tracing.elasticsearch.impl;
 
 import com.uber.jaeger.propagation.b3.B3TextMapCodec;
 import com.uber.jaeger.reporters.NoopReporter;

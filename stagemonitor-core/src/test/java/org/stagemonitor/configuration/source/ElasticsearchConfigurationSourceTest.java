@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.stagemonitor.AbstractElasticsearchTest;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.configuration.ElasticsearchConfigurationSource;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
 import org.stagemonitor.junit.ExcludeOnTravis;
 

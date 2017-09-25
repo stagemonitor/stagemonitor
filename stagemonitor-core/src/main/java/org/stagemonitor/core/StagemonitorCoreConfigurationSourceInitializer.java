@@ -3,11 +3,11 @@ package org.stagemonitor.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.source.ElasticsearchConfigurationSource;
 import org.stagemonitor.configuration.source.EnvironmentVariableConfigurationSource;
 import org.stagemonitor.configuration.source.PropertyFileConfigurationSource;
 import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.configuration.source.SystemPropertyConfigurationSource;
+import org.stagemonitor.core.configuration.ElasticsearchConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 import java.io.IOException;
