@@ -125,6 +125,10 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 		}
 	}
 
+	static String getTodaysIndexName() {
+		return "stagemonitor-spans-" + StringUtils.getLogstashStyleDate();
+	}
+
 	private static class SpanBulkIndexOutputStreamHandler implements OutputStreamHandler {
 
 		private final SpanWrapper spanWrapper;
@@ -168,7 +172,7 @@ public class ElasticsearchSpanReporter extends SpanReporter {
 			if (!elasticsearchClient.isElasticsearchAvailable()) {
 				return;
 			}
-			final String url = elasticsearchClient.getElasticsearchUrl() + "/stagemonitor-spans-" + StringUtils.getLogstashStyleDate() + "/" + SPANS_TYPE + "/_bulk";
+			final String url = elasticsearchClient.getElasticsearchUrl() + "/" + getTodaysIndexName() + "/" + SPANS_TYPE + "/_bulk";
 			httpClient.send("POST", url, CONTENT_TYPE_NDJSON, outputStreamHandler, responseHandler);
 		}
 

@@ -137,4 +137,9 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 		assertThat(errors.get()).isEqualTo(1);
 	}
 
+	@Test
+	public void testCreateEmptyIndex() throws Exception {
+		elasticsearchClient.createEmptyIndexAsync("test").get();
+		assertThat(elasticsearchClient.getJson("/test").get("test")).isNotNull();
+	}
 }

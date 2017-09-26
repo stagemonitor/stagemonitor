@@ -35,6 +35,10 @@ public class HttpRequestBuilder<T> {
 		return new HttpRequestBuilder<T>(url);
 	}
 
+	public static <T> HttpRequestBuilder<T> of(String method, String url) {
+		return new HttpRequestBuilder<T>(url).method(method);
+	}
+
 	public static <T> HttpRequestBuilder<T> jsonRequest(final String method, final String url, final Object requestBody) {
 		return HttpRequestBuilder.<T>forUrl(url)
 				.method(method)

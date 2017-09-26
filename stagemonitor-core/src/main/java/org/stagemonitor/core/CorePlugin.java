@@ -534,6 +534,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
 					metricsIndexTemplate.getValue(), moveToColdNodesAfterDays.getValue(), getNumberOfReplicas(), getNumberOfShards());
 			elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
+			elasticsearchClient.createEmptyIndexAsync(ElasticsearchReporter.getTodaysIndexName());
 			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
 					moveToColdNodesAfterDays.getValue(), deleteElasticsearchMetricsAfterDays.getValue());
 		}

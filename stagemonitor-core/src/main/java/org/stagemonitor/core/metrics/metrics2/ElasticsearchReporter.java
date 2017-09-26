@@ -143,11 +143,15 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
 		@Override
 		public void withHttpURLConnection(OutputStream os) throws IOException {
-			String bulkAction = ElasticsearchClient.getBulkHeader("index", STAGEMONITOR_METRICS_INDEX_PREFIX + StringUtils.getLogstashStyleDate(), METRICS_TYPE);
+			String bulkAction = ElasticsearchClient.getBulkHeader("index", getTodaysIndexName(), METRICS_TYPE);
 			byte[] bulkActionBytes = bulkAction.getBytes("UTF-8");
 			reportMetrics(gauges, counters, histograms, meters, timers, os, bulkActionBytes, timestamp);
 			os.close();
 		}
+	}
+
+	public static String getTodaysIndexName() {
+		return STAGEMONITOR_METRICS_INDEX_PREFIX + StringUtils.getLogstashStyleDate();
 	}
 
 	public static class Builder extends ScheduledMetrics2Reporter.Builder<ElasticsearchReporter, Builder> {

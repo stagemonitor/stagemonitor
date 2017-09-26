@@ -84,6 +84,7 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
 				spanIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
 		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
+		elasticsearchClient.createEmptyIndexAsync(ElasticsearchSpanReporter.getTodaysIndexName());
 
 		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
 			elasticsearchClient.updateKibanaIndexPatternAsync("kibana/stagemonitor-spans-kibana-index-pattern.json",

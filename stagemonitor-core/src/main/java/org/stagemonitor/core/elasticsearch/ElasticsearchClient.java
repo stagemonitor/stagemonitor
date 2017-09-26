@@ -115,7 +115,7 @@ public class ElasticsearchClient {
 				.build(), -1);
 	}
 
-	private void send(HttpRequest<Void> request) {
+	private void send(HttpRequest<?> request) {
 		if (!isElasticsearchAvailable()) {
 			return;
 		}
@@ -129,7 +129,7 @@ public class ElasticsearchClient {
 		return httpClient.send(request);
 	}
 
-	private Future<?> sendAsync(final HttpRequest<Void> request) {
+	private Future<?> sendAsync(final HttpRequest<?> request) {
 		if (isElasticsearchAvailable()) {
 			try {
 				return asyncESPool.submit(new Runnable() {
@@ -158,7 +158,7 @@ public class ElasticsearchClient {
 		final ObjectNode json = JsonUtils.toObjectNode(document);
 		removeDisallowedCharsFromPropertyNames(json);
 
-		sendAsync(HttpRequestBuilder.<Void>jsonRequest("POST", getElasticsearchUrl() + "/" + index + "/" + type, json).build());
+		sendAsync(HttpRequestBuilder.jsonRequest("POST", getElasticsearchUrl() + "/" + index + "/" + type, json).build());
 	}
 
 	private void removeDisallowedCharsFromPropertyNames(ObjectNode json) {
@@ -211,7 +211,7 @@ public class ElasticsearchClient {
 	}
 
 	public Future<?> sendMappingTemplateAsync(String mappingJson, String templateName) {
-		return sendAsync(HttpRequestBuilder.<Void>jsonRequest("PUT", getElasticsearchUrl() + ("/_template/" + templateName), mappingJson).build());
+		return sendAsync(HttpRequestBuilder.jsonRequest("PUT", getElasticsearchUrl() + ("/_template/" + templateName), mappingJson).build());
 	}
 
 	public static String modifyIndexTemplate(String templatePath, int moveToColdNodesAfterDays, Integer numberOfReplicas, Integer numberOfShards) {
@@ -292,7 +292,7 @@ public class ElasticsearchClient {
 		String urlWithoutAuthInfo = HttpClient.removeUserInfo(url);
 		logger.info(logMessage, urlWithoutAuthInfo);
 		try {
-			send(HttpRequestBuilder.<Void>forUrl(url).method(method).build());
+			send(HttpRequestBuilder.forUrl(url).method(method).build());
 		} finally {
 			logger.info(logMessage, "Done " + urlWithoutAuthInfo);
 		}
@@ -401,6 +401,12 @@ public class ElasticsearchClient {
 				.bodyStream(mapping)
 				.build();
 		httpClient.send(request); // log errors here intentionally, as we might need to update the mapping
+	}
+
+	public Future<?> createEmptyIndexAsync(String indexName) {
+		return sendAsync(HttpRequestBuilder.of("PUT", getElasticsearchUrl() + "/" + indexName)
+				.noopForStatus(400) // ignore index exists
+				.build());
 	}
 
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
