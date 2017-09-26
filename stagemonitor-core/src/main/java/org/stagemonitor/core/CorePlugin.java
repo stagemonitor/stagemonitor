@@ -461,7 +461,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		final String mappingJson;
 		try {
 			mappingJson = IOUtils.toString(IOUtils.getResourceAsStream("stagemonitor-configuration-elasticsearch-mapping.json"));
-			return elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-metrics");
+			return elasticsearchClient.sendMappingTemplateAsync(mappingJson, "stagemonitor-configuration");
 		} catch (IOException e) {
 			logger.warn("Suppressed exception:", e);
 			return new CompletedFuture<Object>(null);
