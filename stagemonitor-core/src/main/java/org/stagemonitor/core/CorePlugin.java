@@ -528,7 +528,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
 									   final MeasurementSession measurementSession) {
 		if (isReportToElasticsearch()) {
-			elasticsearchClient.updateKibanaIndexPatternAsync("stagemonitor-metrics-kibana-index-pattern.json",
+			elasticsearchClient.updateKibanaIndexPatternAsync("kibana/stagemonitor-metrics-kibana-index-pattern.json",
 					"/.kibana/index-pattern/stagemonitor-metrics-*");
 			logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrlsWithoutAuthenticationInformation(), reportingInterval);
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(

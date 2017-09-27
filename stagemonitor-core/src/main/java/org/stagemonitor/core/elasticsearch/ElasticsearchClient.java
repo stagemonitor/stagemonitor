@@ -185,7 +185,8 @@ public class ElasticsearchClient {
 			@Override
 			public void run() {
 				try {
-					JsonNode stagemonitorPattern = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(indexPatternLocation));
+					ObjectNode stagemonitorPattern = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(indexPatternLocation)).deepCopy();
+					stagemonitorPattern.put("fields", getFields(stagemonitorPattern.get("fields").asText()));
 					JsonNode currentPattern = fetchCurrentKibanaIndexPatternConfiguration(elasticsearchKibanaIndexPatternPath);
 					JsonNode mergedDefinition = JsonMerger.merge(currentPattern, stagemonitorPattern,
 							mergeStrategy().mergeEncodedObjects("fieldFormatMap").encodedArrayWithKey("fields", "name"));
@@ -208,6 +209,21 @@ public class ElasticsearchClient {
 				}
 			}
 		});
+	}
+
+	private String getFields(String fieldsJsonPath) throws IOException {
+		final JsonNode fields = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(fieldsJsonPath));
+		for (JsonNode field : fields) {
+			if (!field.has("readFromDocValues")) {
+				// if a field mapping does not contain readFromDocValues (previously named doc_values)
+				// kibana refreshes the mapping based on the contents of the index
+				// if the index is empty or contains documents which don't have all possible properties set (like username)
+				// the value for readFromDocValues can't be determined
+				// thus these field mappings are "deleted" (or rather can't be recreated)
+				logger.warn("Field {} in {} does not have property readFromDocValues", field.get("name"), fieldsJsonPath);
+			}
+		}
+		return JsonUtils.getMapper().writeValueAsString(fields);
 	}
 
 	public Future<?> sendMappingTemplateAsync(String mappingJson, String templateName) {

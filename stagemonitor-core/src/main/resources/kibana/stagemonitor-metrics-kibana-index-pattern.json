@@ -1,0 +1,5 @@
+{
+	"fields": "kibana/stagemonitor-metrics-kibana-index-pattern-fields.json",
+	"timeFieldName": "@timestamp",
+	"title": "stagemonitor-metrics-*"
+}

@@ -26,21 +26,15 @@
         "call_tree_ascii":     {"type": "keyword", "index": false, "doc_values": false },
         "call_tree_json":      {"type": "keyword", "index": false, "doc_values": false, "store": true },
         "exception":           {"type": "object", "properties": {
-            "classType":       {"type": "keyword" },
+            "class":           {"type": "keyword" },
             "message":         {"type": "keyword" },
-            "stackTrace":      {"type": "keyword", "index": false, "doc_values": false, "store": true }
+            "stack_trace":     {"type": "keyword", "index": false, "doc_values": false, "store": true }
           }
         },
         "name":                {"type": "text",  "analyzer": "standard",
                                  "fields": { "raw": {"type": "keyword" }}},
         "http":                {"type": "object", "properties": {
             "url":                 {"type": "text",  "analyzer": "standard", "fields": { "raw": {"type": "keyword" }}}
-          }
-        },
-        "externalRequestStats":{"type": "nested", "properties": {
-            "requestType":       {"type": "keyword" },
-            "executionCount":    {"type": "integer" },
-            "executionTime":     {"type": "double" }
           }
         },
         "params":{
