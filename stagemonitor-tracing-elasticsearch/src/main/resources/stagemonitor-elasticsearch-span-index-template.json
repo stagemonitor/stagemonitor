@@ -31,6 +31,7 @@
             "stack_trace":     {"type": "keyword", "index": false, "doc_values": false, "store": true }
           }
         },
+        "peer.ip":             {"type": "ip"},
         "name":                {"type": "text",  "analyzer": "standard",
                                  "fields": { "raw": {"type": "keyword" }}},
         "http":                {"type": "object", "properties": {

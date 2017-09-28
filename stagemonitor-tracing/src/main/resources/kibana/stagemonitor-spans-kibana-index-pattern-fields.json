@@ -297,6 +297,28 @@
 		"readFromDocValues": true
 	},
 	{
+		"name": "peer.ipv4_string",
+		"type": "string",
+		"count": 0,
+		"scripted": false,
+		"indexed": true,
+		"analyzed": false,
+		"doc_values": true,
+		"searchable": true,
+		"aggregatable": true,
+		"readFromDocValues": true
+	},
+	{
+		"name": "peer.ip",
+		"type": "ip",
+		"count": 0,
+		"scripted": false,
+		"searchable": true,
+		"aggregatable": true,
+		"doc_values": true,
+		"readFromDocValues": true
+	},
+	{
 		"name": "timing.dns_lookup",
 		"type": "number",
 		"count": 0,

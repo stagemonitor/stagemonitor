@@ -53,6 +53,9 @@ public class SpanJsonModule extends JsonUtils.StagemonitorJacksonModule {
 						parameters.put(tag.getKey().replace(PARAMETERS_PREFIX, ""), tag.getValue());
 					} else if (tag.getKey().equals(Tags.PEER_HOST_IPV4.getKey()) && tag.getValue() instanceof Integer) {
 						gen.writeStringField(IPV4_STRING, InetAddresses.fromInteger((Integer) tag.getValue()).getHostAddress());
+						gen.writeStringField("ip", InetAddresses.fromInteger((Integer) tag.getValue()).getHostAddress());
+					} else if (tag.getKey().equals(Tags.PEER_HOST_IPV6.getKey()) && tag.getValue() instanceof String) {
+						gen.writeStringField("ip", (String) tag.getValue());
 					} else {
 						gen.writeObjectField(tag.getKey(), tag.getValue());
 					}
