@@ -1,5 +1,5 @@
 stagemonitor
-Copyright 2014 iSYS Software GmbH
+Copyright 2014-2017 iSYS Software GmbH
 
 This product includes software developed at
 iSYS Software GmbH (http://www.isys-software.de/).
@@ -58,9 +58,6 @@ stagemonitor-web-servlet/src/main/resources/eum.debug.js
 This product includes code derived from the Metrics project, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-web-servlet/src/main/java/org/stagemonitor/web/metrics/StagemonitorMetricsServlet.java
 
-This product includes code derived from Apache httpclient, which is available under the "Apache 2.0" license. For details, see
-stagemonitor-tracing/src/main/java/org/stagemonitor/tracing/utils/InetAddressUtils.java
-
 This product includes code derived from https://github.com/raphw/weak-lock-free/, which is available under the "Apache 2.0" license. For details, see
 stagemonitor-core/src/main/java/org/stagemonitor/core/instrument/WeakConcurrentMap.java
 
@@ -74,3 +71,6 @@ This product includes code derived from Google Guava, which is available under t
 stagemonitor-core/src/main/java/org/stagemonitor/core/util/InetAddresses.java
 stagemonitor-core/src/main/java/org/stagemonitor/core/util/Ints.java
 stagemonitor-core/src/main/java/org/stagemonitor/core/util/Assert.java
+
+This product includes code from Spring Framework, which is available under the "Apache 2.0" license. For details, see
+stagemonitor-web-servlet/src/main/java/org/stagemonitor/web/servlet/util/AntPathMatcher.java

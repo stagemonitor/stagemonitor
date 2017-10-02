@@ -130,6 +130,11 @@ subprojects {
 	cobertura {
 		coverageFormats = []
 		coverageIgnoreTrivial = true
+		coverageExcludes = ['.*org.stagemonitor.web.servlet.util.AntPathMatcher.*',
+							'.*org.stagemonitor.core.util.InetAddresses.*',
+							'.*org.stagemonitor.core.util.Ints.*',
+							'.*org.stagemonitor.core.util.Assert.*',
+							'.*org.stagemonitor.core.instrument.WeakConcurrentMap.*']
 	}
 
 	processResources {
@@ -187,6 +192,11 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 		coverageFormats = ['html', 'xml']
 		coverageIgnoreTrivial = true
 		coverageSourceDirs = [projectsToRelease.sourceSets.main.java.srcDirs.flatten() ]
+		coverageExcludes = ['.*org.stagemonitor.web.servlet.util.AntPathMatcher.*',
+							'.*org.stagemonitor.core.util.InetAddresses.*',
+							'.*org.stagemonitor.core.util.Ints.*',
+							'.*org.stagemonitor.core.util.Assert.*',
+							'.*org.stagemonitor.core.instrument.WeakConcurrentMap.*']
 	}
 }
 

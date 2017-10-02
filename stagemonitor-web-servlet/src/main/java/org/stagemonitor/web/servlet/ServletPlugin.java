@@ -146,7 +146,7 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 	private final ConfigurationOption<Collection<String>> excludedRequestPaths = ConfigurationOption.stringsOption()
 			.key("stagemonitor.web.paths.excluded")
 			.dynamic(true)
-			.label("Excluded paths")
+			.label("Excluded paths (ant path style)")
 			.description("Request paths that should not be monitored. " +
 					"A value of `/aaa` means, that all paths starting with `/aaa` should not be monitored." +
 					" It's recommended to not monitor static resources, as they are typically not interesting to " +
@@ -158,6 +158,22 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 					// don't monitor vaadin heatbeat
 					"/HEARTBEAT/",
 					"/favicon.ico"));
+	private final ConfigurationOption<Collection<String>> excludedRequestPathsAntPattern = ConfigurationOption.stringsOption()
+			.key("stagemonitor.web.paths.excluded.antPattern")
+			.dynamic(true)
+			.label("Excluded paths (ant path style)")
+			.description("Request paths that should not be monitored. " +
+					"A value of `/**/*.js` means, that all paths ending with `.js` should not be monitored." +
+					" It's recommended to not monitor static resources, as they are typically not interesting to " +
+					"monitor but consume resources when you do. For more documentation, refer to " +
+					"https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/util/AntPathMatcher.html")
+			.configurationCategory(WEB_PLUGIN)
+			.buildWithDefault(SetValueConverter.immutableSet(
+					"/**/*.js",
+					"/**/*.css",
+					"/**/*.jpg",
+					"/**/*.jpeg",
+					"/**/*.png"));
 	private final ConfigurationOption<String> metricsServletAllowedOrigin = ConfigurationOption.stringOption()
 			.key("stagemonitor.web.metricsServlet.allowedOrigin")
 			.dynamic(true)
@@ -344,6 +360,10 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 
 	public ConfigurationOption<Collection<String>> getExcludedRequestPaths() {
 		return excludedRequestPaths;
+	}
+
+	public ConfigurationOption<Collection<String>> getExcludedRequestPathsAntPattern() {
+		return excludedRequestPathsAntPattern;
 	}
 
 	public String getMetricsServletAllowedOrigin() {
