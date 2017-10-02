@@ -36,14 +36,14 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 public class HttpRequestMonitorFilterTest {
 
 	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
-	private ServletPlugin servletPlugin = mock(ServletPlugin.class);
+	private ServletPlugin servletPlugin = spy(new ServletPlugin());
 	private CorePlugin corePlugin = mock(CorePlugin.class);
 	private TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 	private HttpRequestMonitorFilter httpRequestMonitorFilter;
@@ -57,42 +57,42 @@ public class HttpRequestMonitorFilterTest {
 			public SpanContextInformation answer(InvocationOnMock invocation) throws Throwable {
 				MonitoredRequest request = (MonitoredRequest) invocation.getArguments()[0];
 				request.execute();
-				when(spanContext.getOperationName()).thenReturn("testName");
+				doReturn("testName").when(spanContext).getOperationName();
 				return spanContext;
 			}
 		});
 		*/
 
-		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);
-		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
-		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
-		when(servletPlugin.isWidgetEnabled()).thenReturn(true);
-		when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(true);
-		when(servletPlugin.isClientSpanCollectionEnabled()).thenReturn(true);
-		when(servletPlugin.isClientSpanCollectionInjectionEnabled()).thenReturn(true);
-		when(corePlugin.isStagemonitorActive()).thenReturn(true);
-		when(tracingPlugin.getProfilerRateLimitPerMinute()).thenReturn(1000000d);
+		doReturn(servletPlugin).when(configuration).getConfig(ServletPlugin.class);
+		doReturn(tracingPlugin).when(configuration).getConfig(TracingPlugin.class);
+		doReturn(corePlugin).when(configuration).getConfig(CorePlugin.class);
+		doReturn(true).when(servletPlugin).isWidgetEnabled();
+		doReturn(true).when(servletPlugin).isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class));
+		doReturn(true).when(servletPlugin).isClientSpanCollectionEnabled();
+		doReturn(true).when(servletPlugin).isClientSpanCollectionInjectionEnabled();
+		doReturn(true).when(corePlugin).isStagemonitorActive();
+		doReturn(1000000d).when(tracingPlugin).getProfilerRateLimitPerMinute();
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, mock(Metric2Registry.class));
-		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		doReturn(requestMonitor).when(tracingPlugin).getRequestMonitor();
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(new MockTracer(new B3Propagator()));
 		doAnswer(invocation -> {
 			spanWrappingTracer.addEventListenerFactory(invocation.getArgument(0));
 			return null;
 		}).when(tracingPlugin).addSpanEventListenerFactory(any());
-		when(tracingPlugin.getTracer()).thenReturn(spanWrappingTracer);
-		when(corePlugin.getApplicationName()).thenReturn("testApplication");
-		when(corePlugin.getInstanceName()).thenReturn("testInstance");
+		doReturn(spanWrappingTracer).when(tracingPlugin).getTracer();
+		doReturn("testApplication").when(corePlugin).getApplicationName();
+		doReturn("testInstance").when(corePlugin).getInstanceName();
 
 		initFilter();
 	}
 
 	private void initFilter() throws Exception {
 		final ServletContext servlet3Context = mock(ServletContext.class);
-		when(servlet3Context.getMajorVersion()).thenReturn(3);
-		when(servlet3Context.getContextPath()).thenReturn("");
-		when(servlet3Context.addServlet(anyString(), any(Servlet.class))).thenReturn(mock(ServletRegistration.Dynamic.class));
+		doReturn(3).when(servlet3Context).getMajorVersion();
+		doReturn("").when(servlet3Context).getContextPath();
+		doReturn(mock(ServletRegistration.Dynamic.class)).when(servlet3Context).addServlet(anyString(), any(Servlet.class));
 		final FilterConfig filterConfig = spy(new MockFilterConfig());
-		when(filterConfig.getServletContext()).thenReturn(servlet3Context);
+		doReturn(servlet3Context).when(filterConfig).getServletContext();
 
 		httpRequestMonitorFilter = new HttpRequestMonitorFilter(configuration);
 		httpRequestMonitorFilter.initInternal(filterConfig);
@@ -128,9 +128,9 @@ public class HttpRequestMonitorFilterTest {
 
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
-		when(servletPlugin.isClientSpanCollectionEnabled()).thenReturn(false);
-		when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(false);
-		when(servletPlugin.isWidgetEnabled()).thenReturn(false);
+		doReturn(false).when(servletPlugin).isClientSpanCollectionEnabled();
+		doReturn(false).when(servletPlugin).isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class));
+		doReturn(false).when(servletPlugin).isWidgetEnabled();
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));
 

@@ -7,6 +7,7 @@ import org.stagemonitor.web.servlet.ServletPlugin;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -38,7 +39,8 @@ public class StagemonitorSecurityFilter extends AbstractExclusionFilter {
 	}
 
 	public StagemonitorSecurityFilter(ConfigurationRegistry configuration) {
-		super(ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/stagemonitor/public", "/stagemonitor/configuration")));
+		super(ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/stagemonitor/public", "/stagemonitor/configuration")),
+				ConfigurationOption.stringsOption().buildWithDefault(Collections.<String>emptyList()));
 		this.configuration = configuration;
 		this.servletPlugin = configuration.getConfig(ServletPlugin.class);
 	}

@@ -27,8 +27,9 @@ public class AbstractExclusionFilterTest {
 	private HttpServletRequest mockRequest = mock(HttpServletRequest.class);
 
 	private static class TestExclusionFilter extends AbstractExclusionFilter {
-		protected TestExclusionFilter(ConfigurationOption<Collection<String>> excludedPaths) {
-			super(excludedPaths);
+
+		TestExclusionFilter(ConfigurationOption<Collection<String>> excludedPaths, ConfigurationOption<Collection<String>> excludedPathsAntPattern) {
+			super(excludedPaths, excludedPathsAntPattern);
 		}
 
 		@Override
@@ -38,7 +39,10 @@ public class AbstractExclusionFilterTest {
 
 	@Test
 	public void testExclude() throws Exception {
-		testFilter = Mockito.spy(new TestExclusionFilter(ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/exclude1", "/exclude2", "/exclude3/"))));
+		testFilter = Mockito.spy(new TestExclusionFilter(
+				ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/exclude1", "/exclude2", "/exclude3/")),
+				ConfigurationOption.stringsOption().buildWithDefault(Collections.singletonList("/foo/**"))
+		));
 		assertExcludes("/context-path/exclude1");
 		assertExcludes("/context-path/exclude2/bla/blubb");
 		assertExcludes("/context-path/exclude3/");
@@ -50,9 +54,23 @@ public class AbstractExclusionFilterTest {
 	}
 
 	@Test
+	public void testExcludeAntPath() throws Exception {
+		testFilter = Mockito.spy(new TestExclusionFilter(
+				ConfigurationOption.stringsOption().buildWithDefault(Collections.singletonList("/foo")),
+				ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/**/*.js", "/exclude/**"))
+		));
+		assertExcludes("/context-path/bar.js");
+		assertExcludes("/context-path/exclude/bla/blubb");
+		assertExcludes("/context-path/exclude");
+	}
+
+	@Test
 	public void testNotExclude() throws Exception {
-		testFilter = Mockito.spy(new TestExclusionFilter(ConfigurationOption.stringsOption().buildWithDefault(Collections.emptyList())));
-		assertIncludes("/exclude3");
+		testFilter = Mockito.spy(new TestExclusionFilter(
+				ConfigurationOption.stringsOption().buildWithDefault(Collections.emptyList()),
+				ConfigurationOption.stringsOption().buildWithDefault(Collections.emptyList())
+		));
+		assertIncludes("/context-path/exclude3");
 	}
 
 	private void assertIncludes(String url) throws Exception {

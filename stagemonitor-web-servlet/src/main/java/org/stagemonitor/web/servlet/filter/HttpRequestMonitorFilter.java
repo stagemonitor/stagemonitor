@@ -47,7 +47,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	}
 
 	public HttpRequestMonitorFilter(ConfigurationRegistry configuration) {
-		super(configuration.getConfig(ServletPlugin.class).getExcludedRequestPaths());
+		super(configuration.getConfig(ServletPlugin.class).getExcludedRequestPaths(), configuration.getConfig(ServletPlugin.class).getExcludedRequestPathsAntPattern());
 		logger.debug("Instantiating HttpRequestMonitorFilter");
 		this.configuration = configuration;
 		this.servletPlugin = configuration.getConfig(ServletPlugin.class);

@@ -1,6 +1,7 @@
 package org.stagemonitor.web.servlet.filter;
 
 import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.web.servlet.util.AntPathMatcher;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -21,10 +22,21 @@ import javax.servlet.http.HttpServletResponse;
  */
 public abstract class AbstractExclusionFilter implements Filter {
 
-	private ConfigurationOption<Collection<String>> excludedPaths;
+	private final ConfigurationOption<Collection<String>> excludedPaths;
+	private final ConfigurationOption<Collection<String>> excludedPathsAntPattern;
+	private final AntPathMatcher antPathMatcher;
 
-	protected AbstractExclusionFilter(ConfigurationOption<Collection<String>> excludedPaths) {
+	protected AbstractExclusionFilter(ConfigurationOption<Collection<String>> excludedPaths,
+									  ConfigurationOption<Collection<String>> excludedPathsAntPattern) {
+		if (excludedPaths == null) {
+			throw new IllegalArgumentException("excludedPaths must not be null");
+		}
+		if (excludedPathsAntPattern == null) {
+			throw new IllegalArgumentException("excludedPathsAntPattern must not be null");
+		}
+		this.excludedPathsAntPattern = excludedPathsAntPattern;
 		this.excludedPaths = excludedPaths;
+		antPathMatcher = new AntPathMatcher();
 	}
 
 	@Override
@@ -58,11 +70,15 @@ public abstract class AbstractExclusionFilter implements Filter {
 	}
 
 	private boolean isExcluded(HttpServletRequest request) {
-		if (excludedPaths == null) {
-			return false;
-		}
+		final String uriWithoutContextPath = request.getRequestURI().substring(request.getContextPath().length());
+
 		for (String excludedPath : excludedPaths.get()) {
-			if (request.getRequestURI().substring(request.getContextPath().length()).startsWith(excludedPath)) {
+			if (uriWithoutContextPath.startsWith(excludedPath)) {
+				return true;
+			}
+		}
+		for (String excludedAntPattern : excludedPathsAntPattern.get()) {
+			if (antPathMatcher.match(excludedAntPattern, uriWithoutContextPath)) {
 				return true;
 			}
 		}
