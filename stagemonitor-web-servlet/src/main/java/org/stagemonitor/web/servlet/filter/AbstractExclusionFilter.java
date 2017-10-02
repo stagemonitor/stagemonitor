@@ -70,19 +70,30 @@ public abstract class AbstractExclusionFilter implements Filter {
 	}
 
 	private boolean isExcluded(HttpServletRequest request) {
-		final String uriWithoutContextPath = request.getRequestURI().substring(request.getContextPath().length());
+		final String requestPath = getRequestPath(request);
 
 		for (String excludedPath : excludedPaths.get()) {
-			if (uriWithoutContextPath.startsWith(excludedPath)) {
+			if (requestPath.startsWith(excludedPath)) {
 				return true;
 			}
 		}
 		for (String excludedAntPattern : excludedPathsAntPattern.get()) {
-			if (antPathMatcher.match(excludedAntPattern, uriWithoutContextPath)) {
+			if (antPathMatcher.match(excludedAntPattern, requestPath)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	// borrowed from org.springframework.security.web.util.matcher.AntPathRequestMatcher#getRequestPath
+	private String getRequestPath(HttpServletRequest request) {
+		String url = request.getServletPath();
+
+		if (request.getPathInfo() != null) {
+			url += request.getPathInfo();
+		}
+
+		return url;
 	}
 
 	@Override

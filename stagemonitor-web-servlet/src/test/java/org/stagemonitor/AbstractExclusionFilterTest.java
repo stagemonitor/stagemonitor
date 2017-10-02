@@ -43,14 +43,14 @@ public class AbstractExclusionFilterTest {
 				ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/exclude1", "/exclude2", "/exclude3/")),
 				ConfigurationOption.stringsOption().buildWithDefault(Collections.singletonList("/foo/**"))
 		));
-		assertExcludes("/context-path/exclude1");
-		assertExcludes("/context-path/exclude2/bla/blubb");
-		assertExcludes("/context-path/exclude3/");
-		assertExcludes("/context-path/exclude2bla");
+		assertExcludes("/exclude1");
+		assertExcludes("/exclude2/bla/blubb");
+		assertExcludes("/exclude3/");
+		assertExcludes("/exclude2bla");
 
-		assertIncludes("/context-path/exclude3");
-		assertIncludes("/context-path/included");
-		assertIncludes("/context-path/included/exclude1");
+		assertIncludes("/exclude3");
+		assertIncludes("/included");
+		assertIncludes("/included/exclude1");
 	}
 
 	@Test
@@ -59,9 +59,9 @@ public class AbstractExclusionFilterTest {
 				ConfigurationOption.stringsOption().buildWithDefault(Collections.singletonList("/foo")),
 				ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/**/*.js", "/exclude/**"))
 		));
-		assertExcludes("/context-path/bar.js");
-		assertExcludes("/context-path/exclude/bla/blubb");
-		assertExcludes("/context-path/exclude");
+		assertExcludes("/bar.js");
+		assertExcludes("/exclude/bla/blubb");
+		assertExcludes("/exclude");
 	}
 
 	@Test
@@ -70,7 +70,7 @@ public class AbstractExclusionFilterTest {
 				ConfigurationOption.stringsOption().buildWithDefault(Collections.emptyList()),
 				ConfigurationOption.stringsOption().buildWithDefault(Collections.emptyList())
 		));
-		assertIncludes("/context-path/exclude3");
+		assertIncludes("/exclude3");
 	}
 
 	private void assertIncludes(String url) throws Exception {
@@ -88,6 +88,7 @@ public class AbstractExclusionFilterTest {
 			notExclutedCount++;
 
 		when(mockRequest.getRequestURI()).thenReturn(url);
+		when(mockRequest.getServletPath()).thenReturn(url);
 		when(mockRequest.getContextPath()).thenReturn("/context-path");
 		testFilter.doFilter(mockRequest, mock(HttpServletResponse.class), mock(FilterChain.class));
 		verify(testFilter, times(notExclutedCount)).doFilterInternal(any(), any(), any());
