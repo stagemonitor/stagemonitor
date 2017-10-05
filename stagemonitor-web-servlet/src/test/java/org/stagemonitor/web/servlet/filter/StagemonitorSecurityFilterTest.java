@@ -75,6 +75,7 @@ public class StagemonitorSecurityFilterTest {
 		StagemonitorSecurityFilter stagemonitorSecurityFilter = new StagemonitorSecurityFilter(configuration);
 		FilterChain filterChain = mock(FilterChain.class);
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", url);
+		request.setServletPath(url);
 		if (enableWidgetRequestAttribute != null) {
 			request.setAttribute("X-Stagemonitor-Show-Widget", enableWidgetRequestAttribute);
 		}
