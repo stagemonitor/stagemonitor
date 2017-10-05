@@ -27,7 +27,6 @@ public class HttpRequestBuilder<T> {
 		this.url = url;
 		headers = new HashMap<String, String>();
 		successHandler = NoopResponseHandler.getInstance();
-		outputStreamHandler = NoopOutputStreamHandler.INSTANCE;
 		errorHandler = ErrorLoggingResponseHandler.getInstance();
 	}
 
