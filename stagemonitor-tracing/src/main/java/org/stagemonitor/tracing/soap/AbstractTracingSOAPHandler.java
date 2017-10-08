@@ -21,16 +21,18 @@ import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMessageContext> {
+	private final boolean serverHandler;
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
 
-	public AbstractTracingSOAPHandler() {
-		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(SoapTracingPlugin.class));
+	public AbstractTracingSOAPHandler(boolean serverHandler) {
+		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(SoapTracingPlugin.class), serverHandler);
 	}
 
-	protected AbstractTracingSOAPHandler(TracingPlugin tracingPlugin, SoapTracingPlugin soapTracingPlugin) {
+	protected AbstractTracingSOAPHandler(TracingPlugin tracingPlugin, SoapTracingPlugin soapTracingPlugin, boolean serverHandler) {
 		this.tracingPlugin = tracingPlugin;
 		this.soapTracingPlugin = soapTracingPlugin;
+		this.serverHandler = serverHandler;
 	}
 
 	public static boolean isOutbound(MessageContext messageContext) {
@@ -44,6 +46,15 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 
 	@Override
 	public boolean handleMessage(SOAPMessageContext context) {
+		if (serverHandler) {
+			if (!isServerMessage(context)) {
+				return true;
+			}
+		} else {
+			if (isServerMessage(context)) {
+				return true;
+			}
+		}
 		if (isOutbound(context)) {
 			handleOutboundSOAPMessage(context);
 		} else {
@@ -56,6 +67,12 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 	}
 
 	protected void handleOutboundSOAPMessage(SOAPMessageContext context) {
+	}
+
+	private boolean isServerMessage(SOAPMessageContext context) {
+		return context.containsKey(MessageContext.SERVLET_REQUEST) ||
+				context.containsKey(MessageContext.SERVLET_RESPONSE) ||
+				context.containsKey(MessageContext.SERVLET_CONTEXT);
 	}
 
 	@Override

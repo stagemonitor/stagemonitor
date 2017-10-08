@@ -63,7 +63,7 @@ public class ClassUtils {
 	 */
 	public static String getIdentityString(Object obj) {
 		if (obj == null) {
-			throw new IllegalArgumentException("obj must not be null");
+			return "null";
 		}
 		return obj.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
 	}

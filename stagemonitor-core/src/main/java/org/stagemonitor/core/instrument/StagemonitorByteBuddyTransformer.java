@@ -22,12 +22,14 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
+import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.isFinal;
 import static net.bytebuddy.matcher.ElementMatchers.isInterface;
 import static net.bytebuddy.matcher.ElementMatchers.isNative;
 import static net.bytebuddy.matcher.ElementMatchers.isSynthetic;
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
+import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
@@ -50,7 +52,8 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return new AgentBuilder.RawMatcher() {
 			@Override
 			public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule javaModule, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-				final boolean matches = timed("type", transformerName, getTypeMatcher()).matches(typeDescription) &&
+				final boolean matches = filterCoreJavaClasses(classLoader, typeDescription) &&
+						timed("type", transformerName, getTypeMatcher()).matches(typeDescription) &&
 						getRawMatcher().matches(typeDescription, classLoader, javaModule, classBeingRedefined, protectionDomain) &&
 						timed("classloader", "application", getClassLoaderMatcher()).matches(classLoader);
 				if (!matches) {
@@ -59,6 +62,18 @@ public abstract class StagemonitorByteBuddyTransformer {
 				return matches;
 			}
 		};
+	}
+
+	private boolean filterCoreJavaClasses(ClassLoader classLoader, TypeDescription typeDescription) {
+		if (transformsCoreJavaClasses()) {
+			return true;
+		} else {
+			final boolean isCoreJavaClass = isBootstrapClassLoader().matches(classLoader) || nameStartsWith("java")
+					.or(nameStartsWith("com.sun."))
+					.or(nameStartsWith("sun."))
+					.or(nameStartsWith("jdk.")).matches(typeDescription);
+			return !isCoreJavaClass;
+		}
 	}
 
 	protected AgentBuilder.RawMatcher getRawMatcher() {
@@ -74,6 +89,10 @@ public abstract class StagemonitorByteBuddyTransformer {
 
 	public boolean isActive() {
 		return true;
+	}
+
+	protected boolean transformsCoreJavaClasses() {
+		return false;
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {

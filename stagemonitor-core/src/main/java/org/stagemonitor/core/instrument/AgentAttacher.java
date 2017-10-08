@@ -37,7 +37,6 @@ import java.util.jar.JarFile;
 import __redirected.org.stagemonitor.dispatcher.Dispatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
-import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -191,15 +190,10 @@ public class AgentAttacher {
 				.with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 				.with(getListener())
 				.with(binaryLocator)
-				.ignore(any(), timed("classloader", "bootstrap", isBootstrapClassLoader()))
-				.or(any(), timed("classloader", "reflection", isReflectionClassLoader()))
+				.ignore(any(), timed("classloader", "reflection", isReflectionClassLoader()))
 				.or(any(), timed("classloader", "groovy-call-site", classLoaderWithName("org.codehaus.groovy.runtime.callsite.CallSiteClassLoader")))
 				.or(any(), new IsIgnoredClassLoaderElementMatcher())
-				.or(timed("type", "global-exclude", nameStartsWith("java")
-						.or(nameStartsWith("com.sun."))
-						.or(nameStartsWith("sun."))
-						.or(nameStartsWith("jdk."))
-						.or(nameStartsWith("org.aspectj."))
+				.or(timed("type", "global-exclude", nameStartsWith("org.aspectj.")
 						.or(nameStartsWith("org.groovy."))
 						.or(nameStartsWith("com.p6spy."))
 						.or(nameStartsWith("net.bytebuddy."))
