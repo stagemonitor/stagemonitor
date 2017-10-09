@@ -13,6 +13,7 @@ import org.stagemonitor.configuration.source.SystemPropertyConfigurationSource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +43,9 @@ public class Example {
                         new EnvironmentVariableConfigurationSource()
                 ),
                 null);
+        // reloads configuration options from all configuration sources each 30 seconds
+        configurationRegistry.scheduleReloadAtRate(30, TimeUnit.SECONDS);
+
 
         exampleConfiguration = configurationRegistry.getConfig(ExampleConfiguration.class);
     }

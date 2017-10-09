@@ -200,6 +200,28 @@ public class Example {
 
 ## Integration into Spring
 
-TODO Inject configuration classes 
+Annotate your `ConfigurationOptionProvider` implementations with `@Component`.
+
+Then create a ConfigurationRegistry bean
+
+```java
+@Configuration
+public class ConfigurationSpringConfig {
+
+    @Bean
+    public ConfigurationRegistry configurationRegistry(
+            List<ConfigurationOptionProvider> optionProviders) {
+        // initialize your configuration sources
+        List<ConfigurationSource> configurationSources = Arrays.asList(); 
+        final ConfigurationRegistry configuration = new ConfigurationRegistry(
+                optionProviders, configurationSources, null, true);
+        configuration.scheduleReloadAtRate(30, TimeUnit.SECONDS);
+        return configuration;
+    }
+
+}
+```
+
+Now you can inject the configuration registry to your beans.
 
 
