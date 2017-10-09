@@ -124,8 +124,7 @@ public class Example {
                 .addChangeListener((configurationOption, oldValue, newValue) ->
                         changeListenerInvoked.set(true));
         // saves a value into a specific configuration source
-        configurationRegistry
-                .save("example.optional", "foo", SimpleSource.NAME);
+        exampleConfiguration.getOptionalExample().update(Optional.of("foo"), SimpleSource.NAME);
         assertThat(changeListenerInvoked).isTrue();
     }
 
