@@ -23,26 +23,25 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	private final ConfigurationRegistry configuration;
 
 	public SamplePriorityDeterminingSpanEventListener(ConfigurationRegistry configuration) {
-		this.configuration = configuration;
-		registerPreInterceptors();
-		registerPostInterceptors();
+		this(configuration,
+				ServiceLoader.load(PreExecutionSpanInterceptor.class, SamplePriorityDeterminingSpanEventListener.class.getClassLoader()),
+				ServiceLoader.load(PostExecutionSpanInterceptor.class, SamplePriorityDeterminingSpanEventListener.class.getClassLoader()));
 	}
 
-	private void registerPreInterceptors() {
-		for (PreExecutionSpanInterceptor interceptor : ServiceLoader.load(
-				PreExecutionSpanInterceptor.class,
-				SamplePriorityDeterminingSpanEventListener.class.getClassLoader())) {
+	public SamplePriorityDeterminingSpanEventListener(ConfigurationRegistry configuration, Iterable<PreExecutionSpanInterceptor> preExecutionSpanInterceptors, Iterable<PostExecutionSpanInterceptor> postExecutionSpanInterceptors) {
+		this.configuration = configuration;
+		registerPreInterceptors(preExecutionSpanInterceptors);
+		registerPostInterceptors(postExecutionSpanInterceptors);
+	}
+
+	private void registerPreInterceptors(Iterable<PreExecutionSpanInterceptor> preExecutionSpanInterceptors) {
+		for (PreExecutionSpanInterceptor interceptor : preExecutionSpanInterceptors) {
 			addPreInterceptor(interceptor);
 		}
 	}
 
-	private void registerPostInterceptors() {
-		addPostInterceptor(new NameFilteringPostExecutionInterceptor());
-		addPostInterceptor(new FastExternalSpanExcludingPostExecutionInterceptor());
-
-		for (PostExecutionSpanInterceptor interceptor : ServiceLoader.load(
-				PostExecutionSpanInterceptor.class,
-				SamplePriorityDeterminingSpanEventListener.class.getClassLoader())) {
+	private void registerPostInterceptors(Iterable<PostExecutionSpanInterceptor> postExecutionSpanInterceptors) {
+		for (PostExecutionSpanInterceptor interceptor : postExecutionSpanInterceptors) {
 			addPostInterceptor(interceptor);
 		}
 	}
@@ -50,7 +49,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
 		final SpanContextInformation spanContext = SpanContextInformation.forSpan(spanWrapper);
-		if (!spanContext.isSampled()) {
+		if (!spanWrapper.isSampled()) {
 			return;
 		}
 
@@ -66,7 +65,6 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 		spanContext.setPreExecutionInterceptorContext(context);
 
 		if (!context.isReport()) {
-			spanContext.setSampled(false);
 			Tags.SAMPLING_PRIORITY.set(spanWrapper, 0);
 		}
 	}
@@ -74,7 +72,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
-		if (!info.isSampled()) {
+		if (!spanWrapper.isSampled()) {
 			return;
 		}
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(info);
@@ -87,7 +85,6 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 		}
 		info.setPostExecutionInterceptorContext(context);
 		if (!context.isReport()) {
-			info.setSampled(false);
 			Tags.SAMPLING_PRIORITY.set(spanWrapper, 0);
 		}
 	}

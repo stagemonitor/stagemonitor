@@ -39,7 +39,7 @@ public class ReportingSpanEventListener extends StatelessSpanEventListener {
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
-		if (info.isSampled()) {
+		if (spanWrapper.isSampled()) {
 			try {
 				report(info, spanWrapper);
 			} catch (Exception e) {

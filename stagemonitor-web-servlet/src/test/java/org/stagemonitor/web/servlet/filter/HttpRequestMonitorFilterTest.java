@@ -1,5 +1,8 @@
 package org.stagemonitor.web.servlet.filter;
 
+import com.uber.jaeger.context.TracingUtils;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -11,12 +14,14 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.tracing.B3Propagator;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -74,7 +79,8 @@ public class HttpRequestMonitorFilterTest {
 		doReturn(1000000d).when(tracingPlugin).getProfilerRateLimitPerMinute();
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, mock(Metric2Registry.class));
 		doReturn(requestMonitor).when(tracingPlugin).getRequestMonitor();
-		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(new MockTracer(new B3Propagator()));
+		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(new MockTracer(new B3Propagator()),
+				Arrays.asList(new SpanContextInformation.SpanContextSpanEventListener(), new SpanContextInformation.SpanFinalizer()));
 		doAnswer(invocation -> {
 			spanWrappingTracer.addEventListenerFactory(invocation.getArgument(0));
 			return null;
@@ -84,6 +90,12 @@ public class HttpRequestMonitorFilterTest {
 		doReturn("testInstance").when(corePlugin).getInstanceName();
 
 		initFilter();
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	private void initFilter() throws Exception {

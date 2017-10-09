@@ -1,7 +1,9 @@
 package org.stagemonitor.tracing;
 
 import com.codahale.metrics.Timer;
+import com.uber.jaeger.context.TracingUtils;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -47,6 +49,12 @@ public class TracedTransformerTest {
 		tags = new HashMap<>();
 		Stagemonitor.getPlugin(TracingPlugin.class).addSpanEventListenerFactory(new TagRecordingSpanEventListener(tags));
 		Stagemonitor.getPlugin(TracingPlugin.class).addReporter(spanCapturingReporter);
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@AfterClass

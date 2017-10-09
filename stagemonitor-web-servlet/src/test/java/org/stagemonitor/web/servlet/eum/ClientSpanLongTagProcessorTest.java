@@ -2,15 +2,13 @@ package org.stagemonitor.web.servlet.eum;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.SpanContextInformation.SpanContextSpanEventListener;
 import org.stagemonitor.tracing.SpanContextInformation.SpanFinalizer;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.HashMap;
 
-import io.opentracing.Span;
-import io.opentracing.Tracer;
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
 
@@ -23,7 +21,7 @@ public class ClientSpanLongTagProcessorTest {
 	private static final String REQUEST_PARAMETER_NAME = "param";
 	private static final String TAG = "tag";
 	private MockTracer mockTracer;
-	private Tracer.SpanBuilder spanBuilder;
+	private SpanWrappingTracer.SpanWrappingSpanBuilder spanBuilder;
 	private HashMap<String, String[]> servletRequestParameters = new HashMap<>();
 
 	@Test
@@ -33,13 +31,13 @@ public class ClientSpanLongTagProcessorTest {
 		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME);
 
 		// When
-		SpanContextInformation context = runProcessor(clientSpanLongTagProcessor);
+		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
 
 		// Then
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags().get(TAG)).isEqualTo(123L);
-		assertThat(context.isSampled()).isTrue();
+		assertThat(span.isSampled()).isTrue();
 	}
 
 	private void addServletParameter(String parameterValue) {
@@ -53,13 +51,13 @@ public class ClientSpanLongTagProcessorTest {
 		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME);
 
 		// When
-		SpanContextInformation context = runProcessor(clientSpanLongTagProcessor);
+		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
 
 		// Then
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKey(TAG);
-		assertThat(context.isSampled()).isTrue();
+		assertThat(span.isSampled()).isTrue();
 	}
 
 	@Test
@@ -70,13 +68,13 @@ public class ClientSpanLongTagProcessorTest {
 				.upperBound(5);
 
 		// When
-		SpanContextInformation context = runProcessor(clientSpanLongTagProcessor);
+		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
 
 		// Then
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKeys(TAG);
-		assertThat(context.isSampled()).isTrue();
+		assertThat(span.isSampled()).isTrue();
 	}
 
 	@Test
@@ -88,13 +86,13 @@ public class ClientSpanLongTagProcessorTest {
 				.discardSpanOnBoundViolation(true);
 
 		// When
-		SpanContextInformation context = runProcessor(clientSpanLongTagProcessor);
+		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
 
 		// Then
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKeys(TAG);
-		assertThat(context.isSampled()).isFalse();
+		assertThat(span.isSampled()).isFalse();
 	}
 
 	@Test
@@ -106,13 +104,13 @@ public class ClientSpanLongTagProcessorTest {
 				.discardSpanOnBoundViolation(true);
 
 		// When
-		SpanContextInformation context = runProcessor(clientSpanLongTagProcessor);
+		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
 
 		// Then
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags().get(TAG)).isEqualTo(6L);
-		assertThat(context.isSampled()).isTrue();
+		assertThat(span.isSampled()).isTrue();
 	}
 
 	@Test
@@ -123,13 +121,13 @@ public class ClientSpanLongTagProcessorTest {
 				.lowerBound(5);
 
 		// When
-		SpanContextInformation context = runProcessor(clientSpanLongTagProcessor);
+		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
 
 		// Then
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKeys(TAG);
-		assertThat(context.isSampled()).isTrue();
+		assertThat(span.isSampled()).isTrue();
 	}
 
 	@Test
@@ -141,13 +139,13 @@ public class ClientSpanLongTagProcessorTest {
 				.discardSpanOnBoundViolation(true);
 
 		// When
-		SpanContextInformation context = runProcessor(clientSpanLongTagProcessor);
+		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
 
 		// Then
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKeys(TAG);
-		assertThat(context.isSampled()).isFalse();
+		assertThat(span.isSampled()).isFalse();
 	}
 
 	@Test
@@ -159,22 +157,21 @@ public class ClientSpanLongTagProcessorTest {
 				.discardSpanOnBoundViolation(true);
 
 		// When
-		SpanContextInformation context = runProcessor(clientSpanLongTagProcessor);
+		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
 
 		// Then
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags().get(TAG)).isEqualTo(5L);
-		assertThat(context.isSampled()).isTrue();
+		assertThat(span.isSampled()).isTrue();
 	}
 
-	private SpanContextInformation runProcessor(ClientSpanLongTagProcessor clientSpanLongTagProcessor) {
+	private SpanWrapper runProcessor(ClientSpanLongTagProcessor clientSpanLongTagProcessor) {
 		clientSpanLongTagProcessor.processSpanBuilderImpl(spanBuilder, servletRequestParameters);
-		final Span span = spanBuilder.start();
+		final SpanWrapper span = spanBuilder.start();
 		clientSpanLongTagProcessor.processSpanImpl(span, servletRequestParameters);
-		final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(span);
 		span.finish();
-		return spanContextInformation;
+		return span;
 	}
 
 	@Before

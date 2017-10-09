@@ -2,6 +2,7 @@ package org.stagemonitor.tracing.metrics;
 
 import org.stagemonitor.core.util.TimeUtils;
 import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
@@ -16,7 +17,7 @@ public class CpuTimeTrackingSpanEventListener extends StatelessSpanEventListener
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
 		final SpanContextInformation spanContextInformation = SpanContextInformation.forSpan(spanWrapper);
-		if (!spanContextInformation.isExternalRequest()) {
+		if (!SpanUtils.isExternalRequest(spanWrapper)) {
 			spanContextInformation.addRequestAttribute(CPU_TIME_ATTRIBUTE, TimeUtils.getCpuTime());
 		}
 	}

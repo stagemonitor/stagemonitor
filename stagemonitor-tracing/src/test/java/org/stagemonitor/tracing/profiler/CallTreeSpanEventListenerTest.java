@@ -1,8 +1,12 @@
 package org.stagemonitor.tracing.profiler;
 
+import com.uber.jaeger.context.TracingUtils;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationOption;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
@@ -10,19 +14,21 @@ import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.profiler.formatter.ShortSignatureFormatter;
 import org.stagemonitor.tracing.sampling.PostExecutionInterceptorContext;
 import org.stagemonitor.tracing.sampling.PreExecutionInterceptorContext;
+import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListener;
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
+import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 
 import java.util.Arrays;
+import java.util.Collections;
 
+import io.opentracing.mock.MockTracer;
+import io.opentracing.tag.Tags;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class CallTreeSpanEventListenerTest {
@@ -39,23 +45,28 @@ public class CallTreeSpanEventListenerTest {
 		when(tracingPlugin.getCallTreeAsciiFormatter()).thenReturn(new ShortSignatureFormatter());
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		doReturn(requestMonitor).when(tracingPlugin).getRequestMonitor();
-		span = mock(SpanWrapper.class);
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@Test
 	public void testProfileThisExecutionDeactive() throws Exception {
 		doReturn(0d).when(tracingPlugin).getProfilerRateLimitPerMinute();
 		final SpanContextInformation spanContext = invokeEventListener();
-		assertNull(spanContext.getCallTree());
+		assertThat(spanContext.getCallTree()).isNull();
 	}
 
 	@Test
 	public void testProfileThisExecutionAlwaysActive() throws Exception {
 		doReturn(1000000d).when(tracingPlugin).getProfilerRateLimitPerMinute();
 		final SpanContextInformation spanContext = invokeEventListener();
-		assertNotNull(spanContext.getCallTree());
-		verify(span).setTag(eq(SpanUtils.CALL_TREE_JSON), anyString());
-		verify(span).setTag(eq(SpanUtils.CALL_TREE_ASCII), anyString());
+		assertThat(spanContext.getCallTree()).isNotNull();
+		assertThat(span.getStringTag(SpanUtils.CALL_TREE_JSON)).isNotNull();
+		assertThat(span.getStringTag(SpanUtils.CALL_TREE_ASCII)).isNotNull();
 	}
 
 	@Test
@@ -63,16 +74,16 @@ public class CallTreeSpanEventListenerTest {
 		doReturn(1000000d).when(tracingPlugin).getProfilerRateLimitPerMinute();
 		when(tracingPlugin.getExcludedTags()).thenReturn(Arrays.asList(SpanUtils.CALL_TREE_JSON, SpanUtils.CALL_TREE_ASCII));
 		final SpanContextInformation spanContext = invokeEventListener();
-		assertNotNull(spanContext.getCallTree());
-		verify(span, never()).setTag(eq(SpanUtils.CALL_TREE_JSON), anyString());
-		verify(span, never()).setTag(eq(SpanUtils.CALL_TREE_ASCII), anyString());
+		assertThat(spanContext.getCallTree()).isNotNull();
+		assertThat(span.getStringTag(SpanUtils.CALL_TREE_JSON)).isNull();
+		assertThat(span.getStringTag(SpanUtils.CALL_TREE_ASCII)).isNull();
 	}
 
 	@Test
 	public void testDontActivateProfilerWhenSpanIsNotSampled() throws Exception {
 		doReturn(1000000d).when(tracingPlugin).getProfilerRateLimitPerMinute();
 		final SpanContextInformation spanContext = invokeEventListener(false);
-		assertNull(spanContext.getCallTree());
+		assertThat(spanContext.getCallTree()).isNull();
 	}
 
 	private SpanContextInformation invokeEventListener() {
@@ -80,14 +91,26 @@ public class CallTreeSpanEventListenerTest {
 	}
 
 	private SpanContextInformation invokeEventListener(boolean sampled) {
-		CallTreeSpanEventListener eventListener = new CallTreeSpanEventListener(mock(Metric2Registry.class), tracingPlugin);
+		SpanWrappingTracer spanWrappingTracer = initTracer();
+		final SpanWrappingTracer.SpanWrappingSpanBuilder spanBuilder = spanWrappingTracer.buildSpan("test");
+		spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), sampled ? 1 : 0);
+		span = spanBuilder.start();
 		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(span);
-		contextInformation.setSampled(sampled);
 		contextInformation.setPreExecutionInterceptorContext(new PreExecutionInterceptorContext(contextInformation));
 		contextInformation.setPostExecutionInterceptorContext(new PostExecutionInterceptorContext(contextInformation));
-		eventListener.onStart(span);
-		eventListener.onFinish(span, "test", 0);
+		span.finish();
 		return contextInformation;
+	}
+
+	private SpanWrappingTracer initTracer() {
+		final ConfigurationRegistry configurationRegistry = mock(ConfigurationRegistry.class);
+		return new SpanWrappingTracer(new MockTracer(),
+				Arrays.asList(
+						new SpanContextInformation.SpanContextSpanEventListener(),
+						new SamplePriorityDeterminingSpanEventListener(configurationRegistry, Collections.emptyList(), Collections.emptyList()),
+						new CallTreeSpanEventListener(mock(Metric2Registry.class), tracingPlugin),
+						new SpanContextInformation.SpanFinalizer())
+		);
 	}
 
 	@Test

@@ -8,6 +8,7 @@ import org.stagemonitor.core.metrics.MetricUtils;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
+import org.stagemonitor.tracing.utils.SpanUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +25,7 @@ public class FastExternalSpanExcludingPostExecutionInterceptor extends PostExecu
 
 	@Override
 	public void interceptReport(PostExecutionInterceptorContext context) {
-		if (context.getSpanContext().isExternalRequest()) {
+		if (SpanUtils.isExternalRequest(context.getSpanContext().getSpanWrapper())) {
 			final double thresholdMs = tracingPlugin.getExcludeExternalRequestsFasterThan();
 			final long durationNs = context.getSpanContext().getDurationNanos();
 			final long durationMs = TimeUnit.NANOSECONDS.toMillis(context.getSpanContext().getDurationNanos());

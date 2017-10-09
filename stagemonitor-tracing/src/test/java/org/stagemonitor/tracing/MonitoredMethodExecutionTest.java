@@ -22,7 +22,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -67,12 +66,12 @@ public class MonitoredMethodExecutionTest {
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
 
 		testObject = new TestObject(requestMonitor);
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@Test

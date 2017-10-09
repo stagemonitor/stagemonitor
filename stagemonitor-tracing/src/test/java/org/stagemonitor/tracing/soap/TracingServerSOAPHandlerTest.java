@@ -1,5 +1,8 @@
 package org.stagemonitor.tracing.soap;
 
+import com.uber.jaeger.context.TracingUtils;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.tracing.SpanContextInformation;
@@ -10,7 +13,7 @@ import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.xml.namespace.QName;
@@ -41,11 +44,18 @@ public class TracingServerSOAPHandlerTest {
 	public void setUp() throws Exception {
 		final TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		mockTracer = new MockTracer();
-		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(mockTracer, Collections.singletonList(new SpanContextInformation.SpanContextSpanEventListener())));
+		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(mockTracer,
+				Arrays.asList(new SpanContextInformation.SpanContextSpanEventListener(), new SpanContextInformation.SpanFinalizer())));
 		soapTracingPlugin = mock(SoapTracingPlugin.class);
 		tracingServerSOAPHandler = new TracingServerSOAPHandler(tracingPlugin, soapTracingPlugin);
 		soapRequest = getSoapMessageContext("<request/>", "operationName");
 		soapResponse = getSoapMessageContext("<response/>", "operationName");
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@Test

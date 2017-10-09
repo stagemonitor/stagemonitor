@@ -4,7 +4,6 @@ import com.uber.jaeger.context.TraceContext;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.instrument.WeakConcurrentMap;
 import org.stagemonitor.tracing.profiler.CallStackElement;
 import org.stagemonitor.tracing.sampling.PostExecutionInterceptorContext;
 import org.stagemonitor.tracing.sampling.PreExecutionInterceptorContext;
@@ -18,30 +17,23 @@ import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.opentracing.Span;
-import io.opentracing.tag.Tags;
 
 public class SpanContextInformation {
 
-	private static final WeakConcurrentMap<Span, SpanContextInformation> spanContextMap = new WeakConcurrentMap
-			.WithInlinedExpunction<Span, SpanContextInformation>();
+	private static final ConcurrentHashMap<Span, SpanContextInformation> spanContextMap =
+			new ConcurrentHashMap<Span, SpanContextInformation>();
 
 	private long overhead1;
 	private SpanContextInformation parent;
 	private Map<String, Object> requestAttributes = new HashMap<String, Object>();
 	private CallStackElement callTree;
-	private String operationName;
-	private long duration;
-	private boolean externalRequest;
-	private boolean serverRequest;
 	private Map<String, ExternalRequestStats> externalRequestStats = new HashMap<String, ExternalRequestStats>();
 	private PostExecutionInterceptorContext postExecutionInterceptorContext;
-	private boolean sampled = true;
-	private boolean error = false;
 	private PreExecutionInterceptorContext preExecutionInterceptorContext;
-	private String operationType;
+	private SpanWrapper spanWrapper;
 
 	public static SpanContextInformation getCurrent() {
 		final TraceContext traceContext = TracingUtils.getTraceContext();
@@ -65,7 +57,7 @@ public class SpanContextInformation {
 	}
 
 	public String getOperationName() {
-		return operationName;
+		return getSpanWrapper().getOperationName();
 	}
 
 	/**
@@ -85,32 +77,8 @@ public class SpanContextInformation {
 		return callTree;
 	}
 
-	private void setOperationName(String operationName) {
-		this.operationName = operationName;
-	}
-
-	private void setDuration(long duration) {
-		this.duration = duration;
-	}
-
 	public long getDurationNanos() {
-		return duration;
-	}
-
-	private void setExternalRequest(boolean externalRequest) {
-		this.externalRequest = externalRequest;
-	}
-
-	public boolean isExternalRequest() {
-		return externalRequest;
-	}
-
-	void setServerRequest(boolean serverRequest) {
-		this.serverRequest = serverRequest;
-	}
-
-	public boolean isServerRequest() {
-		return serverRequest;
+		return getSpanWrapper().getDurationNanos();
 	}
 
 	/**
@@ -157,14 +125,7 @@ public class SpanContextInformation {
 	}
 
 	public boolean isSampled() {
-		return sampled;
-	}
-
-	/**
-	 * Internal method, should only be called by stagemonitor itself
-	 */
-	public void setSampled(boolean sampled) {
-		this.sampled = sampled;
+		return spanWrapper.isSampled();
 	}
 
 	long getOverhead1() {
@@ -195,16 +156,14 @@ public class SpanContextInformation {
 	}
 
 	public String getOperationType() {
-		return operationType;
+		return getSpanWrapper().getStringTag(SpanUtils.OPERATION_TYPE);
 	}
 
-	public boolean isError() {
-		return error;
+	public SpanWrapper getSpanWrapper() {
+		return spanWrapper;
 	}
 
 	public static class ExternalRequestStats {
-
-		private final double MS_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 
 		private final String requestType;
 		private int executionCount = 1;
@@ -213,10 +172,6 @@ public class SpanContextInformation {
 		ExternalRequestStats(String requestType, long executionTimeNanos) {
 			this.requestType = requestType;
 			this.executionTimeNanos = executionTimeNanos;
-		}
-
-		public double getExecutionTimeMs() {
-			return executionTimeNanos / MS_IN_NANOS;
 		}
 
 		public long getExecutionTimeNanos() {
@@ -244,6 +199,7 @@ public class SpanContextInformation {
 		@Override
 		public void onStart(SpanWrapper spanWrapper) {
 			info = SpanContextInformation.forSpan(spanWrapper);
+			info.spanWrapper = spanWrapper;
 			info.setParent(SpanContextInformation.getCurrent());
 
 			TracingUtils.getTraceContext().push(spanWrapper);
@@ -251,71 +207,6 @@ public class SpanContextInformation {
 			for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
 				spanWrapper.setTag(entry.getKey(), entry.getValue());
 			}
-
-			handleTagsSetBeforeSpanStarted(spanWrapper);
-		}
-
-		private void handleTagsSetBeforeSpanStarted(SpanWrapper spanWrapper) {
-			final String spanKind = spanWrapper.getStringTag(Tags.SPAN_KIND.getKey());
-			final Number samplingPriority = spanWrapper.getNumberTag(Tags.SAMPLING_PRIORITY.getKey());
-			final String operationType = spanWrapper.getStringTag(SpanUtils.OPERATION_TYPE);
-			if (spanKind != null) {
-				setSpanKind(spanKind);
-			}
-			if (samplingPriority != null) {
-				setSamplingPriority(samplingPriority);
-			}
-			if (operationType != null) {
-				info.operationType = operationType;
-			}
-		}
-
-		@Override
-		public String onSetTag(String key, String value) {
-			if (key.equals(Tags.SPAN_KIND.getKey())) {
-				if (info != null) {
-					setSpanKind(value);
-				}
-			} else if (SpanUtils.OPERATION_TYPE.equals(key)) {
-				if (info != null) {
-					info.operationType = value;
-				}
-			}
-			return value;
-		}
-
-		private void setSpanKind(String value) {
-			info.setExternalRequest(Tags.SPAN_KIND_CLIENT.equals(value));
-			info.setServerRequest(Tags.SPAN_KIND_SERVER.equals(value));
-		}
-
-		@Override
-		public Number onSetTag(String key, Number value) {
-			if (Tags.SAMPLING_PRIORITY.getKey().equals(key)) {
-				if (info != null) {
-					setSamplingPriority(value);
-				}
-			}
-			return value;
-		}
-
-		private void setSamplingPriority(Number value) {
-			info.setSampled(value.intValue() > 0);
-		}
-
-		@Override
-		public boolean onSetTag(String key, boolean value) {
-			if (info != null && Tags.ERROR.getKey().equals(key)) {
-				info.error = value;
-			}
-			return value;
-		}
-
-		@Override
-		public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-			final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
-			info.setOperationName(operationName);
-			info.setDuration(durationNanos);
 		}
 
 		@Override

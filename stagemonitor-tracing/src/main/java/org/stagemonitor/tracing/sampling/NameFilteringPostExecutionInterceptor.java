@@ -6,7 +6,7 @@ import org.stagemonitor.util.StringUtils;
 
 import java.util.Collection;
 
-class NameFilteringPostExecutionInterceptor extends PostExecutionSpanInterceptor {
+public class NameFilteringPostExecutionInterceptor extends PostExecutionSpanInterceptor {
 
 	private TracingPlugin tracingPlugin;
 

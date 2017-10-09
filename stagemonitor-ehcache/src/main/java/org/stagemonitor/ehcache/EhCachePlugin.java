@@ -16,8 +16,8 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.FirstOperationEventListener;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
@@ -98,7 +98,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			@Override
 			public boolean customCondition(SpanWrapper spanWrapper) {
 				// TODO what if the application is not a server application?
-				return SpanContextInformation.forSpan(spanWrapper).isServerRequest();
+				return SpanUtils.isServerRequest(spanWrapper);
 			}
 		});
 	}

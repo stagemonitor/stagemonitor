@@ -8,6 +8,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.util.StringUtils;
@@ -19,6 +20,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
+import io.opentracing.tag.Tags;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -59,42 +61,42 @@ public class MetricsSpanEventListener extends StatelessSpanEventListener impleme
 
 		final boolean trackMetricsByOperationName = spanWrapper.getBooleanTag(ENABLE_TRACKING_METRICS_TAG, false);
 		if (StringUtils.isNotEmpty(operationName) && StringUtils.isNotEmpty(operationType)) {
-			trackResponseTimeMetricsAsync(operationName, durationNanos, contextInformation, operationType, trackMetricsByOperationName);
-			if (contextInformation.isServerRequest()) {
+			trackResponseTimeMetricsAsync(operationName, durationNanos, spanWrapper.getBooleanTag(Tags.ERROR.getKey(), false), operationType, trackMetricsByOperationName);
+			if (SpanUtils.isServerRequest(spanWrapper)) {
 				trackExternalRequestRate(spanWrapper, operationName, contextInformation, trackMetricsByOperationName);
-			} else if (contextInformation.isExternalRequest()) {
+			} else if (SpanUtils.isExternalRequest(spanWrapper)) {
 				addExternalRequestToParent(durationNanos, contextInformation, operationType);
 			}
 		}
 	}
 
-	private void trackResponseTimeMetricsAsync(final String operationName, final long durationNanos, final SpanContextInformation contextInformation, final String operationType, final boolean trackMetricsByOperationName) {
+	private void trackResponseTimeMetricsAsync(final String operationName, final long durationNanos, final boolean error, final String operationType, final boolean trackMetricsByOperationName) {
 		try {
 			// tracking metrics in a single thread to reduce latency and contention of the locks in ExponentiallyDecayingReservoir
 			if (tracingPlugin.isTrackMetricsAsync() && executorService.getQueue().remainingCapacity() != 0) {
 				executorService.submit(new Runnable() {
 					@Override
 					public void run() {
-						trackResponseTimeMetrics(contextInformation, operationName, durationNanos, operationType, trackMetricsByOperationName);
+						trackResponseTimeMetrics(error, operationName, durationNanos, operationType, trackMetricsByOperationName);
 					}
 				});
 			} else {
-				trackResponseTimeMetrics(contextInformation, operationName, durationNanos, operationType, trackMetricsByOperationName);
+				trackResponseTimeMetrics(error, operationName, durationNanos, operationType, trackMetricsByOperationName);
 			}
 		} catch (RejectedExecutionException e) {
 			// race condition
 			logger.warn("Queue for metric tracking executor service is full, tracking metric synchronously");
-			trackResponseTimeMetrics(contextInformation, operationName, durationNanos, operationType, trackMetricsByOperationName);
+			trackResponseTimeMetrics(error, operationName, durationNanos, operationType, trackMetricsByOperationName);
 		}
 	}
 
-	private void trackResponseTimeMetrics(SpanContextInformation contextInformation, String operationName, long durationNanos, String operationType, boolean trackMetricsByOperationName) {
+	private void trackResponseTimeMetrics(boolean error, String operationName, long durationNanos, String operationType, boolean trackMetricsByOperationName) {
 		if (trackMetricsByOperationName) {
 			metricRegistry.timer(getResponseTimeMetricName(operationName, operationType)).update(durationNanos, NANOSECONDS);
 		}
 		metricRegistry.timer(getResponseTimeMetricName("All", operationType)).update(durationNanos, NANOSECONDS);
 
-		if (contextInformation.isError()) {
+		if (error) {
 			if (trackMetricsByOperationName) {
 				metricRegistry.meter(getErrorMetricName(operationName, operationType)).mark();
 			}

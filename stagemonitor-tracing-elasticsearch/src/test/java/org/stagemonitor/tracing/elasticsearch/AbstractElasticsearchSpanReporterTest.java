@@ -3,7 +3,6 @@ package org.stagemonitor.tracing.elasticsearch;
 import com.uber.jaeger.context.TracingUtils;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -34,6 +33,7 @@ import io.opentracing.Tracer;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -91,12 +91,12 @@ public class AbstractElasticsearchSpanReporterTest {
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
-		Assert.assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		Assert.assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	protected SpanContextInformation reportSpanWithCallTree(long executionTimeMs, String operationName) {

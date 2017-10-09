@@ -1,6 +1,7 @@
 package org.stagemonitor.tracing.utils;
 
 import org.stagemonitor.core.util.InetAddresses;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -79,5 +80,13 @@ public class SpanUtils {
 				span.setTag(HTTP_HEADERS_PREFIX + entry.getKey(), entry.getValue());
 			}
 		}
+	}
+
+	public static boolean isExternalRequest(SpanWrapper spanWrapper) {
+		return Tags.SPAN_KIND_CLIENT.equals(spanWrapper.getStringTag(Tags.SPAN_KIND.getKey()));
+	}
+
+	public static boolean isServerRequest(SpanWrapper spanWrapper) {
+		return Tags.SPAN_KIND_SERVER.equals(spanWrapper.getStringTag(Tags.SPAN_KIND.getKey()));
 	}
 }

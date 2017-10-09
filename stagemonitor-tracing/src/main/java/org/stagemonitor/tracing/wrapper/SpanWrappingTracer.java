@@ -23,7 +23,7 @@ import static org.stagemonitor.tracing.wrapper.SpanWrapper.INTERNAL_TAG_PREFIX;
 public class SpanWrappingTracer implements Tracer {
 
 	private final Tracer delegate;
-	private final Collection<SpanEventListenerFactory> spanInterceptorFactories;
+	private final Collection<SpanEventListenerFactory> spanInterceptorFactories = new CopyOnWriteArrayList<SpanEventListenerFactory>();
 
 	public SpanWrappingTracer(Tracer delegate) {
 		this(delegate, new CopyOnWriteArrayList<SpanEventListenerFactory>());
@@ -31,11 +31,11 @@ public class SpanWrappingTracer implements Tracer {
 
 	public SpanWrappingTracer(Tracer delegate, Collection<SpanEventListenerFactory> spanInterceptorFactories) {
 		this.delegate = delegate;
-		this.spanInterceptorFactories = spanInterceptorFactories;
+		this.spanInterceptorFactories.addAll(spanInterceptorFactories);
 	}
 
 	@Override
-	public SpanBuilder buildSpan(String operationName) {
+	public SpanWrappingSpanBuilder buildSpan(String operationName) {
 		return new SpanWrappingSpanBuilder(delegate.buildSpan(operationName), operationName, createSpanInterceptors());
 	}
 
@@ -70,7 +70,7 @@ public class SpanWrappingTracer implements Tracer {
 		return spanInterceptorFactories.remove(spanEventListenerFactory);
 	}
 
-	class SpanWrappingSpanBuilder implements SpanBuilder {
+	public class SpanWrappingSpanBuilder implements SpanBuilder {
 
 		private final String operationName;
 		private final List<SpanEventListener> spanEventListeners;
@@ -85,22 +85,22 @@ public class SpanWrappingTracer implements Tracer {
 			this.spanEventListeners = spanEventListeners;
 		}
 
-		public SpanBuilder asChildOf(SpanContext parent) {
+		public SpanWrappingSpanBuilder asChildOf(SpanContext parent) {
 			delegate = delegate.asChildOf(parent);
 			return this;
 		}
 
-		public SpanBuilder asChildOf(Span parent) {
+		public SpanWrappingSpanBuilder asChildOf(Span parent) {
 			delegate = delegate.asChildOf(parent);
 			return this;
 		}
 
-		public SpanBuilder addReference(String referenceType, SpanContext referencedContext) {
+		public SpanWrappingSpanBuilder addReference(String referenceType, SpanContext referencedContext) {
 			delegate = delegate.addReference(referenceType, referencedContext);
 			return this;
 		}
 
-		public SpanBuilder withTag(String key, String value) {
+		public SpanWrappingSpanBuilder withTag(String key, String value) {
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				value = spanEventListener.onSetTag(key, value);
 			}
@@ -113,7 +113,7 @@ public class SpanWrappingTracer implements Tracer {
 			return this;
 		}
 
-		public SpanBuilder withTag(String key, boolean value) {
+		public SpanWrappingSpanBuilder withTag(String key, boolean value) {
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				value = spanEventListener.onSetTag(key, value);
 			}
@@ -124,7 +124,7 @@ public class SpanWrappingTracer implements Tracer {
 			return this;
 		}
 
-		public SpanBuilder withTag(String key, Number value) {
+		public SpanWrappingSpanBuilder withTag(String key, Number value) {
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				value = spanEventListener.onSetTag(key, value);
 			}
@@ -137,14 +137,14 @@ public class SpanWrappingTracer implements Tracer {
 			return this;
 		}
 
-		public SpanBuilder withStartTimestamp(long microseconds) {
+		public SpanWrappingSpanBuilder withStartTimestamp(long microseconds) {
 			startTimestampNanos = TimeUnit.MICROSECONDS.toNanos(microseconds);
 			startTimestampMillis = TimeUnit.MICROSECONDS.toMillis(microseconds);
 			delegate = delegate.withStartTimestamp(microseconds);
 			return this;
 		}
 
-		public Span start() {
+		public SpanWrapper start() {
 			if (startTimestampNanos == 0) {
 				startTimestampNanos = System.nanoTime();
 				startTimestampMillis = System.currentTimeMillis();

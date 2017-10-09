@@ -14,6 +14,7 @@ import org.stagemonitor.tracing.TracingPlugin;
 
 import javax.ejb.Remote;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -34,14 +35,14 @@ public class RemoteEjbMonitorTransformerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 		spanCapturingReporter = new SpanCapturingReporter();
 		Stagemonitor.getPlugin(TracingPlugin.class).addReporter(spanCapturingReporter);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@Test

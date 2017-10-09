@@ -17,18 +17,17 @@ import java.io.StringWriter;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class FreemarkerProfilingTransformerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@Test

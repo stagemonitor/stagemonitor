@@ -1,5 +1,8 @@
 package org.stagemonitor.tracing.anonymization;
 
+import com.uber.jaeger.context.TracingUtils;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationRegistry;
@@ -42,6 +45,12 @@ public class AnonymizingSpanEventListenerTest {
 		when(tracingPlugin.isAnonymizeIPs()).thenReturn(true);
 		when(tracingPlugin.getDiscloseUsers()).thenReturn(Collections.emptySet());
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@Test

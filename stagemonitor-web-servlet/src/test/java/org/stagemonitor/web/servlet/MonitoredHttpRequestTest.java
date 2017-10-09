@@ -1,5 +1,7 @@
 package org.stagemonitor.web.servlet;
 
+import com.uber.jaeger.context.TracingUtils;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,12 +10,12 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.tracing.RequestMonitor;
+import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
-import org.stagemonitor.tracing.wrapper.AbstractSpanEventListener;
 import org.stagemonitor.tracing.wrapper.SpanEventListenerFactory;
-import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.servlet.filter.StatusExposingByteCountingServletResponse;
 
@@ -38,7 +40,6 @@ import static org.mockito.Mockito.when;
 public class MonitoredHttpRequestTest {
 
 	private ConfigurationRegistry configuration;
-	private String operationName;
 	private io.opentracing.mock.MockTracer tracer;
 	private ServletPlugin servletPlugin;
 
@@ -50,22 +51,20 @@ public class MonitoredHttpRequestTest {
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);
 		final List<SpanEventListenerFactory> spanEventListenerFactories = new ArrayList<>();
-		spanEventListenerFactories.add(() -> new AbstractSpanEventListener() {
-			@Override
-			public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-				MonitoredHttpRequestTest.this.operationName = operationName;
-			}
-		});
+		spanEventListenerFactories.add(new SpanContextInformation.SpanContextSpanEventListener());
 		spanEventListenerFactories.add(new MonitoredHttpRequest.HttpSpanEventListener(servletPlugin, tracingPlugin));
+		spanEventListenerFactories.add(new SpanContextInformation.SpanFinalizer());
 		tracer = new io.opentracing.mock.MockTracer();
-		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(tracer,
-				spanEventListenerFactories));
+		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(tracer, spanEventListenerFactories));
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
 	}
 
@@ -92,7 +91,7 @@ public class MonitoredHttpRequestTest {
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertEquals("/test.js", mockSpan.tags().get(Tags.HTTP_URL.getKey()));
-		assertEquals("GET *.js", operationName);
+		assertEquals("GET *.js", mockSpan.operationName());
 		assertEquals("GET", mockSpan.tags().get("method"));
 
 		assertEquals("application/json", mockSpan.tags().get(SpanUtils.HTTP_HEADERS_PREFIX + "accept"));

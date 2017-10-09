@@ -25,7 +25,7 @@ import java.util.Map;
 
 import io.opentracing.Tracer;
 
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -94,7 +94,7 @@ public abstract class AbstractRequestMonitorTest {
 				return NoopTracer.INSTANCE;
 			}
 		});
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	protected Tracer getTracer() {
@@ -105,6 +105,6 @@ public abstract class AbstractRequestMonitorTest {
 	public void after() {
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
-		assertTrue(TracingUtils.getTraceContext().isEmpty());
+		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 }

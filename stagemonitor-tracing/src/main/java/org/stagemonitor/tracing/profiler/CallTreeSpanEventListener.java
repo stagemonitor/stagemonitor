@@ -18,6 +18,7 @@ import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.util.StringUtils;
 
 import io.opentracing.Span;
+import io.opentracing.tag.Tags;
 
 public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 
@@ -40,17 +41,17 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
 		final SpanContextInformation contextInfo = SpanContextInformation.forSpan(spanWrapper);
-		if (contextInfo.isSampled() && contextInfo.getPreExecutionInterceptorContext() != null) {
-			determineIfEnableProfiler(contextInfo);
+		if (spanWrapper.isSampled() && contextInfo.getPreExecutionInterceptorContext() != null) {
+			determineIfEnableProfiler(spanWrapper, contextInfo);
 			if (!Profiler.isProfilingActive() && contextInfo.getPreExecutionInterceptorContext().isCollectCallTree()) {
 				contextInfo.setCallTree(Profiler.activateProfiling("total"));
 			}
 		}
 	}
 
-	private void determineIfEnableProfiler(SpanContextInformation spanContext) {
+	private void determineIfEnableProfiler(SpanWrapper spanWrapper, SpanContextInformation spanContext) {
 		final PreExecutionInterceptorContext interceptorContext = spanContext.getPreExecutionInterceptorContext();
-		if (spanContext.isExternalRequest()) {
+		if (Tags.SPAN_KIND_CLIENT.equals(spanWrapper.getStringTag(Tags.SPAN_KIND.getKey()))) {
 			interceptorContext.shouldNotCollectCallTree("this is a external request (span.kind=client)");
 			return;
 		}
@@ -70,7 +71,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 		if (contextInfo.getCallTree() != null) {
 			try {
 				Profiler.stop();
-				if (contextInfo.isSampled()) {
+				if (spanWrapper.isSampled()) {
 					determineIfExcludeCallTree(contextInfo);
 					if (isAddCallTreeToSpan(contextInfo, operationName)) {
 						addCallTreeToSpan(contextInfo, spanWrapper, operationName);
