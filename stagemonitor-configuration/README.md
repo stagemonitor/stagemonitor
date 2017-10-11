@@ -7,6 +7,7 @@ This library does not depend on stagemonitor and can be integrated into any proj
    - Includes `ValueConverters` for the most common data types
    - You can implement custom `ValueConverters`
  - Null safety - `NullPointerExceptions` impossible when accessing a configuration option as it can't return `null`s by design. Includes support for `java.util.Optional`.
+	- Feature toggles - use boolean configuration options to toggle features on or off. You can do that during runtime of your application.
  - Validation - verify the integrity of your configuration. Want a int with a range from 1-42? No problem!
  - Change listeners - get notified when a configuration option changes
  - Loading values from different configuration sources. You can write custom configuration sources or use built in:
