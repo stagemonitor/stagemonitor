@@ -266,33 +266,26 @@ public class TracingPlugin extends StagemonitorPlugin {
 			.key("stagemonitor.tracing.sampling.rateLimitPerMinute.default")
 			.dynamic(true)
 			.label("Rate limit for spans per minute")
-			.description("Limits the rate at which spans are collected and reported. " +
-					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report. " +
-					"This setting is active for all operation types which are not listed in " +
-					"'stagemonitor.requestmonitor.sampling.rateLimitPerMinute.perType'")
+			.description("Limits the rate at which spans are sampled (collected and reported). " +
+					"Set to a value <= 0 to sample no span and to 1000000 or higher to always sample. " +
+					"This is useful in combination with the percantage based sampling to prevent overwhelming the " +
+					"backend during peak times or DDOS attacks.\n" +
+					"\n" +
+					"Important: this setting is only evaluated for root spans so that a whole trace is either sampled" +
+					"or not sampled.")
 			.tags("sampling")
 			.configurationCategory(TRACING_PLUGIN)
 			.buildWithDefault(1000000d);
-	private final ConfigurationOption<Map<String, Double>> rateLimitSpansPerMinutePerType = ConfigurationOption.mapOption(StringValueConverter.INSTANCE, DoubleValueConverter.INSTANCE)
-			.key("stagemonitor.tracing.sampling.rateLimitPerMinute.perType")
-			.dynamic(true)
-			.label("Rate limit for spans per minute per operation type")
-			.description("Limits the rate at which specific spans like 'jdbc' queries are collected and reported. " +
-					"Set to a value below 1 to deactivate reporting and to 1000000 or higher to always report. " +
-					"If your application makes excessive use of for example jdbc queries, you might want to deactivate " +
-					"or rate limit the collection of spans. Example: `jdbc: 0, http: 1000000`")
-			.tags("external-requests", "sampling")
-			.configurationCategory(TRACING_PLUGIN)
-			.buildWithDefault(Collections.<String, Double>emptyMap());
 	private final ConfigurationOption<Double> defaultRateLimitSpansPercent = ConfigurationOption.doubleOption()
 			.key("stagemonitor.tracing.sampling.percent.default")
 			.dynamic(true)
-			.label("Sampling probability for spans in %")
-			.description("Sets the percentage of spans which are collected and reported. " +
-					"When set to '0.01', only 1% of the spans will be reported; when set to '1', all spans will be reported. " +
-					"Note that the maximum granularity is 1%. " +
-					"This setting is active for all operation types which are not listed in " +
-					"'stagemonitor.requestmonitor.sampling.percent.perType'")
+			.label("Sampling probability for traces in %")
+			.description("Sets the percentage of traces which are sampled (collected and reported). " +
+					"When set to '0.01', only 1% of the traces will be sampled; when set to '1', all traces," +
+					"including all spans will be sampled. Note that the maximum granularity is 1%.\n" +
+					"\n" +
+					"Important: this setting is only evaluated for root spans so that a whole trace is either sampled" +
+					"or not sampled.")
 			.tags("sampling")
 			.addValidator(new ConfigurationOption.Validator<Double>() {
 				@Override
@@ -310,7 +303,12 @@ public class TracingPlugin extends StagemonitorPlugin {
 					"When set to '0.01', only 1% of the spans will be reported; when set to '1', all spans will be reported. " +
 					"Note that the maximum granularity is 1%. " +
 					"If your application makes excessive use of for example jdbc queries, you might want to deactivate " +
-					"or rate limit the collection of spans. Example: `jdbc: 0, http: 0.1`")
+					"or rate limit the collection of spans.\n" +
+					"Example: set `jdbc: 0.01` to only sample 1% of jdbc spans.\n" +
+					"\n" +
+					"Important: this setting is evaluated for every span (not only the root span), regardless of the" +
+					"sampling decision of the trace. That means that you can exclude certain spans of a sampled trace" +
+					"but also sample spans of a non sampled trace. Note that you will end up with incomplete traces.")
 			.tags("sampling")
 			.addValidator(new ConfigurationOption.Validator<Map<String, Double>>() {
 				@Override
@@ -412,12 +410,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 		final ServiceLoader<SpanEventListenerFactory> factories = ServiceLoader.load(SpanEventListenerFactory.class, TracingPlugin.class.getClassLoader());
 		this.spanWrappingTracer = createSpanWrappingTracer(tracer, initArguments.getConfiguration(), metricRegistry,
 				factories, samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
-		try {
-			GlobalTracer.register(spanWrappingTracer);
-		} catch (IllegalStateException e) {
-			logger.debug("If this exception occurs outside of stagemonitor's unit tests it indicates a programming " +
-					"error. Make sure you don't call Stagemonitor.reset()", e);
-		}
+		GlobalTracer.register(spanWrappingTracer);
 	}
 
 	@Override
@@ -585,14 +578,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	public ConfigurationOption<Double> getDefaultRateLimitSpansPerMinuteOption() {
 		return defaultRateLimitSpansPerMinute;
-	}
-
-	public Map<String, Double> getRateLimitSpansPerMinutePerType() {
-		return rateLimitSpansPerMinutePerType.getValue();
-	}
-
-	public ConfigurationOption<Map<String, Double>> getRateLimitSpansPerMinutePerTypeOption() {
-		return rateLimitSpansPerMinutePerType;
 	}
 
 	public Double getDefaultRateLimitSpansPercent() {

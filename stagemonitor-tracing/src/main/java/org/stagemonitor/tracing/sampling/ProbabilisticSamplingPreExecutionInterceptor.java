@@ -4,6 +4,8 @@ import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.BitSet;
 import java.util.HashMap;
@@ -49,12 +51,18 @@ public class ProbabilisticSamplingPreExecutionInterceptor extends PreExecutionSp
 		final String operationType = spanContext.getOperationType();
 		if (sampleDecisionsByType.containsKey(operationType)) {
 			sampleDecisions = sampleDecisionsByType.get(operationType);
-		} else {
+		} else if (isRoot(context.getSpanContext().getSpanWrapper())) {
 			sampleDecisions = defaultSampleDecisions;
+		} else {
+			return;
 		}
 		if (sampleDecisions != null && !isSampled(sampleDecisions, spanCounter)) {
 			context.shouldNotReport(getClass());
 		}
+	}
+
+	protected boolean isRoot(SpanWrapper span) {
+		return SpanUtils.isRoot(span);
 	}
 
 	private boolean isSampled(BitSet sampleDecisions, AtomicInteger spanCounter) {

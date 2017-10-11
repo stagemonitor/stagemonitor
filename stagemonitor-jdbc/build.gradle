@@ -2,6 +2,7 @@ dependencies {
 	compile project(":stagemonitor-tracing")
 	compile 'p6spy:p6spy:3.0.0'
 
+	testCompile project(':stagemonitor-tracing').sourceSets.test.output
 	testCompile 'org.apache.tomcat:tomcat-jdbc:8.5.0'
 	testCompile 'org.hsqldb:hsqldb:2.3.3'
 	testCompile 'com.mchange:c3p0:0.9.5.2'

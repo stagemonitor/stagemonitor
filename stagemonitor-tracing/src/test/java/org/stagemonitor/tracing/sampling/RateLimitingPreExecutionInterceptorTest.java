@@ -1,13 +1,19 @@
 package org.stagemonitor.tracing.sampling;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.SimpleSource;
+import org.stagemonitor.tracing.GlobalTracerTestHelper;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.Collections;
+
+import io.opentracing.Tracer;
+import io.opentracing.util.GlobalTracer;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -20,19 +26,30 @@ public class RateLimitingPreExecutionInterceptorTest {
 	private TracingPlugin tracingPlugin;
 	private PreExecutionInterceptorContext context;
 	private SpanContextInformation spanContext;
+	private ConfigurationRegistry configuration;
 
 	@Before
 	public void setUp() throws Exception {
+		GlobalTracerTestHelper.resetGlobalTracer();
 		tracingPlugin = new TracingPlugin();
-		final ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(tracingPlugin),
+		configuration = new ConfigurationRegistry(Collections.singletonList(tracingPlugin),
 				Collections.singletonList(new SimpleSource()),
 				null);
 
+		final Tracer tracer = mock(Tracer.class);
+		GlobalTracer.register(tracer);
+
 		spanContext = mock(SpanContextInformation.class);
+		when(spanContext.getSpanWrapper()).thenReturn(mock(SpanWrapper.class));
 
 		context = new PreExecutionInterceptorContext(spanContext);
 		interceptor = new RateLimitingPreExecutionInterceptor();
 		interceptor.init(configuration);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		GlobalTracerTestHelper.resetGlobalTracer();
 	}
 
 	@Test
@@ -77,23 +94,33 @@ public class RateLimitingPreExecutionInterceptorTest {
 	}
 
 	@Test
-	public void testReportSpanGenericType() throws Exception {
-		when(spanContext.getOperationType()).thenReturn("jdbc");
+	public void dontMakeSamplingDecisionsForNonRootTraces() throws Exception {
+		interceptor = new RateLimitingPreExecutionInterceptor() {
+			@Override
+			protected boolean isRoot(SpanWrapper span) {
+				return false;
+			}
+		};
+		interceptor.init(configuration);
 		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(0d, SimpleSource.NAME);
-		tracingPlugin.getRateLimitSpansPerMinutePerTypeOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
-
-		interceptor.interceptReport(context);
-		assertFalse(context.isReport());
-	}
-
-	@Test
-	public void testReportSpanType() throws Exception {
-		when(spanContext.getOperationType()).thenReturn("http");
-		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(0d, SimpleSource.NAME);
-		tracingPlugin.getRateLimitSpansPerMinutePerTypeOption().update(Collections.singletonMap("http", 1000000d), SimpleSource.NAME);
 
 		interceptor.interceptReport(context);
 		assertTrue(context.isReport());
+	}
+
+	@Test
+	public void makeSamplingDecisionsForRootTraces() throws Exception {
+		interceptor = new RateLimitingPreExecutionInterceptor() {
+			@Override
+			protected boolean isRoot(SpanWrapper span) {
+				return true;
+			}
+		};
+		interceptor.init(configuration);
+		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().update(0d, SimpleSource.NAME);
+
+		interceptor.interceptReport(context);
+		assertFalse(context.isReport());
 	}
 
 }

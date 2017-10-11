@@ -9,6 +9,7 @@ import com.p6spy.engine.spy.P6DataSource;
 import com.zaxxer.hikari.HikariDataSource;
 
 import org.apache.tomcat.jdbc.pool.PoolProperties;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -20,6 +21,7 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
+import org.stagemonitor.tracing.GlobalTracerTestHelper;
 import org.stagemonitor.tracing.MonitoredMethodRequest;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
@@ -97,6 +99,7 @@ public class ConnectionMonitoringTransformerTest {
 
 	@BeforeClass
 	public static void attachProfiler() throws Exception {
+		GlobalTracerTestHelper.resetGlobalTracer();
 		Stagemonitor.reset(new MeasurementSession("ConnectionMonitoringTransformerTest", "test", "test"));
 	}
 
@@ -112,6 +115,11 @@ public class ConnectionMonitoringTransformerTest {
 		requestMonitor = Stagemonitor.getPlugin(TracingPlugin.class).getRequestMonitor();
 		configuration = Stagemonitor.getConfiguration();
 		testDao = new TestDao(dataSource);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		GlobalTracerTestHelper.resetGlobalTracer();
 	}
 
 	@AfterClass
