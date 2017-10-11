@@ -1,6 +1,7 @@
 package org.stagemonitor.tracing.utils;
 
 import org.stagemonitor.core.util.InetAddresses;
+import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.io.PrintWriter;
@@ -12,7 +13,9 @@ import java.util.Collection;
 import java.util.Map;
 
 import io.opentracing.Span;
+import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
+import io.opentracing.util.GlobalTracer;
 
 public class SpanUtils {
 
@@ -88,5 +91,14 @@ public class SpanUtils {
 
 	public static boolean isServerRequest(SpanWrapper spanWrapper) {
 		return Tags.SPAN_KIND_SERVER.equals(spanWrapper.getStringTag(Tags.SPAN_KIND.getKey()));
+	}
+
+	// TODO replace with Span#isRoot when https://github.com/opentracing/specification/issues/91 is resolved
+	public static boolean isRoot(Span span) {
+		return isRoot(GlobalTracer.get(), span);
+	}
+
+	public static boolean isRoot(Tracer tracer, Span span) {
+		return B3HeaderFormat.getB3Identifiers(tracer, span).getParentSpanId() == null;
 	}
 }

@@ -34,7 +34,7 @@ public class RateLimiter {
 		this.creditsPerNanosecond = creditsPerSecond / 1.0e9;
 	}
 
-	public boolean checkCredit(double itemCost) {
+	public synchronized boolean checkCredit(double itemCost) {
 		long currentTime = System.nanoTime();
 		double elapsedTime = currentTime - lastTick;
 		lastTick = currentTime;

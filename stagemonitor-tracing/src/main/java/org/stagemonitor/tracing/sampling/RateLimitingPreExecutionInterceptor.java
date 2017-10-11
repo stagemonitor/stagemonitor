@@ -2,45 +2,26 @@ package org.stagemonitor.tracing.sampling;
 
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.RateLimiter;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.stagemonitor.tracing.utils.SpanUtils;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterceptor {
 
-	private RateLimiter defaultSpanRateLimiter;
-	private Map<String, RateLimiter> spanRateLimiterByType;
+	private RateLimiter rateLimiter;
 
 	@Override
 	public void init(ConfigurationRegistry configuration) {
 		TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
 
-		defaultSpanRateLimiter = getRateLimiter(tracingPlugin.getDefaultRateLimitSpansPerMinute());
+		rateLimiter = getRateLimiter(tracingPlugin.getDefaultRateLimitSpansPerMinute());
 		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Double>() {
 			@Override
 			public void onChange(ConfigurationOption<?> configurationOption, Double oldValue, Double newValue) {
-				defaultSpanRateLimiter = getRateLimiter(newValue);
+				rateLimiter = getRateLimiter(newValue);
 			}
 		});
-
-		setRateLimiterMap(tracingPlugin.getRateLimitSpansPerMinutePerType());
-		tracingPlugin.getRateLimitSpansPerMinutePerTypeOption().addChangeListener(new ConfigurationOption.ChangeListener<Map<String, Double>>() {
-			@Override
-			public void onChange(ConfigurationOption<?> configurationOption, Map<String, Double> oldValue, Map<String, Double> newValue) {
-				setRateLimiterMap(newValue);
-			}
-		});
-	}
-
-	private void setRateLimiterMap(Map<String, Double> newValue) {
-		Map<String, RateLimiter> rateLimiters = new HashMap<String, RateLimiter>();
-		for (Map.Entry<String, Double> entry : newValue.entrySet()) {
-			rateLimiters.put(entry.getKey(), getRateLimiter(entry.getValue()));
-		}
-		spanRateLimiterByType = rateLimiters;
 	}
 
 	public static RateLimiter getRateLimiter(double creditsPerMinute) {
@@ -61,16 +42,20 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 
 	@Override
 	public void interceptReport(PreExecutionInterceptorContext context) {
-		final SpanContextInformation spanContext = context.getSpanContext();
-		final RateLimiter rateLimiter;
-		if (spanRateLimiterByType.containsKey(spanContext.getOperationType())) {
-			rateLimiter = spanRateLimiterByType.get(spanContext.getOperationType());
-		} else {
-			rateLimiter = defaultSpanRateLimiter;
+		if (rateLimiter == null) {
+			return;
 		}
-		if (isRateExceeded(rateLimiter)) {
+		// the rate limit is per span but we either sample a trace as a whole or don't sample it
+		// even though we don't make sampling decisions for non root spans
+		// we need to tell the rate limiter that there is another span being sampled
+		// so that the cost is incorporated
+		if (isRateExceeded(rateLimiter) && isRoot(context.getSpanContext().getSpanWrapper())) {
 			context.shouldNotReport(getClass());
 		}
+	}
+
+	protected boolean isRoot(SpanWrapper span) {
+		return SpanUtils.isRoot(span);
 	}
 
 	public static boolean isRateExceeded(RateLimiter rateLimiter) {

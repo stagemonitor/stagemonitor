@@ -54,6 +54,7 @@ public class TracedTransformerTest {
 
 	@After
 	public void tearDown() throws Exception {
+		GlobalTracerTestHelper.resetGlobalTracer();
 		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
