@@ -1,20 +1,13 @@
 package org.stagemonitor.jdbc;
 
-import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.JavaModule;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
 import java.lang.reflect.Method;
-import java.security.ProtectionDomain;
 import java.sql.Connection;
 
 import javax.sql.DataSource;
@@ -30,8 +23,6 @@ import static org.stagemonitor.core.instrument.CanLoadClassElementMatcher.canLoa
  * in application servers like JBoss, the calls to stagemonitor can't be inserted directly but only reflectively.
  */
 public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitoringTransformer {
-
-	private static final Logger logger = LoggerFactory.getLogger(ReflectiveConnectionMonitoringTransformer.class);
 
 	private static final String CONNECTION_MONITOR = ConnectionMonitor.class.getName();
 
@@ -117,38 +108,8 @@ public class ReflectiveConnectionMonitoringTransformer extends ConnectionMonitor
 		}
 	}
 
-	/**
-	 * Makes sure that no DataSources are instrumented twice, even if multiple stagemonitored applications are
-	 * deployed on one application server
-	 */
 	@Override
-	public AgentBuilder.RawMatcher getRawMatcher() {
-		return new AvoidDuplicateTransformationsRawMatcher();
-	}
-
-	private static class AvoidDuplicateTransformationsRawMatcher implements AgentBuilder.RawMatcher {
-		@Override
-		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule javaModule, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-			final String key = getClassAlreadyTransformedKey(typeDescription, classLoader);
-			final boolean hasAlreadyBeenTransformed = Dispatcher.getValues().containsKey(key);
-			if (DEBUG_INSTRUMENTATION) {
-				logger.info("{}: {}", key, hasAlreadyBeenTransformed);
-			}
-			return !hasAlreadyBeenTransformed;
-		}
-	}
-
-	private static String getClassAlreadyTransformedKey(TypeDescription typeDescription, ClassLoader classLoader) {
-		return typeDescription.getName() + ClassUtils.getIdentityString(classLoader) + ".transformed";
-	}
-
-	@Override
-	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
-		super.beforeTransformation(typeDescription, classLoader);
-		final String key = getClassAlreadyTransformedKey(typeDescription, classLoader);
-		if (DEBUG_INSTRUMENTATION) {
-			logger.info("setting {}", key);
-		}
-		Dispatcher.getValues().put(key, Boolean.TRUE);
+	protected boolean isPreventDuplicateTransformation() {
+		return true;
 	}
 }

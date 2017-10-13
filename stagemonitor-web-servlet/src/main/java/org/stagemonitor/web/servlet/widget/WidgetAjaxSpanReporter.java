@@ -41,12 +41,9 @@ public class WidgetAjaxSpanReporter extends SpanReporter {
 	/**
 	 * see {@link OldSpanRemover}
 	 */
-	private ScheduledExecutorService oldSpanRemoverPool;
+	private final ScheduledExecutorService oldSpanRemoverPool;
 
-	public WidgetAjaxSpanReporter() {
-	}
-
-	public void init() {
+	WidgetAjaxSpanReporter() {
 		oldSpanRemoverPool = Executors.newScheduledThreadPool(1, new ThreadFactory() {
 			@Override
 			public Thread newThread(Runnable r) {

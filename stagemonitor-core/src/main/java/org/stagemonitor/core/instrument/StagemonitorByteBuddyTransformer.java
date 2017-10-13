@@ -14,20 +14,25 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.util.ClassUtils;
 
 import java.lang.annotation.Annotation;
 import java.security.ProtectionDomain;
 import java.util.Collections;
 import java.util.List;
 
+import __redirected.org.stagemonitor.dispatcher.Dispatcher;
+
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
+import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.isFinal;
 import static net.bytebuddy.matcher.ElementMatchers.isInterface;
 import static net.bytebuddy.matcher.ElementMatchers.isNative;
 import static net.bytebuddy.matcher.ElementMatchers.isSynthetic;
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
+import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
@@ -50,7 +55,8 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return new AgentBuilder.RawMatcher() {
 			@Override
 			public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule javaModule, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-				final boolean matches = timed("type", transformerName, getTypeMatcher()).matches(typeDescription) &&
+				final boolean matches = filterCoreJavaClasses(classLoader, typeDescription) &&
+						timed("type", transformerName, getTypeMatcher()).matches(typeDescription) &&
 						getRawMatcher().matches(typeDescription, classLoader, javaModule, classBeingRedefined, protectionDomain) &&
 						timed("classloader", "application", getClassLoaderMatcher()).matches(classLoader);
 				if (!matches) {
@@ -61,8 +67,43 @@ public abstract class StagemonitorByteBuddyTransformer {
 		};
 	}
 
+	private boolean filterCoreJavaClasses(ClassLoader classLoader, TypeDescription typeDescription) {
+		if (transformsCoreJavaClasses()) {
+			return true;
+		} else {
+			final boolean isCoreJavaClass = isBootstrapClassLoader().matches(classLoader) || nameStartsWith("java")
+					.or(nameStartsWith("com.sun."))
+					.or(nameStartsWith("sun."))
+					.or(nameStartsWith("jdk.")).matches(typeDescription);
+			return !isCoreJavaClass;
+		}
+	}
+
+	/**
+	 * Makes sure that no classes of the same class loader are instrumented twice, even if multiple stagemonitored
+	 * applications are deployed on one application server
+	 */
 	protected AgentBuilder.RawMatcher getRawMatcher() {
+		if (isPreventDuplicateTransformation()) {
+			return new AvoidDuplicateTransformationsRawMatcher();
+		}
 		return NoOpRawMatcher.INSTANCE;
+	}
+
+	private class AvoidDuplicateTransformationsRawMatcher implements AgentBuilder.RawMatcher {
+		@Override
+		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule javaModule, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+			final String key = getClassAlreadyTransformedKey(typeDescription, classLoader);
+			final boolean hasAlreadyBeenTransformed = Dispatcher.getValues().containsKey(key);
+			if (DEBUG_INSTRUMENTATION) {
+				logger.info("{}: {}", key, hasAlreadyBeenTransformed);
+			}
+			return !hasAlreadyBeenTransformed;
+		}
+	}
+
+	private String getClassAlreadyTransformedKey(TypeDescription typeDescription, ClassLoader classLoader) {
+		return getAdviceClass() + typeDescription.getName() + ClassUtils.getIdentityString(classLoader) + ".transformed";
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
@@ -74,6 +115,10 @@ public abstract class StagemonitorByteBuddyTransformer {
 
 	public boolean isActive() {
 		return true;
+	}
+
+	protected boolean transformsCoreJavaClasses() {
+		return false;
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getIncludeTypeMatcher() {
@@ -166,6 +211,10 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return 0;
 	}
 
+	protected boolean isPreventDuplicateTransformation() {
+		return false;
+	}
+
 	/**
 	 * This method is called before the transformation.
 	 * You can stop the transformation from happening by returning false from this method.
@@ -174,6 +223,10 @@ public abstract class StagemonitorByteBuddyTransformer {
 	 * @param classLoader     The class loader which is loading this type.
 	 */
 	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+		if (isPreventDuplicateTransformation()) {
+			Dispatcher.put(getClassAlreadyTransformedKey(typeDescription, classLoader), Boolean.TRUE);
+		}
+
 		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled()) {
 			logger.debug("TRANSFORM {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}

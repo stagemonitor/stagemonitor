@@ -15,11 +15,11 @@ import io.opentracing.tag.Tags;
 public class TracingClientSOAPHandler extends AbstractTracingSOAPHandler {
 
 	public TracingClientSOAPHandler() {
-		super();
+		super(false);
 	}
 
 	public TracingClientSOAPHandler(TracingPlugin tracingPlugin, SoapTracingPlugin soapTracingPlugin) {
-		super(tracingPlugin, soapTracingPlugin);
+		super(tracingPlugin, soapTracingPlugin, false);
 	}
 
 	@Override

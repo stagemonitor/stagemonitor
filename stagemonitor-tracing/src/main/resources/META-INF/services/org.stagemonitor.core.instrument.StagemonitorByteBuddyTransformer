@@ -4,3 +4,5 @@ org.stagemonitor.tracing.MethodLevelTracingTransformer
 org.stagemonitor.tracing.ClassLevelTracingTransformer
 org.stagemonitor.tracing.ejb.RemoteEjbMonitorTransformer
 org.stagemonitor.tracing.freemarker.FreemarkerProfilingTransformer
+org.stagemonitor.tracing.soap.SoapClientTransformer
+org.stagemonitor.tracing.soap.SoapHandlerTransformer

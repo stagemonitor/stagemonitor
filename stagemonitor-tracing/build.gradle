@@ -7,6 +7,7 @@ dependencies {
 	optional 'org.freemarker:freemarker:2.3.23'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
+	testCompile "org.eclipse.jetty:jetty-server:$jettyVersion"
 	testCompile "io.opentracing:opentracing-mock:$opentracingVersion"
 	testCompile 'net.sf.ehcache:ehcache-core:2.6.6'
 	testCompile "org.elasticsearch.client:transport:$esVersion"
