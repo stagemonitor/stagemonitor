@@ -67,8 +67,8 @@ public class AgentAttacher {
 	}
 
 	/**
-	 * Attaches the profiler and other instrumenters at runtime so that it is not necessary to add the
-	 * -javaagent command line argument.
+	 * Attaches the profiler and other instrumenters at runtime so that it is not necessary to add the -javaagent
+	 * command line argument.
 	 *
 	 * @return A runnable that should be called on shutdown to unregister this class file transformer
 	 */
@@ -80,7 +80,7 @@ public class AgentAttacher {
 
 		final List<ClassFileTransformer> classFileTransformers = new ArrayList<ClassFileTransformer>();
 		final AutoEvictingCachingBinaryLocator binaryLocator = new AutoEvictingCachingBinaryLocator();
-		if (initInstrumentation()) {
+		if (assertNoDifferentStagemonitorVersionIsDeployedOnSameJvm() && initInstrumentation()) {
 			final long start = System.currentTimeMillis();
 			classFileTransformers.add(initByteBuddyClassFileTransformer(binaryLocator));
 			if (corePlugin.isDebugInstrumentation()) {
@@ -100,22 +100,54 @@ public class AgentAttacher {
 		};
 	}
 
+	/**
+	 * The problem with different stagemonitor versions is that a class like {@link javax.xml.ws.Binding}, which is
+	 * loaded by the bootstrap class loader can be used by multiple applications.
+	 *
+	 * <p> If those applications are using different versions of stagemonitor they might expect the class to be
+	 * instrumented differently. This can lead to unexpected behaviour no matter if the classes get instrumented twice
+	 * or if double instrumentation is avoided via {@link StagemonitorByteBuddyTransformer#isPreventDuplicateTransformation()}.
+	 * </p>
+	 *
+	 * <p> One remedy of this could be to make {@link StagemonitorByteBuddyTransformer} implement {@link
+	 * java.io.Serializable} and check via {@code new ObjectStreamClass(SomeByteBuddyTransformer.class).getSerialVersionUID()}
+	 * if there have been any changes to any transformer. </p>
+	 *
+	 * <p> This case can occur when we are dealing with an application server where different applications are deployed
+	 * with different stagemonitor versions. </p>
+	 *
+	 * <p> Another problem is when the API of {@link Dispatcher} changes as this class is injected into the bootstrap
+	 * class loader if not already done so. If another application gets deployed to the same server. </p>
+	 *
+	 * <p> A solution could be to only inject the most recent {@link Dispatcher} and to make sure that changes to its
+	 * API are always backwards compatible. </p>
+	 */
+	private static boolean assertNoDifferentStagemonitorVersionIsDeployedOnSameJvm() {
+		final String stagemonitorVersionKey = "stagemonitor.version";
+		final String stagemonitorClassLoaderKey = "stagemonitor.classLoader";
+		final String alreadyRegisteredVersion = System.getProperty(stagemonitorVersionKey);
+		final String currentVersion = corePlugin.getVersion();
+		if (alreadyRegisteredVersion != null && !currentVersion.equals(alreadyRegisteredVersion)) {
+			final String msg = String.format("Detected a different version of stagemonitor on the same JVM:" +
+							"already registered version: %s current version: %s. " +
+							"It is not supported to have different versions of stagemonitor on the same JVM. " +
+							"For more details take a look at the javadoc.",
+					alreadyRegisteredVersion, currentVersion);
+			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy(msg)));
+			return false;
+		}
+		System.setProperty(stagemonitorVersionKey, currentVersion);
+		System.setProperty(stagemonitorClassLoaderKey, Stagemonitor.class.getClassLoader().toString());
+		return true;
+	}
+
 	private static boolean initInstrumentation() {
 		healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy("Unknown error")));
 		try {
-			try {
-				instrumentation = ByteBuddyAgent.getInstrumentation();
-			} catch (IllegalStateException e) {
-				instrumentation = ByteBuddyAgent.install(
-						new ByteBuddyAgent.AttachmentProvider.Compound(
-								new EhCacheAttachmentProvider(),
-								ByteBuddyAgent.AttachmentProvider.DEFAULT));
-			}
+			instrumentation = getInstrumentation();
 			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.healthy()));
 			ensureDispatcherIsAppendedToBootstrapClasspath(instrumentation);
-			if (!Dispatcher.getValues().containsKey(IGNORED_CLASSLOADERS_KEY)) {
-				Dispatcher.put(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
-			}
+			Dispatcher.getValues().putIfAbsent(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
 			hashCodesOfClassLoadersToIgnore = Dispatcher.get(IGNORED_CLASSLOADERS_KEY);
 			return true;
 		} catch (Exception e) {
@@ -128,6 +160,17 @@ public class AgentAttacher {
 			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy(msg)));
 			logger.warn(msg, e);
 			return false;
+		}
+	}
+
+	private static Instrumentation getInstrumentation() {
+		try {
+			return ByteBuddyAgent.getInstrumentation();
+		} catch (IllegalStateException e) {
+			return ByteBuddyAgent.install(
+					new ByteBuddyAgent.AttachmentProvider.Compound(
+							new EhCacheAttachmentProvider(),
+							ByteBuddyAgent.AttachmentProvider.DEFAULT));
 		}
 	}
 

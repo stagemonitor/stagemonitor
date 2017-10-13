@@ -4,10 +4,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * This class is injected into the bootstrap classpath and is used to share objects between classloaders. <p> The reason
- * why this class is inside the __redirected package is because JBoss' ModuleClassLoader would otherwise not load this
- * class and throw a {@link ClassNotFoundException} when trying to access classes in normal packages from the bootstrap
- * classloader. <p> See also https://github.com/jboss-modules/jboss-modules/blob/master/src/main/java/org/jboss/modules/Module.java#L92
+ * This class is injected into the bootstrap classpath and is used to share objects between classloaders.
+ *
+ * <p> The reason why this class is inside the __redirected package is because JBoss' ModuleClassLoader would otherwise
+ * not load this class and throw a {@link ClassNotFoundException} when trying to access classes in normal packages from
+ * the bootstrap classloader. </p>
+ *
+ * <p> See also https://github.com/jboss-modules/jboss-modules/blob/master/src/main/java/org/jboss/modules/Module.java#L92
+ * </p>
  */
 public class Dispatcher {
 
@@ -24,7 +28,9 @@ public class Dispatcher {
 	}
 
 	/**
-	 * Gets a shared value by it's key <p> Automatically casts the value to the desired type
+	 * Gets a shared value by it's key
+	 *
+	 * <p> Automatically casts the value to the desired type </p>
 	 *
 	 * @param key the key
 	 * @param <T> the type of the value
@@ -37,7 +43,9 @@ public class Dispatcher {
 
 
 	/**
-	 * Gets a shared value by it's key <p> Automatically casts the value to the desired type
+	 * Gets a shared value by it's key
+	 *
+	 * <p> Automatically casts the value to the desired type </p>
 	 *
 	 * @param key        the key
 	 * @param valueClass the class of the value
@@ -68,14 +76,6 @@ public class Dispatcher {
 		return values;
 	}
 
-
-	// TODO using old and new stagemonitor versions on the same application server
-	// - undefined behaviour -> NoSuchMethodError
-	// - compatibility
-	//   - upwards and backwards
-	//   - which Dispatcher is injected: latest init wins vs latest version wins
-	//   -> more error-prone and higher maintenance
-	// - not supported -> disable stagemonitor
 	/**
 	 * This utility method can be used to check whether a certain object can be loaded by the current thread's context
 	 * class loader
