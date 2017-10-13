@@ -4,6 +4,7 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +28,10 @@ import __redirected.org.stagemonitor.dispatcher.Dispatcher;
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 
 public class SoapHandlerTransformer extends StagemonitorByteBuddyTransformer {
 
-	// TODO slf4j
 	private static final Logger logger = LoggerFactory.getLogger(SoapHandlerTransformer.class);
 
 	public SoapHandlerTransformer() {
@@ -53,7 +54,7 @@ public class SoapHandlerTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Override
 	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
-		return isSubTypeOf(Binding.class);
+		return not(ElementMatchers.isInterface()).and(isSubTypeOf(Binding.class));
 	}
 
 	@Override
@@ -69,16 +70,6 @@ public class SoapHandlerTransformer extends StagemonitorByteBuddyTransformer {
 	@Override
 	protected ElementMatcher.Junction<MethodDescription> getMethodElementMatcher() {
 		return named("setHandlerChain");
-	}
-
-	@Override
-	public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
-		super.onIgnored(typeDescription, classLoader);
-	}
-
-	@Override
-	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
-		super.beforeTransformation(typeDescription, classLoader);
 	}
 
 	/**

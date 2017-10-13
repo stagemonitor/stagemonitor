@@ -14,11 +14,14 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.util.ClassUtils;
 
 import java.lang.annotation.Annotation;
 import java.security.ProtectionDomain;
 import java.util.Collections;
 import java.util.List;
+
+import __redirected.org.stagemonitor.dispatcher.Dispatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
@@ -76,8 +79,31 @@ public abstract class StagemonitorByteBuddyTransformer {
 		}
 	}
 
+	/**
+	 * Makes sure that no classes of the same class loader are instrumented twice, even if multiple stagemonitored
+	 * applications are deployed on one application server
+	 */
 	protected AgentBuilder.RawMatcher getRawMatcher() {
+		if (isPreventDuplicateTransformation()) {
+			return new AvoidDuplicateTransformationsRawMatcher();
+		}
 		return NoOpRawMatcher.INSTANCE;
+	}
+
+	private class AvoidDuplicateTransformationsRawMatcher implements AgentBuilder.RawMatcher {
+		@Override
+		public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule javaModule, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+			final String key = getClassAlreadyTransformedKey(typeDescription, classLoader);
+			final boolean hasAlreadyBeenTransformed = Dispatcher.getValues().containsKey(key);
+			if (DEBUG_INSTRUMENTATION) {
+				logger.info("{}: {}", key, hasAlreadyBeenTransformed);
+			}
+			return !hasAlreadyBeenTransformed;
+		}
+	}
+
+	private String getClassAlreadyTransformedKey(TypeDescription typeDescription, ClassLoader classLoader) {
+		return getAdviceClass() + typeDescription.getName() + ClassUtils.getIdentityString(classLoader) + ".transformed";
 	}
 
 	protected ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
@@ -185,6 +211,10 @@ public abstract class StagemonitorByteBuddyTransformer {
 		return 0;
 	}
 
+	protected boolean isPreventDuplicateTransformation() {
+		return false;
+	}
+
 	/**
 	 * This method is called before the transformation.
 	 * You can stop the transformation from happening by returning false from this method.
@@ -193,6 +223,10 @@ public abstract class StagemonitorByteBuddyTransformer {
 	 * @param classLoader     The class loader which is loading this type.
 	 */
 	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
+		if (isPreventDuplicateTransformation()) {
+			Dispatcher.put(getClassAlreadyTransformedKey(typeDescription, classLoader), Boolean.TRUE);
+		}
+
 		if (DEBUG_INSTRUMENTATION && logger.isDebugEnabled()) {
 			logger.debug("TRANSFORM {} ({})", typeDescription.getName(), getClass().getSimpleName());
 		}

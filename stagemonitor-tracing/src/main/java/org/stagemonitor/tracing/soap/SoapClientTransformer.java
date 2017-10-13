@@ -47,16 +47,6 @@ public class SoapClientTransformer extends StagemonitorByteBuddyTransformer {
 		return named("getPort").or(named("createDispatch").and(returns(named("javax.xml.ws.Dispatch"))));
 	}
 
-	@Override
-	public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
-		super.onIgnored(typeDescription, classLoader);
-	}
-
-	@Override
-	public void beforeTransformation(TypeDescription typeDescription, ClassLoader classLoader) {
-		super.beforeTransformation(typeDescription, classLoader);
-	}
-
 	@Advice.OnMethodExit
 	private static void setHandlerChain(@Advice.Return Object portOrDispatch) {
 		if (portOrDispatch instanceof BindingProvider) {
