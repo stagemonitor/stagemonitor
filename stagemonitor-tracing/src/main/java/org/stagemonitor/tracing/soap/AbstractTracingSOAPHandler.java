@@ -46,19 +46,26 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 
 	@Override
 	public boolean handleMessage(SOAPMessageContext context) {
-		if (serverHandler) {
-			if (!isServerMessage(context)) {
-				return true;
-			}
-		} else {
-			if (isServerMessage(context)) {
-				return true;
-			}
+		if (!shouldExecute(context)) {
+			return true;
 		}
 		if (isOutbound(context)) {
 			handleOutboundSOAPMessage(context);
 		} else {
 			handleInboundSOAPMessage(context);
+		}
+		return true;
+	}
+
+	private boolean shouldExecute(MessageContext context) {
+		if (serverHandler) {
+			if (!isServerMessage(context)) {
+				return false;
+			}
+		} else {
+			if (isServerMessage(context)) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -69,7 +76,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 	protected void handleOutboundSOAPMessage(SOAPMessageContext context) {
 	}
 
-	private boolean isServerMessage(SOAPMessageContext context) {
+	private boolean isServerMessage(MessageContext context) {
 		return context.containsKey(MessageContext.SERVLET_REQUEST) ||
 				context.containsKey(MessageContext.SERVLET_RESPONSE) ||
 				context.containsKey(MessageContext.SERVLET_CONTEXT);
@@ -77,6 +84,9 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 
 	@Override
 	public boolean handleFault(SOAPMessageContext context) {
+		if (!shouldExecute(context)) {
+			return true;
+		}
 		if (!TracingUtils.getTraceContext().isEmpty()) {
 			final Span span = TracingUtils.getTraceContext().getCurrentSpan();
 			Tags.ERROR.set(span, Boolean.TRUE);
@@ -93,6 +103,9 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 
 	@Override
 	public void close(MessageContext context) {
+		if (!shouldExecute(context)) {
+			return;
+		}
 		if (!TracingUtils.getTraceContext().isEmpty()) {
 			TracingUtils.getTraceContext().getCurrentSpan().finish();
 		}
