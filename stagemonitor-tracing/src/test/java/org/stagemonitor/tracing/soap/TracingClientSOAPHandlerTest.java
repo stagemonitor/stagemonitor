@@ -44,8 +44,8 @@ public class TracingClientSOAPHandlerTest {
 				Arrays.asList(new SpanContextInformation.SpanContextSpanEventListener(), new SpanContextInformation.SpanFinalizer())));
 		soapTracingPlugin = mock(SoapTracingPlugin.class);
 		tracingClientSOAPHandler = new TracingClientSOAPHandler(tracingPlugin, soapTracingPlugin);
-		soapRequest = getSoapMessageContext("<request/>", "operationName");
-		soapResponse = getSoapMessageContext("<response/>", "operationName");
+		soapRequest = getSoapMessageContext("<request/>", "operationName", false);
+		soapResponse = getSoapMessageContext("<response/>", "operationName", false);
 		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 

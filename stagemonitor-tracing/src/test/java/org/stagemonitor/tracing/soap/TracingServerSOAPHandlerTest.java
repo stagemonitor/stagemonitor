@@ -48,8 +48,8 @@ public class TracingServerSOAPHandlerTest {
 				Arrays.asList(new SpanContextInformation.SpanContextSpanEventListener(), new SpanContextInformation.SpanFinalizer())));
 		soapTracingPlugin = mock(SoapTracingPlugin.class);
 		tracingServerSOAPHandler = new TracingServerSOAPHandler(tracingPlugin, soapTracingPlugin);
-		soapRequest = getSoapMessageContext("<request/>", "operationName");
-		soapResponse = getSoapMessageContext("<response/>", "operationName");
+		soapRequest = getSoapMessageContext("<request/>", "operationName", true);
+		soapResponse = getSoapMessageContext("<response/>", "operationName", true);
 		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
@@ -97,11 +97,12 @@ public class TracingServerSOAPHandlerTest {
 		assertThat(span.tags()).containsEntry("soap.response", "<response/>");
 	}
 
-	static SOAPMessageContext getSoapMessageContext(String soapMessage, String wsdlOperation) throws SOAPException, IOException {
+	static SOAPMessageContext getSoapMessageContext(String soapMessage, String wsdlOperation, boolean serverRequest) throws SOAPException, IOException {
 		SOAPMessageContext soapMessageContext = mock(SOAPMessageContext.class);
 		when(soapMessageContext.get(MessageContext.WSDL_OPERATION)).thenReturn(new QName("", wsdlOperation));
 		SOAPMessage soapMessage1 = mock(SOAPMessage.class);
 		when(soapMessageContext.getMessage()).thenReturn(soapMessage1);
+		when(soapMessageContext.containsKey(MessageContext.SERVLET_CONTEXT)).thenReturn(serverRequest);
 		doAnswer(invocation -> {
 			invocation.<OutputStream>getArgument(0).write(soapMessage.getBytes(StandardCharsets.UTF_8));
 			return null;
