@@ -202,7 +202,7 @@ public class ClientSpanServlet extends HttpServlet {
 			tagProcessor.processSpanBuilder(spanBuilder, servletParameters);
 		}
 
-		final Span span = spanBuilder.start();
+		final Span span = spanBuilder.startManual();
 		if (SpanContextInformation.forSpan(span).isSampled()) {
 			for (ClientSpanTagProcessor tagProcessor : tagProcessors) {
 				tagProcessor.processSpan(span, servletParameters);

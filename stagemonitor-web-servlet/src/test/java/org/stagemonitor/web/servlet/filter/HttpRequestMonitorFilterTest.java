@@ -1,7 +1,5 @@
 package org.stagemonitor.web.servlet.filter;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.opentracing.mock.MockTracer;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -79,7 +78,7 @@ public class HttpRequestMonitorFilterTest {
 		doReturn(1000000d).when(tracingPlugin).getProfilerRateLimitPerMinute();
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, mock(Metric2Registry.class));
 		doReturn(requestMonitor).when(tracingPlugin).getRequestMonitor();
-		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(new MockTracer(new B3Propagator()),
+		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(new MockTracer(new ThreadLocalScopeManager(), new B3Propagator()),
 				Arrays.asList(new SpanContextInformation.SpanContextSpanEventListener(), new SpanContextInformation.SpanFinalizer()));
 		doAnswer(invocation -> {
 			spanWrappingTracer.addEventListenerFactory(invocation.getArgument(0));
@@ -90,12 +89,12 @@ public class HttpRequestMonitorFilterTest {
 		doReturn("testInstance").when(corePlugin).getInstanceName();
 
 		initFilter();
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
 	}
 
 	private void initFilter() throws Exception {

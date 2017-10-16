@@ -1,7 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-core")
 	compile "io.opentracing:opentracing-util:$opentracingVersion"
-	compile "com.uber.jaeger:jaeger-context:$jaegerVersion"
 	optional "org.elasticsearch:elasticsearch:$esVersion"
 	optional 'javax.ejb:ejb-api:3.0'
 	optional 'org.freemarker:freemarker:2.3.23'

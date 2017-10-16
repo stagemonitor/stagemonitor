@@ -1,7 +1,5 @@
 package org.stagemonitor.web.servlet.spring;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -15,7 +13,9 @@ import org.stagemonitor.tracing.BusinessTransactionNamingStrategy;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 
+import io.opentracing.Scope;
 import io.opentracing.Span;
+import io.opentracing.util.GlobalTracer;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.returns;
@@ -40,12 +40,13 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	}
 
 	public static void setRequestNameByHandler(Object handler) {
-		if (!TracingUtils.getTraceContext().isEmpty()) {
+		final Scope activeScope = GlobalTracer.get().scopeManager().active();
+		if (activeScope != null) {
 			final BusinessTransactionNamingStrategy namingStrategy = Stagemonitor.getPlugin(TracingPlugin.class)
 					.getBusinessTransactionNamingStrategy();
 			final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
 			if (requestNameFromHandler != null) {
-				final Span span = TracingPlugin.getCurrentSpan();
+				final Span span = activeScope.span();
 				span.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 				span.setOperationName(requestNameFromHandler);
 			}

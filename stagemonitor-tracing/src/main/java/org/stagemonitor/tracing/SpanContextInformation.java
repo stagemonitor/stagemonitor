@@ -1,8 +1,5 @@
 package org.stagemonitor.tracing;
 
-import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.context.TracingUtils;
-
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.profiler.CallStackElement;
 import org.stagemonitor.tracing.sampling.PostExecutionInterceptorContext;
@@ -19,7 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.opentracing.Scope;
 import io.opentracing.Span;
+import io.opentracing.util.GlobalTracer;
 
 public class SpanContextInformation {
 
@@ -36,11 +35,11 @@ public class SpanContextInformation {
 	private SpanWrapper spanWrapper;
 
 	public static SpanContextInformation getCurrent() {
-		final TraceContext traceContext = TracingUtils.getTraceContext();
-		if (traceContext.isEmpty()) {
+		final Scope activeScope = GlobalTracer.get().scopeManager().active();
+		if (activeScope == null) {
 			return null;
 		}
-		return forSpan(traceContext.getCurrentSpan());
+		return forSpan(activeScope.span());
 	}
 
 	/**
@@ -54,6 +53,10 @@ public class SpanContextInformation {
 			return spanContextMap.get(span);
 		}
 		return null;
+	}
+
+	public static SpanContextInformation get(Span span) {
+		return spanContextMap.get(span);
 	}
 
 	public String getOperationName() {
@@ -202,7 +205,6 @@ public class SpanContextInformation {
 			info.spanWrapper = spanWrapper;
 			info.setParent(SpanContextInformation.getCurrent());
 
-			TracingUtils.getTraceContext().push(spanWrapper);
 			spanContextMap.put(spanWrapper, info);
 			for (Map.Entry<String, String> entry : Stagemonitor.getMeasurementSession().asMap().entrySet()) {
 				spanWrapper.setTag(entry.getKey(), entry.getValue());
@@ -218,7 +220,6 @@ public class SpanContextInformation {
 	public static class SpanFinalizer extends StatelessSpanEventListener {
 		@Override
 		public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-			TracingUtils.getTraceContext().pop();
 			spanContextMap.remove(spanWrapper);
 		}
 	}

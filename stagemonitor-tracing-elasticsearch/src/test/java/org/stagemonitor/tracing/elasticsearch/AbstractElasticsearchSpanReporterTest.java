@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.elasticsearch;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
@@ -90,12 +88,12 @@ public class AbstractElasticsearchSpanReporterTest {
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
 	}
 
 	protected SpanContextInformation reportSpanWithCallTree(long executionTimeMs, String operationName) {

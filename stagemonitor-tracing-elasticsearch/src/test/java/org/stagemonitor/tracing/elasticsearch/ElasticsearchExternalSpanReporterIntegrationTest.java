@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -31,7 +32,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 	protected ElasticsearchSpanReporter reporter;
 	protected TracingPlugin tracingPlugin;
 	protected ConfigurationRegistry configuration;
-	protected final MockTracer mockTracer = new MockTracer(new B3Propagator());
+	protected final MockTracer mockTracer = new MockTracer(new ThreadLocalScopeManager(), new B3Propagator());
 
 	@Before
 	public void setUp() throws Exception {

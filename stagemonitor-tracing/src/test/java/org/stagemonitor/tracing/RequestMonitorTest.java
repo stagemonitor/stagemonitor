@@ -3,25 +3,16 @@ package org.stagemonitor.tracing;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import io.opentracing.Tracer;
-import io.opentracing.mock.MockTracer;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class RequestMonitorTest extends AbstractRequestMonitorTest {
-
-	protected Tracer getTracer() {
-		return new MockTracer();
-	}
 
 	@Test
 	public void testDeactivated() throws Exception {
@@ -55,7 +46,7 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 		doReturn(true).when(corePlugin).isInternalMonitoringActive();
 
 		requestMonitor.monitor(createMonitoredRequest());
-		verify(registry, times(1)).timer(name("internal_overhead_request_monitor").build());
+		verify(registry).timer(name("internal_overhead_request_monitor").build());
 	}
 
 	private void internalMonitoringTestHelper(boolean active) throws Exception {
@@ -67,21 +58,5 @@ public class RequestMonitorTest extends AbstractRequestMonitorTest {
 	private MonitoredRequest createMonitoredRequest() throws Exception {
 		return Mockito.spy(new MonitoredMethodRequest(configuration, "test", () -> {
 		}));
-	}
-
-	@Test
-	public void testDontMonitorClientRootSpans() throws Exception {
-		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1_000_000.0);
-
-		requestMonitor.monitorStart(new AbstractExternalRequest(tracingPlugin.getTracer()) {
-			@Override
-			protected String getType() {
-				return "jdbc";
-			}
-		});
-
-		assertFalse(SpanContextInformation.getCurrent().isSampled());
-
-		requestMonitor.monitorStop();
 	}
 }

@@ -25,6 +25,7 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -58,7 +59,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())).then(invocation -> invocation.getArgument(1));
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean())).then(invocation -> invocation.getArgument(1));
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(ArgumentMatchers.anyString(), ArgumentMatchers.any(Number.class))).then(invocation -> invocation.getArgument(1));
-		tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(new B3Propagator()), configuration,
+		tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(new ThreadLocalScopeManager(), new B3Propagator()), configuration,
 				new Metric2Registry(), Collections.emptyList(), samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
 	}

@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.soap;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
@@ -36,19 +34,14 @@ public class TracingServerSOAPHandler extends AbstractTracingSOAPHandler {
 		if (soapTracingPlugin.isSoapServerRecordRequestMessages()) {
 			spanBuilder.withTag("soap.request", getSoapMessageAsString(context));
 		}
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			spanBuilder.asChildOf(TracingUtils.getTraceContext().getCurrentSpan());
-		}
-		spanBuilder.start();
+		spanBuilder.startActive();
 	}
 
 	@Override
 	protected void handleOutboundSOAPMessage(SOAPMessageContext context) {
 		if (soapTracingPlugin.isSoapServerRecordResponseMessages()) {
-			if (!TracingUtils.getTraceContext().isEmpty()) {
-				final Span span = TracingUtils.getTraceContext().getCurrentSpan();
-				span.setTag("soap.response", getSoapMessageAsString(context));
-			}
+			final Span span = tracingPlugin.getTracer().scopeManager().active().span();
+			span.setTag("soap.response", getSoapMessageAsString(context));
 		}
 	}
 

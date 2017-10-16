@@ -1,7 +1,5 @@
 package org.stagemonitor.web.servlet;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +8,7 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
+import org.stagemonitor.tracing.GlobalTracerTestHelper;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
@@ -22,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 
 import javax.servlet.FilterChain;
 
+import io.opentracing.Scope;
 import io.opentracing.mock.MockTracer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +32,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 
 	private ServletPlugin servletPlugin;
 	private ConfigurationRegistry configuration;
+	private SpanWrappingTracer tracer;
 
 	@Before
 	public void setUp() throws Exception {
@@ -52,18 +53,21 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 		when(corePlugin.getMetricRegistry()).thenReturn(new Metric2Registry());
 		when(servletPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
-		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(new MockTracer(),
+		tracer = new SpanWrappingTracer(new MockTracer(),
 				Arrays.asList(
 						new SpanContextInformation.SpanContextSpanEventListener(),
 						new SpanContextInformation.SpanFinalizer()
 				)
-		));
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		);
+		GlobalTracerTestHelper.override(tracer);
+		when(tracingPlugin.getTracer()).thenReturn(tracer);
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracer.scopeManager().active()).isNull();
+		GlobalTracerTestHelper.resetGlobalTracer();
 	}
 
 	@Test
@@ -71,11 +75,11 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		when(servletPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "1");
-		new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
+		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
 		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
 		assertThat(span.isSampled()).isFalse();
-		span.finish();
+		activeScope.close();
 	}
 
 	@Test
@@ -83,22 +87,22 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		when(servletPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "0");
-		new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
+		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
 		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
 		assertThat(span.isSampled()).isTrue();
-		span.finish();
+		activeScope.close();
 	}
 
 	@Test
 	public void testNoDoNotTrackHeader() throws Exception {
 		when(servletPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		final MockHttpServletRequest request = new MockHttpServletRequest();
-		new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
+		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
 		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
 		assertThat(span.isSampled()).isTrue();
-		span.finish();
+		activeScope.close();
 	}
 
 	@Test
@@ -106,11 +110,11 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		when(servletPlugin.isHonorDoNotTrackHeader()).thenReturn(false);
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "1");
-		new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
+		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
 		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
 		assertThat(span.isSampled()).isTrue();
-		span.finish();
+		activeScope.close();
 	}
 
 }

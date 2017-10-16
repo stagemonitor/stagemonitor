@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing;
 
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
@@ -20,13 +21,14 @@ public class ExternalHttpRequest extends AbstractExternalRequest {
 	}
 
 	@Override
-	public Span createSpan() {
-		final Span span = super.createSpan();
+	public Scope createScope() {
+		final Scope scope = super.createScope();
+		final Span span = scope.span();
 		Tags.HTTP_URL.set(span, url);
 		Tags.PEER_HOSTNAME.set(span, host);
 		Tags.PEER_PORT.set(span, port);
 		span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, method);
-		return span;
+		return scope;
 	}
 
 	@Override

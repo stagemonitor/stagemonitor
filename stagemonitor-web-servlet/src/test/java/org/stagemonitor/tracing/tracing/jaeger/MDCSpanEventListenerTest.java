@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.opentracing.mock.MockTracer;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -38,7 +39,7 @@ public class MDCSpanEventListenerTest {
 		this.corePlugin = mock(CorePlugin.class);
 		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 
-		final MockTracer tracer = new MockTracer(new B3Propagator());
+		final MockTracer tracer = new MockTracer(new ThreadLocalScopeManager(), new B3Propagator());
 
 		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);

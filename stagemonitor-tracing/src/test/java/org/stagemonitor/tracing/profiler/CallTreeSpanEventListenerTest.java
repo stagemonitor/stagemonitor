@@ -1,8 +1,5 @@
 package org.stagemonitor.tracing.profiler;
 
-import com.uber.jaeger.context.TracingUtils;
-
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -45,12 +42,6 @@ public class CallTreeSpanEventListenerTest {
 		when(tracingPlugin.getCallTreeAsciiFormatter()).thenReturn(new ShortSignatureFormatter());
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		doReturn(requestMonitor).when(tracingPlugin).getRequestMonitor();
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@Test
@@ -94,7 +85,7 @@ public class CallTreeSpanEventListenerTest {
 		SpanWrappingTracer spanWrappingTracer = initTracer();
 		final SpanWrappingTracer.SpanWrappingSpanBuilder spanBuilder = spanWrappingTracer.buildSpan("test");
 		spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), sampled ? 1 : 0);
-		span = spanBuilder.start();
+		span = spanBuilder.startManual();
 		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(span);
 		contextInformation.setPreExecutionInterceptorContext(new PreExecutionInterceptorContext(contextInformation));
 		contextInformation.setPostExecutionInterceptorContext(new PostExecutionInterceptorContext(contextInformation));

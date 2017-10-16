@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.soap;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.TracingPlugin;
 
@@ -87,16 +85,14 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return true;
 		}
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			final Span span = TracingUtils.getTraceContext().getCurrentSpan();
-			Tags.ERROR.set(span, Boolean.TRUE);
-			try {
-				final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
-				span.setTag("soap.fault.reason", fault.getFaultString());
-				span.setTag("soap.fault.code", fault.getFaultCode());
-			} catch (SOAPException e) {
-				e.printStackTrace();
-			}
+		final Span span = tracingPlugin.getTracer().scopeManager().active().span();
+		Tags.ERROR.set(span, Boolean.TRUE);
+		try {
+			final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
+			span.setTag("soap.fault.reason", fault.getFaultString());
+			span.setTag("soap.fault.code", fault.getFaultCode());
+		} catch (SOAPException e) {
+			e.printStackTrace();
 		}
 		return true;
 	}
@@ -106,9 +102,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return;
 		}
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			TracingUtils.getTraceContext().getCurrentSpan().finish();
-		}
+		tracingPlugin.getTracer().scopeManager().active().close();
 	}
 
 	protected String getOperationName(SOAPMessageContext context) {

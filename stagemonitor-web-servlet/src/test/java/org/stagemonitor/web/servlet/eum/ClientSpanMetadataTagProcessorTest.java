@@ -114,7 +114,7 @@ public class ClientSpanMetadataTagProcessorTest {
 
 	private void processSpanBuilderImpl(MockTracer.SpanBuilder spanBuilder, HashMap<String, String[]> servletParameters) {
 		clientSpanMetadataTagProcessor.processSpanBuilderImpl(spanBuilder, servletParameters);
-		spanBuilder.start().close();
+		spanBuilder.start().finish();
 	}
 
 	private void addMetadataDefinition(String name, String definition) {

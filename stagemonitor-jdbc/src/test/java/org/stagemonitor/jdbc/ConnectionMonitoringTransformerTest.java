@@ -9,7 +9,6 @@ import com.p6spy.engine.spy.P6DataSource;
 import com.zaxxer.hikari.HikariDataSource;
 
 import org.apache.tomcat.jdbc.pool.PoolProperties;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -117,13 +116,9 @@ public class ConnectionMonitoringTransformerTest {
 		testDao = new TestDao(dataSource);
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		GlobalTracerTestHelper.resetGlobalTracer();
-	}
-
 	@AfterClass
 	public static void cleanUp() {
+		GlobalTracerTestHelper.resetGlobalTracer();
 		Stagemonitor.reset();
 		Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
 	}

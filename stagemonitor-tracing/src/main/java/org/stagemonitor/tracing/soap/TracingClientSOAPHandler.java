@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.soap;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
@@ -28,23 +26,18 @@ public class TracingClientSOAPHandler extends AbstractTracingSOAPHandler {
 				.buildSpan(getOperationName(context))
 				.withTag(SpanUtils.OPERATION_TYPE, "soap")
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			spanBuilder.asChildOf(TracingUtils.getTraceContext().getCurrentSpan());
-		}
 		if (soapTracingPlugin.isSoapClientRecordRequestMessages()) {
 			spanBuilder.withTag("soap.request", getSoapMessageAsString(context));
 		}
-		final Span span = spanBuilder.start();
+		final Span span = spanBuilder.startActive().span();
 		tracingPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SOAPMessageInjectAdapter(context));
 	}
 
 	@Override
 	protected void handleInboundSOAPMessage(SOAPMessageContext context) {
 		if (soapTracingPlugin.isSoapClientRecordResponseMessages()) {
-			if (!TracingUtils.getTraceContext().isEmpty()) {
-				final Span span = TracingUtils.getTraceContext().getCurrentSpan();
-				span.setTag("soap.response", getSoapMessageAsString(context));
-			}
+			final Span span = tracingPlugin.getTracer().scopeManager().active().span();
+			span.setTag("soap.response", getSoapMessageAsString(context));
 		}
 	}
 

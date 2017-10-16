@@ -1,13 +1,9 @@
 package org.stagemonitor.tracing.freemarker;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.tracing.profiler.CallStackElement;
 import org.stagemonitor.tracing.profiler.Profiler;
@@ -19,16 +15,6 @@ import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FreemarkerProfilingTransformerTest {
-
-	@Before
-	public void setUp() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
-	}
 
 	@Test
 	public void testFreemarkerProfiling() throws Exception {

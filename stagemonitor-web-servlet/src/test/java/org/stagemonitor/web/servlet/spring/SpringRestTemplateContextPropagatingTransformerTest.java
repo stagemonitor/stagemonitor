@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 import io.opentracing.mock.MockTracer;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.when;
 
 public class SpringRestTemplateContextPropagatingTransformerTest {
 
-	private final MockTracer mockTracer = new MockTracer(new B3Propagator());
+	private final MockTracer mockTracer = new MockTracer(new ThreadLocalScopeManager(), new B3Propagator());
 	private TracingPlugin tracingPlugin;
 
 	@Before

@@ -21,7 +21,7 @@ import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 
-import io.opentracing.Span;
+import io.opentracing.Scope;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 
@@ -56,14 +56,14 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 
 		@Override
 		public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-			final Span span = new ExternalHttpRequest(tracingPlugin.getTracer(), request.getMethod().toString(), removeQuery(request.getURI()), request.getURI().getHost(), request.getURI().getPort()).createSpan();
+			final Scope scope = new ExternalHttpRequest(tracingPlugin.getTracer(), request.getMethod().toString(), removeQuery(request.getURI()), request.getURI().getHost(), request.getURI().getPort()).createScope();
 			try {
 				Profiler.start(request.getMethod().toString() + " " + request.getURI() + " ");
-				tracingPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
+				tracingPlugin.getTracer().inject(scope.span().context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
 				return execution.execute(request, body);
 			} finally {
 				Profiler.stop();
-				span.finish();
+				scope.close();
 			}
 		}
 

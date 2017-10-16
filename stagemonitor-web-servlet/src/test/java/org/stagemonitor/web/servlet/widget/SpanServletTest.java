@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.widget;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +13,7 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.tracing.GlobalTracerTestHelper;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
@@ -37,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.mock.MockTracer;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -81,9 +84,15 @@ public class SpanServletTest {
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(anyString(), any(Number.class))).then(invocation -> invocation.getArgument(1));
 		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
 		reportingSpanEventListener.addReporter(reporter);
-		Tracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(new B3Propagator()), configuration,
+		Tracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(new ThreadLocalScopeManager(), new B3Propagator()), configuration,
 				new Metric2Registry(), ServiceLoader.load(SpanEventListenerFactory.class), samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
+		GlobalTracerTestHelper.override(tracer);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		GlobalTracerTestHelper.resetGlobalTracer();
 	}
 
 	private void reportSpan() {
@@ -92,7 +101,7 @@ public class SpanServletTest {
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request,
 				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration, mock(ExecutorService.class));
 
-		span = monitoredHttpRequest.createSpan();
+		span = monitoredHttpRequest.createScope().span();
 		span.setOperationName("test");
 		span.finish();
 	}
