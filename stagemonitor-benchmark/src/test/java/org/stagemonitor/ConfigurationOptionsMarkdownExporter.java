@@ -80,6 +80,8 @@ public class ConfigurationOptionsMarkdownExporter {
 				final String defaultValue = configurationOption.getDefaultValueAsString();
 				if (defaultValue == null) {
 					markdown.append("`null`\n\n");
+				} else if (defaultValue.isEmpty()) {
+					markdown.append("`(no default value)`").append("\n\n");
 				} else if (!defaultValue.contains("\n")) {
 					markdown.append('`').append(defaultValue).append("`\n\n");
 				} else {
