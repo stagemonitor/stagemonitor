@@ -306,9 +306,11 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Included packages")
 			.description("The packages that should be included for instrumentation. " +
-					"If this property is required if you want to use the profiler, the @MonitorRequests annotation, the " +
+					"All subpackages of the listed packages are included automatically. " +
+					"This property is required if you want to use the profiler, the @MonitorRequests annotation, the " +
 					"com.codahale.metrics.annotation.* annotations or similar features. " +
-					"You can exclude subpackages of a included package via `stagemonitor.instrument.exclude`.")
+					"You can exclude subpackages of a included package via `stagemonitor.instrument.exclude`. " +
+					"Example: `org.somecompany.package, com.someothercompany`")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(Collections.<String>emptySet());
 	private final ConfigurationOption<Boolean> attachAgentAtRuntime = ConfigurationOption.booleanOption()
