@@ -4,6 +4,7 @@ import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -17,7 +18,7 @@ import io.opentracing.Span;
 @Deprecated
 public class UserAgentParser {
 
-	private static final int MAX_ELEMENTS = 100;
+	private static final int MAX_ELEMENTS = 1000;
 
 	// prevents reDOS attacks like described in https://github.com/before/uadetector/issues/130
 	private static final int MAX_USERAGENT_LENGTH = 256;
@@ -26,12 +27,12 @@ public class UserAgentParser {
 
 	public UserAgentParser() {
 		this(UADetectorServiceFactory.getResourceModuleParser(),
-				new LinkedHashMap<String, ReadableUserAgent>(MAX_ELEMENTS + 1, 0.75f, true) {
+				Collections.synchronizedMap(new LinkedHashMap<String, ReadableUserAgent>(MAX_ELEMENTS + 1, 0.75f, true) {
 					@Override
 					protected boolean removeEldestEntry(Map.Entry eldest) {
 						return size() > MAX_ELEMENTS;
 					}
-				});
+				}));
 	}
 
 	public UserAgentParser(UserAgentStringParser parser, Map<String, ReadableUserAgent> userAgentCache) {
