@@ -1,18 +1,19 @@
 package org.stagemonitor.tracing.ejb;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.tracing.GlobalTracerTestHelper;
 import org.stagemonitor.tracing.SpanCapturingReporter;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 
 import javax.ejb.Remote;
+
+import io.opentracing.util.GlobalTracer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -30,19 +31,20 @@ public class RemoteEjbMonitorTransformerTest {
 	@BeforeClass
 	@AfterClass
 	public static void reset() {
+		GlobalTracerTestHelper.resetGlobalTracer();
 		Stagemonitor.reset();
 	}
 
 	@Before
 	public void setUp() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
 		spanCapturingReporter = new SpanCapturingReporter();
 		Stagemonitor.getPlugin(TracingPlugin.class).addReporter(spanCapturingReporter);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
 	}
 
 	@Test

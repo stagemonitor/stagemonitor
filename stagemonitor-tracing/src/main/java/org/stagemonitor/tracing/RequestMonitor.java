@@ -1,14 +1,12 @@
 package org.stagemonitor.tracing;
 
-import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.context.TracingUtils;
-
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
+import io.opentracing.Scope;
 import io.opentracing.Span;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -32,33 +30,34 @@ public class RequestMonitor {
 		this.tracingPlugin = tracingPlugin;
 	}
 
-	public void monitorStart(MonitoredRequest monitoredRequest) {
+	public SpanContextInformation monitorStart(MonitoredRequest monitoredRequest) {
 		final long start = System.nanoTime();
-		monitoredRequest.createSpan();
-		final SpanContextInformation info = SpanContextInformation.getCurrent();
+		final Scope scope = monitoredRequest.createScope();
+		final SpanContextInformation info = SpanContextInformation.get(scope.span());
 		if (info != null) {
 			info.setOverhead1(System.nanoTime() - start);
 		}
+		return info;
 	}
 
 	public void monitorStop() {
-		final TraceContext traceContext = TracingUtils.getTraceContext();
-		if (!traceContext.isEmpty()) {
-			final Span currentSpan = traceContext.getCurrentSpan();
-			final SpanContextInformation info = SpanContextInformation.forSpan(currentSpan);
+		final Scope activeScope = tracingPlugin.getTracer().scopeManager().active();
+		if (activeScope != null) {
+			final Span currentSpan = activeScope.span();
+			final SpanContextInformation info = SpanContextInformation.get(currentSpan);
 			if (info != null) {
 				long overhead2 = System.nanoTime();
-				currentSpan.finish();
 				trackOverhead(info.getOverhead1(), overhead2);
 			}
+			activeScope.close();
 		}
 	}
 
 	public SpanContextInformation monitor(MonitoredRequest monitoredRequest) throws Exception {
 		try {
-			monitorStart(monitoredRequest);
+			final SpanContextInformation info = monitorStart(monitoredRequest);
 			monitoredRequest.execute();
-			return SpanContextInformation.getCurrent();
+			return info;
 		} catch (Exception e) {
 			recordException(e);
 			throw e;
@@ -68,7 +67,10 @@ public class RequestMonitor {
 	}
 
 	public void recordException(Exception e) {
-		SpanUtils.setException(TracingPlugin.getCurrentSpan(), e, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
+		final Scope activeScope = tracingPlugin.getTracer().scopeManager().active();
+		if (activeScope != null) {
+			SpanUtils.setException(activeScope.span(), e, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
+		}
 	}
 
 	private void trackOverhead(long overhead1, long overhead2) {

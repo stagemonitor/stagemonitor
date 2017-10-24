@@ -26,6 +26,7 @@ import javax.servlet.ServletException;
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +60,7 @@ public class ClientSpanServletTest {
 	@Before
 	public void setUp() {
 		samplingPriority = 1;
-		mockTracer = new MockTracer(new B3Propagator());
+		mockTracer = new MockTracer(new ThreadLocalScopeManager(), new B3Propagator());
 		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(mockTracer, asList(
 				new SpanContextInformation.SpanContextSpanEventListener(),

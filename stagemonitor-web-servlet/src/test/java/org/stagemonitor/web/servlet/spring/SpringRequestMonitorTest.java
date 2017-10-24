@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.spring;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
@@ -21,7 +22,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.tracing.MockTracer;
+import org.stagemonitor.tracing.GlobalTracerTestHelper;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TagRecordingSpanEventListener;
@@ -44,7 +45,9 @@ import java.util.regex.Pattern;
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 
+import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
+import io.opentracing.util.GlobalTracer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -127,7 +130,14 @@ public class SpringRequestMonitorTest {
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), new ReportingSpanEventListener(configuration));
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
+		GlobalTracerTestHelper.resetGlobalTracer();
+		GlobalTracer.register(tracer);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+	}
+
+	@After
+	public void after() {
+		GlobalTracerTestHelper.resetGlobalTracer();
 	}
 
 	private HandlerMapping createHandlerMapping(MockHttpServletRequest request, Method requestMappingMethod) throws Exception {

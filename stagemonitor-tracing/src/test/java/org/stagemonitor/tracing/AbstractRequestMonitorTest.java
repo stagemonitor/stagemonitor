@@ -2,7 +2,6 @@ package org.stagemonitor.tracing;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
-import com.uber.jaeger.context.TracingUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -23,7 +22,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.opentracing.Tracer;
+import io.opentracing.mock.MockTracer;
+import io.opentracing.noop.NoopTracerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,6 +42,7 @@ public abstract class AbstractRequestMonitorTest {
 	protected SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor;
 	protected SpanWrappingTracer tracer;
 	protected SpanCapturingReporter spanCapturingReporter;
+	protected MockTracer mockTracer;
 
 	@Before
 	public void before() {
@@ -82,7 +83,8 @@ public abstract class AbstractRequestMonitorTest {
 		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
 		spanCapturingReporter = new SpanCapturingReporter();
 		reportingSpanEventListener.addReporter(spanCapturingReporter);
-		tracer = TracingPlugin.createSpanWrappingTracer(getTracer(), configuration, registry,
+		mockTracer = new MockTracer();
+		tracer = TracingPlugin.createSpanWrappingTracer(mockTracer, configuration, registry,
 				TagRecordingSpanEventListener.asList(tags),
 				samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
 		when(corePlugin.getMeasurementSession()).thenReturn(new MeasurementSession(getClass().getSimpleName(), "test", "test"));
@@ -90,20 +92,16 @@ public abstract class AbstractRequestMonitorTest {
 			if (corePlugin.isStagemonitorActive()) {
 				return tracer;
 			} else {
-				return NoopTracer.INSTANCE;
+				return NoopTracerFactory.create();
 			}
 		});
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
-	}
-
-	protected Tracer getTracer() {
-		return new MockTracer();
+		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
 	}
 
 	@After
 	public void after() {
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
 	}
 }

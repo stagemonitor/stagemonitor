@@ -1,8 +1,5 @@
 package org.stagemonitor.tracing;
 
-import com.uber.jaeger.context.TraceContext;
-import com.uber.jaeger.context.TracingUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -17,6 +14,7 @@ import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.tracing.anonymization.AnonymizingSpanEventListener;
+import org.stagemonitor.tracing.impl.DefaultTracerImpl;
 import org.stagemonitor.tracing.mdc.MDCSpanEventListener;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallTreeSpanEventListener;
@@ -43,9 +41,10 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 
-import io.opentracing.NoopTracerFactory;
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.util.GlobalTracer;
 
 import static org.stagemonitor.core.util.Assert.checkArgument;
@@ -367,11 +366,11 @@ public class TracingPlugin extends StagemonitorPlugin {
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
 	 */
 	public static Span getCurrentSpan() {
-		final TraceContext traceContext = TracingUtils.getTraceContext();
-		if (!traceContext.isEmpty()) {
-			return traceContext.getCurrentSpan();
+		final Scope activeScope = GlobalTracer.get().scopeManager().active();
+		if (activeScope != null) {
+			return activeScope.span();
 		} else {
-			return NoopTracerFactory.create().buildSpan(null).start();
+			return NoopTracerFactory.create().buildSpan(null).startManual();
 		}
 	}
 
@@ -425,11 +424,11 @@ public class TracingPlugin extends StagemonitorPlugin {
 			assertIsSingleImplementation(initArguments, tracerFactoryIterator, tracer);
 			return tracer;
 		} else {
-			logger.info("No OpenTracing implementation found. Falling back to NoopTracer. " +
+			logger.info("No OpenTracing implementation found. Falling back to DefaultTracerImpl. " +
 					"This is fine if you just want to use stagemonitor for development, for example with the in-browser-widget. " +
 					"If you want to report your traces to Elasticsearch, add a dependency to stagemonitor-tracing-elasticsearch. " +
 					"If you want to report to Zipkin, add stagemonitor-tracing-zipkin.");
-			return NoopTracerFactory.create();
+			return new DefaultTracerImpl();
 		}
 	}
 

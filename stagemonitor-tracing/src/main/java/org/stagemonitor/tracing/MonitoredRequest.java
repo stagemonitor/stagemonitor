@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing;
 
+import io.opentracing.Scope;
 import io.opentracing.Span;
 
 public abstract class MonitoredRequest {
@@ -15,7 +16,7 @@ public abstract class MonitoredRequest {
 	 *
 	 * @return the {@link Span}
 	 */
-	public abstract Span createSpan();
+	public abstract Scope createScope();
 
 	/**
 	 * Executing this method triggers the execution of the execution context.

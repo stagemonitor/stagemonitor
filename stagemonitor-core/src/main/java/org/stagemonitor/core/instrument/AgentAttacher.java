@@ -136,8 +136,10 @@ public class AgentAttacher {
 			healthCheckRegistry.register("Agent attachment", ImmediateResult.of(HealthCheck.Result.unhealthy(msg)));
 			return false;
 		}
-		System.setProperty(stagemonitorVersionKey, currentVersion);
-		System.setProperty(stagemonitorClassLoaderKey, Stagemonitor.class.getClassLoader().toString());
+		if (currentVersion != null) {
+			System.setProperty(stagemonitorVersionKey, currentVersion);
+			System.setProperty(stagemonitorClassLoaderKey, Stagemonitor.class.getClassLoader().toString());
+		}
 		return true;
 	}
 

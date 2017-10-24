@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
+import io.opentracing.Scope;
+import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
@@ -32,6 +34,11 @@ public class SpanWrappingTracer implements Tracer {
 	public SpanWrappingTracer(Tracer delegate, Collection<SpanEventListenerFactory> spanInterceptorFactories) {
 		this.delegate = delegate;
 		this.spanInterceptorFactories.addAll(spanInterceptorFactories);
+	}
+
+	@Override
+	public ScopeManager scopeManager() {
+		return delegate.scopeManager();
 	}
 
 	@Override
@@ -100,6 +107,12 @@ public class SpanWrappingTracer implements Tracer {
 			return this;
 		}
 
+		@Override
+		public SpanBuilder ignoreActiveSpan() {
+			delegate = delegate.ignoreActiveSpan();
+			return this;
+		}
+
 		public SpanWrappingSpanBuilder withTag(String key, String value) {
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				value = spanEventListener.onSetTag(key, value);
@@ -144,12 +157,33 @@ public class SpanWrappingTracer implements Tracer {
 			return this;
 		}
 
+		@Override
+		public Scope startActive() {
+			return scopeManager().activate(startManual());
+		}
+
+		@Override
+		public Scope startActive(boolean finishSpanOnClose) {
+			return scopeManager().activate(startManual(), finishSpanOnClose);
+		}
+
+		@Override
+		public SpanWrapper startManual() {
+			return startSpanWrapper(delegate.startManual());
+		}
+
+		@Override
+		@Deprecated
 		public SpanWrapper start() {
+			return startSpanWrapper(delegate.start());
+		}
+
+		private SpanWrapper startSpanWrapper(Span span) {
 			if (startTimestampNanos == 0) {
 				startTimestampNanos = System.nanoTime();
 				startTimestampMillis = System.currentTimeMillis();
 			}
-			final SpanWrapper spanWrapper = new SpanWrapper(delegate.start(), operationName, startTimestampNanos, startTimestampMillis, spanEventListeners, tags);
+			final SpanWrapper spanWrapper = new SpanWrapper(span, operationName, startTimestampNanos, startTimestampMillis, spanEventListeners, tags);
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				spanEventListener.onStart(spanWrapper);
 			}

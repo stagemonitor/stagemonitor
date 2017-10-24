@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.jaxrs;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -11,7 +12,7 @@ import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Filter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
-import org.stagemonitor.tracing.MockTracer;
+import org.stagemonitor.tracing.GlobalTracerTestHelper;
 import org.stagemonitor.tracing.MonitoredMethodRequest;
 import org.stagemonitor.tracing.MonitoredRequest;
 import org.stagemonitor.tracing.RequestMonitor;
@@ -29,6 +30,9 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+
+import io.opentracing.mock.MockTracer;
+import io.opentracing.util.GlobalTracer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -85,7 +89,14 @@ public class JaxRsRequestNameDeterminerTransformerTest {
 		final SpanWrappingTracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(),
 				configuration, registry, new ArrayList<>(),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
+		GlobalTracerTestHelper.resetGlobalTracer();
+		GlobalTracer.register(tracer);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
+	}
+
+	@After
+	public void after() {
+		GlobalTracerTestHelper.resetGlobalTracer();
 	}
 
 	@Test

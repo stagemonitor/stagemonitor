@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 
 import io.opentracing.Span;
 import io.opentracing.mock.MockTracer;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -29,7 +30,7 @@ public class SpanJsonModuleTest {
 
 	@Before
 	public void setUp() throws Exception {
-		mockTracer = new MockTracer(new B3Propagator());
+		mockTracer = new MockTracer(new ThreadLocalScopeManager(), new B3Propagator());
 	}
 
 	@Test

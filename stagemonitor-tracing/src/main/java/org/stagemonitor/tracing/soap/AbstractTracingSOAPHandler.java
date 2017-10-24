@@ -1,7 +1,7 @@
 package org.stagemonitor.tracing.soap;
 
-import com.uber.jaeger.context.TracingUtils;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.TracingPlugin;
 
@@ -21,6 +21,9 @@ import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMessageContext> {
+
+	private static final Logger logger = LoggerFactory.getLogger(AbstractTracingSOAPHandler.class);
+
 	private final boolean serverHandler;
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
@@ -87,16 +90,14 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return true;
 		}
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			final Span span = TracingUtils.getTraceContext().getCurrentSpan();
-			Tags.ERROR.set(span, Boolean.TRUE);
-			try {
-				final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
-				span.setTag("soap.fault.reason", fault.getFaultString());
-				span.setTag("soap.fault.code", fault.getFaultCode());
-			} catch (SOAPException e) {
-				e.printStackTrace();
-			}
+		final Span span = tracingPlugin.getTracer().scopeManager().active().span();
+		Tags.ERROR.set(span, Boolean.TRUE);
+		try {
+			final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
+			span.setTag("soap.fault.reason", fault.getFaultString());
+			span.setTag("soap.fault.code", fault.getFaultCode());
+		} catch (SOAPException e) {
+			logger.warn("Exception while trying to access SOAP fault (this exception was suppressed)", e);
 		}
 		return true;
 	}
@@ -106,9 +107,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return;
 		}
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			TracingUtils.getTraceContext().getCurrentSpan().finish();
-		}
+		tracingPlugin.getTracer().scopeManager().active().close();
 	}
 
 	protected String getOperationName(SOAPMessageContext context) {

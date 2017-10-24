@@ -1,8 +1,7 @@
 package org.stagemonitor.tracing;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -20,6 +19,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.opentracing.mock.MockTracer;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -28,11 +29,12 @@ import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 public class MonitoredMethodExecutionTest {
 
-	private SpanContextInformation spanContext1;
 	private final Metric2Registry registry = new Metric2Registry();
 	private TestObject testObject;
 	private ConfigurationRegistry configuration;
 	private Map<String, Object> tags;
+	private SpanWrappingTracer tracer;
+	private MockTracer mockTracer;
 
 	@Before
 	public void clearState() {
@@ -54,29 +56,30 @@ public class MonitoredMethodExecutionTest {
 		when(corePlugin.getMetricRegistry()).thenReturn(registry);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
 
-		spanContext1 = null;
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, registry);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 
 		tags = new HashMap<>();
-		final SpanWrappingTracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(), configuration, registry,
+		mockTracer = new MockTracer();
+		tracer = TracingPlugin.createSpanWrappingTracer(mockTracer, configuration, registry,
 				TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), new ReportingSpanEventListener(configuration));
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
 
 		testObject = new TestObject(requestMonitor);
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@Test
 	public void testDoubleForwarding() throws Exception {
 		testObject.monitored1();
-		assertEquals("monitored1()", spanContext1.getOperationName());
+		assertThat(mockTracer.finishedSpans()).hasSize(3);
+		Assert.assertEquals("monitored1()", mockTracer.finishedSpans().get(2).operationName());
 		assertEquals(tags.toString(), "1", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg0"));
 		assertEquals(tags.toString(), "test", tags.get(SpanUtils.PARAMETERS_PREFIX + "arg1"));
 
@@ -104,7 +107,7 @@ public class MonitoredMethodExecutionTest {
 		}
 
 		private void monitored1() throws Exception {
-			spanContext1 = requestMonitor.monitor(
+			requestMonitor.monitor(
 					new MonitoredMethodRequest(configuration, "monitored1()", this::monitored2, MetricsReporterTestHelper.<String, Object>map("arg0", 1).add("arg1", "test")));
 		}
 

@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.soap;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,12 +44,12 @@ public class TracingClientSOAPHandlerTest {
 		tracingClientSOAPHandler = new TracingClientSOAPHandler(tracingPlugin, soapTracingPlugin);
 		soapRequest = getSoapMessageContext("<request/>", "operationName", false);
 		soapResponse = getSoapMessageContext("<response/>", "operationName", false);
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(mockTracer.scopeManager().active()).isNull();
 	}
 
 	@Test

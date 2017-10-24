@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing.soap;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,23 +37,25 @@ public class TracingServerSOAPHandlerTest {
 	private MockTracer mockTracer;
 	private SOAPMessageContext soapRequest;
 	private SOAPMessageContext soapResponse;
+	private SpanWrappingTracer tracer;
 
 	@Before
 	public void setUp() throws Exception {
 		final TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		mockTracer = new MockTracer();
-		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(mockTracer,
-				Arrays.asList(new SpanContextInformation.SpanContextSpanEventListener(), new SpanContextInformation.SpanFinalizer())));
+		tracer = new SpanWrappingTracer(mockTracer,
+				Arrays.asList(new SpanContextInformation.SpanContextSpanEventListener(), new SpanContextInformation.SpanFinalizer()));
+		when(tracingPlugin.getTracer()).thenReturn(tracer);
 		soapTracingPlugin = mock(SoapTracingPlugin.class);
 		tracingServerSOAPHandler = new TracingServerSOAPHandler(tracingPlugin, soapTracingPlugin);
 		soapRequest = getSoapMessageContext("<request/>", "operationName", true);
 		soapResponse = getSoapMessageContext("<response/>", "operationName", true);
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@Test

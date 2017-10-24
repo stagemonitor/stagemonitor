@@ -3,9 +3,10 @@ package org.stagemonitor.tracing.sampling;
 import org.junit.Test;
 import org.stagemonitor.tracing.AbstractRequestMonitorTest;
 import org.stagemonitor.tracing.MonitoredMethodRequest;
-import org.stagemonitor.tracing.SpanContextInformation;
 
-import static org.junit.Assert.assertFalse;
+import io.opentracing.tag.Tags;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SamplePriorityDeterminingSpanEventListenerTest extends AbstractRequestMonitorTest {
 
@@ -18,10 +19,10 @@ public class SamplePriorityDeterminingSpanEventListenerTest extends AbstractRequ
 			}
 		});
 
-		final MonitoredMethodRequest monitoredRequest = new MonitoredMethodRequest(configuration,
+		requestMonitor.monitor(new MonitoredMethodRequest(configuration,
 				"testSetSamplePrioInPreInterceptor", () -> {
-		});
-		final SpanContextInformation info = requestMonitor.monitor(monitoredRequest);
-		assertFalse(info.isSampled());
+		}));
+		assertThat(mockTracer.finishedSpans()).hasSize(1);
+		assertThat(mockTracer.finishedSpans().get(0).tags()).containsEntry(Tags.SAMPLING_PRIORITY.getKey(), 0);
 	}
 }

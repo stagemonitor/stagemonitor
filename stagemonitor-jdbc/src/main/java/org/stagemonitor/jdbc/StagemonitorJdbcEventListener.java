@@ -3,7 +3,6 @@ package org.stagemonitor.jdbc;
 import com.p6spy.engine.common.ConnectionInformation;
 import com.p6spy.engine.common.StatementInformation;
 import com.p6spy.engine.event.SimpleJdbcEventListener;
-import com.uber.jaeger.context.TracingUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
@@ -135,8 +135,9 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	@Override
 	public void onAfterAnyExecute(StatementInformation statementInformation, long timeElapsedNanos, SQLException e) {
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			final Span span = TracingUtils.getTraceContext().getCurrentSpan();
+		final Scope activeScope = tracingPlugin.getTracer().scopeManager().active();
+		if (activeScope != null) {
+			final Span span = activeScope.span();
 			if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
 				MetaData metaData = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
 				Tags.PEER_SERVICE.set(span, metaData.serviceName);

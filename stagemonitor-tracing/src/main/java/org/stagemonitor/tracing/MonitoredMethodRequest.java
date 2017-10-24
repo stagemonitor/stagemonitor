@@ -1,7 +1,5 @@
 package org.stagemonitor.tracing;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.utils.SpanUtils;
@@ -9,7 +7,7 @@ import org.stagemonitor.tracing.utils.SpanUtils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.opentracing.Span;
+import io.opentracing.Scope;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
@@ -51,23 +49,16 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public Span createSpan() {
+	public Scope createScope() {
 		final Tracer tracer = tracingPlugin.getTracer();
-		final Tracer.SpanBuilder spanBuilder;
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			spanBuilder = tracer.buildSpan(methodSignature)
-					.asChildOf(TracingUtils.getTraceContext().getCurrentSpan())
+		final Tracer.SpanBuilder spanBuilder = tracer.buildSpan(methodSignature)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
-		} else {
-			spanBuilder = tracer.buildSpan(methodSignature)
-					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
-		}
-		final Span span = spanBuilder
+		final Scope scope = spanBuilder
 				.withTag(SpanUtils.OPERATION_TYPE, OP_TYPE_METHOD_INVOCATION)
 				.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true)
-				.start();
-		SpanUtils.setParameters(span, safeParameters);
-		return span;
+				.startActive();
+		SpanUtils.setParameters(scope.span(), safeParameters);
+		return scope;
 	}
 
 	@Override

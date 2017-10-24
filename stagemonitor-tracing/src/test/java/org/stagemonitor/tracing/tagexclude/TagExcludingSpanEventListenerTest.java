@@ -1,8 +1,5 @@
 package org.stagemonitor.tracing.tagexclude;
 
-import com.uber.jaeger.context.TracingUtils;
-
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.tracing.TracingPlugin;
@@ -22,12 +19,6 @@ public class TagExcludingSpanEventListenerTest {
 	public void setUp() throws Exception {
 		tracingPlugin = mock(TracingPlugin.class);
 		tagExcludingSpanEventListener = new TagExcludingSpanEventListener(tracingPlugin);
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
 	}
 
 	@Test

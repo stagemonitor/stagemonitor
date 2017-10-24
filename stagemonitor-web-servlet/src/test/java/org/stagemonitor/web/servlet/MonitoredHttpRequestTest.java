@@ -1,7 +1,5 @@
 package org.stagemonitor.web.servlet;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-import io.opentracing.Span;
 import io.opentracing.mock.MockSpan;
 import io.opentracing.tag.Tags;
 
@@ -58,12 +55,12 @@ public class MonitoredHttpRequestTest {
 		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(tracer, spanEventListenerFactories));
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(tracer.scopeManager().active()).isNull();
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
 	}
@@ -86,8 +83,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		final Span span = monitoredHttpRequest.createSpan();
-		span.finish();
+		monitoredHttpRequest.createScope().close();
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertEquals("/test.js", mockSpan.tags().get(Tags.HTTP_URL.getKey()));
@@ -112,7 +108,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan().finish();
+		monitoredHttpRequest.createScope().close();
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertEquals("www.github.com", mockSpan.tags().get("http.referring_site"));
@@ -126,7 +122,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan().finish();
+		monitoredHttpRequest.createScope().close();
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertNull(mockSpan.tags().get("http.referring_site"));
@@ -140,7 +136,7 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createSpan().finish();
+		monitoredHttpRequest.createScope().close();
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).containsEntry("user_agent.browser", "Chrome");

@@ -2,7 +2,8 @@ package org.stagemonitor.tracing;
 
 import java.lang.reflect.Field;
 
-import io.opentracing.NoopTracerFactory;
+import io.opentracing.Tracer;
+import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.util.GlobalTracer;
 
 public class GlobalTracerTestHelper {
@@ -15,5 +16,10 @@ public class GlobalTracerTestHelper {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static void override(Tracer tracer) {
+		resetGlobalTracer();
+		GlobalTracer.register(tracer);
 	}
 }

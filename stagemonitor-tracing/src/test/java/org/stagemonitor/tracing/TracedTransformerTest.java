@@ -1,7 +1,6 @@
 package org.stagemonitor.tracing;
 
 import com.codahale.metrics.Timer;
-import com.uber.jaeger.context.TracingUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -21,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.opentracing.util.GlobalTracer;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -35,11 +36,13 @@ public class TracedTransformerTest {
 
 	@BeforeClass
 	public static void attachProfiler() {
+		GlobalTracerTestHelper.resetGlobalTracer();
 		Stagemonitor.init();
 	}
 
 	@Before
 	public void before() throws Exception {
+		GlobalTracerTestHelper.resetGlobalTracer();
 		testClass = new TestSubClass();
 		metricRegistry = Stagemonitor.getMetric2Registry();
 		testClassLevelAnnotationClass = new TestClassLevelAnnotationClass();
@@ -49,17 +52,17 @@ public class TracedTransformerTest {
 		tags = new HashMap<>();
 		Stagemonitor.getPlugin(TracingPlugin.class).addSpanEventListenerFactory(new TagRecordingSpanEventListener(tags));
 		Stagemonitor.getPlugin(TracingPlugin.class).addReporter(spanCapturingReporter);
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		GlobalTracerTestHelper.resetGlobalTracer();
-		assertThat(TracingUtils.getTraceContext().isEmpty()).isTrue();
+		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
 	}
 
 	@AfterClass
 	public static void resetStagemonitor() {
+		GlobalTracerTestHelper.resetGlobalTracer();
 		Stagemonitor.reset();
 	}
 

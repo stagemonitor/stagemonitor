@@ -42,18 +42,12 @@ public class SpanWrapper implements Span {
 		this.tags = tags;
 	}
 
+	@Override
 	public SpanContext context() {
 		return delegate.context();
 	}
 
-	public void close() {
-		durationNanos = System.nanoTime() - startTimestampNanos;
-		for (SpanEventListener spanEventListener : spanEventListeners) {
-			spanEventListener.onFinish(this, operationName, durationNanos);
-		}
-		delegate.close();
-	}
-
+	@Override
 	public void finish() {
 		durationNanos = System.nanoTime() - startTimestampNanos;
 		for (SpanEventListener spanEventListener : spanEventListeners) {
@@ -62,6 +56,7 @@ public class SpanWrapper implements Span {
 		delegate.finish();
 	}
 
+	@Override
 	public void finish(long finishMicros) {
 		durationNanos = TimeUnit.MICROSECONDS.toNanos(finishMicros) - startTimestampNanos;
 		for (SpanEventListener spanEventListener : spanEventListeners) {
@@ -70,6 +65,7 @@ public class SpanWrapper implements Span {
 		delegate.finish(finishMicros);
 	}
 
+	@Override
 	public Span setTag(String key, String value) {
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			value = spanEventListener.onSetTag(key, value);
@@ -83,6 +79,7 @@ public class SpanWrapper implements Span {
 		return this;
 	}
 
+	@Override
 	public Span setTag(String key, boolean value) {
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			value = spanEventListener.onSetTag(key, value);
@@ -94,6 +91,7 @@ public class SpanWrapper implements Span {
 		return this;
 	}
 
+	@Override
 	public Span setTag(String key, Number value) {
 		for (SpanEventListener spanEventListener : spanEventListeners) {
 			value = spanEventListener.onSetTag(key, value);
@@ -131,25 +129,18 @@ public class SpanWrapper implements Span {
 		return this;
 	}
 
-	public Span log(String eventName, Object payload) {
-		delegate = delegate.log(eventName, payload);
-		return this;
-	}
-
-	public Span log(long timestampMicroseconds, String eventName, Object payload) {
-		delegate = delegate.log(timestampMicroseconds, eventName, payload);
-		return this;
-	}
-
+	@Override
 	public Span setBaggageItem(String key, String value) {
 		delegate = delegate.setBaggageItem(key, value);
 		return this;
 	}
 
+	@Override
 	public String getBaggageItem(String key) {
 		return delegate.getBaggageItem(key);
 	}
 
+	@Override
 	public Span setOperationName(String operationName) {
 		this.operationName = operationName;
 		delegate = delegate.setOperationName(operationName);

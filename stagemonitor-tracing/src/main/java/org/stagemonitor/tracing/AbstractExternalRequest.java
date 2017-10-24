@@ -1,12 +1,10 @@
 package org.stagemonitor.tracing;
 
-import com.uber.jaeger.context.TracingUtils;
-
 import org.stagemonitor.core.instrument.CallerUtil;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
-import io.opentracing.Span;
+import io.opentracing.Scope;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
@@ -25,13 +23,11 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 		this.operationName = operationName;
 	}
 
-	public Span createSpan() {
+	public Scope createScope() {
 		final Tracer.SpanBuilder spanBuilder;
-		if (!TracingUtils.getTraceContext().isEmpty()) {
-			final Span currentSpan = TracingUtils.getTraceContext().getCurrentSpan();
+		if (tracer.scopeManager().active() != null) {
 			spanBuilder = tracer.buildSpan(operationName)
-					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT)
-					.asChildOf(currentSpan);
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 		} else {
 			// client spans should not be root spans
 			spanBuilder = tracer.buildSpan(operationName)
@@ -42,7 +38,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 			spanBuilder.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 		}
 		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, getType());
-		return spanBuilder.start();
+		return spanBuilder.startActive();
 	}
 
 	protected abstract String getType();

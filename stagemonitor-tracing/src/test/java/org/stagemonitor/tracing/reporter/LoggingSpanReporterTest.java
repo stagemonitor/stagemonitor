@@ -14,6 +14,7 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.opentracing.mock.MockTracer;
+import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -29,7 +30,7 @@ public class LoggingSpanReporterTest {
 	@Before
 	public void setUp() throws Exception {
 		tracingPlugin = mock(TracingPlugin.class);
-		mockTracer = new MockTracer(new B3Propagator());
+		mockTracer = new MockTracer(new ThreadLocalScopeManager(), new B3Propagator());
 		when(tracingPlugin.getTracer()).thenReturn(mockTracer);
 		loggingSpanReporter = new LoggingSpanReporter();
 		final ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
