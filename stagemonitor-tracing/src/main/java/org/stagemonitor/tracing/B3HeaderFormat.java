@@ -2,6 +2,7 @@ package org.stagemonitor.tracing;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
@@ -132,6 +133,25 @@ public final class B3HeaderFormat implements Format<TextMap> {
 			}
 		});
 		return spanId[0];
+	}
+
+	public static boolean isRoot(Tracer tracer, final Span span) {
+		final AtomicBoolean root = new AtomicBoolean(true);
+		tracer.inject(span.context(), B3HeaderFormat.INSTANCE, new B3HeaderFormat.B3InjectAdapter() {
+			@Override
+			public void setParentId(String value) {
+				root.set(false);
+			}
+
+			@Override
+			public void setSpanId(String value) {
+			}
+
+			@Override
+			public void setTraceId(String value) {
+			}
+		});
+		return root.get();
 	}
 
 	public static B3Identifiers getB3Identifiers(final Span span) {

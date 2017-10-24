@@ -99,6 +99,6 @@ public class SpanUtils {
 	}
 
 	public static boolean isRoot(Tracer tracer, Span span) {
-		return B3HeaderFormat.getB3Identifiers(tracer, span).getParentSpanId() == null;
+		return B3HeaderFormat.isRoot(tracer, span);
 	}
 }
