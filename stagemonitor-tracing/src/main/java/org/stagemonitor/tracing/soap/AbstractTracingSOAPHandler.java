@@ -1,5 +1,7 @@
 package org.stagemonitor.tracing.soap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.TracingPlugin;
 
@@ -19,6 +21,9 @@ import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
 public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMessageContext> {
+
+	private static final Logger logger = LoggerFactory.getLogger(AbstractTracingSOAPHandler.class);
+
 	private final boolean serverHandler;
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
@@ -92,7 +97,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 			span.setTag("soap.fault.reason", fault.getFaultString());
 			span.setTag("soap.fault.code", fault.getFaultCode());
 		} catch (SOAPException e) {
-			e.printStackTrace();
+			logger.warn("Exception while trying to access SOAP fault (this exception was suppressed)", e);
 		}
 		return true;
 	}
