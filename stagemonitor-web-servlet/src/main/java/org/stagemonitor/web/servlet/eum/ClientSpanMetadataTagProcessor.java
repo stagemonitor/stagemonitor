@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.opentracing.Tracer;
+import io.opentracing.Span;
 
 public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 
@@ -27,7 +27,7 @@ public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 	}
 
 	@Override
-	protected void processSpanBuilderImpl(Tracer.SpanBuilder spanBuilder, Map<String, String[]> servletParameters) {
+	protected void processSpanImpl(Span spanBuilder, Map<String, String[]> servletParameters) {
 		final Map<String, ClientSpanMetadataDefinition> whitelistedClientSpanTags = servletPlugin.getWhitelistedClientSpanTags();
 		for (String originalParameterName : servletParameters.keySet()) {
 			final String parameterNameWithoutPrefix = stripMetadataPrefix(originalParameterName);
@@ -38,13 +38,13 @@ public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 				try {
 					if (TYPE_STRING.equalsIgnoreCase(clientSpanTagDefinition.getType()) || parameterValueOrNull == null) {
 						final String value = trimStringToLength(parameterValueOrNull, clientSpanTagDefinition.getLength());
-						spanBuilder.withTag(parameterNameWithoutPrefix, value);
+						spanBuilder.setTag(parameterNameWithoutPrefix, value);
 					} else if (TYPE_NUMBER.equalsIgnoreCase(clientSpanTagDefinition.getType())) {
 						final Double value = DoubleValueConverter.INSTANCE.convert(parameterValueOrNull);
-						spanBuilder.withTag(parameterNameWithoutPrefix, value);
+						spanBuilder.setTag(parameterNameWithoutPrefix, value);
 					} else if (TYPE_BOOLEAN.equalsIgnoreCase(clientSpanTagDefinition.getType())) {
 						final Boolean value = ClientSpanBooleanTagProcessor.parseBooleanOrFalse(parameterValueOrNull);
-						spanBuilder.withTag(parameterNameWithoutPrefix, value);
+						spanBuilder.setTag(parameterNameWithoutPrefix, value);
 					}
 				} catch (IllegalArgumentException e) {
 					// skip this metadata as it has either an invalid name or is not parsable
