@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 
-public class AlertingPlugin extends StagemonitorPlugin {
+public class AlertingPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -335,27 +335,23 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		return pushbulletAccessToken.getValue();
 	}
 
-	public static class Initializer implements ServletContainerInitializer {
-
-		@Override
-		public void onStartup(Set<Class<?>> c, ServletContext ctx) {
-			final String initializedAttribute = getClass().getName() + ".initialized";
-			if (ctx.getAttribute(initializedAttribute) != null) {
-				// already initialized
-				return;
-			}
-			ctx.setAttribute(initializedAttribute, true);
-
-			final AlertingPlugin alertingPlugin = Stagemonitor.getPlugin(AlertingPlugin.class);
-			ctx.addServlet(AlerterTypeServlet.class.getSimpleName(), new AlerterTypeServlet(alertingPlugin, Stagemonitor.getMeasurementSession()))
-					.addMapping("/stagemonitor/alerter-types");
-
-			ctx.addServlet(IncidentServlet.class.getSimpleName(), new IncidentServlet(alertingPlugin))
-					.addMapping("/stagemonitor/incidents");
-
-			ctx.addServlet(TestAlertSenderServlet.class.getSimpleName(), new TestAlertSenderServlet())
-					.addMapping("/stagemonitor/test-alert");
+	@Override
+	public void onStartup(Set<Class<?>> c, ServletContext ctx) {
+		final String initializedAttribute = getClass().getName() + ".initialized";
+		if (ctx.getAttribute(initializedAttribute) != null) {
+			// already initialized
+			return;
 		}
-	}
+		ctx.setAttribute(initializedAttribute, true);
 
+		final AlertingPlugin alertingPlugin = Stagemonitor.getPlugin(AlertingPlugin.class);
+		ctx.addServlet(AlerterTypeServlet.class.getSimpleName(), new AlerterTypeServlet(alertingPlugin, Stagemonitor.getMeasurementSession()))
+				.addMapping("/stagemonitor/alerter-types");
+
+		ctx.addServlet(IncidentServlet.class.getSimpleName(), new IncidentServlet(alertingPlugin))
+				.addMapping("/stagemonitor/incidents");
+
+		ctx.addServlet(TestAlertSenderServlet.class.getSimpleName(), new TestAlertSenderServlet())
+				.addMapping("/stagemonitor/test-alert");
+	}
 }
