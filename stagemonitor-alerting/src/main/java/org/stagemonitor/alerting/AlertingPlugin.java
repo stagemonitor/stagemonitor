@@ -21,16 +21,16 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.web.servlet.initializer.ServletContainerInitializerUtil;
+import org.stagemonitor.web.servlet.initializer.StagemonitorServletContainerInitializer;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 
 public class AlertingPlugin extends StagemonitorPlugin {
@@ -335,10 +335,12 @@ public class AlertingPlugin extends StagemonitorPlugin {
 		return pushbulletAccessToken.getValue();
 	}
 
-	public static class Initializer implements ServletContainerInitializer {
+	public static class Initializer implements StagemonitorServletContainerInitializer {
 
 		@Override
-		public void onStartup(Set<Class<?>> c, ServletContext ctx) {
+		public void onStartup(ServletContext ctx) {
+			if (ServletContainerInitializerUtil.avoidDoubleInit(this, ctx)) return;
+
 			final String initializedAttribute = getClass().getName() + ".initialized";
 			if (ctx.getAttribute(initializedAttribute) != null) {
 				// already initialized

@@ -9,7 +9,7 @@ import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletCont
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.web.servlet.util.ServletContainerInitializerUtil;
+import org.stagemonitor.web.servlet.initializer.ServletContainerInitializerUtil;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;

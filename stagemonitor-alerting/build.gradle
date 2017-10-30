@@ -1,5 +1,6 @@
 dependencies {
 	compile project(":stagemonitor-tracing")
+	optional project(":stagemonitor-web-servlet")
 	provided 'javax.servlet:javax.servlet-api:3.0.1'
 
 	compile 'javax.mail:mail:1.4.1'

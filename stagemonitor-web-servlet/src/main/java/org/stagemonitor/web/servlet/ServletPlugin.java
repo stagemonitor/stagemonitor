@@ -24,8 +24,9 @@ import org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension;
 import org.stagemonitor.web.servlet.filter.HttpRequestMonitorFilter;
 import org.stagemonitor.web.servlet.filter.StagemonitorSecurityFilter;
 import org.stagemonitor.web.servlet.health.HealthCheckServlet;
+import org.stagemonitor.web.servlet.initializer.ServletContainerInitializerUtil;
+import org.stagemonitor.web.servlet.initializer.StagemonitorServletContainerInitializer;
 import org.stagemonitor.web.servlet.session.SessionCounter;
-import org.stagemonitor.web.servlet.util.ServletContainerInitializerUtil;
 import org.stagemonitor.web.servlet.widget.SpanServlet;
 import org.stagemonitor.web.servlet.widget.StagemonitorMetricsServlet;
 import org.stagemonitor.web.servlet.widget.WidgetServlet;
@@ -41,12 +42,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRegistration;
 import javax.servlet.http.HttpServletRequest;
@@ -54,7 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import static org.stagemonitor.core.pool.MBeanPooledResource.tomcatThreadPools;
 import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registerPooledResources;
 
-public class ServletPlugin extends StagemonitorPlugin implements ServletContainerInitializer {
+public class ServletPlugin extends StagemonitorPlugin {
 
 	public static final String STAGEMONITOR_SHOW_WIDGET = "X-Stagemonitor-Show-Widget";
 
@@ -452,47 +451,50 @@ public class ServletPlugin extends StagemonitorPlugin implements ServletContaine
 		return clientSpanExtensions;
 	}
 
-	@Override
-	public void onStartup(Set<Class<?>> c, ServletContext ctx) {
-		Stagemonitor.init();
-		if (ServletContainerInitializerUtil.avoidDoubleInit(this, ctx)) return;
-		ctx.addServlet(ConfigurationServlet.class.getSimpleName(), new ConfigurationServlet())
-				.addMapping(ConfigurationServlet.CONFIGURATION_ENDPOINT);
-		ctx.addServlet(StagemonitorMetricsServlet.class.getSimpleName(), new StagemonitorMetricsServlet())
-				.addMapping("/stagemonitor/metrics");
-		ctx.addServlet(ClientSpanServlet.class.getSimpleName(), new ClientSpanServlet())
-				.addMapping("/stagemonitor/public/eum");
-		ctx.addServlet(ClientSpanJavaScriptServlet.class.getSimpleName(), new ClientSpanJavaScriptServlet())
-				.addMapping("/stagemonitor/public/eum.js");
-		ctx.addServlet(StagemonitorFileServlet.class.getSimpleName(), new StagemonitorFileServlet())
-				.addMapping("/stagemonitor/static/*", "/stagemonitor/public/static/*");
-		ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
-				.addMapping("/stagemonitor");
+	public static class Initializer implements StagemonitorServletContainerInitializer {
+		@Override
+		public void onStartup(ServletContext ctx) {
+			Stagemonitor.init();
+			if (ServletContainerInitializerUtil.avoidDoubleInit(this, ctx)) return;
+			ctx.addServlet(ConfigurationServlet.class.getSimpleName(), new ConfigurationServlet())
+					.addMapping(ConfigurationServlet.CONFIGURATION_ENDPOINT);
+			ctx.addServlet(StagemonitorMetricsServlet.class.getSimpleName(), new StagemonitorMetricsServlet())
+					.addMapping("/stagemonitor/metrics");
+			ctx.addServlet(ClientSpanServlet.class.getSimpleName(), new ClientSpanServlet())
+					.addMapping("/stagemonitor/public/eum");
+			ctx.addServlet(ClientSpanJavaScriptServlet.class.getSimpleName(), new ClientSpanJavaScriptServlet())
+					.addMapping("/stagemonitor/public/eum.js");
+			ctx.addServlet(StagemonitorFileServlet.class.getSimpleName(), new StagemonitorFileServlet())
+					.addMapping("/stagemonitor/static/*", "/stagemonitor/public/static/*");
+			ctx.addServlet(WidgetServlet.class.getSimpleName(), new WidgetServlet())
+					.addMapping("/stagemonitor");
 
-		final ServletRegistration.Dynamic spanServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), new SpanServlet());
-		spanServlet.addMapping("/stagemonitor/spans");
-		spanServlet.setAsyncSupported(true);
+			final ServletRegistration.Dynamic spanServlet = ctx.addServlet(SpanServlet.class.getSimpleName(), new SpanServlet());
+			spanServlet.addMapping("/stagemonitor/spans");
+			spanServlet.setAsyncSupported(true);
 
 
-		final FilterRegistration.Dynamic securityFilter = ctx.addFilter(StagemonitorSecurityFilter.class.getSimpleName(), new StagemonitorSecurityFilter());
-		// Add as last filter so that other filters have the chance to set the
-		// ServletPlugin.STAGEMONITOR_SHOW_WIDGET request attribute that overrides the widget visibility.
-		// That way the application can decide whether a particular user is allowed to see the widget.P
-		securityFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/stagemonitor/*");
-		securityFilter.setAsyncSupported(true);
+			final FilterRegistration.Dynamic securityFilter = ctx.addFilter(StagemonitorSecurityFilter.class.getSimpleName(), new StagemonitorSecurityFilter());
+			// Add as last filter so that other filters have the chance to set the
+			// ServletPlugin.STAGEMONITOR_SHOW_WIDGET request attribute that overrides the widget visibility.
+			// That way the application can decide whether a particular user is allowed to see the widget.P
+			securityFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/stagemonitor/*");
+			securityFilter.setAsyncSupported(true);
 
-		final FilterRegistration.Dynamic monitorFilter = ctx.addFilter(HttpRequestMonitorFilter.class.getSimpleName(), new HttpRequestMonitorFilter());
-		monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/*");
-		monitorFilter.setAsyncSupported(true);
+			final FilterRegistration.Dynamic monitorFilter = ctx.addFilter(HttpRequestMonitorFilter.class.getSimpleName(), new HttpRequestMonitorFilter());
+			monitorFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "/*");
+			monitorFilter.setAsyncSupported(true);
 
-		try {
-			ctx.addListener(SessionCounter.class);
-		} catch (IllegalArgumentException e) {
-			// embedded servlet containers like jetty don't necessarily support sessions
+			try {
+				ctx.addListener(SessionCounter.class);
+			} catch (IllegalArgumentException e) {
+				// embedded servlet containers like jetty don't necessarily support sessions
+			}
+
+			final ServletRegistration.Dynamic healthServlet = ctx.addServlet(HealthCheckServlet.class.getSimpleName(), new HealthCheckServlet(Stagemonitor.getHealthCheckRegistry()));
+			healthServlet.addMapping("/stagemonitor/status");
+			healthServlet.setAsyncSupported(true);
 		}
 
-		final ServletRegistration.Dynamic healthServlet = ctx.addServlet(HealthCheckServlet.class.getSimpleName(), new HealthCheckServlet(Stagemonitor.getHealthCheckRegistry()));
-		healthServlet.addMapping("/stagemonitor/status");
-		healthServlet.setAsyncSupported(true);
 	}
 }

@@ -6,7 +6,7 @@ import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
-import org.stagemonitor.web.servlet.util.ServletContainerInitializerUtil;
+import org.stagemonitor.web.servlet.initializer.ServletContainerInitializerUtil;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
