@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
-import io.opentracing.tag.Tags;
 
 /**
  * The purpose of this wrapper is to call the registered {@link SpanEventListener}s before certain methods of the
@@ -230,11 +229,6 @@ public class SpanWrapper implements Span {
 
 	public double getDurationMs() {
 		return durationNanos / MILLISECOND_IN_NANOS;
-	}
-
-	public boolean isSampled() {
-		final Number samplingPriority = getNumberTag(Tags.SAMPLING_PRIORITY.getKey());
-		return samplingPriority == null || samplingPriority.intValue() > 0;
 	}
 
 }

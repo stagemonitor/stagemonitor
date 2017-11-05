@@ -1,11 +1,13 @@
 package org.stagemonitor.configuration;
 
-import java.lang.reflect.Field;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public abstract class ConfigurationOptionProvider {
 
@@ -13,8 +15,8 @@ public abstract class ConfigurationOptionProvider {
 
 	public List<ConfigurationOption<?>> getConfigurationOptions() {
 		List<ConfigurationOption<?>> configurationOptions = new LinkedList<ConfigurationOption<?>>();
-		for (Field field : getClass().getDeclaredFields()) {
-			if (field.getType() == ConfigurationOption.class) {
+		for (Field field : getAllDeclaredFields(getClass())) {
+			if (ConfigurationOption.class.isAssignableFrom(field.getType())) {
 				field.setAccessible(true);
 				try {
 					configurationOptions.add((ConfigurationOption) field.get(this));
@@ -24,6 +26,14 @@ public abstract class ConfigurationOptionProvider {
 			}
 		}
 		return configurationOptions;
+	}
+
+	private static List<Field> getAllDeclaredFields(Class<?> type) {
+		List<Field> fields = new ArrayList<Field>();
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			fields.addAll(Arrays.asList(c.getDeclaredFields()));
+		}
+		return fields;
 	}
 
 }

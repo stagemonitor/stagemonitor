@@ -11,6 +11,7 @@ import java.util.HashMap;
 
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
+import io.opentracing.tag.Tags;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +38,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags().get(TAG)).isEqualTo(123L);
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 	}
 
 	private void addServletParameter(String parameterValue) {
@@ -57,7 +58,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKey(TAG);
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 	}
 
 	@Test
@@ -74,7 +75,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKeys(TAG);
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 	}
 
 	@Test
@@ -92,7 +93,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKeys(TAG);
-		assertThat(span.isSampled()).isFalse();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isEqualTo(0);
 	}
 
 	@Test
@@ -110,7 +111,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags().get(TAG)).isEqualTo(6L);
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 	}
 
 	@Test
@@ -127,7 +128,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKeys(TAG);
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 	}
 
 	@Test
@@ -145,7 +146,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).doesNotContainKeys(TAG);
-		assertThat(span.isSampled()).isFalse();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isEqualTo(0);
 	}
 
 	@Test
@@ -163,7 +164,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(mockTracer.finishedSpans()).hasSize(1);
 		MockSpan mockSpan = mockTracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags().get(TAG)).isEqualTo(5L);
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 	}
 
 	private SpanWrapper runProcessor(ClientSpanLongTagProcessor clientSpanLongTagProcessor) {

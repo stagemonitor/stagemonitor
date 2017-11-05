@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.tracing.SpanContextInformation;
+import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 
@@ -21,6 +22,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	private final Collection<PostExecutionSpanInterceptor> postInterceptors =
 			new CopyOnWriteArrayList<PostExecutionSpanInterceptor>();
 	private final ConfigurationRegistry configuration;
+	private final TracingPlugin tracingPlugin;
 
 	public SamplePriorityDeterminingSpanEventListener(ConfigurationRegistry configuration) {
 		this(configuration,
@@ -30,6 +32,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 
 	public SamplePriorityDeterminingSpanEventListener(ConfigurationRegistry configuration, Iterable<PreExecutionSpanInterceptor> preExecutionSpanInterceptors, Iterable<PostExecutionSpanInterceptor> postExecutionSpanInterceptors) {
 		this.configuration = configuration;
+		this.tracingPlugin = configuration.getConfig(TracingPlugin.class);
 		registerPreInterceptors(preExecutionSpanInterceptors);
 		registerPostInterceptors(postExecutionSpanInterceptors);
 	}
@@ -49,7 +52,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
 		final SpanContextInformation spanContext = SpanContextInformation.forSpan(spanWrapper);
-		if (!spanWrapper.isSampled()) {
+		if (!tracingPlugin.isSampled(spanWrapper)) {
 			return;
 		}
 
@@ -72,7 +75,7 @@ public class SamplePriorityDeterminingSpanEventListener extends StatelessSpanEve
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
 		final SpanContextInformation info = SpanContextInformation.forSpan(spanWrapper);
-		if (!spanWrapper.isSampled()) {
+		if (!tracingPlugin.isSampled(spanWrapper)) {
 			return;
 		}
 		PostExecutionInterceptorContext context = new PostExecutionInterceptorContext(info);

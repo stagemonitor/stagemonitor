@@ -29,6 +29,7 @@ import static junit.framework.Assert.assertNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -55,6 +56,7 @@ public class MonitoredHttpRequestTest {
 		when(tracingPlugin.getTracer()).thenReturn(new SpanWrappingTracer(tracer, spanEventListenerFactories));
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
+		when(tracingPlugin.isSampled(any())).thenReturn(true);
 		assertThat(tracer.scopeManager().active()).isNull();
 	}
 

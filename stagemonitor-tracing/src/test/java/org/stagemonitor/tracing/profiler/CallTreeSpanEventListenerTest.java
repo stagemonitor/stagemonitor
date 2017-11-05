@@ -24,6 +24,7 @@ import io.opentracing.tag.Tags;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -32,10 +33,13 @@ public class CallTreeSpanEventListenerTest {
 
 	private TracingPlugin tracingPlugin;
 	private SpanWrapper span;
+	private ConfigurationRegistry configurationRegistry;
 
 	@Before
 	public void setUp() throws Exception {
 		tracingPlugin = mock(TracingPlugin.class);
+		configurationRegistry = mock(ConfigurationRegistry.class);
+		when(configurationRegistry.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.isProfilerActive()).thenReturn(true);
@@ -82,6 +86,7 @@ public class CallTreeSpanEventListenerTest {
 	}
 
 	private SpanContextInformation invokeEventListener(boolean sampled) {
+		when(tracingPlugin.isSampled(any())).thenReturn(sampled);
 		SpanWrappingTracer spanWrappingTracer = initTracer();
 		final SpanWrappingTracer.SpanWrappingSpanBuilder spanBuilder = spanWrappingTracer.buildSpan("test");
 		spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), sampled ? 1 : 0);
@@ -94,7 +99,6 @@ public class CallTreeSpanEventListenerTest {
 	}
 
 	private SpanWrappingTracer initTracer() {
-		final ConfigurationRegistry configurationRegistry = mock(ConfigurationRegistry.class);
 		return new SpanWrappingTracer(new MockTracer(),
 				Arrays.asList(
 						new SpanContextInformation.SpanContextSpanEventListener(),

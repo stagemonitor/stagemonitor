@@ -51,10 +51,8 @@ import io.opentracing.util.GlobalTracer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -110,6 +108,7 @@ public class SpringRequestMonitorTest {
 		when(tracingPlugin.getDefaultRateLimitSpansPercent()).thenReturn(1.0);
 		when(tracingPlugin.getRateLimitSpansPerMinutePercentPerType()).thenReturn(Collections.emptyMap());
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.isSampled(any())).thenReturn(true);
 
 		when(servletPlugin.getGroupUrls()).thenReturn(Collections.singletonMap(Pattern.compile("(.*).js$"), "*.js"));
 		requestMonitor = new RequestMonitor(configuration, registry);
@@ -183,7 +182,7 @@ public class SpringRequestMonitorTest {
 		assertThat(registry.getTimers()).doesNotContainKey(getResponseTimeMetricName(spanContext.getOperationName(), "http"));
 		assertThat(registry.getTimers()).containsKey(getResponseTimeMetricName("All", "http"));
 		verify(monitoredRequest, times(1)).getRequestName();
-		assertTrue(spanContext.isSampled());
+		assertThat(tags.get(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 	}
 
 	@Test
@@ -196,7 +195,7 @@ public class SpringRequestMonitorTest {
 
 		assertNull(spanContext.getOperationName());
 		assertNull(registry.getTimers().get(name("response_time").operationName("GET *.js").operationType("http").build()));
-		assertFalse(spanContext.isSampled());
+		assertThat(tags.get(Tags.SAMPLING_PRIORITY.getKey())).isEqualTo(0);
 	}
 
 	private MonitoredHttpRequest createMonitoredHttpRequest(HttpServletRequest request) throws Exception {

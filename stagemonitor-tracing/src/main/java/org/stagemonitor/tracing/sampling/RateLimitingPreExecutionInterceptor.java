@@ -4,16 +4,16 @@ import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.RateLimiter;
-import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterceptor {
 
 	private RateLimiter rateLimiter;
+	private TracingPlugin tracingPlugin;
 
 	@Override
 	public void init(ConfigurationRegistry configuration) {
-		TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
+		tracingPlugin = configuration.getConfig(TracingPlugin.class);
 
 		rateLimiter = getRateLimiter(tracingPlugin.getDefaultRateLimitSpansPerMinute());
 		tracingPlugin.getDefaultRateLimitSpansPerMinuteOption().addChangeListener(new ConfigurationOption.ChangeListener<Double>() {
@@ -55,7 +55,7 @@ public class RateLimitingPreExecutionInterceptor extends PreExecutionSpanInterce
 	}
 
 	protected boolean isRoot(SpanWrapper span) {
-		return SpanUtils.isRoot(span);
+		return tracingPlugin.isRoot(span);
 	}
 
 	public static boolean isRateExceeded(RateLimiter rateLimiter) {

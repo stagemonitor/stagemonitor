@@ -5,13 +5,16 @@ import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.TracerFactory;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.concurrent.TimeUnit;
 
 import brave.Tracing;
+import brave.opentracing.BraveSpan;
 import brave.opentracing.BraveTracer;
 import brave.propagation.Propagation;
 import brave.sampler.Sampler;
+import io.opentracing.Span;
 import io.opentracing.Tracer;
 import zipkin.reporter.AsyncReporter;
 import zipkin.reporter.urlconnection.URLConnectionSender;
@@ -28,6 +31,32 @@ public class BraveZipkinReportingTracerFactory extends TracerFactory {
 		return BraveTracer.newBuilder(braveTracer)
 				.textMapPropagation(B3HeaderFormat.INSTANCE, Propagation.B3_STRING)
 				.build();
+	}
+
+	@Override
+	public boolean isRoot(Span span) {
+		// TODO replace with Span#unwrap once https://github.com/opentracing/opentracing-java/pull/211 is merged
+		if (span instanceof SpanWrapper) {
+			span = ((SpanWrapper) span).getDelegate();
+		}
+		if (span instanceof BraveSpan) {
+			final BraveSpan braveSpan = (BraveSpan) span;
+			return braveSpan.unwrap().context().parentId() == null;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isSampled(Span span) {
+		// TODO replace with Span#unwrap once https://github.com/opentracing/opentracing-java/pull/211 is merged
+		if (span instanceof SpanWrapper) {
+			span = ((SpanWrapper) span).getDelegate();
+		}
+		if (span instanceof BraveSpan) {
+			final BraveSpan braveSpan = (BraveSpan) span;
+			return braveSpan.unwrap().context().sampled();
+		}
+		return false;
 	}
 
 	protected AlwaysSampler getSampler() {

@@ -14,7 +14,7 @@ import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.tracing.anonymization.AnonymizingSpanEventListener;
-import org.stagemonitor.tracing.impl.DefaultTracerImpl;
+import org.stagemonitor.tracing.impl.DefaultTracerFactory;
 import org.stagemonitor.tracing.mdc.MDCSpanEventListener;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallTreeSpanEventListener;
@@ -361,6 +361,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 	private SamplePriorityDeterminingSpanEventListener samplePriorityDeterminingSpanInterceptor;
 	private ReportingSpanEventListener reportingSpanEventListener;
 	private CorePlugin corePlugin;
+	private TracerFactory tracerFactory;
 
 	/**
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
@@ -400,7 +401,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 		}
 
 		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
-		final Tracer tracer = getTracerImpl(initArguments);
+		tracerFactory = getTracerImpl();
+		final Tracer tracer = tracerFactory.getTracer(initArguments);
 		reportingSpanEventListener = new ReportingSpanEventListener(initArguments.getConfiguration());
 		for (SpanReporter spanReporter : ServiceLoader.load(SpanReporter.class, RequestMonitor.class.getClassLoader())) {
 			addReporter(spanReporter);
@@ -417,24 +419,24 @@ public class TracingPlugin extends StagemonitorPlugin {
 		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(CorePlugin.class);
 	}
 
-	private Tracer getTracerImpl(InitArguments initArguments) {
+	private TracerFactory getTracerImpl() {
 		final Iterator<TracerFactory> tracerFactoryIterator = ServiceLoader.load(TracerFactory.class, RequestMonitor.class.getClassLoader()).iterator();
 		if (tracerFactoryIterator.hasNext()) {
-			final Tracer tracer = tracerFactoryIterator.next().getTracer(initArguments);
-			assertIsSingleImplementation(initArguments, tracerFactoryIterator, tracer);
-			return tracer;
+			final TracerFactory tracerFactory = tracerFactoryIterator.next();
+			assertIsSingleImplementation(tracerFactoryIterator, tracerFactory);
+			return tracerFactory;
 		} else {
 			logger.info("No OpenTracing implementation found. Falling back to DefaultTracerImpl. " +
 					"This is fine if you just want to use stagemonitor for development, for example with the in-browser-widget. " +
 					"If you want to report your traces to Elasticsearch, add a dependency to stagemonitor-tracing-elasticsearch. " +
 					"If you want to report to Zipkin, add stagemonitor-tracing-zipkin.");
-			return new DefaultTracerImpl();
+			return new DefaultTracerFactory();
 		}
 	}
 
-	private void assertIsSingleImplementation(InitArguments initArguments, Iterator<TracerFactory> tracerFactoryIterator, Tracer tracer) {
+	private void assertIsSingleImplementation(Iterator<TracerFactory> tracerFactoryIterator, TracerFactory tracer) {
 		if (tracerFactoryIterator.hasNext()) {
-			final Tracer tracer2 = tracerFactoryIterator.next().getTracer(initArguments);
+			final TracerFactory tracer2 = tracerFactoryIterator.next();
 			throw new IllegalStateException(MessageFormat.format("Multiple tracing implementations found: {0}, {1}. " +
 							"Make sure you only have one stagemonitor-tracing-* jar in your class path.",
 					tracer.getClass().getName(), tracer2.getClass().getName()));
@@ -468,6 +470,14 @@ public class TracingPlugin extends StagemonitorPlugin {
 	@Override
 	public void registerWidgetMetricTabPlugins(WidgetMetricTabPluginsRegistry widgetMetricTabPluginsRegistry) {
 		widgetMetricTabPluginsRegistry.addWidgetMetricTabPlugin("/stagemonitor/static/tabs/metrics/request-metrics");
+	}
+
+	public boolean isRoot(Span span) {
+		return tracerFactory.isRoot(span);
+	}
+
+	public boolean isSampled(Span span) {
+		return tracerFactory.isSampled(span);
 	}
 
 	public RequestMonitor getRequestMonitor() {
@@ -667,4 +677,9 @@ public class TracingPlugin extends StagemonitorPlugin {
 	public AsciiCallTreeSignatureFormatter getCallTreeAsciiFormatter() {
 		return callTreeAsciiFormatter.getValue();
 	}
+
+	public void registerDefaultRateLimitSpansPercentChangeListener(ConfigurationOption.ChangeListener<Double> changeListener) {
+		defaultRateLimitSpansPercent.addChangeListener(changeListener);
+	}
+
 }

@@ -7,11 +7,14 @@ import org.stagemonitor.tracing.MonitoredMethodRequest;
 import io.opentracing.tag.Tags;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 public class SamplePriorityDeterminingSpanEventListenerTest extends AbstractRequestMonitorTest {
 
 	@Test
 	public void testSetSamplePrioInPreInterceptor() throws Exception {
+		when(tracingPlugin.isSampled(any())).thenReturn(true);
 		samplePriorityDeterminingSpanInterceptor.addPreInterceptor(new PreExecutionSpanInterceptor() {
 			@Override
 			public void interceptReport(PreExecutionInterceptorContext context) {
