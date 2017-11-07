@@ -35,6 +35,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.stagemonitor.web.servlet.eum.ClientSpanServlet.TYPE_PAGE_LOAD;
+import static org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension.METADATA_BACKEND_SPAN_ID;
+import static org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension.METADATA_BACKEND_SPAN_SAMPLING_FLAG;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_APP_CACHE_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_DNS_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_LOAD;
@@ -426,6 +429,62 @@ public class ClientSpanServletTest {
 					.containsEntry("duration_ms", 2084L)
 					.containsEntry("id", "2d371455215c504")
 					.containsEntry("trace_id", "2d371455215c504");
+		});
+	}
+
+	@Test
+	public void testWeaselBeaconXhrBeacon_withSampledFlag() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("t", "2d371455215c504");
+		mockHttpServletRequest.setParameter("s", "2d371455215c504");
+		mockHttpServletRequest.setParameter("ty", "xhr");
+
+		mockHttpServletRequest.setParameter("sp", "0");
+		// ignored
+		mockHttpServletRequest.setParameter(METADATA_BACKEND_SPAN_ID, "1");
+
+		// When
+		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+
+			softly.assertThat(span.tags())
+					.containsEntry("id", "2d371455215c504")
+					.containsEntry("trace_id", "2d371455215c504")
+					.containsEntry(Tags.SAMPLING_PRIORITY.getKey(), 0);
+		});
+	}
+
+	@Test
+	public void testWeaselBeaconPageLoadBeacon_withSampledFlag() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("t", "2d371455215c504");
+		mockHttpServletRequest.setParameter("s", "2d371455215c504");
+		mockHttpServletRequest.setParameter("ty", TYPE_PAGE_LOAD);
+
+		// ignored
+		mockHttpServletRequest.setParameter("sp", "0");
+		mockHttpServletRequest.setParameter(METADATA_BACKEND_SPAN_SAMPLING_FLAG, "1");
+
+		// When
+		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+
+			softly.assertThat(span.tags())
+					.containsEntry("id", "2d371455215c504")
+					.containsEntry("trace_id", "2d371455215c504")
+					.containsEntry(Tags.SAMPLING_PRIORITY.getKey(), 1);
 		});
 	}
 

@@ -112,11 +112,11 @@ public class ClientSpanServlet extends HttpServlet {
 		// TODO change to SELF reference when https://github.com/opentracing/opentracing-java/pull/212 is merged
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ALL, SPAN_ID, "s", false));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ALL, TRACE_ID, "t", false));
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_ALL, Tags.SAMPLING_PRIORITY.getKey(), SAMPLED_FLAG)
+		addTagProcessor(new ClientSpanIntegerTagProcessor(TYPE_ALL, Tags.SAMPLING_PRIORITY.getKey(), SAMPLED_FLAG)
 				.lowerBound(0)
 				.upperBound(1));
 		// sets the same sampling decision as the backend trace (does not work for standalone EUM servers)
-		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_PAGE_LOAD, Tags.SAMPLING_PRIORITY.getKey(), METADATA_BACKEND_SPAN_SAMPLING_FLAG)
+		addTagProcessor(new ClientSpanIntegerTagProcessor(TYPE_PAGE_LOAD, Tags.SAMPLING_PRIORITY.getKey(), METADATA_BACKEND_SPAN_SAMPLING_FLAG)
 				.lowerBound(0)
 				.upperBound(1));
 		// bt = backend trace id
@@ -140,9 +140,9 @@ public class ClientSpanServlet extends HttpServlet {
 		return durationProcessor(typePageLoad, tagName, getWeaselRequestParameterName(tagName));
 	}
 
-	private ClientSpanLongTagProcessor durationProcessor(String beaconType, String tagName, String requestParameterName) {
+	private ClientSpanTagProcessor durationProcessor(String beaconType, String tagName, String requestParameterName) {
 		return new ClientSpanLongTagProcessor(beaconType, tagName, requestParameterName)
-				.lowerBound(0)
+				.lowerBound(0L)
 				.upperBound(TimeUnit.MINUTES.toMillis(10))
 				.discardSpanOnBoundViolation(true);
 	}

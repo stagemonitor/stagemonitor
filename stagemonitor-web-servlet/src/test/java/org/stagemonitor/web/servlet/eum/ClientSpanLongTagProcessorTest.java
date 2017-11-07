@@ -29,7 +29,7 @@ public class ClientSpanLongTagProcessorTest {
 	public void testProcessSpan_withValidLongValueReturnsThatValue() throws Exception {
 		// Given
 		addServletParameter("123");
-		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME);
+		ClientSpanTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME);
 
 		// When
 		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
@@ -49,7 +49,7 @@ public class ClientSpanLongTagProcessorTest {
 	public void testProcessSpan_withInvalidValueReturnsNull() throws Exception {
 		// Given
 		addServletParameter("invalid");
-		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME);
+		ClientSpanTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME);
 
 		// When
 		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
@@ -65,8 +65,8 @@ public class ClientSpanLongTagProcessorTest {
 	public void testProcessSpan_withUpperIgnoresIfGreater()  throws Exception {
 		// Given
 		addServletParameter("6");
-		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
-				.upperBound(5);
+		ClientSpanTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
+				.upperBound(5L);
 
 		// When
 		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
@@ -82,8 +82,8 @@ public class ClientSpanLongTagProcessorTest {
 	public void testProcessSpan_withUpperBoundDiscardsIfGreater()  throws Exception {
 		// Given
 		addServletParameter("6");
-		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
-				.upperBound(5)
+		ClientSpanTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
+				.upperBound(5L)
 				.discardSpanOnBoundViolation(true);
 
 		// When
@@ -100,8 +100,8 @@ public class ClientSpanLongTagProcessorTest {
 	public void testProcessSpan_withUpperBoundAllowingIfEquals()  throws Exception {
 		// Given
 		addServletParameter("6");
-		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
-				.upperBound(6)
+		ClientSpanTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
+				.upperBound(6L)
 				.discardSpanOnBoundViolation(true);
 
 		// When
@@ -118,8 +118,8 @@ public class ClientSpanLongTagProcessorTest {
 	public void testProcessSpan_withLowerBoundIgnoresIfLower()  throws Exception {
 		// Given
 		addServletParameter("4");
-		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
-				.lowerBound(5);
+		ClientSpanTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
+				.lowerBound(5L);
 
 		// When
 		SpanWrapper span = runProcessor(clientSpanLongTagProcessor);
@@ -135,8 +135,8 @@ public class ClientSpanLongTagProcessorTest {
 	public void testProcessSpan_withLowerBoundDiscardsIfLower()  throws Exception {
 		// Given
 		addServletParameter("4");
-		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
-				.lowerBound(5)
+		ClientSpanTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
+				.lowerBound(5L)
 				.discardSpanOnBoundViolation(true);
 
 		// When
@@ -153,8 +153,8 @@ public class ClientSpanLongTagProcessorTest {
 	public void testProcessSpan_withLowerBoundAllowingIfEquals()  throws Exception {
 		// Given
 		addServletParameter("5");
-		ClientSpanLongTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
-				.lowerBound(5)
+		ClientSpanTagProcessor clientSpanLongTagProcessor = new ClientSpanLongTagProcessor(TYPE_ALL, TAG, REQUEST_PARAMETER_NAME)
+				.lowerBound(5L)
 				.discardSpanOnBoundViolation(true);
 
 		// When
@@ -167,7 +167,7 @@ public class ClientSpanLongTagProcessorTest {
 		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 	}
 
-	private SpanWrapper runProcessor(ClientSpanLongTagProcessor clientSpanLongTagProcessor) {
+	private SpanWrapper runProcessor(ClientSpanTagProcessor clientSpanLongTagProcessor) {
 		clientSpanLongTagProcessor.processSpanBuilderImpl(spanBuilder, servletRequestParameters);
 		final SpanWrapper span = spanBuilder.start();
 		clientSpanLongTagProcessor.processSpanImpl(span, servletRequestParameters);
