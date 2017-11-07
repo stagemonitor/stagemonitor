@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.B3HeaderFormat;
-import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.web.servlet.MonitoredHttpRequest;
@@ -33,7 +32,9 @@ import io.opentracing.tag.Tags;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.stagemonitor.tracing.B3IdentifierTagger.SPAN_ID;
 import static org.stagemonitor.tracing.B3IdentifierTagger.TRACE_ID;
+import static org.stagemonitor.web.servlet.eum.ClientSpanTagProcessor.TYPE_ALL;
 import static org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension.METADATA_BACKEND_SPAN_ID;
+import static org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension.METADATA_BACKEND_SPAN_SAMPLING_FLAG;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_APP_CACHE_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_DNS_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_LOAD;
@@ -60,6 +61,8 @@ public class ClientSpanServlet extends HttpServlet {
 	private static final String ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
 	private static final String ACCESS_CONTROL_ALLOW_METHODS = "Access-Control-Allow-Methods";
 	private static final Logger logger = LoggerFactory.getLogger(ClientSpanServlet.class);
+	private static final String SAMPLED_FLAG = "sp";
+	private static final String BACKEND_TRACE_ID = "bt";
 
 	private final TracingPlugin tracingPlugin;
 	private final List<ClientSpanTagProcessor> tagProcessors;
@@ -106,15 +109,23 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(new ClientSpanBooleanTagProcessor(TYPE_XHR, "xhr.async", "a"));
 		addTagProcessor(durationProcessor(TYPE_XHR, "duration_ms", "d"));
 		// The OT-API does not allow to set the SpanContext for the current span, so just set the ids as tags
-		addTagProcessor(new ClientSpanStringTagProcessor(ClientSpanTagProcessor.TYPE_ALL, SPAN_ID, "s", false));
-		addTagProcessor(new ClientSpanStringTagProcessor(ClientSpanTagProcessor.TYPE_ALL, TRACE_ID, "t", false));
+		// TODO change to SELF reference when https://github.com/opentracing/opentracing-java/pull/212 is merged
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ALL, SPAN_ID, "s", false));
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ALL, TRACE_ID, "t", false));
+		addTagProcessor(new ClientSpanIntegerTagProcessor(TYPE_ALL, Tags.SAMPLING_PRIORITY.getKey(), SAMPLED_FLAG)
+				.lowerBound(0)
+				.upperBound(1));
+		// sets the same sampling decision as the backend trace (does not work for standalone EUM servers)
+		addTagProcessor(new ClientSpanIntegerTagProcessor(TYPE_PAGE_LOAD, Tags.SAMPLING_PRIORITY.getKey(), METADATA_BACKEND_SPAN_SAMPLING_FLAG)
+				.lowerBound(0)
+				.upperBound(1));
 		// bt = backend trace id
-		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_PAGE_LOAD, TRACE_ID, "bt", false));
-		addTagProcessor(new ClientSpanTagProcessor(TYPE_PAGE_LOAD, Arrays.asList("bt", METADATA_BACKEND_SPAN_ID)) {
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_PAGE_LOAD, TRACE_ID, BACKEND_TRACE_ID, false));
+		addTagProcessor(new ClientSpanTagProcessor(TYPE_PAGE_LOAD, Arrays.asList(BACKEND_TRACE_ID, METADATA_BACKEND_SPAN_ID)) {
 			@Override
 			protected void processSpanImpl(Span span, Map<String, String[]> requestParameters) {
 				final B3HeaderFormat.B3Identifiers backendSpanIds = B3HeaderFormat.B3Identifiers.builder()
-						.traceId(getParameterValueOrNull("bt", requestParameters))
+						.traceId(getParameterValueOrNull(BACKEND_TRACE_ID, requestParameters))
 						.spanId(getParameterValueOrNull(METADATA_BACKEND_SPAN_ID, requestParameters))
 						.build();
 				final String pageloadSpanId = B3HeaderFormat.getB3Identifiers(tracingPlugin.getTracer(), span).getSpanId();
@@ -129,9 +140,9 @@ public class ClientSpanServlet extends HttpServlet {
 		return durationProcessor(typePageLoad, tagName, getWeaselRequestParameterName(tagName));
 	}
 
-	private ClientSpanLongTagProcessor durationProcessor(String beaconType, String tagName, String requestParameterName) {
+	private ClientSpanTagProcessor durationProcessor(String beaconType, String tagName, String requestParameterName) {
 		return new ClientSpanLongTagProcessor(beaconType, tagName, requestParameterName)
-				.lowerBound(0)
+				.lowerBound(0L)
 				.upperBound(TimeUnit.MINUTES.toMillis(10))
 				.discardSpanOnBoundViolation(true);
 	}
@@ -203,11 +214,13 @@ public class ClientSpanServlet extends HttpServlet {
 		}
 
 		final Span span = spanBuilder.startManual();
-		if (SpanContextInformation.forSpan(span).isSampled()) {
+		if (tracingPlugin.isSampled(span)) {
 			for (ClientSpanTagProcessor tagProcessor : tagProcessors) {
 				tagProcessor.processSpan(span, servletParameters);
 			}
+		}
 
+		if (tracingPlugin.isSampled(span)) {
 			if (servletPlugin.isParseUserAgent()) {
 				if (userAgentParser == null) {
 					userAgentParser = new UserAgentParser();
@@ -233,10 +246,10 @@ public class ClientSpanServlet extends HttpServlet {
 
 	private String getHttpUrl(HttpServletRequest httpServletRequest) {
 		String operationName;
-		if (httpServletRequest.getParameter(PARAMETER_LOCATION) != null) {
-			operationName = httpServletRequest.getParameter(PARAMETER_LOCATION);
-		} else {
+		if (httpServletRequest.getParameter(PARAMETER_URL) != null) {
 			operationName = httpServletRequest.getParameter(PARAMETER_URL);
+		} else {
+			operationName = httpServletRequest.getParameter(PARAMETER_LOCATION);
 		}
 		return operationName;
 	}

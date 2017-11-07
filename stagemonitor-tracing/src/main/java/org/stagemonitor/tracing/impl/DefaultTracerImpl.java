@@ -7,12 +7,12 @@ import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.util.ThreadLocalScopeManager;
 
-public class DefaultTracerImpl implements Tracer {
+class DefaultTracerImpl implements Tracer {
 
 	private final ScopeManager scopeManager = new ThreadLocalScopeManager();
 	private final Tracer tracer;
 
-	public DefaultTracerImpl() {
+	DefaultTracerImpl() {
 		tracer = NoopTracerFactory.create();
 	}
 

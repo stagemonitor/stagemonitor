@@ -28,6 +28,7 @@ import io.opentracing.tag.Tags;
 import io.opentracing.util.ThreadLocalScopeManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -51,6 +52,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1000000d);
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
 		when(tracingPlugin.isPseudonymizeUserNames()).thenReturn(true);
+		when(tracingPlugin.isSampled(any())).thenReturn(true);
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(configuration);
 		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
@@ -106,7 +108,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 	public void testUpdateNotYetExistentSpan_eventuallyUpdates() throws Exception {
 		final Span span = tracer.buildSpan("Test#test")
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-				.start();
+				.startManual();
 		reporter.updateSpan(B3HeaderFormat.getB3Identifiers(tracer, span), null, Collections.singletonMap("foo", "bar"));
 
 		span.finish();

@@ -109,7 +109,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		SpanContextInformation info = SpanContextInformation.forSpan(span);
 		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
 		info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
-		if (info.isSampled() && servletPlugin.isParseUserAgent() && StringUtils.isNotEmpty(userAgentHeader)) {
+		if (tracingPlugin.isSampled(span) && servletPlugin.isParseUserAgent() && StringUtils.isNotEmpty(userAgentHeader)) {
 			parseUserAgentAsync(span, info);
 		}
 		return scope;

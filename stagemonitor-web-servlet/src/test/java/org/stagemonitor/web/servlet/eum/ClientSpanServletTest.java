@@ -9,9 +9,7 @@ import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.reporter.ReportingSpanEventListener;
 import org.stagemonitor.tracing.tracing.B3Propagator;
-import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
-import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
 import org.stagemonitor.web.servlet.ServletPlugin;
 import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataDefinition;
 
@@ -37,6 +35,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.stagemonitor.web.servlet.eum.ClientSpanServlet.TYPE_PAGE_LOAD;
+import static org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension.METADATA_BACKEND_SPAN_ID;
+import static org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension.METADATA_BACKEND_SPAN_SAMPLING_FLAG;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_APP_CACHE_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_DNS_LOOKUP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_LOAD;
@@ -54,24 +55,18 @@ public class ClientSpanServletTest {
 	private MockTracer mockTracer;
 	private ClientSpanServlet servlet;
 	private ServletPlugin servletPlugin;
-	private Integer samplingPriority;
 	private ReportingSpanEventListener reportingSpanEventListener;
+	private TracingPlugin tracingPlugin;
 
 	@Before
 	public void setUp() {
-		samplingPriority = 1;
 		mockTracer = new MockTracer(new ThreadLocalScopeManager(), new B3Propagator());
-		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
+		tracingPlugin = mock(TracingPlugin.class);
 		SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(mockTracer, asList(
 				new SpanContextInformation.SpanContextSpanEventListener(),
-				new SpanContextInformation.SpanFinalizer(),
-				new StatelessSpanEventListener() {
-					@Override
-					public void onStart(SpanWrapper spanWrapper) {
-						Tags.SAMPLING_PRIORITY.set(spanWrapper, samplingPriority);
-					}
-				}));
+				new SpanContextInformation.SpanFinalizer()));
 		when(tracingPlugin.getTracer()).thenReturn(spanWrappingTracer);
+		when(tracingPlugin.isSampled(any())).thenReturn(true);
 		reportingSpanEventListener = mock(ReportingSpanEventListener.class);
 		when(tracingPlugin.getReportingSpanEventListener()).thenReturn(reportingSpanEventListener);
 		servletPlugin = mock(ServletPlugin.class);
@@ -221,7 +216,8 @@ public class ClientSpanServletTest {
 	@Test
 	public void testConvertWeaselBeaconToSpan_skipsTagProcessorsIfSpanIsNotSampled() throws ServletException, IOException {
 		// Given
-		samplingPriority = 0;
+		when(tracingPlugin.isSampled(any())).thenReturn(false);
+
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
 		mockHttpServletRequest.setParameter("ty", "pl");
 		mockHttpServletRequest.setParameter("r", "1496751574200");
@@ -250,7 +246,6 @@ public class ClientSpanServletTest {
 			MockSpan span = finishedSpans.get(0);
 			softly.assertThat(span.tags())
 					.containsEntry("type", "pageload")
-					.containsEntry(Tags.SAMPLING_PRIORITY.getKey(), 0)
 					.doesNotContainKeys(TIMING_UNLOAD, TIMING_REDIRECT, TIMING_APP_CACHE_LOOKUP, TIMING_DNS_LOOKUP,
 							TIMING_TCP, TIMING_REQUEST, TIMING_RESPONSE, TIMING_PROCESSING, TIMING_LOAD,
 							TIMING_TIME_TO_FIRST_PAINT, TIMING_RESOURCE);
@@ -404,7 +399,7 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("pl", "d58cddae830273d1");
 		mockHttpServletRequest.setParameter("l", "http://localhost:9966/petclinic/");
 		mockHttpServletRequest.setParameter("m", "GET");
-		mockHttpServletRequest.setParameter("u", "owners.html?lastName=");
+		mockHttpServletRequest.setParameter("u", "http://localhost:9966/petclinic/owners.html?lastName=");
 		mockHttpServletRequest.setParameter("a", "1");
 		mockHttpServletRequest.setParameter("st", "200");
 		mockHttpServletRequest.setParameter("e", "undefined");
@@ -420,7 +415,7 @@ public class ClientSpanServletTest {
 			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
 			softly.assertThat(finishedSpans).hasSize(1);
 			MockSpan span = finishedSpans.get(0);
-			softly.assertThat(span.operationName()).isEqualTo("/petclinic/");
+			softly.assertThat(span.operationName()).isEqualTo("/petclinic/owners.html");
 			softly.assertThat(span.finishMicros() - span.startMicros()).isEqualTo(TimeUnit.MILLISECONDS.toMicros(2084L));
 
 			softly.assertThat(span.tags())
@@ -428,12 +423,68 @@ public class ClientSpanServletTest {
 					.containsEntry("type", "ajax")
 					.containsEntry("http.status_code", 200L)
 					.containsEntry("method", "GET")
-					.containsEntry("xhr.requested_url", "owners.html?lastName=")
+					.containsEntry("xhr.requested_url", "http://localhost:9966/petclinic/owners.html?lastName=")
 					.containsEntry("xhr.requested_from", "http://localhost:9966/petclinic/")
 					.containsEntry("xhr.async", true)
 					.containsEntry("duration_ms", 2084L)
 					.containsEntry("id", "2d371455215c504")
 					.containsEntry("trace_id", "2d371455215c504");
+		});
+	}
+
+	@Test
+	public void testWeaselBeaconXhrBeacon_withSampledFlag() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("t", "2d371455215c504");
+		mockHttpServletRequest.setParameter("s", "2d371455215c504");
+		mockHttpServletRequest.setParameter("ty", "xhr");
+
+		mockHttpServletRequest.setParameter("sp", "0");
+		// ignored
+		mockHttpServletRequest.setParameter(METADATA_BACKEND_SPAN_ID, "1");
+
+		// When
+		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+
+			softly.assertThat(span.tags())
+					.containsEntry("id", "2d371455215c504")
+					.containsEntry("trace_id", "2d371455215c504")
+					.containsEntry(Tags.SAMPLING_PRIORITY.getKey(), 0);
+		});
+	}
+
+	@Test
+	public void testWeaselBeaconPageLoadBeacon_withSampledFlag() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("t", "2d371455215c504");
+		mockHttpServletRequest.setParameter("s", "2d371455215c504");
+		mockHttpServletRequest.setParameter("ty", TYPE_PAGE_LOAD);
+
+		// ignored
+		mockHttpServletRequest.setParameter("sp", "0");
+		mockHttpServletRequest.setParameter(METADATA_BACKEND_SPAN_SAMPLING_FLAG, "1");
+
+		// When
+		servlet.doGet(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertSoftly(softly -> {
+			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
+			softly.assertThat(finishedSpans).hasSize(1);
+			MockSpan span = finishedSpans.get(0);
+
+			softly.assertThat(span.tags())
+					.containsEntry("id", "2d371455215c504")
+					.containsEntry("trace_id", "2d371455215c504")
+					.containsEntry(Tags.SAMPLING_PRIORITY.getKey(), 1);
 		});
 	}
 

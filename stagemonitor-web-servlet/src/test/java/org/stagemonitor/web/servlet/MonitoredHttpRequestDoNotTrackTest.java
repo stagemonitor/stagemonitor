@@ -23,6 +23,7 @@ import javax.servlet.FilterChain;
 
 import io.opentracing.Scope;
 import io.opentracing.mock.MockTracer;
+import io.opentracing.tag.Tags;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -78,7 +79,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
 				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
 		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
-		assertThat(span.isSampled()).isFalse();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isEqualTo(0);
 		activeScope.close();
 	}
 
@@ -90,7 +91,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
 				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
 		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 		activeScope.close();
 	}
 
@@ -101,7 +102,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
 				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
 		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 		activeScope.close();
 	}
 
@@ -113,7 +114,7 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
 				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
 		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
-		assertThat(span.isSampled()).isTrue();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 		activeScope.close();
 	}
 

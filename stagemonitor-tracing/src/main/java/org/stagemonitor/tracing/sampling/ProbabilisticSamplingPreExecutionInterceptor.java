@@ -4,7 +4,6 @@ import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
-import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.BitSet;
@@ -19,10 +18,11 @@ public class ProbabilisticSamplingPreExecutionInterceptor extends PreExecutionSp
 	private BitSet defaultSampleDecisions;
 	private Map<String, BitSet> sampleDecisionsByType;
 	private AtomicInteger spanCounter = new AtomicInteger();
+	private TracingPlugin tracingPlugin;
 
 	@Override
 	public void init(ConfigurationRegistry configuration) {
-		TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
+		tracingPlugin = configuration.getConfig(TracingPlugin.class);
 
 		defaultSampleDecisions = getBitSet(tracingPlugin.getDefaultRateLimitSpansPercent());
 		setBitSetMap(tracingPlugin.getRateLimitSpansPerMinutePercentPerType());
@@ -62,7 +62,7 @@ public class ProbabilisticSamplingPreExecutionInterceptor extends PreExecutionSp
 	}
 
 	protected boolean isRoot(SpanWrapper span) {
-		return SpanUtils.isRoot(span);
+		return tracingPlugin.isRoot(span);
 	}
 
 	private boolean isSampled(BitSet sampleDecisions, AtomicInteger spanCounter) {

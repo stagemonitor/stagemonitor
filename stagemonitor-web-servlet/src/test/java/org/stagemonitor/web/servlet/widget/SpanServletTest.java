@@ -63,6 +63,7 @@ public class SpanServletTest {
 		TracingPlugin tracingPlugin = mock(TracingPlugin.class);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(mock(RequestMonitor.class));
 		when(tracingPlugin.getProfilerRateLimitPerMinuteOption()).thenReturn(mock(ConfigurationOption.class));
+		when(tracingPlugin.isSampled(any())).thenReturn(true);
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 
 		servletPlugin = mock(ServletPlugin.class);

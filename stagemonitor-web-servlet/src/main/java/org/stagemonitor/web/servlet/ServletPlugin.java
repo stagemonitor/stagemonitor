@@ -20,7 +20,6 @@ import org.stagemonitor.web.servlet.eum.ClientSpanJavaScriptServlet;
 import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataConverter;
 import org.stagemonitor.web.servlet.eum.ClientSpanMetadataTagProcessor.ClientSpanMetadataDefinition;
 import org.stagemonitor.web.servlet.eum.ClientSpanServlet;
-import org.stagemonitor.web.servlet.eum.WeaselClientSpanExtension;
 import org.stagemonitor.web.servlet.filter.HttpRequestMonitorFilter;
 import org.stagemonitor.web.servlet.filter.StagemonitorSecurityFilter;
 import org.stagemonitor.web.servlet.health.HealthCheckServlet;
@@ -212,10 +211,10 @@ public class ServletPlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Request Exception Attributes")
 			.description("Defines the list of attribute names to check on the HttpServletRequest when searching for an exception. \n\n" +
-			             "Stagemonitor searches this list in order to see if any of these attributes are set on the request with " +
+					"Stagemonitor searches this list in order to see if any of these attributes are set on the request with " +
 					"an Exception object and then records that information on the span. If your web framework " +
 					"sets a different attribute outside of the defaults, you can add that attribute to this list to properly " +
-					     "record the exception on the trace.")
+					"record the exception on the trace.")
 			.configurationCategory(WEB_PLUGIN)
 			.buildWithDefault(new LinkedHashSet<String>() {{
 				add("javax.servlet.error.exception");
@@ -277,6 +276,8 @@ public class ServletPlugin extends StagemonitorPlugin {
 			.configurationCategory(WEB_PLUGIN)
 			.tags("advanced")
 			.buildWithDefault(5);
+	private ClientSpanJavaScriptServlet clientSpanJavaScriptServlet;
+	private List<ClientSpanExtension> clientSpanExtensions;
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
@@ -288,6 +289,7 @@ public class ServletPlugin extends StagemonitorPlugin {
 			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk", true);
 			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		}
+		initClientSpanExtensions(initArguments.getConfiguration());
 	}
 
 	@Override
@@ -395,8 +397,8 @@ public class ServletPlugin extends StagemonitorPlugin {
 		} else {
 			if (StringUtils.isNotEmpty(password)) {
 				logger.error("The password transmitted via the header {} is not correct. " +
-						"This might be a malicious attempt to guess the value of {}. " +
-						"The request was initiated from the ip {}.",
+								"This might be a malicious attempt to guess the value of {}. " +
+								"The request was initiated from the ip {}.",
 						STAGEMONITOR_SHOW_WIDGET, Stagemonitor.STAGEMONITOR_PASSWORD,
 						MonitoredHttpRequest.getClientIp(request));
 			}
@@ -422,33 +424,40 @@ public class ServletPlugin extends StagemonitorPlugin {
 
 	public Map<String, ClientSpanMetadataDefinition> getWhitelistedClientSpanTags() {
 		HashMap<String, ClientSpanMetadataDefinition> allWhitelistedClientSpanTags = new HashMap<String, ClientSpanMetadataDefinition>();
-		allWhitelistedClientSpanTags.putAll(getWhitelistedClientSpanTagsFromSPI());
+		allWhitelistedClientSpanTags.putAll(whitelistedClientSpanTagsFromSPI);
 		allWhitelistedClientSpanTags.putAll(whitelistedClientSpanTags.get());
 		return Collections.unmodifiableMap(allWhitelistedClientSpanTags);
 	}
 
-	private Map<String, ClientSpanMetadataDefinition> getWhitelistedClientSpanTagsFromSPI() {
-		if (whitelistedClientSpanTagsFromSPI == null) {
-			HashMap<String, ClientSpanMetadataDefinition> whitelistedTagsFromSPI = new HashMap<String, ClientSpanMetadataDefinition>();
-
-			for (ClientSpanExtension clientSpanExtension : getClientSpanExtenders()) {
-				final Map<String, ClientSpanMetadataDefinition> whitelistedTags = clientSpanExtension.getWhitelistedTags();
-				whitelistedTagsFromSPI.putAll(whitelistedTags);
-			}
-
-			this.whitelistedClientSpanTagsFromSPI = Collections.unmodifiableMap(whitelistedTagsFromSPI);
+	private void initClientSpanExtensions(ConfigurationRegistry config) {
+		List<ClientSpanExtension> clientSpanExtensions = new ArrayList<ClientSpanExtension>();
+		for (ClientSpanExtension clientSpanExtension : ServiceLoader.load(ClientSpanExtension.class)) {
+			clientSpanExtension.init(config);
+			clientSpanExtensions.add(clientSpanExtension);
 		}
+		this.clientSpanExtensions = clientSpanExtensions;
+		initWhiteListedClientSpanTags(clientSpanExtensions);
+	}
 
-		return whitelistedClientSpanTagsFromSPI;
+	private void initWhiteListedClientSpanTags(List<ClientSpanExtension> clientSpanExtensions) {
+		HashMap<String, ClientSpanMetadataDefinition> whitelistedTagsFromSPI = new HashMap<String, ClientSpanMetadataDefinition>();
+		for (ClientSpanExtension clientSpanExtension : clientSpanExtensions) {
+			final Map<String, ClientSpanMetadataDefinition> whitelistedTags = clientSpanExtension.getWhitelistedTags();
+			whitelistedTagsFromSPI.putAll(whitelistedTags);
+		}
+		this.whitelistedClientSpanTagsFromSPI = Collections.unmodifiableMap(whitelistedTagsFromSPI);
 	}
 
 	public List<ClientSpanExtension> getClientSpanExtenders() {
-		List<ClientSpanExtension> clientSpanExtensions = new ArrayList<ClientSpanExtension>();
-		for (ClientSpanExtension clientSpanExtension : ServiceLoader.load(ClientSpanExtension.class)) {
-			clientSpanExtensions.add(clientSpanExtension);
-		}
-		clientSpanExtensions.add(new WeaselClientSpanExtension(this));
 		return clientSpanExtensions;
+	}
+
+	private void setClientSpanJavaScriptServlet(ClientSpanJavaScriptServlet clientSpanJavaScriptServlet) {
+		this.clientSpanJavaScriptServlet = clientSpanJavaScriptServlet;
+	}
+
+	public ClientSpanJavaScriptServlet getClientSpanJavaScriptServlet() {
+		return clientSpanJavaScriptServlet;
 	}
 
 	public static class Initializer implements StagemonitorServletContainerInitializer {
@@ -462,7 +471,9 @@ public class ServletPlugin extends StagemonitorPlugin {
 					.addMapping("/stagemonitor/metrics");
 			ctx.addServlet(ClientSpanServlet.class.getSimpleName(), new ClientSpanServlet())
 					.addMapping("/stagemonitor/public/eum");
-			ctx.addServlet(ClientSpanJavaScriptServlet.class.getSimpleName(), new ClientSpanJavaScriptServlet())
+			final ClientSpanJavaScriptServlet servlet = new ClientSpanJavaScriptServlet();
+			Stagemonitor.getPlugin(ServletPlugin.class).setClientSpanJavaScriptServlet(servlet);
+			ctx.addServlet(ClientSpanJavaScriptServlet.class.getSimpleName(), servlet)
 					.addMapping("/stagemonitor/public/eum.js");
 			ctx.addServlet(StagemonitorFileServlet.class.getSimpleName(), new StagemonitorFileServlet())
 					.addMapping("/stagemonitor/static/*", "/stagemonitor/public/static/*");

@@ -41,7 +41,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
 		final SpanContextInformation contextInfo = SpanContextInformation.forSpan(spanWrapper);
-		if (spanWrapper.isSampled() && contextInfo.getPreExecutionInterceptorContext() != null) {
+		if (tracingPlugin.isSampled(spanWrapper) && contextInfo.getPreExecutionInterceptorContext() != null) {
 			determineIfEnableProfiler(spanWrapper, contextInfo);
 			if (!Profiler.isProfilingActive() && contextInfo.getPreExecutionInterceptorContext().isCollectCallTree()) {
 				contextInfo.setCallTree(Profiler.activateProfiling("total"));
@@ -71,7 +71,7 @@ public class CallTreeSpanEventListener extends StatelessSpanEventListener {
 		if (contextInfo.getCallTree() != null) {
 			try {
 				Profiler.stop();
-				if (spanWrapper.isSampled()) {
+				if (tracingPlugin.isSampled(spanWrapper)) {
 					determineIfExcludeCallTree(contextInfo);
 					if (isAddCallTreeToSpan(contextInfo, operationName)) {
 						addCallTreeToSpan(contextInfo, spanWrapper, operationName);

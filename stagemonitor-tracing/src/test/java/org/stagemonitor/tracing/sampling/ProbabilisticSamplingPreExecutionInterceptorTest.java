@@ -21,7 +21,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class ProbabilisticSamplingPreExecutionInterceptorTest {
@@ -35,7 +38,8 @@ public class ProbabilisticSamplingPreExecutionInterceptorTest {
 	@Before
 	public void setUp() throws Exception {
 		GlobalTracerTestHelper.resetGlobalTracer();
-		tracingPlugin = new TracingPlugin();
+		tracingPlugin = spy(new TracingPlugin());
+		doReturn(true).when(tracingPlugin).isRoot(any());
 		configuration = new ConfigurationRegistry(Collections.singletonList(tracingPlugin),
 				Collections.singletonList(new SimpleSource()),
 				null);

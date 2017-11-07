@@ -2,7 +2,6 @@ package org.stagemonitor.web.servlet.eum;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
@@ -15,7 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class ClientSpanJavaScriptServlet extends HttpServlet implements ConfigurationOption.ChangeListener<Boolean> {
+public class ClientSpanJavaScriptServlet extends HttpServlet {
 
 	private static final String MIME_APPLICATION_JAVASCRIPT = "application/javascript";
 	private static final String ETAG = "etag";
@@ -35,11 +34,10 @@ public class ClientSpanJavaScriptServlet extends HttpServlet implements Configur
 
 	public ClientSpanJavaScriptServlet(ServletPlugin servletPlugin) {
 		this.servletPlugin = servletPlugin;
-		servletPlugin.registerMinifyClientSpanScriptOptionChangedListener(this);
-		buildJavaScriptAndEtag();
+		rebuildJavaScriptAndEtag();
 	}
 
-	private void buildJavaScriptAndEtag() {
+	public void rebuildJavaScriptAndEtag() {
 		List<ClientSpanExtension> clientSpanExtensions = Stagemonitor.getPlugin(ServletPlugin.class).getClientSpanExtenders();
 		javaScript = concatenateJavaScript(clientSpanExtensions);
 		javaScriptEtag = generateEtag(javaScript);
@@ -47,7 +45,7 @@ public class ClientSpanJavaScriptServlet extends HttpServlet implements Configur
 	}
 
 	private String generateEtag(String javaScript) {
-		return String.format("\"%d\"", javaScript.hashCode());
+		return String.format("\"%x\"", javaScript.hashCode());
 	}
 
 	private String concatenateJavaScript(List<ClientSpanExtension> clientSpanExtensions) {
@@ -89,10 +87,5 @@ public class ClientSpanJavaScriptServlet extends HttpServlet implements Configur
 		} else {
 			return MAX_AGE + String.valueOf(TimeUnit.MINUTES.toSeconds(cachingDurationInMinutes));
 		}
-	}
-
-	@Override
-	public void onChange(ConfigurationOption<?> configurationOption, Boolean oldValue, Boolean newValue) {
-		buildJavaScriptAndEtag();
 	}
 }

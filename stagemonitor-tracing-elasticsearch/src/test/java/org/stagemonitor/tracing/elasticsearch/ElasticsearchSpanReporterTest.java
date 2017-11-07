@@ -64,7 +64,6 @@ public class ElasticsearchSpanReporterTest extends AbstractElasticsearchSpanRepo
 		final SpanContextInformation info = reportSpanWithCallTree(1, "Regular Foo");
 
 		Assert.assertTrue(reporter.isActive(info));
-		Assert.assertFalse(info.isSampled());
 		assertEquals(0, tags.get(Tags.SAMPLING_PRIORITY.getKey()));
 	}
 

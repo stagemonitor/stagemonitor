@@ -13,6 +13,7 @@ import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TagRecordingSpanEventListener;
 import org.stagemonitor.tracing.TracingPlugin;
+import org.stagemonitor.tracing.impl.DefaultTracerFactory;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.profiler.CallStackElement;
 import org.stagemonitor.tracing.profiler.formatter.ShortSignatureFormatter;
@@ -32,6 +33,7 @@ import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -71,6 +73,7 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(tracingPlugin.isProfilerActive()).thenReturn(true);
 		when(tracingPlugin.getProfilerRateLimitPerMinute()).thenReturn(1_000_000d);
 		when(tracingPlugin.getCallTreeAsciiFormatter()).thenReturn(new ShortSignatureFormatter());
+		when(tracingPlugin.isSampled(any())).then(invocation -> new DefaultTracerFactory().isSampled(invocation.getArgument(0)));
 		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));

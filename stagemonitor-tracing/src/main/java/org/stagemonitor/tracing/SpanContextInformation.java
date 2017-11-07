@@ -127,10 +127,6 @@ public class SpanContextInformation {
 		return postExecutionInterceptorContext;
 	}
 
-	public boolean isSampled() {
-		return spanWrapper.isSampled();
-	}
-
 	long getOverhead1() {
 		return overhead1;
 	}

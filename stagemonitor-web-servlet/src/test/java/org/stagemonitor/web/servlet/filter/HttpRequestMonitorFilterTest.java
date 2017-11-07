@@ -1,5 +1,7 @@
 package org.stagemonitor.web.servlet.filter;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +12,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.MeasurementSession;
+import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
@@ -43,6 +47,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class HttpRequestMonitorFilterTest {
 
@@ -76,6 +81,7 @@ public class HttpRequestMonitorFilterTest {
 		doReturn(true).when(servletPlugin).isClientSpanCollectionInjectionEnabled();
 		doReturn(true).when(corePlugin).isStagemonitorActive();
 		doReturn(1000000d).when(tracingPlugin).getProfilerRateLimitPerMinute();
+		when(tracingPlugin.isSampled(any())).thenReturn(true);
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, mock(Metric2Registry.class));
 		doReturn(requestMonitor).when(tracingPlugin).getRequestMonitor();
 		final SpanWrappingTracer spanWrappingTracer = new SpanWrappingTracer(new MockTracer(new ThreadLocalScopeManager(), new B3Propagator()),
@@ -87,6 +93,8 @@ public class HttpRequestMonitorFilterTest {
 		doReturn(spanWrappingTracer).when(tracingPlugin).getTracer();
 		doReturn("testApplication").when(corePlugin).getApplicationName();
 		doReturn("testInstance").when(corePlugin).getInstanceName();
+		servletPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(mock(Metric2Registry.class), configuration,
+				mock(MeasurementSession.class), mock(HealthCheckRegistry.class)));
 
 		initFilter();
 		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
