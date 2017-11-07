@@ -54,9 +54,9 @@ ext {
 	slf4jVersion = '1.7.25'
 	jacksonVersion = '2.9.0'
 	esVersion = '5.1.2'
-	byteBuddyVersion = '1.7.5'
+	byteBuddyVersion = '1.7.9'
 	opentracingVersion = '0.31.0-RC1'
-	jaegerVersion = '0.22.0-RC1'
+	jaegerVersion = '0.22.0-RC2'
 	jettyVersion = '9.3.13.v20161014'
 	getProjectsToRelease = this.&getProjectsToRelease
 }
