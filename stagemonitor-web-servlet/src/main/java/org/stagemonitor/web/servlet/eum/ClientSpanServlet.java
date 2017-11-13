@@ -238,7 +238,7 @@ public class ClientSpanServlet extends HttpServlet {
 		String httpUrl = getHttpUrl(httpServletRequest);
 		try {
 			URL url = new URL(httpUrl);
-			return url.getPath();
+			return MonitoredHttpRequest.removeSemicolonContent(url.getPath());
 		} catch (MalformedURLException e) {
 			return httpUrl;
 		}
