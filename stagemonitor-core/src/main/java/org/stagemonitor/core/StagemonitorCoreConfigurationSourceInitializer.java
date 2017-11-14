@@ -16,6 +16,7 @@ import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -93,7 +94,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 			return;
 		}
 
-		final Collection<String> springCloudConfigurationSourceIds = corePlugin.getSpringCloudConfigurationSourceProfiles();
+		final Collection<String> springCloudConfigurationSourceIds = new ArrayList<String>(corePlugin.getSpringCloudConfigurationSourceProfiles());
 		if (springCloudConfigurationSourceIds.isEmpty()) {
 			logger.warn("No configServerConfigurationProfiles set. Using " + SpringCloudConfigConfigurationSource.DEFAULT_PROFILE);
 			springCloudConfigurationSourceIds.add(SpringCloudConfigConfigurationSource.DEFAULT_PROFILE);
