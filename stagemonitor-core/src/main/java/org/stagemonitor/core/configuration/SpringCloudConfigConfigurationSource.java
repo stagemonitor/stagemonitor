@@ -27,8 +27,15 @@ import java.util.Map;
  * stagemonitor.instrument.include: my.domain
  * stagemonitor.web.paths.excluded: /some/path
  * }</pre>
+ * <br>
+ * The SpringCloudConfigConfigurationSource is controlled via the following properties.
+ * See {@code CorePlugin} for their corresponding detailed description
+ * <pre> {@code stagemonitor.configuration.springcloud.enabled=(true|false)
+ * stagemonitor.configuration.springcloud.address=<configserveraddress>
+ * stagemonitor.configuration.springcloud.configurationSourceProfiles: <profile>[, <profile>]...
+ * stagemonitor.configuration.springcloud.deactivateStagemonitorIfConfigServerIsDown=(true|false)
+ * }</pre>
  *
- * <p>
  */
 public class SpringCloudConfigConfigurationSource extends AbstractConfigurationSource {
 	private static final Logger logger = LoggerFactory.getLogger(SpringCloudConfigConfigurationSource.class);
