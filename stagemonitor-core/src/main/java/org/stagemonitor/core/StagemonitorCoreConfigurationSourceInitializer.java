@@ -19,6 +19,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
+
+import static org.stagemonitor.core.configuration.SpringCloudConfigConfigurationSource.getFullQualifiedConfigUrl;
 
 public class StagemonitorCoreConfigurationSourceInitializer extends StagemonitorConfigurationSourceInitializer {
 
@@ -94,14 +97,15 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 			return;
 		}
 
-		final Collection<String> springCloudConfigurationSourceIds = new ArrayList<String>(corePlugin.getSpringCloudConfigurationSourceProfiles());
+		final List<String> springCloudConfigurationSourceIds = new ArrayList<String>(corePlugin.getSpringCloudConfigurationSourceProfiles());
 		if (springCloudConfigurationSourceIds.isEmpty()) {
 			logger.warn("No configServerConfigurationProfiles set. Using " + SpringCloudConfigConfigurationSource.DEFAULT_PROFILE);
 			springCloudConfigurationSourceIds.add(SpringCloudConfigConfigurationSource.DEFAULT_PROFILE);
 		}
 
 		if (corePlugin.isDeactivateStagemonitorIfConfigServerIsDown()) {
-			assertCloudConfigServerIsAvailable(springCloudConfigServerAddress);
+			final String configUrl = getFullQualifiedConfigUrl(springCloudConfigServerAddress, applicationName, springCloudConfigurationSourceIds.get(0));
+			assertCloudConfigServerIsAvailable(configUrl);
 		}
 
 		logger.debug("Loading SpringCloudConfigurationSources with: applicationName = " + applicationName
@@ -122,18 +126,18 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 
 
 	/**
-	 * Does a simple HEAD request to the server's /health endpoint to check if it's reachable If not an
+	 * Does a simple HEAD request to a configuration endpoint to check if it's reachable. If not an
 	 * IllegalStateException is thrown
 	 *
-	 * @param springCloudConfigServerAddress Address of the Spring Cloud Config server
+	 * @param configUrl Full qualified configuration url for an application+profile
 	 */
-	private void assertCloudConfigServerIsAvailable(final String springCloudConfigServerAddress) {
-		new HttpClient().send("HEAD", springCloudConfigServerAddress + "/health", new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
+	private void assertCloudConfigServerIsAvailable(final String configUrl) {
+		new HttpClient().send("HEAD", configUrl, new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
 					@Override
 					public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
 						if (e != null || statusCode != 200) {
 							throw new IllegalStateException("Property stagemonitor.configuration.springcloud.enabled was set " +
-									"but the config server is not reachable at " + springCloudConfigServerAddress + ", http status code: " + statusCode, e);
+									"but the config server is not reachable at " + configUrl + ", http status code: " + statusCode, e);
 						}
 						return null;
 					}
