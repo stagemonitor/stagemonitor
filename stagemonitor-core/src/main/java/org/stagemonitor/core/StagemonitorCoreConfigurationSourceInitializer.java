@@ -1,9 +1,5 @@
 package org.stagemonitor.core;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
@@ -17,6 +13,11 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.http.HttpRequest;
 import org.stagemonitor.util.StringUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashMap;
 
 public class StagemonitorCoreConfigurationSourceInitializer extends StagemonitorConfigurationSourceInitializer {
 
@@ -74,10 +75,8 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	}
 
 	/**
-	 * Creates and registers a SpringCloudConfigConfigurationSource for each active profile, if the SpringCloudConfigurationSource is enabled per flag
-	 *
-	 * @param configuration
-	 * @param corePlugin
+	 * Creates and registers a SpringCloudConfigConfigurationSource for each active profile, if the
+	 * SpringCloudConfigurationSource is enabled per flag
 	 */
 	private void addSpringCloudConfigurationSources(ConfigurationRegistry configuration, CorePlugin corePlugin) {
 		// Validating necessary properties
@@ -85,12 +84,12 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 		final String springCloudConfigServerAddress = corePlugin.getSpringCloudConfigServerAddress();
 		if (StringUtils.isEmpty(applicationName) || CorePlugin.DEFAULT_APPLICATION_NAME.equals(applicationName)) {
 			logger.warn("stagemonitor.applicationName is not set (explicitly) but necessary for the config service configuration source." +
-				"Will skip the config source");
+					"Will skip the config source");
 			return;
 		}
 		if (StringUtils.isEmpty(springCloudConfigServerAddress) || !springCloudConfigServerAddress.startsWith("http")) {
 			logger.warn("stagemonitor.configuration.springcloud.address is not set or not a valid http/s address but necessary for the Spring Cloud Config configuration source." +
-				"Will skip the config source.");
+					"Will skip the config source.");
 			return;
 		}
 
@@ -105,16 +104,16 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 		}
 
 		logger.debug("Loading SpringCloudConfigurationSources with: applicationName = " + applicationName
-			+ ", springCloudConfigServerAddress = " + springCloudConfigServerAddress
-			+ ", profiles = " + springCloudConfigurationSourceIds);
+				+ ", springCloudConfigServerAddress = " + springCloudConfigServerAddress
+				+ ", profiles = " + springCloudConfigurationSourceIds);
 
 		final HttpClient sharedHttpClient = new HttpClient();
 		for (String configurationId : springCloudConfigurationSourceIds) {
 			final SpringCloudConfigConfigurationSource source = new SpringCloudConfigConfigurationSource(
-				sharedHttpClient,
-				springCloudConfigServerAddress,
-				applicationName,
-				configurationId);
+					sharedHttpClient,
+					springCloudConfigServerAddress,
+					applicationName,
+					configurationId);
 			configuration.addConfigurationSourceAfter(source, SimpleSource.class);
 		}
 		configuration.reloadAllConfigurationOptions();
@@ -122,25 +121,22 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 
 
 	/**
-	 * Does a simple HEAD request to the server's /health endpoint to check if it's reachable
-	 * If not an IllegalStateException is thrown
+	 * Does a simple HEAD request to the server's /health endpoint to check if it's reachable If not an
+	 * IllegalStateException is thrown
 	 *
 	 * @param springCloudConfigServerAddress Address of the Spring Cloud Config server
 	 */
-	private void assertCloudConfigServerIsAvailable(final String springCloudConfigServerAddress)
-	{
-		new HttpClient().send("HEAD", springCloudConfigServerAddress + "/health", new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>()
-			{
-				@Override
-				public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException
-				{
-					if (e != null || statusCode != 200) {
-						throw new IllegalStateException("Property stagemonitor.configuration.springcloud.enabled was set " +
-							"but the config server is not reachable at " + springCloudConfigServerAddress + ", http status code: " + statusCode, e);
+	private void assertCloudConfigServerIsAvailable(final String springCloudConfigServerAddress) {
+		new HttpClient().send("HEAD", springCloudConfigServerAddress + "/health", new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
+					@Override
+					public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
+						if (e != null || statusCode != 200) {
+							throw new IllegalStateException("Property stagemonitor.configuration.springcloud.enabled was set " +
+									"but the config server is not reachable at " + springCloudConfigServerAddress + ", http status code: " + statusCode, e);
+						}
+						return null;
 					}
-					return null;
 				}
-			}
 		);
 	}
 }

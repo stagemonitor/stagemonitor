@@ -1,9 +1,5 @@
 package org.stagemonitor.configuration.source;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,12 +11,15 @@ import org.mockito.stubbing.Answer;
 import org.stagemonitor.core.configuration.SpringCloudConfigConfigurationSource;
 import org.stagemonitor.core.util.HttpClient;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.Map;
+
 @RunWith(BlockJUnit4ClassRunner.class)
-public class ConfigServerConfigurationSourceTest
-{
+public class ConfigServerConfigurationSourceTest {
 	@Test
-	public void whenReturnCodeNot200_thenEmptyConfiguration()
-	{
+	public void whenReturnCodeNot200_thenEmptyConfiguration() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "", 400, null);
@@ -30,8 +29,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenResponseIsEmpty_thenEmptyConfiguration()
-	{
+	public void whenResponseIsEmpty_thenEmptyConfiguration() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
@@ -44,8 +42,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void whenBadConfigServerAddress_thenThrowException()
-	{
+	public void whenBadConfigServerAddress_thenThrowException() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
@@ -53,8 +50,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void whenMissingConfigServerAddress_thenThrowException()
-	{
+	public void whenMissingConfigServerAddress_thenThrowException() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
@@ -62,8 +58,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void whenMissingServiceName_thenThrowException()
-	{
+	public void whenMissingServiceName_thenThrowException() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
@@ -71,18 +66,16 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenNoProfileSpecified_thenUseDefaultProfile()
-	{
+	public void whenNoProfileSpecified_thenUseDefaultProfile() {
 		HttpClient http = Mockito.mock(HttpClient.class);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http,"http://localhost/config", "myservice");
+		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config", "myservice");
 
 		Assert.assertNotNull(dut);
 		Assert.assertTrue("config address should reflect the default profile", dut.getName().endsWith("default.properties"));
 	}
 
 	@Test
-	public void whenMalformedResponse_thenEmptyConfiguration()
-	{
+	public void whenMalformedResponse_thenEmptyConfiguration() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "malformed content", 200, null);
@@ -92,8 +85,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenMalformedContent_givenAlsoValidProperty_thenReturnConfig()
-	{
+	public void whenMalformedContent_givenAlsoValidProperty_thenReturnConfig() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "malformed content\nnew: hope\nbut not much", 200, null);
@@ -104,8 +96,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenIOException_thenEmptyConfiguration()
-	{
+	public void whenIOException_thenEmptyConfiguration() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar", 200, new IOException("bad connection or connection loss"));
@@ -129,8 +120,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenSimpleConfig_thenReturnConfig()
-	{
+	public void whenSimpleConfig_thenReturnConfig() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice", 200, null);
@@ -141,8 +131,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenSimpleConfig_givenSpecialCharsInPropValue_thenReturnConfig()
-	{
+	public void whenSimpleConfig_givenSpecialCharsInPropValue_thenReturnConfig() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: some more complex 123 \" string", 200, null);
@@ -160,8 +149,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenSimpleConfig_givenDifferentUpdates_thenReturnConfig()
-	{
+	public void whenSimpleConfig_givenDifferentUpdates_thenReturnConfig() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice", 200, null);
@@ -199,8 +187,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenSimpleConfig_givenPropertyList_thenReturnConfig()
-	{
+	public void whenSimpleConfig_givenPropertyList_thenReturnConfig() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser[0]: alice\nuser[1]: bob", 200, null);
@@ -212,8 +199,7 @@ public class ConfigServerConfigurationSourceTest
 	}
 
 	@Test
-	public void whenPropertyContainsAColon_thenStillSplitKeyValueCorrectly()
-	{
+	public void whenPropertyContainsAColon_thenStillSplitKeyValueCorrectly() {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice:bob\nanother: one: bites\nthe: dust:\n", 200, null);
@@ -225,30 +211,24 @@ public class ConfigServerConfigurationSourceTest
 		Assert.assertEquals("dust:", dut.getValue("the"));
 	}
 
-	private void prepMockWithResponse(HttpClient mockedHttpClient, String response, Integer statusCode, IOException ioException)
-	{
+	private void prepMockWithResponse(HttpClient mockedHttpClient, String response, Integer statusCode, IOException ioException) {
 		final ByteArrayInputStream inputStream;
-		try
-		{
+		try {
 			inputStream = response == null ? null : new ByteArrayInputStream(response.getBytes("UTF-8"));
 
-			Mockito.doAnswer(new Answer<Map<String, String>>()
-			{
+			Mockito.doAnswer(new Answer<Map<String, String>>() {
 				@Override
-				public Map<String, String> answer(InvocationOnMock invocation) throws Throwable
-				{
-					return (Map<String, String>)((HttpClient.ResponseHandler) invocation.getArgument(4)).handleResponse(null, inputStream, statusCode, ioException);
+				public Map<String, String> answer(InvocationOnMock invocation) throws Throwable {
+					return (Map<String, String>) ((HttpClient.ResponseHandler) invocation.getArgument(4)).handleResponse(null, inputStream, statusCode, ioException);
 				}
 			}).when(mockedHttpClient)
-				.send(
-					ArgumentMatchers.anyString(),
-					ArgumentMatchers.anyString(),
-					ArgumentMatchers.any(Map.class),
-					ArgumentMatchers.<HttpClient.OutputStreamHandler>any(),
-					ArgumentMatchers.any(HttpClient.ResponseHandler.class));
-		}
-		catch (UnsupportedEncodingException e)
-		{
+					.send(
+							ArgumentMatchers.anyString(),
+							ArgumentMatchers.anyString(),
+							ArgumentMatchers.any(Map.class),
+							ArgumentMatchers.<HttpClient.OutputStreamHandler>any(),
+							ArgumentMatchers.any(HttpClient.ResponseHandler.class));
+		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 			Assert.fail();
 		}
