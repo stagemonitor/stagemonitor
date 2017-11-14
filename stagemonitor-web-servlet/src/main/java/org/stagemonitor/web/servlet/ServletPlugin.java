@@ -277,7 +277,7 @@ public class ServletPlugin extends StagemonitorPlugin {
 			.tags("advanced")
 			.buildWithDefault(5);
 	private ClientSpanJavaScriptServlet clientSpanJavaScriptServlet;
-	private List<ClientSpanExtension> clientSpanExtensions;
+	private List<ClientSpanExtension> clientSpanExtensions = Collections.emptyList();
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
