@@ -32,7 +32,8 @@ import java.util.Map;
  * See {@code CorePlugin} for their corresponding detailed description
  * <pre> {@code stagemonitor.configuration.springcloud.enabled=(true|false)
  * stagemonitor.configuration.springcloud.address=<configserveraddress>
- * stagemonitor.configuration.springcloud.configurationSourceProfiles: <profile>[, <profile>]...
+ * stagemonitor.applicationName=<applicationName>
+ * stagemonitor.configuration.springcloud.configurationSourceProfiles=<profile>[, <profile>]...
  * stagemonitor.configuration.springcloud.deactivateStagemonitorIfConfigServerIsDown=(true|false)
  * }</pre>
  *
