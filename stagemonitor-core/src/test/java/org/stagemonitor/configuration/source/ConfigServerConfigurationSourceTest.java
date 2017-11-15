@@ -2,8 +2,6 @@ package org.stagemonitor.configuration.source;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -16,7 +14,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
-@RunWith(BlockJUnit4ClassRunner.class)
 public class ConfigServerConfigurationSourceTest {
 	@Test
 	public void whenReturnCodeNot200_thenEmptyConfiguration() {

@@ -50,7 +50,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 			addElasticsearchConfigurationSources(configInitializedArguments.getConfiguration(), corePlugin, elasticsearchConfigurationSourceIds);
 		}
 
-		if (corePlugin.isSpringCloudConfigurationSourceEnabled()) {
+		if (!StringUtils.isEmpty(corePlugin.getSpringCloudConfigServerAddress())) {
 			logger.debug("Spring Cloud Config configuration source is enabled");
 			addSpringCloudConfigurationSources(configInitializedArguments.getConfiguration(), corePlugin);
 		}
@@ -89,11 +89,6 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 		if (StringUtils.isEmpty(applicationName) || CorePlugin.DEFAULT_APPLICATION_NAME.equals(applicationName)) {
 			logger.warn("stagemonitor.applicationName is not set (explicitly) but necessary for the config service configuration source." +
 					"Will skip the config source");
-			return;
-		}
-		if (StringUtils.isEmpty(springCloudConfigServerAddress) || !springCloudConfigServerAddress.startsWith("http")) {
-			logger.warn("stagemonitor.configuration.springcloud.address is not set or not a valid http/s address but necessary for the Spring Cloud Config configuration source." +
-					"Will skip the config source.");
 			return;
 		}
 

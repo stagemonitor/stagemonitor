@@ -62,7 +62,6 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 	@Test
 	public void testESEnabledAndSpringCloudDisabled() throws IOException {
 		prepareESTest();
-		when(corePlugin.isSpringCloudConfigurationSourceEnabled()).thenReturn(false);
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
@@ -72,7 +71,6 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testESDisabledAndSpringCloudEnabled() throws IOException {
-		when(corePlugin.isSpringCloudConfigurationSourceEnabled()).thenReturn(true);
 		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
 		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("http://localhost/");
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");
@@ -86,7 +84,6 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 	@Test
 	public void testSpringCloud_missingServerAddress() throws IOException {
 		// Missing server address
-		when(corePlugin.isSpringCloudConfigurationSourceEnabled()).thenReturn(true);
 		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");
 
@@ -97,7 +94,6 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testSpringCloud_badServerAddress() throws IOException {
-		when(corePlugin.isSpringCloudConfigurationSourceEnabled()).thenReturn(true);
 		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
 		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("some.invalid.server/address/");
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");
@@ -109,7 +105,6 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testSpringCloud_nonDefaultOrMissingApplicationName() throws IOException {
-		when(corePlugin.isSpringCloudConfigurationSourceEnabled()).thenReturn(true);
 		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
 		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("some.invalid.server/address/");
 		// Making use of the default application name here
@@ -121,7 +116,6 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testCorrectProperties() throws IOException {
-		when(corePlugin.isSpringCloudConfigurationSourceEnabled()).thenReturn(true);
 		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
 		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("http://localhost/");
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");
@@ -137,7 +131,6 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testSpringCloud_defaultProfile() throws IOException {
-		when(corePlugin.isSpringCloudConfigurationSourceEnabled()).thenReturn(true);
 		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("http://localhost/");
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");
 
@@ -152,7 +145,6 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testSpringCloud_multipleProfiles() throws IOException {
-		when(corePlugin.isSpringCloudConfigurationSourceEnabled()).thenReturn(true);
 		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Arrays.asList("common", "prod", "local"));
 		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("http://localhost/");
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");

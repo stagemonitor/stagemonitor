@@ -7,12 +7,10 @@ import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.http.HttpRequest;
 import org.stagemonitor.util.StringUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Properties;
 
 /**
  * A configuration source to pull stagemonitor configuration from a Spring Cloud Config Server. <p> A simple http GET
@@ -27,16 +25,14 @@ import java.util.Map;
  * stagemonitor.instrument.include: my.domain
  * stagemonitor.web.paths.excluded: /some/path
  * }</pre>
- * <br>
- * The SpringCloudConfigConfigurationSource is controlled via the following properties.
- * See {@code CorePlugin} for their corresponding detailed description
+ * <br> The SpringCloudConfigConfigurationSource is controlled via the following properties. See {@code CorePlugin} for
+ * their corresponding detailed description
  * <pre> {@code stagemonitor.configuration.springcloud.enabled=(true|false)
  * stagemonitor.configuration.springcloud.address=<configserveraddress>
  * stagemonitor.applicationName=<applicationName>
  * stagemonitor.configuration.springcloud.configurationSourceProfiles=<profile>[, <profile>]...
  * stagemonitor.configuration.springcloud.deactivateStagemonitorIfConfigServerIsDown=(true|false)
  * }</pre>
- *
  */
 public class SpringCloudConfigConfigurationSource extends AbstractConfigurationSource {
 	private static final Logger logger = LoggerFactory.getLogger(SpringCloudConfigConfigurationSource.class);
@@ -46,7 +42,7 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 	private final String profile;
 	private final String applicationName;
 
-	private Map<String, String> properties;
+	private Properties properties;
 	private HttpClient httpClient;
 	private String configAddress;
 
@@ -93,7 +89,7 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 		}
 
 		this.httpClient = httpClient;
-		this.properties = new HashMap<String, String>();
+		this.properties = new Properties();
 		this.profile = profile;
 		this.applicationName = applicationName;
 
@@ -110,7 +106,7 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 	 */
 	@Override
 	public String getValue(String key) {
-		return properties.get(key);
+		return properties.getProperty(key);
 	}
 
 
@@ -140,55 +136,20 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 
 		logger.debug("Requesting configuration from: " + configAddress);
 
-		Map<String, String> newProperties = httpClient.send("GET", configAddress, new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Map<String, String>>() {
+		httpClient.send("GET", configAddress, new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
 			@Override
-			public Map<String, String> handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
+			public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
 				if (e != null || statusCode != 200 || is == null) {
 					logger.warn("Couldn't GET configuration. " + configAddress + " returned " + statusCode);
 					return null;
 				}
 
-				return getConfigurationFromInputStream(is);
+				logger.debug("reloading ConfigServerConfigurationSource with: " + properties);
+				properties.clear();
+				properties.load(is);
+				return null;
 			}
 		});
-
-		// Only updating the config, if there's valid server response
-		if (newProperties != null) {
-			logger.debug("reloading ConfigServerConfigurationSource with: " + newProperties);
-			properties.clear();
-			properties.putAll(newProperties);
-		}
-	}
-
-
-	/**
-	 * Processes an input stream and converts the incoming string to a Map<String, String>
-	 */
-	private Map<String, String> getConfigurationFromInputStream(InputStream is) {
-		final HashMap<String, String> result = new HashMap<String, String>();
-		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(is));
-			try {
-				String inputLine;
-
-				while ((inputLine = in.readLine()) != null) {
-					// Get Key/Value by splitting at the first occurence of ": "
-					final String[] property = inputLine.split(": ", 2);
-					if (property.length != 2) {
-						logger.warn("Skipping invalid property: " + inputLine);
-					} else {
-						logger.debug("Property: " + property[0] + "=" + property[1]);
-						result.put(property[0], property[1]);
-					}
-				}
-			} finally {
-				in.close();
-			}
-		} catch (IOException ex) {
-			logger.warn("Couldn't parse input stream", ex);
-		}
-
-		return result;
 	}
 
 	/**
@@ -203,5 +164,4 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 	public static String getFullQualifiedConfigUrl(String address, String applicationName, String profile) {
 		return String.format("%s/%s-%s.properties", address, applicationName, profile);
 	}
-
 }
