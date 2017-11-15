@@ -12,7 +12,6 @@ import org.stagemonitor.core.configuration.SpringCloudConfigConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.http.HttpRequest;
-import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-
-import static org.stagemonitor.core.configuration.SpringCloudConfigConfigurationSource.getFullQualifiedConfigUrl;
 
 public class StagemonitorCoreConfigurationSourceInitializer extends StagemonitorConfigurationSourceInitializer {
 
@@ -50,7 +47,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 			addElasticsearchConfigurationSources(configInitializedArguments.getConfiguration(), corePlugin, elasticsearchConfigurationSourceIds);
 		}
 
-		if (!StringUtils.isEmpty(corePlugin.getSpringCloudConfigServerAddress())) {
+		if (!corePlugin.getSpringCloudConfigServerUrls().isEmpty()) {
 			logger.debug("Spring Cloud Config configuration source is enabled");
 			addSpringCloudConfigurationSources(configInitializedArguments.getConfiguration(), corePlugin);
 		}
@@ -79,60 +76,46 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	}
 
 	/**
-	 * Creates and registers a SpringCloudConfigConfigurationSource for each active profile, if the
-	 * SpringCloudConfigurationSource is enabled per flag
+	 * Creates and registers a SpringCloudConfigConfigurationSource for each configuration url
 	 */
 	private void addSpringCloudConfigurationSources(ConfigurationRegistry configuration, CorePlugin corePlugin) {
 		// Validating necessary properties
-		final String applicationName = corePlugin.getApplicationName();
-		final String springCloudConfigServerAddress = corePlugin.getSpringCloudConfigServerAddress();
-		if (StringUtils.isEmpty(applicationName) || CorePlugin.DEFAULT_APPLICATION_NAME.equals(applicationName)) {
-			logger.warn("stagemonitor.applicationName is not set (explicitly) but necessary for the config service configuration source." +
-					"Will skip the config source");
-			return;
-		}
-
-		final List<String> springCloudConfigurationSourceIds = new ArrayList<String>(corePlugin.getSpringCloudConfigurationSourceProfiles());
-		if (springCloudConfigurationSourceIds.isEmpty()) {
-			logger.warn("No configServerConfigurationProfiles set. Using " + SpringCloudConfigConfigurationSource.DEFAULT_PROFILE);
-			springCloudConfigurationSourceIds.add(SpringCloudConfigConfigurationSource.DEFAULT_PROFILE);
-		}
+		final List<String> configurationUrls = new ArrayList<String>(corePlugin.getSpringCloudConfigServerUrls());
 
 		if (corePlugin.isDeactivateStagemonitorIfConfigServerIsDown()) {
-			final String configUrl = getFullQualifiedConfigUrl(springCloudConfigServerAddress, applicationName, springCloudConfigurationSourceIds.get(0));
-			assertCloudConfigServerIsAvailable(configUrl);
+			assertCloudConfigServerIsAvailable(configurationUrls.get(0));
 		}
 
-		logger.debug("Loading SpringCloudConfigurationSources with: applicationName = " + applicationName
-				+ ", springCloudConfigServerAddress = " + springCloudConfigServerAddress
-				+ ", profiles = " + springCloudConfigurationSourceIds);
-
+		logger.debug("Loading SpringCloudConfigurationSources with: configurationUrls = " + configurationUrls);
 		final HttpClient sharedHttpClient = new HttpClient();
-		for (String configurationId : springCloudConfigurationSourceIds) {
+		for (String configUrl : configurationUrls) {
 			final SpringCloudConfigConfigurationSource source = new SpringCloudConfigConfigurationSource(
 					sharedHttpClient,
-					springCloudConfigServerAddress,
-					applicationName,
-					configurationId);
+					configUrl);
 			configuration.addConfigurationSourceAfter(source, SimpleSource.class);
 		}
+
 		configuration.reloadAllConfigurationOptions();
 	}
-
 
 	/**
 	 * Does a simple HEAD request to a configuration endpoint to check if it's reachable. If not an
 	 * IllegalStateException is thrown
 	 *
-	 * @param configUrl Full qualified configuration url for an application+profile
+	 * @param configUrl Full qualified configuration url
 	 */
 	private void assertCloudConfigServerIsAvailable(final String configUrl) {
-		new HttpClient().send("HEAD", configUrl, new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
+		new HttpClient().send(
+				"HEAD",
+				configUrl,
+				new HashMap<String, String>(),
+				null,
+				new HttpClient.ResponseHandler<Void>() {
 					@Override
 					public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
 						if (e != null || statusCode != 200) {
-							throw new IllegalStateException("Property stagemonitor.configuration.springcloud.enabled was set " +
-									"but the config server is not reachable at " + configUrl + ", http status code: " + statusCode, e);
+							throw new IllegalStateException("Remote properties are not available at " +
+									configUrl + ", http status code: " + statusCode, e);
 						}
 						return null;
 					}

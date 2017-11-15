@@ -39,64 +39,39 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 
 	// The default profile for a Spring Environment if no specific Spring profile is set
 	public static final String DEFAULT_PROFILE = "default";
-	private final String profile;
-	private final String applicationName;
 
 	private Properties properties;
 	private HttpClient httpClient;
-	private String configAddress;
+	private String configUrl;
 
 
 	/**
 	 * Creates an ConfigServerConfigurationSource instance and fetches the configuration initially via a http GET
 	 *
-	 * @param configServerAddress Http or https address of the config server
-	 * @param applicationName     Name of the application to fetch config for
+	 * @param configUrl Http or https address of the config server
 	 */
-	public SpringCloudConfigConfigurationSource(String configServerAddress, String applicationName) {
-		this(new HttpClient(), configServerAddress, applicationName, DEFAULT_PROFILE);
+	public SpringCloudConfigConfigurationSource(String configUrl) {
+		this(new HttpClient(), configUrl);
 	}
-
-	/**
-	 * Creates an ConfigServerConfigurationSource instance and fetches the configuration initially via a http GET.<br>
-	 * Uses the DEFAULT_PROFILE
-	 *
-	 * @param httpClient          Instance of HttpClient
-	 * @param configServerAddress Http or https address of the config server
-	 * @param applicationName     Name of the application to fetch config for
-	 */
-	public SpringCloudConfigConfigurationSource(HttpClient httpClient, String configServerAddress, String applicationName) {
-		this(httpClient, configServerAddress, applicationName, DEFAULT_PROFILE);
-	}
-
 
 	/**
 	 * Creates an ConfigServerConfigurationSource instance and fetches the configuration initially via a http GET
 	 *
-	 * @param httpClient          Instance of HttpClient
-	 * @param configServerAddress Http or https address of the config server
-	 * @param applicationName     Name of the application to fetch config for
-	 * @param profile             Name of profile to be used. If empty or null "default" will be used
+	 * @param httpClient Instance of HttpClient
+	 * @param configUrl  Http or https address of the config server
 	 */
-	public SpringCloudConfigConfigurationSource(HttpClient httpClient, String configServerAddress, String applicationName, String profile) {
+	public SpringCloudConfigConfigurationSource(HttpClient httpClient, String configUrl) {
 
-		if (StringUtils.isEmpty(configServerAddress) || !configServerAddress.startsWith("http")) {
-			throw new IllegalArgumentException("Invalid config server address: " + configServerAddress);
-		}
-
-		if (StringUtils.isEmpty(applicationName)) {
-			throw new IllegalArgumentException("The application name must not be empty.");
+		if (StringUtils.isEmpty(configUrl) || !configUrl.startsWith("http")) {
+			throw new IllegalArgumentException("Invalid config server address: " + configUrl);
 		}
 
 		this.httpClient = httpClient;
 		this.properties = new Properties();
-		this.profile = profile;
-		this.applicationName = applicationName;
+		this.configUrl = configUrl;
 
-		this.configAddress = getFullQualifiedConfigUrl(configServerAddress, applicationName, profile);
 		reload();
 	}
-
 
 	/**
 	 * Return the property value for a give key
@@ -109,7 +84,6 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 		return properties.getProperty(key);
 	}
 
-
 	/**
 	 * Returns the config address of this config source
 	 *
@@ -117,30 +91,19 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 	 */
 	@Override
 	public String getName() {
-		return configAddress;
+		return configUrl;
 	}
-
-
-	public String getProfile() {
-		return profile;
-	}
-
-
-	public String getApplicationName() {
-		return applicationName;
-	}
-
 
 	@Override
 	public void reload() {
 
-		logger.debug("Requesting configuration from: " + configAddress);
+		logger.debug("Requesting configuration from: " + configUrl);
 
-		httpClient.send("GET", configAddress, new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
+		httpClient.send("GET", configUrl, new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
 			@Override
 			public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
 				if (e != null || statusCode != 200 || is == null) {
-					logger.warn("Couldn't GET configuration. " + configAddress + " returned " + statusCode);
+					logger.warn("Couldn't GET configuration. " + configUrl + " returned " + statusCode);
 					return null;
 				}
 
@@ -150,18 +113,5 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 				return null;
 			}
 		});
-	}
-
-	/**
-	 * Builds the effective url for the config for a given application and profile<br> e.g.
-	 * https://localhost/myapp-prod.properties
-	 *
-	 * @param address         Address of the Spring Cloud Config server
-	 * @param applicationName Name of application to get config for
-	 * @param profile         Profile to get config for
-	 * @return Full qualified configuration url
-	 */
-	public static String getFullQualifiedConfigUrl(String address, String applicationName, String profile) {
-		return String.format("%s/%s-%s.properties", address, applicationName, profile);
 	}
 }

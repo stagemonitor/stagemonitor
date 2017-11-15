@@ -71,9 +71,7 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testESDisabledAndSpringCloudEnabled() throws IOException {
-		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
-		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("http://localhost/");
-		when(corePlugin.getApplicationName()).thenReturn("myapplication");
+		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn(Collections.singletonList("http://localhost/config.json"));
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
@@ -83,31 +81,14 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testSpringCloud_missingServerAddress() throws IOException {
-		// Missing server address
-		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
-		when(corePlugin.getApplicationName()).thenReturn("myapplication");
-
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
 		verify(configuration, never()).addConfigurationSourceAfter(any(SpringCloudConfigConfigurationSource.class), eq(SimpleSource.class));
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testSpringCloud_badServerAddress() throws IOException {
-		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
-		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("some.invalid.server/address/");
-		when(corePlugin.getApplicationName()).thenReturn("myapplication");
-
-		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
-
-		verify(configuration, never()).addConfigurationSourceAfter(any(SpringCloudConfigConfigurationSource.class), eq(SimpleSource.class));
-	}
-
-	@Test
-	public void testSpringCloud_nonDefaultOrMissingApplicationName() throws IOException {
-		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
-		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("some.invalid.server/address/");
-		// Making use of the default application name here
+		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn(Collections.singletonList("some.invalid.server/address/"));
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
@@ -116,37 +97,34 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testCorrectProperties() throws IOException {
-		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
-		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("http://localhost/");
-		when(corePlugin.getApplicationName()).thenReturn("myapplication");
+		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn(Collections.singletonList("http://localhost/config.json"));
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
 		ArgumentCaptor<SpringCloudConfigConfigurationSource> configSourceCaptor = ArgumentCaptor.forClass(SpringCloudConfigConfigurationSource.class);
 		verify(configuration).addConfigurationSourceAfter(configSourceCaptor.capture(), eq(SimpleSource.class));
 
-		Assert.assertEquals("myapplication", configSourceCaptor.getValue().getApplicationName());
-		Assert.assertEquals("test", configSourceCaptor.getValue().getProfile());
+		Assert.assertEquals("http://localhost/config.json", configSourceCaptor.getValue().getName());
 	}
 
+//	@Test
+//	public void testSpringCloud_defaultProfile() throws IOException {
+//		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn("http://localhost/");
+//		when(corePlugin.getApplicationName()).thenReturn("myapplication");
+//
+//		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
+//
+//		ArgumentCaptor<SpringCloudConfigConfigurationSource> configSourceCaptor = ArgumentCaptor.forClass(SpringCloudConfigConfigurationSource.class);
+//		verify(configuration).addConfigurationSourceAfter(configSourceCaptor.capture(), eq(SimpleSource.class));
+//
+//		// Expecting it to use the DEFAULT_PROFILE
+//		Assert.assertEquals(SpringCloudConfigConfigurationSource.DEFAULT_PROFILE, configSourceCaptor.getValue().getProfile());
+//	}
+
 	@Test
-	public void testSpringCloud_defaultProfile() throws IOException {
-		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("http://localhost/");
-		when(corePlugin.getApplicationName()).thenReturn("myapplication");
-
-		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
-
-		ArgumentCaptor<SpringCloudConfigConfigurationSource> configSourceCaptor = ArgumentCaptor.forClass(SpringCloudConfigConfigurationSource.class);
-		verify(configuration).addConfigurationSourceAfter(configSourceCaptor.capture(), eq(SimpleSource.class));
-
-		// Expecting it to use the DEFAULT_PROFILE
-		Assert.assertEquals(SpringCloudConfigConfigurationSource.DEFAULT_PROFILE, configSourceCaptor.getValue().getProfile());
-	}
-
-	@Test
-	public void testSpringCloud_multipleProfiles() throws IOException {
-		when(corePlugin.getSpringCloudConfigurationSourceProfiles()).thenReturn(Arrays.asList("common", "prod", "local"));
-		when(corePlugin.getSpringCloudConfigServerAddress()).thenReturn("http://localhost/");
+	public void testSpringCloud_multipleConfigUrls() throws IOException {
+		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn(
+				Arrays.asList("http://localhost/config1", "http://localhost/config2", "http://some.other/domain"));
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));

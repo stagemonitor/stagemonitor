@@ -397,32 +397,23 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("elasticsearch", "advanced")
 			.buildWithDefault(5);
-	private final ConfigurationOption<String> springCloudConfigServerAddress = ConfigurationOption.stringOption()
-			.key("stagemonitor.configuration.springcloud.address")
+	private final ConfigurationOption<Collection<String>> springCloudConfigServerUrls = ConfigurationOption.stringsOption()
+			.key("stagemonitor.configuration.springcloud.urls")
 			.dynamic(false)
-			.label("Address of the Spring Cloud Config server")
-			.description("Must be a http or https url.")
+			.label("URLs of the Spring Cloud Config server")
+			.description("Must be http or https urls.")
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.addValidator(new ConfigurationOption.Validator<String>() {
+			.addValidator(new ConfigurationOption.Validator<Collection<String>>() {
 				@Override
-				public void assertValid(String value) {
-					checkArgument(StringUtils.isEmpty(value) || !value.startsWith("http"),
-							"stagemonitor.configuration.springcloud.address is not set or not a valid http/s address, " +
-									" but necessary for the Spring Cloud Config configuration source. Will skip the config source.");
+				public void assertValid(Collection<String> urls) {
+					for (String url : urls) {
+						checkArgument(StringUtils.isEmpty(url) || !url.startsWith("http"),
+								"stagemonitor.configuration.springcloud.address is not set or not a valid http/s address, " +
+										" but necessary for the Spring Cloud Config configuration source. Will skip the config source.");
+					}
+
 				}
 			})
-			.build();
-	private final ConfigurationOption<Collection<String>> springCloudConfigConfigurationSourceProfiles = ConfigurationOption.stringsOption()
-			.key("stagemonitor.configuration.springcloud.configurationSourceProfiles")
-			.dynamic(false)
-			.label("Spring Cloud Config configuration source profiles")
-			.description("Set configuration profiles of configuration from the Spring Cloud Config server as a centralized configuration source " +
-				"that can be shared between multiple server instances. Set the profiles appropriate to the current " +
-				"environment e.g. `common,prod`, `local`, `test`, ..." +
-				"When you provide multiple profiles, the later ones have precedence over the first ones. " +
-				"The configuration will be stored under " +
-				"`{stagemonitor.configuration.springcloud.address}/{stagemonitor.applicationName}/{stagemonitor.configuration.springcloud.configurationSourceProfiles}`.")
-			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(Collections.<String>emptyList());
 	private final ConfigurationOption<Boolean> deactivateStagemonitorIfConfigServerIsDown = ConfigurationOption.booleanOption()
 			.key("stagemonitor.configuration.springcloud.deactivateStagemonitorIfConfigServerIsDown")
@@ -859,12 +850,8 @@ public class CorePlugin extends StagemonitorPlugin {
 		return reporters;
 	}
 
-	public String getSpringCloudConfigServerAddress() {
-		return springCloudConfigServerAddress.getValue();
-	}
-
-	public Collection<String> getSpringCloudConfigurationSourceProfiles() {
-		return springCloudConfigConfigurationSourceProfiles.getValue();
+	public Collection<String> getSpringCloudConfigServerUrls() {
+		return springCloudConfigServerUrls.getValue();
 	}
 
 	public boolean isDeactivateStagemonitorIfConfigServerIsDown() {
