@@ -22,6 +22,7 @@ import org.stagemonitor.tracing.sampling.SamplePriorityDeterminingSpanEventListe
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,8 +75,9 @@ public class AbstractElasticsearchSpanReporterTest {
 		when(tracingPlugin.getProfilerRateLimitPerMinute()).thenReturn(1_000_000d);
 		when(tracingPlugin.getCallTreeAsciiFormatter()).thenReturn(new ShortSignatureFormatter());
 		when(tracingPlugin.isSampled(any())).then(invocation -> new DefaultTracerFactory().isSampled(invocation.getArgument(0)));
-		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
-		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
+		final URL url = new URL("http://localhost:9200");
+		when(corePlugin.getElasticsearchUrl()).thenReturn(url);
+		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(url));
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient = mock(ElasticsearchClient.class));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);

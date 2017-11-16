@@ -1,14 +1,12 @@
 package org.stagemonitor.configuration.converter;
 
-import org.stagemonitor.util.StringUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class ListValueConverter<T> implements ValueConverter<List<T>> {
+public class ListValueConverter<T> extends AbstractCollectionValueConverter<List<T>, T> {
 
 	public static final ListValueConverter<String> STRINGS_VALUE_CONVERTER =
 			new ListValueConverter<String>(StringValueConverter.INSTANCE);
@@ -19,10 +17,9 @@ public class ListValueConverter<T> implements ValueConverter<List<T>> {
 	public static final ValueConverter<List<Integer>> INTEGERS =
 			new ListValueConverter<Integer>(IntegerValueConverter.INSTANCE);
 
-	private final ValueConverter<T> valueConverter;
 
 	public ListValueConverter(ValueConverter<T> valueConverter) {
-		this.valueConverter = valueConverter;
+		super(valueConverter);
 	}
 
 	@Override
@@ -37,10 +34,6 @@ public class ListValueConverter<T> implements ValueConverter<List<T>> {
 		return emptyList();
 	}
 
-	@Override
-	public String toString(List<T> value) {
-		return StringUtils.asCsv(value);
-	}
 
 }
 

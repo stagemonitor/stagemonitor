@@ -15,6 +15,7 @@ import org.stagemonitor.util.IOUtils;
 import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -47,10 +48,10 @@ public class GrafanaClient {
 				.createSingleThreadDeamonPool("async-grafana", corePlugin.getThreadPoolQueueCapacityLimit(), corePlugin);
 	}
 
-	public void createElasticsearchDatasource(final String url) {
+	public void createElasticsearchDatasource(final URL elasticsearchUrl) {
 		Map<String, Object> dataSource = new HashMap<String, Object>();
 		dataSource.put("name", ES_STAGEMONITOR_DS_NAME);
-		dataSource.put("url", url);
+		dataSource.put("url", elasticsearchUrl.toString());
 		dataSource.put("access", "proxy");
 		dataSource.put("database", "[stagemonitor-metrics-]YYYY.MM.DD");
 		dataSource.put("isDefault", false);

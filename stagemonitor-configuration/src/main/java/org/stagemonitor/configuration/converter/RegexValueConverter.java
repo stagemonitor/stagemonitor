@@ -3,7 +3,7 @@ package org.stagemonitor.configuration.converter;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class RegexValueConverter implements ValueConverter<Pattern> {
+public class RegexValueConverter extends AbstractValueConverter<Pattern> {
 
 	public static final RegexValueConverter INSTANCE = new RegexValueConverter();
 

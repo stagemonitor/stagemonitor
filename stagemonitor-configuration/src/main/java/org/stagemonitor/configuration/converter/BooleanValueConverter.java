@@ -1,6 +1,6 @@
 package org.stagemonitor.configuration.converter;
 
-public class BooleanValueConverter implements ValueConverter<Boolean> {
+public class BooleanValueConverter extends AbstractValueConverter<Boolean> {
 
 	public static final BooleanValueConverter INSTANCE = new BooleanValueConverter();
 

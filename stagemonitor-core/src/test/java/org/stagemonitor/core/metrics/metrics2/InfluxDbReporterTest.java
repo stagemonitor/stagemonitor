@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.HttpClient;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -46,7 +47,7 @@ public class InfluxDbReporterTest {
 		timestamp = System.currentTimeMillis();
 		when(clock.getTime()).thenReturn(timestamp);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
-		when(corePlugin.getInfluxDbUrl()).thenReturn("http://localhost:8086");
+		when(corePlugin.getInfluxDbUrl()).thenReturn(new URL("http://localhost:8086"));
 		when(corePlugin.getInfluxDbDb()).thenReturn("stm");
 		influxDbReporter = InfluxDbReporter.forRegistry(new Metric2Registry(), corePlugin)
 				.convertRatesTo(TimeUnit.SECONDS)

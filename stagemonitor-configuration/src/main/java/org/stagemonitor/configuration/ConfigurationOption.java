@@ -11,16 +11,19 @@ import org.stagemonitor.configuration.converter.DoubleValueConverter;
 import org.stagemonitor.configuration.converter.EnumValueConverter;
 import org.stagemonitor.configuration.converter.IntegerValueConverter;
 import org.stagemonitor.configuration.converter.JsonValueConverter;
+import org.stagemonitor.configuration.converter.ListValueConverter;
 import org.stagemonitor.configuration.converter.LongValueConverter;
 import org.stagemonitor.configuration.converter.MapValueConverter;
 import org.stagemonitor.configuration.converter.OptionalValueConverter;
 import org.stagemonitor.configuration.converter.RegexValueConverter;
 import org.stagemonitor.configuration.converter.SetValueConverter;
 import org.stagemonitor.configuration.converter.StringValueConverter;
+import org.stagemonitor.configuration.converter.UrlValueConverter;
 import org.stagemonitor.configuration.converter.ValueConverter;
 import org.stagemonitor.configuration.source.ConfigurationSource;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -215,6 +218,25 @@ public class ConfigurationOption<T> {
 		return optionBuilder;
 	}
 
+	/**
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link String}
+	 *
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link String}
+	 */
+	public static ConfigurationOptionBuilder<URL> urlOption() {
+		return new ConfigurationOptionBuilder<URL>(UrlValueConverter.INSTANCE, URL.class);
+	}
+
+	/**
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link String}
+	 *
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link String}
+	 */
+	public static ConfigurationOptionBuilder<List<URL>> urlsOption() {
+		return new ConfigurationOptionBuilder<List<URL>>(new ListValueConverter<URL>(UrlValueConverter.INSTANCE), List.class)
+				.defaultValue(Collections.<URL>emptyList());
+	}
+
 	private ConfigurationOption(boolean dynamic, boolean sensitive, String key, String label, String description,
 								T defaultValue, String configurationCategory, final ValueConverter<T> valueConverter,
 								Class<? super T> valueType, List<String> tags, boolean required,
@@ -310,6 +332,10 @@ public class ConfigurationOption<T> {
 	 */
 	public String getValueAsString() {
 		return valueAsString;
+	}
+
+	public String getValueAsSafeString() {
+		return valueConverter.toSafeString(value);
 	}
 
 	/**

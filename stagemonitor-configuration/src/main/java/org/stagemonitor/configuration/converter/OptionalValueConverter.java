@@ -2,7 +2,7 @@ package org.stagemonitor.configuration.converter;
 
 import java.util.Optional;
 
-public class OptionalValueConverter<T> implements ValueConverter<Optional<T>> {
+public class OptionalValueConverter<T> extends AbstractValueConverter<Optional<T>> {
 
 	private final ValueConverter<T> valueConverter;
 
