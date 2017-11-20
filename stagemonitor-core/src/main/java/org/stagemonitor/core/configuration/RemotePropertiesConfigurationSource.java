@@ -13,10 +13,11 @@ import java.util.HashMap;
 import java.util.Properties;
 
 /**
- * A configuration source to pull stagemonitor configuration from a Spring Cloud Config Server. <p> A simple http GET
- * call is made to retrieve a list of key/value pairs by calling the /{application}-{profile}.properties end point.<br>
- * Multiple property sources are already considered on the server side, so a flat key/value list (separated by line
- * breaks) is returned from the server.<p> The config source can handle additions, changes and removals for
+ * A configuration source to pull stagemonitor configuration from a remote property configuration server. <p> A simple http GET
+ * call is made to retrieve a list of key/value pairs by calling the specified configUrl.<br>
+ * The properties are expected in a simple line oriented format with key/value pairs. For more information on the format,
+ * see <a href="https://docs.oracle.com/javase/7/docs/api/java/util/Properties.html#load(java.io.Reader">java.util.Properties.load(java.io.Reader)</a>)
+ * The config source can handle additions, changes and removals for
  * properties.<br> The configuration map is only updated when it got a valid response from the server (i.e. 200, not
  * exception, valid response body). On failure the cached properties are still available.<br> Note that
  * {stagemonitor.applicationName} is required with a non default value for this to work, as the application name is used
@@ -25,42 +26,36 @@ import java.util.Properties;
  * stagemonitor.instrument.include: my.domain
  * stagemonitor.web.paths.excluded: /some/path
  * }</pre>
- * <br> The SpringCloudConfigConfigurationSource is controlled via the following properties. See {@code CorePlugin} for
+ * The RemotePropertiesConfigurationSource is controlled via the following properties. See {@code CorePlugin} for
  * their corresponding detailed description
- * <pre> {@code stagemonitor.configuration.springcloud.enabled=(true|false)
- * stagemonitor.configuration.springcloud.address=<configserveraddress>
- * stagemonitor.applicationName=<applicationName>
- * stagemonitor.configuration.springcloud.configurationSourceProfiles=<profile>[, <profile>]...
+ * <pre>
+ * stagemonitor.configuration.remoteproperties.urls=configUrl[, configUrl]...
  * stagemonitor.configuration.springcloud.deactivateStagemonitorIfConfigServerIsDown=(true|false)
- * }</pre>
+ * </pre>
  */
-public class SpringCloudConfigConfigurationSource extends AbstractConfigurationSource {
-	private static final Logger logger = LoggerFactory.getLogger(SpringCloudConfigConfigurationSource.class);
-
-	// The default profile for a Spring Environment if no specific Spring profile is set
-	public static final String DEFAULT_PROFILE = "default";
+public class RemotePropertiesConfigurationSource extends AbstractConfigurationSource {
+	private static final Logger logger = LoggerFactory.getLogger(RemotePropertiesConfigurationSource.class);
 
 	private Properties properties;
 	private HttpClient httpClient;
 	private String configUrl;
 
-
 	/**
-	 * Creates an ConfigServerConfigurationSource instance and fetches the configuration initially via a http GET
+	 * Creates an RemotePropertiesConfigurationSource instance and fetches the configuration initially via a http GET
 	 *
 	 * @param configUrl Http or https address of the config server
 	 */
-	public SpringCloudConfigConfigurationSource(String configUrl) {
+	public RemotePropertiesConfigurationSource(String configUrl) {
 		this(new HttpClient(), configUrl);
 	}
 
 	/**
-	 * Creates an ConfigServerConfigurationSource instance and fetches the configuration initially via a http GET
+	 * Creates an RemotePropertiesConfigurationSource instance and fetches the configuration initially via a http GET
 	 *
 	 * @param httpClient Instance of HttpClient
 	 * @param configUrl  Http or https address of the config server
 	 */
-	public SpringCloudConfigConfigurationSource(HttpClient httpClient, String configUrl) {
+	public RemotePropertiesConfigurationSource(HttpClient httpClient, String configUrl) {
 
 		if (StringUtils.isEmpty(configUrl) || !configUrl.startsWith("http")) {
 			throw new IllegalArgumentException("Invalid config server address: " + configUrl);
@@ -74,7 +69,7 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 	}
 
 	/**
-	 * Return the property value for a give key
+	 * Return the property value for a given key
 	 *
 	 * @param key the property key
 	 * @return value of property, or null
@@ -85,9 +80,9 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 	}
 
 	/**
-	 * Returns the config address of this config source
+	 * Returns the config url of this config source
 	 *
-	 * @return full config address including service and profile
+	 * @return full config url
 	 */
 	@Override
 	public String getName() {
@@ -107,7 +102,7 @@ public class SpringCloudConfigConfigurationSource extends AbstractConfigurationS
 					return null;
 				}
 
-				logger.debug("reloading ConfigServerConfigurationSource with: " + properties);
+				logger.debug("Reloading RemotePropertiesConfigurationSource with: " + properties);
 				properties.clear();
 				properties.load(is);
 				return null;

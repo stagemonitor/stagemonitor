@@ -8,7 +8,7 @@ import org.stagemonitor.configuration.source.PropertyFileConfigurationSource;
 import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.configuration.source.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.configuration.ElasticsearchConfigurationSource;
-import org.stagemonitor.core.configuration.SpringCloudConfigConfigurationSource;
+import org.stagemonitor.core.configuration.RemotePropertiesConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.http.HttpRequest;
@@ -47,7 +47,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 			addElasticsearchConfigurationSources(configInitializedArguments.getConfiguration(), corePlugin, elasticsearchConfigurationSourceIds);
 		}
 
-		if (!corePlugin.getSpringCloudConfigServerUrls().isEmpty()) {
+		if (!corePlugin.getRemotePropertiesConfigUrls().isEmpty()) {
 			logger.debug("Spring Cloud Config configuration source is enabled");
 			addSpringCloudConfigurationSources(configInitializedArguments.getConfiguration(), corePlugin);
 		}
@@ -80,16 +80,16 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	 */
 	private void addSpringCloudConfigurationSources(ConfigurationRegistry configuration, CorePlugin corePlugin) {
 		// Validating necessary properties
-		final List<String> configurationUrls = new ArrayList<String>(corePlugin.getSpringCloudConfigServerUrls());
+		final List<String> configurationUrls = new ArrayList<String>(corePlugin.getRemotePropertiesConfigUrls());
 
-		if (corePlugin.isDeactivateStagemonitorIfConfigServerIsDown()) {
+		if (corePlugin.isDeactivateStagemonitorIfRemotePropertyServerIsDown()) {
 			assertCloudConfigServerIsAvailable(configurationUrls.get(0));
 		}
 
 		logger.debug("Loading SpringCloudConfigurationSources with: configurationUrls = " + configurationUrls);
 		final HttpClient sharedHttpClient = new HttpClient();
 		for (String configUrl : configurationUrls) {
-			final SpringCloudConfigConfigurationSource source = new SpringCloudConfigConfigurationSource(
+			final RemotePropertiesConfigurationSource source = new RemotePropertiesConfigurationSource(
 					sharedHttpClient,
 					configUrl);
 			configuration.addConfigurationSourceAfter(source, SimpleSource.class);

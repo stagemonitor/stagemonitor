@@ -8,7 +8,7 @@ import org.mockito.Mockito;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.core.configuration.ElasticsearchConfigurationSource;
-import org.stagemonitor.core.configuration.SpringCloudConfigConfigurationSource;
+import org.stagemonitor.core.configuration.RemotePropertiesConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 
@@ -65,17 +65,17 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
-		verify(configuration, never()).addConfigurationSourceAfter(any(SpringCloudConfigConfigurationSource.class), eq(SimpleSource.class));
+		verify(configuration, never()).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
 		verify(configuration).addConfigurationSourceAfter(any(ElasticsearchConfigurationSource.class), eq(SimpleSource.class));
 	}
 
 	@Test
 	public void testESDisabledAndSpringCloudEnabled() throws IOException {
-		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn(Collections.singletonList("http://localhost/config.json"));
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList("http://localhost/config.json"));
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
-		verify(configuration).addConfigurationSourceAfter(any(SpringCloudConfigConfigurationSource.class), eq(SimpleSource.class));
+		verify(configuration).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
 		verify(configuration, never()).addConfigurationSourceAfter(any(ElasticsearchConfigurationSource.class), eq(SimpleSource.class));
 	}
 
@@ -83,53 +83,39 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 	public void testSpringCloud_missingServerAddress() throws IOException {
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
-		verify(configuration, never()).addConfigurationSourceAfter(any(SpringCloudConfigConfigurationSource.class), eq(SimpleSource.class));
+		verify(configuration, never()).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testSpringCloud_badServerAddress() throws IOException {
-		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn(Collections.singletonList("some.invalid.server/address/"));
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList("some.invalid.server/address/"));
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
-		verify(configuration, never()).addConfigurationSourceAfter(any(SpringCloudConfigConfigurationSource.class), eq(SimpleSource.class));
+		verify(configuration, never()).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
 	}
 
 	@Test
 	public void testCorrectProperties() throws IOException {
-		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn(Collections.singletonList("http://localhost/config.json"));
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList("http://localhost/config.json"));
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
-		ArgumentCaptor<SpringCloudConfigConfigurationSource> configSourceCaptor = ArgumentCaptor.forClass(SpringCloudConfigConfigurationSource.class);
+		ArgumentCaptor<RemotePropertiesConfigurationSource> configSourceCaptor = ArgumentCaptor.forClass(RemotePropertiesConfigurationSource.class);
 		verify(configuration).addConfigurationSourceAfter(configSourceCaptor.capture(), eq(SimpleSource.class));
 
 		Assert.assertEquals("http://localhost/config.json", configSourceCaptor.getValue().getName());
 	}
 
-//	@Test
-//	public void testSpringCloud_defaultProfile() throws IOException {
-//		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn("http://localhost/");
-//		when(corePlugin.getApplicationName()).thenReturn("myapplication");
-//
-//		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
-//
-//		ArgumentCaptor<SpringCloudConfigConfigurationSource> configSourceCaptor = ArgumentCaptor.forClass(SpringCloudConfigConfigurationSource.class);
-//		verify(configuration).addConfigurationSourceAfter(configSourceCaptor.capture(), eq(SimpleSource.class));
-//
-//		// Expecting it to use the DEFAULT_PROFILE
-//		Assert.assertEquals(SpringCloudConfigConfigurationSource.DEFAULT_PROFILE, configSourceCaptor.getValue().getProfile());
-//	}
-
 	@Test
 	public void testSpringCloud_multipleConfigUrls() throws IOException {
-		when(corePlugin.getSpringCloudConfigServerUrls()).thenReturn(
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(
 				Arrays.asList("http://localhost/config1", "http://localhost/config2", "http://some.other/domain"));
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
 		// Expecting 3 config source
-		verify(configuration, times(3)).addConfigurationSourceAfter(any(SpringCloudConfigConfigurationSource.class), eq(SimpleSource.class));
+		verify(configuration, times(3)).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
 	}
 }

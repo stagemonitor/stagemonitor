@@ -397,31 +397,30 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("elasticsearch", "advanced")
 			.buildWithDefault(5);
-	private final ConfigurationOption<Collection<String>> springCloudConfigServerUrls = ConfigurationOption.stringsOption()
-			.key("stagemonitor.configuration.springcloud.urls")
+	private final ConfigurationOption<Collection<String>> remotePropertiesConfigUrls = ConfigurationOption.stringsOption()
+			.key("stagemonitor.configuration.remoteproperties.urls")
 			.dynamic(false)
-			.label("URLs of the Spring Cloud Config server")
+			.label("URLs of the remote properties")
 			.description("Must be http or https urls.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.addValidator(new ConfigurationOption.Validator<Collection<String>>() {
 				@Override
 				public void assertValid(Collection<String> urls) {
 					for (String url : urls) {
-						checkArgument(StringUtils.isEmpty(url) || !url.startsWith("http"),
-								"stagemonitor.configuration.springcloud.address is not set or not a valid http/s address, " +
-										" but necessary for the Spring Cloud Config configuration source. Will skip the config source.");
+						checkArgument(!StringUtils.isEmpty(url) && url.startsWith("http"),
+								"stagemonitor.configuration.remoteproperties.urls contains invalid http/s urls." +
+										"Will skip the config source.");
 					}
 
 				}
 			})
 			.buildWithDefault(Collections.<String>emptyList());
-	private final ConfigurationOption<Boolean> deactivateStagemonitorIfConfigServerIsDown = ConfigurationOption.booleanOption()
-			.key("stagemonitor.configuration.springcloud.deactivateStagemonitorIfConfigServerIsDown")
+	private final ConfigurationOption<Boolean> deactivateStagemonitorIfRemotePropertyServerIsDown = ConfigurationOption.booleanOption()
+			.key("stagemonitor.configuration.remoteproperties.deactivateStagemonitorIfRemotePropertyServerIsDown")
 			.dynamic(false)
-			.label("Deactivate stagemonitor if the Spring Cloud Config server is down or can't be reached")
-			.description("Set to true if stagemonitor should be deactivated if " +
-				"stagemonitor.configuration.springcloud.enabled is set but the config server specified " +
-				"under stagemonitor.reporting.springcloud.address is unavailable. Defaults to true to prevent starting stagemonitor with " +
+			.label("Deactivate stagemonitor if the remote properties configuration server is down or can't be reached")
+			.description("Set to true if stagemonitor should be deactivated if the config url specified " +
+				"under stagemonitor.reporting.remoteproperties.urls is unavailable. Defaults to true to prevent starting stagemonitor with " +
 				"wrong configuration.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(true);
@@ -850,11 +849,11 @@ public class CorePlugin extends StagemonitorPlugin {
 		return reporters;
 	}
 
-	public Collection<String> getSpringCloudConfigServerUrls() {
-		return springCloudConfigServerUrls.getValue();
+	public Collection<String> getRemotePropertiesConfigUrls() {
+		return remotePropertiesConfigUrls.getValue();
 	}
 
-	public boolean isDeactivateStagemonitorIfConfigServerIsDown() {
-		return deactivateStagemonitorIfConfigServerIsDown.getValue();
+	public boolean isDeactivateStagemonitorIfRemotePropertyServerIsDown() {
+		return deactivateStagemonitorIfRemotePropertyServerIsDown.getValue();
 	}
 }

@@ -6,7 +6,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.stagemonitor.core.configuration.SpringCloudConfigConfigurationSource;
+import org.stagemonitor.core.configuration.RemotePropertiesConfigurationSource;
 import org.stagemonitor.core.util.HttpClient;
 
 import java.io.ByteArrayInputStream;
@@ -20,7 +20,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "", 400, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 
 		Assert.assertNotNull(dut);
 	}
@@ -30,7 +30,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 		Assert.assertNotNull(dut);
 
 		prepMockWithResponse(http, "", 200, null);
@@ -43,7 +43,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "malformedAddress");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "malformedAddress");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -51,7 +51,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "");
 	}
 
 	@Test
@@ -59,7 +59,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "malformed content", 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 
 		Assert.assertNotNull(dut);
 	}
@@ -69,7 +69,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "malformed content\nnew: hope\nbut not much", 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 
 		Assert.assertNotNull(dut);
 		Assert.assertEquals("hope", dut.getValue("new"));
@@ -80,7 +80,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar", 200, new IOException("bad connection or connection loss"));
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 		Assert.assertNotNull(dut);
 
 		// Now the connection is back
@@ -104,7 +104,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice", 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("alice", dut.getValue("user.name"));
@@ -115,7 +115,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: some more complex 123 \" string", 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("some more complex 123 \" string", dut.getValue("user.name"));
@@ -133,7 +133,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice", 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("alice", dut.getValue("user.name"));
@@ -171,7 +171,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser[0]: alice\nuser[1]: bob", 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("alice", dut.getValue("user[0]"));
@@ -183,7 +183,7 @@ public class ConfigServerConfigurationSourceTest {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice:bob\nanother: one: bites\nthe: dust:\n", 200, null);
-		final SpringCloudConfigConfigurationSource dut = new SpringCloudConfigConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("alice:bob", dut.getValue("user.name"));
