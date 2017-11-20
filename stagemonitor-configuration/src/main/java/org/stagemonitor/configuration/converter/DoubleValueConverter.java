@@ -1,6 +1,6 @@
 package org.stagemonitor.configuration.converter;
 
-public class DoubleValueConverter implements ValueConverter<Double> {
+public class DoubleValueConverter extends AbstractValueConverter<Double> {
 
 	public static final ValueConverter<Double> INSTANCE = new DoubleValueConverter();
 

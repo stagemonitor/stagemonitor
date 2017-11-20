@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.converter.ListValueConverter;
 import org.stagemonitor.configuration.converter.SetValueConverter;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
@@ -36,7 +35,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -118,7 +117,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.tags(METRICS_STORE, "graphite")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(2003);
-	private final ConfigurationOption<String> influxDbUrl = ConfigurationOption.stringOption()
+	private final ConfigurationOption<URL> influxDbUrl = ConfigurationOption.urlOption()
 			.key("stagemonitor.reporting.influxdb.url")
 			.dynamic(true)
 			.label("InfluxDB URL")
@@ -229,7 +228,7 @@ public class CorePlugin extends StagemonitorPlugin {
 					"The dashboards provide a filter for the host name.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(getNameOfLocalHost());
-	private final ConfigurationOption<List<String>> elasticsearchUrls = ConfigurationOption.builder(ListValueConverter.STRINGS_VALUE_CONVERTER, List.class)
+	private final ConfigurationOption<List<URL>> elasticsearchUrls = ConfigurationOption.urlsOption()
 			.key("stagemonitor.reporting.elasticsearch.url")
 			.aliasKeys("stagemonitor.elasticsearch.url")
 			.dynamic(true)
@@ -238,7 +237,7 @@ public class CorePlugin extends StagemonitorPlugin {
 					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(ELASTICSEARCH)
-			.buildWithDefault(Collections.<String>emptyList());
+			.buildWithDefault(Collections.<URL>emptyList());
 	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceProfiles = ConfigurationOption.stringsOption()
 			.key("stagemonitor.configuration.elasticsearch.configurationSourceProfiles")
 			.aliasKeys("stagemonitor.elasticsearch.configurationSourceProfiles")
@@ -514,7 +513,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private void reportToInfluxDb(Metric2Registry metricRegistry, int reportingInterval,
 								  MeasurementSession measurementSession) {
 
-		if (StringUtils.isNotEmpty(getInfluxDbUrl()) && reportingInterval > 0) {
+		if (getInfluxDbUrl() != null && reportingInterval > 0) {
 			logger.info("Sending metrics to InfluxDB ({}) every {}s", getInfluxDbUrl(), reportingInterval);
 			final InfluxDbReporter reporter = InfluxDbReporter.forRegistry(metricRegistry, this)
 					.globalTags(measurementSession.asMap())
@@ -687,30 +686,21 @@ public class CorePlugin extends StagemonitorPlugin {
 	 *
 	 * @return One of the provided Elasticsearch URLs
 	 */
-	public String getElasticsearchUrl() {
-		final List<String> urls = elasticsearchUrls.getValue();
+	public URL getElasticsearchUrl() {
+		final List<URL> urls = elasticsearchUrls.getValue();
 		if (urls.isEmpty()) {
 			return null;
 		}
 		final int index = accessesToElasticsearchUrl.getAndIncrement() % urls.size();
-		return StringUtils.removeTrailingSlash(urls.get(index));
+		return urls.get(index);
 	}
 
-	public Collection<String> getElasticsearchUrls() {
+	public Collection<URL> getElasticsearchUrls() {
 		return elasticsearchUrls.getValue();
 	}
 
-	public Collection<String> getElasticsearchUrlsWithoutAuthenticationInformation() {
-		final List<String> urls = elasticsearchUrls.getValue();
-		final ArrayList<String> result = new ArrayList<String>(urls.size());
-		for (String url : urls) {
-			if (url.contains("@")) {
-				result.add(HttpClient.removeUserInfo(url));
-			} else {
-				result.add(url);
-			}
-		}
-		return result;
+	public String getElasticsearchUrlsWithoutAuthenticationInformation() {
+		return elasticsearchUrls.getValueAsSafeString();
 	}
 
 	public Collection<String> getElasticsearchConfigurationSourceProfiles() {
@@ -753,8 +743,8 @@ public class CorePlugin extends StagemonitorPlugin {
 		return excludedInstrumenters.getValue();
 	}
 
-	public String getInfluxDbUrl() {
-		return StringUtils.removeTrailingSlash(influxDbUrl.getValue());
+	public URL getInfluxDbUrl() {
+		return influxDbUrl.getValue();
 	}
 
 	public String getInfluxDbDb() {

@@ -18,4 +18,12 @@ public interface ValueConverter<T> {
 	 * @return the configuration value in its string representation
 	 */
 	String toString(T value);
+
+	/**
+	 * Converts a value to a string, redacting all sensitive information specific to the value type.
+	 *
+	 * <p>For example, when the value type {@link T} is of type {@link java.net.URL} this method should redact the
+	 * password in the {@link java.net.URL#userInfo}</p>
+	 */
+	String toSafeString(T value);
 }

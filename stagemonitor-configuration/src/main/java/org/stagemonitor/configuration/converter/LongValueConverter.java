@@ -1,6 +1,6 @@
 package org.stagemonitor.configuration.converter;
 
-public class LongValueConverter implements ValueConverter<Long> {
+public class LongValueConverter extends AbstractValueConverter<Long> {
 
 	public static final LongValueConverter INSTANCE = new LongValueConverter();
 

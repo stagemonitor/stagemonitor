@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
-public class JsonValueConverter<T> implements ValueConverter<T> {
+public class JsonValueConverter<T> extends AbstractValueConverter<T> {
 
 	private final TypeReference<T> typeReference;
 	private final ObjectMapper objectMapper;

@@ -10,7 +10,7 @@ import java.util.Set;
 
 import static java.util.Collections.emptySet;
 
-public class SetValueConverter<T> implements ValueConverter<Collection<T>> {
+public class SetValueConverter<T> extends AbstractCollectionValueConverter<Collection<T>, T> {
 
 	public static final SetValueConverter<String> STRINGS_VALUE_CONVERTER =
 			new SetValueConverter<String>(StringValueConverter.INSTANCE);
@@ -21,10 +21,8 @@ public class SetValueConverter<T> implements ValueConverter<Collection<T>> {
 	public static final ValueConverter<Collection<Integer>> INTEGERS =
 			new SetValueConverter<Integer>(IntegerValueConverter.INSTANCE);
 
-	private final ValueConverter<T> valueConverter;
-
 	public SetValueConverter(ValueConverter<T> valueConverter) {
-		this.valueConverter = valueConverter;
+		super(valueConverter);
 	}
 
 	@Override

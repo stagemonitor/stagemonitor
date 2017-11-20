@@ -23,7 +23,6 @@ import org.stagemonitor.core.util.http.HttpRequestBuilder;
 import org.stagemonitor.core.util.http.NoopResponseHandler;
 import org.stagemonitor.core.util.http.StatusCodeResponseHandler;
 import org.stagemonitor.util.IOUtils;
-import org.stagemonitor.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -294,7 +293,7 @@ public class ElasticsearchClient {
 			return;
 		}
 		final String url = corePlugin.getElasticsearchUrl() + "/" + indexPattern + "/_settings?ignore_unavailable=true";
-		logger.info("Updating index settings {}\n{}", HttpClient.removeUserInfo(url), settings);
+		logger.info("Updating index settings {}\n{}", indexPattern, settings);
 		httpClient.send(HttpRequestBuilder.<Integer>jsonRequest("PUT", url, settings)
 				.responseHandler(new StatusCodeResponseHandler(new ErrorLoggingResponseHandler()))
 				.build());
@@ -305,12 +304,11 @@ public class ElasticsearchClient {
 			return;
 		}
 		final String url = corePlugin.getElasticsearchUrl() + "/" + path;
-		String urlWithoutAuthInfo = HttpClient.removeUserInfo(url);
-		logger.info(logMessage, urlWithoutAuthInfo);
+		logger.info(logMessage, path);
 		try {
 			send(HttpRequestBuilder.forUrl(url).method(method).build());
 		} finally {
-			logger.info(logMessage, "Done " + urlWithoutAuthInfo);
+			logger.info(logMessage, "Done " + path);
 		}
 	}
 
@@ -382,7 +380,7 @@ public class ElasticsearchClient {
 		return httpClient;
 	}
 
-	public String getElasticsearchUrl() {
+	public URL getElasticsearchUrl() {
 		return corePlugin.getElasticsearchUrl();
 	}
 
@@ -545,8 +543,8 @@ public class ElasticsearchClient {
 			// TODO actually, the availability check has to be performed for each URL as multiple ES urls can be configured
 			// in the future, detect all available nodes in the cluster: http://{oneOfTheProvidedUrls}/_nodes/box_type:hot/none
 			// -> response.nodes*.http_address
-			final String elasticsearchUrl = corePlugin.getElasticsearchUrl();
-			if (StringUtils.isEmpty(elasticsearchUrl)) {
+			final URL elasticsearchUrl = corePlugin.getElasticsearchUrl();
+			if (elasticsearchUrl == null) {
 				return;
 			}
 			httpClient.send(HttpRequestBuilder.<Void>forUrl(elasticsearchUrl + "/")

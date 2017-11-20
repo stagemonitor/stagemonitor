@@ -9,6 +9,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.util.HttpClient;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collections;
 
 import javax.servlet.ServletException;
@@ -27,8 +28,9 @@ public class ElasticsearchClientAvailabilityCheckTest {
 	@Before
 	public void setUp() throws Exception {
 		final CorePlugin corePlugin = mock(CorePlugin.class);
-		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:41234");
-		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:41234"));
+		final URL url = new URL("http://localhost:41234");
+		when(corePlugin.getElasticsearchUrl()).thenReturn(url);
+		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(url));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(10000);
 		elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), 1);
 	}
