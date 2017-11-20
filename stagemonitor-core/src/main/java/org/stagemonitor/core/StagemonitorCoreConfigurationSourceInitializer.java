@@ -16,9 +16,9 @@ import org.stagemonitor.core.util.http.HttpRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 public class StagemonitorCoreConfigurationSourceInitializer extends StagemonitorConfigurationSourceInitializer {
 
@@ -79,9 +79,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	 * Creates and registers a RemotePropertiesConfigurationSource for each configuration url
 	 */
 	private void addRemotePropertiesConfigurationSources(ConfigurationRegistry configuration, CorePlugin corePlugin) {
-		// Validating necessary properties
-		final ArrayList<URL> configurationUrls = new ArrayList<URL>(corePlugin.getRemotePropertiesConfigUrls());
-
+		final List<URL> configurationUrls = corePlugin.getRemotePropertiesConfigUrls();
 		if (corePlugin.isDeactivateStagemonitorIfRemotePropertyServerIsDown()) {
 			assertRemotePropertiesServerIsAvailable(configurationUrls.get(0));
 		}

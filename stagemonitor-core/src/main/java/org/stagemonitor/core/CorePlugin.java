@@ -399,10 +399,10 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.configuration.remoteproperties.urls")
 			.dynamic(false)
 			.label("URLs of the remote properties")
-			.description("Must be http or https URLs. This can be a single URL or a list of config URLs." +
-					"The end point should provide a list of properties in a simple line oriented format with key/value pairs." +
-					"For more information on the format, see java.util.Properties.load(java.io.Reader))." +
-					"For example a configuration URL for the petclinic application with the default profile from a" +
+			.description("Must be http or https URLs. This can be a single URL or a list of config URLs. " +
+					"The end point should provide a list of properties in a simple line oriented format with key/value pairs. " +
+					"For more information on the format, see java.util.Properties.load(java.io.Reader)). " +
+					"For example of a configuration URL for the petclinic application with the default profile from a" +
 					"Spring Cloud Config server would look like: https://config.server/petclinic-default.properties")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(Collections.<URL>emptyList());
@@ -831,7 +831,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		return reporters;
 	}
 
-	public Collection<URL> getRemotePropertiesConfigUrls() {
+	public List<URL> getRemotePropertiesConfigUrls() {
 		return remotePropertiesConfigUrls.getValue();
 	}
 
