@@ -395,6 +395,26 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("elasticsearch", "advanced")
 			.buildWithDefault(5);
+	private final ConfigurationOption<List<URL>> remotePropertiesConfigUrls = ConfigurationOption.urlsOption()
+			.key("stagemonitor.configuration.remoteproperties.urls")
+			.dynamic(false)
+			.label("URLs of the remote properties")
+			.description("Must be http or https URLs. This can be a single URL or a list of config URLs. " +
+					"The end point should provide a list of properties in a simple line oriented format with key/value pairs. " +
+					"For more information on the format, see java.util.Properties.load(java.io.Reader)). " +
+					"For example of a configuration URL for the petclinic application with the default profile from a" +
+					"Spring Cloud Config server would look like: https://config.server/petclinic-default.properties")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.buildWithDefault(Collections.<URL>emptyList());
+	private final ConfigurationOption<Boolean> deactivateStagemonitorIfRemotePropertyServerIsDown = ConfigurationOption.booleanOption()
+			.key("stagemonitor.configuration.remoteproperties.deactivateStagemonitorIfRemotePropertyServerIsDown")
+			.dynamic(false)
+			.label("Deactivate stagemonitor if the remote properties configuration server is down or can't be reached")
+			.description("Set to true if stagemonitor should be deactivated if the config url specified " +
+				"under stagemonitor.reporting.remoteproperties.urls is unavailable. Defaults to true to prevent starting stagemonitor with " +
+				"wrong configuration.")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.buildWithDefault(true);
 
 	private List<Closeable> reporters = new CopyOnWriteArrayList<Closeable>();
 
@@ -809,5 +829,13 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	List<Closeable> getReporters() {
 		return reporters;
+	}
+
+	public List<URL> getRemotePropertiesConfigUrls() {
+		return remotePropertiesConfigUrls.getValue();
+	}
+
+	public boolean isDeactivateStagemonitorIfRemotePropertyServerIsDown() {
+		return deactivateStagemonitorIfRemotePropertyServerIsDown.getValue();
 	}
 }

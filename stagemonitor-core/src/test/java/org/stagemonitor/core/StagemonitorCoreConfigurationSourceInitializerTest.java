@@ -1,18 +1,26 @@
 package org.stagemonitor.core;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.configuration.source.SimpleSource;
+import org.stagemonitor.core.configuration.ElasticsearchConfigurationSource;
+import org.stagemonitor.core.configuration.RemotePropertiesConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,15 +32,19 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Before
 	public void setUp() throws Exception {
+		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
+	}
+
+	private void prepareESTest() {
 		when(corePlugin.getElasticsearchConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		ElasticsearchClient elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void testEsDownDeactivate() throws Exception {
+		prepareESTest();
 		when(corePlugin.isDeactivateStagemonitorIfEsConfigSourceIsDown()).thenReturn(true);
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
@@ -40,10 +52,62 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testEsDown() throws Exception {
+		prepareESTest();
 		when(corePlugin.isDeactivateStagemonitorIfEsConfigSourceIsDown()).thenReturn(false);
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
-		verify(configuration).addConfigurationSourceAfter(any(ConfigurationSource.class), eq(SimpleSource.class));
+		verify(configuration).addConfigurationSourceAfter(any(ElasticsearchConfigurationSource.class), eq(SimpleSource.class));
+	}
+
+	@Test
+	public void testESEnabledAndSpringCloudDisabled() throws IOException {
+		prepareESTest();
+
+		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
+
+		verify(configuration, never()).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
+		verify(configuration).addConfigurationSourceAfter(any(ElasticsearchConfigurationSource.class), eq(SimpleSource.class));
+	}
+
+	@Test
+	public void testESDisabledAndSpringCloudEnabled() throws IOException {
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList(new URL("http://localhost/config.json")));
+
+		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
+
+		verify(configuration).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
+		verify(configuration, never()).addConfigurationSourceAfter(any(ElasticsearchConfigurationSource.class), eq(SimpleSource.class));
+	}
+
+	@Test
+	public void testSpringCloud_missingServerAddress() throws IOException {
+		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
+
+		verify(configuration, never()).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
+	}
+
+	@Test
+	public void testCorrectProperties() throws IOException {
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList(new URL("http://localhost/config.json")));
+
+		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
+
+		ArgumentCaptor<RemotePropertiesConfigurationSource> configSourceCaptor = ArgumentCaptor.forClass(RemotePropertiesConfigurationSource.class);
+		verify(configuration).addConfigurationSourceAfter(configSourceCaptor.capture(), eq(SimpleSource.class));
+
+		Assert.assertEquals("http://localhost/config.json", configSourceCaptor.getValue().getName());
+	}
+
+	@Test
+	public void testSpringCloud_multipleConfigUrls() throws IOException {
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(
+				Arrays.asList(new URL("http://localhost/config1"), new URL("http://localhost/config2"), new URL("http://some.other/domain")));
+		when(corePlugin.getApplicationName()).thenReturn("myapplication");
+
+		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
+
+		// Expecting 3 config source
+		verify(configuration, times(3)).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
 	}
 }
