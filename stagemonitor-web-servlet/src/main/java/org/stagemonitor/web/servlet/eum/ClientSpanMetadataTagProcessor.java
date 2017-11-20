@@ -2,8 +2,8 @@ package org.stagemonitor.web.servlet.eum;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.converter.AbstractValueConverter;
 import org.stagemonitor.configuration.converter.DoubleValueConverter;
-import org.stagemonitor.configuration.converter.ValueConverter;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
 import java.util.Map;
@@ -105,7 +105,7 @@ public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 		}
 	}
 
-	public static class ClientSpanMetadataConverter implements ValueConverter<ClientSpanMetadataDefinition>	{
+	public static class ClientSpanMetadataConverter extends AbstractValueConverter<ClientSpanMetadataDefinition> {
 
 		@Override
 		public ClientSpanMetadataDefinition convert(String definition) throws IllegalArgumentException {

@@ -15,6 +15,7 @@ import org.stagemonitor.tracing.wrapper.SpanWrapper;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.servlet.filter.StatusExposingByteCountingServletResponse;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
@@ -47,8 +48,9 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);
 		when(tracingPlugin.getDefaultRateLimitSpansPerMinute()).thenReturn(1000000d);
 		when(tracingPlugin.getOnlyReportSpansWithName()).thenReturn(Collections.emptyList());
-		when(corePlugin.getElasticsearchUrl()).thenReturn("http://localhost:9200");
-		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList("http://localhost:9200"));
+		final URL url = new URL("http://localhost:9200");
+		when(corePlugin.getElasticsearchUrl()).thenReturn(url);
+		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(url));
 		ElasticsearchClient elasticsearchClient = mock(ElasticsearchClient.class);
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);

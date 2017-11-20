@@ -3,7 +3,7 @@ package org.stagemonitor.configuration.converter;
 /**
  * Converts an {@link Enum} to a {@link String} and back
  */
-public class EnumValueConverter<T extends Enum<T>> implements ValueConverter<T> {
+public class EnumValueConverter<T extends Enum<T>> extends AbstractValueConverter<T> {
 
 	private final Class<T> enumClass;
 

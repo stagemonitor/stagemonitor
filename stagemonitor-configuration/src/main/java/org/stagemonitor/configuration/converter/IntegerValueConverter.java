@@ -1,6 +1,6 @@
 package org.stagemonitor.configuration.converter;
 
-public class IntegerValueConverter implements ValueConverter<Integer> {
+public class IntegerValueConverter extends AbstractValueConverter<Integer> {
 
 	public static final IntegerValueConverter INSTANCE = new IntegerValueConverter();
 

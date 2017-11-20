@@ -15,7 +15,6 @@ import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.metrics.health.OverridableHealthCheckRegistry;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.HttpClient;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -155,14 +154,7 @@ public final class Stagemonitor {
 		if (option.isSensitive()) {
 			return "XXXX";
 		} else {
-			String trimmedValue = HttpClient.removeUserInfo(option.getValueAsString());
-			trimmedValue = trimmedValue.replace("\n", "");
-
-			int maximumLineLength = 55;
-			if (trimmedValue.length() > maximumLineLength) {
-				trimmedValue = trimmedValue.substring(0, maximumLineLength - 3) + "...";
-			}
-			return trimmedValue;
+			return option.getValueAsSafeString();
 		}
 	}
 

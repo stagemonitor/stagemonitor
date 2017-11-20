@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class MapValueConverter<K, V> implements ValueConverter<Map<K, V>> {
+public class MapValueConverter<K, V> extends AbstractValueConverter<Map<K, V>> {
 
 	private final ValueConverter<K> keyValueConverter;
 	private final ValueConverter<V> valueValueConverter;
@@ -54,13 +54,26 @@ public class MapValueConverter<K, V> implements ValueConverter<Map<K, V>> {
 
 	@Override
 	public String toString(Map<K, V> value) {
-		if (value == null) {
+		return getString(value, false);
+	}
+
+	@Override
+	public String toSafeString(Map<K, V> value) {
+		return getString(value, true);
+	}
+
+	private String getString(Map<K, V> map, boolean safeString) {
+		if (map == null) {
 			return null;
 		}
 		StringBuilder sb = new StringBuilder();
-		for (Iterator<Map.Entry<K, V>> iterator = value.entrySet().iterator(); iterator.hasNext(); ) {
+		for (Iterator<Map.Entry<K, V>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
 			Map.Entry<K, V> entry = iterator.next();
-			sb.append(keyValueConverter.toString(entry.getKey())).append(valueSeparator).append(' ').append(valueValueConverter.toString(entry.getValue()));
+			final K key = entry.getKey();
+			final V value = entry.getValue();
+			sb.append(safeString ? keyValueConverter.toSafeString(key) : keyValueConverter.toString(key))
+					.append(valueSeparator).append(' ')
+					.append(safeString ? valueValueConverter.toSafeString(value) : valueValueConverter.toString(value));
 			if (iterator.hasNext()) {
 				sb.append(entrySeparator).append('\n');
 			}

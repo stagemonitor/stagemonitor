@@ -13,7 +13,6 @@ import java.io.Closeable;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 
@@ -27,12 +26,12 @@ public class CorePluginTest {
 						.add("stagemonitor.reporting.elasticsearch.url", "http://bla:1/,http://bla:2,http://bla:3")),
 				null).getConfig(CorePlugin.class);
 
-		assertEquals("http://bla:1", corePlugin.getElasticsearchUrl());
-		assertEquals("http://bla:2", corePlugin.getElasticsearchUrl());
-		assertEquals("http://bla:3", corePlugin.getElasticsearchUrl());
-		assertEquals("http://bla:1", corePlugin.getElasticsearchUrl());
-		assertEquals("http://bla:2", corePlugin.getElasticsearchUrl());
-		assertEquals("http://bla:3", corePlugin.getElasticsearchUrl());
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://bla:1");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://bla:2");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://bla:3");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://bla:1");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://bla:2");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://bla:3");
 	}
 
 	@Test
@@ -43,7 +42,7 @@ public class CorePluginTest {
 						.add("stagemonitor.reporting.elasticsearch.url", "http://user:password@bla:1")),
 				null).getConfig(CorePlugin.class);
 
-		assertThat(corePlugin.getElasticsearchUrlsWithoutAuthenticationInformation()).containsExactly("http://XXXX:XXXX@bla:1");
+		assertThat(corePlugin.getElasticsearchUrlsWithoutAuthenticationInformation()).isEqualTo("http://user:XXX@bla:1");
 	}
 
 	@Test

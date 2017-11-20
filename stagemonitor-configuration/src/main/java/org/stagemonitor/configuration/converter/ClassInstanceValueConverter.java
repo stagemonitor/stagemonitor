@@ -7,7 +7,7 @@ package org.stagemonitor.configuration.converter;
  *
  * @param <T> the type of the class
  */
-public class ClassInstanceValueConverter<T> implements ValueConverter<T> {
+public class ClassInstanceValueConverter<T> extends AbstractValueConverter<T> {
 
 	private final Class<T> clazz;
 

@@ -18,7 +18,7 @@ public class HttpAlerterTest extends AbstractElasticsearchTest {
 
 	@Before
 	public void setUp() throws Exception {
-		abstractAlerterTest.configurationSource.add("stagemonitor.reporting.elasticsearch.url", elasticsearchUrl);
+		abstractAlerterTest.configurationSource.add("stagemonitor.reporting.elasticsearch.url", elasticsearchUrl.toString());
 		abstractAlerterTest.configuration.reloadDynamicConfigurationOptions();
 		httpAlerter = new HttpAlerter();
 		this.alertSender = abstractAlerterTest.createAlertSender(httpAlerter);

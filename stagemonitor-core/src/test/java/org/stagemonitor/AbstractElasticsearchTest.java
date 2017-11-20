@@ -20,6 +20,7 @@ import org.stagemonitor.core.util.HttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -34,7 +35,7 @@ public class AbstractElasticsearchTest {
 	protected static AdminClient adminClient;
 	protected static int elasticsearchPort;
 	protected static ElasticsearchClient elasticsearchClient;
-	protected static String elasticsearchUrl;
+	protected static URL elasticsearchUrl;
 	protected static CorePlugin corePlugin;
 
 	@BeforeClass
@@ -54,7 +55,7 @@ public class AbstractElasticsearchTest {
 					.put("transport.type", "local")
 					.put("http.type", "netty4")
 					.build();
-			elasticsearchUrl = "http://localhost:" + elasticsearchPort;
+			elasticsearchUrl = new URL("http://localhost:" + elasticsearchPort);
 			AbstractElasticsearchTest.corePlugin = mock(CorePlugin.class);
 			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
 			when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(elasticsearchUrl));
