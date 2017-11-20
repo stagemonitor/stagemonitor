@@ -12,25 +12,27 @@ import org.stagemonitor.core.util.HttpClient;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 
 public class ConfigServerConfigurationSourceTest {
 	@Test
-	public void whenReturnCodeNot200_thenEmptyConfiguration() {
+	public void whenReturnCodeNot200_thenEmptyConfiguration() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "", 400, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 
 		Assert.assertNotNull(dut);
 	}
 
 	@Test
-	public void whenResponseIsEmpty_thenEmptyConfiguration() {
+	public void whenResponseIsEmpty_thenEmptyConfiguration() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 		Assert.assertNotNull(dut);
 
 		prepMockWithResponse(http, "", 200, null);
@@ -38,49 +40,41 @@ public class ConfigServerConfigurationSourceTest {
 		Assert.assertNotNull(dut);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void whenBadConfigServerAddress_thenThrowException() {
+	@Test(expected = MalformedURLException.class)
+	public void whenMissingConfigUrl_thenThrowException() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, null, 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "malformedAddress");
-	}
-
-	@Test(expected = IllegalArgumentException.class)
-	public void whenMissingConfigUrl_thenThrowException() {
-		HttpClient http = Mockito.mock(HttpClient.class);
-
-		prepMockWithResponse(http, null, 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL(""));
 	}
 
 	@Test
-	public void whenMalformedResponse_thenEmptyConfiguration() {
+	public void whenMalformedResponse_thenEmptyConfiguration() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "malformed content", 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 
 		Assert.assertNotNull(dut);
 	}
 
 	@Test
-	public void whenMalformedContent_givenAlsoValidProperty_thenReturnConfig() {
+	public void whenMalformedContent_givenAlsoValidProperty_thenReturnConfig() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "malformed content\nnew: hope\nbut not much", 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 
 		Assert.assertNotNull(dut);
 		Assert.assertEquals("hope", dut.getValue("new"));
 	}
 
 	@Test
-	public void whenIOException_thenEmptyConfiguration() {
+	public void whenIOException_thenEmptyConfiguration() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar", 200, new IOException("bad connection or connection loss"));
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 		Assert.assertNotNull(dut);
 
 		// Now the connection is back
@@ -100,22 +94,22 @@ public class ConfigServerConfigurationSourceTest {
 	}
 
 	@Test
-	public void whenSimpleConfig_thenReturnConfig() {
+	public void whenSimpleConfig_thenReturnConfig() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice", 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("alice", dut.getValue("user.name"));
 	}
 
 	@Test
-	public void whenSimpleConfig_givenSpecialCharsInPropValue_thenReturnConfig() {
+	public void whenSimpleConfig_givenSpecialCharsInPropValue_thenReturnConfig() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: some more complex 123 \" string", 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("some more complex 123 \" string", dut.getValue("user.name"));
@@ -129,11 +123,11 @@ public class ConfigServerConfigurationSourceTest {
 	}
 
 	@Test
-	public void whenSimpleConfig_givenDifferentUpdates_thenReturnConfig() {
+	public void whenSimpleConfig_givenDifferentUpdates_thenReturnConfig() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice", 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("alice", dut.getValue("user.name"));
@@ -167,11 +161,11 @@ public class ConfigServerConfigurationSourceTest {
 	}
 
 	@Test
-	public void whenSimpleConfig_givenPropertyList_thenReturnConfig() {
+	public void whenSimpleConfig_givenPropertyList_thenReturnConfig() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser[0]: alice\nuser[1]: bob", 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("alice", dut.getValue("user[0]"));
@@ -179,11 +173,11 @@ public class ConfigServerConfigurationSourceTest {
 	}
 
 	@Test
-	public void whenPropertyContainsAColon_thenStillSplitKeyValueCorrectly() {
+	public void whenPropertyContainsAColon_thenStillSplitKeyValueCorrectly() throws MalformedURLException {
 		HttpClient http = Mockito.mock(HttpClient.class);
 
 		prepMockWithResponse(http, "foo: bar\nuser.name: alice:bob\nanother: one: bites\nthe: dust:\n", 200, null);
-		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, "http://localhost/config");
+		final RemotePropertiesConfigurationSource dut = new RemotePropertiesConfigurationSource(http, new URL("http://localhost/config"));
 
 		Assert.assertEquals("bar", dut.getValue("foo"));
 		Assert.assertEquals("alice:bob", dut.getValue("user.name"));

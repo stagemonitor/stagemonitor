@@ -15,10 +15,10 @@ import org.stagemonitor.core.util.http.HttpRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 public class StagemonitorCoreConfigurationSourceInitializer extends StagemonitorConfigurationSourceInitializer {
 
@@ -80,7 +80,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	 */
 	private void addRemotePropertiesConfigurationSources(ConfigurationRegistry configuration, CorePlugin corePlugin) {
 		// Validating necessary properties
-		final List<String> configurationUrls = new ArrayList<String>(corePlugin.getRemotePropertiesConfigUrls());
+		final ArrayList<URL> configurationUrls = new ArrayList<URL>(corePlugin.getRemotePropertiesConfigUrls());
 
 		if (corePlugin.isDeactivateStagemonitorIfRemotePropertyServerIsDown()) {
 			assertRemotePropertiesServerIsAvailable(configurationUrls.get(0));
@@ -88,7 +88,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 
 		logger.debug("Loading RemotePropertiesConfigurationSources with: configurationUrls = " + configurationUrls);
 		final HttpClient sharedHttpClient = new HttpClient();
-		for (String configUrl : configurationUrls) {
+		for (URL configUrl : configurationUrls) {
 			final RemotePropertiesConfigurationSource source = new RemotePropertiesConfigurationSource(
 					sharedHttpClient,
 					configUrl);
@@ -104,10 +104,10 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	 *
 	 * @param configUrl Full qualified configuration url
 	 */
-	private void assertRemotePropertiesServerIsAvailable(final String configUrl) {
+	private void assertRemotePropertiesServerIsAvailable(final URL configUrl) {
 		new HttpClient().send(
 				"HEAD",
-				configUrl,
+				configUrl.toExternalForm(),
 				new HashMap<String, String>(),
 				null,
 				new HttpClient.ResponseHandler<Void>() {

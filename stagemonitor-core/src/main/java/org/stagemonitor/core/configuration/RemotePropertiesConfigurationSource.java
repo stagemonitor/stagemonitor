@@ -5,10 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.source.AbstractConfigurationSource;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.http.HttpRequest;
-import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -38,28 +38,23 @@ public class RemotePropertiesConfigurationSource extends AbstractConfigurationSo
 
 	private Properties properties;
 	private HttpClient httpClient;
-	private String configUrl;
+	private URL configUrl;
 
 	/**
 	 * Creates an RemotePropertiesConfigurationSource instance and fetches the configuration initially via a http GET
 	 *
 	 * @param configUrl Http or https address of the config server
 	 */
-	public RemotePropertiesConfigurationSource(String configUrl) {
+	public RemotePropertiesConfigurationSource(URL configUrl) {
 		this(new HttpClient(), configUrl);
 	}
 
 	/**
 	 * Creates an RemotePropertiesConfigurationSource instance and fetches the configuration initially via a http GET
-	 *
-	 * @param httpClient Instance of HttpClient
+	 *  @param httpClient Instance of HttpClient
 	 * @param configUrl  Http or https address of the config server
 	 */
-	public RemotePropertiesConfigurationSource(HttpClient httpClient, String configUrl) {
-
-		if (StringUtils.isEmpty(configUrl) || !configUrl.startsWith("http")) {
-			throw new IllegalArgumentException("Invalid config server address: " + configUrl);
-		}
+	public RemotePropertiesConfigurationSource(HttpClient httpClient, URL configUrl) {
 
 		this.httpClient = httpClient;
 		this.properties = new Properties();
@@ -86,19 +81,19 @@ public class RemotePropertiesConfigurationSource extends AbstractConfigurationSo
 	 */
 	@Override
 	public String getName() {
-		return configUrl;
+		return configUrl.toExternalForm();
 	}
 
 	@Override
 	public void reload() {
 
-		logger.debug("Requesting configuration from: " + configUrl);
+		logger.debug("Requesting configuration from: " + configUrl.toExternalForm());
 
-		httpClient.send("GET", configUrl, new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
+		httpClient.send("GET", configUrl.toExternalForm(), new HashMap<String, String>(), null, new HttpClient.ResponseHandler<Void>() {
 			@Override
 			public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
 				if (e != null || statusCode != 200 || is == null) {
-					logger.warn("Couldn't GET configuration. " + configUrl + " returned " + statusCode);
+					logger.warn("Couldn't GET configuration. " + configUrl.toExternalForm() + " returned " + statusCode);
 					return null;
 				}
 

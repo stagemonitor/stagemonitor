@@ -45,7 +45,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.stagemonitor.core.util.Assert.checkArgument;
 import static org.stagemonitor.core.util.GraphiteSanitizer.sanitizeGraphiteMetricSegment;
 
 /**
@@ -396,7 +395,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags("elasticsearch", "advanced")
 			.buildWithDefault(5);
-	private final ConfigurationOption<Collection<String>> remotePropertiesConfigUrls = ConfigurationOption.stringsOption()
+	private final ConfigurationOption<List<URL>> remotePropertiesConfigUrls = ConfigurationOption.urlsOption()
 			.key("stagemonitor.configuration.remoteproperties.urls")
 			.dynamic(false)
 			.label("URLs of the remote properties")
@@ -406,18 +405,7 @@ public class CorePlugin extends StagemonitorPlugin {
 					"For example a configuration URL for the petclinic application with the default profile from a" +
 					"Spring Cloud Config server would look like: https://config.server/petclinic-default.properties")
 			.configurationCategory(CORE_PLUGIN_NAME)
-			.addValidator(new ConfigurationOption.Validator<Collection<String>>() {
-				@Override
-				public void assertValid(Collection<String> urls) {
-					for (String url : urls) {
-						checkArgument(!StringUtils.isEmpty(url) && url.startsWith("http"),
-								"stagemonitor.configuration.remoteproperties.urls contains invalid http/s urls." +
-										"Will skip the config source.");
-					}
-
-				}
-			})
-			.buildWithDefault(Collections.<String>emptyList())
+			.buildWithDefault(Collections.<URL>emptyList());
 	private final ConfigurationOption<Boolean> deactivateStagemonitorIfRemotePropertyServerIsDown = ConfigurationOption.booleanOption()
 			.key("stagemonitor.configuration.remoteproperties.deactivateStagemonitorIfRemotePropertyServerIsDown")
 			.dynamic(false)
@@ -843,7 +831,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		return reporters;
 	}
 
-	public Collection<String> getRemotePropertiesConfigUrls() {
+	public Collection<URL> getRemotePropertiesConfigUrls() {
 		return remotePropertiesConfigUrls.getValue();
 	}
 

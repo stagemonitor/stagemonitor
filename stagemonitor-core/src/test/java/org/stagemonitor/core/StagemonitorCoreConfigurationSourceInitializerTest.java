@@ -13,6 +13,7 @@ import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.HttpClient;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -71,7 +72,7 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 
 	@Test
 	public void testESDisabledAndSpringCloudEnabled() throws IOException {
-		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList("http://localhost/config.json"));
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList(new URL("http://localhost/config.json")));
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
@@ -86,18 +87,9 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 		verify(configuration, never()).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testSpringCloud_badServerAddress() throws IOException {
-		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList("some.invalid.server/address/"));
-
-		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
-
-		verify(configuration, never()).addConfigurationSourceAfter(any(RemotePropertiesConfigurationSource.class), eq(SimpleSource.class));
-	}
-
 	@Test
 	public void testCorrectProperties() throws IOException {
-		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList("http://localhost/config.json"));
+		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(Collections.singletonList(new URL("http://localhost/config.json")));
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
 
@@ -110,7 +102,7 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 	@Test
 	public void testSpringCloud_multipleConfigUrls() throws IOException {
 		when(corePlugin.getRemotePropertiesConfigUrls()).thenReturn(
-				Arrays.asList("http://localhost/config1", "http://localhost/config2", "http://some.other/domain"));
+				Arrays.asList(new URL("http://localhost/config1"), new URL("http://localhost/config2"), new URL("http://some.other/domain")));
 		when(corePlugin.getApplicationName()).thenReturn("myapplication");
 
 		initializer.onConfigurationInitialized(new StagemonitorConfigurationSourceInitializer.ConfigInitializedArguments(configuration));
