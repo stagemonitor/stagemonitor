@@ -401,7 +401,11 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.configuration.remoteproperties.urls")
 			.dynamic(false)
 			.label("URLs of the remote properties")
-			.description("Must be http or https urls.")
+			.description("Must be http or https URLs. This can be a single URL or a list of config URLs." +
+					"The end point should provide a list of properties in a simple line oriented format with key/value pairs." +
+					"For more information on the format, see java.util.Properties.load(java.io.Reader))." +
+					"For example a configuration URL for the petclinic application with the default profile from a" +
+					"Spring Cloud Config server would look like: https://config.server/petclinic-default.properties")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.addValidator(new ConfigurationOption.Validator<Collection<String>>() {
 				@Override
@@ -414,7 +418,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 				}
 			})
-			.buildWithDefault(Collections.<String>emptyList());
+			.buildWithDefault(Collections.<String>emptyList())
 	private final ConfigurationOption<Boolean> deactivateStagemonitorIfRemotePropertyServerIsDown = ConfigurationOption.booleanOption()
 			.key("stagemonitor.configuration.remoteproperties.deactivateStagemonitorIfRemotePropertyServerIsDown")
 			.dynamic(false)

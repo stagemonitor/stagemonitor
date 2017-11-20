@@ -30,7 +30,7 @@ import java.util.Properties;
  * their corresponding detailed description
  * <pre>
  * stagemonitor.configuration.remoteproperties.urls=configUrl[, configUrl]...
- * stagemonitor.configuration.springcloud.deactivateStagemonitorIfConfigServerIsDown=(true|false)
+ * stagemonitor.configuration.remoteproperties.deactivateStagemonitorIfConfigServerIsDown=(true|false)
  * </pre>
  */
 public class RemotePropertiesConfigurationSource extends AbstractConfigurationSource {
@@ -103,8 +103,9 @@ public class RemotePropertiesConfigurationSource extends AbstractConfigurationSo
 				}
 
 				logger.debug("Reloading RemotePropertiesConfigurationSource with: " + properties);
-				properties.clear();
-				properties.load(is);
+				final Properties newProperties = new Properties();
+				newProperties.load(is);
+				RemotePropertiesConfigurationSource.this.properties = newProperties;
 				return null;
 			}
 		});

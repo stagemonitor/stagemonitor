@@ -48,8 +48,8 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 		}
 
 		if (!corePlugin.getRemotePropertiesConfigUrls().isEmpty()) {
-			logger.debug("Spring Cloud Config configuration source is enabled");
-			addSpringCloudConfigurationSources(configInitializedArguments.getConfiguration(), corePlugin);
+			logger.debug("RemotePropertiesConfigurationSource is enabled");
+			addRemotePropertiesConfigurationSources(configInitializedArguments.getConfiguration(), corePlugin);
 		}
 	}
 
@@ -76,17 +76,17 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	}
 
 	/**
-	 * Creates and registers a SpringCloudConfigConfigurationSource for each configuration url
+	 * Creates and registers a RemotePropertiesConfigurationSource for each configuration url
 	 */
-	private void addSpringCloudConfigurationSources(ConfigurationRegistry configuration, CorePlugin corePlugin) {
+	private void addRemotePropertiesConfigurationSources(ConfigurationRegistry configuration, CorePlugin corePlugin) {
 		// Validating necessary properties
 		final List<String> configurationUrls = new ArrayList<String>(corePlugin.getRemotePropertiesConfigUrls());
 
 		if (corePlugin.isDeactivateStagemonitorIfRemotePropertyServerIsDown()) {
-			assertCloudConfigServerIsAvailable(configurationUrls.get(0));
+			assertRemotePropertiesServerIsAvailable(configurationUrls.get(0));
 		}
 
-		logger.debug("Loading SpringCloudConfigurationSources with: configurationUrls = " + configurationUrls);
+		logger.debug("Loading RemotePropertiesConfigurationSources with: configurationUrls = " + configurationUrls);
 		final HttpClient sharedHttpClient = new HttpClient();
 		for (String configUrl : configurationUrls) {
 			final RemotePropertiesConfigurationSource source = new RemotePropertiesConfigurationSource(
@@ -104,7 +104,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	 *
 	 * @param configUrl Full qualified configuration url
 	 */
-	private void assertCloudConfigServerIsAvailable(final String configUrl) {
+	private void assertRemotePropertiesServerIsAvailable(final String configUrl) {
 		new HttpClient().send(
 				"HEAD",
 				configUrl,
