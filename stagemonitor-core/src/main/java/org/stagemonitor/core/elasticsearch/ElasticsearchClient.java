@@ -80,7 +80,7 @@ public class ElasticsearchClient {
 	}
 
 	public JsonNode getJson(final String path) throws IOException {
-		return JsonUtils.getMapper().readTree(new URL(corePlugin.getElasticsearchUrl() + path).openStream());
+		return JsonUtils.getMapper().readTree(new URL(corePlugin.getElasticsearchUrl() + path));
 	}
 
 	public <T> T getObject(final String path, Class<T> type) {

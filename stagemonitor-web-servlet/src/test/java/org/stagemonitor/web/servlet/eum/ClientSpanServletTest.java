@@ -488,4 +488,36 @@ public class ClientSpanServletTest {
 		});
 	}
 
+	@Test
+	public void testJsessionId() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("ty", "pl");
+		mockHttpServletRequest.setParameter("r", "1496751574200");
+		mockHttpServletRequest.setParameter("u", "http://localhost:9966/petclinic;jsessionid=xyz");
+		mockHttpServletRequest.setParameter("d", "518");
+
+		// When
+		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertThat(mockTracer.finishedSpans().get(0).operationName()).isEqualTo("/petclinic");
+	}
+
+	@Test
+	public void testQueryParameter() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("ty", "pl");
+		mockHttpServletRequest.setParameter("r", "1496751574200");
+		mockHttpServletRequest.setParameter("u", "http://localhost:9966/petclinic?jsessionid=xyz");
+		mockHttpServletRequest.setParameter("d", "518");
+
+		// When
+		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertThat(mockTracer.finishedSpans().get(0).operationName()).isEqualTo("/petclinic");
+	}
+
 }

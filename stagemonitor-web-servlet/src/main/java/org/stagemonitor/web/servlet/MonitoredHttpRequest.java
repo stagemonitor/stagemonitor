@@ -198,7 +198,10 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		return request.getMethod() + " " + requestURI;
 	}
 
-	private static String removeSemicolonContent(String requestUri) {
+	/*
+	 * copy of org.springframework.web.util.UrlPathHelper#removeSemicolonContentInternal
+	 */
+	public static String removeSemicolonContent(String requestUri) {
 		int semicolonIndex = requestUri.indexOf(';');
 		while (semicolonIndex != -1) {
 			int slashIndex = requestUri.indexOf('/', semicolonIndex);
