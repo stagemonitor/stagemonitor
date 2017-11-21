@@ -7,9 +7,9 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.ConfigurationSource;
+import org.stagemonitor.core.configuration.ConfigurationLogger;
 import org.stagemonitor.core.instrument.AgentAttacher;
 import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.metrics.health.OverridableHealthCheckRegistry;
@@ -125,37 +125,6 @@ public final class Stagemonitor {
 	private static String getJvmAndOsVersionString() {
 		return "Java " + System.getProperty("java.version") + " (" + System.getProperty("java.vendor") + ") " +
 				System.getProperty("os.name") + " " + System.getProperty("os.version");
-	}
-
-	private static void logConfiguration() {
-		logger.info("# stagemonitor configuration, listing non-default values:");
-		boolean hasOnlyDefaultOptions = true;
-
-		for (List<ConfigurationOption<?>> options : configuration.getConfigurationOptionsByCategory().values()) {
-			for (ConfigurationOption<?> option : options) {
-				if (!option.isDefault()) {
-					hasOnlyDefaultOptions = false;
-					logger.info("{}: {} (source: {})",
-							option.getKey(), prepareOptionValueForLog(option), option.getNameOfCurrentConfigurationSource());
-				}
-			}
-		}
-
-		if (hasOnlyDefaultOptions) {
-			logger.warn("stagemonitor has not been configured. Have a look at");
-			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/How-should-I-configure-stagemonitor%3F");
-			logger.warn("and");
-			logger.warn("https://github.com/stagemonitor/stagemonitor/wiki/Configuration-Options");
-			logger.warn("for further instructions");
-		}
-	}
-
-	private static String prepareOptionValueForLog(ConfigurationOption<?> option) {
-		if (option.isSensitive()) {
-			return "XXXX";
-		} else {
-			return option.getValueAsSafeString();
-		}
 	}
 
 	private static void initializePlugins() {
@@ -352,7 +321,7 @@ public final class Stagemonitor {
 			}
 		});
 		logStatus();
-		logConfiguration();
+		new ConfigurationLogger().logConfiguration(configuration);
 	}
 
 	private static void reloadPluginsAndConfiguration() {

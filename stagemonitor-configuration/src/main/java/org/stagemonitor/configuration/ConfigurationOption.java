@@ -71,6 +71,7 @@ public class ConfigurationOption<T> {
 	private String nameOfCurrentConfigurationSource;
 	private String errorMessage;
 	private ConfigurationRegistry configuration;
+	private String usedKey;
 
 	public static <T> ConfigurationOptionBuilder<T> builder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 		return new ConfigurationOptionBuilder<T>(valueConverter, valueType);
@@ -456,6 +457,7 @@ public class ConfigurationOption<T> {
 			ConfigValueInfo configValueInfo = loadValueFromSources(key);
 			success = trySetValue(configValueInfo);
 			if (success) {
+				usedKey = key;
 				break;
 			}
 		}
@@ -586,6 +588,16 @@ public class ConfigurationOption<T> {
 
 	public boolean removeChangeListener(ChangeListener<T> changeListener) {
 		return changeListeners.remove(changeListener);
+	}
+
+	/**
+	 * A {@link ConfigurationOption} can have multiple keys ({@link #key} and {@link #aliasKeys}). This method returns
+	 * the key which is used by the current configuration source ({@link #nameOfCurrentConfigurationSource}).
+	 *
+	 * @return the used key of the current configuration source
+	 */
+	public String getUsedKey() {
+		return usedKey;
 	}
 
 	/**
