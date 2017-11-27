@@ -2,6 +2,8 @@ package org.stagemonitor.web.servlet.initializer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +16,9 @@ public class ServletContainerInitializerUtil {
 	private static final Logger logger = LoggerFactory.getLogger(ServletContainerInitializerUtil.class);
 
 	public static void registerStagemonitorServletContainerInitializers(ServletContext servletContext) {
+		if (!Stagemonitor.getPlugin(CorePlugin.class).isStagemonitorActive()) {
+			return;
+		}
 		for (StagemonitorServletContainerInitializer sci : getStagemonitorSCIs()) {
 			try {
 				sci.onStartup(servletContext);
