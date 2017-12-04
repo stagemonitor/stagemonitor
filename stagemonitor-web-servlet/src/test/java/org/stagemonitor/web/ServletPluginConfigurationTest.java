@@ -23,7 +23,7 @@ public class ServletPluginConfigurationTest {
 
 	@Before
 	public void before() throws Exception {
-		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(new ServletPlugin()), Collections.emptyList(), "");
+		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(new ServletPlugin()), Collections.emptyList());
 		config = configuration.getConfig(ServletPlugin.class);
 	}
 

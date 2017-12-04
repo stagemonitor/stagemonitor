@@ -41,8 +41,8 @@ public class ProbabilisticSamplingPreExecutionInterceptorTest {
 		tracingPlugin = spy(new TracingPlugin());
 		doReturn(true).when(tracingPlugin).isRoot(any());
 		configuration = new ConfigurationRegistry(Collections.singletonList(tracingPlugin),
-				Collections.singletonList(new SimpleSource()),
-				null);
+				Collections.singletonList(new SimpleSource())
+		);
 
 		final Tracer tracer = mock(Tracer.class);
 		GlobalTracer.register(tracer);

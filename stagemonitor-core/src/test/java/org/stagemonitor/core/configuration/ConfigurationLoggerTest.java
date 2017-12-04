@@ -39,8 +39,8 @@ public class ConfigurationLoggerTest {
 		}
 		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(
 				Collections.singletonList(new Provider()),
-				Collections.singletonList(new SimpleSource().add("foo", "bar")),
-				null);
+				Collections.singletonList(new SimpleSource().add("foo", "bar"))
+		);
 		configurationLogger.logConfiguration(configurationRegistry);
 
 		verify(logger).warn(contains("Detected usage of deprecated configuration option '{}'"), eq("foo"));
@@ -56,8 +56,8 @@ public class ConfigurationLoggerTest {
 		}
 		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(
 				Collections.singletonList(new Provider()),
-				Collections.singletonList(new SimpleSource().add("foo.old", "bar")),
-				null);
+				Collections.singletonList(new SimpleSource().add("foo.old", "bar"))
+		);
 		configurationLogger.logConfiguration(configurationRegistry);
 
 		verify(logger).warn(eq("Detected usage of an old configuration key: '{}'. " +
@@ -74,8 +74,8 @@ public class ConfigurationLoggerTest {
 		}
 		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(
 				Collections.singletonList(new Provider()),
-				Collections.singletonList(new SimpleSource("source").add("foo", "secret")),
-				null);
+				Collections.singletonList(new SimpleSource("source").add("foo", "secret"))
+		);
 		configurationLogger.logConfiguration(configurationRegistry);
 
 		verify(logger).info(startsWith("# stagemonitor configuration"));
@@ -91,8 +91,8 @@ public class ConfigurationLoggerTest {
 		}
 		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(
 				Collections.singletonList(new Provider()),
-				Collections.singletonList(new SimpleSource("source").add("foo", "http://user:pwd@example.com")),
-				null);
+				Collections.singletonList(new SimpleSource("source").add("foo", "http://user:pwd@example.com"))
+		);
 		configurationLogger.logConfiguration(configurationRegistry);
 
 		verify(logger).info(startsWith("# stagemonitor configuration"));

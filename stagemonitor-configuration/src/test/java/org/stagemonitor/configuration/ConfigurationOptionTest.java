@@ -73,7 +73,7 @@ public class ConfigurationOptionTest {
 				return configurationOptions;
 			}
 		});
-		return new ConfigurationRegistry(configurationOptionProviders, Collections.singletonList(configurationSource), null);
+		return new ConfigurationRegistry(configurationOptionProviders, Collections.singletonList(configurationSource));
 	}
 
 	@Test

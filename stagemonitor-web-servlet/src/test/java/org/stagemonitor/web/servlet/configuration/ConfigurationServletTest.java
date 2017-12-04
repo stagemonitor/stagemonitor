@@ -1,9 +1,11 @@
 package org.stagemonitor.web.servlet.configuration;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.web.servlet.ServletPlugin;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -14,11 +16,21 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ConfigurationServletTest {
 
-	private ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
-	private ConfigurationServlet configurationServlet = new ConfigurationServlet(configuration);
+	private ConfigurationRegistry configuration;
+	private ConfigurationServlet configurationServlet;
+
+	@Before
+	public void setUp() {
+		configuration = mock(ConfigurationRegistry.class);
+		final ServletPlugin servletPlugin = mock(ServletPlugin.class);
+		when(servletPlugin.getConfigurationPasswordChecker()).thenReturn(mock(ConfigurationPasswordChecker.class));
+		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);
+		configurationServlet = new ConfigurationServlet(configuration);
+	}
 
 	@Test
 	public void testUpdateConfigurationWithoutConfigurationSource() throws IOException, ServletException {
@@ -71,7 +83,7 @@ public class ConfigurationServletTest {
 
 	@Test
 	public void testIllegalArgumentException() throws ServletException, IOException {
-		doThrow(new IllegalArgumentException("test")).when(configuration).save(any(), any(), any(), any());
+		doThrow(new IllegalArgumentException("test")).when(configuration).save(any(), any(), any());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("key", "stagemonitor.internal.monitoring");
@@ -86,7 +98,7 @@ public class ConfigurationServletTest {
 
 	@Test
 	public void testIllegalStateException() throws ServletException, IOException {
-		doThrow(new IllegalStateException("test")).when(configuration).save(any(), any(), any(), any());
+		doThrow(new IllegalStateException("test")).when(configuration).save(any(), any(), any());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("key", "stagemonitor.internal.monitoring");
@@ -101,7 +113,7 @@ public class ConfigurationServletTest {
 
 	@Test
 	public void testUnsupportedOperationException() throws ServletException, IOException {
-		doThrow(new UnsupportedOperationException("test")).when(configuration).save(any(), any(), any(), any());
+		doThrow(new UnsupportedOperationException("test")).when(configuration).save(any(), any(), any());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("key", "stagemonitor.internal.monitoring");
@@ -116,7 +128,7 @@ public class ConfigurationServletTest {
 
 	@Test
 	public void testException() throws ServletException, IOException {
-		doThrow(new RuntimeException("test")).when(configuration).save(any(), any(), any(), any());
+		doThrow(new RuntimeException("test")).when(configuration).save(any(), any(), any());
 
 		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/stagemonitor/configuration");
 		request.addParameter("key", "stagemonitor.internal.monitoring");

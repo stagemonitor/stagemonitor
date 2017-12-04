@@ -41,8 +41,8 @@ public class Example {
                         new SystemPropertyConfigurationSource(),
                         new PropertyFileConfigurationSource("application.properties"),
                         new EnvironmentVariableConfigurationSource()
-                ),
-                null);
+                )
+		);
         // reloads configuration options from all configuration sources each 30 seconds
         configurationRegistry.scheduleReloadAtRate(30, TimeUnit.SECONDS);
 

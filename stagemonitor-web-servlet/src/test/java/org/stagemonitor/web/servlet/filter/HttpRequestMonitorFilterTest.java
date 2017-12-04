@@ -76,7 +76,7 @@ public class HttpRequestMonitorFilterTest {
 		doReturn(tracingPlugin).when(configuration).getConfig(TracingPlugin.class);
 		doReturn(corePlugin).when(configuration).getConfig(CorePlugin.class);
 		doReturn(true).when(servletPlugin).isWidgetEnabled();
-		doReturn(true).when(servletPlugin).isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class));
+		doReturn(true).when(servletPlugin).isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class));
 		doReturn(true).when(servletPlugin).isClientSpanCollectionEnabled();
 		doReturn(true).when(servletPlugin).isClientSpanCollectionInjectionEnabled();
 		doReturn(true).when(corePlugin).isStagemonitorActive();
@@ -148,7 +148,7 @@ public class HttpRequestMonitorFilterTest {
 	@Test
 	public void testWidgetShouldNotBeInjectedIfInjectionDisabled() throws IOException, ServletException {
 		doReturn(false).when(servletPlugin).isClientSpanCollectionEnabled();
-		doReturn(false).when(servletPlugin).isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class));
+		doReturn(false).when(servletPlugin).isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class));
 		doReturn(false).when(servletPlugin).isWidgetEnabled();
 		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 		httpRequestMonitorFilter.doFilter(requestWithAccept("text/html"), servletResponse, writeInResponseWhenCallingDoFilter(testHtml));

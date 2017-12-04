@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -19,23 +18,10 @@ public class ConfigurationRegistryTest {
 
 	@Test
 	public void testAddConfigurationSource() {
-		ConfigurationRegistry configuration = new ConfigurationRegistry("");
+		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.emptyList(), Collections.emptyList());
 		configuration.addConfigurationSource(new SimpleSource());
 
 		assertEquals(Collections.singletonMap("Transient Configuration Source", true), configuration.getNamesOfConfigurationSources());
-	}
-
-	@Test
-	public void testIsPasswordSetTrue() throws Exception {
-		ConfigurationRegistry configuration = new ConfigurationRegistry("pwd");
-		configuration.addConfigurationSource(SimpleSource.forTest("pwd", ""));
-		assertTrue(configuration.isPasswordSet());
-	}
-
-	@Test
-	public void testIsPasswordSetFalse() throws Exception {
-		ConfigurationRegistry configuration = new ConfigurationRegistry("pwd");
-		assertFalse(configuration.isPasswordSet());
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -43,7 +29,7 @@ public class ConfigurationRegistryTest {
 		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(
 				ConfigurationOption.stringOption().key("foo").description("Foo").build(),
 				ConfigurationOption.stringOption().key("foo").label("Bar").build());
-		new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.emptyList(), "");
+		new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.emptyList());
 	}
 
 	@Test
@@ -52,21 +38,18 @@ public class ConfigurationRegistryTest {
 		final ConfigurationOption<String> configurationOption = ConfigurationOption.stringOption()
 				.key("foo")
 				.dynamic(true)
-				.addChangeListener(new ConfigurationOption.ChangeListener<String>() {
-					@Override
-					public void onChange(ConfigurationOption<?> configurationOption, String oldValue, String newValue) {
-						assertEquals("foo", configurationOption.getKey());
-						assertEquals("old", oldValue);
-						assertEquals("new", newValue);
-						changeListenerFired.set(true);
-						throw new RuntimeException("This is an expected test exception. " +
-								"It is thrown to test whether Configuration can cope with change listeners that throw an exception.");
-					}
+				.addChangeListener((opt, oldValue, newValue) -> {
+					assertEquals("foo", opt.getKey());
+					assertEquals("old", oldValue);
+					assertEquals("new", newValue);
+					changeListenerFired.set(true);
+					throw new RuntimeException("This is an expected test exception. " +
+							"It is thrown to test whether Configuration can cope with change listeners that throw an exception.");
 				}).buildWithDefault("old");
 
 		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
 		final SimpleSource configurationSource = new SimpleSource("test");
-		final ConfigurationRegistry config = new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.singletonList(configurationSource), "");
+		final ConfigurationRegistry config = new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.singletonList(configurationSource));
 		config.save("foo", "new", "test");
 		assertTrue(changeListenerFired.get());
 	}
@@ -76,7 +59,7 @@ public class ConfigurationRegistryTest {
 		final ConfigurationOption<String> configurationOption = ConfigurationOption.stringOption().key("foo").required().build();
 
 		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
-		new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.emptyList(), "", true);
+		new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.emptyList(), true);
 	}
 
 	@Test
@@ -92,7 +75,7 @@ public class ConfigurationRegistryTest {
 
 		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(configurationOption);
 		final SimpleSource configurationSource = new SimpleSource("test");
-		final ConfigurationRegistry config = new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.singletonList(configurationSource), "");
+		final ConfigurationRegistry config = new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.singletonList(configurationSource));
 		try {
 			config.save("foo", "false", "test");
 			fail();
@@ -122,7 +105,7 @@ public class ConfigurationRegistryTest {
 	public void testToJsonDoesNotThrowException() throws Exception {
 		final ConfigurationOptionProvider optionProvider = TestConfigurationOptionProvider.of(
 				ConfigurationOption.stringOption().key("foo").description("Foo").configurationCategory("Foos").build());
-		final ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.emptyList(), "");
+		final ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(optionProvider), Collections.emptyList());
 		new ObjectMapper().writeValueAsString(configuration.getConfigurationOptionsByCategory());
 	}
 

@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 public class StagemonitorSecurityFilter extends AbstractExclusionFilter {
 
 	private final ServletPlugin servletPlugin;
-	private final ConfigurationRegistry configuration;
 
 	public StagemonitorSecurityFilter() {
 		this(Stagemonitor.getConfiguration());
@@ -41,7 +40,6 @@ public class StagemonitorSecurityFilter extends AbstractExclusionFilter {
 	public StagemonitorSecurityFilter(ConfigurationRegistry configuration) {
 		super(ConfigurationOption.stringsOption().buildWithDefault(Arrays.asList("/stagemonitor/public", "/stagemonitor/configuration")),
 				ConfigurationOption.stringsOption().buildWithDefault(Collections.<String>emptyList()));
-		this.configuration = configuration;
 		this.servletPlugin = configuration.getConfig(ServletPlugin.class);
 	}
 
@@ -49,7 +47,7 @@ public class StagemonitorSecurityFilter extends AbstractExclusionFilter {
 	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
 
-		if (!servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(request, configuration)) {
+		if (!servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(request)) {
 			// let's pretend as if stagemonitor is not there to not unnecessarily leak information
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;

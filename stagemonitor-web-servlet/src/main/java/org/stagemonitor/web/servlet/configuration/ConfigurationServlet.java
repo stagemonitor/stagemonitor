@@ -4,10 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.web.servlet.ServletPlugin;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,12 +19,14 @@ public class ConfigurationServlet extends HttpServlet {
 	private static final Logger logger = LoggerFactory.getLogger(ConfigurationServlet.class);
 
 	private final ConfigurationRegistry configuration;
+	private final ServletPlugin servletPlugin;
 
 	public ConfigurationServlet() {
 		this(Stagemonitor.getConfiguration());
 	}
 
 	public ConfigurationServlet(ConfigurationRegistry configuration) {
+		this.servletPlugin = configuration.getConfig(ServletPlugin.class);
 		this.configuration = configuration;
 		logger.info("Registering configuration Endpoint {}. You can dynamically change the configuration by " +
 				"issuing a POST request to {}?key=stagemonitor.config.key&value=configValue&stagemonitor.password=password. " +
@@ -34,7 +36,7 @@ public class ConfigurationServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
 		reloadConfigIfRequested(req);
 		resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 	}
@@ -48,7 +50,7 @@ public class ConfigurationServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (reloadConfigIfRequested(req)) {
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 			return;
@@ -68,15 +70,16 @@ public class ConfigurationServlet extends HttpServlet {
 				req.getParameter("value"));
 	}
 
-	public static void tryToSaveAndHandleErrors(ConfigurationRegistry configuration, HttpServletRequest req,
-												HttpServletResponse resp,
-												String key, String value) throws IOException {
+	private void tryToSaveAndHandleErrors(ConfigurationRegistry configuration, HttpServletRequest req,
+										  HttpServletResponse resp,
+										  String key, String value) throws IOException {
 		String password = req.getHeader("X-Stagemonitor-Show-Widget");
 		if (password == null) {
-			password = req.getParameter(Stagemonitor.STAGEMONITOR_PASSWORD);
+			password = req.getParameter(ServletPlugin.STAGEMONITOR_PASSWORD);
 		}
 		try {
-			configuration.save(key, value, req.getParameter("configurationSource"), password);
+			servletPlugin.getConfigurationPasswordChecker().assertPasswordCorrect(password);
+			configuration.save(key, value, req.getParameter("configurationSource"));
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} catch (IllegalArgumentException e) {
 			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());

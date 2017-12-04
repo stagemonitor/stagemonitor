@@ -72,7 +72,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		userAgentHeader = httpServletRequest.getHeader("user-agent");
 		connectionId = httpServletRequest.getHeader(WidgetAjaxSpanReporter.CONNECTION_ID);
 		this.userAgentParsingExecutor = userAgentParsingExecutor;
-		widgetAndStagemonitorEndpointsAllowed = servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest, configuration);
+		widgetAndStagemonitorEndpointsAllowed = servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(httpServletRequest);
 		clientIp = getClientIp(httpServletRequest);
 	}
 

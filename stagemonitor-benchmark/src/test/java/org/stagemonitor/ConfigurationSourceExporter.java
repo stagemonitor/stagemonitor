@@ -7,6 +7,8 @@ import org.stagemonitor.core.util.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.ServiceLoader;
 
 public class ConfigurationSourceExporter {
 
@@ -14,7 +16,7 @@ public class ConfigurationSourceExporter {
 	}
 
 	public static void main(String[] args) throws IOException {
-		final String json = JsonUtils.toJson(new ConfigurationRegistry(StagemonitorPlugin.class).getConfigurationOptionsByCategory());
+		final String json = JsonUtils.toJson(new ConfigurationRegistry(ServiceLoader.load(StagemonitorPlugin.class, ConfigurationRegistry.class.getClassLoader()), Collections.emptyList()).getConfigurationOptionsByCategory());
 		System.out.println(json);
 		File stagemonitorWidgetDevHtml = new File("stagemonitor-web-servlet/src/test/resources/stagemonitorWidgetDev.html");
 		String content = FileUtils.readFileToString(stagemonitorWidgetDevHtml);

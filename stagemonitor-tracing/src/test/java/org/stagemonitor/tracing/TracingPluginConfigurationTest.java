@@ -20,7 +20,7 @@ public class TracingPluginConfigurationTest {
 	public void before() throws Exception {
 		Stagemonitor.reset();
 		SharedMetricRegistries.clear();
-		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(new TracingPlugin()), Collections.emptyList(), "");
+		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(new TracingPlugin()), Collections.emptyList());
 		config = configuration.getConfig(TracingPlugin.class);
 	}
 

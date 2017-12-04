@@ -5,11 +5,10 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.stagemonitor.configuration.ConfigurationOptionProvider;
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletRequest;
@@ -69,8 +68,9 @@ public class StagemonitorSecurityFilterTest {
 			configurationSource.add("stagemonitor.password", password);
 		}
 		configurationSource.add("stagemonitor.web.widget.enabled", Boolean.toString(widgetEnabled));
-		ConfigurationRegistry configuration = new ConfigurationRegistry(Arrays.<ConfigurationOptionProvider>asList(servletPlugin),
-				Arrays.<ConfigurationSource>asList(configurationSource), "stagemonitor.password");
+		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.<ConfigurationOptionProvider>singletonList(servletPlugin),
+				Collections.singletonList(configurationSource));
+		servletPlugin.initPasswordChecker(configuration);
 
 		StagemonitorSecurityFilter stagemonitorSecurityFilter = new StagemonitorSecurityFilter(configuration);
 		FilterChain filterChain = mock(FilterChain.class);

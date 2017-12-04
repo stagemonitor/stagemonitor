@@ -9,8 +9,10 @@ import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -20,7 +22,7 @@ public class ConfigurationOptionsMarkdownExporter {
 	}
 
 	public static void main(String[] args) throws IOException {
-		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(StagemonitorPlugin.class);
+		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(ServiceLoader.load(StagemonitorPlugin.class, ConfigurationRegistry.class.getClassLoader()), Collections.emptyList());
 		System.out.println(getMarkdown(configurationRegistry));
 	}
 
