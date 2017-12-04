@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
@@ -29,16 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -56,13 +48,15 @@ public class ElasticsearchClient {
 	private final String TITLE = "title";
 	private final HttpClient httpClient;
 	private final CorePlugin corePlugin;
+	private final ConfigurationRegistry configurationRegistry;
 	private final AtomicBoolean elasticsearchAvailable = new AtomicBoolean(true);
 
 	private final ThreadPoolExecutor asyncESPool;
 	private Timer timer;
 
-	public ElasticsearchClient(final CorePlugin corePlugin, final HttpClient httpClient, int esAvailabilityCheckIntervalSec) {
+	public ElasticsearchClient(final CorePlugin corePlugin, final HttpClient httpClient, int esAvailabilityCheckIntervalSec, ConfigurationRegistry configurationRegistry) {
 		this.corePlugin = corePlugin;
+		this.configurationRegistry = configurationRegistry;
 		asyncESPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-elasticsearch", corePlugin.getThreadPoolQueueCapacityLimit(), corePlugin);
 		timer = new Timer("elasticsearch-tasks", true);
@@ -529,13 +523,27 @@ public class ElasticsearchClient {
 		public abstract void onBulkError(int errorCount);
 	}
 
+	void checkEsAvailability() {
+		new CheckEsAvailability(httpClient, corePlugin).run();
+	}
+
 	private class CheckEsAvailability extends TimerTask {
 		private final HttpClient httpClient;
 		private final CorePlugin corePlugin;
+		private final List<ElasticsearchAvailableObserver> elasticsearchAvailableObservers = new ArrayList<ElasticsearchAvailableObserver>();
 
 		public CheckEsAvailability(HttpClient httpClient, CorePlugin corePlugin) {
 			this.httpClient = httpClient;
 			this.corePlugin = corePlugin;
+			initElasticsearchAvailableObservers();
+		}
+
+		private void initElasticsearchAvailableObservers() {
+			ServiceLoader<ElasticsearchAvailableObserver> observers = ServiceLoader.load(ElasticsearchAvailableObserver.class);
+			for (ElasticsearchAvailableObserver elasticsearchAvailableObserver : observers) {
+				elasticsearchAvailableObservers.add(elasticsearchAvailableObserver);
+				elasticsearchAvailableObserver.init(configurationRegistry);
+			}
 		}
 
 		@Override
@@ -547,15 +555,24 @@ public class ElasticsearchClient {
 			if (elasticsearchUrl == null) {
 				return;
 			}
-			httpClient.send(HttpRequestBuilder.<Void>forUrl(elasticsearchUrl + "/")
-					.method("HEAD")
+
+			httpClient.send(HttpRequestBuilder.<Void>forUrl(elasticsearchUrl + "/_cluster/health")
+					.method("GET")
 					.successHandler(new HttpClient.ResponseHandler<Void>() {
 						@Override
-						public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
-							if (!isElasticsearchAvailable()) {
-								logger.info("Elasticsearch is available again.");
+						public Void handleResponse(HttpRequest<?> httpRequest, InputStream inputStream, Integer statusCode, IOException e) throws IOException {
+							JsonNode clusterHealthResponse = JsonUtils.getMapper().readTree(inputStream);
+							String statusValue = clusterHealthResponse.has("status") ? clusterHealthResponse.get("status").asText() : "red";
+							boolean isNowAvailable = statusValue.equals("green") || statusValue.equals("yellow");
+							if (isNowAvailable) {
+								if (!isElasticsearchAvailable()) {
+									logger.info("Elasticsearch is available again.");
+								}
+								elasticsearchAvailable.set(true);
+								for (ElasticsearchAvailableObserver elasticsearchAvailableObserver : elasticsearchAvailableObservers) {
+									elasticsearchAvailableObserver.onElasticsearchAvailable();
+								}
 							}
-							elasticsearchAvailable.set(true);
 							return null;
 						}
 					})

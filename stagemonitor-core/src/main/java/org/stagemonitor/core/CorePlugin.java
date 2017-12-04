@@ -625,7 +625,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public ElasticsearchClient getElasticsearchClient() {
 		if (elasticsearchClient == null) {
-			elasticsearchClient = new ElasticsearchClient(this, new HttpClient(), elasticsearchAvailabilityCheckPeriodSec.getValue());
+			elasticsearchClient = new ElasticsearchClient(this, new HttpClient(), elasticsearchAvailabilityCheckPeriodSec.getValue(), Stagemonitor.getConfiguration());
 		}
 		return elasticsearchClient;
 	}

@@ -60,7 +60,7 @@ public class AbstractElasticsearchTest {
 			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
 			when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(elasticsearchUrl));
 			when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-			elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1);
+			elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, null);
 
 			node = new TestNode(settings, Collections.singletonList(Netty4Plugin.class));
 			node.start();

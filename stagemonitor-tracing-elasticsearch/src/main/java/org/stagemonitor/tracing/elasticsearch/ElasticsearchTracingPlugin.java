@@ -81,25 +81,19 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 
-		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
-				spanIndexTemplate.getValue(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
-		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
-		elasticsearchClient.createEmptyIndexAsync(ElasticsearchSpanReporter.getTodaysIndexName());
-
 		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
-			elasticsearchClient.updateKibanaIndexPatternAsync("kibana/stagemonitor-spans-kibana-index-pattern.json",
-					"/.kibana/index-pattern/stagemonitor-spans-*");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Analysis.bulk", true);
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Web-Analytics.bulk", true);
-
-			elasticsearchClient.scheduleIndexManagement("stagemonitor-spans-",
-					corePlugin.getMoveToColdNodesAfterDays(), deleteSpansAfterDays.getValue());
+			deleteSpansAfterDays(elasticsearchClient, corePlugin);
 		}
 	}
 
 	@Override
 	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
 		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(TracingPlugin.class);
+	}
+
+	public void deleteSpansAfterDays(ElasticsearchClient elasticsearchClient, CorePlugin corePlugin) {
+		elasticsearchClient.scheduleIndexManagement("stagemonitor-spans-",
+				corePlugin.getMoveToColdNodesAfterDays(), deleteSpansAfterDays.getValue());
 	}
 
 	public boolean isOnlyLogElasticsearchSpanReports() {
@@ -116,5 +110,9 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 
 	public int getMaxQueueSize() {
 		return maxQueueSize.getValue();
+	}
+
+	public String getSpanIndexTemplate() {
+		return spanIndexTemplate.getValue();
 	}
 }
