@@ -32,7 +32,7 @@ public class ElasticsearchClientAvailabilityCheckTest {
 		when(corePlugin.getElasticsearchUrl()).thenReturn(url);
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(url));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(10000);
-		elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, null);
+		elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, Collections.emptyList());
 	}
 
 	@Test

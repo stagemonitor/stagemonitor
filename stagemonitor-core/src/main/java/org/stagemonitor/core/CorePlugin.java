@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.converter.SetValueConverter;
+import org.stagemonitor.core.elasticsearch.ElasticsearchAvailabilityObserver;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.elasticsearch.IndexSelector;
 import org.stagemonitor.core.grafana.GrafanaClient;
@@ -36,9 +37,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -625,9 +624,20 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public ElasticsearchClient getElasticsearchClient() {
 		if (elasticsearchClient == null) {
-			elasticsearchClient = new ElasticsearchClient(this, new HttpClient(), elasticsearchAvailabilityCheckPeriodSec.getValue(), Stagemonitor.getConfiguration());
+			elasticsearchClient = new ElasticsearchClient(this, new HttpClient(), elasticsearchAvailabilityCheckPeriodSec.getValue(), initElasticsearchAvailableObservers(Stagemonitor.getConfiguration()));
 		}
 		return elasticsearchClient;
+	}
+
+
+	private List<ElasticsearchAvailabilityObserver> initElasticsearchAvailableObservers(ConfigurationRegistry configurationRegistry) {
+		final List<ElasticsearchAvailabilityObserver> elasticsearchAvailabilityObservers = new ArrayList<ElasticsearchAvailabilityObserver>();
+		ServiceLoader<ElasticsearchAvailabilityObserver> observers = ServiceLoader.load(ElasticsearchAvailabilityObserver.class);
+		for (ElasticsearchAvailabilityObserver elasticsearchAvailabilityObserver : observers) {
+			elasticsearchAvailabilityObservers.add(elasticsearchAvailabilityObserver);
+			elasticsearchAvailabilityObserver.init(configurationRegistry);
+		}
+		return elasticsearchAvailabilityObservers;
 	}
 
 	public GrafanaClient getGrafanaClient() {

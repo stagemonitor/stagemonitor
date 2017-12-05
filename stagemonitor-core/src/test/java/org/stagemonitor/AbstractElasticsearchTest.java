@@ -12,6 +12,7 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -24,6 +25,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -60,7 +62,8 @@ public class AbstractElasticsearchTest {
 			when(corePlugin.getElasticsearchUrl()).thenReturn(elasticsearchUrl);
 			when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(elasticsearchUrl));
 			when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-			elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, null);
+			elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, Collections.emptyList());
+			when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 
 			node = new TestNode(settings, Collections.singletonList(Netty4Plugin.class));
 			node.start();
@@ -71,6 +74,8 @@ public class AbstractElasticsearchTest {
 			adminClient.cluster().prepareHealth()
 					.setWaitForYellowStatus().execute().actionGet();
 		}
+		elasticsearchClient.checkEsAvailability();
+		assertThat(elasticsearchClient.isElasticsearchAvailable()).isTrue();
 	}
 
 	private static class TestNode extends Node {
