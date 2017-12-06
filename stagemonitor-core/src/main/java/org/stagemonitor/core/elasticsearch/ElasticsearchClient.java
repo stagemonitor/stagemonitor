@@ -193,7 +193,7 @@ public class ElasticsearchClient {
 					JsonNode currentPattern = fetchCurrentKibanaIndexPatternConfiguration(elasticsearchKibanaIndexPatternPath);
 					JsonNode mergedDefinition = JsonMerger.merge(currentPattern, stagemonitorPattern,
 							mergeStrategy().mergeEncodedObjects("fieldFormatMap").encodedArrayWithKey("fields", "name"));
-					sendAsJson((String) "PUT", elasticsearchKibanaIndexPatternPath, (Object) mergedDefinition, force);
+					sendAsJson("PUT", elasticsearchKibanaIndexPatternPath, mergedDefinition, force);
 				} catch (IOException e) {
 					logger.error("Error while updating kibana index pattern, definition = {}, pattern path = {}",
 							e, indexPatternLocation, elasticsearchKibanaIndexPatternPath);
