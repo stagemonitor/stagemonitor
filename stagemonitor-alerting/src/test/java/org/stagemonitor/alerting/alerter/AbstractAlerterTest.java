@@ -1,16 +1,15 @@
 package org.stagemonitor.alerting.alerter;
 
+import org.stagemonitor.alerting.AlertingPlugin;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.configuration.source.SimpleSource;
+import org.stagemonitor.core.CorePlugin;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.TimeZone;
-
-import org.stagemonitor.alerting.AlertingPlugin;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.configuration.source.ConfigurationSource;
-import org.stagemonitor.configuration.source.SimpleSource;
 
 public class AbstractAlerterTest {
 
@@ -21,11 +20,15 @@ public class AbstractAlerterTest {
 	public AbstractAlerterTest() {
 		configurationSource = new SimpleSource();
 		alertingPlugin = new AlertingPlugin();
-		configuration = new ConfigurationRegistry(Arrays.asList(new CorePlugin(), alertingPlugin), Arrays.<ConfigurationSource>asList(configurationSource), null);
+		configuration = ConfigurationRegistry.builder()
+				.addOptionProvider(new CorePlugin())
+				.addOptionProvider(alertingPlugin)
+				.addConfigSource(configurationSource)
+				.build();
 	}
 
 	public AlertSender createAlertSender(Alerter alerter) {
-		return new AlertSender(configuration, Arrays.asList(alerter));
+		return new AlertSender(configuration, Collections.singletonList(alerter));
 	}
 
 	public Subscription createSubscription(Alerter forAlerter) {

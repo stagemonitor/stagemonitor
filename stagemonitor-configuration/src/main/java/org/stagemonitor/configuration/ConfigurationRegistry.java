@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.source.ConfigurationSource;
 import org.stagemonitor.util.CollectionUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,94 +14,132 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-public class ConfigurationRegistry {
+public class ConfigurationRegistry implements Closeable {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private final String updateConfigPasswordKey;
 	private final List<ConfigurationSource> configurationSources = new CopyOnWriteArrayList<ConfigurationSource>();
 	private final boolean failOnMissingRequiredValues;
 
 	private Map<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider> optionProvidersByClass = new HashMap<Class<? extends ConfigurationOptionProvider>, ConfigurationOptionProvider>();
 	private Map<String, ConfigurationOption<?>> configurationOptionsByKey = new LinkedHashMap<String, ConfigurationOption<?>>();
 	private Map<String, List<ConfigurationOption<?>>> configurationOptionsByCategory = new LinkedHashMap<String, List<ConfigurationOption<?>>>();
-	private ScheduledExecutorService configurationReloader = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r);
-			thread.setDaemon(true);
-			thread.setName("configuration-reloader");
-			return thread;
-		}
-	});
+	private ScheduledExecutorService configurationReloader;
 
-	/**
-	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
-	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
-	 */
-	public ConfigurationRegistry(String updateConfigPasswordKey) {
-		this(ConfigurationOptionProvider.class, updateConfigPasswordKey);
-	}
-
-	/**
-	 * @param optionProviderClass the class that should be used to lookup instances of
-	 *                            {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
-	 */
-	public ConfigurationRegistry(Class<? extends ConfigurationOptionProvider> optionProviderClass) {
-		this(optionProviderClass, null);
-	}
-
-	/**
-	 * @param optionProviderClass     the class that should be used to lookup instances of
-	 *                                {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
-	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
-	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
-	 */
-	public ConfigurationRegistry(Class<? extends ConfigurationOptionProvider> optionProviderClass, String updateConfigPasswordKey) {
-		this(optionProviderClass, Collections.<ConfigurationSource>emptyList(), updateConfigPasswordKey);
-	}
-
-	/**
-	 * @param optionProviderClass     the class that should be used to lookup instances of
-	 *                                {@link ConfigurationOptionProvider} via {@link ServiceLoader#load(Class)}
-	 * @param configSources           the configuration sources
-	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
-	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
-	 */
-	public ConfigurationRegistry(Class<? extends ConfigurationOptionProvider> optionProviderClass,
-								 List<ConfigurationSource> configSources, String updateConfigPasswordKey) {
-		this(ServiceLoader.load(optionProviderClass, ConfigurationRegistry.class.getClassLoader()), configSources, updateConfigPasswordKey);
+	public static Builder builder() {
+		return new Builder();
 	}
 
 	/**
 	 * @param optionProviders         the option providers
 	 * @param configSources           the configuration sources
-	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
-	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
+	 * @deprecated use {@link #builder()}
 	 */
+	@Deprecated
 	public ConfigurationRegistry(Iterable<? extends ConfigurationOptionProvider> optionProviders,
-								 List<ConfigurationSource> configSources, String updateConfigPasswordKey) {
-		this(optionProviders, configSources, updateConfigPasswordKey, false);
+								 List<ConfigurationSource> configSources) {
+		this(optionProviders, configSources, false);
 	}
 
 	/**
 	 * @param optionProviders         the option providers
 	 * @param configSources           the configuration sources
-	 * @param updateConfigPasswordKey the key of the password to update configuration settings.
-	 *                                The actual password is loaded from the configuration sources. Set to null to disable dynamic updates.
+	 * @deprecated use {@link #builder()}
 	 */
+	@Deprecated
 	public ConfigurationRegistry(Iterable<? extends ConfigurationOptionProvider> optionProviders,
-								 List<ConfigurationSource> configSources, String updateConfigPasswordKey, boolean failOnMissingRequiredValues) {
-		this.updateConfigPasswordKey = updateConfigPasswordKey;
+								 List<ConfigurationSource> configSources, boolean failOnMissingRequiredValues) {
 		this.failOnMissingRequiredValues = failOnMissingRequiredValues;
 		configurationSources.addAll(configSources);
 		registerConfigurationOptions(optionProviders);
+	}
+
+	public static class Builder {
+
+		private List<ConfigurationOptionProvider> optionProviders = new ArrayList<ConfigurationOptionProvider>();
+		private List<ConfigurationSource> configSources = new ArrayList<ConfigurationSource>();
+		private boolean failOnMissingRequiredValues = false;
+
+		/**
+		 * Adds a {@link ConfigurationOptionProvider}
+		 *
+		 * @param optionProvider the {@link ConfigurationOptionProvider} to add
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder addOptionProvider(ConfigurationOptionProvider optionProvider) {
+			this.optionProviders.add(optionProvider);
+			return this;
+		}
+
+		/**
+		 * Adds multiple {@link ConfigurationOptionProvider}s
+		 *
+		 * @param optionProviders the {@link ConfigurationOptionProvider}s to add
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder optionProviders(Iterable<? extends ConfigurationOptionProvider> optionProviders) {
+			for (ConfigurationOptionProvider optionProvider : optionProviders) {
+				this.optionProviders.add(optionProvider);
+			}
+			return this;
+		}
+
+		/**
+		 * Adds a single {@link ConfigurationSource}
+		 * <p>
+		 * The first configuration source which is added will have the highest precedence
+		 * </p>
+		 *
+		 * @param configurationSource the {@link ConfigurationSource} to add
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder addConfigSource(ConfigurationSource configurationSource) {
+			this.configSources.add(configurationSource);
+			return this;
+		}
+
+		/**
+		 * Adds multiple {@link ConfigurationSource}s
+		 * <p>
+		 * The first configuration source in the provided list will have the highest precedence
+		 * </p>
+		 *
+		 * @param configSources the {@link ConfigurationSource}s to add
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder configSources(List<? extends ConfigurationSource> configSources) {
+			this.configSources.addAll(configSources);
+			return this;
+		}
+
+		/**
+		 * When set to true, {@link #build()} will fail with an {@link IllegalStateException} if there are any
+		 * {@link ConfigurationOption}s created with {@link ConfigurationOption.ConfigurationOptionBuilder#buildRequired()}
+		 * which don't have a value set
+		 *
+		 * @param failOnMissingRequiredValues whether an unset but required configuration option should result in an {@link IllegalStateException}
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder failOnMissingRequiredValues(boolean failOnMissingRequiredValues) {
+			this.failOnMissingRequiredValues = failOnMissingRequiredValues;
+			return this;
+		}
+
+		/**
+		 * Builds a {@link ConfigurationRegistry} configured by this builder
+		 *
+		 * @return the {@link ConfigurationRegistry} configured by this builder
+		 * @throws IllegalStateException if there are unset required configuration options and
+		 *                               {@link #failOnMissingRequiredValues(boolean)} has been called
+		 */
+		public ConfigurationRegistry build() {
+			return new ConfigurationRegistry(optionProviders, configSources, failOnMissingRequiredValues);
+		}
 	}
 
 	private void registerConfigurationOptions(Iterable<? extends ConfigurationOptionProvider> optionProviders) {
@@ -220,6 +259,7 @@ public class ConfigurationRegistry {
 	 * @param timeUnit the time unit of rate
 	 */
 	public void scheduleReloadAtRate(final long rate, TimeUnit timeUnit) {
+		initThreadPool();
 		configurationReloader.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
@@ -228,6 +268,22 @@ public class ConfigurationRegistry {
 				logger.debug("Finished scheduled configuration reload");
 			}
 		}, rate, rate, timeUnit);
+	}
+
+	private void initThreadPool() {
+		synchronized (this) {
+			if (configurationReloader == null) {
+				configurationReloader = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+					@Override
+					public Thread newThread(Runnable r) {
+						Thread thread = new Thread(r);
+						thread.setDaemon(true);
+						thread.setName("configuration-reloader");
+						return thread;
+					}
+				});
+			}
+		}
 	}
 
 	/**
@@ -311,67 +367,6 @@ public class ConfigurationRegistry {
 	}
 
 	/**
-	 * Returns <code>true</code>, if the password that is required to {@link #save(String, String, String, String)} settings is
-	 * set (not <code>null</code>), <code>false</code> otherwise
-	 *
-	 * @return <code>true</code>, if the update configuration password is set, <code>false</code> otherwise
-	 */
-	public boolean isPasswordSet() {
-		return getString(updateConfigPasswordKey) != null;
-	}
-
-	/**
-	 * Dynamically updates a configuration key.
-	 * <p>
-	 * Performs a password check.
-	 *
-	 * @param key                         the configuration key
-	 * @param value                       the configuration value
-	 * @param configurationSourceName     the {@link ConfigurationSource#getName()}
-	 *                                    of the configuration source the value should be stored to
-	 * @param configurationUpdatePassword the password (must not be null)
-	 * @throws IOException                   if there was an error saving the key to the source
-	 * @throws IllegalStateException         if the update configuration password did not match
-	 * @throws IllegalArgumentException      if there was a error processing the configuration key or value or the
-	 *                                       configurationSourceName did not match any of the available configuration
-	 *                                       sources
-	 * @throws UnsupportedOperationException if saving values is not possible with this configuration source
-	 */
-	public void save(String key, String value, String configurationSourceName, String configurationUpdatePassword) throws IOException,
-			IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
-		assertPasswordCorrect(configurationUpdatePassword);
-		final ConfigurationOption<?> configurationOption = validateConfigurationOption(key, value);
-		saveToConfigurationSource(key, value, configurationSourceName, configurationOption);
-	}
-
-	/**
-	 * Validates a password.
-	 *
-	 * @param password the provided password to validate
-	 * @return <code>true</code>, if the password is correct, <code>false</code> otherwise
-	 */
-	public boolean isPasswordCorrect(String password) {
-		final String actualPassword = getString(updateConfigPasswordKey);
-		return "".equals(actualPassword) || actualPassword != null && actualPassword.equals(password);
-	}
-
-	/**
-	 * Validates a password. If not valid, throws a {@link IllegalStateException}.
-	 *
-	 * @param password the provided password to validate
-	 * @throws IllegalStateException if the password did not match
-	 */
-	public void assertPasswordCorrect(String password) {
-		if (!isPasswordSet()) {
-			throw new IllegalStateException("'" + updateConfigPasswordKey + "' is not set.");
-		}
-
-		if (!isPasswordCorrect(password)) {
-			throw new IllegalStateException("Wrong password for '" + updateConfigPasswordKey + "'.");
-		}
-	}
-
-	/**
 	 * Dynamically updates a configuration key.
 	 * <p>
 	 * Does not perform a password check.
@@ -420,7 +415,13 @@ public class ConfigurationRegistry {
 		}
 	}
 
-	private String getString(String key) {
+	/**
+	 * Gets the value of a configuration key as string
+	 *
+	 * @param key the configuration key
+	 * @return the value of this configuration key
+	 */
+	public String getString(String key) {
 		if (key == null || key.isEmpty()) {
 			return null;
 		}
@@ -437,8 +438,11 @@ public class ConfigurationRegistry {
 	/**
 	 * Shuts down the internal thread pool
 	 */
+	@Override
 	public void close() {
-		configurationReloader.shutdown();
+		if (configurationReloader != null) {
+			configurationReloader.shutdown();
+		}
 	}
 
 	boolean isFailOnMissingRequiredValues() {

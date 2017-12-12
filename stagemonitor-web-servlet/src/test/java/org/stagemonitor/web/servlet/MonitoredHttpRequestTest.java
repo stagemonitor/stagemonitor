@@ -58,6 +58,7 @@ public class MonitoredHttpRequestTest {
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		when(tracingPlugin.isSampled(any())).thenReturn(true);
 		assertThat(tracer.scopeManager().active()).isNull();
+		servletPlugin.initPasswordChecker(configuration);
 	}
 
 	@After

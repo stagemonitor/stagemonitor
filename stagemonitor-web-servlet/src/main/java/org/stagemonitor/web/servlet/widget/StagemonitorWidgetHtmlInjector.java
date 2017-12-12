@@ -49,7 +49,7 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 
 	@Override
 	public boolean isActive(HtmlInjector.IsActiveArguments isActiveArguments) {
-		return servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(isActiveArguments.getHttpServletRequest(), configuration);
+		return servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(isActiveArguments.getHttpServletRequest());
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 		injectArguments.setContentToInjectBeforeClosingBody(widgetTemplate
 				.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", span != null ? JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII) : "null")
 				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByCategory()))
-				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(configuration.isPasswordSet()))
+				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(servletPlugin.getConfigurationPasswordChecker().isPasswordSet()))
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()))
 				.replace("@@MEASUREMENT_SESSION@@", JsonUtils.toJson(Stagemonitor.getMeasurementSession()))
 				.replace("@@PATHS_OF_TAB_PLUGINS@@", JsonUtils.toJson(pathsOfWidgetTabPlugins))

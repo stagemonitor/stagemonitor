@@ -29,7 +29,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class Stagemonitor {
 
-	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
 	private static Logger logger = LoggerFactory.getLogger(Stagemonitor.class);
 	private static ConfigurationRegistry configuration;
 	private static boolean initialized;
@@ -332,7 +331,10 @@ public final class Stagemonitor {
 		configurationSources.remove(null);
 
 		plugins = ServiceLoader.load(StagemonitorPlugin.class, Stagemonitor.class.getClassLoader());
-		configuration = new ConfigurationRegistry(plugins, configurationSources, STAGEMONITOR_PASSWORD);
+		configuration = ConfigurationRegistry.builder()
+				.optionProviders(plugins)
+				.configSources(configurationSources)
+				.build();
 
 		try {
 			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {

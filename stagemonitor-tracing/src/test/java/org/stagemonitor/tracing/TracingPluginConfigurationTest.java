@@ -8,8 +8,6 @@ import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.Stagemonitor;
 
-import java.util.Collections;
-
 import static org.junit.Assert.assertEquals;
 
 public class TracingPluginConfigurationTest {
@@ -20,7 +18,9 @@ public class TracingPluginConfigurationTest {
 	public void before() throws Exception {
 		Stagemonitor.reset();
 		SharedMetricRegistries.clear();
-		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(new TracingPlugin()), Collections.emptyList(), "");
+		ConfigurationRegistry configuration = ConfigurationRegistry.builder()
+				.addOptionProvider(new TracingPlugin())
+				.build();
 		config = configuration.getConfig(TracingPlugin.class);
 	}
 

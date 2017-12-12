@@ -10,8 +10,6 @@ import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
-import java.util.Collections;
-
 import io.opentracing.Tracer;
 import io.opentracing.util.GlobalTracer;
 
@@ -40,9 +38,10 @@ public class ProbabilisticSamplingPreExecutionInterceptorTest {
 		GlobalTracerTestHelper.resetGlobalTracer();
 		tracingPlugin = spy(new TracingPlugin());
 		doReturn(true).when(tracingPlugin).isRoot(any());
-		configuration = new ConfigurationRegistry(Collections.singletonList(tracingPlugin),
-				Collections.singletonList(new SimpleSource()),
-				null);
+		configuration = ConfigurationRegistry.builder()
+				.addOptionProvider(tracingPlugin)
+				.addConfigSource(new SimpleSource())
+				.build();
 
 		final Tracer tracer = mock(Tracer.class);
 		GlobalTracer.register(tracer);

@@ -67,7 +67,7 @@ public class SpanServletTest {
 		when(configuration.getConfig(TracingPlugin.class)).thenReturn(tracingPlugin);
 
 		servletPlugin = mock(ServletPlugin.class);
-		when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class), any(ConfigurationRegistry.class))).thenReturn(Boolean.TRUE);
+		when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(any(HttpServletRequest.class))).thenReturn(Boolean.TRUE);
 		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);
 
 		final CorePlugin corePlugin = mock(CorePlugin.class);
@@ -231,7 +231,7 @@ public class SpanServletTest {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stagemonitor/spans");
 		request.addParameter("connectionId", "");
 		MockHttpServletResponse response = new MockHttpServletResponse();
-		Mockito.when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(eq(request), any(ConfigurationRegistry.class))).thenReturn(Boolean.FALSE);
+		Mockito.when(servletPlugin.isWidgetAndStagemonitorEndpointsAllowed(eq(request))).thenReturn(Boolean.FALSE);
 
 		ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		when(configuration.getConfig(ServletPlugin.class)).thenReturn(servletPlugin);

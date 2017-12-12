@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -20,7 +21,9 @@ public class ConfigurationOptionsMarkdownExporter {
 	}
 
 	public static void main(String[] args) throws IOException {
-		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(StagemonitorPlugin.class);
+		final ConfigurationRegistry configurationRegistry = ConfigurationRegistry.builder()
+				.optionProviders(ServiceLoader.load(StagemonitorPlugin.class, ConfigurationRegistry.class.getClassLoader()))
+				.build();
 		System.out.println(getMarkdown(configurationRegistry));
 	}
 

@@ -14,6 +14,7 @@ import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.util.StringUtils;
+import org.stagemonitor.web.servlet.configuration.ConfigurationPasswordChecker;
 import org.stagemonitor.web.servlet.configuration.ConfigurationServlet;
 import org.stagemonitor.web.servlet.eum.ClientSpanExtension;
 import org.stagemonitor.web.servlet.eum.ClientSpanJavaScriptServlet;
@@ -55,6 +56,7 @@ import static org.stagemonitor.core.pool.PooledResourceMetricsRegisterer.registe
 public class ServletPlugin extends StagemonitorPlugin {
 
 	public static final String STAGEMONITOR_SHOW_WIDGET = "X-Stagemonitor-Show-Widget";
+	public static final String STAGEMONITOR_PASSWORD = "stagemonitor.password";
 
 	private static final String WEB_PLUGIN = "Servlet Plugin";
 
@@ -278,9 +280,11 @@ public class ServletPlugin extends StagemonitorPlugin {
 			.buildWithDefault(5);
 	private ClientSpanJavaScriptServlet clientSpanJavaScriptServlet;
 	private List<ClientSpanExtension> clientSpanExtensions = Collections.emptyList();
+	private ConfigurationPasswordChecker configurationPasswordChecker;
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
+		initPasswordChecker(initArguments.getConfiguration());
 		registerPooledResources(initArguments.getMetricRegistry(), tomcatThreadPools());
 		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
 		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
@@ -292,9 +296,17 @@ public class ServletPlugin extends StagemonitorPlugin {
 		initClientSpanExtensions(initArguments.getConfiguration());
 	}
 
+	public void initPasswordChecker(ConfigurationRegistry configuration) {
+		configurationPasswordChecker = new ConfigurationPasswordChecker(configuration, STAGEMONITOR_PASSWORD);
+	}
+
 	@Override
 	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
 		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(TracingPlugin.class);
+	}
+
+	public ConfigurationPasswordChecker getConfigurationPasswordChecker() {
+		return configurationPasswordChecker;
 	}
 
 	@Override
@@ -375,7 +387,7 @@ public class ServletPlugin extends StagemonitorPlugin {
 		return metricsServletJsonpParameter.getValue();
 	}
 
-	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request, ConfigurationRegistry configuration) {
+	public boolean isWidgetAndStagemonitorEndpointsAllowed(HttpServletRequest request) {
 		final Boolean showWidgetAttr = (Boolean) request.getAttribute(STAGEMONITOR_SHOW_WIDGET);
 		if (showWidgetAttr != null) {
 			logger.debug("isWidgetAndStagemonitorEndpointsAllowed: showWidgetAttr={}", showWidgetAttr);
@@ -383,23 +395,23 @@ public class ServletPlugin extends StagemonitorPlugin {
 		}
 
 		final boolean widgetEnabled = isWidgetEnabled();
-		final boolean passwordInShowWidgetHeaderCorrect = isPasswordInShowWidgetHeaderCorrect(request, configuration);
+		final boolean passwordInShowWidgetHeaderCorrect = isPasswordInShowWidgetHeaderCorrect(request);
 		final boolean result = widgetEnabled || passwordInShowWidgetHeaderCorrect;
 		logger.debug("isWidgetAndStagemonitorEndpointsAllowed: isWidgetEnabled={}, isPasswordInShowWidgetHeaderCorrect={}, result={}",
 				widgetEnabled, passwordInShowWidgetHeaderCorrect, result);
 		return result;
 	}
 
-	private boolean isPasswordInShowWidgetHeaderCorrect(HttpServletRequest request, ConfigurationRegistry configuration) {
+	private boolean isPasswordInShowWidgetHeaderCorrect(HttpServletRequest request) {
 		String password = request.getHeader(STAGEMONITOR_SHOW_WIDGET);
-		if (configuration.isPasswordCorrect(password)) {
+		if (getConfigurationPasswordChecker().isPasswordCorrect(password)) {
 			return true;
 		} else {
 			if (StringUtils.isNotEmpty(password)) {
 				logger.error("The password transmitted via the header {} is not correct. " +
 								"This might be a malicious attempt to guess the value of {}. " +
 								"The request was initiated from the ip {}.",
-						STAGEMONITOR_SHOW_WIDGET, Stagemonitor.STAGEMONITOR_PASSWORD,
+						STAGEMONITOR_SHOW_WIDGET, STAGEMONITOR_PASSWORD,
 						MonitoredHttpRequest.getClientIp(request));
 			}
 			return false;

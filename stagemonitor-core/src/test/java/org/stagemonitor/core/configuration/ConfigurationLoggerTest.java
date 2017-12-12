@@ -9,7 +9,6 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.SimpleSource;
 
 import java.net.URL;
-import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.contains;
@@ -37,10 +36,10 @@ public class ConfigurationLoggerTest {
 					.tags("deprecated")
 					.buildRequired();
 		}
-		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(
-				Collections.singletonList(new Provider()),
-				Collections.singletonList(new SimpleSource().add("foo", "bar")),
-				null);
+		final ConfigurationRegistry configurationRegistry = ConfigurationRegistry.builder()
+				.addOptionProvider(new Provider())
+				.addConfigSource(new SimpleSource().add("foo", "bar"))
+				.build();
 		configurationLogger.logConfiguration(configurationRegistry);
 
 		verify(logger).warn(contains("Detected usage of deprecated configuration option '{}'"), eq("foo"));
@@ -54,10 +53,10 @@ public class ConfigurationLoggerTest {
 					.aliasKeys("foo.old")
 					.buildRequired();
 		}
-		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(
-				Collections.singletonList(new Provider()),
-				Collections.singletonList(new SimpleSource().add("foo.old", "bar")),
-				null);
+		final ConfigurationRegistry configurationRegistry = ConfigurationRegistry.builder()
+				.addOptionProvider(new Provider())
+				.addConfigSource(new SimpleSource().add("foo.old", "bar"))
+				.build();
 		configurationLogger.logConfiguration(configurationRegistry);
 
 		verify(logger).warn(eq("Detected usage of an old configuration key: '{}'. " +
@@ -72,10 +71,10 @@ public class ConfigurationLoggerTest {
 					.sensitive()
 					.buildRequired();
 		}
-		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(
-				Collections.singletonList(new Provider()),
-				Collections.singletonList(new SimpleSource("source").add("foo", "secret")),
-				null);
+		final ConfigurationRegistry configurationRegistry = ConfigurationRegistry.builder()
+				.addOptionProvider(new Provider())
+				.addConfigSource(new SimpleSource("source").add("foo", "secret"))
+				.build();
 		configurationLogger.logConfiguration(configurationRegistry);
 
 		verify(logger).info(startsWith("# stagemonitor configuration"));
@@ -89,10 +88,10 @@ public class ConfigurationLoggerTest {
 					.key("foo")
 					.buildRequired();
 		}
-		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(
-				Collections.singletonList(new Provider()),
-				Collections.singletonList(new SimpleSource("source").add("foo", "http://user:pwd@example.com")),
-				null);
+		final ConfigurationRegistry configurationRegistry = ConfigurationRegistry.builder()
+				.addOptionProvider(new Provider())
+				.addConfigSource(new SimpleSource("source").add("foo", "http://user:pwd@example.com"))
+				.build();
 		configurationLogger.logConfiguration(configurationRegistry);
 
 		verify(logger).info(startsWith("# stagemonitor configuration"));

@@ -8,7 +8,6 @@ import org.stagemonitor.web.servlet.ServletPlugin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,7 +22,9 @@ public class ServletPluginConfigurationTest {
 
 	@Before
 	public void before() throws Exception {
-		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.singletonList(new ServletPlugin()), Collections.emptyList(), "");
+		ConfigurationRegistry configuration = ConfigurationRegistry.builder()
+				.addOptionProvider(new ServletPlugin())
+				.build();
 		config = configuration.getConfig(ServletPlugin.class);
 	}
 
