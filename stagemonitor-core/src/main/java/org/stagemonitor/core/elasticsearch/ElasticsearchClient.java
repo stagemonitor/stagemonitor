@@ -411,6 +411,8 @@ public class ElasticsearchClient {
 		}
 		HttpRequest request =  HttpRequestBuilder.<Void>forUrl(getElasticsearchUrl() + "/" + index + "/_mapping/" + type)
 				.method("PUT")
+				// the mapping might be incompatible, this is probably ok
+				.noopForStatus(400) 
 				.addHeaders(HttpRequestBuilder.CONTENT_TYPE_JSON)
 				.bodyStream(mapping)
 				.build();
