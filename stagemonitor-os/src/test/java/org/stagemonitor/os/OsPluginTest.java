@@ -55,6 +55,7 @@ public class OsPluginTest {
 	}
 
 	@Test
+	@Ignore
 	public void testCpuUtilisation() throws Exception {
 		double cpu = Double.NaN;
 		for (int i = 0; i < 5 && Double.isNaN(cpu); i++) {
