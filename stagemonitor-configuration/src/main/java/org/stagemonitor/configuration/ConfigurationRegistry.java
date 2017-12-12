@@ -31,10 +31,16 @@ public class ConfigurationRegistry implements Closeable {
 	private Map<String, List<ConfigurationOption<?>>> configurationOptionsByCategory = new LinkedHashMap<String, List<ConfigurationOption<?>>>();
 	private ScheduledExecutorService configurationReloader;
 
+	public static Builder builder() {
+		return new Builder();
+	}
+
 	/**
 	 * @param optionProviders         the option providers
 	 * @param configSources           the configuration sources
+	 * @deprecated use {@link #builder()}
 	 */
+	@Deprecated
 	public ConfigurationRegistry(Iterable<? extends ConfigurationOptionProvider> optionProviders,
 								 List<ConfigurationSource> configSources) {
 		this(optionProviders, configSources, false);
@@ -43,12 +49,97 @@ public class ConfigurationRegistry implements Closeable {
 	/**
 	 * @param optionProviders         the option providers
 	 * @param configSources           the configuration sources
+	 * @deprecated use {@link #builder()}
 	 */
+	@Deprecated
 	public ConfigurationRegistry(Iterable<? extends ConfigurationOptionProvider> optionProviders,
 								 List<ConfigurationSource> configSources, boolean failOnMissingRequiredValues) {
 		this.failOnMissingRequiredValues = failOnMissingRequiredValues;
 		configurationSources.addAll(configSources);
 		registerConfigurationOptions(optionProviders);
+	}
+
+	public static class Builder {
+
+		private List<ConfigurationOptionProvider> optionProviders = new ArrayList<ConfigurationOptionProvider>();
+		private List<ConfigurationSource> configSources = new ArrayList<ConfigurationSource>();
+		private boolean failOnMissingRequiredValues = false;
+
+		/**
+		 * Adds a {@link ConfigurationOptionProvider}
+		 *
+		 * @param optionProvider the {@link ConfigurationOptionProvider} to add
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder addOptionProvider(ConfigurationOptionProvider optionProvider) {
+			this.optionProviders.add(optionProvider);
+			return this;
+		}
+
+		/**
+		 * Adds multiple {@link ConfigurationOptionProvider}s
+		 *
+		 * @param optionProviders the {@link ConfigurationOptionProvider}s to add
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder optionProviders(Iterable<? extends ConfigurationOptionProvider> optionProviders) {
+			for (ConfigurationOptionProvider optionProvider : optionProviders) {
+				this.optionProviders.add(optionProvider);
+			}
+			return this;
+		}
+
+		/**
+		 * Adds a single {@link ConfigurationSource}
+		 * <p>
+		 * The first configuration source which is added will have the highest precedence
+		 * </p>
+		 *
+		 * @param configurationSource the {@link ConfigurationSource} to add
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder addConfigSource(ConfigurationSource configurationSource) {
+			this.configSources.add(configurationSource);
+			return this;
+		}
+
+		/**
+		 * Adds multiple {@link ConfigurationSource}s
+		 * <p>
+		 * The first configuration source in the provided list will have the highest precedence
+		 * </p>
+		 *
+		 * @param configSources the {@link ConfigurationSource}s to add
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder configSources(List<? extends ConfigurationSource> configSources) {
+			this.configSources.addAll(configSources);
+			return this;
+		}
+
+		/**
+		 * When set to true, {@link #build()} will fail with an {@link IllegalStateException} if there are any
+		 * {@link ConfigurationOption}s created with {@link ConfigurationOption.ConfigurationOptionBuilder#buildRequired()}
+		 * which don't have a value set
+		 *
+		 * @param failOnMissingRequiredValues whether an unset but required configuration option should result in an {@link IllegalStateException}
+		 * @return <code>this</code>, for chaining
+		 */
+		public Builder failOnMissingRequiredValues(boolean failOnMissingRequiredValues) {
+			this.failOnMissingRequiredValues = failOnMissingRequiredValues;
+			return this;
+		}
+
+		/**
+		 * Builds a {@link ConfigurationRegistry} configured by this builder
+		 *
+		 * @return the {@link ConfigurationRegistry} configured by this builder
+		 * @throws IllegalStateException if there are unset required configuration options and
+		 *                               {@link #failOnMissingRequiredValues(boolean)} has been called
+		 */
+		public ConfigurationRegistry build() {
+			return new ConfigurationRegistry(optionProviders, configSources, failOnMissingRequiredValues);
+		}
 	}
 
 	private void registerConfigurationOptions(Iterable<? extends ConfigurationOptionProvider> optionProviders) {

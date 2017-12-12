@@ -7,7 +7,6 @@ import org.stagemonitor.core.CorePlugin;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.TimeZone;
@@ -21,7 +20,11 @@ public class AbstractAlerterTest {
 	public AbstractAlerterTest() {
 		configurationSource = new SimpleSource();
 		alertingPlugin = new AlertingPlugin();
-		configuration = new ConfigurationRegistry(Arrays.asList(new CorePlugin(), alertingPlugin), Collections.singletonList(configurationSource));
+		configuration = ConfigurationRegistry.builder()
+				.addOptionProvider(new CorePlugin())
+				.addOptionProvider(alertingPlugin)
+				.addConfigSource(configurationSource)
+				.build();
 	}
 
 	public AlertSender createAlertSender(Alerter alerter) {

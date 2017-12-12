@@ -331,7 +331,10 @@ public final class Stagemonitor {
 		configurationSources.remove(null);
 
 		plugins = ServiceLoader.load(StagemonitorPlugin.class, Stagemonitor.class.getClassLoader());
-		configuration = new ConfigurationRegistry(plugins, configurationSources);
+		configuration = ConfigurationRegistry.builder()
+				.optionProviders(plugins)
+				.configSources(configurationSources)
+				.build();
 
 		try {
 			for (StagemonitorConfigurationSourceInitializer initializer : ServiceLoader.load(StagemonitorConfigurationSourceInitializer.class, Stagemonitor.class.getClassLoader())) {

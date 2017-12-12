@@ -68,12 +68,14 @@ public class ConfigurationOptionTest {
 	}
 
 	private ConfigurationRegistry createConfiguration(List<ConfigurationOption<?>> configurationOptions, ConfigurationSource configurationSource) {
-		final List<ConfigurationOptionProvider> configurationOptionProviders = Collections.singletonList(new ConfigurationOptionProvider() {
-			public List<ConfigurationOption<?>> getConfigurationOptions() {
-				return configurationOptions;
-			}
-		});
-		return new ConfigurationRegistry(configurationOptionProviders, Collections.singletonList(configurationSource));
+		return ConfigurationRegistry.builder()
+				.addOptionProvider(new ConfigurationOptionProvider() {
+					public List<ConfigurationOption<?>> getConfigurationOptions() {
+						return configurationOptions;
+					}
+				})
+				.addConfigSource(configurationSource)
+				.build();
 	}
 
 	@Test

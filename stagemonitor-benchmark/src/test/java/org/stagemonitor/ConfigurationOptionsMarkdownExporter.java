@@ -9,7 +9,6 @@ import org.stagemonitor.util.StringUtils;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -22,7 +21,9 @@ public class ConfigurationOptionsMarkdownExporter {
 	}
 
 	public static void main(String[] args) throws IOException {
-		final ConfigurationRegistry configurationRegistry = new ConfigurationRegistry(ServiceLoader.load(StagemonitorPlugin.class, ConfigurationRegistry.class.getClassLoader()), Collections.emptyList());
+		final ConfigurationRegistry configurationRegistry = ConfigurationRegistry.builder()
+				.optionProviders(ServiceLoader.load(StagemonitorPlugin.class, ConfigurationRegistry.class.getClassLoader()))
+				.build();
 		System.out.println(getMarkdown(configurationRegistry));
 	}
 

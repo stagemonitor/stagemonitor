@@ -8,7 +8,6 @@ import org.stagemonitor.configuration.source.SystemPropertyConfigurationSource;
 import org.stagemonitor.core.CorePlugin;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -27,16 +26,20 @@ public class ConfigurationRegistryTest {
 
 	@Before
 	public void init() {
-		configuration = new ConfigurationRegistry(Collections.singletonList(new CorePlugin()),
-				Collections.singletonList(new SimpleSource()));
+		configuration = ConfigurationRegistry.builder()
+				.addOptionProvider(new CorePlugin())
+				.addConfigSource(new SimpleSource())
+				.build();
 		corePlugin = configuration.getConfig(CorePlugin.class);
 	}
 
 	@Test
 	public void testGetConfigSubclass() {
 		final CorePlugin corePluginMock = mock(CorePlugin.class);
-		configuration = new ConfigurationRegistry(Collections.singletonList(corePluginMock),
-				Collections.singletonList(new SimpleSource()));
+		configuration = ConfigurationRegistry.builder()
+				.addOptionProvider(corePluginMock)
+				.addConfigSource(new SimpleSource())
+				.build();
 		assertSame(corePluginMock, configuration.getConfig(CorePlugin.class));
 		assertNull(configuration.getConfig(new ConfigurationOptionProvider(){}.getClass()));
 	}

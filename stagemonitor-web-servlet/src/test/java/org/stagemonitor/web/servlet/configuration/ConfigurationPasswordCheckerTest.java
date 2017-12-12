@@ -6,7 +6,6 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.configuration.source.SimpleSource;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -21,21 +20,22 @@ public class ConfigurationPasswordCheckerTest {
 
 	@Before
 	public void init() {
-		configuration = new ConfigurationRegistry(Collections.emptyList(),
-				Collections.singletonList(new SimpleSource()));
+		configuration = ConfigurationRegistry.builder()
+				.addConfigSource(new SimpleSource())
+				.build();
 		configurationPasswordChecker = new ConfigurationPasswordChecker(configuration, passwordKey);
 	}
 
 	@Test
 	public void testIsPasswordSetTrue() throws Exception {
-		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.emptyList(), Collections.emptyList());
+		ConfigurationRegistry configuration = ConfigurationRegistry.builder().build();
 		configuration.addConfigurationSource(SimpleSource.forTest(passwordKey, ""));
 		assertTrue(new ConfigurationPasswordChecker(configuration, passwordKey).isPasswordSet());
 	}
 
 	@Test
 	public void testIsPasswordSetFalse() throws Exception {
-		ConfigurationRegistry configuration = new ConfigurationRegistry(Collections.emptyList(), Collections.emptyList());
+		ConfigurationRegistry configuration = ConfigurationRegistry.builder().build();
 		assertFalse(new ConfigurationPasswordChecker(configuration, passwordKey).isPasswordSet());
 	}
 
