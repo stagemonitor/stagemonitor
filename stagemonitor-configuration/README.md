@@ -45,9 +45,8 @@ import org.stagemonitor.configuration.source.PropertyFileConfigurationSource;
 import org.stagemonitor.configuration.source.SimpleSource;
 import org.stagemonitor.configuration.source.SystemPropertyConfigurationSource;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,21 +61,22 @@ public class Example {
 
     @Before
     public void setUp() throws Exception {
-        configurationRegistry = new ConfigurationRegistry(
+        configurationRegistry = ConfigurationRegistry.builder()
                 // its also possible to automatically detect all ConfigurationOptionProvider
                 // implementations at runtime via ServiceLoader.load
-                Collections.singletonList(new ExampleConfiguration()),
-                Arrays.asList(
-                        // Defines the hierarchy of configuration sources
-                        // The first one has the highest precedence
-                        // You can implement custom configuration sources
-                        // For example JdbcConfigurationSource to sore config values in your DB
-                        new SimpleSource(),
-                        new SystemPropertyConfigurationSource(),
-                        new PropertyFileConfigurationSource("application.properties"),
-                        new EnvironmentVariableConfigurationSource()
-                ),
-                null);
+                .addOptionProvider(new ExampleConfiguration())
+                // Defines the hierarchy of configuration sources
+                // The first one has the highest precedence
+                // You can implement custom configuration sources
+                // For example JdbcConfigurationSource to sore config values in your DB
+                .addConfigSource(new SimpleSource())
+                .addConfigSource(new SystemPropertyConfigurationSource())
+                .addConfigSource(new PropertyFileConfigurationSource("application.properties"))
+                .addConfigSource(new EnvironmentVariableConfigurationSource())
+                .build();
+        // reloads configuration options from all configuration sources each 30 seconds
+        configurationRegistry.scheduleReloadAtRate(30, TimeUnit.SECONDS);
+
 
         exampleConfiguration = configurationRegistry.getConfig(ExampleConfiguration.class);
     }
