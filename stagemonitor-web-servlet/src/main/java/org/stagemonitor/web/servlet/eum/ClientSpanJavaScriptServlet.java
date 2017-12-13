@@ -68,6 +68,7 @@ public class ClientSpanJavaScriptServlet extends HttpServlet {
 				resp.getWriter().write(javaScript);
 			}
 		} else {
+			log.debug("Client span collection is disabled");
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
 	}

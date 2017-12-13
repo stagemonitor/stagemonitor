@@ -431,12 +431,13 @@ public class ServletPlugin extends StagemonitorPlugin {
 
 	private void initClientSpanExtensions(ConfigurationRegistry config) {
 		List<ClientSpanExtension> clientSpanExtensions = new ArrayList<ClientSpanExtension>();
-		for (ClientSpanExtension clientSpanExtension : ServiceLoader.load(ClientSpanExtension.class)) {
+		for (ClientSpanExtension clientSpanExtension : ServiceLoader.load(ClientSpanExtension.class, ServletPlugin.class.getClassLoader())) {
 			clientSpanExtension.init(config);
 			clientSpanExtensions.add(clientSpanExtension);
 		}
 		this.clientSpanExtensions = clientSpanExtensions;
 		initWhiteListedClientSpanTags(clientSpanExtensions);
+		logger.info("Initializing ClientSpanExtensions {}", clientSpanExtensions);
 	}
 
 	private void initWhiteListedClientSpanTags(List<ClientSpanExtension> clientSpanExtensions) {
