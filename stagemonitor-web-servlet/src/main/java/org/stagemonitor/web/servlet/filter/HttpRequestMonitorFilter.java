@@ -54,7 +54,9 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		this.corePlugin = configuration.getConfig(CorePlugin.class);
 		this.requestMonitor = configuration.getConfig(TracingPlugin.class).getRequestMonitor();
 
-		final Iterator<MonitoredHttpRequestFactory> requestFactoryIterator = ServiceLoader.load(MonitoredHttpRequestFactory.class).iterator();
+		final Iterator<MonitoredHttpRequestFactory> requestFactoryIterator = ServiceLoader
+				.load(MonitoredHttpRequestFactory.class, HttpRequestMonitorFilter.class.getClassLoader())
+				.iterator();
 		if (!requestFactoryIterator.hasNext()) {
 			this.monitoredHttpRequestFactory = new DefaultMonitoredHttpRequestFactory(corePlugin);
 		} else {
@@ -69,7 +71,7 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 		final ServletContext servletContext = filterConfig.getServletContext();
 		atLeastServletApi3 = servletContext.getMajorVersion() >= 3;
 
-		for (HtmlInjector htmlInjector : ServiceLoader.load(HtmlInjector.class)) {
+		for (HtmlInjector htmlInjector : ServiceLoader.load(HtmlInjector.class, HttpRequestMonitorFilter.class.getClassLoader())) {
 			htmlInjector.init(new HtmlInjector.InitArguments(configuration, servletContext));
 			htmlInjectors.add(htmlInjector);
 		}

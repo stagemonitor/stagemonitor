@@ -30,7 +30,7 @@ public class AlertSender {
 	private final List<Alerter> defaultAlerters;
 
 	public AlertSender(ConfigurationRegistry configuration) {
-		this(configuration, ServiceLoader.load(Alerter.class));
+		this(configuration, ServiceLoader.load(Alerter.class, AlertSender.class.getClassLoader()));
 	}
 
 	public AlertSender(ConfigurationRegistry configuration, Iterable<Alerter> alerterIterable) {
