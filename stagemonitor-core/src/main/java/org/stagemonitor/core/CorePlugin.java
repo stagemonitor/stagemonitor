@@ -445,8 +445,6 @@ public class CorePlugin extends StagemonitorPlugin {
 			}
 		});
 
-		final ElasticsearchClient elasticsearchClient = getElasticsearchClient();
-		createKibanaIndexAndMappings(elasticsearchClient);
 		sendConfigurationMappingAsync(elasticsearchClient);
 		initArguments.getHealthCheckRegistry().register("Elasticsearch", new HealthCheck() {
 			@Override
@@ -458,24 +456,10 @@ public class CorePlugin extends StagemonitorPlugin {
 				}
 			}
 		});
-
-		if (isReportToElasticsearch()) {
-			final GrafanaClient grafanaClient = getGrafanaClient();
-			grafanaClient.createElasticsearchDatasource(getElasticsearchUrl());
-			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchCustomMetricsDashboard.json");
-		}
 		registerReporters(initArguments.getMetricRegistry(), initArguments.getConfiguration(), initArguments.getMeasurementSession());
 	}
 
-	private void createKibanaIndexAndMappings(ElasticsearchClient elasticsearchClient) {
-		// makes sure the .kibana index is present and has the right mapping.
-		// otherwise it leads to problems if stagemonitor sends the dashboards to the
-		// .kibana index before it has been properly created by kibana
-		elasticsearchClient.createIndexAndSendMappingAsync(".kibana", "index-pattern", IOUtils.getResourceAsStream("kibana/kibana-index-index-pattern.json"));
-		elasticsearchClient.createIndexAndSendMappingAsync(".kibana", "search", IOUtils.getResourceAsStream("kibana/kibana-index-search.json"));
-		elasticsearchClient.createIndexAndSendMappingAsync(".kibana", "dashboard", IOUtils.getResourceAsStream("kibana/kibana-index-dashboard.json"));
-		elasticsearchClient.createIndexAndSendMappingAsync(".kibana", "visualization", IOUtils.getResourceAsStream("kibana/kibana-index-visualization.json"));
-	}
+
 
 	public static Future<?> sendConfigurationMappingAsync(ElasticsearchClient elasticsearchClient) {
 		final String mappingJson;
@@ -637,6 +621,12 @@ public class CorePlugin extends StagemonitorPlugin {
 			elasticsearchAvailabilityObservers.add(elasticsearchAvailabilityObserver);
 			elasticsearchAvailabilityObserver.init(configurationRegistry);
 		}
+		Collections.sort(elasticsearchAvailabilityObservers, new Comparator<ElasticsearchAvailabilityObserver>() {
+			@Override
+			public int compare(ElasticsearchAvailabilityObserver o1, ElasticsearchAvailabilityObserver o2) {
+				return (o1.getPriority() < o2.getPriority()) ? -1 : ((o1.getPriority() == o2.getPriority()) ? 0 : 1);
+			}
+		});
 		return elasticsearchAvailabilityObservers;
 	}
 

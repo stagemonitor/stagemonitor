@@ -30,15 +30,6 @@ public class OsPlugin extends StagemonitorPlugin  {
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) throws Exception {
-		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
-
-		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
-		if (corePlugin.isReportToElasticsearch()) {
-			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchHostDashboard.json");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Host.bulk", true);
-		}
-
 		if (sigar == null) {
 			if (!SigarNativeBindingLoader.loadNativeSigarBindings()) {
 				// redeploys are a problem, because the native libs can only be loaded by one class loader

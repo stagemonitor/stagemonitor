@@ -8,4 +8,11 @@ public interface ElasticsearchAvailabilityObserver {
 
 	void onElasticsearchAvailable();
 
+	/**
+	 * Higher priority observers will be executed first
+	 *
+	 * @return the priority of the observer
+	 */
+	int getPriority();
+
 }

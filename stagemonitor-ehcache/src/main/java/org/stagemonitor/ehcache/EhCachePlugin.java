@@ -67,13 +67,7 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			healthCheckRegistry.register("EhCache CacheManager", ImmediateResult.of(HealthCheck.Result.healthy()));
 		}
 
-		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
-		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
-		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-		if (corePlugin.isReportToElasticsearch()) {
-			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchEhCache.json");
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/EhCache.bulk", true);
-		}
+
 	}
 
 	private void tryAgainWhenFirstRequestComesIn(TracingPlugin tracingPlugin) {

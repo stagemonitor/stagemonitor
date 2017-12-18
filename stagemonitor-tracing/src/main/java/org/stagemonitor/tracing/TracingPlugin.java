@@ -391,15 +391,6 @@ public class TracingPlugin extends StagemonitorPlugin {
 
 	@Override
 	public void initializePlugin(final StagemonitorPlugin.InitArguments initArguments) {
-		corePlugin = initArguments.getPlugin(CorePlugin.class);
-		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
-		final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-
-		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Request-Metrics.bulk", true);
-			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
-		}
-
 		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
 		tracerFactory = getTracerImpl();
 		final Tracer tracer = tracerFactory.getTracer(initArguments);
