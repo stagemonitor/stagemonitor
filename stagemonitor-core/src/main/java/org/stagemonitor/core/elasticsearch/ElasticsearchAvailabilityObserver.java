@@ -6,7 +6,7 @@ public interface ElasticsearchAvailabilityObserver {
 
 	void init(ConfigurationRegistry configurationRegistry);
 
-	void onElasticsearchAvailable();
+	void onElasticsearchAvailable(ElasticsearchClient elasticsearchClient);
 
 	/**
 	 * Higher priority observers will be executed first

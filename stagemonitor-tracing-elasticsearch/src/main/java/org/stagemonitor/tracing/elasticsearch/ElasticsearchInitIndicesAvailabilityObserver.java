@@ -18,9 +18,8 @@ public class ElasticsearchInitIndicesAvailabilityObserver extends AbstractElasti
 	}
 
 	@Override
-	protected void onElasticsearchFirstAvailable() {
+	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
 		logger.info("sending stagemonitor-spans-* index pattern...");
-		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
 		elasticsearchClient.updateKibanaIndexPatternAsyncForce("kibana/stagemonitor-spans-kibana-index-pattern.json",
 						"/.kibana/index-pattern/stagemonitor-spans-*");
 		elasticsearchClient.sendClassPathRessourceBulkAsyncForce("kibana/Request-Analysis.bulk", true);
@@ -30,5 +29,10 @@ public class ElasticsearchInitIndicesAvailabilityObserver extends AbstractElasti
 		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
 		elasticsearchClient.createEmptyIndexAsync(ElasticsearchSpanReporter.getTodaysIndexName());
 		logger.info("sent stagemonitor-spans-* index pattern!");
+	}
+
+	@Override
+	public int getPriority() {
+		return 0;
 	}
 }

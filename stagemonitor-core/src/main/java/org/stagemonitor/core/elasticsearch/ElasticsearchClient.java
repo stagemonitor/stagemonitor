@@ -585,7 +585,7 @@ public class ElasticsearchClient {
 									logger.info("Elasticsearch is available again.");
 								}
 								for (ElasticsearchAvailabilityObserver elasticsearchAvailabilityObserver : elasticsearchAvailabilityObservers) {
-									elasticsearchAvailabilityObserver.onElasticsearchAvailable();
+									elasticsearchAvailabilityObserver.onElasticsearchAvailable(corePlugin.getElasticsearchClient());
 								}
 								elasticsearchAvailable.set(true);
 							}
