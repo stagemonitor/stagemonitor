@@ -191,11 +191,11 @@ public class ElasticsearchClient {
 							mergeStrategy().mergeEncodedObjects("fieldFormatMap").encodedArrayWithKey("fields", "name"));
 					sendAsJson("PUT", elasticsearchKibanaIndexPatternPath, mergedDefinition);
 				} catch (IOException e) {
-					logger.error("Error while updating kibana index pattern, definition = {}, pattern path = {}",
-							e, indexPatternLocation, elasticsearchKibanaIndexPatternPath);
+					logger.warn("Error while updating kibana index pattern, definition = {}, pattern path = {}",
+							indexPatternLocation, elasticsearchKibanaIndexPatternPath);
 				} catch (IllegalArgumentException e) {
-					logger.error("Error while preparing data for kibana index pattern update, definition = {}, pattern path = {}",
-							e, indexPatternLocation, elasticsearchKibanaIndexPatternPath);
+					logger.warn("Error while preparing data for kibana index pattern update, definition = {}, pattern path = {}",
+							indexPatternLocation, elasticsearchKibanaIndexPatternPath);
 				}
 			}
 
@@ -440,7 +440,8 @@ public class ElasticsearchClient {
 		@Override
 		public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
 			if (is == null) {
-				logger.warn(e.getMessage(), e);
+				// don't log exception as it might contain basic auth credentials (see #362)
+				logger.warn("Error while sending bulk request to Elasticsearch. Status {}", statusCode);
 				return null;
 			}
 			final JsonNode bulkResponse = JsonUtils.getMapper().readTree(is);
