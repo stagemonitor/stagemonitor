@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
@@ -29,16 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -61,7 +53,7 @@ public class ElasticsearchClient {
 	private final ThreadPoolExecutor asyncESPool;
 	private Timer timer;
 
-	public ElasticsearchClient(final CorePlugin corePlugin, final HttpClient httpClient, int esAvailabilityCheckIntervalSec) {
+	public ElasticsearchClient(final CorePlugin corePlugin, final HttpClient httpClient, int esAvailabilityCheckIntervalSec, List<ElasticsearchAvailabilityObserver> elasticsearchAvailabilityObservers) {
 		this.corePlugin = corePlugin;
 		asyncESPool = ExecutorUtils
 				.createSingleThreadDeamonPool("async-elasticsearch", corePlugin.getThreadPoolQueueCapacityLimit(), corePlugin);
@@ -74,7 +66,7 @@ public class ElasticsearchClient {
 
 		if (esAvailabilityCheckIntervalSec > 0) {
 			final long period = TimeUnit.SECONDS.toMillis(esAvailabilityCheckIntervalSec);
-			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin), 0, period);
+			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin, elasticsearchAvailabilityObservers), 0, period);
 		}
 	}
 
@@ -111,30 +103,30 @@ public class ElasticsearchClient {
 		return send(HttpRequestBuilder.<Integer>forUrl(corePlugin.getElasticsearchUrl() + path)
 				.method("DELETE")
 				.responseHandler(StatusCodeResponseHandler.WITH_ERROR_LOGGING)
-				.build(), -1);
+				.build(), -1, false);
 	}
 
-	private void send(HttpRequest<?> request) {
-		if (!isElasticsearchAvailable()) {
+	private void send(HttpRequest<?> request, boolean force) {
+		if (!force && !isElasticsearchAvailable()) {
 			return;
 		}
 		httpClient.send(request);
 	}
 
-	private <T> T send(HttpRequest<T> request, T defaultIfNotAvailable) {
-		if (!isElasticsearchAvailable()) {
+	private <T> T send(HttpRequest<T> request, T defaultIfNotAvailable, boolean force) {
+		if (!force && !isElasticsearchAvailable()) {
 			return defaultIfNotAvailable;
 		}
 		return httpClient.send(request);
 	}
 
-	private Future<?> sendAsync(final HttpRequest<?> request) {
-		if (isElasticsearchAvailable()) {
+	private Future<?> sendAsync(final HttpRequest<?> request, final boolean force) {
+		if (isElasticsearchAvailable() || force) {
 			try {
 				return asyncESPool.submit(new Runnable() {
 					@Override
 					public void run() {
-						send(request);
+						send(request, force);
 					}
 				});
 			} catch (RejectedExecutionException e) {
@@ -145,9 +137,13 @@ public class ElasticsearchClient {
 	}
 
 	public int sendAsJson(final String method, final String path, final Object requestBody) {
+		return sendAsJson(method, path, requestBody, false);
+	}
+
+	private int sendAsJson(String method, String path, Object requestBody, boolean force) {
 		return send(HttpRequestBuilder.<Integer>jsonRequest(method, corePlugin.getElasticsearchUrl() + path, requestBody)
 				.responseHandler(StatusCodeResponseHandler.WITH_ERROR_LOGGING)
-				.build(), -1);
+				.build(), -1, force);
 	}
 
 	public void index(final String index, final String type, final Object document) {
@@ -157,7 +153,7 @@ public class ElasticsearchClient {
 		final ObjectNode json = JsonUtils.toObjectNode(document);
 		removeDisallowedCharsFromPropertyNames(json);
 
-		sendAsync(HttpRequestBuilder.jsonRequest("POST", getElasticsearchUrl() + "/" + index + "/" + type, json).build());
+		sendAsync(HttpRequestBuilder.jsonRequest("POST", getElasticsearchUrl() + "/" + index + "/" + type, json).build(), false);
 	}
 
 	private void removeDisallowedCharsFromPropertyNames(ObjectNode json) {
@@ -180,6 +176,14 @@ public class ElasticsearchClient {
 	}
 
 	public void updateKibanaIndexPatternAsync(final String indexPatternLocation, final String elasticsearchKibanaIndexPatternPath) {
+		updateKibanaIndexPatternAsync(indexPatternLocation, elasticsearchKibanaIndexPatternPath, false);
+	}
+
+	public void updateKibanaIndexPatternAsyncForce(final String indexPatternLocation, final String elasticsearchKibanaIndexPatternPath) {
+		updateKibanaIndexPatternAsync(indexPatternLocation, elasticsearchKibanaIndexPatternPath, true);
+	}
+
+	private void updateKibanaIndexPatternAsync(final String indexPatternLocation, final String elasticsearchKibanaIndexPatternPath, final boolean force) {
 		asyncESPool.submit(new Runnable() {
 			@Override
 			public void run() {
@@ -189,7 +193,7 @@ public class ElasticsearchClient {
 					JsonNode currentPattern = fetchCurrentKibanaIndexPatternConfiguration(elasticsearchKibanaIndexPatternPath);
 					JsonNode mergedDefinition = JsonMerger.merge(currentPattern, stagemonitorPattern,
 							mergeStrategy().mergeEncodedObjects("fieldFormatMap").encodedArrayWithKey("fields", "name"));
-					sendAsJson("PUT", elasticsearchKibanaIndexPatternPath, mergedDefinition);
+					sendAsJson("PUT", elasticsearchKibanaIndexPatternPath, mergedDefinition, force);
 				} catch (IOException e) {
 					logger.warn("Error while updating kibana index pattern, definition = {}, pattern path = {}",
 							indexPatternLocation, elasticsearchKibanaIndexPatternPath);
@@ -210,6 +214,7 @@ public class ElasticsearchClient {
 		});
 	}
 
+
 	private String getFields(String fieldsJsonPath) throws IOException {
 		final JsonNode fields = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(fieldsJsonPath));
 		for (JsonNode field : fields) {
@@ -226,7 +231,7 @@ public class ElasticsearchClient {
 	}
 
 	public Future<?> sendMappingTemplateAsync(String mappingJson, String templateName) {
-		return sendAsync(HttpRequestBuilder.jsonRequest("PUT", getElasticsearchUrl() + ("/_template/" + templateName), mappingJson).build());
+		return sendAsync(HttpRequestBuilder.jsonRequest("PUT", getElasticsearchUrl() + ("/_template/" + templateName), mappingJson).build(), true);
 	}
 
 	public static String modifyIndexTemplate(String templatePath, int moveToColdNodesAfterDays, Integer numberOfReplicas, Integer numberOfShards) {
@@ -250,21 +255,29 @@ public class ElasticsearchClient {
 	}
 
 	public void sendClassPathRessourceBulkAsync(final String resource, boolean logBulkErrors) {
+		sendClassPathRessourceBulkAsync(resource, logBulkErrors, false);
+	}
+
+	public void sendClassPathRessourceBulkAsyncForce(final String resource, boolean logBulkErrors) {
+		sendClassPathRessourceBulkAsync(resource, logBulkErrors, true);
+	}
+
+	private void sendClassPathRessourceBulkAsync(final String resource, boolean logBulkErrors, boolean force) {
 		sendBulkAsync(new HttpClient.OutputStreamHandler() {
 			@Override
 			public void withHttpURLConnection(OutputStream os) throws IOException {
 				IOUtils.copy(IOUtils.getResourceAsStream(resource), os);
 				os.close();
 			}
-		}, logBulkErrors);
+		}, logBulkErrors, force);
 	}
 
-	private void sendBulkAsync(final HttpClient.OutputStreamHandler outputStreamHandler, final boolean logBulkErrors) {
+	private void sendBulkAsync(final HttpClient.OutputStreamHandler outputStreamHandler, final boolean logBulkErrors, final boolean force) {
 		try {
 			asyncESPool.submit(new Runnable() {
 				@Override
 				public void run() {
-					sendBulk(outputStreamHandler, logBulkErrors);
+					sendBulk(outputStreamHandler, logBulkErrors, force);
 				}
 			});
 		} catch (RejectedExecutionException e) {
@@ -273,7 +286,11 @@ public class ElasticsearchClient {
 	}
 
 	void sendBulk(HttpClient.OutputStreamHandler outputStreamHandler, boolean logBulkErrors) {
-		if (!isElasticsearchAvailable()) {
+		sendBulk(outputStreamHandler, logBulkErrors, false);
+	}
+
+	private void sendBulk(HttpClient.OutputStreamHandler outputStreamHandler, boolean logBulkErrors, boolean force) {
+		if (!force && !isElasticsearchAvailable()) {
 			return;
 		}
 		final HttpClient.ResponseHandler<Void> responseHandler = logBulkErrors ? BulkErrorReportingResponseHandler.INSTANCE : NoopResponseHandler.INSTANCE;
@@ -306,7 +323,7 @@ public class ElasticsearchClient {
 		final String url = corePlugin.getElasticsearchUrl() + "/" + path;
 		logger.info(logMessage, path);
 		try {
-			send(HttpRequestBuilder.forUrl(url).method(method).build());
+			send(HttpRequestBuilder.forUrl(url).method(method).build(), false);
 		} finally {
 			logger.info(logMessage, "Done " + path);
 		}
@@ -422,7 +439,7 @@ public class ElasticsearchClient {
 	public Future<?> createEmptyIndexAsync(String indexName) {
 		return sendAsync(HttpRequestBuilder.of("PUT", getElasticsearchUrl() + "/" + indexName)
 				.noopForStatus(400) // ignore index exists
-				.build());
+				.build(), true);
 	}
 
 	public static class BulkErrorReportingResponseHandler implements HttpClient.ResponseHandler<Void> {
@@ -532,14 +549,21 @@ public class ElasticsearchClient {
 		public abstract void onBulkError(int errorCount);
 	}
 
+	public void checkEsAvailability() {
+		new CheckEsAvailability(httpClient, corePlugin, Collections.<ElasticsearchAvailabilityObserver>emptyList()).run();
+	}
+
 	private class CheckEsAvailability extends TimerTask {
 		private final HttpClient httpClient;
 		private final CorePlugin corePlugin;
+		private final List<ElasticsearchAvailabilityObserver> elasticsearchAvailabilityObservers;
 
-		public CheckEsAvailability(HttpClient httpClient, CorePlugin corePlugin) {
+		public CheckEsAvailability(HttpClient httpClient, CorePlugin corePlugin, List<ElasticsearchAvailabilityObserver> elasticsearchAvailabilityObservers) {
 			this.httpClient = httpClient;
 			this.corePlugin = corePlugin;
+			this.elasticsearchAvailabilityObservers = elasticsearchAvailabilityObservers;
 		}
+
 
 		@Override
 		public void run() {
@@ -550,15 +574,24 @@ public class ElasticsearchClient {
 			if (elasticsearchUrl == null) {
 				return;
 			}
-			httpClient.send(HttpRequestBuilder.<Void>forUrl(elasticsearchUrl + "/")
-					.method("HEAD")
+
+			httpClient.send(HttpRequestBuilder.<Void>forUrl(elasticsearchUrl + "/_cluster/health")
+					.method("GET")
 					.successHandler(new HttpClient.ResponseHandler<Void>() {
 						@Override
-						public Void handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
-							if (!isElasticsearchAvailable()) {
-								logger.info("Elasticsearch is available again.");
+						public Void handleResponse(HttpRequest<?> httpRequest, InputStream inputStream, Integer statusCode, IOException e) throws IOException {
+							JsonNode clusterHealthResponse = JsonUtils.getMapper().readTree(inputStream);
+							String statusValue = clusterHealthResponse.has("status") ? clusterHealthResponse.get("status").asText() : "red";
+							boolean isNowAvailable = statusValue.equals("green") || statusValue.equals("yellow");
+							if (isNowAvailable) {
+								if (!isElasticsearchAvailable()) {
+									logger.info("Elasticsearch is available again.");
+								}
+								for (ElasticsearchAvailabilityObserver elasticsearchAvailabilityObserver : elasticsearchAvailabilityObservers) {
+									elasticsearchAvailabilityObserver.onElasticsearchAvailable(corePlugin.getElasticsearchClient());
+								}
+								elasticsearchAvailable.set(true);
 							}
-							elasticsearchAvailable.set(true);
 							return null;
 						}
 					})

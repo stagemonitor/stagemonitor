@@ -32,24 +32,41 @@ public class ElasticsearchClientAvailabilityCheckTest {
 		when(corePlugin.getElasticsearchUrl()).thenReturn(url);
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(url));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(10000);
-		elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), 1);
+		elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, Collections.emptyList());
 	}
 
 	@Test
 	public void testNotAvailable() throws Exception {
-		Thread.sleep(1100);
+		elasticsearchClient.checkEsAvailability();
 		assertFalse(elasticsearchClient.isElasticsearchAvailable());
 
 		Server server = new Server(41234);
 		server.setHandler(new AbstractHandler() {
 			@Override
 			public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				response.getWriter().write("{\n" +
+								"  \"cluster_name\" : \"monitoring-cluster\",\n" +
+								"  \"status\" : \"yellow\",\n" +
+								"  \"timed_out\" : false,\n" +
+								"  \"number_of_nodes\" : 1,\n" +
+								"  \"number_of_data_nodes\" : 1,\n" +
+								"  \"active_primary_shards\" : 8,\n" +
+								"  \"active_shards\" : 8,\n" +
+								"  \"relocating_shards\" : 0,\n" +
+								"  \"initializing_shards\" : 0,\n" +
+								"  \"unassigned_shards\" : 6,\n" +
+								"  \"delayed_unassigned_shards\" : 0,\n" +
+								"  \"number_of_pending_tasks\" : 0,\n" +
+								"  \"number_of_in_flight_fetch\" : 0,\n" +
+								"  \"task_max_waiting_in_queue_millis\" : 0,\n" +
+								"  \"active_shards_percent_as_number\" : 57.14285714285714\n" +
+								"}");
 				baseRequest.setHandled(true);
 			}
 		});
 		server.start();
 
-		Thread.sleep(1100);
+		elasticsearchClient.checkEsAvailability();
 		assertTrue(elasticsearchClient.isElasticsearchAvailable());
 		server.stop();
 	}

@@ -286,13 +286,6 @@ public class ServletPlugin extends StagemonitorPlugin {
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
 		initPasswordChecker(initArguments.getConfiguration());
 		registerPooledResources(initArguments.getMetricRegistry(), tomcatThreadPools());
-		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
-		ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
-		if (corePlugin.isReportToElasticsearch()) {
-			final GrafanaClient grafanaClient = corePlugin.getGrafanaClient();
-			elasticsearchClient.sendClassPathRessourceBulkAsync("kibana/Application-Server.bulk", true);
-			grafanaClient.sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
-		}
 		initClientSpanExtensions(initArguments.getConfiguration());
 	}
 

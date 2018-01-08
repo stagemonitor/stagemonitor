@@ -38,7 +38,7 @@ public class StagemonitorCoreConfigurationSourceInitializerTest {
 	private void prepareESTest() {
 		when(corePlugin.getElasticsearchConfigurationSourceProfiles()).thenReturn(Collections.singletonList("test"));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-		ElasticsearchClient elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1);
+		ElasticsearchClient elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, Collections.emptyList());
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
 	}
 
