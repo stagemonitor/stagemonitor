@@ -1,14 +1,11 @@
 package org.stagemonitor.tracing.elasticsearch;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.elasticsearch.AbstractElasticsearchFirstAvailabilityObserver;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
 public class ElasticsearchInitIndicesAvailabilityObserver extends AbstractElasticsearchFirstAvailabilityObserver {
 
-	private final Logger logger = LoggerFactory.getLogger(ElasticsearchInitIndicesAvailabilityObserver.class);
 	private ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 
 	@Override
@@ -19,20 +16,22 @@ public class ElasticsearchInitIndicesAvailabilityObserver extends AbstractElasti
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		logger.info("sending stagemonitor-spans-* index pattern...");
-		elasticsearchClient.updateKibanaIndexPatternAsyncForce("kibana/stagemonitor-spans-kibana-index-pattern.json",
-						"/.kibana/index-pattern/stagemonitor-spans-*");
-		elasticsearchClient.sendClassPathRessourceBulkAsyncForce("kibana/Request-Analysis.bulk", true);
-		elasticsearchClient.sendClassPathRessourceBulkAsyncForce("kibana/Web-Analytics.bulk", true);
-		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
-						elasticsearchTracingPlugin.getSpanIndexTemplate(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
-		elasticsearchClient.sendMappingTemplateAsync(spanMappingJson, "stagemonitor-spans");
-		elasticsearchClient.createEmptyIndexAsync(ElasticsearchSpanReporter.getTodaysIndexName());
-		logger.info("sent stagemonitor-spans-* index pattern!");
+		createSpansIndex(elasticsearchClient);
+
+		elasticsearchClient.updateKibanaIndexPattern("kibana/stagemonitor-spans-kibana-index-pattern.json",
+				"/.kibana/index-pattern/stagemonitor-spans-*");
+
+		elasticsearchClient.sendSpanDashboardBulkAsync("kibana/Request-Analysis.bulk", true);
+		elasticsearchClient.sendSpanDashboardBulkAsync("kibana/Web-Analytics.bulk", true);
+
+		elasticsearchClient.scheduleIndexManagement("stagemonitor-spans-",
+				corePlugin.getMoveToColdNodesAfterDays(), elasticsearchTracingPlugin.getDeleteSpansAfterDays());
 	}
 
-	@Override
-	public int getPriority() {
-		return 0;
+	private void createSpansIndex(ElasticsearchClient elasticsearchClient) {
+		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
+				elasticsearchTracingPlugin.getSpanIndexTemplate(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
+		elasticsearchClient.sendMappingTemplate(spanMappingJson, "stagemonitor-spans");
+		elasticsearchClient.createEmptyIndex(ElasticsearchSpanReporter.getTodaysIndexName());
 	}
 }

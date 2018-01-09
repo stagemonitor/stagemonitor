@@ -7,6 +7,7 @@ import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Set;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
@@ -54,6 +55,9 @@ public class JvmPlugin extends StagemonitorPlugin {
 		} catch (Exception e) {
 			logger.warn("Could not register cpu usage. ({})", e.getMessage());
 		}
+
+		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
+		corePlugin.getGrafanaClient().sendGrafanaDashboardAsync("grafana/ElasticsearchJvm.json");
 	}
 
 	@Override

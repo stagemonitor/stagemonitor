@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.AbstractElasticsearchTest;
 import org.stagemonitor.core.util.JsonUtils;
 
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.qos.logback.classic.Logger;
@@ -73,10 +72,10 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void modifyIndexTemplateIntegrationTest() throws Exception {
-		elasticsearchClient.sendMappingTemplateAsync(modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, 1, 2), "stagemonitor-elasticsearch-metrics");
+		elasticsearchClient.sendMappingTemplate(modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, 1, 2), "stagemonitor-elasticsearch-metrics");
 		elasticsearchClient.waitForCompletion();
 		refresh();
-		elasticsearchClient.index("stagemonitor-metrics-test", "metrics", Collections.singletonMap("count", 1));
+		elasticsearchClient.createEmptyIndex("stagemonitor-metrics-test");
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		final JsonNode indexSettings = elasticsearchClient.getJson("/stagemonitor-metrics-test/_settings")
@@ -93,8 +92,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testBulkNoRequest() {
-		elasticsearchClient.sendBulk(os ->
-				os.write(("").getBytes("UTF-8")), true);
+		elasticsearchClient.sendBulk(os -> os.write(("").getBytes("UTF-8")));
 		assertThat(testAppender.list).hasSize(1);
 		final ILoggingEvent event = testAppender.list.get(0);
 		assertThat(event.getLevel().toString()).isEqualTo("WARN");
@@ -105,7 +103,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 	public void testBulkErrorInvalidRequest() {
 		elasticsearchClient.sendBulk(os ->
 				os.write(("{ \"update\" : {\"_id\" : \"1\", \"_type\" : \"type1\", \"_index\" : \"index1\", \"_retry_on_conflict\" : 3} }\n" +
-						"{ \"doc\" : {\"field\" : \"value\"} }\n").getBytes("UTF-8")), true);
+						"{ \"doc\" : {\"field\" : \"value\"} }\n").getBytes("UTF-8")));
 		assertThat(testAppender.list).hasSize(1);
 		final ILoggingEvent event = testAppender.list.get(0);
 		assertThat(event.getLevel().toString()).isEqualTo("WARN");
@@ -116,7 +114,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 	public void testSuccessfulBulkRequest() {
 		elasticsearchClient.sendBulk(os ->
 				os.write(("{ \"index\" : { \"_index\" : \"test\", \"_type\" : \"type1\", \"_id\" : \"1\" } }\n" +
-						"{ \"field1\" : \"value1\" }\n").getBytes("UTF-8")), true);
+						"{ \"field1\" : \"value1\" }\n").getBytes("UTF-8")));
 		assertThat(testAppender.list).hasSize(0);
 	}
 
@@ -139,7 +137,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testCreateEmptyIndex() throws Exception {
-		elasticsearchClient.createEmptyIndexAsync("test").get();
+		elasticsearchClient.createEmptyIndex("test");
 		assertThat(elasticsearchClient.getJson("/test").get("test")).isNotNull();
 	}
 }

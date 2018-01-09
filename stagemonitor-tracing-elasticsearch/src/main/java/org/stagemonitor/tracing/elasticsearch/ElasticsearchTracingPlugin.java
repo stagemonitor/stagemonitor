@@ -3,9 +3,7 @@ package org.stagemonitor.tracing.elasticsearch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
-import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.tracing.TracingPlugin;
 
 import java.util.Collections;
@@ -77,23 +75,8 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 			.buildWithDefault(1000);
 
 	@Override
-	public void initializePlugin(InitArguments initArguments) throws Exception {
-		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
-		final ElasticsearchClient elasticsearchClient = corePlugin.getElasticsearchClient();
-
-		if (!corePlugin.getElasticsearchUrls().isEmpty()) {
-			deleteSpansAfterDays(elasticsearchClient, corePlugin);
-		}
-	}
-
-	@Override
 	public List<Class<? extends StagemonitorPlugin>> dependsOn() {
 		return Collections.<Class<? extends StagemonitorPlugin>>singletonList(TracingPlugin.class);
-	}
-
-	public void deleteSpansAfterDays(ElasticsearchClient elasticsearchClient, CorePlugin corePlugin) {
-		elasticsearchClient.scheduleIndexManagement("stagemonitor-spans-",
-				corePlugin.getMoveToColdNodesAfterDays(), deleteSpansAfterDays.getValue());
 	}
 
 	public boolean isOnlyLogElasticsearchSpanReports() {
@@ -114,5 +97,9 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 
 	public String getSpanIndexTemplate() {
 		return spanIndexTemplate.getValue();
+	}
+
+	public int getDeleteSpansAfterDays() {
+		return deleteSpansAfterDays.get();
 	}
 }

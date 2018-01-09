@@ -9,8 +9,6 @@ import org.stagemonitor.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.util.ClassUtils;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.util.StringUtils;
@@ -286,6 +284,8 @@ public class ServletPlugin extends StagemonitorPlugin {
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) {
 		initPasswordChecker(initArguments.getConfiguration());
 		registerPooledResources(initArguments.getMetricRegistry(), tomcatThreadPools());
+		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
+		corePlugin.getGrafanaClient().sendGrafanaDashboardAsync("grafana/ElasticsearchApplicationServer.json");
 		initClientSpanExtensions(initArguments.getConfiguration());
 	}
 

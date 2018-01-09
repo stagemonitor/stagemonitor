@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.TracingPlugin;
@@ -66,8 +64,8 @@ public class EhCachePlugin extends StagemonitorPlugin {
 			monitorCaches(cacheManager);
 			healthCheckRegistry.register("EhCache CacheManager", ImmediateResult.of(HealthCheck.Result.healthy()));
 		}
-
-
+		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
+		corePlugin.getGrafanaClient().sendGrafanaDashboardAsync("grafana/ElasticsearchEhCache.json");
 	}
 
 	private void tryAgainWhenFirstRequestComesIn(TracingPlugin tracingPlugin) {

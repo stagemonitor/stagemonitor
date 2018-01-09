@@ -68,8 +68,12 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 	public void save(String key, String value) throws IOException {
 		final Map<String, String> configToSend = new HashMap<String, String>(configuration);
 		configToSend.put(key, value);
-		elasticsearchClient.sendAsJson("PUT", path, Collections.singletonMap("configuration", EsConfigurationDto.of(configToSend)));
-		configuration.put(key, value);
+		if (elasticsearchClient.isElasticsearchAvailable()) {
+			elasticsearchClient.sendAsJson("PUT", path, Collections.singletonMap("configuration", EsConfigurationDto.of(configToSend)));
+			configuration.put(key, value);
+		} else {
+			throw new IOException("Elasticsearch is not available");
+		}
 	}
 
 	@Override

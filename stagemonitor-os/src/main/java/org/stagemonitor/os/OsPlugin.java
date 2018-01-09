@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.os.metrics.AbstractSigarMetricSet;
 import org.stagemonitor.os.metrics.CpuMetricSet;
 import org.stagemonitor.os.metrics.EmptySigarMetricSet;
@@ -30,6 +28,9 @@ public class OsPlugin extends StagemonitorPlugin  {
 
 	@Override
 	public void initializePlugin(StagemonitorPlugin.InitArguments initArguments) throws Exception {
+		final CorePlugin corePlugin = initArguments.getPlugin(CorePlugin.class);
+
+		corePlugin.getGrafanaClient().sendGrafanaDashboardAsync("grafana/ElasticsearchHostDashboard.json");
 		if (sigar == null) {
 			if (!SigarNativeBindingLoader.loadNativeSigarBindings()) {
 				// redeploys are a problem, because the native libs can only be loaded by one class loader

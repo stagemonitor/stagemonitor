@@ -9,8 +9,6 @@ import org.stagemonitor.configuration.converter.StringValueConverter;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
-import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
-import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.tracing.anonymization.AnonymizingSpanEventListener;
@@ -392,6 +390,8 @@ public class TracingPlugin extends StagemonitorPlugin {
 	@Override
 	public void initializePlugin(final StagemonitorPlugin.InitArguments initArguments) {
 		corePlugin = initArguments.getPlugin(CorePlugin.class);
+
+		corePlugin.getGrafanaClient().sendGrafanaDashboardAsync("grafana/ElasticsearchRequestDashboard.json");
 		final Metric2Registry metricRegistry = initArguments.getMetricRegistry();
 		tracerFactory = getTracerImpl();
 		final Tracer tracer = tracerFactory.getTracer(initArguments);

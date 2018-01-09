@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.stagemonitor.AbstractElasticsearchTest;
-import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.ElasticsearchCoreAvailabilityObserver;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.configuration.ElasticsearchConfigurationSource;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
@@ -33,7 +33,7 @@ public class ElasticsearchConfigurationSourceTest extends AbstractElasticsearchT
 
 	@Before
 	public void setUp() throws Exception {
-		CorePlugin.sendConfigurationMappingAsync(elasticsearchClient).get();
+		ElasticsearchCoreAvailabilityObserver.sendConfigurationMapping(elasticsearchClient);
 		configurationSource = new ElasticsearchConfigurationSource(elasticsearchClient, "test");
 	}
 

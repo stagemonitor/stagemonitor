@@ -47,7 +47,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 		reporter = new ElasticsearchSpanReporter();
 		reporter.init(configuration);
 		final String mappingTemplate = IOUtils.getResourceAsString("stagemonitor-elasticsearch-span-index-template.json");
-		elasticsearchClient.sendMappingTemplateAsync(mappingTemplate, "stagemonitor-spans");
+		elasticsearchClient.sendMappingTemplate(mappingTemplate, "stagemonitor-spans");
 		elasticsearchClient.waitForCompletion();
 		when(tracingPlugin.getTracer()).thenReturn(mockTracer);
 	}

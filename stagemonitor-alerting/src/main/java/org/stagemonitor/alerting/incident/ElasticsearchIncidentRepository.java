@@ -27,7 +27,11 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 
 	@Override
 	public boolean deleteIncident(Incident incident) {
-		return hasNoConflict(elasticsearchClient.delete(BASE_URL + "/" + getEsId(incident) + getVersionParameter(incident)));
+		if (elasticsearchClient.isElasticsearchAvailable()) {
+			return hasNoConflict(elasticsearchClient.delete(BASE_URL + "/" + getEsId(incident) + getVersionParameter(incident)));
+		} else {
+			return false;
+		}
 	}
 
 	private String getEsId(Incident incident) {
@@ -53,7 +57,11 @@ public class ElasticsearchIncidentRepository implements IncidentRepository {
 
 	@Override
 	public boolean updateIncident(Incident incident) {
-		return hasNoConflict(elasticsearchClient.sendAsJson("PUT", BASE_URL + "/" + getEsId(incident) + getVersionParameter(incident), incident));
+		if (elasticsearchClient.isElasticsearchAvailable()) {
+			return hasNoConflict(elasticsearchClient.sendAsJson("PUT", BASE_URL + "/" + getEsId(incident) + getVersionParameter(incident), incident));
+		} else {
+			return false;
+		}
 	}
 
 	@Override
