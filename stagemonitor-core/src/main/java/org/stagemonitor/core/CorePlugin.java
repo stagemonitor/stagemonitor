@@ -445,6 +445,8 @@ public class CorePlugin extends StagemonitorPlugin {
 			}
 		});
 
+		// it's important to initialize the ElasticsearchClient via getElasticsearchClient()
+		// otherwise the periodic availability check might not get started
 		final ElasticsearchClient elasticsearchClient = getElasticsearchClient();
 		initArguments.getHealthCheckRegistry().register("Elasticsearch", new HealthCheck() {
 			@Override
@@ -482,7 +484,6 @@ public class CorePlugin extends StagemonitorPlugin {
 
 		reportToGraphite(legacyMetricRegistry, getGraphiteReportingInterval(), measurementSession);
 		reportToInfluxDb(metric2Registry, reportingIntervalInfluxDb.getValue(), measurementSession);
-		reportToElasticsearch(metric2Registry, reportingIntervalElasticsearch.getValue(), measurementSession);
 		reportToConsole(metric2Registry, getConsoleReportingInterval(), allFilters);
 
 		if (configuration.getConfig(CorePlugin.class).isReportToJMX()) {
@@ -519,23 +520,6 @@ public class CorePlugin extends StagemonitorPlugin {
 			reporters.add(reporter);
 		} else {
 			logger.info("Not sending metrics to InfluxDB (url={}, interval={}s)", getInfluxDbUrl(), reportingInterval);
-		}
-	}
-
-	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
-									   final MeasurementSession measurementSession) {
-        if (isReportToElasticsearch()) {
-            logger.info("Sending metrics to Elasticsearch ({}) every {}s", getElasticsearchUrlsWithoutAuthenticationInformation(), reportingInterval);
-        }
-		if (isReportToElasticsearch() || isOnlyLogElasticsearchMetricReports()) {
-			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, this)
-					.globalTags(measurementSession.asMap())
-					.build();
-
-			reporter.start(reportingInterval, TimeUnit.SECONDS);
-			reporters.add(reporter);
-		} else {
-			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", getElasticsearchUrlsWithoutAuthenticationInformation(), reportingInterval);
 		}
 	}
 
@@ -829,5 +813,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public String getMetricsIndexTemplate() {
 		return metricsIndexTemplate.get();
+	}
+
+	public int getReportingIntervalElasticsearch() {
+		return reportingIntervalElasticsearch.get();
 	}
 }

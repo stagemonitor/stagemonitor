@@ -5,9 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.elasticsearch.AbstractElasticsearchFirstAvailabilityObserver;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
+import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.util.IOUtils;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class ElasticsearchCoreAvailabilityObserver extends AbstractElasticsearchFirstAvailabilityObserver {
 
@@ -21,6 +23,8 @@ public class ElasticsearchCoreAvailabilityObserver extends AbstractElasticsearch
 		logger.debug("created KibanaIndexAndMapping...");
 
 		manageMetricsIndex(elasticsearchClient, corePlugin);
+
+		reportToElasticsearch(corePlugin.getMetricRegistry(), corePlugin.getReportingIntervalElasticsearch(), corePlugin.getMeasurementSession());
 	}
 
 	private void createKibanaIndexAndMappings(ElasticsearchClient elasticsearchClient) {
@@ -53,6 +57,23 @@ public class ElasticsearchCoreAvailabilityObserver extends AbstractElasticsearch
 			elasticsearchClient.createEmptyIndex(ElasticsearchReporter.getTodaysIndexName());
 			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
 					corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getDeleteElasticsearchMetricsAfterDays());
+		}
+	}
+
+	private void reportToElasticsearch(Metric2Registry metricRegistry, int reportingInterval,
+									   final MeasurementSession measurementSession) {
+		if (corePlugin.isReportToElasticsearch()) {
+			logger.info("Sending metrics to Elasticsearch ({}) every {}s", corePlugin.getElasticsearchUrlsWithoutAuthenticationInformation(), reportingInterval);
+		}
+		if (corePlugin.isReportToElasticsearch() || corePlugin.isOnlyLogElasticsearchMetricReports()) {
+			final ElasticsearchReporter reporter = ElasticsearchReporter.forRegistry(metricRegistry, corePlugin)
+					.globalTags(measurementSession.asMap())
+					.build();
+
+			reporter.start(reportingInterval, TimeUnit.SECONDS);
+			corePlugin.closeOnShutdown(reporter);
+		} else {
+			logger.info("Not sending metrics to Elasticsearch (url={}, interval={}s)", corePlugin.getElasticsearchUrlsWithoutAuthenticationInformation(), reportingInterval);
 		}
 	}
 
