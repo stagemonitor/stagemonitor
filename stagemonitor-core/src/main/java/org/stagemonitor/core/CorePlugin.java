@@ -451,7 +451,7 @@ public class CorePlugin extends StagemonitorPlugin {
 		initArguments.getHealthCheckRegistry().register("Elasticsearch", new HealthCheck() {
 			@Override
 			protected Result check() throws Exception {
-				if (elasticsearchClient.isElasticsearchAvailable()) {
+				if (elasticsearchClient.isElasticsearchHealthy()) {
 					return Result.healthy();
 				} else {
 					return Result.unhealthy("Elasticsearch is not available");

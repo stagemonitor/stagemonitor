@@ -7,7 +7,7 @@ public class ElasticsearchEhCacheAvailabilityObserver extends AbstractElasticsea
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync("kibana/EhCache.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "EhCache.bulk");
 	}
 
 }

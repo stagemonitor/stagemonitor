@@ -7,7 +7,7 @@ public class ElasticsearchJvmAvailabilityObserver extends AbstractElasticsearchF
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync("kibana/JVM.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "JVM.bulk");
 	}
 
 }

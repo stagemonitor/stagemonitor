@@ -9,7 +9,7 @@ import com.codahale.metrics.Timer;
 import org.apache.commons.io.FileUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.internal.InternalSettingsPreparer;
+import org.elasticsearch.node.InternalSettingsPreparer;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.slf4j.LoggerFactory;

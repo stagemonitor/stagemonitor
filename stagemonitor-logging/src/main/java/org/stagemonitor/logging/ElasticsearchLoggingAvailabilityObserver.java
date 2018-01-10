@@ -7,7 +7,7 @@ public class ElasticsearchLoggingAvailabilityObserver extends AbstractElasticsea
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync("kibana/Logging.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "Logging.bulk");
 	}
 
 }

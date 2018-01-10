@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
@@ -52,6 +53,8 @@ public class ElasticsearchClient {
 	private final HttpClient httpClient;
 	private final CorePlugin corePlugin;
 	private final AtomicBoolean elasticsearchAvailable = new AtomicBoolean(false);
+	private final AtomicBoolean elasticsearchHealthy = new AtomicBoolean(false);
+	private String esMajorVersion;
 
 	private final ThreadPoolExecutor asyncESPool;
 	private Timer timer;
@@ -71,6 +74,25 @@ public class ElasticsearchClient {
 			final long period = TimeUnit.SECONDS.toMillis(esAvailabilityCheckIntervalSec);
 			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin, elasticsearchAvailabilityObservers), 0, period);
 		}
+	}
+
+	public boolean isElasticsearch6Compatible() {
+		if (esMajorVersion != null) {
+			try {
+				return Integer.parseInt(esMajorVersion) >= 6;
+			} catch (NumberFormatException nfe) {
+				logger.error("Could not get Elasticsearch major version", nfe);
+			}
+		}
+
+		return false;
+	}
+
+	public String getElasticsearchResourcePath() {
+		if (!isElasticsearch6Compatible()) {
+			return "kibana/5/";
+		}
+		return "kibana/6/";
 	}
 
 	public JsonNode getJson(final String path) throws IOException {
@@ -115,14 +137,23 @@ public class ElasticsearchClient {
 				.build());
 	}
 
-	public void updateKibanaIndexPattern(final String indexPatternLocation, final String elasticsearchKibanaIndexPatternPath) {
+	public void updateKibanaIndexPattern(final String indexName, final String indexPatternLocation) {
+		final String elasticsearchKibanaIndexPatternPath = isElasticsearch6Compatible() ? "/.kibana/doc/index-pattern:" + indexName : "/.kibana/index-pattern/" + indexName;
 		logger.debug("Sending index pattern {} to {}", indexPatternLocation, elasticsearchKibanaIndexPatternPath);
 		try {
 			ObjectNode stagemonitorPattern = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(indexPatternLocation)).deepCopy();
-			stagemonitorPattern.put("fields", getFields(stagemonitorPattern.get("fields").asText()));
+
+			if (isElasticsearch6Compatible()) {
+				ObjectNode indexPatternNode = (ObjectNode) stagemonitorPattern.get("index-pattern");
+				indexPatternNode.put("fields", getFields(stagemonitorPattern.get("index-pattern").get("fields").asText()));
+			} else {
+				stagemonitorPattern.put("fields", getFields(stagemonitorPattern.get("fields").asText()));
+			}
+
 			JsonNode currentPattern = fetchCurrentKibanaIndexPatternConfiguration(elasticsearchKibanaIndexPatternPath);
 			JsonNode mergedDefinition = JsonMerger.merge(currentPattern, stagemonitorPattern,
 					mergeStrategy().mergeEncodedObjects("fieldFormatMap").encodedArrayWithKey("fields", "name"));
+
 			sendAsJson("PUT", elasticsearchKibanaIndexPatternPath, mergedDefinition);
 		} catch (IOException e) {
 			logger.warn("Error while updating kibana index pattern, definition = {}, pattern path = {}",
@@ -321,6 +352,10 @@ public class ElasticsearchClient {
 		return !corePlugin.getElasticsearchUrls().isEmpty() && elasticsearchAvailable.get();
 	}
 
+	public boolean isElasticsearchHealthy() {
+		return elasticsearchHealthy.get();
+	}
+
 	public HttpClient getHttpClient() {
 		return httpClient;
 	}
@@ -501,13 +536,20 @@ public class ElasticsearchClient {
 							String statusValue = clusterHealthResponse.has("status") ? clusterHealthResponse.get("status").asText() : "red";
 							boolean isNowAvailable = statusValue.equals("green") || statusValue.equals("yellow");
 							if (isNowAvailable) {
+								elasticsearchHealthy.set(true);
 								if (!isElasticsearchAvailable()) {
+									esMajorVersion = getElasticsearchMajorVersion(elasticsearchUrl);
 									logger.info("Elasticsearch is available again.");
 								}
 								for (ElasticsearchAvailabilityObserver elasticsearchAvailabilityObserver : elasticsearchAvailabilityObservers) {
 									elasticsearchAvailabilityObserver.onElasticsearchAvailable(corePlugin.getElasticsearchClient());
 								}
 								elasticsearchAvailable.set(true);
+							} else {
+								elasticsearchAvailable.set(false);
+								elasticsearchHealthy.set(false);
+								logger.warn("Elasticsearch is not healthy. Status: " + statusValue + ". " +
+										"Stagemonitor won't try to send documents to Elasticsearch until it is available again.");
 							}
 							return null;
 						}
@@ -520,10 +562,28 @@ public class ElasticsearchClient {
 										"Stagemonitor won't try to send documents to Elasticsearch until it is available again.");
 							}
 							elasticsearchAvailable.set(false);
+							elasticsearchHealthy.set(false);
 							return null;
 						}
 					})
 					.build());
+		}
+
+		private String getElasticsearchMajorVersion(URL elasticsearchUrl) {
+			return httpClient.send(HttpRequestBuilder.<String>forUrl(elasticsearchUrl.toString())
+					.method("GET")
+					.successHandler(new HttpClient.ResponseHandler<String>() {
+						@Override
+						public String handleResponse(HttpRequest<?> httpRequest, InputStream inputStream, Integer statusCode, IOException e) throws IOException {
+							JsonNode clusterResponse = JsonUtils.getMapper().readTree(inputStream);
+							String version = clusterResponse.has("version") ? clusterResponse.get("version").get("number").asText() : "0.0.0";
+							logger.info(String.format("Elasticsearch Version: %s", version));
+							StringTokenizer stringTokenizer = new StringTokenizer(version, ".");
+							return stringTokenizer.nextToken();
+						}
+					})
+					.build());
+
 		}
 	}
 }
