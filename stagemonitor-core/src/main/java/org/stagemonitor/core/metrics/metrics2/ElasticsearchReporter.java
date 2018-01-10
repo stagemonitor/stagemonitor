@@ -23,8 +23,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 
-import static org.stagemonitor.core.util.http.HttpRequestBuilder.CONTENT_TYPE_JSON;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
+import static org.stagemonitor.core.util.http.HttpRequestBuilder.CONTENT_TYPE_JSON;
 
 public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 
@@ -64,6 +64,10 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  final Map<MetricName, Histogram> histograms,
 							  final Map<MetricName, Meter> meters,
 							  final Map<MetricName, Timer> timers) {
+
+		if (!corePlugin.isStagemonitorActive()) {
+			return;
+		}
 
 		long timestamp = clock.getTime();
 
