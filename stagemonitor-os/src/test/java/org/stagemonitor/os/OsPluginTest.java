@@ -16,6 +16,7 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
+import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.junit.ConditionalTravisTestRunner;
@@ -49,6 +50,7 @@ public class OsPluginTest {
 		final ConfigurationRegistry configuration = mock(ConfigurationRegistry.class);
 		final CorePlugin corePlugin = mock(CorePlugin.class);
 		when(corePlugin.getElasticsearchClient()).thenReturn(mock(ElasticsearchClient.class));
+		when(corePlugin.getGrafanaClient()).thenReturn(mock(GrafanaClient.class));
 		when(configuration.getConfig(CorePlugin.class)).thenReturn(corePlugin);
 		osPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metricRegistry, configuration, mock(MeasurementSession.class), mock(HealthCheckRegistry.class)));
 		this.sigar = osPlugin.getSigar();

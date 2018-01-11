@@ -68,22 +68,4 @@ public class CorePluginTest {
 		assertNull(corePlugin.getElasticsearchUrl());
 	}
 
-	@Test
-	public void testOnlyLogElasticsearchMetricReports() throws Exception {
-		Metric2Registry registry = new Metric2Registry();
-		CorePlugin corePlugin = new CorePlugin(mock(ElasticsearchClient.class));
-		ConfigurationRegistry configuration = ConfigurationRegistry.builder()
-				.addOptionProvider(corePlugin)
-				.addConfigSource(new SimpleSource("test")
-					.add("stagemonitor.reporting.elasticsearch.onlyLogElasticsearchMetricReports", "true"))
-				.build();
-
-		corePlugin.registerReporters(registry, configuration, new MeasurementSession("OnlyLogElasticsearchMetricReportsTest", "test", "test"));
-
-		boolean found = false;
-		for (Closeable c : corePlugin.getReporters()) {
-			found |= (c instanceof ElasticsearchReporter);
-		}
-		Assert.assertTrue("No ElasticsearchReporter found", found);
-	}
 }

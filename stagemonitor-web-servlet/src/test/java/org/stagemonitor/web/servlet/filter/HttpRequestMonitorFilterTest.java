@@ -14,6 +14,7 @@ import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.MeasurementSession;
 import org.stagemonitor.core.StagemonitorPlugin;
+import org.stagemonitor.core.grafana.GrafanaClient;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
@@ -80,6 +81,7 @@ public class HttpRequestMonitorFilterTest {
 		doReturn(true).when(servletPlugin).isClientSpanCollectionEnabled();
 		doReturn(true).when(servletPlugin).isClientSpanCollectionInjectionEnabled();
 		doReturn(true).when(corePlugin).isStagemonitorActive();
+		doReturn(mock(GrafanaClient.class)).when(corePlugin).getGrafanaClient();
 		doReturn(1000000d).when(tracingPlugin).getProfilerRateLimitPerMinute();
 		when(tracingPlugin.isSampled(any())).thenReturn(true);
 		final RequestMonitor requestMonitor = new RequestMonitor(configuration, mock(Metric2Registry.class));

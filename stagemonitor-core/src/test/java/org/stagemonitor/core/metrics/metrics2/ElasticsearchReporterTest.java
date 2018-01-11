@@ -79,6 +79,7 @@ public class ElasticsearchReporterTest {
 		final ElasticsearchClient elasticsearchClient = mock(ElasticsearchClient.class);
 		when(elasticsearchClient.isElasticsearchAvailable()).thenReturn(true);
 		when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
+		when(corePlugin.isStagemonitorActive()).thenReturn(true);
 		elasticsearchReporter = ElasticsearchReporter.forRegistry(registry, corePlugin)
 				.convertDurationsTo(DURATION_UNIT)
 				.globalTags(singletonMap("app", "test"))
