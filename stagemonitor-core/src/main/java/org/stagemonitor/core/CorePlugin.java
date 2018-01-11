@@ -584,7 +584,8 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	private static List<ElasticsearchAvailabilityObserver> initElasticsearchAvailabilityObservers(ConfigurationRegistry configurationRegistry) {
 		final List<ElasticsearchAvailabilityObserver> elasticsearchAvailabilityObservers = new ArrayList<ElasticsearchAvailabilityObserver>();
-		ServiceLoader<ElasticsearchAvailabilityObserver> observers = ServiceLoader.load(ElasticsearchAvailabilityObserver.class);
+		ServiceLoader<ElasticsearchAvailabilityObserver> observers = ServiceLoader
+				.load(ElasticsearchAvailabilityObserver.class, CorePlugin.class.getClassLoader());
 		for (ElasticsearchAvailabilityObserver elasticsearchAvailabilityObserver : observers) {
 			elasticsearchAvailabilityObservers.add(elasticsearchAvailabilityObserver);
 			elasticsearchAvailabilityObserver.init(configurationRegistry);
