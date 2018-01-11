@@ -26,7 +26,9 @@ import javax.xml.ws.handler.Handler;
 import __redirected.org.stagemonitor.dispatcher.Dispatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.isInterface;
 import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
+import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
@@ -54,7 +56,11 @@ public class SoapHandlerTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Override
 	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
-		return not(ElementMatchers.isInterface()).and(isSubTypeOf(Binding.class));
+		// It's important to pre-select potential matches first with the nameContains matcher
+		// otherwise, the type hierarchy of each and every class has to be determined whether it derives from Binding
+		return nameContains("Binding")
+				.and(not(isInterface()))
+				.and(isSubTypeOf(Binding.class));
 	}
 
 	@Override
