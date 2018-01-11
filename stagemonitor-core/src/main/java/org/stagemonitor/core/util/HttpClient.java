@@ -45,10 +45,17 @@ public class HttpClient {
 		HttpURLConnection connection = null;
 		InputStream inputStream = null;
 		try {
-		  	URL parsedUrl = new URL(request.getUrl());
-		  	connection = (HttpURLConnection) parsedUrl.openConnection();
-			if (parsedUrl.getUserInfo() != null) {
-				String basicAuth = "Basic " + DatatypeConverter.printBase64Binary(parsedUrl.getUserInfo().getBytes());
+			URL url = new URL(request.getUrl());
+			final String basicAuth;
+			if (url.getUserInfo() != null) {
+				basicAuth = "Basic " + DatatypeConverter.printBase64Binary(url.getUserInfo().getBytes());
+				// remove username:password from url so it does not appear in exception messages
+				url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile());
+			} else {
+				basicAuth = null;
+			}
+			connection = (HttpURLConnection) url.openConnection();
+			if (basicAuth != null) {
 				connection.setRequestProperty("Authorization", basicAuth);
 			}
 			connection.setDoOutput(true);

@@ -12,8 +12,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class HttpClientTest extends AbstractEmbeddedServerTest {
 
@@ -27,12 +29,40 @@ public class HttpClientTest extends AbstractEmbeddedServerTest {
 			public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 				baseRequest.setHandled(true);
 				assertEquals("Basic dXNlcjpwYXNz", request.getHeader("Authorization"));
+				assertThat(request.getQueryString()).isEqualTo("bar=baz");
 				handled[0] = true;
 			}
 		});
 
-		assertEquals(Integer.valueOf(200), httpClient.send(HttpRequestBuilder.<Integer>forUrl("http://user:pass@localhost:" + getPort() + "/")
+		assertEquals(Integer.valueOf(200), httpClient.send(HttpRequestBuilder.<Integer>forUrl("http://user:pass@localhost:" + getPort() + "/foo?bar=baz")
 				.successHandler(new StatusCodeResponseHandler()).build()));
 		assertTrue(handled[0]);
+	}
+
+	@Test
+	public void testBasicAuthException() throws Exception {
+		startWithHandler(new AbstractHandler() {
+			@Override
+			public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+				baseRequest.setHandled(true);
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			}
+		});
+
+		final String url = "http://user:pass@localhost:" + getPort() + "/foo?bar=baz";
+		final String urlWithoutAuth = "http://localhost:" + getPort() + "/foo?bar=baz";
+		httpClient.send(HttpRequestBuilder.<Integer>forUrl(url)
+				.successHandler((httpRequest, is, statusCode, e) -> {
+					fail();
+					return null;
+				})
+				.errorHandler((httpRequest, is, statusCode, e) -> {
+					assertThat(statusCode).isEqualTo(401);
+					assertThat(e.getMessage())
+							.doesNotContain(url)
+							.contains(urlWithoutAuth);
+					return null;
+				})
+				.build());
 	}
 }
