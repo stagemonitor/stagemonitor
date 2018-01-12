@@ -55,7 +55,7 @@ public class ElasticsearchExternalSpanReporterIntegrationTest extends AbstractEl
 	@Test
 	public void reportTemplateCreated() throws Exception {
 		final JsonNode template = elasticsearchClient.getJson("/_template/stagemonitor-spans").get("stagemonitor-spans");
-		assertThat(template.get("template").asText()).as(template.toString()).isEqualTo("stagemonitor-spans-*");
+		assertThat(template.get("index_patterns").get(0).asText()).isEqualTo("stagemonitor-spans-*");
 		assertThat(template.get("mappings").get("_default_").get("_all").get("enabled").asBoolean()).as(template.toString()).isEqualTo(false);
 	}
 
