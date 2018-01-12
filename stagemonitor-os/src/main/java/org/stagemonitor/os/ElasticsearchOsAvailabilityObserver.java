@@ -7,6 +7,6 @@ public class ElasticsearchOsAvailabilityObserver extends AbstractElasticsearchFi
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync("kibana/Host.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "Host.bulk");
 	}
 }

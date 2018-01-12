@@ -7,7 +7,7 @@ public class ElasticsearchServletAvailabilityObserver extends AbstractElasticsea
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync("kibana/Application-Server.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "Application-Server.bulk");
 	}
 
 }

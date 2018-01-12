@@ -5,14 +5,13 @@ import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.internal.InternalSettingsPreparer;
+import org.elasticsearch.node.InternalSettingsPreparer;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
@@ -54,7 +53,6 @@ public class AbstractElasticsearchTest {
 					.put("http.port", elasticsearchPort)
 					.put("path.logs", "build/elasticsearch/logs")
 					.put("path.data", "build/elasticsearch/data")
-					.put("transport.type", "local")
 					.put("http.type", "netty4")
 					.build();
 			elasticsearchUrl = new URL("http://localhost:" + elasticsearchPort);

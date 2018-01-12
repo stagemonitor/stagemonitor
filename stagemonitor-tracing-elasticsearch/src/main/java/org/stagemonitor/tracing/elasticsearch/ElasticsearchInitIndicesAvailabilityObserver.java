@@ -18,11 +18,11 @@ public class ElasticsearchInitIndicesAvailabilityObserver extends AbstractElasti
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
 		createSpansIndex(elasticsearchClient);
 
-		elasticsearchClient.updateKibanaIndexPattern("kibana/stagemonitor-spans-kibana-index-pattern.json",
-				"/.kibana/index-pattern/stagemonitor-spans-*");
+		final String resourcePath = elasticsearchClient.getElasticsearchResourcePath();
+		elasticsearchClient.updateKibanaIndexPattern("stagemonitor-spans-*",resourcePath + "stagemonitor-spans-kibana-index-pattern.json");
 
-		elasticsearchClient.sendSpanDashboardBulkAsync("kibana/Request-Analysis.bulk", true);
-		elasticsearchClient.sendSpanDashboardBulkAsync("kibana/Web-Analytics.bulk", true);
+		elasticsearchClient.sendSpanDashboardBulkAsync(resourcePath + "Request-Analysis.bulk", true);
+		elasticsearchClient.sendSpanDashboardBulkAsync(resourcePath + "Web-Analytics.bulk", true);
 
 		elasticsearchClient.scheduleIndexManagement("stagemonitor-spans-",
 				corePlugin.getMoveToColdNodesAfterDays(), elasticsearchTracingPlugin.getDeleteSpansAfterDays());

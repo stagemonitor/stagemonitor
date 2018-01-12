@@ -1,0 +1,6 @@
+{
+	"fieldFormatMap": "{\"child_spans\":{\"id\":\"url\",\"params\":{\"urlTemplate\":\"/app/kibana#/discover/Request-Analysis?_g=(time:(from:now-1h,mode:quick,to:now))&_a=(filters:!((meta:(alias:!n,disabled:!f,index:'stagemonitor-spans-*',key:parent_id,negate:!f,value:'{{value}}'),query:(match:(parent_id:(query:'{{value}}',type:phrase))))),index:'stagemonitor-spans-*')\",\"labelTemplate\":\"Child Spans\"}},\"all_spans\":{\"id\":\"url\",\"params\":{\"urlTemplate\":\"/app/kibana#/discover/Request-Analysis?_g=(time:(from:now-1h,mode:quick,to:now))&_a=(filters:!((meta:(alias:!n,disabled:!f,index:'stagemonitor-spans-*',key:trace_id,negate:!f,value:'{{value}}'),query:(match:(trace_id:(query:'{{value}}',type:phrase))))),index:'stagemonitor-spans-*')\",\"labelTemplate\":\"All Spans of This Trace\"}}}",
+	"fields": "kibana/5/stagemonitor-spans-kibana-index-pattern-fields.json",
+	"timeFieldName": "@timestamp",
+	"title": "stagemonitor-spans-*"
+}

@@ -53,7 +53,7 @@ ext {
 	metricsVersion = '3.2.4'
 	slf4jVersion = '1.7.25'
 	jacksonVersion = '2.9.0'
-	esVersion = '5.1.2'
+	esVersion = '6.1.1'
 	byteBuddyVersion = '1.7.9'
 	opentracingVersion = '0.31.0-RC1'
 	jaegerVersion = '0.22.0-RC1'
@@ -102,7 +102,7 @@ subprojects {
 		testCompile 'junit:junit:4.12'
 		testCompile 'org.mockito:mockito-core:2.10.0'
 		testCompile 'ch.qos.logback:logback-classic:1.1.7'
-		testCompile 'org.apache.logging.log4j:log4j-core:2.7'
+		testCompile 'org.apache.logging.log4j:log4j-core:2.9.1'
 		testCompile 'commons-io:commons-io:2.5'
 		testCompile 'org.assertj:assertj-core:3.8.0'
 	}
