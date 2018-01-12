@@ -54,7 +54,7 @@ public class ElasticsearchClient {
 	private final CorePlugin corePlugin;
 	private final AtomicBoolean elasticsearchAvailable = new AtomicBoolean(false);
 	private final AtomicBoolean elasticsearchHealthy = new AtomicBoolean(false);
-	private String esMajorVersion;
+	private Integer esMajorVersion;
 
 	private final ThreadPoolExecutor asyncESPool;
 	private Timer timer;
@@ -77,15 +77,7 @@ public class ElasticsearchClient {
 	}
 
 	public boolean isElasticsearch6Compatible() {
-		if (esMajorVersion != null) {
-			try {
-				return Integer.parseInt(esMajorVersion) >= 6;
-			} catch (NumberFormatException nfe) {
-				logger.error("Could not get Elasticsearch major version", nfe);
-			}
-		}
-
-		return false;
+		return esMajorVersion != null && esMajorVersion >= 6;
 	}
 
 	public String getElasticsearchResourcePath() {
@@ -563,27 +555,30 @@ public class ElasticsearchClient {
 							}
 							elasticsearchAvailable.set(false);
 							elasticsearchHealthy.set(false);
+							esMajorVersion = null;
 							return null;
 						}
 					})
 					.build());
 		}
 
-		private String getElasticsearchMajorVersion(URL elasticsearchUrl) {
-			return httpClient.send(HttpRequestBuilder.<String>forUrl(elasticsearchUrl.toString())
+		private Integer getElasticsearchMajorVersion(URL elasticsearchUrl) {
+			return httpClient.send(HttpRequestBuilder.<Integer>forUrl(elasticsearchUrl.toString())
 					.method("GET")
-					.successHandler(new HttpClient.ResponseHandler<String>() {
+					.successHandler(new HttpClient.ResponseHandler<Integer>() {
 						@Override
-						public String handleResponse(HttpRequest<?> httpRequest, InputStream inputStream, Integer statusCode, IOException e) throws IOException {
+						public Integer handleResponse(HttpRequest<?> httpRequest, InputStream inputStream, Integer statusCode, IOException e) throws IOException {
 							JsonNode clusterResponse = JsonUtils.getMapper().readTree(inputStream);
 							String version = clusterResponse.has("version") ? clusterResponse.get("version").get("number").asText() : "0.0.0";
 							logger.info(String.format("Elasticsearch Version: %s", version));
 							StringTokenizer stringTokenizer = new StringTokenizer(version, ".");
-							return stringTokenizer.nextToken();
+							try {
+								return Integer.valueOf(stringTokenizer.nextToken());
+							} catch (NumberFormatException nfe) {
+								return null;
+							}
 						}
-					})
-					.build());
-
+					}).build());
 		}
 	}
 }
