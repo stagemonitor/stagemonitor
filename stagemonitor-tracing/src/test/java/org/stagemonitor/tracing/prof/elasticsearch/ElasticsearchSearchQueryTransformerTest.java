@@ -24,22 +24,8 @@ public class ElasticsearchSearchQueryTransformerTest extends AbstractElasticsear
 		client.prepareSearch().setQuery(QueryBuilders.matchAllQuery()).setSearchType(SearchType.DFS_QUERY_THEN_FETCH).get();
 		Profiler.stop();
 		Assert.assertEquals(total.toString(), "POST /_search\n" +
-				"{\n" +
-				"  \"query\" : {\n" +
-				"    \"match_all\" : {\n" +
-				"      \"boost\" : 1.0\n" +
-				"    }\n" +
-				"  },\n" +
-				"  \"ext\" : { }\n" +
-				"} ", total.getChildren().get(0).getSignature());
+				"{\"query\":{\"match_all\":{\"boost\":1.0}}} ", total.getChildren().get(0).getSignature());
 		Assert.assertEquals(total.toString(), "POST /_search?search_type=dfs_query_then_fetch\n" +
-				"{\n" +
-				"  \"query\" : {\n" +
-				"    \"match_all\" : {\n" +
-				"      \"boost\" : 1.0\n" +
-				"    }\n" +
-				"  },\n" +
-				"  \"ext\" : { }\n" +
-				"} ", total.getChildren().get(1).getSignature());
+				"{\"query\":{\"match_all\":{\"boost\":1.0}}} ", total.getChildren().get(1).getSignature());
 	}
 }
