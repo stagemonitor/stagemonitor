@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.StagemonitorSPI;
 import org.stagemonitor.core.util.ClassUtils;
 
 import java.lang.annotation.Annotation;
@@ -39,7 +40,7 @@ import static org.stagemonitor.core.instrument.CachedClassLoaderMatcher.cached;
 import static org.stagemonitor.core.instrument.StagemonitorClassNameMatcher.isInsideMonitoredProject;
 import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
 
-public abstract class StagemonitorByteBuddyTransformer {
+public abstract class StagemonitorByteBuddyTransformer implements StagemonitorSPI {
 
 	protected static final ConfigurationRegistry configuration = Stagemonitor.getConfiguration();
 
