@@ -23,7 +23,6 @@ import org.stagemonitor.core.util.http.NoopResponseHandler;
 import org.stagemonitor.core.util.http.StatusCodeResponseHandler;
 import org.stagemonitor.util.IOUtils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -87,29 +86,52 @@ public class ElasticsearchClient {
 		return "kibana/6/";
 	}
 
-	public JsonNode getJson(final String path) throws IOException {
-		return JsonUtils.getMapper().readTree(new URL(corePlugin.getElasticsearchUrl() + path));
+	public JsonNode getJson(final String path) {
+		return httpClient.send(HttpRequestBuilder.<JsonNode>forUrl(corePlugin.getElasticsearchUrl() + path)
+			.successHandler(new HttpClient.ResponseHandler<JsonNode>() {
+				@Override
+				public JsonNode handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
+					return JsonUtils.getMapper().readTree(is);
+				}
+			}).errorHandler(new HttpClient.ResponseHandler<JsonNode>() {
+					@Override
+					public JsonNode handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
+						if (statusCode != 404) {
+							logger.warn(e.getMessage(), e);
+						}
+						return null;
+					}
+				})
+				.build());
 	}
 
 	public <T> T getObject(final String path, Class<T> type) {
-		try {
-			return JsonUtils.getObjectReader(type).readValue(getJson(path).get("_source"));
-		} catch (FileNotFoundException e) {
+		final JsonNode json = getJson(path);
+		if (json != null) {
+			try {
+				return JsonUtils.getObjectReader(type).readValue(json.get("_source"));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
 			return null;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 
 	public <T> Collection<T> getAll(String path, int limit, Class<T> clazz) {
 		try {
-			JsonNode hits = getJson(path + "/_search?size=" + limit).get("hits").get("hits");
-			List<T> all = new ArrayList<T>(hits.size());
-			ObjectReader reader = JsonUtils.getObjectReader(clazz);
-			for (JsonNode hit : hits) {
-				all.add(reader.<T>readValue(hit.get("_source")));
+			final JsonNode json = getJson(path + "/_search?size=" + limit);
+			if (json != null) {
+				JsonNode hits = json.get("hits").get("hits");
+				List<T> all = new ArrayList<T>(hits.size());
+				ObjectReader reader = JsonUtils.getObjectReader(clazz);
+				for (JsonNode hit : hits) {
+					all.add(reader.<T>readValue(hit.get("_source")));
+				}
+				return all;
+			} else {
+				return Collections.emptyList();
 			}
-			return all;
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
 			return Collections.emptyList();
@@ -149,7 +171,7 @@ public class ElasticsearchClient {
 			sendAsJson("PUT", elasticsearchKibanaIndexPatternPath, mergedDefinition);
 		} catch (IOException e) {
 			logger.warn("Error while updating kibana index pattern, definition = {}, pattern path = {}",
-					indexPatternLocation, elasticsearchKibanaIndexPatternPath);
+					indexPatternLocation, elasticsearchKibanaIndexPatternPath, e);
 		} catch (IllegalArgumentException e) {
 			logger.warn("Error while preparing data for kibana index pattern update, definition = {}, pattern path = {}",
 					indexPatternLocation, elasticsearchKibanaIndexPatternPath);
@@ -157,9 +179,10 @@ public class ElasticsearchClient {
 	}
 
 	private JsonNode fetchCurrentKibanaIndexPatternConfiguration(String elasticsearchKibanaIndexPatternPath) throws IOException {
-		try {
-			return getJson(elasticsearchKibanaIndexPatternPath).get("_source");
-		} catch (FileNotFoundException e) {
+		final JsonNode json = getJson(elasticsearchKibanaIndexPatternPath);
+		if (json != null) {
+			return json.get("_source");
+		} else {
 			// kibana returned 404 -> document does not yet exist -> merge stagemonitor configuration with empty object
 			return JsonUtils.getMapper().createObjectNode();
 		}

@@ -12,7 +12,6 @@ import org.stagemonitor.configuration.source.AbstractConfigurationSource;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.util.JsonUtils;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,13 +77,12 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 
 	@Override
 	public void reload() throws IOException {
-		try {
-			final JsonNode source = elasticsearchClient.getJson(path).get("_source").get("configuration");
+		final JsonNode json = elasticsearchClient.getJson(path);
+		if (json != null) {
+			final JsonNode source = json.get("_source").get("configuration");
 			List<EsConfigurationDto> configAsList = JsonUtils.getMapper().readValue(source.traverse(), new TypeReference<List<EsConfigurationDto>>() {
 			});
 			configuration = EsConfigurationDto.toMap(configAsList);
-		} catch (FileNotFoundException e) {
-			// ignore
 		}
 	}
 
