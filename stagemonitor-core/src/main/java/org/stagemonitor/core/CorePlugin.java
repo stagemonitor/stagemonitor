@@ -590,12 +590,13 @@ public class CorePlugin extends StagemonitorPlugin {
 			elasticsearchAvailabilityObservers.add(elasticsearchAvailabilityObserver);
 			elasticsearchAvailabilityObserver.init(configurationRegistry);
 		}
-		Collections.sort(elasticsearchAvailabilityObservers, new Comparator<ElasticsearchAvailabilityObserver>() {
+		
+		Collections.sort(elasticsearchAvailabilityObservers, Collections.reverseOrder(new Comparator<ElasticsearchAvailabilityObserver>() {
 			@Override
 			public int compare(ElasticsearchAvailabilityObserver o1, ElasticsearchAvailabilityObserver o2) {
 				return (o1.getPriority() < o2.getPriority()) ? -1 : ((o1.getPriority() == o2.getPriority()) ? 0 : 1);
 			}
-		});
+		}));
 		return elasticsearchAvailabilityObservers;
 	}
 
