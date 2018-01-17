@@ -6,7 +6,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -432,6 +432,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	private IndexSelector indexSelector = new IndexSelector(new Clock.UserTimeClock());
 	private Metric2Registry metricRegistry;
 	private AtomicInteger accessesToElasticsearchUrl = new AtomicInteger();
+	private HealthCheckRegistry healthCheckRegistry;
 
 	public CorePlugin() {
 	}
@@ -443,6 +444,7 @@ public class CorePlugin extends StagemonitorPlugin {
 	@Override
 	public void initializePlugin(InitArguments initArguments) {
 		this.metricRegistry = initArguments.getMetricRegistry();
+		this.healthCheckRegistry = initArguments.getHealthCheckRegistry();
 		final Integer reloadInterval = getReloadConfigurationInterval();
 		if (reloadInterval > 0) {
 			initArguments.getConfiguration().scheduleReloadAtRate(reloadInterval, TimeUnit.SECONDS);
@@ -457,17 +459,7 @@ public class CorePlugin extends StagemonitorPlugin {
 
 		// it's important to initialize the ElasticsearchClient via getElasticsearchClient()
 		// otherwise the periodic availability check might not get started
-		final ElasticsearchClient elasticsearchClient = getElasticsearchClient();
-		initArguments.getHealthCheckRegistry().register("Elasticsearch", new HealthCheck() {
-			@Override
-			protected Result check() throws Exception {
-				if (elasticsearchClient.isElasticsearchHealthy()) {
-					return Result.healthy();
-				} else {
-					return Result.unhealthy("Elasticsearch is not available");
-				}
-			}
-		});
+		getElasticsearchClient();
 
 		if (isReportToElasticsearch()) {
 			final GrafanaClient grafanaClient = getGrafanaClient();
@@ -833,5 +825,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public boolean isInitializeElasticsearch() {
 		return initializeElasticsearch.get();
+	}
+
+	public HealthCheckRegistry getHealthCheckRegistry() {
+		return healthCheckRegistry;
 	}
 }

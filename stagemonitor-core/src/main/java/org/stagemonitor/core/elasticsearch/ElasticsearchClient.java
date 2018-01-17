@@ -1,5 +1,6 @@
 package org.stagemonitor.core.elasticsearch;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.health.ImmediateResult;
 import org.stagemonitor.core.pool.JavaThreadPoolMetricsCollectorImpl;
 import org.stagemonitor.core.pool.PooledResourceMetricsRegisterer;
 import org.stagemonitor.core.util.DateUtils;
@@ -41,6 +43,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.codahale.metrics.health.HealthCheck.Result.healthy;
+import static com.codahale.metrics.health.HealthCheck.Result.unhealthy;
 import static org.stagemonitor.core.util.JsonMerger.mergeStrategy;
 
 public class ElasticsearchClient {
@@ -52,7 +56,6 @@ public class ElasticsearchClient {
 	private final HttpClient httpClient;
 	private final CorePlugin corePlugin;
 	private final AtomicBoolean elasticsearchAvailable = new AtomicBoolean(false);
-	private final AtomicBoolean elasticsearchHealthy = new AtomicBoolean(false);
 	private final CheckEsAvailability checkEsAvailability;
 	private Integer esMajorVersion;
 
@@ -369,10 +372,6 @@ public class ElasticsearchClient {
 		return !corePlugin.getElasticsearchUrls().isEmpty() && elasticsearchAvailable.get();
 	}
 
-	public boolean isElasticsearchHealthy() {
-		return elasticsearchHealthy.get();
-	}
-
 	public HttpClient getHttpClient() {
 		return httpClient;
 	}
@@ -544,6 +543,7 @@ public class ElasticsearchClient {
 				return;
 			}
 
+			final HealthCheckRegistry healthCheckRegistry = corePlugin.getHealthCheckRegistry();
 			httpClient.send(HttpRequestBuilder.<Void>forUrl(elasticsearchUrl + "/_cluster/health")
 					.method("GET")
 					.successHandler(new HttpClient.ResponseHandler<Void>() {
@@ -553,7 +553,9 @@ public class ElasticsearchClient {
 							String statusValue = clusterHealthResponse.has("status") ? clusterHealthResponse.get("status").asText() : "red";
 							boolean isNowAvailable = statusValue.equals("green") || statusValue.equals("yellow");
 							if (isNowAvailable) {
-								elasticsearchHealthy.set(true);
+								if (healthCheckRegistry != null) {
+									healthCheckRegistry.register("Elasticsearch", ImmediateResult.of(healthy()));
+								}
 								if (!isElasticsearchAvailable()) {
 									esMajorVersion = getElasticsearchMajorVersion(elasticsearchUrl);
 									logger.info("Elasticsearch is available again.");
@@ -564,7 +566,10 @@ public class ElasticsearchClient {
 								elasticsearchAvailable.set(true);
 							} else {
 								elasticsearchAvailable.set(false);
-								elasticsearchHealthy.set(false);
+								if (healthCheckRegistry != null) {
+									healthCheckRegistry.register("Elasticsearch",
+											ImmediateResult.of(unhealthy("Elasticsearch is not healthy: " + statusValue)));
+								}
 								logger.warn("Elasticsearch is not healthy. Status: " + statusValue + ". " +
 										"Stagemonitor won't try to send documents to Elasticsearch until it is available again.");
 							}
@@ -579,7 +584,10 @@ public class ElasticsearchClient {
 										"Stagemonitor won't try to send documents to Elasticsearch until it is available again.");
 							}
 							elasticsearchAvailable.set(false);
-							elasticsearchHealthy.set(false);
+							if (healthCheckRegistry != null) {
+								healthCheckRegistry.register("Elasticsearch",
+										ImmediateResult.of(unhealthy("Elasticsearch is not available")));
+							}
 							esMajorVersion = null;
 							return null;
 						}
