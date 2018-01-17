@@ -53,6 +53,7 @@ public class ElasticsearchClient {
 	private final CorePlugin corePlugin;
 	private final AtomicBoolean elasticsearchAvailable = new AtomicBoolean(false);
 	private final AtomicBoolean elasticsearchHealthy = new AtomicBoolean(false);
+	private final CheckEsAvailability checkEsAvailability;
 	private Integer esMajorVersion;
 
 	private final ThreadPoolExecutor asyncESPool;
@@ -69,9 +70,10 @@ public class ElasticsearchClient {
 		}
 		this.httpClient = httpClient;
 
+		checkEsAvailability = new CheckEsAvailability(httpClient, corePlugin, elasticsearchAvailabilityObservers);
 		if (esAvailabilityCheckIntervalSec > 0) {
 			final long period = TimeUnit.SECONDS.toMillis(esAvailabilityCheckIntervalSec);
-			timer.scheduleAtFixedRate(new CheckEsAvailability(httpClient, corePlugin, elasticsearchAvailabilityObservers), 0, period);
+			timer.scheduleAtFixedRate(checkEsAvailability, 0, period);
 		}
 	}
 
@@ -517,7 +519,7 @@ public class ElasticsearchClient {
 	}
 
 	public void checkEsAvailability() {
-		new CheckEsAvailability(httpClient, corePlugin, Collections.<ElasticsearchAvailabilityObserver>emptyList()).run();
+		checkEsAvailability.run();
 	}
 
 	private class CheckEsAvailability extends TimerTask {
