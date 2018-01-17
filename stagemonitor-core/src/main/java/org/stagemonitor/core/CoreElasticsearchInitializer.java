@@ -2,7 +2,7 @@ package org.stagemonitor.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.elasticsearch.AbstractElasticsearchFirstAvailabilityObserver;
+import org.stagemonitor.core.elasticsearch.AbstractElasticsearchInitializer;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 import org.stagemonitor.core.metrics.metrics2.ElasticsearchReporter;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
@@ -11,9 +11,9 @@ import org.stagemonitor.util.IOUtils;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class ElasticsearchCoreAvailabilityObserver extends AbstractElasticsearchFirstAvailabilityObserver {
+public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializer {
 
-	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchCoreAvailabilityObserver.class);
+	private static final Logger logger = LoggerFactory.getLogger(CoreElasticsearchInitializer.class);
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {

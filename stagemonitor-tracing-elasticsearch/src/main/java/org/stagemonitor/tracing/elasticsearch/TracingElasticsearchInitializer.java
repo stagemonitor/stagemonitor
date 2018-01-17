@@ -1,10 +1,10 @@
 package org.stagemonitor.tracing.elasticsearch;
 
 import org.stagemonitor.configuration.ConfigurationRegistry;
-import org.stagemonitor.core.elasticsearch.AbstractElasticsearchFirstAvailabilityObserver;
+import org.stagemonitor.core.elasticsearch.AbstractElasticsearchInitializer;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
-public class ElasticsearchInitIndicesAvailabilityObserver extends AbstractElasticsearchFirstAvailabilityObserver {
+public class TracingElasticsearchInitializer extends AbstractElasticsearchInitializer {
 
 	private ElasticsearchTracingPlugin elasticsearchTracingPlugin;
 

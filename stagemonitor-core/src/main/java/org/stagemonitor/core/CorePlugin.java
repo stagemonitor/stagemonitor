@@ -414,6 +414,16 @@ public class CorePlugin extends StagemonitorPlugin {
 					"wrong configuration.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.buildWithDefault(true);
+	private final ConfigurationOption<Boolean> initializeElasticsearch = ConfigurationOption.booleanOption()
+			.key("stagemonitor.elasticsearch.init")
+			.dynamic(true)
+			.label("Initialize Elasticsearch indices and Kibana dashboards")
+			.description("Set to true if stagemonitor should initialize the required indices and Dashboards. " +
+					"If you don't want to grant the stagemonitor X-Pack Security user the permission to create " +
+					"indices and to access the .kibana index, set this to false and use the init tool " +
+					"https://github.com/stagemonitor/stagemonitor-elasticsearch-init.")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.buildWithDefault(true);
 
 	private List<Closeable> reporters = new CopyOnWriteArrayList<Closeable>();
 
@@ -819,5 +829,9 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public int getReportingIntervalElasticsearch() {
 		return reportingIntervalElasticsearch.get();
+	}
+
+	public boolean isInitializeElasticsearch() {
+		return initializeElasticsearch.get();
 	}
 }

@@ -1,9 +1,9 @@
 package org.stagemonitor.tracing;
 
-import org.stagemonitor.core.elasticsearch.AbstractElasticsearchFirstAvailabilityObserver;
+import org.stagemonitor.core.elasticsearch.AbstractElasticsearchInitializer;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
-public class ElasticsearchTracingAvailabilityObserver extends AbstractElasticsearchFirstAvailabilityObserver {
+public class TracingMetricsElasticsearchInitializer extends AbstractElasticsearchInitializer {
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {

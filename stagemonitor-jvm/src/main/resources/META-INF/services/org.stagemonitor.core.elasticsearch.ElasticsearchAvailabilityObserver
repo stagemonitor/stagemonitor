@@ -1,1 +1,1 @@
-org.stagemonitor.jvm.ElasticsearchJvmAvailabilityObserver
+org.stagemonitor.jvm.JvmElasticsearchInitializer

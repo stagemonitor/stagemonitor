@@ -1,9 +1,9 @@
 package org.stagemonitor.web.servlet;
 
-import org.stagemonitor.core.elasticsearch.AbstractElasticsearchFirstAvailabilityObserver;
+import org.stagemonitor.core.elasticsearch.AbstractElasticsearchInitializer;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
-public class ElasticsearchServletAvailabilityObserver extends AbstractElasticsearchFirstAvailabilityObserver {
+public class ServletElasticsearchInitializer extends AbstractElasticsearchInitializer {
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {

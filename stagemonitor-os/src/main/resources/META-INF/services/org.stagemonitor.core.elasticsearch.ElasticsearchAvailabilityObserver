@@ -1,1 +1,1 @@
-org.stagemonitor.os.ElasticsearchOsAvailabilityObserver
+org.stagemonitor.os.OsElasticsearchInitializer

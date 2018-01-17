@@ -1,9 +1,9 @@
 package org.stagemonitor.ehcache;
 
-import org.stagemonitor.core.elasticsearch.AbstractElasticsearchFirstAvailabilityObserver;
+import org.stagemonitor.core.elasticsearch.AbstractElasticsearchInitializer;
 import org.stagemonitor.core.elasticsearch.ElasticsearchClient;
 
-public class ElasticsearchEhCacheAvailabilityObserver extends AbstractElasticsearchFirstAvailabilityObserver {
+public class EhCacheElasticsearchInitializer extends AbstractElasticsearchInitializer {
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {

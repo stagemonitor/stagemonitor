@@ -3,7 +3,7 @@ package org.stagemonitor.core.elasticsearch;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 
-public abstract class AbstractElasticsearchFirstAvailabilityObserver implements ElasticsearchAvailabilityObserver {
+public abstract class AbstractElasticsearchInitializer implements ElasticsearchAvailabilityObserver {
 	private boolean hasRun = false;
 	protected CorePlugin corePlugin;
 
@@ -13,6 +13,9 @@ public abstract class AbstractElasticsearchFirstAvailabilityObserver implements 
 	}
 
 	public final void onElasticsearchAvailable(ElasticsearchClient elasticsearchClient) {
+		if (!corePlugin.isInitializeElasticsearch()) {
+			return;
+		}
 		if (!hasRun) {
 			onElasticsearchFirstAvailable(elasticsearchClient);
 			hasRun = true;

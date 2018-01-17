@@ -1,1 +1,1 @@
-org.stagemonitor.logging.ElasticsearchLoggingAvailabilityObserver
+org.stagemonitor.logging.LoggingElasticsearchInitializer
