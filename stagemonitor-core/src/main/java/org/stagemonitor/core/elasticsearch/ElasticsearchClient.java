@@ -18,6 +18,7 @@ import org.stagemonitor.core.util.ExecutorUtils;
 import org.stagemonitor.core.util.HttpClient;
 import org.stagemonitor.core.util.JsonMerger;
 import org.stagemonitor.core.util.JsonUtils;
+import org.stagemonitor.core.util.VersionUtils;
 import org.stagemonitor.core.util.http.ErrorLoggingResponseHandler;
 import org.stagemonitor.core.util.http.HttpRequest;
 import org.stagemonitor.core.util.http.HttpRequestBuilder;
@@ -34,7 +35,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
@@ -604,12 +604,7 @@ public class ElasticsearchClient {
 							JsonNode clusterResponse = JsonUtils.getMapper().readTree(inputStream);
 							String version = clusterResponse.has("version") ? clusterResponse.get("version").get("number").asText() : "0.0.0";
 							logger.info(String.format("Elasticsearch Version: %s", version));
-							StringTokenizer stringTokenizer = new StringTokenizer(version, ".");
-							try {
-								return Integer.valueOf(stringTokenizer.nextToken());
-							} catch (NumberFormatException nfe) {
-								return null;
-							}
+							return VersionUtils.getMajorVersion(version);
 						}
 					}).build());
 		}
