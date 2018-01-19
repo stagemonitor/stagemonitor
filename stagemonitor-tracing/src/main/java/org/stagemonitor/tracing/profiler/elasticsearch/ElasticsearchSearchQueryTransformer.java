@@ -8,8 +8,11 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
 import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.VersionUtils;
 import org.stagemonitor.tracing.profiler.Profiler;
 import org.stagemonitor.util.StringUtils;
 
@@ -17,6 +20,8 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 public class ElasticsearchSearchQueryTransformer extends StagemonitorByteBuddyTransformer {
+
+	private static final Logger logger = LoggerFactory.getLogger(ElasticsearchSearchQueryTransformer.class);
 
 	private static final String ABSTRACT_CLIENT_CLASSNAME = "org.elasticsearch.client.support.AbstractClient";
 
@@ -39,6 +44,12 @@ public class ElasticsearchSearchQueryTransformer extends StagemonitorByteBuddyTr
 
 	@Override
 	public boolean isActive() {
+		// try to detect elasticsearch version <= 2
+		Integer elasticsearchMajorVersion = VersionUtils.getMajorVersionFromPomProperties(SearchRequest.class, "org.elasticsearch", "elasticsearch");
+		if (elasticsearchMajorVersion != null && elasticsearchMajorVersion <= 2) {
+			logger.warn("Profiling Elasticsearch < 5 is no longer supported in the current stagemonitor version.");
+			return false;
+		}
 		return ClassUtils.isPresent(ABSTRACT_CLIENT_CLASSNAME);
 	}
 
