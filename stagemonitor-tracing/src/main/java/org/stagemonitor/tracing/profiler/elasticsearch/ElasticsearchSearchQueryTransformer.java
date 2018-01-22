@@ -44,13 +44,16 @@ public class ElasticsearchSearchQueryTransformer extends StagemonitorByteBuddyTr
 
 	@Override
 	public boolean isActive() {
+		if (!ClassUtils.isPresent(ABSTRACT_CLIENT_CLASSNAME)) {
+			return false;
+		}
 		// try to detect elasticsearch version <= 2
 		Integer elasticsearchMajorVersion = VersionUtils.getMajorVersionFromPomProperties(SearchRequest.class, "org.elasticsearch", "elasticsearch");
 		if (elasticsearchMajorVersion != null && elasticsearchMajorVersion <= 2) {
 			logger.warn("Profiling Elasticsearch < 5 is no longer supported in the current stagemonitor version.");
 			return false;
 		}
-		return ClassUtils.isPresent(ABSTRACT_CLIENT_CLASSNAME);
+		return true;
 	}
 
 	public static String getSearchRequestAsString(SearchRequest request) {
