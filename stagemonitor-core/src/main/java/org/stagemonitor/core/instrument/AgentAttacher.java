@@ -267,13 +267,18 @@ public class AgentAttacher {
 	private static Iterable<StagemonitorByteBuddyTransformer> getStagemonitorByteBuddyTransformers() {
 		List<StagemonitorByteBuddyTransformer> transformers = new ArrayList<StagemonitorByteBuddyTransformer>();
 		for (StagemonitorByteBuddyTransformer transformer : ServiceLoader.load(StagemonitorByteBuddyTransformer.class, Stagemonitor.class.getClassLoader())) {
-			if (transformer.isActive() && !isExcluded(transformer)) {
-				transformers.add(transformer);
-				if (corePlugin.isDebugInstrumentation()) {
-					logger.info("Registering {}", transformer.getClass().getSimpleName());
+			try {
+				if (transformer.isActive() && !isExcluded(transformer)) {
+					transformers.add(transformer);
+					if (corePlugin.isDebugInstrumentation()) {
+						logger.info("Registering {}", transformer.getClass().getSimpleName());
+					}
+				} else if (corePlugin.isDebugInstrumentation()) {
+					logger.info("Excluding {}", transformer.getClass().getSimpleName());
 				}
-			} else if (corePlugin.isDebugInstrumentation()) {
-				logger.info("Excluding {}", transformer.getClass().getSimpleName());
+			} catch (NoClassDefFoundError e) {
+				logger.warn("NoClassDefFoundError when trying to apply {}. " +
+						"Make sure that optional types are not referenced directly.", transformer, e);
 			}
 		}
 		Collections.sort(transformers, new Comparator<StagemonitorByteBuddyTransformer>() {
