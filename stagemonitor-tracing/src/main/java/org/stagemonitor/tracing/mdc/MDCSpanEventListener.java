@@ -17,6 +17,12 @@ import org.stagemonitor.tracing.wrapper.StatelessSpanEventListener;
  */
 public class MDCSpanEventListener extends StatelessSpanEventListener {
 
+	private static final String TRACE_ID = "traceId";
+	private static final String SPAN_ID = "spanId";
+	private static final String APPLICATION = "application";
+	private static final String HOST = "host";
+	private static final String INSTANCE = "instance";
+
 	private final CorePlugin corePlugin;
 	private final TracingPlugin tracingPlugin;
 
@@ -41,7 +47,6 @@ public class MDCSpanEventListener extends StatelessSpanEventListener {
 				tracingPlugin.getTracer().inject(spanWrapper.context(), B3HeaderFormat.INSTANCE, new B3HeaderFormat.B3InjectAdapter() {
 					@Override
 					public void setParentId(String value) {
-						addToMdcIfNotNull("parentId", value);
 					}
 
 					@Override
@@ -60,10 +65,11 @@ public class MDCSpanEventListener extends StatelessSpanEventListener {
 
 	@Override
 	public void onFinish(SpanWrapper spanWrapper, String operationName, long durationNanos) {
-		// the other keys are not span-scoped hence not removed here
-		MDC.remove("traceId");
-		MDC.remove("spanId");
-		MDC.remove("parentId");
+		MDC.remove(TRACE_ID);
+		MDC.remove(SPAN_ID);
+		MDC.remove(APPLICATION);
+		MDC.remove(HOST);
+		MDC.remove(INSTANCE);
 	}
 
 	private void addToMdcIfNotNull(String key, String value) {
