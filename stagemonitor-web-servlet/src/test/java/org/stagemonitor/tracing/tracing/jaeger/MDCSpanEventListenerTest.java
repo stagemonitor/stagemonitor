@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.util.ThreadLocalScopeManager;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -67,12 +68,7 @@ public class MDCSpanEventListenerTest {
 		assertNull(MDC.get("parentId"));
 
 		mdcSpanInterceptor.onFinish(spanWrapper, null, 0);
-		assertEquals("testHost", MDC.get("host"));
-		assertEquals("MDCSpanEventListenerTest", MDC.get("application"));
-		assertEquals("testInstance", MDC.get("instance"));
-		assertNull(MDC.get("spanId"));
-		assertNull(MDC.get("traceId"));
-		assertNull(MDC.get("parentId"));
+		assertThat(MDC.getCopyOfContextMap()).isEmpty();
 	}
 
 	@Test
