@@ -2,6 +2,7 @@ package org.stagemonitor.web.servlet.filter;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +24,9 @@ import org.stagemonitor.tracing.tracing.B3Propagator;
 import org.stagemonitor.tracing.wrapper.SpanWrappingTracer;
 import org.stagemonitor.web.servlet.ServletPlugin;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import javax.servlet.FilterChain;
@@ -129,6 +132,16 @@ public class HttpRequestMonitorFilterTest {
 		assertThat(response).endsWith("</body></html>");
 		assertThat(response).contains("window.StagemonitorLoaded");
 		assertThat(response).contains("'/stagemonitor/public/eum.js'");
+	}
+
+	public static void main(String[] args) throws Exception {
+		final HttpRequestMonitorFilterTest test = new HttpRequestMonitorFilterTest();
+		test.before();
+		final MockHttpServletResponse servletResponse = new MockHttpServletResponse();
+		test.httpRequestMonitorFilter.doFilter(test.requestWithAccept("text/html"), servletResponse, test.writeInResponseWhenCallingDoFilter(test.testHtml));
+
+		final String response = servletResponse.getContentAsString();
+		FileUtils.write(new File("build/stagemonitor-widget.html"), response, StandardCharsets.UTF_8);
 	}
 
 	@Test
