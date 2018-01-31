@@ -13,9 +13,6 @@ public abstract class AbstractElasticsearchInitializer implements ElasticsearchA
 	}
 
 	public final void onElasticsearchAvailable(ElasticsearchClient elasticsearchClient) {
-		if (!corePlugin.isInitializeElasticsearch()) {
-			return;
-		}
 		if (!hasRun) {
 			onElasticsearchFirstAvailable(elasticsearchClient);
 			hasRun = true;
