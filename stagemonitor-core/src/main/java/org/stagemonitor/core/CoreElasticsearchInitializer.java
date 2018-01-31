@@ -17,18 +17,19 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		if (elasticsearchClient.isElasticsearch6Compatible()) {
-			logger.debug("creating KibanaIndexAndMapping for ES 6...");
-			elasticsearchClient.createIndexAndSendMapping(".kibana", "doc", IOUtils.getResourceAsStream(elasticsearchClient.getElasticsearchResourcePath() + "kibana-index-doc.json"));
-			logger.debug("created KibanaIndexAndMapping for ES 6");
-		} else {
-			logger.debug("creating KibanaIndexAndMapping for ES 5...");
-			createKibana5IndexAndMappings(elasticsearchClient);
-			sendConfigurationMapping(elasticsearchClient);
-			logger.debug("created KibanaIndexAndMapping for ES 5");
+		if (corePlugin.isInitializeElasticsearch()) {
+			if (elasticsearchClient.isElasticsearch6Compatible()) {
+				logger.debug("creating KibanaIndexAndMapping for ES 6...");
+				elasticsearchClient.createIndexAndSendMapping(".kibana", "doc", IOUtils.getResourceAsStream(elasticsearchClient.getElasticsearchResourcePath() + "kibana-index-doc.json"));
+				logger.debug("created KibanaIndexAndMapping for ES 6");
+			} else {
+				logger.debug("creating KibanaIndexAndMapping for ES 5...");
+				createKibana5IndexAndMappings(elasticsearchClient);
+				sendConfigurationMapping(elasticsearchClient);
+				logger.debug("created KibanaIndexAndMapping for ES 5");
+			}
+			manageMetricsIndex(elasticsearchClient, corePlugin);
 		}
-
-		manageMetricsIndex(elasticsearchClient, corePlugin);
 
 		reportToElasticsearch(corePlugin.getMetricRegistry(), corePlugin.getReportingIntervalElasticsearch(), corePlugin.getMeasurementSession());
 	}
