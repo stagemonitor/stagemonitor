@@ -19,6 +19,11 @@ public abstract class AbstractElasticsearchInitializer implements ElasticsearchA
 		}
 	}
 
+	/**
+	 * Please check {@link CorePlugin#isInitializeElasticsearch()} before any initialization (e.g. index pattern, kibana dashboards) is done.
+	 *
+	 * @param elasticsearchClient
+	 */
 	protected abstract void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient);
 
 	@Override

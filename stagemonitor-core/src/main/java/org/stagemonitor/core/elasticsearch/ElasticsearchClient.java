@@ -233,6 +233,11 @@ public class ElasticsearchClient {
 	}
 
 	public void sendMetricDashboardBulkAsync(final String resource) {
+		// skip sending dashboards if init parameter is set to false
+		if (!corePlugin.isInitializeElasticsearch()) {
+			logger.info("skip Elasticsearch init due to stagemonitor.elasticsearch.init=false");
+			return;
+		}
 		// only send metric dashboards if metrics are reported to elasticsearch
 		if (corePlugin.isReportToElasticsearch()) {
 			sendClassPathRessourceBulkAsync(resource, true);
