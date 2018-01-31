@@ -221,12 +221,14 @@ public class ClientSpanServlet extends HttpServlet {
 		}
 
 		if (tracingPlugin.isSampled(span)) {
+			String userAgentHeader = httpServletRequest.getHeader("user-agent");
 			if (servletPlugin.isParseUserAgent()) {
 				if (userAgentParser == null) {
 					userAgentParser = new UserAgentParser();
 				}
-				userAgentParser.setUserAgentInformation(span, httpServletRequest.getHeader("user-agent"));
+				userAgentParser.setUserAgentInformation(span, userAgentHeader);
 			}
+			span.setTag("user_agent.header", userAgentHeader);
 			SpanUtils.setClientIp(span, MonitoredHttpRequest.getClientIp(httpServletRequest));
 		}
 
