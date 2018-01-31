@@ -78,7 +78,10 @@ public class ClientSpanServletTest {
 	@Test
 	public void testConvertWeaselBeaconToSpan_withPageLoadBeacon() throws ServletException, IOException {
 		// Given
+		final String userAgentHeader = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36";
+
 		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.addHeader("user-agent", userAgentHeader);
 		mockHttpServletRequest.setParameter("ty", "pl");
 		mockHttpServletRequest.setParameter("r", "1496751574200");
 		mockHttpServletRequest.setParameter("u", "http://localhost:9966/petclinic/");
@@ -123,6 +126,7 @@ public class ClientSpanServletTest {
 					.containsEntry("type", "pageload")
 					.doesNotContainEntry(Tags.SAMPLING_PRIORITY.getKey(), 0)
 					.doesNotContainKey("user")
+					.containsEntry("user_agent.header", userAgentHeader)
 					.containsEntry("http.url", "http://localhost:9966/petclinic/")
 					.containsEntry("timing.unload", 0L)
 					.containsEntry("timing.redirect", redirect)
