@@ -32,7 +32,6 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 	public static final String ES_METRICS_LOGGER = "ElasticsearchMetrics";
 	private static final String METRICS_TYPE = "metrics";
 	private static final MetricName reportingTimeMetricName = name("reporting_time").tag("reporter", "elasticsearch").build();
-	private static final String SPANS_TYPE = "spans";
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final Logger elasticsearchMetricsLogger;
@@ -78,7 +77,7 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			if (!elasticsearchClient.isElasticsearchAvailable()) {
 				return;
 			}
-			final String url = corePlugin.getElasticsearchUrl() + "/" + getTodaysIndexName() + "/" + SPANS_TYPE + "/_bulk";
+			final String url = corePlugin.getElasticsearchUrl() + "/" + getTodaysIndexName() + "/" + METRICS_TYPE + "/_bulk";
 			httpClient.send("POST", url, CONTENT_TYPE_JSON,
 					metricsOutputStreamHandler, NoopResponseHandler.INSTANCE);
 		} else {
