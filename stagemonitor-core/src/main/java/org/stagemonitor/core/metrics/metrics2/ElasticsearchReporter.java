@@ -77,8 +77,8 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			if (!elasticsearchClient.isElasticsearchAvailable()) {
 				return;
 			}
-
-			httpClient.send("POST", corePlugin.getElasticsearchUrl() + "/_bulk", CONTENT_TYPE_JSON,
+			final String url = corePlugin.getElasticsearchUrl() + "/" + getTodaysIndexName() + "/" + METRICS_TYPE + "/_bulk";
+			httpClient.send("POST", url, CONTENT_TYPE_JSON,
 					metricsOutputStreamHandler, NoopResponseHandler.INSTANCE);
 		} else {
 			try {
