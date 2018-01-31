@@ -933,5 +933,17 @@
 		"searchable": true,
 		"aggregatable": true,
 		"readFromDocValues": true
+	},
+	{
+	  "name": "user_agent.header",
+	  "type": "string",
+	  "count": 0,
+	  "scripted": false,
+	  "indexed": true,
+	  "analyzed": false,
+	  "doc_values": true,
+	  "searchable": true,
+	  "aggregatable": true,
+	  "readFromDocValues": true
 	}
 ]
