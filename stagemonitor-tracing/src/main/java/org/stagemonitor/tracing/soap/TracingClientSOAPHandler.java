@@ -29,7 +29,7 @@ public class TracingClientSOAPHandler extends AbstractTracingSOAPHandler {
 		if (soapTracingPlugin.isSoapClientRecordRequestMessages()) {
 			spanBuilder.withTag("soap.request", getSoapMessageAsString(context));
 		}
-		final Span span = spanBuilder.startActive().span();
+		final Span span = spanBuilder.startActive(true).span();
 		tracingPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SOAPMessageInjectAdapter(context));
 	}
 

@@ -40,6 +40,11 @@ public class SpanWrappingTracer implements Tracer {
 	public ScopeManager scopeManager() {
 		return delegate.scopeManager();
 	}
+    
+    @Override
+    public Span activeSpan() {
+        return scopeManager().active().span();
+    }
 
 	@Override
 	public SpanWrappingSpanBuilder buildSpan(String operationName) {
@@ -155,11 +160,6 @@ public class SpanWrappingTracer implements Tracer {
 			startTimestampMillis = TimeUnit.MICROSECONDS.toMillis(microseconds);
 			delegate = delegate.withStartTimestamp(microseconds);
 			return this;
-		}
-
-		@Override
-		public Scope startActive() {
-			return scopeManager().activate(startManual());
 		}
 
 		@Override

@@ -96,7 +96,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 		}
 		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, "http");
-		final Scope scope = spanBuilder.startActive();
+		final Scope scope = spanBuilder.startActive(true);
 		final Span span = scope.span();
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
 		Tags.PEER_PORT.set(span, httpServletRequest.getRemotePort());

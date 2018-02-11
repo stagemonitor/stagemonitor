@@ -20,8 +20,8 @@ public class JaegerTracerFactoryTest {
 				new MeasurementSession("JaegerTracerFactoryTest", "test", "test"));
 		final JaegerTracerFactory jaegerTracerFactory = new JaegerTracerFactory();
 		final Tracer tracer = jaegerTracerFactory.getTracer(initArguments);
-		try (final Scope rootSpan = tracer.buildSpan("foo").startActive()) {
-			try (final Scope childSpan = tracer.buildSpan("bar").startActive()) {
+		try (final Scope rootSpan = tracer.buildSpan("foo").startActive(true)) {
+			try (final Scope childSpan = tracer.buildSpan("bar").startActive(true)) {
 				assertThat(jaegerTracerFactory.isRoot(rootSpan.span())).isTrue();
 				assertThat(jaegerTracerFactory.isRoot(childSpan.span())).isFalse();
 			}

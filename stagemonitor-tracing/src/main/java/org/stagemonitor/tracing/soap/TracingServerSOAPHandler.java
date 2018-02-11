@@ -34,7 +34,7 @@ public class TracingServerSOAPHandler extends AbstractTracingSOAPHandler {
 		if (soapTracingPlugin.isSoapServerRecordRequestMessages()) {
 			spanBuilder.withTag("soap.request", getSoapMessageAsString(context));
 		}
-		spanBuilder.startActive();
+		spanBuilder.startActive(true);
 	}
 
 	@Override
