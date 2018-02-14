@@ -10,6 +10,7 @@ public class WeaselSpanTags {
 	public static final String TIMING_APP_CACHE_LOOKUP = "timing.app_cache_lookup";
 	public static final String TIMING_DNS_LOOKUP = "timing.dns_lookup";
 	public static final String TIMING_TCP = "timing.tcp";
+	public static final String TIMING_SSL = "timing.ssl";
 	public static final String TIMING_REQUEST = "timing.request";
 	public static final String TIMING_RESPONSE = "timing.response";
 	public static final String TIMING_PROCESSING = "timing.processing";
@@ -25,6 +26,7 @@ public class WeaselSpanTags {
 		addMapping(TIMING_APP_CACHE_LOOKUP, "t_apc");
 		addMapping(TIMING_DNS_LOOKUP, "t_dns");
 		addMapping(TIMING_TCP, "t_tcp");
+		addMapping(TIMING_SSL, "t_ssl");
 		addMapping(TIMING_REQUEST, "t_req");
 		addMapping(TIMING_RESPONSE, "t_rsp");
 		addMapping(TIMING_PROCESSING, "t_pro");
@@ -43,7 +45,5 @@ public class WeaselSpanTags {
 		}
 		return weaselRequestParameterName;
 	}
-
-
 
 }

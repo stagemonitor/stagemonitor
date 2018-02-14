@@ -42,6 +42,7 @@ import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_PROCESSING;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_REDIRECT;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_REQUEST;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_RESPONSE;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_SSL;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_TCP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_TIME_TO_FIRST_PAINT;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_UNLOAD;
@@ -92,6 +93,7 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_APP_CACHE_LOOKUP));
 		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_DNS_LOOKUP));
 		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_TCP));
+		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_SSL));
 		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_REQUEST));
 		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_RESPONSE));
 		addTagProcessor(durationProcessor(TYPE_PAGE_LOAD, TIMING_PROCESSING));
@@ -104,10 +106,10 @@ public class ClientSpanServlet extends HttpServlet {
 
 		addTagProcessor(new ClientSpanLongTagProcessor(TYPE_XHR, Tags.HTTP_STATUS.getKey(), "st"));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "method", "m"));
-		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_url", "u"));
-		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_from", "l"));
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_url", PARAMETER_URL));
+		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_XHR, "xhr.requested_from", PARAMETER_LOCATION));
 		addTagProcessor(new ClientSpanBooleanTagProcessor(TYPE_XHR, "xhr.async", "a"));
-		addTagProcessor(durationProcessor(TYPE_XHR, "duration_ms", "d"));
+		addTagProcessor(durationProcessor(TYPE_XHR, "duration_ms", PARAMETER_DURATION));
 		// The OT-API does not allow to set the SpanContext for the current span, so just set the ids as tags
 		// TODO change to SELF reference when https://github.com/opentracing/opentracing-java/pull/212 is merged
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ALL, SPAN_ID, "s", false));
@@ -169,7 +171,7 @@ public class ClientSpanServlet extends HttpServlet {
 				convertWeaselBeaconToSpan(req);
 			} catch (Exception e) {
 				// e.g. non numeric timing values
-				logger.info("error handling client span beacon: {}", e.getMessage());
+				logger.info("error handling client span beacon", e);
 			}
 			// always respond with success status code
 			setCorsHeaders(resp);
