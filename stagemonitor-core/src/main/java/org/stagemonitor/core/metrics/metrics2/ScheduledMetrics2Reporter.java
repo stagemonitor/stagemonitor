@@ -100,7 +100,7 @@ public abstract class ScheduledMetrics2Reporter extends ScheduledReporter {
 					try {
 						report();
 					} catch (RuntimeException ex) {
-						logger.error("RuntimeException thrown from {}#report. Exception was suppressed.", getClass().getSimpleName(), ex);
+						logger.error("RuntimeException thrown from {}#report. Exception was suppressed.", ScheduledMetrics2Reporter.this.getClass().getSimpleName(), ex);
 					}
 				}
 			}, getOffsetUntilTimestampIsDivisableByPeriod(clock.getTime(), periodInMS), periodInMS, TimeUnit.MILLISECONDS);
