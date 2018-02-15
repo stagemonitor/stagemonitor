@@ -16,13 +16,15 @@ public class TracingElasticsearchInitializer extends AbstractElasticsearchInitia
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		createSpansIndex(elasticsearchClient);
+		if (corePlugin.isInitializeElasticsearch()) {
+			createSpansIndex(elasticsearchClient);
 
-		final String resourcePath = elasticsearchClient.getElasticsearchResourcePath();
-		elasticsearchClient.updateKibanaIndexPattern("stagemonitor-spans-*",resourcePath + "stagemonitor-spans-kibana-index-pattern.json");
+			final String resourcePath = elasticsearchClient.getElasticsearchResourcePath();
+			elasticsearchClient.updateKibanaIndexPattern("stagemonitor-spans-*",resourcePath + "stagemonitor-spans-kibana-index-pattern.json");
 
-		elasticsearchClient.sendSpanDashboardBulkAsync(resourcePath + "Request-Analysis.bulk", true);
-		elasticsearchClient.sendSpanDashboardBulkAsync(resourcePath + "Web-Analytics.bulk", true);
+			elasticsearchClient.sendSpanDashboardBulkAsync(resourcePath + "Request-Analysis.bulk", true);
+			elasticsearchClient.sendSpanDashboardBulkAsync(resourcePath + "Web-Analytics.bulk", true);
+		}
 
 		elasticsearchClient.scheduleIndexManagement("stagemonitor-spans-",
 				corePlugin.getMoveToColdNodesAfterDays(), elasticsearchTracingPlugin.getDeleteSpansAfterDays());
