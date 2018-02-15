@@ -13,6 +13,7 @@ import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_REDIRECT;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_REQUEST;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_RESOURCE;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_RESPONSE;
+import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_SSL;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.TIMING_TCP;
 import static org.stagemonitor.web.servlet.eum.WeaselSpanTags.getWeaselRequestParameterName;
 
@@ -23,6 +24,7 @@ public class ResourceTimingProcessor extends ClientSpanTagProcessor {
 			getWeaselRequestParameterName(TIMING_APP_CACHE_LOOKUP),
 			getWeaselRequestParameterName(TIMING_DNS_LOOKUP),
 			getWeaselRequestParameterName(TIMING_TCP),
+			getWeaselRequestParameterName(TIMING_SSL),
 			getWeaselRequestParameterName(TIMING_REQUEST),
 			getWeaselRequestParameterName(TIMING_RESPONSE));
 
@@ -34,7 +36,7 @@ public class ResourceTimingProcessor extends ClientSpanTagProcessor {
 	protected void processSpanImpl(Span span, Map<String, String[]> servletRequestParameters) {
 		long sum = 0;
 		for (String weaselParameterToSum : weaselParametersToSum) {
-			final Long timing = parsedLongOrNull(getParameterValueOrNull(weaselParameterToSum, servletRequestParameters));
+			final Long timing = getParameterValueAsLongOrNull(weaselParameterToSum, servletRequestParameters);
 			if (timing == null) {
 				return;
 			} else {

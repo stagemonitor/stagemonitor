@@ -93,6 +93,7 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("t_apc", "5");
 		mockHttpServletRequest.setParameter("t_dns", "0");
 		mockHttpServletRequest.setParameter("t_tcp", "0");
+		mockHttpServletRequest.setParameter("t_ssl", "2");
 		mockHttpServletRequest.setParameter("t_req", "38");
 		mockHttpServletRequest.setParameter("t_rsp", "4");
 		mockHttpServletRequest.setParameter("t_pro", "471");
@@ -120,6 +121,7 @@ public class ClientSpanServletTest {
 			final long appCacheLookup = 5L;
 			final long dns = 0L;
 			final long tcp = 0L;
+			final long ssl = 2L;
 			final long request = 38L;
 			final long response = 4L;
 			softly.assertThat(span.tags())
@@ -133,12 +135,13 @@ public class ClientSpanServletTest {
 					.containsEntry("timing.app_cache_lookup", appCacheLookup)
 					.containsEntry("timing.dns_lookup", dns)
 					.containsEntry("timing.tcp", tcp)
+					.containsEntry("timing.ssl", ssl)
 					.containsEntry("timing.request", request)
 					.containsEntry("timing.response", response)
 					.containsEntry("timing.processing", 471L)
 					.containsEntry("timing.load", 5L)
 					.containsEntry("timing.time_to_first_paint", 151L)
-					.containsEntry("timing.resource", redirect + appCacheLookup + dns + tcp + request + response);
+					.containsEntry("timing.resource", redirect + appCacheLookup + dns + tcp + ssl + request + response);
 		});
 	}
 
@@ -196,6 +199,7 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("t_apc", "5");
 		mockHttpServletRequest.setParameter("t_dns", "0");
 		mockHttpServletRequest.setParameter("t_tcp", "0");
+		mockHttpServletRequest.setParameter("t_ssl", "2");
 		mockHttpServletRequest.setParameter("t_req", "38");
 		mockHttpServletRequest.setParameter("t_rsp", "4");
 		mockHttpServletRequest.setParameter("t_pro", "471");
@@ -234,6 +238,7 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("t_apc", "5");
 		mockHttpServletRequest.setParameter("t_dns", "0");
 		mockHttpServletRequest.setParameter("t_tcp", "0");
+		mockHttpServletRequest.setParameter("t_ssl", "0");
 		mockHttpServletRequest.setParameter("t_req", "38");
 		mockHttpServletRequest.setParameter("t_rsp", "4");
 		mockHttpServletRequest.setParameter("t_pro", "471");
@@ -271,6 +276,7 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("t_apc", "5");
 		mockHttpServletRequest.setParameter("t_dns", "0");
 		mockHttpServletRequest.setParameter("t_tcp", "0");
+		mockHttpServletRequest.setParameter("t_ssl", "0");
 		mockHttpServletRequest.setParameter("t_req", "38");
 		mockHttpServletRequest.setParameter("t_rsp", "4");
 		mockHttpServletRequest.setParameter("t_pro", "471");

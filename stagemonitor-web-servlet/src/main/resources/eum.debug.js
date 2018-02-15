@@ -543,10 +543,12 @@ function addTimingToPageLoadBeacon(beacon) {
   }
   beacon['t_req'] = timing.responseStart - timing.requestStart;
   beacon['t_rsp'] = timing.responseEnd - timing.responseStart;
-  beacon['t_dom'] = timing.domContentLoadedEventStart - timing.domLoading;
-  beacon['t_chi'] = timing.loadEventEnd - timing.domContentLoadedEventStart;
-  beacon['t_bac'] = timing.responseStart - start;
-  beacon['t_fro'] = timing.loadEventEnd - timing.responseStart;
+  //beacon['t_dom'] = timing.domContentLoadedEventStart - timing.domLoading;
+  //beacon['t_chi'] = timing.loadEventEnd - timing.domContentLoadedEventStart;
+  //beacon['t_bac'] = timing.responseStart - start;
+  //beacon['t_fro'] = timing.loadEventEnd - timing.responseStart;
+  beacon['t_pro'] = timing.loadEventStart - timing.domLoading;
+  beacon['t_loa'] = timing.loadEventEnd - timing.loadEventStart;
 
   addFirstPaintTimings(beacon, start);
 }
@@ -1204,3 +1206,4 @@ registerState('spaTransition', state$1);
 transitionTo('init');
 
 }());
+//# sourceMappingURL=eum.debug.js.map

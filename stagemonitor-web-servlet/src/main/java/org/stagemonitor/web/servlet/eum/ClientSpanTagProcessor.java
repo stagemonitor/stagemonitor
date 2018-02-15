@@ -56,7 +56,7 @@ abstract class ClientSpanTagProcessor {
 
 	}
 
-	public final String getParameterValueOrNull(String key, Map<String, String[]> servletRequestParameters) {
+	public String getParameterValueOrNull(String key, Map<String, String[]> servletRequestParameters) {
 		if (servletRequestParameters != null
 				&& servletRequestParameters.containsKey(key)
 				&& servletRequestParameters.get(key).length > 0) {
@@ -64,6 +64,10 @@ abstract class ClientSpanTagProcessor {
 		} else {
 			return null;
 		}
+	}
+
+	public Long getParameterValueAsLongOrNull(String key, Map<String, String[]> servletRequestParameters) {
+		return parsedLongOrNull(getParameterValueOrNull(key, servletRequestParameters));
 	}
 
 	public final void processSpan(Span span, Map<String, String[]> servletRequestParameters) {

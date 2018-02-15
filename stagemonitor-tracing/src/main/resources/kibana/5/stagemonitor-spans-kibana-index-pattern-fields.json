@@ -261,6 +261,18 @@
 		"readFromDocValues": true
 	},
 	{
+		"name": "timing.ssl",
+		"type": "number",
+		"count": 0,
+		"scripted": false,
+		"indexed": true,
+		"analyzed": false,
+		"doc_values": true,
+		"searchable": true,
+		"aggregatable": true,
+		"readFromDocValues": true
+	},
+	{
 		"name": "method",
 		"type": "string",
 		"count": 0,
