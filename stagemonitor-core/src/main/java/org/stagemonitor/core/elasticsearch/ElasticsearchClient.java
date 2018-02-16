@@ -558,6 +558,15 @@ public class ElasticsearchClient {
 							String statusValue = clusterHealthResponse.has("status") ? clusterHealthResponse.get("status").asText() : "red";
 							boolean isNowAvailable = statusValue.equals("green") || statusValue.equals("yellow");
 							if (isNowAvailable) {
+								// make sure core plugin is fully initialized, otherwise corePlugin.getMetricRegistry() returns null
+								while (! corePlugin.isInitialized()) {
+									try {
+										logger.info("wait 1s until core plugin is initialized");
+										Thread.sleep(1000);
+									} catch (InterruptedException e1) {
+										logger.error(e1.getMessage(), e1);
+									}
+								}
 								if (healthCheckRegistry != null) {
 									healthCheckRegistry.register("Elasticsearch", ImmediateResult.of(healthy()));
 								}
