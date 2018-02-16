@@ -24,6 +24,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 
+import static java.lang.Boolean.TRUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -62,6 +63,7 @@ public class AbstractElasticsearchTest {
 			when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
 			elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, Collections.emptyList());
 			when(corePlugin.getElasticsearchClient()).thenReturn(elasticsearchClient);
+			when(corePlugin.isInitialized()).thenReturn(TRUE);
 
 			node = new TestNode(settings, Collections.singletonList(Netty4Plugin.class));
 			node.start();
