@@ -31,6 +31,9 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 			manageMetricsIndex(elasticsearchClient, corePlugin);
 		}
 
+		elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
+				corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getDeleteElasticsearchMetricsAfterDays());
+
 		reportToElasticsearch(corePlugin.getMetricRegistry(), corePlugin.getReportingIntervalElasticsearch(), corePlugin.getMeasurementSession());
 	}
 
@@ -62,8 +65,6 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 					corePlugin.getMetricsIndexTemplate(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
 			elasticsearchClient.sendMappingTemplate(mappingJson, "stagemonitor-metrics");
 			elasticsearchClient.createEmptyIndex(ElasticsearchReporter.getTodaysIndexName());
-			elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
-					corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getDeleteElasticsearchMetricsAfterDays());
 		}
 	}
 
