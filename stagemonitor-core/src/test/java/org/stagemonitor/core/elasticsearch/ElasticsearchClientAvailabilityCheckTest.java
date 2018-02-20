@@ -16,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static java.lang.Boolean.TRUE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -32,6 +33,7 @@ public class ElasticsearchClientAvailabilityCheckTest {
 		when(corePlugin.getElasticsearchUrl()).thenReturn(url);
 		when(corePlugin.getElasticsearchUrls()).thenReturn(Collections.singletonList(url));
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(10000);
+		when(corePlugin.isInitialized()).thenReturn(TRUE);
 		elasticsearchClient = new ElasticsearchClient(corePlugin, new HttpClient(), -1, Collections.emptyList());
 	}
 
