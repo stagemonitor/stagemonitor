@@ -61,9 +61,16 @@ modifyPom {
 		}
 		developers {
 			developer {
-				id 'felixbarny'
-				name 'Felix Barnsteiner'
-				email 'f.barnsteiner@isys-software.de'
+				id 'liebhaeuser'
+				name 'Andreas Liebhäuser'
+				email 'andreas.liebhaeuser@isys.de'
+				organization 'iSYS Software GmbH'
+				organizationUrl "https://www.isys-software.de/"
+			}
+			developer {
+				id 'trampi'
+				name 'Fabian Trampusch'
+				email 'fabian.trampusch@isys.de'
 				organization 'iSYS Software GmbH'
 				organizationUrl "https://www.isys-software.de/"
 			}

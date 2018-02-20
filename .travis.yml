@@ -27,7 +27,7 @@ addons:
     project:
       name: "stagemonitor/stagemonitor"
       description: "Build submitted via Travis CI"
-    notification_email: felix.barnsteiner@gmail.com
+    notification_email: andreas.liebhaeuser@isys.de
     build_command_prepend: "./gradlew clean"
     build_command: "./gradlew compileJava"
     branch_pattern: coverity
