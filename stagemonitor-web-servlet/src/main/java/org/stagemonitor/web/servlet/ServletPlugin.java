@@ -397,7 +397,7 @@ public class ServletPlugin extends StagemonitorPlugin {
 
 	private boolean isPasswordInShowWidgetHeaderCorrect(HttpServletRequest request) {
 		String password = request.getHeader(STAGEMONITOR_SHOW_WIDGET);
-		if (getConfigurationPasswordChecker().isPasswordCorrect(password)) {
+		if (configurationPasswordChecker != null && configurationPasswordChecker.isPasswordCorrect(password)) {
 			return true;
 		} else {
 			if (StringUtils.isNotEmpty(password)) {
