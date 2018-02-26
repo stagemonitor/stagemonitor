@@ -101,7 +101,7 @@ public class ElasticsearchClient {
 			}).errorHandler(new HttpClient.ResponseHandler<JsonNode>() {
 					@Override
 					public JsonNode handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
-						if (statusCode != 404) {
+						if (Integer.valueOf(404).equals(statusCode)) {
 							logger.warn(e.getMessage(), e);
 						}
 						return null;
