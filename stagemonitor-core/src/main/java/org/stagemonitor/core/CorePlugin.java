@@ -7,7 +7,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.health.HealthCheckRegistry;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -35,6 +34,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -233,10 +233,29 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Elasticsearch URL")
 			.description("A comma separated list of the Elasticsearch URLs that store spans and metrics. " +
-					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com.")
+					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com. You can" +
+					" also specify default credentials with stagemonitor.reporting.elasticsearch.username and stagemonitor.reporting.elasticsearch.password."
+			)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(ELASTICSEARCH)
 			.buildWithDefault(Collections.<URL>emptyList());
+	private final ConfigurationOption<String> elasticsearchDefaultUsername = ConfigurationOption.stringOption()
+			.key("stagemonitor.reporting.elasticsearch.username")
+			.dynamic(true)
+			.label("Elasticsearch Username")
+			.description("The default username for all Elasticsearch URLs defined by stagemonitor.reporting.elasticsearch.url.")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags(ELASTICSEARCH)
+			.buildWithDefault("");
+	private final ConfigurationOption<String> elasticsearchDefaultPassword = ConfigurationOption.stringOption()
+			.key("stagemonitor.reporting.elasticsearch.password")
+			.dynamic(true)
+			.label("Elasticsearch Password")
+			.description("The default password for all Elasticsearch URLs defined by stagemonitor.reporting.elasticsearch.url.")
+			.configurationCategory(CORE_PLUGIN_NAME)
+			.tags(ELASTICSEARCH)
+			.sensitive()
+			.buildWithDefault("");
 	private final ConfigurationOption<Collection<String>> elasticsearchConfigurationSourceProfiles = ConfigurationOption.stringsOption()
 			.key("stagemonitor.configuration.elasticsearch.configurationSourceProfiles")
 			.aliasKeys("stagemonitor.elasticsearch.configurationSourceProfiles")
@@ -684,7 +703,37 @@ public class CorePlugin extends StagemonitorPlugin {
 			return null;
 		}
 		final int index = accessesToElasticsearchUrl.getAndIncrement() % urls.size();
-		return urls.get(index);
+		URL elasticsearchURL = urls.get(index);
+
+		final String defaultUsernameValue = elasticsearchDefaultUsername.getValue();
+		final String defaultPasswordValue = elasticsearchDefaultPassword.getValue();
+
+		if (elasticsearchURL.getUserInfo() == null
+				&& ! defaultUsernameValue.isEmpty()
+				&& ! defaultPasswordValue.isEmpty()) {
+
+			try {
+				String username = URLEncoder.encode(defaultUsernameValue, "UTF-8");
+				String password = URLEncoder.encode(defaultPasswordValue, "UTF-8");
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder
+						.append(elasticsearchURL.getProtocol())
+						.append("://")
+						.append(username)
+						.append(":")
+						.append(password)
+						.append("@")
+						.append(elasticsearchURL.getHost())
+						.append(":")
+						.append(elasticsearchURL.getPort())
+						.append(elasticsearchURL.getPath());
+				return new URL(stringBuilder.toString());
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+
+		return elasticsearchURL;
 	}
 
 	public Collection<URL> getElasticsearchUrls() {
