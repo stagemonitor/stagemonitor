@@ -33,7 +33,7 @@ public abstract class AbstractNumberClientSpanTagProcessor<N extends Number> ext
 			if (inBounds(parsedNumberOrNull)) {
 				span.setTag(tagName, parsedNumberOrNull);
 			} else if (discardSpanOnBoundViolation) {
-				logger.info("discarding {} for illegal value '{}': not in bounds ({} <= {} <= {})",
+				logger.debug("discarding {} for illegal value '{}': not in bounds ({} <= {} <= {})",
 						tagName, valueOrNull, lowerBound, valueOrNull, upperBound);
 				discardSpan(span);
 			}
@@ -61,7 +61,7 @@ public abstract class AbstractNumberClientSpanTagProcessor<N extends Number> ext
 		try {
 			return parse(valueOrNull);
 		} catch (NumberFormatException e) {
-			logger.info("discarding {} for illegal value '{}': not a parseable number", tagName, valueOrNull);
+			logger.debug("discarding {} for illegal value '{}': not a parseable number", tagName, valueOrNull);
 			return null;
 		}
 	}
