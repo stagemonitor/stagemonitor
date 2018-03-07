@@ -92,16 +92,20 @@ public class ElasticsearchClient {
 	}
 
 	public JsonNode getJson(final String path) {
+		return getJson(path, false	);
+	}
+
+	public JsonNode getJson(final String path, final boolean suppressWarning) {
 		return httpClient.send(HttpRequestBuilder.<JsonNode>forUrl(corePlugin.getElasticsearchUrl() + path)
-			.successHandler(new HttpClient.ResponseHandler<JsonNode>() {
-				@Override
-				public JsonNode handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
-					return JsonUtils.getMapper().readTree(is);
-				}
-			}).errorHandler(new HttpClient.ResponseHandler<JsonNode>() {
+				.successHandler(new HttpClient.ResponseHandler<JsonNode>() {
 					@Override
 					public JsonNode handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
-						if (Integer.valueOf(404).equals(statusCode)) {
+						return JsonUtils.getMapper().readTree(is);
+					}
+				}).errorHandler(new HttpClient.ResponseHandler<JsonNode>() {
+					@Override
+					public JsonNode handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException {
+						if (! suppressWarning && Integer.valueOf(404).equals(statusCode)) {
 							logger.warn(e.getMessage(), e);
 						}
 						return null;
