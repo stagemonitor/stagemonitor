@@ -1,5 +1,8 @@
 package org.stagemonitor.web.servlet.eum;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -7,6 +10,7 @@ import io.opentracing.Span;
 
 public abstract class AbstractNumberClientSpanTagProcessor<N extends Number> extends ClientSpanTagProcessor {
 
+	private static final Logger logger = LoggerFactory.getLogger(AbstractNumberClientSpanTagProcessor.class);
 	private final String tagName;
 	private final String requestParameterName;
 	protected N lowerBound;
@@ -29,6 +33,8 @@ public abstract class AbstractNumberClientSpanTagProcessor<N extends Number> ext
 			if (inBounds(parsedNumberOrNull)) {
 				span.setTag(tagName, parsedNumberOrNull);
 			} else if (discardSpanOnBoundViolation) {
+				logger.info("discarding {} for illegal value '{}': not in bounds ({} <= {} <= {})",
+						tagName, valueOrNull, lowerBound, valueOrNull, upperBound);
 				discardSpan(span);
 			}
 		}
@@ -55,6 +61,7 @@ public abstract class AbstractNumberClientSpanTagProcessor<N extends Number> ext
 		try {
 			return parse(valueOrNull);
 		} catch (NumberFormatException e) {
+			logger.info("discarding {} for illegal value '{}': not a parseable number", tagName, valueOrNull);
 			return null;
 		}
 	}
