@@ -85,6 +85,14 @@ public class ClientSpanServlet extends HttpServlet {
 		addTagProcessor(new ClientSpanTypeTagProcessor());
 		addTagProcessor(new ClientSpanMetadataTagProcessor(servletPlugin));
 
+		addTagProcessor(new ClientSpanIntegerTagProcessor(TYPE_ALL, Tags.SAMPLING_PRIORITY.getKey(), SAMPLED_FLAG)
+				.lowerBound(0)
+				.upperBound(1));
+		// sets the same sampling decision as the backend trace (does not work for standalone EUM servers)
+		addTagProcessor(new ClientSpanIntegerTagProcessor(TYPE_PAGE_LOAD, Tags.SAMPLING_PRIORITY.getKey(), METADATA_BACKEND_SPAN_SAMPLING_FLAG)
+				.lowerBound(0)
+				.upperBound(1));
+
 		// have a look at the weasel source [0] and the w3c spec for window.performance.timing [1]
 		// [0]: https://github.com/instana/weasel/blob/master/lib/timings.js
 		// [1]: https://w3c.github.io/navigation-timing/#processing-model
@@ -114,13 +122,6 @@ public class ClientSpanServlet extends HttpServlet {
 		// TODO change to SELF reference when https://github.com/opentracing/opentracing-java/pull/212 is merged
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ALL, SPAN_ID, "s", false));
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_ALL, TRACE_ID, "t", false));
-		addTagProcessor(new ClientSpanIntegerTagProcessor(TYPE_ALL, Tags.SAMPLING_PRIORITY.getKey(), SAMPLED_FLAG)
-				.lowerBound(0)
-				.upperBound(1));
-		// sets the same sampling decision as the backend trace (does not work for standalone EUM servers)
-		addTagProcessor(new ClientSpanIntegerTagProcessor(TYPE_PAGE_LOAD, Tags.SAMPLING_PRIORITY.getKey(), METADATA_BACKEND_SPAN_SAMPLING_FLAG)
-				.lowerBound(0)
-				.upperBound(1));
 		// bt = backend trace id
 		addTagProcessor(new ClientSpanStringTagProcessor(TYPE_PAGE_LOAD, TRACE_ID, BACKEND_TRACE_ID, false));
 		addTagProcessor(new ClientSpanTagProcessor(TYPE_PAGE_LOAD, Arrays.asList(BACKEND_TRACE_ID, METADATA_BACKEND_SPAN_ID)) {
