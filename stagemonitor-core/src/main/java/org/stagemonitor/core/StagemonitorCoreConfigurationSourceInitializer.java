@@ -69,7 +69,7 @@ public class StagemonitorCoreConfigurationSourceInitializer extends Stagemonitor
 	private void assertElasticsearchIsAvailable(ElasticsearchClient elasticsearchClient, CorePlugin corePlugin) {
 		if (elasticsearchClient.getJson("/") == null) {
 			throw new IllegalStateException("Property stagemonitor.configuration.elasticsearch.configurationSourceProfiles was set " +
-					"but elasticsearch is not reachable at " + corePlugin.getElasticsearchUrl());
+					"but elasticsearch is not reachable at " + corePlugin.getElasticsearchUrlsWithoutAuthenticationInformation());
 		}
 	}
 

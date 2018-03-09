@@ -58,6 +58,41 @@ public class CorePluginTest {
 	}
 
 	@Test
+	public void testCycleElasticsearchUrlsBasicAuth() throws Exception {
+		CorePlugin corePlugin = ConfigurationRegistry.builder()
+				.addOptionProvider(new CorePlugin())
+				.addConfigSource(new SimpleSource("test")
+						.add("stagemonitor.reporting.elasticsearch.url", "http://bla:1/,http://other:other@bla:2,https://bla:3,http://bla:4/search")
+						.add("stagemonitor.reporting.elasticsearch.username", "user")
+						.add("stagemonitor.reporting.elasticsearch.password", "password"))
+				.build()
+				.getConfig(CorePlugin.class);
+
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://user:password@bla:1");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://other:other@bla:2");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("https://user:password@bla:3");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://user:password@bla:4/search");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://user:password@bla:1");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://other:other@bla:2");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("https://user:password@bla:3");
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://user:password@bla:4/search");
+	}
+
+	@Test
+	public void testElasticsearchUrlsBasicAuthViaConfig() throws Exception {
+		CorePlugin corePlugin = ConfigurationRegistry.builder()
+				.addOptionProvider(new CorePlugin())
+				.addConfigSource(new SimpleSource("test")
+						.add("stagemonitor.reporting.elasticsearch.url", "http://bla:1")
+						.add("stagemonitor.reporting.elasticsearch.username", "user")
+						.add("stagemonitor.reporting.elasticsearch.password", "password"))
+				.build()
+				.getConfig(CorePlugin.class);
+
+		assertThat(corePlugin.getElasticsearchUrl().toString()).isEqualTo("http://user:password@bla:1");
+	}
+
+	@Test
 	public void testNoElasticsearchUrl() throws Exception {
 		CorePlugin corePlugin = ConfigurationRegistry.builder()
 				.addOptionProvider(new CorePlugin())

@@ -88,6 +88,8 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("m_user", "tom.mason@example.com");
 		mockHttpServletRequest.setParameter("ts", "-197");
 		mockHttpServletRequest.setParameter("d", "518");
+		mockHttpServletRequest.setParameter("sp", "1");
+		mockHttpServletRequest.setParameter("m_bsp", "1");
 		mockHttpServletRequest.setParameter("t_unl", "0");
 		mockHttpServletRequest.setParameter("t_red", "0");
 		mockHttpServletRequest.setParameter("t_apc", "5");
@@ -194,6 +196,7 @@ public class ClientSpanServletTest {
 		mockHttpServletRequest.setParameter("u", "http://localhost:9966/petclinic/");
 		mockHttpServletRequest.setParameter("ts", "-197");
 		mockHttpServletRequest.setParameter("d", "518");
+		mockHttpServletRequest.setParameter("sp", "1");
 		mockHttpServletRequest.setParameter("t_unl", "0");
 		mockHttpServletRequest.setParameter("t_red", "-500");
 		mockHttpServletRequest.setParameter("t_apc", "5");
@@ -210,6 +213,71 @@ public class ClientSpanServletTest {
 		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
 
 		// Then
+		assertSpanIsDiscarded();
+	}
+
+	@Test
+	public void testConvertWeaselBeaconToSpan_withDisabledSamplingFlagIsDiscarded() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("ty", "pl");
+		mockHttpServletRequest.setParameter("r", "1496751574200");
+		mockHttpServletRequest.setParameter("u", "http://localhost:9966/petclinic/");
+		mockHttpServletRequest.setParameter("ts", "-197");
+		mockHttpServletRequest.setParameter("d", "518");
+		mockHttpServletRequest.setParameter("sp", "0");
+		mockHttpServletRequest.setParameter("t_unl", "0");
+		mockHttpServletRequest.setParameter("t_red", "500");
+		mockHttpServletRequest.setParameter("t_apc", "5");
+		mockHttpServletRequest.setParameter("t_dns", "0");
+		mockHttpServletRequest.setParameter("t_tcp", "0");
+		mockHttpServletRequest.setParameter("t_ssl", "2");
+		mockHttpServletRequest.setParameter("t_req", "38");
+		mockHttpServletRequest.setParameter("t_rsp", "4");
+		mockHttpServletRequest.setParameter("t_pro", "471");
+		mockHttpServletRequest.setParameter("t_loa", "5");
+		mockHttpServletRequest.setParameter("t_fp", "151");
+		mockHttpServletRequest.setParameter("t_fp", "151");
+
+		// When
+		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertSpanIsDiscarded();
+	}
+
+	@Test
+	public void testConvertWeaselBeaconToSpan_withUnsampledBackendSpanFlagIsDiscarded() throws ServletException, IOException {
+		// Given
+		MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+		mockHttpServletRequest.setParameter("ty", "pl");
+		mockHttpServletRequest.setParameter("r", "1496751574200");
+		mockHttpServletRequest.setParameter("u", "http://localhost:9966/petclinic/");
+		mockHttpServletRequest.setParameter("ts", "-197");
+		mockHttpServletRequest.setParameter("d", "518");
+		mockHttpServletRequest.setParameter("sp", "1");
+		mockHttpServletRequest.setParameter("m_bsp", "0");
+		mockHttpServletRequest.setParameter("t_unl", "0");
+		mockHttpServletRequest.setParameter("t_red", "500");
+		mockHttpServletRequest.setParameter("t_apc", "5");
+		mockHttpServletRequest.setParameter("t_dns", "0");
+		mockHttpServletRequest.setParameter("t_tcp", "0");
+		mockHttpServletRequest.setParameter("t_ssl", "2");
+		mockHttpServletRequest.setParameter("t_req", "38");
+		mockHttpServletRequest.setParameter("t_rsp", "4");
+		mockHttpServletRequest.setParameter("t_pro", "471");
+		mockHttpServletRequest.setParameter("t_loa", "5");
+		mockHttpServletRequest.setParameter("t_fp", "151");
+		mockHttpServletRequest.setParameter("t_fp", "151");
+
+		// When
+		servlet.doPost(mockHttpServletRequest, new MockHttpServletResponse());
+
+		// Then
+		assertSpanIsDiscarded();
+	}
+
+	private void assertSpanIsDiscarded() {
 		assertSoftly(softly -> {
 			final List<MockSpan> finishedSpans = mockTracer.finishedSpans();
 			softly.assertThat(finishedSpans).hasSize(1);
@@ -219,7 +287,6 @@ public class ClientSpanServletTest {
 					.containsEntry(Tags.SAMPLING_PRIORITY.getKey(), 0);
 		});
 	}
-
 
 	@Test
 	public void testConvertWeaselBeaconToSpan_skipsTagProcessorsIfSpanIsNotSampled() throws ServletException, IOException {

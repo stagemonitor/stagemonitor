@@ -77,7 +77,7 @@ public class ElasticsearchConfigurationSource extends AbstractConfigurationSourc
 
 	@Override
 	public void reload() throws IOException {
-		final JsonNode json = elasticsearchClient.getJson(path);
+		final JsonNode json = elasticsearchClient.getJson(path, true);
 		if (json != null) {
 			final JsonNode source = json.get("_source").get("configuration");
 			List<EsConfigurationDto> configAsList = JsonUtils.getMapper().readValue(source.traverse(), new TypeReference<List<EsConfigurationDto>>() {
