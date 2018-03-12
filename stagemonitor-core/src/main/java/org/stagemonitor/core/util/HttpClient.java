@@ -9,9 +9,11 @@ import org.stagemonitor.util.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -48,7 +50,7 @@ public class HttpClient {
 			URL url = new URL(request.getUrl());
 			final String basicAuth;
 			if (url.getUserInfo() != null) {
-				basicAuth = "Basic " + DatatypeConverter.printBase64Binary(url.getUserInfo().getBytes());
+				basicAuth = getBasicAuthFromUserInfo(url);
 				// remove username:password from url so it does not appear in exception messages
 				url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile());
 			} else {
@@ -114,6 +116,11 @@ public class HttpClient {
 
 	public interface ResponseHandler<T> {
 		T handleResponse(HttpRequest<?> httpRequest, InputStream is, Integer statusCode, IOException e) throws IOException;
+	}
+
+	public static String getBasicAuthFromUserInfo(URL url) throws UnsupportedEncodingException {
+		String decodedUserInfo = URLDecoder.decode(url.getUserInfo(), "UTF-8");
+		return "Basic " + DatatypeConverter.printBase64Binary(decodedUserInfo.getBytes());
 	}
 
 	public static String removeUserInfo(String url) {
