@@ -31,6 +31,7 @@ import org.stagemonitor.util.StringUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -233,8 +234,9 @@ public class CorePlugin extends StagemonitorPlugin {
 			.dynamic(true)
 			.label("Elasticsearch URL")
 			.description("A comma separated list of the Elasticsearch URLs that store spans and metrics. " +
-					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com. You can" +
-					" also specify default credentials with stagemonitor.reporting.elasticsearch.username and stagemonitor.reporting.elasticsearch.password."
+					"If your ES cluster is secured with basic authentication, you can use urls like https://user:password@example.com. " +
+					"The authentication information must be in application/x-www-form-urlencoded format. " +
+					"You can also specify default credentials (in plain text) with stagemonitor.reporting.elasticsearch.username and stagemonitor.reporting.elasticsearch.password."
 			)
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(ELASTICSEARCH)
@@ -243,7 +245,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.reporting.elasticsearch.username")
 			.dynamic(true)
 			.label("Elasticsearch Username")
-			.description("The default username for all Elasticsearch URLs defined by stagemonitor.reporting.elasticsearch.url.")
+			.description("The default username for all Elasticsearch URLs defined by stagemonitor.reporting.elasticsearch.url in plain text format.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(ELASTICSEARCH)
 			.buildWithDefault("");
@@ -251,7 +253,7 @@ public class CorePlugin extends StagemonitorPlugin {
 			.key("stagemonitor.reporting.elasticsearch.password")
 			.dynamic(true)
 			.label("Elasticsearch Password")
-			.description("The default password for all Elasticsearch URLs defined by stagemonitor.reporting.elasticsearch.url.")
+			.description("The default password for all Elasticsearch URLs defined by stagemonitor.reporting.elasticsearch.url in plain text format.")
 			.configurationCategory(CORE_PLUGIN_NAME)
 			.tags(ELASTICSEARCH)
 			.sensitive()
