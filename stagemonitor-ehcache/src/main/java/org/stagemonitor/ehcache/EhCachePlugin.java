@@ -131,11 +131,13 @@ public class EhCachePlugin extends StagemonitorPlugin {
 	 * @param cache The Cache to monitor
 	 */
 	public void monitorCache(Ehcache cache) {
-		cache.setStatisticsEnabled(true);
-		final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(cache.getName(),
+		if (this.isInitialized()) {
+			cache.setStatisticsEnabled(true);
+			final StagemonitorCacheUsageListener cacheUsageListener = new StagemonitorCacheUsageListener(cache.getName(),
 				metricRegistry, timeGet.getValue());
-		cache.registerCacheUsageListener(cacheUsageListener);
-		metricRegistry.registerAny(new EhCacheMetricSet(cache.getName(), cache, cacheUsageListener));
+			cache.registerCacheUsageListener(cacheUsageListener);
+			metricRegistry.registerAny(new EhCacheMetricSet(cache.getName(), cache, cacheUsageListener));
+		}
 	}
 
 	@Override
