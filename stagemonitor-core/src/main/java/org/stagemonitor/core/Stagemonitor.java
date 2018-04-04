@@ -58,7 +58,12 @@ public final class Stagemonitor {
 			reset();
 		} catch (Throwable e) {
 			logger.error(e.getMessage(), e);
-			throw new RuntimeException(e);
+			try {
+				// something bad happened, try to shut down
+				Stagemonitor.shutDown();
+			} catch (Throwable t) {
+				logger.error(t.getMessage(), t);
+			}
 		}
 	}
 
