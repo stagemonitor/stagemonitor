@@ -152,7 +152,7 @@ public class AgentAttacher {
 			Dispatcher.getValues().putIfAbsent(IGNORED_CLASSLOADERS_KEY, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
 			hashCodesOfClassLoadersToIgnore = Dispatcher.get(IGNORED_CLASSLOADERS_KEY);
 			return true;
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			final String msg = "Failed to perform runtime attachment of the stagemonitor agent. Make sure that you run your " +
 					"application with a JDK (not a JRE)." +
 					"To make stagemonitor work with a JRE, you have to add the following command line argument to the " +
