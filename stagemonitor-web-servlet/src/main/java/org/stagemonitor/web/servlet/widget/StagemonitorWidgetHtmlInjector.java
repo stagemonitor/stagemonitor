@@ -65,7 +65,7 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 		}
 		final SpanWrapper span = injectArguments.getSpanWrapper();
 		injectArguments.setContentToInjectBeforeClosingBody(widgetTemplate
-				.replace("@@JSON_REQUEST_TACE_PLACEHOLDER@@", span != null ? JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII) : "null")
+				.replace("@@JSON_REQUEST_TRACE_PLACEHOLDER@@", span != null ? JsonUtils.toJson(span, SpanUtils.CALL_TREE_ASCII) : "null")
 				.replace("@@CONFIGURATION_OPTIONS@@", JsonUtils.toJson(configuration.getConfigurationOptionsByCategory()))
 				.replace("@@CONFIGURATION_PWD_SET@@", Boolean.toString(servletPlugin.getConfigurationPasswordChecker().isPasswordSet()))
 				.replace("@@CONFIGURATION_SOURCES@@", JsonUtils.toJson(configuration.getNamesOfConfigurationSources()))
