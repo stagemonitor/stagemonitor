@@ -23,11 +23,13 @@ public class ExternalHttpRequest extends AbstractExternalRequest {
 	@Override
 	public Scope createScope() {
 		final Scope scope = super.createScope();
-		final Span span = scope.span();
-		Tags.HTTP_URL.set(span, url);
-		Tags.PEER_HOSTNAME.set(span, host);
-		Tags.PEER_PORT.set(span, port);
-		span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, method);
+		if (scope != null) {
+			final Span span = scope.span();
+			Tags.HTTP_URL.set(span, url);
+			Tags.PEER_HOSTNAME.set(span, host);
+			Tags.PEER_PORT.set(span, port);
+			span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, method);
+		}
 		return scope;
 	}
 

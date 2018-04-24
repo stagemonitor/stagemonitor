@@ -33,11 +33,14 @@ public class RequestMonitor {
 	public SpanContextInformation monitorStart(MonitoredRequest monitoredRequest) {
 		final long start = System.nanoTime();
 		final Scope scope = monitoredRequest.createScope();
-		final SpanContextInformation info = SpanContextInformation.get(scope.span());
-		if (info != null) {
-			info.setOverhead1(System.nanoTime() - start);
+		if (scope != null) {
+			final SpanContextInformation info = SpanContextInformation.get(scope.span());
+			if (info != null) {
+				info.setOverhead1(System.nanoTime() - start);
+			}
+			return info;
 		}
-		return info;
+		return null;
 	}
 
 	public void monitorStop() {

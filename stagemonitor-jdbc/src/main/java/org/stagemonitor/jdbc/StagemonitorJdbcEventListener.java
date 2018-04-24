@@ -12,6 +12,7 @@ import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.AbstractExternalRequest;
+import org.stagemonitor.tracing.RequestMonitor;
 import org.stagemonitor.tracing.SpanContextInformation;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.profiler.Profiler;
@@ -130,7 +131,10 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	@Override
 	public void onBeforeAnyExecute(StatementInformation statementInformation) {
-		tracingPlugin.getRequestMonitor().monitorStart(new MonitoredJdbcRequest(tracingPlugin));
+		RequestMonitor requestMonitor = tracingPlugin.getRequestMonitor();
+		if (requestMonitor != null) {
+			requestMonitor.monitorStart(new MonitoredJdbcRequest(tracingPlugin));
+		}
 	}
 
 	@Override

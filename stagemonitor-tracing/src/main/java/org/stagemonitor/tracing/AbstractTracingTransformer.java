@@ -43,12 +43,15 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 
 		final MonitoredMethodRequest monitoredRequest = new MonitoredMethodRequest(Stagemonitor.getConfiguration(), requestName, null, params);
 		final TracingPlugin tracingPlugin = Stagemonitor.getPlugin(TracingPlugin.class);
-		tracingPlugin.getRequestMonitor().monitorStart(monitoredRequest);
-		final Span span = TracingPlugin.getCurrentSpan();
-		if (requestName == null) {
-			span.setOperationName(getBusinessTransationName(thiz != null ? thiz.getClass().getName() : className, methodName));
+		RequestMonitor requestMonitor = tracingPlugin.getRequestMonitor();
+		if (requestMonitor != null) {
+			requestMonitor.monitorStart(monitoredRequest);
+			final Span span = TracingPlugin.getCurrentSpan();
+			if (requestName == null) {
+				span.setOperationName(getBusinessTransationName(thiz != null ? thiz.getClass().getName() : className, methodName));
+			}
+			span.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 		}
-		span.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 	}
 
 	@Advice.OnMethodExit(onThrowable = Throwable.class, inline = false)

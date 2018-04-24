@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.widget;
 
+import io.opentracing.Scope;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -102,9 +103,12 @@ public class SpanServletTest {
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request,
 				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration, mock(ExecutorService.class));
 
-		span = monitoredHttpRequest.createScope().span();
-		span.setOperationName("test");
-		span.finish();
+		Scope scope = monitoredHttpRequest.createScope();
+		if (scope != null) {
+			span = scope.span();
+			span.setOperationName("test");
+			span.finish();
+		}
 	}
 
 	@Test

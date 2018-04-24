@@ -85,34 +85,38 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 
 		final Tracer tracer = tracingPlugin.getTracer();
 		io.opentracing.SpanContext spanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new HttpServletRequestTextMapExtractAdapter(httpServletRequest));
-		Tracer.SpanBuilder spanBuilder = tracer.buildSpan(getRequestName())
-				.asChildOf(spanCtx)
-				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
-		if (widgetAndStagemonitorEndpointsAllowed) {
-			// use null as value so that the tag is not really set
-			spanBuilder = spanBuilder.withTag(WIDGET_ALLOWED_ATTRIBUTE, (String) null);
-		}
-		if (!sample) {
-			spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
-		}
-		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, "http");
-		final Scope scope = spanBuilder.startActive(true);
-		final Span span = scope.span();
-		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
-		Tags.PEER_PORT.set(span, httpServletRequest.getRemotePort());
-		span.setTag("method", httpServletRequest.getMethod());
-		span.setTag("http.referring_site", getReferringSite());
-		if (servletPlugin.isCollectHttpHeaders()) {
-			SpanUtils.setHttpHeaders(span, getHeaders(httpServletRequest));
-		}
+		if (spanCtx == null) {
+			return null;
+		} else {
+			Tracer.SpanBuilder spanBuilder = tracer.buildSpan(getRequestName())
+					.asChildOf(spanCtx)
+					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
+			if (widgetAndStagemonitorEndpointsAllowed) {
+				// use null as value so that the tag is not really set
+				spanBuilder = spanBuilder.withTag(WIDGET_ALLOWED_ATTRIBUTE, (String) null);
+			}
+			if (!sample) {
+				spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
+			}
+			spanBuilder.withTag(SpanUtils.OPERATION_TYPE, "http");
+			final Scope scope = spanBuilder.startActive(true);
+			final Span span = scope.span();
+			Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
+			Tags.PEER_PORT.set(span, httpServletRequest.getRemotePort());
+			span.setTag("method", httpServletRequest.getMethod());
+			span.setTag("http.referring_site", getReferringSite());
+			if (servletPlugin.isCollectHttpHeaders()) {
+				SpanUtils.setHttpHeaders(span, getHeaders(httpServletRequest));
+			}
 
-		SpanContextInformation info = SpanContextInformation.forSpan(span);
-		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
-		info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
-		if (tracingPlugin.isSampled(span) && servletPlugin.isParseUserAgent() && StringUtils.isNotEmpty(userAgentHeader)) {
-			parseUserAgentAsync(span, info);
+			SpanContextInformation info = SpanContextInformation.forSpan(span);
+			info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
+			info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
+			if (tracingPlugin.isSampled(span) && servletPlugin.isParseUserAgent() && StringUtils.isNotEmpty(userAgentHeader)) {
+				parseUserAgentAsync(span, info);
+			}
+			return scope;
 		}
-		return scope;
 	}
 
 	private void parseUserAgentAsync(final Span span, SpanContextInformation info) {

@@ -105,6 +105,37 @@ public class MonitoredHttpRequestTest {
 	}
 
 	@Test
+	public void testXSSCreateSpan() throws Exception {
+		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
+		request.addParameter("foo", "bar");
+		request.addParameter("bla", "blubb");
+		request.addParameter("pwd", "secret");
+		request.addParameter("creditCard", "123456789");
+		request.addHeader("Cookie", "foobar");
+		request.addHeader("Accept", "application/json");
+		request.addHeader("X-B3-SpanId", "<script>alert(1);</script>");
+
+		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
+
+		monitoredHttpRequest.createScope().close();
+		assertEquals(1, tracer.finishedSpans().size());
+		final MockSpan mockSpan = tracer.finishedSpans().get(0);
+		assertEquals("/test.js", mockSpan.tags().get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET *.js", mockSpan.operationName());
+		assertEquals("GET", mockSpan.tags().get("method"));
+
+		assertEquals("application/json", mockSpan.tags().get(SpanUtils.HTTP_HEADERS_PREFIX + "accept"));
+		assertFalse(mockSpan.tags().containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "cookie"));
+		assertFalse(mockSpan.tags().containsKey(SpanUtils.HTTP_HEADERS_PREFIX + "Cookie"));
+
+		assertEquals("bar", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "foo"));
+		assertEquals("blubb", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "bla"));
+		assertEquals("XXXX", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
+		assertEquals("XXXX", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
+		assertFalse(mockSpan.tags().containsKey(Tags.ERROR.getKey()));
+	}
+
+	@Test
 	public void testReferringSite() throws Exception {
 		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
 		request.addHeader("Referer", "https://www.github.com/stagemonitor/stagemonitor");
