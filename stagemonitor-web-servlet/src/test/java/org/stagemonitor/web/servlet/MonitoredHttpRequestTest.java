@@ -1,6 +1,7 @@
 package org.stagemonitor.web.servlet;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockFilterChain;
@@ -101,6 +102,27 @@ public class MonitoredHttpRequestTest {
 		assertEquals("blubb", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "bla"));
 		assertEquals("XXXX", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "pwd"));
 		assertEquals("XXXX", mockSpan.tags().get(SpanUtils.PARAMETERS_PREFIX + "creditCard"));
+		assertFalse(mockSpan.tags().containsKey(Tags.ERROR.getKey()));
+	}
+
+	@Test
+	public void testXSSCreateSpan() throws Exception {
+		final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test.js");
+		request.addHeader("spanid", "<script>alert(1);</script>");
+		request.addHeader("traceid", "42");
+
+		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
+
+		monitoredHttpRequest.createScope().close();
+		assertEquals(1, tracer.finishedSpans().size());
+		final MockSpan mockSpan = tracer.finishedSpans().get(0);
+		assertEquals(0, mockSpan.parentId());
+		assertEquals(2, mockSpan.context().spanId());
+		assertEquals(1, mockSpan.context().traceId());
+		assertEquals("/test.js", mockSpan.tags().get(Tags.HTTP_URL.getKey()));
+		assertEquals("GET *.js", mockSpan.operationName());
+		assertEquals("GET", mockSpan.tags().get("method"));
+
 		assertFalse(mockSpan.tags().containsKey(Tags.ERROR.getKey()));
 	}
 
