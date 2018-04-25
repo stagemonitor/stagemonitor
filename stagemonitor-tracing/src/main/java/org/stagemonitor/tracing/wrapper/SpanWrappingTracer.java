@@ -14,6 +14,8 @@ import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.stagemonitor.tracing.wrapper.SpanWrapper.INTERNAL_TAG_PREFIX;
 
@@ -23,6 +25,8 @@ import static org.stagemonitor.tracing.wrapper.SpanWrapper.INTERNAL_TAG_PREFIX;
  * or {@link Span} are called.
  */
 public class SpanWrappingTracer implements Tracer {
+
+	private static final Logger logger = LoggerFactory.getLogger(SpanWrappingTracer.class);
 
 	private final Tracer delegate;
 	private final Collection<SpanEventListenerFactory> spanInterceptorFactories = new CopyOnWriteArrayList<SpanEventListenerFactory>();
@@ -58,7 +62,12 @@ public class SpanWrappingTracer implements Tracer {
 
 	@Override
 	public <C> SpanContext extract(Format<C> format, C carrier) {
-		return delegate.extract(format, carrier);
+		try {
+			return delegate.extract(format, carrier);
+		} catch (NumberFormatException e) {
+			logger.error("error parsing span id, possible XSS attack: " + e.getMessage(), e);
+			return null;
+		}
 	}
 
 	protected List<SpanEventListener> createSpanInterceptors() {
