@@ -402,11 +402,15 @@ public class ConfigurationRegistry implements Closeable {
 				validateConfigurationSource(configurationSource, configurationOption);
 				configurationSource.save(key, value);
 				reload(key);
-				logger.info("Updated configuration: {}={} ({})", key, value, configurationSourceName);
+				logger.info("Updated configuration: {}={} ({})", key, maskSensitivConfigurationValues(configurationOption, value), configurationSourceName);
 				return;
 			}
 		}
 		throw new IllegalArgumentException("Configuration source '" + configurationSourceName + "' does not exist.");
+	}
+
+	private String maskSensitivConfigurationValues(ConfigurationOption<?> configurationOption, String value) {
+		return configurationOption.isSensitive() ? "xxxxxxxxxxx" : value;
 	}
 
 	private void validateConfigurationSource(ConfigurationSource configurationSource, ConfigurationOption<?> configurationOption) {
