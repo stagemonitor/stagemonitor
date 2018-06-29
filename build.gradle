@@ -52,7 +52,7 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 ext {
 	metricsVersion = '3.2.4'
 	slf4jVersion = '1.7.25'
-	jacksonVersion = '2.9.0'
+	jacksonVersion = '2.9.6'
 	esVersion = '6.2.4'
 	byteBuddyVersion = '1.8.11'
 	opentracingVersion = '0.31.0'
