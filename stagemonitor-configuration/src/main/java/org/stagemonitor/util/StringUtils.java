@@ -18,6 +18,10 @@ public class StringUtils {
 	private static final Pattern CAMEL_CASE = Pattern.compile("(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
 	private static final char[] hexArray = "0123456789abcdef".toCharArray();
 
+	private static final ThreadLocal<DateFormat> LOGSTASH_STYLE_FORMAT = new ThreadLocal<DateFormat>();
+
+	private static final ThreadLocal<DateFormat> ISO_STRING_FORMAT = new ThreadLocal<DateFormat>();
+
 	private StringUtils() {
 	}
 
@@ -93,10 +97,12 @@ public class StringUtils {
 	}
 
 	public static String dateAsIsoString(Date date) {
-		TimeZone tz = TimeZone.getDefault();
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-		df.setTimeZone(tz);
-		return df.format(date);
+		DateFormat dateFormat = ISO_STRING_FORMAT.get();
+		if (dateFormat == null) {
+			dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+			dateFormat.setTimeZone(TimeZone.getDefault());
+		}
+		return dateFormat.format(date);
 	}
 
 	public static String timestampAsIsoString(long timestamp) {
@@ -133,8 +139,12 @@ public class StringUtils {
 	}
 
 	public static String getLogstashStyleDate(long time) {
-		final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
-		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		DateFormat dateFormat = LOGSTASH_STYLE_FORMAT.get();
+		if (dateFormat == null) {
+			dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+			dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+			LOGSTASH_STYLE_FORMAT.set(dateFormat);
+		}
 		return dateFormat.format(new Date(time));
 	}
 
