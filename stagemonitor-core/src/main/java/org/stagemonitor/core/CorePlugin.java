@@ -870,10 +870,6 @@ public class CorePlugin extends StagemonitorPlugin {
 		return metricsIndexTemplate.get();
 	}
 
-	public int getReportingIntervalElasticsearch() {
-		return reportingIntervalElasticsearch.get();
-	}
-
 	public boolean isInitializeElasticsearch() {
 		return initializeElasticsearch.get();
 	}
