@@ -7,7 +7,7 @@ public class EhCacheElasticsearchInitializer extends AbstractElasticsearchInitia
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "EhCache.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getKibanaResourcePath() + "EhCache.bulk");
 	}
 
 }

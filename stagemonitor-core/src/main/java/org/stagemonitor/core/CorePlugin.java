@@ -31,7 +31,6 @@ import org.stagemonitor.util.StringUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -868,6 +867,10 @@ public class CorePlugin extends StagemonitorPlugin {
 
 	public String getMetricsIndexTemplate() {
 		return metricsIndexTemplate.get();
+	}
+
+	public boolean isMetricsIndexTemplateDefaultValue() {
+		return metricsIndexTemplate.isDefault();
 	}
 
 	public boolean isInitializeElasticsearch() {

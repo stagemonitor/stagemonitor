@@ -99,6 +99,10 @@ public class ElasticsearchTracingPlugin extends StagemonitorPlugin {
 		return spanIndexTemplate.getValue();
 	}
 
+	public boolean isSpanIndexTemplateDefaultValue() {
+		return spanIndexTemplate.isDefault();
+	}
+
 	public int getDeleteSpansAfterDays() {
 		return deleteSpansAfterDays.get();
 	}

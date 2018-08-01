@@ -1,0 +1,50 @@
+{
+  "template": "stagemonitor-spans-*",
+  "order" : 1,
+  "settings" : {
+    "index" : {
+      "refresh_interval" : "5s",
+      "query.default_field": "name"
+    }
+  },
+  "mappings": {
+    "spans": {
+      "dynamic_templates" : [
+        {
+          "string_fields" : {
+            "match" : "*",
+            "match_mapping_type" : "string",
+            "mapping" : {
+              "type": "keyword", "ignore_above" : 256 }
+            }
+        }
+      ],
+      "_source" :              { "excludes" : ["call_tree_json"] },
+      "properties": {
+        "@timestamp":          {"type": "date" },
+        "call_tree_ascii":     {"type": "keyword", "index": false, "doc_values": false },
+        "call_tree_json":      {"type": "keyword", "index": false, "doc_values": false, "store": true },
+        "exception":           {"type": "object", "properties": {
+            "class":           {"type": "keyword" },
+            "message":         {"type": "keyword" },
+            "stack_trace":     {"type": "keyword", "index": false, "doc_values": false, "store": true }
+          }
+        },
+        "peer.ip":             {"type": "ip"},
+        "name":                {"type": "text",  "analyzer": "standard",
+                                 "fields": { "raw": {"type": "keyword" }}},
+        "http":                {"type": "object", "properties": {
+            "url":                 {"type": "text",  "analyzer": "standard", "fields": { "raw": {"type": "keyword" }}}
+          }
+        },
+        "params":{
+          "type": "object",
+          "properties": {
+            "key":         {"type": "keyword" },
+            "value":       {"type": "keyword" }
+          }
+        }
+      }
+    }
+  }
+}

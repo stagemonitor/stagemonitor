@@ -48,7 +48,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testRequireBoxTypeHotWhenHotColdActive() throws Exception {
-		final String indexTemplate = modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 2, null, 0);
+		final String indexTemplate = modifyIndexTemplate("es/6/stagemonitor-elasticsearch-metrics-index-template.json", 2, null, 0);
 		assertTrue(indexTemplate.contains("hot"));
 		assertFalse(indexTemplate.contains("number_of_shards"));
 		assertFalse(indexTemplate.contains("number_of_replicas"));
@@ -56,7 +56,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testSetReplicas() throws Exception {
-		final String indexTemplate = modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, 0, 0);
+		final String indexTemplate = modifyIndexTemplate("es/6/stagemonitor-elasticsearch-metrics-index-template.json", 0, 0, 0);
 		assertFalse(indexTemplate.contains("hot"));
 		assertEquals(0, JsonUtils.getMapper().readTree(indexTemplate).get("settings").get("index").get("number_of_replicas").asInt());
 		assertFalse(indexTemplate.contains("number_of_shards"));
@@ -64,7 +64,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testSetShards() throws Exception {
-		final String indexTemplate = modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, -1, 1);
+		final String indexTemplate = modifyIndexTemplate("es/6/stagemonitor-elasticsearch-metrics-index-template.json", 0, -1, 1);
 		assertFalse(indexTemplate.contains("hot"));
 		assertEquals(1, JsonUtils.getMapper().readTree(indexTemplate).get("settings").get("index").get("number_of_shards").asInt());
 		assertFalse(indexTemplate.contains("number_of_replicas"));
@@ -72,7 +72,7 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void modifyIndexTemplateIntegrationTest() throws Exception {
-		elasticsearchClient.sendMappingTemplate(modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, 1, 2), "stagemonitor-elasticsearch-metrics");
+		elasticsearchClient.sendMappingTemplate(modifyIndexTemplate("es/6/stagemonitor-elasticsearch-metrics-index-template.json", 0, 1, 2), "stagemonitor-elasticsearch-metrics");
 		elasticsearchClient.waitForCompletion();
 		refresh();
 		elasticsearchClient.createEmptyIndex("stagemonitor-metrics-test");
@@ -86,8 +86,8 @@ public class ElasticsearchClientTest extends AbstractElasticsearchTest {
 
 	@Test
 	public void testDontRequireBoxTypeHotWhenHotColdInactive() throws Exception {
-		assertFalse(modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", 0, 0, 0).contains("hot"));
-		assertFalse(modifyIndexTemplate("stagemonitor-elasticsearch-metrics-index-template.json", -1, 0, 0).contains("hot"));
+		assertFalse(modifyIndexTemplate("es/6/stagemonitor-elasticsearch-metrics-index-template.json", 0, 0, 0).contains("hot"));
+		assertFalse(modifyIndexTemplate("es/6/stagemonitor-elasticsearch-metrics-index-template.json", -1, 0, 0).contains("hot"));
 	}
 
 	@Test

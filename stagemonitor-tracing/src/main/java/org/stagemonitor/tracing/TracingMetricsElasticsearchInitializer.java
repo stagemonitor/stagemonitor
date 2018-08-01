@@ -7,7 +7,7 @@ public class TracingMetricsElasticsearchInitializer extends AbstractElasticsearc
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "Request-Metrics.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getKibanaResourcePath() + "Request-Metrics.bulk");
 	}
 
 }

@@ -80,15 +80,29 @@ public class ElasticsearchClient {
 		}
 	}
 
-	public boolean isElasticsearch6Compatible() {
-		return esMajorVersion != null && esMajorVersion >= 6;
+	public boolean isElasticsearch7Compatible() {
+		return esMajorVersion != null && esMajorVersion >= 7;
 	}
 
-	public String getElasticsearchResourcePath() {
-		if (!isElasticsearch6Compatible()) {
+	public boolean isElasticsearch6Compatible() {
+		return esMajorVersion != null && esMajorVersion == 6;
+	}
+
+	public String getElasticSearchTemplateResourcePath() {
+		if (! isElasticsearch7Compatible()) {
+			return "es/6/";
+		}
+		return "es/7/";
+	}
+
+	public String getKibanaResourcePath() {
+		if (! isElasticsearch6Compatible()) {
 			return "kibana/5/";
 		}
-		return "kibana/6/";
+		if (! isElasticsearch7Compatible()) {
+			return "kibana/6/";
+		}
+		return "kibana/7/";
 	}
 
 	public JsonNode getJson(final String path) {
@@ -161,6 +175,11 @@ public class ElasticsearchClient {
 	}
 
 	public void updateKibanaIndexPattern(final String indexName, final String indexPatternLocation) {
+		if (isElasticsearch7Compatible()) {
+			logger.debug("TODO: implement");
+			return;
+		}
+
 		final String elasticsearchKibanaIndexPatternPath = isElasticsearch6Compatible() ? "/.kibana/doc/index-pattern:" + indexName : "/.kibana/index-pattern/" + indexName;
 		logger.debug("Sending index pattern {} to {}", indexPatternLocation, elasticsearchKibanaIndexPatternPath);
 		try {
@@ -237,6 +256,11 @@ public class ElasticsearchClient {
 	}
 
 	public void sendMetricDashboardBulkAsync(final String resource) {
+		if (isElasticsearch7Compatible()) {
+			logger.debug("TODO: implement");
+			return;
+		}
+
 		// skip sending dashboards if init parameter is set to false
 		if (!corePlugin.isInitializeElasticsearch()) {
 			logger.info("skip Elasticsearch init due to stagemonitor.elasticsearch.init=false");
@@ -249,6 +273,11 @@ public class ElasticsearchClient {
 	}
 
 	public void sendSpanDashboardBulkAsync(final String resource, boolean logBulkErrors) {
+		if (isElasticsearch7Compatible()) {
+			logger.debug("TODO: implement");
+			return;
+		}
+
 		sendClassPathRessourceBulkAsync(resource, logBulkErrors);
 	}
 
