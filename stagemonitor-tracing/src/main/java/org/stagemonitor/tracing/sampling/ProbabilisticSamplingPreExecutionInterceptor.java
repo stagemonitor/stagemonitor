@@ -114,44 +114,4 @@ public class ProbabilisticSamplingPreExecutionInterceptor extends PreExecutionSp
 		return result;
 	}
 
-	public static void main(String[] args) {
-		int size = BIT_SET_SIZE;
-		int cardinality = 10;
-		Random rnd = new Random();
-
-		BitSet result = new BitSet(size);
-		int[] chosen = new int[cardinality];
-		// set first cardinality bits to 1
-		// the rest (size - cardinality) is still 0
-		int i;
-		for (i = 0; i < cardinality; ++i) {
-			chosen[i] = i;
-			result.set(i);
-		}
-
-		// shuffle to more evenly (randomly) distribute 0's and 1's
-		for (; i < size; ++i) {
-			int j = rnd.nextInt(i + 1);
-			if (j < cardinality) {
-				result.clear(chosen[j]);
-				result.set(i);
-				chosen[j] = i;
-			}
-		}
-
-		System.out.println(result);
-
-		int nbOfSamples = 0;
-		for (int x = 1; x <= 1798; x++) {
-			int index = Math.abs(x % BIT_SET_SIZE);
-			boolean bitValue = result.get(index);
-			System.out.println(String.format("check %d for %d calls: %s", index, x, bitValue));
-			if (bitValue) {
-				nbOfSamples++;
-			}
-			double prob = nbOfSamples * 100 / x;
-			System.out.println("probability " + prob);
-		}
-	}
-
 }
