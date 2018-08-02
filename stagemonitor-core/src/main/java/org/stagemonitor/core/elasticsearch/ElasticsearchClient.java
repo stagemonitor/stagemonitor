@@ -202,7 +202,7 @@ public class ElasticsearchClient {
 	}
 
 	private JsonNode fetchCurrentKibanaIndexPatternConfiguration(String elasticsearchKibanaIndexPatternPath) throws IOException {
-		JsonNode json = getJson(elasticsearchKibanaIndexPatternPath);
+		final JsonNode json = getJson(elasticsearchKibanaIndexPatternPath);
 		if (json != null) {
 			return json.get("_source");
 		} else {
