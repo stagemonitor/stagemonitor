@@ -96,7 +96,7 @@ public class ElasticsearchClient {
 	}
 
 	public String getKibanaResourcePath() {
-		if (! isElasticsearch6Compatible()) {
+		if (! isElasticsearch6Compatible() && ! isElasticsearch7Compatible()) {
 			return "kibana/5/";
 		}
 		if (! isElasticsearch7Compatible()) {
@@ -175,17 +175,12 @@ public class ElasticsearchClient {
 	}
 
 	public void updateKibanaIndexPattern(final String indexName, final String indexPatternLocation) {
-		if (isElasticsearch7Compatible()) {
-			logger.debug("TODO: implement");
-			return;
-		}
-
-		final String elasticsearchKibanaIndexPatternPath = isElasticsearch6Compatible() ? "/.kibana/doc/index-pattern:" + indexName : "/.kibana/index-pattern/" + indexName;
+		final String elasticsearchKibanaIndexPatternPath = isElasticsearch6Compatible() || isElasticsearch7Compatible() ? "/.kibana/doc/index-pattern:" + indexName : "/.kibana/index-pattern/" + indexName;
 		logger.debug("Sending index pattern {} to {}", indexPatternLocation, elasticsearchKibanaIndexPatternPath);
 		try {
 			ObjectNode stagemonitorPattern = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(indexPatternLocation)).deepCopy();
 
-			if (isElasticsearch6Compatible()) {
+			if (isElasticsearch6Compatible() || isElasticsearch7Compatible()) {
 				ObjectNode indexPatternNode = (ObjectNode) stagemonitorPattern.get("index-pattern");
 				indexPatternNode.put("fields", getFields(stagemonitorPattern.get("index-pattern").get("fields").asText()));
 			} else {
@@ -207,7 +202,7 @@ public class ElasticsearchClient {
 	}
 
 	private JsonNode fetchCurrentKibanaIndexPatternConfiguration(String elasticsearchKibanaIndexPatternPath) throws IOException {
-		final JsonNode json = getJson(elasticsearchKibanaIndexPatternPath);
+		JsonNode json = getJson(elasticsearchKibanaIndexPatternPath);
 		if (json != null) {
 			return json.get("_source");
 		} else {
@@ -256,11 +251,6 @@ public class ElasticsearchClient {
 	}
 
 	public void sendMetricDashboardBulkAsync(final String resource) {
-		if (isElasticsearch7Compatible()) {
-			logger.debug("TODO: implement");
-			return;
-		}
-
 		// skip sending dashboards if init parameter is set to false
 		if (!corePlugin.isInitializeElasticsearch()) {
 			logger.info("skip Elasticsearch init due to stagemonitor.elasticsearch.init=false");
@@ -273,11 +263,6 @@ public class ElasticsearchClient {
 	}
 
 	public void sendSpanDashboardBulkAsync(final String resource, boolean logBulkErrors) {
-		if (isElasticsearch7Compatible()) {
-			logger.debug("TODO: implement");
-			return;
-		}
-
 		sendClassPathRessourceBulkAsync(resource, logBulkErrors);
 	}
 

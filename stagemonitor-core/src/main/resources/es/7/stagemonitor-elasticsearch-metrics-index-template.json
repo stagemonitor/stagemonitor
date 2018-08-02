@@ -1,5 +1,5 @@
 {
-  "template": "stagemonitor-metrics-*",
+  "index_patterns": "stagemonitor-metrics-*",
   "order" : 1,
   "settings": {
     "index": {

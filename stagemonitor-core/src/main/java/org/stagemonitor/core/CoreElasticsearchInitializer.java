@@ -18,12 +18,10 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
 		if (corePlugin.isInitializeElasticsearch()) {
-			if (elasticsearchClient.isElasticsearch7Compatible()) {
-				logger.debug("TODO: creating KibanaIndexAndMapping for ES 7...");
-			} else if (elasticsearchClient.isElasticsearch6Compatible()) {
-				logger.debug("creating KibanaIndexAndMapping for ES 6...");
+			if (elasticsearchClient.isElasticsearch6Compatible() || elasticsearchClient.isElasticsearch7Compatible()) {
+				logger.debug("creating KibanaIndexAndMapping for ES 6/7...");
 				elasticsearchClient.createIndexAndSendMapping(".kibana", "doc", IOUtils.getResourceAsStream(elasticsearchClient.getKibanaResourcePath() + "kibana-index-doc.json"));
-				logger.debug("created KibanaIndexAndMapping for ES 6");
+				logger.debug("created KibanaIndexAndMapping for ES 6/7");
 			} else {
 				logger.debug("creating KibanaIndexAndMapping for ES 5...");
 				createKibana5IndexAndMappings(elasticsearchClient);
@@ -69,7 +67,11 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 			}
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
 					templatePath, corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
-			elasticsearchClient.sendMappingTemplate(mappingJson, "stagemonitor-metrics");
+			String templateName = "stagemonitor-metrics";
+			if (elasticsearchClient.isElasticsearch7Compatible()) {
+				templateName = "stagemonitor-metrics-*";
+			}
+			elasticsearchClient.sendMappingTemplate(mappingJson, templateName);
 			elasticsearchClient.createEmptyIndex(ElasticsearchReporter.getTodaysIndexName());
 		}
 	}

@@ -1,5 +1,5 @@
 {
-  "template": "stagemonitor-spans-*",
+  "index_patterns": "stagemonitor-spans-*",
   "order" : 1,
   "settings" : {
     "index" : {
