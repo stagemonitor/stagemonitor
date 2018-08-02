@@ -67,11 +67,7 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 			}
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
 					templatePath, corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
-			String templateName = "stagemonitor-metrics";
-			if (elasticsearchClient.isElasticsearch7Compatible()) {
-				templateName = "stagemonitor-metrics-*";
-			}
-			elasticsearchClient.sendMappingTemplate(mappingJson, templateName);
+			elasticsearchClient.sendMappingTemplate(mappingJson, "stagemonitor-metrics");
 			elasticsearchClient.createEmptyIndex(ElasticsearchReporter.getTodaysIndexName());
 		}
 	}

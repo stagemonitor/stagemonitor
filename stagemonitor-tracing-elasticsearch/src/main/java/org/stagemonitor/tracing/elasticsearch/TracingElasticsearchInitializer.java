@@ -37,11 +37,7 @@ public class TracingElasticsearchInitializer extends AbstractElasticsearchInitia
 		}
 		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
 				templatePath, corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
-		String templateName = "stagemonitor-spans";
-		if (elasticsearchClient.isElasticsearch7Compatible()) {
-			templateName = "stagemonitor-spans-*";
-		}
-		elasticsearchClient.sendMappingTemplate(spanMappingJson, templateName);
+		elasticsearchClient.sendMappingTemplate(spanMappingJson, "stagemonitor-spans");
 		elasticsearchClient.createEmptyIndex(ElasticsearchSpanReporter.getTodaysIndexName());
 	}
 }
