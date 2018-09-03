@@ -1,21 +1,32 @@
 plugins {
-	id 'me.champeau.gradle.jmh' version '0.3.0'
+	id "me.champeau.gradle.jmh" version "0.4.7"
 }
 
-apply plugin: 'me.champeau.gradle.jmh'
-
 jmh {
-	jmhVersion = '1.12'
+	jmhVersion = '1.21'
 	iterations = 5
 	fork = 2
 	warmupIterations = 1
 	warmupForks = 1
-	benchmarkMode = 'AverageTime'
+	benchmarkMode = ['AverageTime']
 	humanOutputFile = null
 	timeUnit = 'ns'
 	include = '.*MetricNameBenchmark.*'
 //	profilers = ['hs_gc']
 	//	mergeServiceFiles()
+}
+
+jmh {
+	jmhVersion = '1.21'
+	iterations = 1
+	fork = 1
+	warmupIterations = 1
+	warmupForks = 1
+	benchmarkMode = ['AverageTime']
+	timeUnit = 'ns'
+	include = '.*ElasticsearchReporterBenchmark.*'
+	jvmArgs = "$System.env.JMH_ARGS"
+	profilers = ['gc']
 }
 
 dependencies {
