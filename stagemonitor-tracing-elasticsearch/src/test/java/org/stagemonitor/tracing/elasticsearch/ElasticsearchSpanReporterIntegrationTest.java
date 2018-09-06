@@ -108,7 +108,7 @@ public class ElasticsearchSpanReporterIntegrationTest extends AbstractElasticsea
 	public void testUpdateNotYetExistentSpan_eventuallyUpdates() throws Exception {
 		final Span span = tracer.buildSpan("Test#test")
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
-				.startManual();
+				.start();
 		reporter.updateSpan(B3HeaderFormat.getB3Identifiers(tracer, span), null, Collections.singletonMap("foo", "bar"));
 
 		span.finish();

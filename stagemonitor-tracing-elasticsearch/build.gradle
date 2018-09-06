@@ -1,6 +1,9 @@
 dependencies {
 	compile project(":stagemonitor-tracing")
-	compile "com.uber.jaeger:jaeger-b3:$jaegerVersion"
+
+	compile "io.jaegertracing:jaeger-core:$jaegerVersion"
+	compile "io.jaegertracing:jaeger-thrift:$jaegerVersion"
+	compile "io.jaegertracing:jaeger-zipkin:$jaegerVersion"
 
 	compileOnly "org.elasticsearch:elasticsearch:$esVersion"
 
