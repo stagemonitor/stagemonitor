@@ -1,10 +1,9 @@
 package org.stagemonitor.tracing.elasticsearch.impl;
 
-import com.uber.jaeger.metrics.Counter;
-import com.uber.jaeger.metrics.Gauge;
-import com.uber.jaeger.metrics.StatsFactory;
-import com.uber.jaeger.metrics.Timer;
-
+import io.jaegertracing.internal.metrics.Counter;
+import io.jaegertracing.internal.metrics.Gauge;
+import io.jaegertracing.internal.metrics.Timer;
+import io.jaegertracing.spi.MetricsFactory;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 import java.util.Map;
@@ -13,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
-public class Metric2RegistryStatsFactory implements StatsFactory {
+public class Metric2RegistryStatsFactory implements MetricsFactory {
 
 	private final Metric2Registry metric2Registry;
 

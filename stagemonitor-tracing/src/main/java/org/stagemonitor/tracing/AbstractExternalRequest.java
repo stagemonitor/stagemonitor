@@ -38,7 +38,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 			spanBuilder.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 		}
 		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, getType());
-		return spanBuilder.startActive();
+		return spanBuilder.startActive(true);
 	}
 
 	protected abstract String getType();

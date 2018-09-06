@@ -56,7 +56,7 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 		final Scope scope = spanBuilder
 				.withTag(SpanUtils.OPERATION_TYPE, OP_TYPE_METHOD_INVOCATION)
 				.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true)
-				.startActive();
+				.startActive(true);
 		SpanUtils.setParameters(scope.span(), safeParameters);
 		return scope;
 	}
