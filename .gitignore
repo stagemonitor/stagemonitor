@@ -14,3 +14,4 @@ secring.gpg
 sonatype-credentials.properties
 node_modules
 classes
+.DS_Store
