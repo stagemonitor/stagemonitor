@@ -82,7 +82,7 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 		public Advice.OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<MeterExceptionsFor> annotation, AdviceType adviceType) {
 			return new Advice.OffsetMapping() {
 				@Override
-				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler, Sort sort) {
 					final ExceptionMetered exceptionMetered = instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent();
 					final TypeDescription.ForLoadedType exceptionType = new TypeDescription.ForLoadedType(exceptionMetered.cause());
 					return Target.ForStackManipulation.of(exceptionType);

@@ -33,7 +33,7 @@ public class EumApplication extends SpringBootServletInitializer {
 
 		@Override
 		public void onStartup(ServletContext servletContext) throws ServletException {
-			// necessary for spring boot 2.0.0.M2 until stagemonitor supports it natively
+			// necessary for spring boot 2.0.0 until stagemonitor supports it natively
 			ServletContainerInitializerUtil.registerStagemonitorServletContainerInitializers(servletContext);
 		}
 	}

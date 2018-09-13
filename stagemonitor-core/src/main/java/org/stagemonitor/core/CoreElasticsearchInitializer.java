@@ -34,7 +34,7 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 		elasticsearchClient.scheduleIndexManagement(ElasticsearchReporter.STAGEMONITOR_METRICS_INDEX_PREFIX,
 				corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getDeleteElasticsearchMetricsAfterDays());
 
-		reportToElasticsearch(corePlugin.getMetricRegistry(), corePlugin.getReportingIntervalElasticsearch(), corePlugin.getMeasurementSession());
+		reportToElasticsearch(corePlugin.getMetricRegistry(), corePlugin.getElasticsearchReportingInterval(), corePlugin.getMeasurementSession());
 	}
 
 	private void createKibana5IndexAndMappings(ElasticsearchClient elasticsearchClient) {

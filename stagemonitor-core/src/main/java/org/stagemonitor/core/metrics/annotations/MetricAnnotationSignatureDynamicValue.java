@@ -23,7 +23,7 @@ public abstract class MetricAnnotationSignatureDynamicValue<T extends Annotation
 	public Advice.OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
 		return new Advice.OffsetMapping() {
 			@Override
-			public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+			public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler, Sort sort) {
 				return Advice.OffsetMapping.Target.ForStackManipulation.of(getRequestName(instrumentedMethod));
 			}
 		};

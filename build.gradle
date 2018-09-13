@@ -52,11 +52,11 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 ext {
 	metricsVersion = '3.2.4'
 	slf4jVersion = '1.7.25'
-	jacksonVersion = '2.9.0'
-	esVersion = '6.1.1'
-	byteBuddyVersion = '1.7.9'
+	jacksonVersion = '2.9.6'
+	esVersion = '6.2.4'
+	byteBuddyVersion = '1.8.11'
 	opentracingVersion = '0.31.0'
-	jaegerVersion = '0.24.0'
+	jaegerVersion = '0.31.0'
 	jettyVersion = '9.3.13.v20161014'
 	getProjectsToRelease = this.&getProjectsToRelease
 }
@@ -101,7 +101,7 @@ subprojects {
 	dependencies {
 		testCompile 'junit:junit:4.12'
 		testCompile 'org.mockito:mockito-core:2.10.0'
-		testCompile 'ch.qos.logback:logback-classic:1.1.7'
+		testCompile 'ch.qos.logback:logback-classic:1.2.3'
 		testCompile 'org.apache.logging.log4j:log4j-core:2.9.1'
 		testCompile 'commons-io:commons-io:2.5'
 		testCompile 'org.assertj:assertj-core:3.8.0'
@@ -140,7 +140,9 @@ subprojects {
 	processResources {
 		doLast {
 			sourceSets.main.output.resourcesDir.mkdirs()
-			def versionFile = new File(sourceSets.main.output.resourcesDir, "version.properties")
+			def versionDir = file("${sourceSets.main.output.resourcesDir}/org/stagemonitor")
+			versionDir.mkdirs()
+			def versionFile = new File(versionDir, "version.properties")
 			versionFile.text = "version=$version"
 		}
 		eachFile { resource ->
@@ -201,7 +203,7 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "4.5.1"
+	gradleVersion = "4.10"
 	distributionType = "all"
 }
 

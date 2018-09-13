@@ -52,6 +52,8 @@ public class JvmPlugin extends StagemonitorPlugin {
 					}
 				}
 			});
+		} catch (ClassNotFoundException cnfe) {
+			logger.warn("Could not register cpu usage due to ClassNotFoundException. Please make sure that com.sun.management.OperatingSystemMXBean can be loaded.");
 		} catch (Exception e) {
 			logger.warn("Could not register cpu usage. ({})", e.getMessage());
 		}
