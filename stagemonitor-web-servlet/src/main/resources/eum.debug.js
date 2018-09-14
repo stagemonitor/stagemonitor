@@ -1005,6 +1005,7 @@ function instrumentXMLHttpRequest() {
     var traceId = void 0;
     var spanId = void 0;
     var setBackendCorrelationHeaders = false;
+    var sampled = Math.random() <= defaultVars.sampleRate ? 1 : 0;
 
     function onFinish(status) {
       if (ignored) return;
@@ -1094,8 +1095,6 @@ function instrumentXMLHttpRequest() {
       }
 
       setBackendCorrelationHeaders = isSameOrigin(url) || isWhitelistedOrigin(url);
-
-      var sampled = Math.random() <= defaultVars.sampleRate ? 1 : 0;
 
       beacon['t'] = traceId;
       beacon['s'] = spanId;
