@@ -203,7 +203,7 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "4.10"
+	gradleVersion = "4.10.2"
 	distributionType = "all"
 }
 
