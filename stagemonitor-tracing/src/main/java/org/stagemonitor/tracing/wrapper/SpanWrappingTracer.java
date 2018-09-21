@@ -47,7 +47,7 @@ public class SpanWrappingTracer implements Tracer {
     
     @Override
     public Span activeSpan() {
-        return scopeManager().active().span();
+        return scopeManager().active() == null ? null : scopeManager().active().span();
     }
 
 	@Override
