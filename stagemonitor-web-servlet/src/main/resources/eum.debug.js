@@ -391,8 +391,6 @@ function addMetaDataToBeacon(beacon) {
   }
 }
 
-var maxLengthForImgRequest = 2000;
-
 function sendBeacon(data) {
   var str = stringify(data);
   if (str.length === 0) {
@@ -403,7 +401,7 @@ function sendBeacon(data) {
     info('Transmitting beacon', data);
   }
 
-  if (OriginalXMLHttpRequest && str.length > maxLengthForImgRequest) {
+  if (OriginalXMLHttpRequest) {
     var xhr = new OriginalXMLHttpRequest();
     xhr.open('POST', String(defaultVars.reportingUrl), true);
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
