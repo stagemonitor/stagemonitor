@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.eum;
 
+import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.web.servlet.ServletPlugin;
 import org.stagemonitor.web.servlet.filter.HtmlInjector;
 
@@ -31,7 +32,9 @@ public class ClientSpanJavaScriptHtmlInjector extends HtmlInjector {
 				.append(contextPath)
 				.append("/stagemonitor/public/eum.js','ineum');\n")
 				.append("  \n")
-				.append("  ineum('reportingUrl', '").append(contextPath).append("/stagemonitor/public/eum');\n");
+				.append("  ineum('reportingUrl', '").append(contextPath).append("/stagemonitor/public/eum');\n")
+				.append("  ineum('maxLengthForImgRequest', " + servletPlugin.getMaxLengthForImgRequest() + ");\n")
+				.append("  ineum('disableResourceTimingTransmission', " + servletPlugin.isDisableResourceTimingTransmission() + ");\n");
 		for (ClientSpanExtension clientSpanExtension : servletPlugin.getClientSpanExtenders()) {
 			sb.append(clientSpanExtension.getClientTraceExtensionScriptDynamicPart(injectArguments.getSpanWrapper()));
 		}
