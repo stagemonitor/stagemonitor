@@ -266,6 +266,29 @@ public class ServletPlugin extends StagemonitorPlugin {
 			.configurationCategory(WEB_PLUGIN)
 			.tags("advanced")
 			.buildWithDefault(false);
+	private ConfigurationOption<Integer> maxLengthForImgRequest = ConfigurationOption.integerOption()
+			.key("stagemonitor.eum.maxLengthForImgRequest")
+			.dynamic(true)
+			.label("Max length for img requests")
+			.description("Weasel will send data either as HTTP GET requests with data being stored" +
+					" in query parameters, or as HTTP POST requests with data being available" +
+					" as the request body encoded as application/x-www-form-urlencoded." +
+					" Whether GET or POST is used depends on the amount of data. If the" +
+					" length of the url exceeds the value of maxLengthForImgRequest and" +
+					" the browser supports the XMLHttpRequest API, the request" +
+					" will be sent as HTTP POST, otherwise as HTTP GET.")
+			.configurationCategory(WEB_PLUGIN)
+			.tags("advanced")
+			.buildWithDefault(2000);
+	private ConfigurationOption<Boolean> disableResourceTimingTransmission = ConfigurationOption.booleanOption()
+			.key("stagemonitor.eum.disableResourceTimingTransmission")
+			.dynamic(true)
+			.label("Disable resource timing transmission")
+			.description("Weasel will attempt to record resource timings. You can use this" +
+					" setting to disable the transmission of the data.")
+			.configurationCategory(WEB_PLUGIN)
+			.tags("advanced")
+			.buildWithDefault(false);
 	private ConfigurationOption<Integer> clientSpanScriptCacheDuration = ConfigurationOption.integerOption()
 			.key("stagemonitor.eum.clientSpanScriptCacheDuration")
 			.dynamic(true)
@@ -354,6 +377,14 @@ public class ServletPlugin extends StagemonitorPlugin {
 
 	public void registerMinifyClientSpanScriptOptionChangedListener(ConfigurationOption.ChangeListener<Boolean> listener) {
 		minifyClientSpanScript.addChangeListener(listener);
+	}
+
+	public int getMaxLengthForImgRequest() {
+		return maxLengthForImgRequest.getValue();
+	}
+
+	public boolean isDisableResourceTimingTransmission() {
+		return disableResourceTimingTransmission.getValue();
 	}
 
 	public int getClientSpanScriptCacheDuration() {

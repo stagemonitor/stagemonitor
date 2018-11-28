@@ -1,8 +1,12 @@
 (function () {
 'use strict';
 
+var pageLoad = 'pl';
+var spaTransition = 'spa';
+
 var win = window;
 var doc = win.document;
+var nav = navigator;
 var encodeURIComponent = win.encodeURIComponent;
 var OriginalXMLHttpRequest = win.XMLHttpRequest;
 var originalFetch = win.fetch;
@@ -142,6 +146,10 @@ function getActiveTraceId() {
   return states[currentStateName].getActiveTraceId();
 }
 
+function getActivePhase() {
+  return states[currentStateName].getActivePhase();
+}
+
 function triggerManualPageLoad() {
   return states[currentStateName].triggerManualPageLoad();
 }
@@ -173,6 +181,7 @@ var defaultVars = {
   meta: {},
   ignoreUrls: [],
   ignorePings: true,
+  ignoreErrorMessages: [],
   xhrTransmissionTimeout: 20000,
   whitelistedOrigins: [],
   manualPageLoadEvent: false,
@@ -182,6 +191,11 @@ var defaultVars = {
   wrapEventHandlers: false,
   wrappedEventHandlersOriginalFunctionStorageKey: '__weaselOriginalFunctions__',
   wrapTimers: false,
+  maxLengthForImgRequest: 2000,
+  disableResourceTimingTransmission: false,
+  userId: undefined,
+  userName: undefined,
+  userEmail: undefined,
   sampleRate: 1
 };
 
@@ -194,6 +208,9 @@ var state = {
   },
   getActiveTraceId: function () {
     return defaultVars.pageLoadTraceId;
+  },
+  getActivePhase: function () {
+    return pageLoad;
   },
 
 
@@ -216,6 +233,48 @@ var state = {
 };
 function onLoad() {
   transitionTo('pageLoaded');
+}
+
+function addMetaDataToBeacon(beacon) {
+  for (var key in defaultVars.meta) {
+    if (hasOwnProperty(defaultVars.meta, key)) {
+      beacon['m_' + key] = defaultVars.meta[key];
+    }
+  }
+}
+
+var languages = determineLanguages();
+
+function addCommonBeaconProperties(beacon) {
+  beacon['k'] = defaultVars.apiKey;
+  beacon['r'] = defaultVars.referenceTimestamp;
+  beacon['p'] = defaultVars.page;
+  beacon['pl'] = defaultVars.pageLoadTraceId;
+  beacon['ui'] = defaultVars.userId;
+  beacon['un'] = defaultVars.userName;
+  beacon['ue'] = defaultVars.userEmail;
+  beacon['ul'] = languages;
+  beacon['ph'] = getActivePhase();
+  beacon['ww'] = win.innerWidth;
+  beacon['wh'] = win.innerHeight;
+
+  if (doc.visibilityState) {
+    beacon['h'] = doc.visibilityState === 'hidden' ? 1 : 0;
+  }
+
+  addMetaDataToBeacon(beacon);
+}
+
+function determineLanguages() {
+  if (nav.languages && nav.languages.length > 0) {
+    return nav.languages.slice(0, 5).join(',');
+  }
+
+  if (typeof nav.userLanguage === 'string') {
+    return [nav.userLanguage].join(',');
+  }
+
+  return undefined;
 }
 
 var INTERNAL_END_MARKER = '<END>';
@@ -298,14 +357,21 @@ var urlMaxLength = 255;
 
 var initiatorTypes = {
   'other': 0,
+
   'img': 1,
+  // IMAGE element inside a SVG
+  'image': 1,
+
   'link': 2,
   'script': 3,
   'css': 4,
+
   'xmlhttprequest': 5,
+  'fetch': 5,
+  'beacon': 5,
+
   'html': 6,
-  // IMAGE element inside a SVG
-  'image': 7
+  'navigation': 6
 };
 
 var cachingTypes = {
@@ -317,8 +383,15 @@ var cachingTypes = {
 
 function addResourceTimings(beacon, minStartTime) {
   if (isResourceTimingAvailable && win.JSON) {
-    var entries = getEntriesTransferFormat(performance.getEntriesByType('resource'), minStartTime);
-    beacon['res'] = win.JSON.stringify(entries);
+    if (defaultVars.disableResourceTimingTransmission) {
+      beacon['res'] = 'resource timing transmission is disabled';
+      {
+        debug('resource timing transmission is disabled');
+      }
+    } else {
+      var entries = getEntriesTransferFormat(performance.getEntriesByType('resource'), minStartTime);
+      beacon['res'] = win.JSON.stringify(entries);
+    }
 
     if (defaultVars.autoClearResourceTimings && performance.clearResourceTimings) {
       {
@@ -371,24 +444,56 @@ function serializeEntry(entry) {
   entry['transferSize'] > 0) {
     if (entry['transferSize'] === 0) {
       result.push(cachingTypes.cached);
-    } else if (entry['transferSize'] < entry['encodedBodySize']) {
+    } else if (entry['transferSize'] > 0 && (entry['encodedBodySize'] === 0 || entry['transferSize'] < entry['encodedBodySize'])) {
       result.push(cachingTypes.validated);
     } else {
       result.push(cachingTypes.fullLoad);
     }
 
-    result.push(entry['encodedBodySize']);
+    result.push(entry['encodedBodySize'] || '');
+    result.push(entry['decodedBodySize'] || '');
+    result.push(entry['transferSize'] || '');
+  } else {
+    result.push('');
+    result.push('');
+    result.push('');
+    result.push('');
   }
 
-  return result.join(',');
+  if (entry['responseStart'] != null &&
+  // timing allow origin check may have failed
+  entry['responseStart'] >= entry['fetchStart']) {
+    result.push(calculateTiming(entry['redirectEnd'], entry['redirectStart']));
+    result.push(calculateTiming(entry['domainLookupStart'], entry['fetchStart']));
+    result.push(calculateTiming(entry['domainLookupEnd'], entry['domainLookupStart']));
+    if (entry['secureConnectionStart'] != null && entry['secureConnectionStart'] > 0) {
+      result.push(calculateTiming(entry['secureConnectionStart'], entry['connectStart']));
+      result.push(calculateTiming(entry['connectEnd'], entry['secureConnectionStart']));
+    } else {
+      result.push(calculateTiming(entry['connectEnd'], entry['connectStart']));
+      result.push('');
+    }
+    result.push(calculateTiming(entry['responseStart'], entry['requestStart']));
+    result.push(calculateTiming(entry['responseEnd'], entry['responseStart']));
+  }
+
+  return result.join(',')
+  // remove empty trailing timings
+  .replace(/,+$/, '');
 }
 
-function addMetaDataToBeacon(beacon) {
-  for (var key in defaultVars.meta) {
-    if (hasOwnProperty(defaultVars.meta, key)) {
-      beacon['m_' + key] = defaultVars.meta[key];
-    }
+function calculateTiming(a, b) {
+  if (a == null || b == null ||
+  // the values being equal indicates for example that a network connection didn't need
+  // to be established. Do not report a timing of '0' as this will skew the statistics.
+  a === b) {
+    return '';
   }
+  var diff = Math.round(a - b);
+  if (diff < 0) {
+    return '';
+  }
+  return diff;
 }
 
 function sendBeacon(data) {
@@ -401,7 +506,7 @@ function sendBeacon(data) {
     info('Transmitting beacon', data);
   }
 
-  if (OriginalXMLHttpRequest) {
+  if (OriginalXMLHttpRequest && str.length > defaultVars.maxLengthForImgRequest) {
     var xhr = new OriginalXMLHttpRequest();
     xhr.open('POST', String(defaultVars.reportingUrl), true);
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
@@ -440,17 +545,16 @@ var beacon = {};
 
 var state$1 = {
   onEnter: function () {
-    beacon['k'] = defaultVars.apiKey;
-    beacon['r'] = defaultVars.referenceTimestamp;
     beacon['t'] = generateUniqueId();
     beacon['ts'] = now();
-
     beacon['ty'] = 'spa';
-    beacon['pl'] = defaultVars.pageLoadTraceId;
   },
   getActiveTraceId: function () {
     // $FlowFixMe: Flow somehow considers this property as null|number|undefined.
     return beacon['t'];
+  },
+  getActivePhase: function () {
+    return spaTransition;
   },
   triggerManualPageLoad: function () {
     {
@@ -466,7 +570,6 @@ var state$1 = {
     transitionTo('spaTransition');
   },
   endSpaPageTransition: function (opts) {
-    beacon['p'] = defaultVars.page;
     beacon['l'] = opts['url'];
     beacon['e'] = opts['explanation'];
     // $FlowFixMe: Flow somehow considers the ts property to be a string
@@ -490,7 +593,9 @@ var state$1 = {
         break;
     }
 
-    addMetaDataToBeacon(beacon);
+    addCommonBeaconProperties(beacon);
+    beacon['ph'] = spaTransition;
+
     // $FlowFixMe: Flow somehow considers the ts property to be a string
     addResourceTimings(beacon, beacon['ts'] - 1);
     sendBeacon(beacon);
@@ -562,10 +667,10 @@ function addTimingToPageLoadBeacon(beacon) {
   }
   beacon['t_req'] = timing.responseStart - timing.requestStart;
   beacon['t_rsp'] = timing.responseEnd - timing.responseStart;
-  //beacon['t_dom'] = timing.domContentLoadedEventStart - timing.domLoading;
-  //beacon['t_chi'] = timing.loadEventEnd - timing.domContentLoadedEventStart;
-  //beacon['t_bac'] = timing.responseStart - start;
-  //beacon['t_fro'] = timing.loadEventEnd - timing.responseStart;
+  beacon['t_dom'] = timing.domContentLoadedEventStart - timing.domLoading;
+  beacon['t_chi'] = timing.loadEventEnd - timing.domContentLoadedEventStart;
+  beacon['t_bac'] = timing.responseStart - start;
+  beacon['t_fro'] = timing.loadEventEnd - timing.responseStart;
   beacon['t_pro'] = timing.loadEventStart - timing.domLoading;
   beacon['t_loa'] = timing.loadEventEnd - timing.loadEventStart;
 
@@ -635,6 +740,9 @@ var state$2 = {
   getActiveTraceId: function () {
     return null;
   },
+  getActivePhase: function () {
+    return undefined;
+  },
   triggerManualPageLoad: function () {
     {
       warn('Page load triggered, but page is already considered as loaded. Did you mark it as loaded more than once?');
@@ -656,26 +764,38 @@ var state$2 = {
 function sendPageLoadBeacon() {
   // $FlowFixMe: Find a way to define all properties beforehand so that flow doesn't complain about missing props.
   var beacon = {};
+  addCommonBeaconProperties(beacon);
+
   beacon['ty'] = 'pl';
-  beacon['r'] = defaultVars.referenceTimestamp;
-  beacon['k'] = defaultVars.apiKey;
   beacon['t'] = defaultVars.pageLoadTraceId;
-  beacon['p'] = defaultVars.page;
   beacon['bt'] = defaultVars.pageLoadBackendTraceId;
   beacon['u'] = win.location.href;
+  beacon['ph'] = pageLoad;
 
-  addMetaDataToBeacon(beacon);
   addTimingToPageLoadBeacon(beacon);
   addResourceTimings(beacon);
 
   sendBeacon(beacon);
 }
 
+var ignorePingsRegex = /.*\/ping(\/?$|\?.*)/i;
+
+function isUrlIgnored(url) {
+  if (defaultVars.ignorePings && ignorePingsRegex.test(url)) {
+    return true;
+  }
+
+  return matchesAny(defaultVars.ignoreUrls, url);
+}
+
+function isErrorMessageIgnored(message) {
+  return !message || matchesAny(defaultVars.ignoreErrorMessages, message);
+}
+
 var maxErrorsToReport = 100;
 var maxStackSize = 30;
 
 var reportedErrors = 0;
-var erroneousPageViewReported = false;
 var maxSeenErrorsTracked = 20;
 var numberOfDifferentErrorsSeen = 0;
 var seenErrors = {};
@@ -723,12 +843,11 @@ function reportError(error) {
 }
 
 function onUnhandledError(message, stack) {
-  if (!erroneousPageViewReported) {
-    erroneousPageViewReported = true;
-    sendErroneousPageViewBeacon();
+  if (!message || reportedErrors > maxErrorsToReport) {
+    return;
   }
 
-  if (!message || reportedErrors > maxErrorsToReport) {
+  if (isErrorMessageIgnored(message)) {
     return;
   }
 
@@ -792,40 +911,18 @@ function sendBeaconForError(error) {
   var traceId = error.parentId || spanId;
   // $FlowFixMe
   var beacon = {
-    // $FlowFixMe
-    'k': defaultVars.apiKey,
     's': spanId,
     't': traceId,
     'ts': now(),
-    'p': defaultVars.page,
 
     // error beacon specific data
     'ty': 'err',
-    'pl': defaultVars.pageLoadTraceId,
     'l': error.location,
     'e': error.message,
     'st': error.stack,
     'c': error.seenCount - error.transmittedCount
   };
-  addMetaDataToBeacon(beacon);
-
-  sendBeacon(beacon);
-}
-
-function sendErroneousPageViewBeacon() {
-  // $FlowFixMe
-  var beacon = {
-    // $FlowFixMe
-    'k': defaultVars.apiKey,
-    't': generateUniqueId(),
-    'ts': getPageLoadStartTimestamp(),
-    'p': defaultVars.page,
-
-    // epv beacon specific data
-    'ty': 'epv',
-    'pl': defaultVars.pageLoadTraceId
-  };
-  addMetaDataToBeacon(beacon);
+  addCommonBeaconProperties(beacon);
   sendBeacon(beacon);
 }
 
@@ -888,16 +985,6 @@ function normalizeUrl(url) {
     }
     return url;
   }
-}
-
-var ignorePingsRegex = /.*\/ping(\/?$|\?.*)/i;
-
-function isUrlIgnored(url) {
-  if (defaultVars.ignorePings && ignorePingsRegex.test(url)) {
-    return true;
-  }
-
-  return matchesAny(defaultVars.ignoreUrls, url);
 }
 
 // Asynchronously created a tag.
@@ -975,10 +1062,6 @@ function instrumentXMLHttpRequest() {
     // $FlowFixMe: Some properties deliberately left our for js file size reasons.
     var beacon = {
       // general beacon data
-      'r': defaultVars.referenceTimestamp,
-
-      // $FlowFixMe: Some properties deliberately left our for js file size reasons.
-      'k': defaultVars.apiKey,
       // 't': '',
       'ts': 0,
       'd': 0,
@@ -986,7 +1069,6 @@ function instrumentXMLHttpRequest() {
       // xhr beacon specific data
       'ty': 'xhr',
       // 's': '',
-      'pl': defaultVars.pageLoadTraceId,
       'l': win.location.href,
       'm': '',
       'u': '',
@@ -994,8 +1076,6 @@ function instrumentXMLHttpRequest() {
       'st': 0,
       'e': undefined
     };
-
-    addMetaDataToBeacon(beacon);
 
     // Whether or not we should ignore this beacon, e.g. because the URL is ignored.
     var ignored = false;
@@ -1108,6 +1188,7 @@ function instrumentXMLHttpRequest() {
         beacon['ts'] = now() - defaultVars.referenceTimestamp;
         beacon['st'] = additionalStatuses.openError;
         beacon['e'] = e.message;
+        addCommonBeaconProperties(beacon);
         sendBeacon(beacon);
         throw e;
       }
@@ -1133,10 +1214,6 @@ function instrumentXMLHttpRequest() {
         return originalSend.apply(xhr, arguments);
       }
 
-      if (doc.visibilityState) {
-        beacon['h'] = doc.visibilityState === 'hidden' ? 1 : 0;
-      }
-
       if (setBackendCorrelationHeaders) {
         originalSetRequestHeader.call(xhr, 'X-INSTANA-T', traceId);
         originalSetRequestHeader.call(xhr, 'X-INSTANA-S', spanId);
@@ -1144,7 +1221,7 @@ function instrumentXMLHttpRequest() {
       }
 
       beacon['ts'] = now() - defaultVars.referenceTimestamp;
-      beacon['p'] = defaultVars.page;
+      addCommonBeaconProperties(beacon);
       return originalSend.apply(xhr, arguments);
     };
 
@@ -1378,24 +1455,18 @@ function instrumentFetch() {
       {
         debug('Not generating XHR beacon for fetch call because it is to be ignored according to user configuration. URL: ' + url);
       }
-      return originalFetch(input, init);
+      return originalFetch(request);
     }
 
     // $FlowFixMe: Some properties deliberately left our for js file size reasons.
     var beacon = {
-      // general beacon data
-      'r': defaultVars.referenceTimestamp,
-
-      // $FlowFixMe: Some properties deliberately left our for js file size reasons.
-      'k': defaultVars.apiKey,
       // 't': '',
-      'ts': 0,
+      'ts': now() - defaultVars.referenceTimestamp,
       'd': 0,
 
       // xhr beacon specific data
       'ty': 'xhr',
       // 's': '',
-      'pl': defaultVars.pageLoadTraceId,
       'l': win.location.href,
       'm': '',
       'u': '',
@@ -1404,7 +1475,7 @@ function instrumentFetch() {
       'e': undefined
     };
 
-    addMetaDataToBeacon(beacon);
+    addCommonBeaconProperties(beacon);
 
     var traceId = getActiveTraceId();
     var spanId = generateUniqueId();
@@ -1419,9 +1490,6 @@ function instrumentFetch() {
     beacon['u'] = normalizeUrl(url);
     beacon['a'] = 1;
     beacon['bc'] = setBackendCorrelationHeaders ? 1 : 0;
-    if (doc.visibilityState) {
-      beacon['h'] = doc.visibilityState === 'hidden' ? 1 : 0;
-    }
 
     if (setBackendCorrelationHeaders) {
       request.headers.append('X-INSTANA-T', traceId);
@@ -1445,6 +1513,7 @@ function instrumentFetch() {
       // $FlowFixMe: see above
       beacon['d'] = now() - (beacon['ts'] + defaultVars.referenceTimestamp);
       beacon['e'] = e.message;
+      beacon['st'] = -103;
       sendBeacon(beacon);
       throw e;
     });
@@ -1473,6 +1542,12 @@ function processCommand(command) {
         validateRegExpArray('ignoreUrls', command[1]);
       }
       defaultVars.ignoreUrls = command[1];
+      break;
+    case 'ignoreErrorMessages':
+      {
+        validateRegExpArray('ignoreErrorMessages', command[1]);
+      }
+      defaultVars.ignoreErrorMessages = command[1];
       break;
     case 'whitelistedOrigins':
       {
@@ -1516,6 +1591,25 @@ function processCommand(command) {
       break;
     case 'sampleRate':
       defaultVars.sampleRate = command[1];
+      break;
+    case 'getPageLoadId':
+      return defaultVars.pageLoadTraceId;
+    case 'maxLengthForImgRequest':
+      defaultVars.maxLengthForImgRequest = command[1];
+      break;
+    case 'disableResourceTimingTransmission':
+      defaultVars.disableResourceTimingTransmission = command[1];
+      break;
+    case 'user':
+      if (command[1]) {
+        defaultVars.userId = String(command[1]).substring(0, 128);
+      }
+      if (command[2]) {
+        defaultVars.userName = String(command[2]).substring(0, 128);
+      }
+      if (command[3]) {
+        defaultVars.userEmail = String(command[3]).substring(0, 128);
+      }
       break;
     default:
       {
@@ -1634,6 +1728,9 @@ var state$3 = {
   getActiveTraceId: function () {
     return defaultVars.pageLoadTraceId;
   },
+  getActivePhase: function () {
+    return pageLoad;
+  },
   triggerManualPageLoad: function () {
     {
       warn('Triggering a page load while EUM is initializing is unsupported.');
@@ -1663,7 +1760,7 @@ function processCommands(commands) {
 function addCommandAfterInitializationSupport() {
   var globalObjectName = win[defaultVars.nameOfLongGlobal];
   win[globalObjectName] = function () {
-    processCommand(arguments);
+    return processCommand(arguments);
   };
 }
 
