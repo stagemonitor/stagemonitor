@@ -257,9 +257,9 @@ public class ServletPlugin extends StagemonitorPlugin {
 					" Example: `user: string, logged_in: boolean, age: number`")
 			.configurationCategory(WEB_PLUGIN)
 			.buildWithDefault(Collections.<String, ClientSpanMetadataDefinition>emptyMap());
-	private ConfigurationOption<Boolean> minifyClientSpanScript = ConfigurationOption.booleanOption()
+	private ConfigurationOption<Boolean> debugClientSpanScript = ConfigurationOption.booleanOption()
 			.key("stagemonitor.eum.debugCollectionScript")
-			.dynamic(true)
+			.dynamic(false)
 			.label("Use debug build of weasel")
 			.description("If set, stagemonitor will serve the debug build of weasel for end user monitoring." +
 					" This should only be set to true, if you debug errors in the end user monitoring.")
@@ -371,12 +371,12 @@ public class ServletPlugin extends StagemonitorPlugin {
 		return clientSpanInjectionEnabled.getValue();
 	}
 
-	public boolean getMinifyClientSpanScript() {
-		return minifyClientSpanScript.getValue();
+	public boolean getDebugClientSpanScript() {
+		return debugClientSpanScript.getValue();
 	}
 
-	public void registerMinifyClientSpanScriptOptionChangedListener(ConfigurationOption.ChangeListener<Boolean> listener) {
-		minifyClientSpanScript.addChangeListener(listener);
+	public void registerDebugClientSpanScriptOptionChangedListener(ConfigurationOption.ChangeListener<Boolean> listener) {
+		debugClientSpanScript.addChangeListener(listener);
 	}
 
 	public int getMaxLengthForImgRequest() {

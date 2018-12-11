@@ -85,7 +85,7 @@ public class ClientSpanJavaScriptServletTest {
 		when(plugin.isClientSpanCollectionEnabled()).thenReturn(true);
 		when(plugin.isClientSpanCollectionInjectionEnabled()).thenReturn(false);
 		when(plugin.getClientSpanScriptCacheDuration()).thenReturn(timeToCache);
-		when(plugin.getMinifyClientSpanScript()).thenReturn(true);
+		when(plugin.getDebugClientSpanScript()).thenReturn(false);
 		return plugin;
 	}
 
