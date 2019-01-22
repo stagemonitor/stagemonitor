@@ -1,23 +1,12 @@
 package org.stagemonitor.core.instrument;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheckRegistry;
-
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.agent.ByteBuddyAgent;
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.dynamic.scaffold.MethodGraph;
-import net.bytebuddy.dynamic.scaffold.TypeValidation;
-import net.bytebuddy.matcher.ElementMatcher;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.stagemonitor.core.CorePlugin;
-import org.stagemonitor.core.Stagemonitor;
-import org.stagemonitor.core.metrics.health.ImmediateResult;
-import org.stagemonitor.core.util.ClassUtils;
-import org.stagemonitor.core.util.VersionUtils;
-import org.stagemonitor.util.IOUtils;
+import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.nameContains;
+import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
+import static net.bytebuddy.matcher.ElementMatchers.not;
+import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.classLoaderWithName;
+import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.isReflectionClassLoader;
+import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,15 +23,25 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
 
-import __redirected.org.stagemonitor.dispatcher.Dispatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.core.metrics.health.ImmediateResult;
+import org.stagemonitor.core.util.ClassUtils;
+import org.stagemonitor.core.util.VersionUtils;
+import org.stagemonitor.util.IOUtils;
 
-import static net.bytebuddy.matcher.ElementMatchers.any;
-import static net.bytebuddy.matcher.ElementMatchers.nameContains;
-import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
-import static net.bytebuddy.matcher.ElementMatchers.not;
-import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.classLoaderWithName;
-import static org.stagemonitor.core.instrument.ClassLoaderNameMatcher.isReflectionClassLoader;
-import static org.stagemonitor.core.instrument.TimedElementMatcherDecorator.timed;
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
+
+import __redirected.org.stagemonitor.dispatcher.Dispatcher;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.matcher.ElementMatcher;
 
 /**
  * Attaches the {@link ByteBuddyAgent} at runtime and registers all {@link StagemonitorByteBuddyTransformer}s
@@ -213,8 +212,8 @@ public class AgentAttacher {
 		for (StagemonitorByteBuddyTransformer transformer : getStagemonitorByteBuddyTransformers()) {
 			agentBuilder = agentBuilder
 					.type(transformer.getMatcher())
-					.transform(transformer.getTransformer())
-					.asDecorator();
+					.transform(transformer.getTransformer());
+					//.asDecorator();
 		}
 
 		final long start = System.currentTimeMillis();

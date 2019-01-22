@@ -25,7 +25,7 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'net.saliman:gradle-cobertura-plugin:2.3.0'
+		classpath 'net.saliman:gradle-cobertura-plugin:2.6.0'
 		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.6.3'
 		classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
 		classpath 'com.github.ben-manes:gradle-versions-plugin:0.15.0'
@@ -33,7 +33,7 @@ buildscript {
 }
 
 plugins {
-	id 'net.researchgate.release' version '2.3.5'
+	id 'net.researchgate.release' version '2.8.0'
 }
 
 repositories {
@@ -54,7 +54,8 @@ ext {
 	slf4jVersion = '1.7.25'
 	jacksonVersion = '2.9.6'
 	esVersion = '6.2.4'
-	byteBuddyVersion = '1.8.11'
+	byteBuddyVersion = '1.9.3'
+	jaxWsApiVersion = '2.3.1'
 	opentracingVersion = '0.31.0'
 	jaegerVersion = '0.31.0'
 	jettyVersion = '9.3.13.v20161014'
@@ -100,7 +101,7 @@ subprojects {
 
 	dependencies {
 		testCompile 'junit:junit:4.12'
-		testCompile 'org.mockito:mockito-core:2.10.0'
+		testCompile 'org.mockito:mockito-core:2.23.4'
 		testCompile 'ch.qos.logback:logback-classic:1.2.3'
 		testCompile 'org.apache.logging.log4j:log4j-core:2.9.1'
 		testCompile 'commons-io:commons-io:2.5'
@@ -202,7 +203,7 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 	}
 }
 
-task wrapper(type: Wrapper) {
+wrapper {
 	gradleVersion = "4.10.2"
 	distributionType = "all"
 }

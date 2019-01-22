@@ -5,6 +5,7 @@ dependencies {
 
 	compile 'javax.mail:mail:1.4.1'
 	compile 'org.freemarker:freemarker:2.3.23'
+	compile "javax.xml.ws:jaxws-api:$jaxWsApiVersion"
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
 	testCompile "org.elasticsearch:elasticsearch:$esVersion"
