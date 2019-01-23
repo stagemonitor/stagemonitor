@@ -31,7 +31,7 @@ public class PropertyFileConfigurationSourceTest {
 		source.save("foo", "bar");
 	}
 
-	//@Test
+	@Test
 	public void testLoadFromFileSystem() throws Exception {
 		File properties = File.createTempFile("filesystem-test", ".properties");
 		properties.deleteOnExit();

@@ -110,6 +110,13 @@ subprojects {
 
 	test.testLogging.exceptionFormat = 'full'
 
+	test {
+    	filter {
+        	//include specific method in any of the tests
+        	includeTestsMatching "*Test.test*"
+    	}
+	}
+
 	compileJava {
 		sourceCompatibility = 1.6
 		targetCompatibility = 1.6
