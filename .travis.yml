@@ -2,7 +2,6 @@ language: java
 sudo: false
 jdk:
   - oraclejdk8
-  - openjdk11
 env:
   matrix:
   - TERM=dumb
