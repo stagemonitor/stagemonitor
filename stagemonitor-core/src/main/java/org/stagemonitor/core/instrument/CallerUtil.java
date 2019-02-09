@@ -4,21 +4,17 @@ import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.metrics.aspects.SignatureUtils;
 
-import org.stagemonitor.core.util.ClassUtils;
-import sun.misc.JavaLangAccess;
-import sun.misc.SharedSecrets;
-
 public final class CallerUtil {
 
-	private static final Object javaLangAccessObject;
+	private static final Object javaLangAccessObject = null;
 
-	static {
-		if (ClassUtils.hasMethod("sun.misc.JavaLangAccess", "getStackTraceDepth", Throwable.class)) {
-			javaLangAccessObject = SharedSecrets.getJavaLangAccess();
-		} else {
-			javaLangAccessObject = null;
-		}
-	}
+//	static {
+//		if (ClassUtils.hasMethod("sun.misc.JavaLangAccess", "getStackTraceDepth", Throwable.class)) {
+//			javaLangAccessObject = SharedSecrets.getJavaLangAccess();
+//		} else {
+//			javaLangAccessObject = null;
+//		}
+//	}
 
 	private CallerUtil() {
 	}
@@ -30,27 +26,27 @@ public final class CallerUtil {
 		if (Stagemonitor.getPlugin(CorePlugin.class).getIncludePackages().isEmpty()) {
 			return null;
 		}
-		if (javaLangAccessObject != null) {
-			return getCallerSignatureSharedSecrets();
-		}
+//		if (javaLangAccessObject != null) {
+//			return getCallerSignatureSharedSecrets();
+//		}
 
 		return getCallerSignatureGetStackTrace();
 
 	}
 
-	private static String getCallerSignatureSharedSecrets() {
-		String executedBy = null;
-		Exception exception = new Exception();
-		final JavaLangAccess javaLangAccess = (JavaLangAccess) javaLangAccessObject;
-		for (int i = 2; i < javaLangAccess.getStackTraceDepth(exception); i++) {
-			final StackTraceElement stackTraceElement = javaLangAccess.getStackTraceElement(exception, i);
-			if (StagemonitorClassNameMatcher.isIncluded(stackTraceElement.getClassName())) {
-				executedBy = SignatureUtils.getSignature(stackTraceElement.getClassName(), stackTraceElement.getMethodName());
-				break;
-			}
-		}
-		return executedBy;
-	}
+//	private static String getCallerSignatureSharedSecrets() {
+//		String executedBy = null;
+//		Exception exception = new Exception();
+//		final JavaLangAccess javaLangAccess = (JavaLangAccess) javaLangAccessObject;
+//		for (int i = 2; i < javaLangAccess.getStackTraceDepth(exception); i++) {
+//			final StackTraceElement stackTraceElement = javaLangAccess.getStackTraceElement(exception, i);
+//			if (StagemonitorClassNameMatcher.isIncluded(stackTraceElement.getClassName())) {
+//				executedBy = SignatureUtils.getSignature(stackTraceElement.getClassName(), stackTraceElement.getMethodName());
+//				break;
+//			}
+//		}
+//		return executedBy;
+//	}
 
 	private static String getCallerSignatureGetStackTrace() {
 		String executedBy = null;
