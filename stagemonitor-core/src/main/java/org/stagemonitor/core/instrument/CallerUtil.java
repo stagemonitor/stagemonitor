@@ -32,8 +32,6 @@ public final class CallerUtil {
 		}
 		if (javaLangAccessObject != null) {
 			return getCallerSignatureSharedSecrets();
-		} else {
-			return getCallerSignatureGetStackTrace();
 		}
 
 		return getCallerSignatureGetStackTrace();
