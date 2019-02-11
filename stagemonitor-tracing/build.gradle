@@ -1,7 +1,7 @@
 dependencies {
 	compile project(":stagemonitor-core")
 	compile "io.opentracing:opentracing-util:$opentracingVersion"
-	compile "com.sun.xml.ws:jaxws-ri:2.3.2"
+	compile "com.sun.xml.ws:jaxws-rt:2.3.2"
 	optional "org.elasticsearch:elasticsearch:$esVersion"
 	optional 'javax.ejb:ejb-api:3.0'
 	optional 'org.freemarker:freemarker:2.3.23'
