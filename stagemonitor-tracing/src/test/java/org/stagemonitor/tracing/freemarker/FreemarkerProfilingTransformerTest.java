@@ -1,21 +1,44 @@
 package org.stagemonitor.tracing.freemarker;
 
-import freemarker.template.Configuration;
-import freemarker.template.Template;
-import freemarker.template.TemplateException;
-
-import org.junit.Test;
-import org.stagemonitor.tracing.profiler.CallStackElement;
-import org.stagemonitor.tracing.profiler.Profiler;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collections;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.SharedMetricRegistries;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.tracing.profiler.CallStackElement;
+import org.stagemonitor.tracing.profiler.Profiler;
 
 public class FreemarkerProfilingTransformerTest {
+    
+    @BeforeClass
+    public static void attachProfiler() {
+        Stagemonitor.init();
+    }
 
+    @Before
+    @After
+    public void clearMetricRegistry() {
+        Stagemonitor.getMetric2Registry().removeMatching(MetricFilter.ALL);
+    }
+
+    @AfterClass
+    public static void resetStagemonitor() {
+        Stagemonitor.reset();
+        SharedMetricRegistries.clear();
+    }    
+    
 	@Test
 	public void testFreemarkerProfiling() throws Exception {
 		final CallStackElement callTree = Profiler.activateProfiling("testFreemarkerProfiling");
