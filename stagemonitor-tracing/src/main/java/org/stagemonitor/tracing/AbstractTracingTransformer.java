@@ -87,7 +87,7 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 		public Advice.OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<RequestName> annotation, AdviceType adviceType) {
 			return new Advice.OffsetMapping() {
 				@Override
-				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler, Sort sort) {
 					final String requestName = getRequestName(instrumentedMethod);
 					if (requestName != null) {
 						return Target.ForStackManipulation.of(requestName);
@@ -139,7 +139,7 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 										 AdviceType adviceType) {
 			return new Advice.OffsetMapping() {
 				@Override
-				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler, Sort sort) {
 					final StringBuilder params = new StringBuilder();
 					for (ParameterDescription param : instrumentedMethod.getParameters()) {
 						params.append(param.getName()).append(',');

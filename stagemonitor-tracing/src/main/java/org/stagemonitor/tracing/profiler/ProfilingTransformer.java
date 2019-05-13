@@ -81,10 +81,10 @@ public class ProfilingTransformer extends StagemonitorByteBuddyTransformer {
 		public Advice.OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<ProfilerSignature> annotation, AdviceType adviceType) {
 			return new Advice.OffsetMapping() {
 				@Override
-				public Target resolve(TypeDescription instrumentedType, MethodDescription method, Assigner assigner, Context context) {
-					final String returnType = method.getReturnType().asErasure().getSimpleName();
-					final String className = method.getDeclaringType().getTypeName();
-					final String signature = String.format("%s %s.%s(%s)", returnType, className, method.getName(), getSignature(method));
+				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler, Sort sort) {
+					final String returnType = instrumentedMethod.getReturnType().asErasure().getSimpleName();
+					final String className = instrumentedMethod.getDeclaringType().getTypeName();
+					final String signature = String.format("%s %s.%s(%s)", returnType, className, instrumentedMethod.getName(), getSignature(instrumentedMethod));
 					return Target.ForStackManipulation.of(signature);
 				}
 			};
