@@ -1,10 +1,16 @@
 package org.stagemonitor.tracing.freemarker;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.stagemonitor.configuration.ConfigurationRegistry;
+import org.stagemonitor.core.Stagemonitor;
+import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.profiler.CallStackElement;
 import org.stagemonitor.tracing.profiler.Profiler;
 
@@ -13,8 +19,27 @@ import java.io.StringWriter;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class FreemarkerProfilingTransformerTest {
+
+	private TracingPlugin config;
+
+	@Before
+	public void before() throws Exception {
+		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
+		ConfigurationRegistry configuration = ConfigurationRegistry.builder()
+			.addOptionProvider(new TracingPlugin())
+			.build();
+		config = configuration.getConfig(TracingPlugin.class);
+	}
+
+	@After
+	public void cleanUp() {
+		Stagemonitor.reset();
+		SharedMetricRegistries.clear();
+	}
 
 	@Test
 	public void testFreemarkerProfiling() throws Exception {
