@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
+import io.opentracing.tag.Tag;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * The purpose of this wrapper is to call the registered {@link SpanEventListener}s before certain methods of the
@@ -62,6 +64,11 @@ public class SpanWrapper implements Span {
 			spanEventListener.onFinish(this, operationName, durationNanos);
 		}
 		delegate.finish(finishMicros);
+	}
+
+	@Override
+	public <T> Span setTag(Tag<T> tag, T value) {
+		throw new NotImplementedException();
 	}
 
 	@Override

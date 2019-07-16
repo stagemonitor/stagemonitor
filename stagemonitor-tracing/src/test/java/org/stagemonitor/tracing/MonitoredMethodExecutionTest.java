@@ -67,12 +67,12 @@ public class MonitoredMethodExecutionTest {
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
 
 		testObject = new TestObject(requestMonitor);
-		assertThat(tracer.scopeManager().active()).isNull();
+		assertThat(tracer.scopeManager().activeSpan()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracer.scopeManager().active()).isNull();
+		assertThat(tracer.scopeManager().activeSpan()).isNull();
 	}
 
 	@Test

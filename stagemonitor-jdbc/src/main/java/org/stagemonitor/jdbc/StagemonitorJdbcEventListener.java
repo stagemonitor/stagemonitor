@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
-import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
@@ -135,25 +134,22 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	@Override
 	public void onAfterAnyExecute(StatementInformation statementInformation, long timeElapsedNanos, SQLException e) {
-		final Scope activeScope = tracingPlugin.getTracer().scopeManager().active();
-		if (activeScope != null) {
-			final Span span = activeScope.span();
-			if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
-				MetaData metaData = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
-				Tags.PEER_SERVICE.set(span, metaData.serviceName);
-				span.setTag("db.type", metaData.productName);
-				span.setTag("db.user", metaData.userName);
+		final Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
+		if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
+			MetaData metaData = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
+			Tags.PEER_SERVICE.set(span, metaData.serviceName);
+			span.setTag("db.type", metaData.productName);
+			span.setTag("db.user", metaData.userName);
 
-				if (StringUtils.isNotEmpty(statementInformation.getSql())) {
-					String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
-					Profiler.addIOCall(sql, timeElapsedNanos);
-					span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, getMethod(sql));
-					span.setTag(DB_STATEMENT, sql);
-				}
-
+			if (StringUtils.isNotEmpty(statementInformation.getSql())) {
+				String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
+				Profiler.addIOCall(sql, timeElapsedNanos);
+				span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, getMethod(sql));
+				span.setTag(DB_STATEMENT, sql);
 			}
-			tracingPlugin.getRequestMonitor().monitorStop();
+
 		}
+		tracingPlugin.getRequestMonitor().monitorStop();
 	}
 
 	static String getMethod(String sql) {

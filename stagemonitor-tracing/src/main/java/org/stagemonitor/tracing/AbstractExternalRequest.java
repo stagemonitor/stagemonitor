@@ -1,10 +1,11 @@
 package org.stagemonitor.tracing;
 
+import io.opentracing.Scope;
+import io.opentracing.Span;
 import org.stagemonitor.core.instrument.CallerUtil;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
-import io.opentracing.Scope;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
@@ -23,9 +24,11 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 		this.operationName = operationName;
 	}
 
-	public Scope createScope() {
+	@Override
+	public Span createSpan() {
 		final Tracer.SpanBuilder spanBuilder;
-		if (tracer.scopeManager().active() != null) {
+		final Span activeSpan = tracer.scopeManager().activeSpan();
+		if (activeSpan != null) {
 			spanBuilder = tracer.buildSpan(operationName)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 		} else {
@@ -38,7 +41,8 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 			spanBuilder.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 		}
 		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, getType());
-		return spanBuilder.startActive(true);
+		Span span = spanBuilder.start();
+		return span;
 	}
 
 	protected abstract String getType();

@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing.soap;
 
+import io.opentracing.Scope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
@@ -8,6 +9,8 @@ import org.stagemonitor.tracing.TracingPlugin;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.namespace.QName;
@@ -27,6 +30,8 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 	private final boolean serverHandler;
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
+
+	protected Map<Span, Scope> scopeMap = new HashMap<Span, Scope>();
 
 	public AbstractTracingSOAPHandler(boolean serverHandler) {
 		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(SoapTracingPlugin.class), serverHandler);
@@ -90,7 +95,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return true;
 		}
-		final Span span = tracingPlugin.getTracer().scopeManager().active().span();
+		final Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
 		Tags.ERROR.set(span, Boolean.TRUE);
 		try {
 			final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
@@ -107,7 +112,14 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return;
 		}
-		tracingPlugin.getTracer().scopeManager().active().close();
+		Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
+		if (span != null) {
+			span.finish();
+			Scope scope = scopeMap.get(span);
+			if (scope != null) {
+				scope.close();
+			}
+		}
 	}
 
 	protected String getOperationName(SOAPMessageContext context) {

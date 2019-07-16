@@ -1,13 +1,17 @@
 package org.stagemonitor.tracing;
 
+import io.opentracing.Scope;
+import io.opentracing.util.GlobalTracer;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
-import io.opentracing.Scope;
 import io.opentracing.Span;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
@@ -20,6 +24,8 @@ public class RequestMonitor {
 	private CorePlugin corePlugin;
 	private TracingPlugin tracingPlugin;
 
+	private Map<Span, Scope> scopeMap = new HashMap<Span, Scope>();
+
 	public RequestMonitor(ConfigurationRegistry configuration, Metric2Registry registry) {
 		this(configuration, registry, configuration.getConfig(TracingPlugin.class));
 	}
@@ -31,9 +37,26 @@ public class RequestMonitor {
 	}
 
 	public SpanContextInformation monitorStart(MonitoredRequest monitoredRequest) {
+		if (! corePlugin.isStagemonitorActive()) {
+			return null;
+		}
 		final long start = System.nanoTime();
-		final Scope scope = monitoredRequest.createScope();
-		final SpanContextInformation info = SpanContextInformation.get(scope.span());
+		final Span span = monitorStart(monitoredRequest, true);
+		return getSpanContextInformation(span, start);
+	}
+
+	private Span monitorStart(MonitoredRequest monitoredRequest, boolean activateSpan) {
+		final Span span = monitoredRequest.createSpan();
+		if (activateSpan) {
+			Scope scope = tracingPlugin.getTracer().activateSpan(span);
+			scopeMap.put(span, scope);
+		}
+
+		return span;
+	}
+
+	private SpanContextInformation getSpanContextInformation(Span span, long start) {
+		final SpanContextInformation info = SpanContextInformation.get(span);
 		if (info != null) {
 			info.setOverhead1(System.nanoTime() - start);
 		}
@@ -41,35 +64,58 @@ public class RequestMonitor {
 	}
 
 	public void monitorStop() {
-		final Scope activeScope = tracingPlugin.getTracer().scopeManager().active();
-		if (activeScope != null) {
-			final Span currentSpan = activeScope.span();
-			final SpanContextInformation info = SpanContextInformation.get(currentSpan);
+		if (! corePlugin.isStagemonitorActive()) {
+			return;
+		}
+		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		monitorStop(activeSpan);
+	}
+
+	private void monitorStop(Span span) {
+		if (span != null) {
+			final SpanContextInformation info = SpanContextInformation.get(span);
 			if (info != null) {
 				long overhead2 = System.nanoTime();
 				trackOverhead(info.getOverhead1(), overhead2);
 			}
-			activeScope.close();
+			span.finish();
+			Scope scope = scopeMap.get(span);
+			if (scope != null) {
+				scope.close();
+			}
+			scopeMap.remove(span);
 		}
 	}
 
 	public SpanContextInformation monitor(MonitoredRequest monitoredRequest) throws Exception {
-		try {
-			final SpanContextInformation info = monitorStart(monitoredRequest);
-			monitoredRequest.execute();
-			return info;
-		} catch (Exception e) {
-			recordException(e);
-			throw e;
-		} finally {
-			monitorStop();
+		if (corePlugin.isStagemonitorActive()) {
+			final long start = System.nanoTime();
+			final Span span = monitorStart(monitoredRequest, false);
+			final SpanContextInformation info = getSpanContextInformation(span, start);
+			final Scope scope = tracingPlugin.getTracer().activateSpan(span);
+			try {
+				monitoredRequest.execute();
+				return info;
+			} catch (Exception e) {
+				recordException(e);
+				throw e;
+			} finally {
+				monitorStop(span);
+				if (scope != null) {
+					scope.close();
+				}
+			}
 		}
+		return null;
 	}
 
 	public void recordException(Exception e) {
-		final Scope activeScope = tracingPlugin.getTracer().scopeManager().active();
-		if (activeScope != null) {
-			SpanUtils.setException(activeScope.span(), e, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
+		if (! corePlugin.isStagemonitorActive()) {
+			return;
+		}
+		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		if (activeSpan != null) {
+			SpanUtils.setException(activeSpan, e, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
 		}
 	}
 
