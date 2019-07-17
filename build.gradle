@@ -25,7 +25,6 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'net.saliman:gradle-cobertura-plugin:2.3.0'
 		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.6.3'
 		classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
 		classpath 'com.github.ben-manes:gradle-versions-plugin:0.15.0'
@@ -33,7 +32,8 @@ buildscript {
 }
 
 plugins {
-	id 'net.researchgate.release' version '2.3.5'
+	id 'net.researchgate.release' version '2.6.0'
+	id "net.saliman.cobertura" version "2.6.1"
 	id "org.owasp.dependencycheck" version "5.1.0"
 }
 
@@ -203,8 +203,8 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 	}
 }
 
-task wrapper(type: Wrapper) {
-	gradleVersion = "4.10.2"
+wrapper {
+	gradleVersion = "5.5.1"
 	distributionType = "all"
 }
 
