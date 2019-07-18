@@ -24,7 +24,7 @@ public class RequestMonitor {
 	private CorePlugin corePlugin;
 	private TracingPlugin tracingPlugin;
 
-	private Map<Span, Scope> scopeMap = new HashMap<Span, Scope>();
+	private final ThreadLocal<Scope> currentScope = new ThreadLocal<Scope>();
 
 	public RequestMonitor(ConfigurationRegistry configuration, Metric2Registry registry) {
 		this(configuration, registry, configuration.getConfig(TracingPlugin.class));
@@ -49,7 +49,7 @@ public class RequestMonitor {
 		final Span span = monitoredRequest.createSpan();
 		if (activateSpan) {
 			Scope scope = tracingPlugin.getTracer().activateSpan(span);
-			scopeMap.put(span, scope);
+			currentScope.set(scope);
 		}
 
 		return span;
@@ -79,11 +79,10 @@ public class RequestMonitor {
 				trackOverhead(info.getOverhead1(), overhead2);
 			}
 			span.finish();
-			Scope scope = scopeMap.get(span);
+			Scope scope = currentScope.get();
 			if (scope != null) {
 				scope.close();
 			}
-			scopeMap.remove(span);
 		}
 	}
 

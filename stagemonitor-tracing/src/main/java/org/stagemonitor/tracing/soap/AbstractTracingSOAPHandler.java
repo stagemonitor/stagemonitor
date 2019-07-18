@@ -31,7 +31,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
 
-	protected Map<Span, Scope> scopeMap = new HashMap<Span, Scope>();
+	protected final ThreadLocal<Scope> currentScope = new ThreadLocal<Scope>();
 
 	public AbstractTracingSOAPHandler(boolean serverHandler) {
 		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(SoapTracingPlugin.class), serverHandler);
@@ -115,7 +115,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
 		if (span != null) {
 			span.finish();
-			Scope scope = scopeMap.get(span);
+			Scope scope = currentScope.get();
 			if (scope != null) {
 				scope.close();
 			}

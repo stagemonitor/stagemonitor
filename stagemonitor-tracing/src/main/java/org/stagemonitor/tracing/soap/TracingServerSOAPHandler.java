@@ -38,7 +38,7 @@ public class TracingServerSOAPHandler extends AbstractTracingSOAPHandler {
 		}
 		Span span = spanBuilder.start();
 		Scope scope = tracer.scopeManager().activate(span);
-		scopeMap.put(span, scope);
+		currentScope.set(scope);
 	}
 
 	@Override
