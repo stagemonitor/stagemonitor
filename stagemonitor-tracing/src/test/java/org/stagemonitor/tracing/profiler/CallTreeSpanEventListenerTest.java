@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing.profiler;
 
+import io.opentracing.Scope;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -91,11 +92,12 @@ public class CallTreeSpanEventListenerTest {
 		final SpanWrappingTracer.SpanWrappingSpanBuilder spanBuilder = spanWrappingTracer.buildSpan("test");
 		spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), sampled ? 1 : 0);
 		span = spanBuilder.start();
-		spanWrappingTracer.activateSpan(span);
+		Scope scope = spanWrappingTracer.activateSpan(span);
 		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(span);
 		contextInformation.setPreExecutionInterceptorContext(new PreExecutionInterceptorContext(contextInformation));
 		contextInformation.setPostExecutionInterceptorContext(new PostExecutionInterceptorContext(contextInformation));
 		span.finish();
+		scope.close();
 		return contextInformation;
 	}
 
@@ -117,7 +119,6 @@ public class CallTreeSpanEventListenerTest {
 
 		final SpanContextInformation spanContext2 = invokeEventListener();
 		assertNotNull(spanContext2.getCallTree());
-
 	}
 
 }
