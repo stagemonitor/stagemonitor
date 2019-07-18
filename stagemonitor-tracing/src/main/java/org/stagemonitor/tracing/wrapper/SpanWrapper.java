@@ -68,7 +68,16 @@ public class SpanWrapper implements Span {
 
 	@Override
 	public <T> Span setTag(Tag<T> tag, T value) {
-		throw new NotImplementedException();
+		for (SpanEventListener spanEventListener : spanEventListeners) {
+			value = spanEventListener.onSetTag(tag, value);
+		}
+		if (value != null) {
+			if (!tag.getKey().startsWith(INTERNAL_TAG_PREFIX)) {
+				delegate = delegate.setTag(tag, value);
+			}
+			tags.put(tag.getKey(), value);
+		}
+		return this;
 	}
 
 	@Override
