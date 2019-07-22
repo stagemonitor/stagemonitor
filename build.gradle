@@ -41,6 +41,7 @@ repositories {
 	mavenCentral()
 }
 
+apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'com.github.ben-manes.versions'
@@ -111,8 +112,8 @@ subprojects {
 	test.testLogging.exceptionFormat = 'full'
 
 	compileJava {
-		sourceCompatibility = 1.6
-		targetCompatibility = 1.6
+		sourceCompatibility = 1.8
+		targetCompatibility = 1.8
 		options.debug = true
 		options.debugOptions.debugLevel = "source,lines,vars"
 		options.incremental = true
@@ -205,7 +206,7 @@ if (!System.getProperty("java.version").startsWith("1.6.")) {
 
 wrapper {
 	gradleVersion = "5.5.1"
-	distributionType = "all"
+//	distributionType = "all"
 }
 
 task printProjectsToTest() {
@@ -214,5 +215,5 @@ task printProjectsToTest() {
 	}
 }
 
-task install
+//task install
 install.dependsOn subprojects.compileJava
