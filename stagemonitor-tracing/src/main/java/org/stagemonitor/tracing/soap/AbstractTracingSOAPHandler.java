@@ -95,14 +95,16 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return true;
 		}
-		final Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
-		Tags.ERROR.set(span, Boolean.TRUE);
-		try {
-			final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
-			span.setTag("soap.fault.reason", fault.getFaultString());
-			span.setTag("soap.fault.code", fault.getFaultCode());
-		} catch (SOAPException e) {
-			logger.warn("Exception while trying to access SOAP fault (this exception was suppressed)", e);
+		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		if (activeSpan != null) {
+			Tags.ERROR.set(activeSpan, Boolean.TRUE);
+			try {
+				final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
+				activeSpan.setTag("soap.fault.reason", fault.getFaultString());
+				activeSpan.setTag("soap.fault.code", fault.getFaultCode());
+			} catch (SOAPException e) {
+				logger.warn("Exception while trying to access SOAP fault (this exception was suppressed)", e);
+			}
 		}
 		return true;
 	}

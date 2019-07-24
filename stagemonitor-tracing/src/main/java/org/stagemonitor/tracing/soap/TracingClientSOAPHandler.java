@@ -40,8 +40,10 @@ public class TracingClientSOAPHandler extends AbstractTracingSOAPHandler {
 	@Override
 	protected void handleInboundSOAPMessage(SOAPMessageContext context) {
 		if (soapTracingPlugin.isSoapClientRecordResponseMessages()) {
-			final Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
-			span.setTag("soap.response", getSoapMessageAsString(context));
+			final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+			if (activeSpan != null) {
+				activeSpan.setTag("soap.response", getSoapMessageAsString(context));
+			}
 		}
 	}
 
