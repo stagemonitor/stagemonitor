@@ -134,7 +134,9 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	@Override
 	public void onAfterAnyExecute(StatementInformation statementInformation, long timeElapsedNanos, SQLException e) {
-		final Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
+		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		if (activeSpan != null) {
+		    ....
 		if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
 			MetaData metaData = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
 			Tags.PEER_SERVICE.set(span, metaData.serviceName);
