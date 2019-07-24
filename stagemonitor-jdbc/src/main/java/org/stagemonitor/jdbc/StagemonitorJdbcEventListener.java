@@ -136,20 +136,19 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 	public void onAfterAnyExecute(StatementInformation statementInformation, long timeElapsedNanos, SQLException e) {
 		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
 		if (activeSpan != null) {
-		    ....
-		if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
-			MetaData metaData = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
-			Tags.PEER_SERVICE.set(span, metaData.serviceName);
-			span.setTag("db.type", metaData.productName);
-			span.setTag("db.user", metaData.userName);
+			if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
+				MetaData metaData = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
+				Tags.PEER_SERVICE.set(activeSpan, metaData.serviceName);
+				activeSpan.setTag("db.type", metaData.productName);
+				activeSpan.setTag("db.user", metaData.userName);
 
-			if (StringUtils.isNotEmpty(statementInformation.getSql())) {
-				String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
-				Profiler.addIOCall(sql, timeElapsedNanos);
-				span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, getMethod(sql));
-				span.setTag(DB_STATEMENT, sql);
+				if (StringUtils.isNotEmpty(statementInformation.getSql())) {
+					String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
+					Profiler.addIOCall(sql, timeElapsedNanos);
+					activeSpan.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, getMethod(sql));
+					activeSpan.setTag(DB_STATEMENT, sql);
+				}
 			}
-
 		}
 		tracingPlugin.getRequestMonitor().monitorStop();
 	}
