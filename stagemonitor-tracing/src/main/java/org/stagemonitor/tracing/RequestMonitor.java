@@ -23,7 +23,7 @@ public class RequestMonitor {
 	private CorePlugin corePlugin;
 	private TracingPlugin tracingPlugin;
 
-	private final ThreadLocal<Map<Span, Scope>> currentScope = new ThreadLocal<Map<Span, Scope>>();
+	private static final ThreadLocal<Map<Span, Scope>> currentScope = new ThreadLocal<Map<Span, Scope>>();
 
 	public RequestMonitor(ConfigurationRegistry configuration, Metric2Registry registry) {
 		this(configuration, registry, configuration.getConfig(TracingPlugin.class));
@@ -70,7 +70,11 @@ public class RequestMonitor {
 			return;
 		}
 		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
-		final Scope scope = currentScope.get().remove(activeSpan);
+		Map<Span, Scope> scopeMap = currentScope.get();
+		final Scope scope = scopeMap.remove(activeSpan);
+		if (scopeMap.isEmpty()) {
+			currentScope.remove();
+		}
 		monitorStop(scope, activeSpan);
 	}
 

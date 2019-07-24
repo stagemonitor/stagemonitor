@@ -31,7 +31,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
 
-	protected final ThreadLocal<Scope> currentScope = new ThreadLocal<Scope>();
+	protected static final ThreadLocal<Scope> currentScope = new ThreadLocal<Scope>();
 
 	public AbstractTracingSOAPHandler(boolean serverHandler) {
 		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(SoapTracingPlugin.class), serverHandler);
@@ -121,6 +121,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 			if (scope != null) {
 				scope.close();
 			}
+			currentScope.remove();
 		}
 	}
 
