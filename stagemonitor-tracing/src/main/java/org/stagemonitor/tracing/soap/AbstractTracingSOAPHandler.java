@@ -9,8 +9,6 @@ import org.stagemonitor.tracing.TracingPlugin;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.namespace.QName;
@@ -31,7 +29,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
 
-	protected static final ThreadLocal<Scope> currentScope = new ThreadLocal<Scope>();
+	protected static final ThreadLocal<Scope> currentScopeThreadLocal = new ThreadLocal<Scope>();
 
 	public AbstractTracingSOAPHandler(boolean serverHandler) {
 		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(SoapTracingPlugin.class), serverHandler);
@@ -117,11 +115,11 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
 		if (span != null) {
 			span.finish();
-			Scope scope = currentScope.get();
+			Scope scope = currentScopeThreadLocal.get();
+			currentScopeThreadLocal.remove();
 			if (scope != null) {
 				scope.close();
 			}
-			currentScope.remove();
 		}
 	}
 
