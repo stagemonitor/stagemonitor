@@ -41,6 +41,7 @@ repositories {
 	mavenCentral()
 }
 
+apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'com.github.ben-manes.versions'
@@ -209,5 +210,4 @@ task printProjectsToTest() {
 	}
 }
 
-task install
 install.dependsOn subprojects.compileJava
