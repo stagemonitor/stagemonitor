@@ -45,10 +45,8 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'com.github.ben-manes.versions'
 apply plugin: 'java'
-if (!System.getProperty("java.version").startsWith("1.6.")) {
-	apply plugin: 'cobertura'
-	apply plugin: 'com.github.kt3k.coveralls'
-}
+apply plugin: 'cobertura'
+apply plugin: 'com.github.kt3k.coveralls'
 
 ext {
 	metricsVersion = '3.2.4'
@@ -68,9 +66,7 @@ subprojects {
 	apply plugin: 'idea'
 	apply plugin: 'eclipse'
 	apply plugin: 'java'
-	if (!System.getProperty("java.version").startsWith("1.6.")) {
-		apply plugin: 'cobertura'
-	}
+	apply plugin: 'cobertura'
 
 	if (projectsToRelease.contains(project)) {
 		apply plugin: 'osgi'
@@ -111,8 +107,8 @@ subprojects {
 	test.testLogging.exceptionFormat = 'full'
 
 	compileJava {
-		sourceCompatibility = 1.6
-		targetCompatibility = 1.6
+		sourceCompatibility = 1.8
+		targetCompatibility = 1.8
 		options.debug = true
 		options.debugOptions.debugLevel = "source,lines,vars"
 		options.incremental = true
@@ -189,18 +185,17 @@ def getProjectsToRelease() {
 
 test.dependsOn << projectsToRelease*.tasks*.withType(Test).flatten()
 
-if (!System.getProperty("java.version").startsWith("1.6.")) {
-	cobertura {
-		coverageMergeDatafiles =  projectsToRelease.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
-		coverageFormats = ['html', 'xml']
-		coverageIgnoreTrivial = true
-		coverageSourceDirs = [projectsToRelease.sourceSets.main.java.srcDirs.flatten() ]
-		coverageExcludes = ['.*org.stagemonitor.web.servlet.util.AntPathMatcher.*',
-							'.*org.stagemonitor.core.util.InetAddresses.*',
-							'.*org.stagemonitor.core.util.Ints.*',
-							'.*org.stagemonitor.core.util.Assert.*',
-							'.*org.stagemonitor.core.instrument.WeakConcurrentMap.*']
-	}
+
+cobertura {
+	coverageMergeDatafiles =  projectsToRelease.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
+	coverageFormats = ['html', 'xml']
+	coverageIgnoreTrivial = true
+	coverageSourceDirs = [projectsToRelease.sourceSets.main.java.srcDirs.flatten() ]
+	coverageExcludes = ['.*org.stagemonitor.web.servlet.util.AntPathMatcher.*',
+						'.*org.stagemonitor.core.util.InetAddresses.*',
+						'.*org.stagemonitor.core.util.Ints.*',
+						'.*org.stagemonitor.core.util.Assert.*',
+						'.*org.stagemonitor.core.instrument.WeakConcurrentMap.*']
 }
 
 wrapper {
