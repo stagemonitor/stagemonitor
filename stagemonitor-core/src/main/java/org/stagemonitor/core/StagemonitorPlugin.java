@@ -29,7 +29,7 @@ public abstract class StagemonitorPlugin extends ConfigurationOptionProvider imp
 	private final String version;
 
 	protected StagemonitorPlugin() {
-		final Properties properties = PropertyFileConfigurationSource.getFromClasspath("version.properties", getClass().getClassLoader());
+		final Properties properties = PropertyFileConfigurationSource.getFromClasspath("org/stagemonitor/version.properties", getClass().getClassLoader());
 		if (properties != null) {
 			version = properties.getProperty("version");
 		} else {

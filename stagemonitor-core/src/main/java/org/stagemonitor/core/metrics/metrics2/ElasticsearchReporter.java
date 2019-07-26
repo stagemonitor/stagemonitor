@@ -96,19 +96,26 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 							  Map<MetricName, Histogram> histograms, final Map<MetricName, Meter> meters,
 							  Map<MetricName, Timer> timers, OutputStream os, byte[] bulkActionBytes, long timestamp) throws IOException {
 
-		reportMetric(gauges, timestamp, metric2RegistryModule.getValueWriter(Gauge.class), os, bulkActionBytes);
-		reportMetric(counters, timestamp, metric2RegistryModule.getValueWriter(Counter.class), os, bulkActionBytes);
-		reportMetric(histograms, timestamp, metric2RegistryModule.getValueWriter(Histogram.class), os, bulkActionBytes);
-		reportMetric(meters, timestamp, metric2RegistryModule.getValueWriter(Meter.class), os, bulkActionBytes);
-		reportMetric(timers, timestamp, metric2RegistryModule.getValueWriter(Timer.class), os, bulkActionBytes);
+		final JsonGenerator jg = jfactory.createGenerator(os);
+		try {
+			reportMetric(gauges, timestamp, metric2RegistryModule.getValueWriter(Gauge.class), jg, bulkActionBytes);
+			reportMetric(counters, timestamp, metric2RegistryModule.getValueWriter(Counter.class), jg, bulkActionBytes);
+			reportMetric(histograms, timestamp, metric2RegistryModule.getValueWriter(Histogram.class), jg, bulkActionBytes);
+			reportMetric(meters, timestamp, metric2RegistryModule.getValueWriter(Meter.class), jg, bulkActionBytes);
+			reportMetric(timers, timestamp, metric2RegistryModule.getValueWriter(Timer.class), jg, bulkActionBytes);
+		} finally {
+			jg.close(); // release reusable jackson write buffers
+		}
 	}
 
 	private <T extends Metric> void reportMetric(Map<MetricName, T> metrics, long timestamp, Metric2RegistryModule.ValueWriter<T> valueWriter,
-												 OutputStream os, byte[] bulkActionBytes) throws IOException {
+												 JsonGenerator jg, byte[] bulkActionBytes) throws IOException {
+
+		//Workaround, unable to write unquoted raw UTF-8 string to JsonGenerator
+		OutputStream os = (OutputStream) jg.getOutputTarget();
 
 		for (Map.Entry<MetricName, T> entry : metrics.entrySet()) {
 			os.write(bulkActionBytes);
-			final JsonGenerator jg = jfactory.createGenerator(os);
 			jg.writeStartObject();
 			MetricName metricName = entry.getKey();
 			jg.writeNumberField("@timestamp", timestamp);
@@ -117,8 +124,8 @@ public class ElasticsearchReporter extends ScheduledMetrics2Reporter {
 			writeMap(jg, globalTags);
 			valueWriter.writeValues(entry.getValue(), jg);
 			jg.writeEndObject();
+			jg.writeRaw('\n');
 			jg.flush();
-			os.write('\n');
 		}
 	}
 

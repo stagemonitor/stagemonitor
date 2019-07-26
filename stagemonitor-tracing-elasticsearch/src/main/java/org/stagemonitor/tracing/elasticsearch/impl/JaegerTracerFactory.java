@@ -1,9 +1,9 @@
 package org.stagemonitor.tracing.elasticsearch.impl;
 
-import com.uber.jaeger.propagation.b3.B3TextMapCodec;
-import com.uber.jaeger.reporters.NoopReporter;
-import com.uber.jaeger.samplers.ConstSampler;
-
+import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.propagation.B3TextMapCodec;
+import io.jaegertracing.internal.reporters.NoopReporter;
+import io.jaegertracing.internal.samplers.ConstSampler;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.TracerFactory;
@@ -17,11 +17,11 @@ public class JaegerTracerFactory extends TracerFactory {
 
 	@Override
 	public Tracer getTracer(StagemonitorPlugin.InitArguments initArguments) {
-		final B3TextMapCodec b3TextMapCodec = new B3TextMapCodec();
-		final com.uber.jaeger.Tracer.Builder builder = new com.uber.jaeger.Tracer.Builder(
-				initArguments.getMeasurementSession().getApplicationName(),
-				new NoopReporter(),
-				new ConstSampler(true))
+		final B3TextMapCodec b3TextMapCodec = new B3TextMapCodec.Builder().build();
+		final JaegerTracer.Builder builder = new JaegerTracer.Builder(
+				initArguments.getMeasurementSession().getApplicationName())
+				.withReporter(new NoopReporter())
+				.withSampler(new ConstSampler(true))
 				.registerInjector(B3HeaderFormat.INSTANCE, b3TextMapCodec)
 				.registerInjector(Format.Builtin.HTTP_HEADERS, b3TextMapCodec)
 				.registerExtractor(Format.Builtin.HTTP_HEADERS, b3TextMapCodec);
@@ -34,8 +34,8 @@ public class JaegerTracerFactory extends TracerFactory {
 		if (span instanceof SpanWrapper) {
 			span = ((SpanWrapper) span).getDelegate();
 		}
-		if (span instanceof com.uber.jaeger.Span) {
-			final com.uber.jaeger.Span jaegerSpan = (com.uber.jaeger.Span) span;
+		if (span instanceof io.jaegertracing.internal.JaegerSpan) {
+			final io.jaegertracing.internal.JaegerSpan jaegerSpan = (io.jaegertracing.internal.JaegerSpan) span;
 			return jaegerSpan.context().getParentId() == 0;
 		}
 		return false;
@@ -43,12 +43,12 @@ public class JaegerTracerFactory extends TracerFactory {
 
 	@Override
 	public boolean isSampled(Span span) {
-		// TODO replace with Span#unwrap once https://github.com/opentracing/opentracing-java/pull/211 is merged
 		if (span instanceof SpanWrapper) {
-			span = ((SpanWrapper) span).getDelegate();
+			span = ((SpanWrapper) span).unwrap(Span.class);
 		}
-		if (span instanceof com.uber.jaeger.Span) {
-			final com.uber.jaeger.Span jaegerSpan = (com.uber.jaeger.Span) span;
+
+		if (span instanceof io.jaegertracing.internal.JaegerSpan) {
+			final io.jaegertracing.internal.JaegerSpan jaegerSpan = (io.jaegertracing.internal.JaegerSpan) span;
 			return jaegerSpan.context().isSampled();
 		}
 		return false;

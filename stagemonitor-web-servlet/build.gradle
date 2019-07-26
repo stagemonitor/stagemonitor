@@ -6,14 +6,14 @@ dependencies {
 	provided 'javax.servlet:javax.servlet-api:3.0.1'
 	// optional
 	provided 'net.sf.uadetector:uadetector-resources:2014.10'
-	provided 'org.springframework:spring-webmvc:3.1.0.RELEASE'
+	provided 'org.springframework:spring-webmvc:3.1.4.RELEASE'
 	provided 'org.springframework.boot:spring-boot:1.5.2.RELEASE'
-	provided 'org.jboss.resteasy:resteasy-jaxrs:3.0.10.Final'
+	provided 'org.jboss.resteasy:resteasy-jaxrs:3.1.4.Final'
 
 	testCompile project(':stagemonitor-core').sourceSets.test.output
 	testCompile project(':stagemonitor-tracing').sourceSets.test.output
-	testCompile 'org.springframework:spring-webmvc:4.1.0.RELEASE'
-	testCompile 'org.springframework:spring-test:4.1.0.RELEASE'
+	testCompile 'org.springframework:spring-webmvc:4.1.9.RELEASE'
+	testCompile 'org.springframework:spring-test:4.1.9.RELEASE'
 	testCompile "org.elasticsearch.client:transport:$esVersion"
 	testCompile "org.eclipse.jetty:jetty-server:$jettyVersion"
 	testCompile "io.opentracing:opentracing-mock:$opentracingVersion"

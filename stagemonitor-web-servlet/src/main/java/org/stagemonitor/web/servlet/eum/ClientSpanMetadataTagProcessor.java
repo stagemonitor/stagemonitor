@@ -22,7 +22,7 @@ public class ClientSpanMetadataTagProcessor extends ClientSpanTagProcessor {
 	private final ServletPlugin servletPlugin;
 
 	protected ClientSpanMetadataTagProcessor(ServletPlugin servletPlugin) {
-		super(ClientSpanServlet.TYPE_PAGE_LOAD);
+		super();
 		this.servletPlugin = servletPlugin;
 	}
 

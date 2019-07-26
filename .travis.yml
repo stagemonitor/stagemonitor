@@ -1,7 +1,7 @@
 language: java
 sudo: false
 jdk:
-  - oraclejdk8
+  - openjdk8
 env:
   matrix:
   - TERM=dumb
@@ -31,6 +31,3 @@ addons:
     build_command_prepend: "./gradlew clean"
     build_command: "./gradlew compileJava"
     branch_pattern: coverity
-  apt:
-    packages:
-      - oracle-java8-installer

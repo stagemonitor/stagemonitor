@@ -257,12 +257,35 @@ public class ServletPlugin extends StagemonitorPlugin {
 					" Example: `user: string, logged_in: boolean, age: number`")
 			.configurationCategory(WEB_PLUGIN)
 			.buildWithDefault(Collections.<String, ClientSpanMetadataDefinition>emptyMap());
-	private ConfigurationOption<Boolean> minifyClientSpanScript = ConfigurationOption.booleanOption()
+	private ConfigurationOption<Boolean> debugClientSpanScript = ConfigurationOption.booleanOption()
 			.key("stagemonitor.eum.debugCollectionScript")
-			.dynamic(true)
+			.dynamic(false)
 			.label("Use debug build of weasel")
 			.description("If set, stagemonitor will serve the debug build of weasel for end user monitoring." +
 					" This should only be set to true, if you debug errors in the end user monitoring.")
+			.configurationCategory(WEB_PLUGIN)
+			.tags("advanced")
+			.buildWithDefault(false);
+	private ConfigurationOption<Integer> maxLengthForImgRequest = ConfigurationOption.integerOption()
+			.key("stagemonitor.eum.maxLengthForImgRequest")
+			.dynamic(true)
+			.label("Max length for img requests")
+			.description("Weasel will send data either as HTTP GET requests with data being stored" +
+					" in query parameters, or as HTTP POST requests with data being available" +
+					" as the request body encoded as application/x-www-form-urlencoded." +
+					" Whether GET or POST is used depends on the amount of data. If the" +
+					" length of the url exceeds the value of maxLengthForImgRequest and" +
+					" the browser supports the XMLHttpRequest API, the request" +
+					" will be sent as HTTP POST, otherwise as HTTP GET.")
+			.configurationCategory(WEB_PLUGIN)
+			.tags("advanced")
+			.buildWithDefault(2000);
+	private ConfigurationOption<Boolean> disableResourceTimingTransmission = ConfigurationOption.booleanOption()
+			.key("stagemonitor.eum.disableResourceTimingTransmission")
+			.dynamic(true)
+			.label("Disable resource timing transmission")
+			.description("Weasel will attempt to record resource timings. You can use this" +
+					" setting to disable the transmission of the data.")
 			.configurationCategory(WEB_PLUGIN)
 			.tags("advanced")
 			.buildWithDefault(false);
@@ -348,12 +371,20 @@ public class ServletPlugin extends StagemonitorPlugin {
 		return clientSpanInjectionEnabled.getValue();
 	}
 
-	public boolean getMinifyClientSpanScript() {
-		return minifyClientSpanScript.getValue();
+	public boolean getDebugClientSpanScript() {
+		return debugClientSpanScript.getValue();
 	}
 
-	public void registerMinifyClientSpanScriptOptionChangedListener(ConfigurationOption.ChangeListener<Boolean> listener) {
-		minifyClientSpanScript.addChangeListener(listener);
+	public void registerDebugClientSpanScriptOptionChangedListener(ConfigurationOption.ChangeListener<Boolean> listener) {
+		debugClientSpanScript.addChangeListener(listener);
+	}
+
+	public int getMaxLengthForImgRequest() {
+		return maxLengthForImgRequest.getValue();
+	}
+
+	public boolean isDisableResourceTimingTransmission() {
+		return disableResourceTimingTransmission.getValue();
 	}
 
 	public int getClientSpanScriptCacheDuration() {

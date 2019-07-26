@@ -27,7 +27,7 @@ public class WeaselClientSpanExtension extends ClientSpanExtension {
 	public void init(ConfigurationRegistry config) {
 		this.servletPlugin = config.getConfig(ServletPlugin.class);
 		tracingPlugin = config.getConfig(TracingPlugin.class);
-		servletPlugin.registerMinifyClientSpanScriptOptionChangedListener(new ConfigurationOption.ChangeListener<Boolean>() {
+		servletPlugin.registerDebugClientSpanScriptOptionChangedListener(new ConfigurationOption.ChangeListener<Boolean>() {
 			@Override
 			public void onChange(ConfigurationOption<?> configurationOption, Boolean oldValue, Boolean newValue) {
 				if (servletPlugin.getClientSpanJavaScriptServlet() != null) {
@@ -49,7 +49,7 @@ public class WeaselClientSpanExtension extends ClientSpanExtension {
 	@Override
 	public String getClientTraceExtensionScriptStaticPart() {
 		String eumJs;
-		if (servletPlugin.getMinifyClientSpanScript()) {
+		if (servletPlugin.getDebugClientSpanScript()) {
 			eumJs = IOUtils.getResourceAsString("eum.debug.js");
 		} else {
 			eumJs = IOUtils.getResourceAsString("eum.min.js");
