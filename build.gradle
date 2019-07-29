@@ -54,7 +54,7 @@ ext {
 	slf4jVersion = '1.7.25'
 	jacksonVersion = '2.9.6'
 	esVersion = '6.2.4'
-	byteBuddyVersion = '1.8.22'
+	byteBuddyVersion = '1.9.15'
 	opentracingVersion = '0.33.0'
 	jaegerVersion = '0.35.5'
 	jettyVersion = '9.3.13.v20161014'

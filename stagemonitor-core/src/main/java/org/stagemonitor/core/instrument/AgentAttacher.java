@@ -213,8 +213,7 @@ public class AgentAttacher {
 		for (StagemonitorByteBuddyTransformer transformer : getStagemonitorByteBuddyTransformers()) {
 			agentBuilder = agentBuilder
 					.type(transformer.getMatcher())
-					.transform(transformer.getTransformer())
-					.asDecorator();
+					.transform(transformer.getTransformer());
 		}
 
 		final long start = System.currentTimeMillis();
@@ -284,7 +283,7 @@ public class AgentAttacher {
 		Collections.sort(transformers, new Comparator<StagemonitorByteBuddyTransformer>() {
 			@Override
 			public int compare(StagemonitorByteBuddyTransformer o1, StagemonitorByteBuddyTransformer o2) {
-				return o1.getOrder() > o2.getOrder() ? -1 : 1;
+				return o1.getOrder() > o2.getOrder() ? 1 : -1;
 			}
 		});
 		return transformers;
