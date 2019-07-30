@@ -10,6 +10,20 @@ dependencies {
 	compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
 	compile "net.bytebuddy:byte-buddy-agent:$byteBuddyVersion"
 	compile project(":stagemonitor-configuration")
+
+	compile "javax.xml.ws:jaxws-api:$jaxWsApiVersion"
+	compile "javax.jws:javax.jws-api:$jwsApiVersion"
+	compile 'com.sun.xml.ws:jaxws-rt:2.3.1'
+	compile 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+	compile 'org.glassfish.jaxb:txw2:2.4.0-b180830.0438'
+
+
+	/*compile 'org.glassfish.jaxb:txw2:2.3.1'
+	compile 'javax.xml.bind:jaxb-api:2.3.1'
+	compile 'com.sun.xml.bind:jaxb-impl:2.3.1'
+	compile 'com.sun.xml.bind:jaxb-core:2.3.0.1'
+	compile 'com.sun.org.apache.xml.internal:resolver:20050927'*/
+
 	provided "io.prometheus:simpleclient:0.0.26"
 	provided project(":stagemonitor-dispatcher")
 
