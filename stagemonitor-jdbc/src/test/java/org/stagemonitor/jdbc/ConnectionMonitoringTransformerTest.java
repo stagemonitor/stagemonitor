@@ -38,8 +38,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 
 @RunWith(Parameterized.class)
@@ -179,6 +178,7 @@ public class ConnectionMonitoringTransformerTest {
 		assertEquals(message, 1, timers.get(name("response_time").operationType("jdbc").operationName("ConnectionMonitoringTransformerTest$TestDao#executeStatement").build()).getCount());
 		assertEquals(message, 1, timers.get(name("response_time").operationType("jdbc").operationName("All").build()).getCount());
 		final CallStackElement callStack = spanContext.getCallTree();
+		assertNotNull(callStack);
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executeStatement()",
 				callStack.getChildren().get(0).getSignature());

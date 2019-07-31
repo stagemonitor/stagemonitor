@@ -3,6 +3,9 @@ package org.stagemonitor.tracing;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 
+import io.opentracing.Span;
+import io.opentracing.noop.NoopSpan;
+import io.opentracing.noop.NoopTracer;
 import org.junit.After;
 import org.junit.Before;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -95,13 +98,20 @@ public abstract class AbstractRequestMonitorTest {
 				return NoopTracerFactory.create();
 			}
 		});
-		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
+		assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
 	}
 
 	@After
 	public void after() {
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
+		GlobalTracerTestHelper.resetGlobalTracer();
 		Stagemonitor.reset();
-		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
+		// TODO check if this is correct
+		boolean active = corePlugin.isStagemonitorActive();
+		if (active) {
+			assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
+		} else {
+			assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isEqualTo(NoopSpan.INSTANCE);
+		}
 	}
 }

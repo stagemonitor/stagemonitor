@@ -39,7 +39,6 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 
-import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.noop.NoopTracerFactory;
@@ -365,11 +364,11 @@ public class TracingPlugin extends StagemonitorPlugin {
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
 	 */
 	public static Span getCurrentSpan() {
-		final Scope activeScope = GlobalTracer.get().scopeManager().active();
-		if (activeScope != null) {
-			return activeScope.span();
+		final Span span = GlobalTracer.get().scopeManager().activeSpan();
+		if (span != null) {
+			return span;
 		} else {
-			return NoopTracerFactory.create().buildSpan(null).startManual();
+			return NoopTracerFactory.create().buildSpan(null).start();
 		}
 	}
 
