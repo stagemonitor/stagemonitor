@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing.soap;
 
+import io.opentracing.Scope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
@@ -27,6 +28,8 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 	private final boolean serverHandler;
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
+
+	protected static final ThreadLocal<Scope> currentScopeThreadLocal = new ThreadLocal<Scope>();
 
 	public AbstractTracingSOAPHandler(boolean serverHandler) {
 		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(SoapTracingPlugin.class), serverHandler);
@@ -90,14 +93,16 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return true;
 		}
-		final Span span = tracingPlugin.getTracer().scopeManager().active().span();
-		Tags.ERROR.set(span, Boolean.TRUE);
-		try {
-			final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
-			span.setTag("soap.fault.reason", fault.getFaultString());
-			span.setTag("soap.fault.code", fault.getFaultCode());
-		} catch (SOAPException e) {
-			logger.warn("Exception while trying to access SOAP fault (this exception was suppressed)", e);
+		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		if (activeSpan != null) {
+			Tags.ERROR.set(activeSpan, Boolean.TRUE);
+			try {
+				final SOAPFault fault = context.getMessage().getSOAPBody().getFault();
+				activeSpan.setTag("soap.fault.reason", fault.getFaultString());
+				activeSpan.setTag("soap.fault.code", fault.getFaultCode());
+			} catch (SOAPException e) {
+				logger.warn("Exception while trying to access SOAP fault (this exception was suppressed)", e);
+			}
 		}
 		return true;
 	}
@@ -107,7 +112,15 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return;
 		}
-		tracingPlugin.getTracer().scopeManager().active().close();
+		Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
+		if (span != null) {
+			span.finish();
+			Scope scope = currentScopeThreadLocal.get();
+			currentScopeThreadLocal.remove();
+			if (scope != null) {
+				scope.close();
+			}
+		}
 	}
 
 	protected String getOperationName(SOAPMessageContext context) {

@@ -31,6 +31,11 @@ class EhCacheAttachmentProvider implements ByteBuddyAgent.AttachmentProvider {
 			}
 
 			@Override
+			public boolean isExternalAttachmentRequired() {
+				return false;
+			}
+
+			@Override
 			public Class<?> getVirtualMachineType() {
 				return virtualMachineClass;
 			}
