@@ -12,6 +12,7 @@ import org.stagemonitor.web.servlet.filter.HtmlInjector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 
@@ -54,10 +55,10 @@ public class StagemonitorWidgetHtmlInjector extends HtmlInjector {
 
 	@Override
 	public void injectHtml(HtmlInjector.InjectArguments injectArguments) {
-		final List<String> pathsOfWidgetTabPlugins = new ArrayList<String>();
-		for (String path : Stagemonitor.getPathsOfWidgetTabPlugins()) {
-			pathsOfWidgetTabPlugins.add(contextPath + path);
-		}
+		final List<String> pathsOfWidgetTabPlugins = Stagemonitor.getPathsOfWidgetTabPlugins()
+																														 .stream()
+																														 .map(path -> contextPath + path)
+																														 .collect(Collectors.toList());
 
 		final List<String> pathsOfWidgetMetricTabPlugins = new ArrayList<String>();
 		for (String path : Stagemonitor.getPathsOfWidgetMetricTabPlugins()) {
