@@ -37,14 +37,14 @@ public class RemoteEjbMonitorTransformerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
+		assertThat(GlobalTracer.get().scopeManager().activeSpan()).isNull();
 		spanCapturingReporter = new SpanCapturingReporter();
 		Stagemonitor.getPlugin(TracingPlugin.class).addReporter(spanCapturingReporter);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
+		assertThat(GlobalTracer.get().scopeManager().activeSpan()).isNull();
 	}
 
 	@Test

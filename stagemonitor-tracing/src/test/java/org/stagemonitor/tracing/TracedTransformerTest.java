@@ -52,12 +52,12 @@ public class TracedTransformerTest {
 		tags = new HashMap<>();
 		Stagemonitor.getPlugin(TracingPlugin.class).addSpanEventListenerFactory(new TagRecordingSpanEventListener(tags));
 		Stagemonitor.getPlugin(TracingPlugin.class).addReporter(spanCapturingReporter);
-		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
+		assertThat(GlobalTracer.get().scopeManager().activeSpan()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
+		assertThat(GlobalTracer.get().scopeManager().activeSpan()).isNull();
 	}
 
 	@AfterClass
@@ -145,8 +145,8 @@ public class TracedTransformerTest {
 
 	@Test
 	public void testNestedTracing() throws Exception {
-		final TracedNestedTestClass testClass = new TracedNestedTestClass();
-		testClass.foo();
+		final TracedNestedTestClass tracedNestedTestClass = new TracedNestedTestClass();
+		tracedNestedTestClass.foo();
 		final SpanContextInformation barInfo = spanCapturingReporter.get();
 		final SpanContextInformation fooInfo = spanCapturingReporter.get();
 		assertThat(fooInfo.getOperationName()).contains("foo").doesNotContain("bar");

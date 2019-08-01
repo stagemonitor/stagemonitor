@@ -93,12 +93,12 @@ public class AbstractElasticsearchSpanReporterTest {
 				configuration, registry, TagRecordingSpanEventListener.asList(tags),
 				new SamplePriorityDeterminingSpanEventListener(configuration), reportingSpanEventListener);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
-		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
+		assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
+		assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
 	}
 
 	protected SpanContextInformation reportSpanWithCallTree(long executionTimeMs, String operationName) {

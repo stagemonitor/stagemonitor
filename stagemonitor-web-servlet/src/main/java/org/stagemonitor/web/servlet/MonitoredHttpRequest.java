@@ -35,7 +35,6 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
@@ -77,7 +76,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public Scope createScope() {
+	public Span createSpan() {
 		boolean sample = true;
 		if (servletPlugin.isHonorDoNotTrackHeader() && "1".equals(httpServletRequest.getHeader("dnt"))) {
 			sample = false;
@@ -96,8 +95,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			spanBuilder = spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), 0);
 		}
 		spanBuilder.withTag(SpanUtils.OPERATION_TYPE, "http");
-		final Scope scope = spanBuilder.startActive(true);
-		final Span span = scope.span();
+		final Span span = spanBuilder.start();
 		Tags.HTTP_URL.set(span, httpServletRequest.getRequestURI());
 		Tags.PEER_PORT.set(span, httpServletRequest.getRemotePort());
 		span.setTag("method", httpServletRequest.getMethod());
@@ -112,7 +110,7 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		if (tracingPlugin.isSampled(span) && servletPlugin.isParseUserAgent() && StringUtils.isNotEmpty(userAgentHeader)) {
 			parseUserAgentAsync(span, info);
 		}
-		return scope;
+		return span;
 	}
 
 	private void parseUserAgentAsync(final Span span, SpanContextInformation info) {
