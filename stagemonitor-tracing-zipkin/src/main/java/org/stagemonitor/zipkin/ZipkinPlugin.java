@@ -16,7 +16,7 @@ public final class ZipkinPlugin extends StagemonitorPlugin {
 			.dynamic(false)
 			.label("Zipkin endpoint")
 			.description("The POST URL for zipkin's api (http://zipkin.io/zipkin-api/#/), " +
-					"usually \"http://zipkinhost:9411/api/v1/spans\".")
+					"usually \"http://zipkinhost:9411/api/v2/spans\".")
 			.tags("reporting", "zipkin")
 			.configurationCategory(ZIPKIN_PLUGIN)
 			.buildRequired();
