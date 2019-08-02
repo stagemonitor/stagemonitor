@@ -89,20 +89,21 @@ public class ElasticsearchClient {
 	}
 
 	public String getElasticSearchTemplateResourcePath() {
-		if (! isElasticsearch7Compatible()) {
+		if (isElasticsearch7Compatible()) {
+			return "es/7/";
+		} else if (isElasticsearch6Compatible()) {
 			return "es/6/";
 		}
-		return "es/7/";
+		return "es/5/";
 	}
 
 	public String getKibanaResourcePath() {
-		if (! isElasticsearch6Compatible() && ! isElasticsearch7Compatible()) {
-			return "kibana/5/";
-		}
-		if (! isElasticsearch7Compatible()) {
+		if (isElasticsearch7Compatible()) {
+			return "kibana/7/";
+		} else if (isElasticsearch6Compatible()) {
 			return "kibana/6/";
 		}
-		return "kibana/7/";
+		return "kibana/5/";
 	}
 
 	public JsonNode getJson(final String path) {
@@ -420,7 +421,7 @@ public class ElasticsearchClient {
 		HttpRequest request =  HttpRequestBuilder.<Void>forUrl(getElasticsearchUrl() + "/" + index + "/_mapping/" + type)
 				.method("PUT")
 				// the mapping might be incompatible, this is probably ok
-				.noopForStatus(400) 
+				.noopForStatus(400)
 				.addHeaders(HttpRequestBuilder.CONTENT_TYPE_JSON)
 				.bodyStream(mapping)
 				.build();
