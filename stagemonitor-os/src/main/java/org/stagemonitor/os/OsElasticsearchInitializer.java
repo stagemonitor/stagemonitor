@@ -7,6 +7,6 @@ public class OsElasticsearchInitializer extends AbstractElasticsearchInitializer
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "Host.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getKibanaResourcePath() + "Host.bulk");
 	}
 }

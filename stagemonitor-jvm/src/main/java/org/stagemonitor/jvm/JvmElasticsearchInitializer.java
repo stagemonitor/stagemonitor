@@ -7,7 +7,7 @@ public class JvmElasticsearchInitializer extends AbstractElasticsearchInitialize
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "JVM.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getKibanaResourcePath() + "JVM.bulk");
 	}
 
 }

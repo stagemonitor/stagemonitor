@@ -18,10 +18,10 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
 		if (corePlugin.isInitializeElasticsearch()) {
-			if (elasticsearchClient.isElasticsearch6Compatible()) {
-				logger.debug("creating KibanaIndexAndMapping for ES 6...");
-				elasticsearchClient.createIndexAndSendMapping(".kibana", "doc", IOUtils.getResourceAsStream(elasticsearchClient.getElasticsearchResourcePath() + "kibana-index-doc.json"));
-				logger.debug("created KibanaIndexAndMapping for ES 6");
+			if (elasticsearchClient.isElasticsearch6Compatible() || elasticsearchClient.isElasticsearch7Compatible()) {
+				logger.debug("creating KibanaIndexAndMapping for ES 6/7...");
+				elasticsearchClient.createIndexAndSendMapping(".kibana", "doc", IOUtils.getResourceAsStream(elasticsearchClient.getKibanaResourcePath() + "kibana-index-doc.json"));
+				logger.debug("created KibanaIndexAndMapping for ES 6/7");
 			} else {
 				logger.debug("creating KibanaIndexAndMapping for ES 5...");
 				createKibana5IndexAndMappings(elasticsearchClient);
@@ -41,7 +41,7 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 		// makes sure the .kibana index is present and has the right mapping.
 		// otherwise it leads to problems if stagemonitor sends the dashboards to the
 		// .kibana index before it has been properly created by kibana
-		final String resourcePath = elasticsearchClient.getElasticsearchResourcePath();
+		final String resourcePath = elasticsearchClient.getKibanaResourcePath();
 		elasticsearchClient.createIndexAndSendMapping(".kibana", "index-pattern", IOUtils.getResourceAsStream(resourcePath + "kibana-index-index-pattern.json"));
 		elasticsearchClient.createIndexAndSendMapping(".kibana", "search", IOUtils.getResourceAsStream(resourcePath + "kibana-index-search.json"));
 		elasticsearchClient.createIndexAndSendMapping(".kibana", "dashboard", IOUtils.getResourceAsStream(resourcePath + "kibana-index-dashboard.json"));
@@ -60,9 +60,13 @@ public class CoreElasticsearchInitializer extends AbstractElasticsearchInitializ
 
 	private static void manageMetricsIndex(ElasticsearchClient elasticsearchClient, CorePlugin corePlugin) {
 		if (corePlugin.isReportToElasticsearch()) {
-			elasticsearchClient.updateKibanaIndexPattern("stagemonitor-metrics-*", elasticsearchClient.getElasticsearchResourcePath() + "stagemonitor-metrics-kibana-index-pattern.json");
+			elasticsearchClient.updateKibanaIndexPattern("stagemonitor-metrics-*", elasticsearchClient.getKibanaResourcePath() + "stagemonitor-metrics-kibana-index-pattern.json");
+			String templatePath = corePlugin.getMetricsIndexTemplate();
+			if (corePlugin.isMetricsIndexTemplateDefaultValue()) {
+				templatePath = elasticsearchClient.getElasticSearchTemplateResourcePath() + corePlugin.getMetricsIndexTemplate();
+			}
 			final String mappingJson = ElasticsearchClient.modifyIndexTemplate(
-					corePlugin.getMetricsIndexTemplate(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
+					templatePath, corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
 			elasticsearchClient.sendMappingTemplate(mappingJson, "stagemonitor-metrics");
 			elasticsearchClient.createEmptyIndex(ElasticsearchReporter.getTodaysIndexName());
 		}
