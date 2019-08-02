@@ -37,7 +37,7 @@ public class TracingServerSOAPHandler extends AbstractTracingSOAPHandler {
 			spanBuilder.withTag("soap.request", getSoapMessageAsString(context));
 		}
 		Span span = spanBuilder.start();
-		Scope scope = tracer.scopeManager().activate(span);
+		final Scope scope = SpanUtils.activateSpan(tracer.scopeManager(), span);
 		currentScopeThreadLocal.set(scope);
 	}
 

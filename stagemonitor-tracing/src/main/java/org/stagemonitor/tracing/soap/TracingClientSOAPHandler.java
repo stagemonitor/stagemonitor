@@ -32,7 +32,7 @@ public class TracingClientSOAPHandler extends AbstractTracingSOAPHandler {
 			spanBuilder.withTag("soap.request", getSoapMessageAsString(context));
 		}
 		final Span span = spanBuilder.start();
-		Scope scope = tracer.scopeManager().activate(span);
+		final Scope scope = SpanUtils.activateSpan(tracer.scopeManager(), span);
 		currentScopeThreadLocal.set(scope);
 		tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new SOAPMessageInjectAdapter(context));
 	}

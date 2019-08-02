@@ -8,6 +8,7 @@ import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
 import io.opentracing.Span;
+import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class RequestMonitor {
 		final long start = System.nanoTime();
 		final Span span = monitoredRequest.createSpan();
 		if (activateSpan) {
-			Scope scope = tracingPlugin.getTracer().scopeManager().activate(span);
+			final Scope scope = SpanUtils.activateSpan(tracingPlugin.getTracer().scopeManager(), span);
 			Map<Span, Scope> scopeMap = currentScopeMapThreadLocal.get();
 			if (scopeMap == null) {
 				scopeMap = new HashMap<Span, Scope>();
@@ -100,7 +101,8 @@ public class RequestMonitor {
 		if (corePlugin.isStagemonitorActive()) {
 			final long start = System.nanoTime();
 			final Span span = monitoredRequest.createSpan();
-			final Scope scope = tracingPlugin.getTracer().scopeManager().activate(span);
+			final Scope scope = SpanUtils.activateSpan(tracingPlugin.getTracer().scopeManager(), span);
+
 			try {
 				final SpanContextInformation info = getSpanContextInformation(start, span);
 				monitoredRequest.execute();

@@ -6,7 +6,7 @@ import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import zipkin.reporter.ReporterMetrics;
+import zipkin2.reporter.ReporterMetrics;
 
 import static org.stagemonitor.core.metrics.metrics2.MetricName.name;
 

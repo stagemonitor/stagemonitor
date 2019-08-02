@@ -16,8 +16,8 @@ import brave.propagation.Propagation;
 import brave.sampler.Sampler;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-import zipkin.reporter.AsyncReporter;
-import zipkin.reporter.urlconnection.URLConnectionSender;
+import zipkin2.reporter.AsyncReporter;
+import zipkin2.reporter.urlconnection.URLConnectionSender;
 
 public class BraveZipkinReportingTracerFactory extends TracerFactory {
 
@@ -25,7 +25,7 @@ public class BraveZipkinReportingTracerFactory extends TracerFactory {
 	public Tracer getTracer(StagemonitorPlugin.InitArguments initArguments) {
 		final Tracing braveTracer = Tracing.newBuilder()
 				.localServiceName(initArguments.getMeasurementSession().getApplicationName())
-				.reporter(getZipkinReporterBuilder(initArguments).build())
+				.spanReporter(getZipkinReporterBuilder(initArguments).build())
 				.sampler(getSampler())
 				.build();
 		return BraveTracer.newBuilder(braveTracer)
