@@ -93,7 +93,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return true;
 		}
-		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		final Span activeSpan = tracingPlugin.getTracer().activeSpan();
 		if (activeSpan != null) {
 			Tags.ERROR.set(activeSpan, Boolean.TRUE);
 			try {
@@ -112,7 +112,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return;
 		}
-		Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
+		Span span = tracingPlugin.getTracer().activeSpan();
 		if (span != null) {
 			span.finish();
 			Scope scope = currentScopeThreadLocal.get();

@@ -32,7 +32,7 @@ public class TracingClientSOAPHandler extends AbstractTracingSOAPHandler {
 			spanBuilder.withTag("soap.request", getSoapMessageAsString(context));
 		}
 		final Span span = spanBuilder.start();
-		final Scope scope = SpanUtils.activateSpan(tracer.scopeManager(), span);
+		final Scope scope = tracer.activateSpan(span);
 		currentScopeThreadLocal.set(scope);
 		tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new SOAPMessageInjectAdapter(context));
 	}
@@ -40,7 +40,7 @@ public class TracingClientSOAPHandler extends AbstractTracingSOAPHandler {
 	@Override
 	protected void handleInboundSOAPMessage(SOAPMessageContext context) {
 		if (soapTracingPlugin.isSoapClientRecordResponseMessages()) {
-			final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+			final Span activeSpan = tracingPlugin.getTracer().activeSpan();
 			if (activeSpan != null) {
 				activeSpan.setTag("soap.response", getSoapMessageAsString(context));
 			}

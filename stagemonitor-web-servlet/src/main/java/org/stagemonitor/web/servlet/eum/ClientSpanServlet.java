@@ -218,7 +218,7 @@ public class ClientSpanServlet extends HttpServlet {
 		}
 
 		final Span span = spanBuilder.start();
-		final Scope scope = SpanUtils.activateSpan(tracingPlugin.getTracer().scopeManager(), span);
+		final Scope scope = tracingPlugin.getTracer().activateSpan(span);
 		try {
 			if (tracingPlugin.isSampled(span)) {
 				for (ClientSpanTagProcessor tagProcessor : tagProcessors) {

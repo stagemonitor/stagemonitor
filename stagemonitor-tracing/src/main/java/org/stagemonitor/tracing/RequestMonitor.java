@@ -1,13 +1,12 @@
 package org.stagemonitor.tracing;
 
 import io.opentracing.Scope;
+import io.opentracing.Span;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.utils.SpanUtils;
-
-import io.opentracing.Span;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.util.HashMap;
@@ -24,7 +23,7 @@ public class RequestMonitor {
 	private CorePlugin corePlugin;
 	private TracingPlugin tracingPlugin;
 
-	private static final ThreadLocal<Map<Span, Scope>> currentScopeMapThreadLocal = new ThreadLocal<Map<Span, Scope>>();
+	private static final ThreadLocal<Map<Span, ScopeContextHelper>> currentScopeMapThreadLocal = new ThreadLocal<>();
 
 	public RequestMonitor(ConfigurationRegistry configuration, Metric2Registry registry) {
 		this(configuration, registry, configuration.getConfig(TracingPlugin.class));
@@ -47,13 +46,21 @@ public class RequestMonitor {
 		final long start = System.nanoTime();
 		final Span span = monitoredRequest.createSpan();
 		if (activateSpan) {
-			final Scope scope = SpanUtils.activateSpan(tracingPlugin.getTracer().scopeManager(), span);
-			Map<Span, Scope> scopeMap = currentScopeMapThreadLocal.get();
-			if (scopeMap == null) {
-				scopeMap = new HashMap<Span, Scope>();
-				currentScopeMapThreadLocal.set(scopeMap);
+			ScopeContextHelper scopeContextHelper = new ScopeContextHelper();
+			Span delegate = span;
+			if (span instanceof SpanWrapper) {
+				SpanWrapper spanWrapper = (SpanWrapper) span;
+				scopeContextHelper.spanWrapper = spanWrapper;
+				delegate = spanWrapper.getDelegate();
 			}
-			scopeMap.put(span, scope);
+			scopeContextHelper.scope = tracingPlugin.getTracer().activateSpan(delegate);
+
+			Map<Span, ScopeContextHelper> scopeContextHelperMap = currentScopeMapThreadLocal.get();
+			if (scopeContextHelperMap == null) {
+				scopeContextHelperMap = new HashMap<>();
+				currentScopeMapThreadLocal.set(scopeContextHelperMap);
+			}
+			scopeContextHelperMap.put(delegate, scopeContextHelper);
 		}
 		return getSpanContextInformation(start, span);
 	}
@@ -70,13 +77,17 @@ public class RequestMonitor {
 		if (! corePlugin.isStagemonitorActive()) {
 			return;
 		}
-		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
-		Map<Span, Scope> scopeMap = currentScopeMapThreadLocal.get();
-		final Scope scope = scopeMap.remove(activeSpan);
-		if (scopeMap.isEmpty()) {
+		final Span activeSpan = tracingPlugin.getTracer().activeSpan();
+		Map<Span, ScopeContextHelper> scopeContextHelperMap = currentScopeMapThreadLocal.get();
+		final ScopeContextHelper scopeContextHelper = scopeContextHelperMap.remove(activeSpan);
+		if (scopeContextHelperMap.isEmpty()) {
 			currentScopeMapThreadLocal.remove();
 		}
-		monitorStop(scope, activeSpan);
+		if (scopeContextHelper != null) {
+			monitorStop(scopeContextHelper.scope, scopeContextHelper.spanWrapper != null ? scopeContextHelper.spanWrapper : activeSpan);
+		} else {
+			monitorStop(null, activeSpan);
+		}
 	}
 
 	private void monitorStop(Scope scope, Span span) {
@@ -101,7 +112,7 @@ public class RequestMonitor {
 		if (corePlugin.isStagemonitorActive()) {
 			final long start = System.nanoTime();
 			final Span span = monitoredRequest.createSpan();
-			final Scope scope = SpanUtils.activateSpan(tracingPlugin.getTracer().scopeManager(), span);
+			final Scope scope = tracingPlugin.getTracer().activateSpan(span);
 
 			try {
 				final SpanContextInformation info = getSpanContextInformation(start, span);
@@ -121,7 +132,7 @@ public class RequestMonitor {
 		if (! corePlugin.isStagemonitorActive()) {
 			return;
 		}
-		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		final Span activeSpan = tracingPlugin.getTracer().activeSpan();
 		if (activeSpan != null) {
 			SpanUtils.setException(activeSpan, e, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
 		}
@@ -132,6 +143,11 @@ public class RequestMonitor {
 			overhead2 = System.nanoTime() - overhead2;
 			metricRegistry.timer(internalOverheadMetricName).update(overhead2 + overhead1, NANOSECONDS);
 		}
+	}
+
+	private class ScopeContextHelper {
+		SpanWrapper spanWrapper;
+		Scope scope;
 	}
 
 }

@@ -2,6 +2,7 @@ package org.stagemonitor.tracing.utils;
 
 import io.opentracing.Scope;
 import io.opentracing.ScopeManager;
+import io.opentracing.Tracer;
 import org.stagemonitor.core.util.InetAddresses;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
@@ -91,18 +92,6 @@ public class SpanUtils {
 
 	public static boolean isServerRequest(SpanWrapper spanWrapper) {
 		return Tags.SPAN_KIND_SERVER.equals(spanWrapper.getStringTag(Tags.SPAN_KIND.getKey()));
-	}
-
-	public static Scope activateSpan(ScopeManager scopeManager, Span span) {
-		final Scope scope;
-		if (span instanceof SpanWrapper) {
-			SpanWrapper spanWrapper = (SpanWrapper) span;
-			Span delegate = spanWrapper.getDelegate();
-			scope = scopeManager.activate(delegate);
-		} else {
-			scope = scopeManager.activate(span);
-		}
-		return scope;
 	}
 
 }

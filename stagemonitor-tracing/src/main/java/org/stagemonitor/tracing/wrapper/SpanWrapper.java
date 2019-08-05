@@ -1,13 +1,12 @@
 package org.stagemonitor.tracing.wrapper;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.tag.Tag;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The purpose of this wrapper is to call the registered {@link SpanEventListener}s before certain methods of the

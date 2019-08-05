@@ -43,7 +43,7 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 				.getBusinessTransactionNamingStrategy();
 		final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
 		if (requestNameFromHandler != null) {
-			final Span activeSpan = GlobalTracer.get().scopeManager().activeSpan();
+			final Span activeSpan = GlobalTracer.get().activeSpan();
 			if (activeSpan != null) {
 				activeSpan.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
 				activeSpan.setOperationName(requestNameFromHandler);

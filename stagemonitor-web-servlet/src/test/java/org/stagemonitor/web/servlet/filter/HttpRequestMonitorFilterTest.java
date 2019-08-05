@@ -102,12 +102,12 @@ public class HttpRequestMonitorFilterTest {
 				mock(MeasurementSession.class), mock(HealthCheckRegistry.class)));
 
 		initFilter();
-		assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
+		assertThat(tracingPlugin.getTracer().activeSpan()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
+		assertThat(tracingPlugin.getTracer().activeSpan()).isNull();
 	}
 
 	private void initFilter() throws Exception {

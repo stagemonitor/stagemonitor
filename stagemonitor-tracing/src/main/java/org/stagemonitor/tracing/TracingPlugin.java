@@ -364,7 +364,7 @@ public class TracingPlugin extends StagemonitorPlugin {
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
 	 */
 	public static Span getCurrentSpan() {
-		final Span span = GlobalTracer.get().scopeManager().activeSpan();
+		final Span span = GlobalTracer.get().activeSpan();
 		if (span != null) {
 			return span;
 		} else {

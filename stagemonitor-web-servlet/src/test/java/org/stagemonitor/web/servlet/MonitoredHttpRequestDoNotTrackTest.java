@@ -65,12 +65,12 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		);
 		GlobalTracerTestHelper.override(tracer);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.activeSpan()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.activeSpan()).isNull();
 		GlobalTracerTestHelper.resetGlobalTracer();
 	}
 

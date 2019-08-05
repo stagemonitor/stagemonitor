@@ -60,13 +60,13 @@ public class MonitoredHttpRequestTest {
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		when(tracingPlugin.isSampled(any())).thenReturn(true);
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.activeSpan()).isNull();
 		servletPlugin.initPasswordChecker(configuration);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.activeSpan()).isNull();
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
 	}

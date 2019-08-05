@@ -27,7 +27,7 @@ public abstract class AbstractExternalRequest extends MonitoredRequest {
 	@Override
 	public Span createSpan() {
 		final Tracer.SpanBuilder spanBuilder;
-		final Span activeSpan = tracer.scopeManager().activeSpan();
+		final Span activeSpan = tracer.activeSpan();
 		if (activeSpan != null) {
 			spanBuilder = tracer.buildSpan(operationName)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);

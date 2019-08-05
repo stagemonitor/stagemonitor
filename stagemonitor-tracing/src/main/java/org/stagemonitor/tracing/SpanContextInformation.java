@@ -34,7 +34,7 @@ public class SpanContextInformation {
 	private SpanWrapper spanWrapper;
 
 	public static SpanContextInformation getCurrent() {
-		final Span activeSpan = GlobalTracer.get().scopeManager().activeSpan();
+		final Span activeSpan = GlobalTracer.get().activeSpan();
 		if (activeSpan == null) {
 			return null;
 		}

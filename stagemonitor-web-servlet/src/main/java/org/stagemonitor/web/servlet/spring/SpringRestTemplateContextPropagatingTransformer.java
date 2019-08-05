@@ -2,11 +2,12 @@ package org.stagemonitor.web.servlet.spring;
 
 import io.opentracing.Scope;
 import io.opentracing.Span;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -22,10 +23,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
-
-import io.opentracing.propagation.Format;
-import io.opentracing.propagation.TextMap;
-import org.stagemonitor.tracing.utils.SpanUtils;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -60,7 +57,7 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 		public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
 			final ExternalHttpRequest externalHttpRequest = new ExternalHttpRequest(tracingPlugin.getTracer(), request.getMethod().toString(), removeQuery(request.getURI()), request.getURI().getHost(), request.getURI().getPort());
 			final Span span = externalHttpRequest.createSpan();
-			final Scope scope = SpanUtils.activateSpan(tracingPlugin.getTracer().scopeManager(), span);
+			final Scope scope = tracingPlugin.getTracer().activateSpan(span);
 			try {
 				Profiler.start(request.getMethod().toString() + " " + request.getURI() + " ");
 				tracingPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));

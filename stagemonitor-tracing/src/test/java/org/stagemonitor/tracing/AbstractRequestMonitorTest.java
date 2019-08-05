@@ -98,7 +98,7 @@ public abstract class AbstractRequestMonitorTest {
 				return NoopTracerFactory.create();
 			}
 		});
-		assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
+		assertThat(tracingPlugin.getTracer().activeSpan()).isNull();
 	}
 
 	@After
@@ -109,9 +109,9 @@ public abstract class AbstractRequestMonitorTest {
 		// TODO check if this is correct
 		boolean active = corePlugin.isStagemonitorActive();
 		if (active) {
-			assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
+			assertThat(tracingPlugin.getTracer().activeSpan()).isNull();
 		} else {
-			assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isEqualTo(NoopSpan.INSTANCE);
+			assertThat(tracingPlugin.getTracer().activeSpan()).isEqualTo(NoopSpan.INSTANCE);
 		}
 	}
 }
