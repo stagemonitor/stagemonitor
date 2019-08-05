@@ -112,7 +112,14 @@ public class RequestMonitor {
 		if (corePlugin.isStagemonitorActive()) {
 			final long start = System.nanoTime();
 			final Span span = monitoredRequest.createSpan();
-			final Scope scope = tracingPlugin.getTracer().activateSpan(span);
+			final Scope scope;
+			SpanWrapper spanWrapper = null;
+			if (span instanceof SpanWrapper) {
+				spanWrapper = (SpanWrapper) span;
+				scope = tracingPlugin.getTracer().activateSpan(spanWrapper.getDelegate());
+			} else {
+				scope = tracingPlugin.getTracer().activateSpan(span);
+			}
 
 			try {
 				final SpanContextInformation info = getSpanContextInformation(start, span);
@@ -122,7 +129,7 @@ public class RequestMonitor {
 				recordException(e);
 				throw e;
 			} finally {
-				monitorStop(scope, span);
+				monitorStop(scope, spanWrapper != null ? spanWrapper : span);
 			}
 		}
 		return null;
