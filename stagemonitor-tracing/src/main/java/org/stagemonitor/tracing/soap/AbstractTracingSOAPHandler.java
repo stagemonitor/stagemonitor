@@ -1,13 +1,12 @@
 package org.stagemonitor.tracing.soap;
 
-import io.opentracing.Scope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.TracingPlugin;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
 
@@ -18,6 +17,7 @@ import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
 
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.tag.Tags;
 
@@ -132,7 +132,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 			final ByteArrayOutputStream os = new ByteArrayOutputStream();
 			context.getMessage().writeTo(os);
 			os.close();
-			return new String(os.toByteArray(), Charset.forName("UTF-8"));
+			return new String(os.toByteArray(), StandardCharsets.UTF_8);
 		} catch (Exception e) {
 			return null;
 		}

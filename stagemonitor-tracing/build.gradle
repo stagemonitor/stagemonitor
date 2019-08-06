@@ -5,6 +5,8 @@ dependencies {
 	optional 'javax.ejb:ejb-api:3.0'
 	optional 'org.freemarker:freemarker:2.3.23'
 
+	provided group: 'com.sun.xml.ws', name: 'jaxws-rt', version: '2.2.8'
+
 	testCompile project(':stagemonitor-core').sourceSets.test.output
 	testCompile "org.eclipse.jetty:jetty-server:$jettyVersion"
 	testCompile "io.opentracing:opentracing-mock:$opentracingVersion"
