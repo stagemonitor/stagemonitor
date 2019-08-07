@@ -142,7 +142,7 @@ public class SpanWrappingTracer implements Tracer {
 		public <T> SpanBuilder withTag(Tag<T> tag, T value) {
 			final String key = tag.getKey();
 			for (SpanEventListener spanEventListener : spanEventListeners) {
-				//value = spanEventListener.onSetTag(key, value);
+				value = spanEventListener.onSetTag(tag, value);
 			}
 			if (value != null) {
 				if (!key.startsWith(INTERNAL_TAG_PREFIX)) {
