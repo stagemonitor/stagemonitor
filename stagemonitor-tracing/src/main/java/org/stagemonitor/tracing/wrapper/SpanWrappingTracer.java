@@ -1,5 +1,11 @@
 package org.stagemonitor.tracing.wrapper;
 
+import io.opentracing.*;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -7,16 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
-
-import io.opentracing.Scope;
-import io.opentracing.ScopeManager;
-import io.opentracing.Span;
-import io.opentracing.SpanContext;
-import io.opentracing.Tracer;
-import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.stagemonitor.tracing.wrapper.SpanWrapper.INTERNAL_TAG_PREFIX;
 
@@ -30,6 +26,7 @@ public class SpanWrappingTracer implements Tracer {
 	private static final Logger logger = LoggerFactory.getLogger(SpanWrappingTracer.class);
 
 	private final Tracer delegate;
+	private final SpanWrappingScopeManager scopeManager;
 	private final Collection<SpanEventListenerFactory> spanInterceptorFactories = new CopyOnWriteArrayList<SpanEventListenerFactory>();
 
 	public SpanWrappingTracer(Tracer delegate) {
@@ -38,12 +35,13 @@ public class SpanWrappingTracer implements Tracer {
 
 	public SpanWrappingTracer(Tracer delegate, Collection<SpanEventListenerFactory> spanInterceptorFactories) {
 		this.delegate = delegate;
+		this.scopeManager = new SpanWrappingScopeManager(delegate.scopeManager());
 		this.spanInterceptorFactories.addAll(spanInterceptorFactories);
 	}
 
 	@Override
 	public ScopeManager scopeManager() {
-		return delegate.scopeManager();
+		return scopeManager;
 	}
 
     @Override
@@ -117,16 +115,19 @@ public class SpanWrappingTracer implements Tracer {
 			this.spanEventListeners = spanEventListeners;
 		}
 
+		@Override
 		public SpanWrappingSpanBuilder asChildOf(SpanContext parent) {
 			delegate = delegate.asChildOf(parent);
 			return this;
 		}
 
+		@Override
 		public SpanWrappingSpanBuilder asChildOf(Span parent) {
 			delegate = delegate.asChildOf(parent);
 			return this;
 		}
 
+		@Override
 		public SpanWrappingSpanBuilder addReference(String referenceType, SpanContext referencedContext) {
 			delegate = delegate.addReference(referenceType, referencedContext);
 			return this;
@@ -198,7 +199,7 @@ public class SpanWrappingTracer implements Tracer {
 		}
 
 		@Override
-		public SpanWrapper start() {
+		public Span start() {
 			return startSpanWrapper(delegate.start());
 		}
 

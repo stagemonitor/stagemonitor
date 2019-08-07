@@ -1,6 +1,7 @@
 package org.stagemonitor.zipkin;
 
 import org.stagemonitor.core.CorePlugin;
+import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.core.StagemonitorPlugin;
 import org.stagemonitor.tracing.B3HeaderFormat;
 import org.stagemonitor.tracing.TracerFactory;

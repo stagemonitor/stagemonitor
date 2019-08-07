@@ -1,13 +1,13 @@
 package org.stagemonitor.tracing;
 
 import io.opentracing.Scope;
-import io.opentracing.Span;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.core.CorePlugin;
 import org.stagemonitor.core.metrics.metrics2.Metric2Registry;
 import org.stagemonitor.core.metrics.metrics2.MetricName;
 import org.stagemonitor.tracing.utils.SpanUtils;
-import org.stagemonitor.tracing.wrapper.SpanWrapper;
+
+import io.opentracing.Span;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class RequestMonitor {
 	private CorePlugin corePlugin;
 	private TracingPlugin tracingPlugin;
 
-	private static final ThreadLocal<Map<Span, ScopeContextHelper>> currentScopeMapThreadLocal = new ThreadLocal<>();
+	private static final ThreadLocal<Map<Span, Scope>> currentScopeMapThreadLocal = new ThreadLocal<Map<Span, Scope>>();
 
 	public RequestMonitor(ConfigurationRegistry configuration, Metric2Registry registry) {
 		this(configuration, registry, configuration.getConfig(TracingPlugin.class));
@@ -46,21 +46,13 @@ public class RequestMonitor {
 		final long start = System.nanoTime();
 		final Span span = monitoredRequest.createSpan();
 		if (activateSpan) {
-			ScopeContextHelper scopeContextHelper = new ScopeContextHelper();
-			Span delegate = span;
-			if (span instanceof SpanWrapper) {
-				SpanWrapper spanWrapper = (SpanWrapper) span;
-				scopeContextHelper.spanWrapper = spanWrapper;
-				delegate = spanWrapper.getDelegate();
+			final Scope scope = tracingPlugin.getTracer().activateSpan(span);
+			Map<Span, Scope> scopeMap = currentScopeMapThreadLocal.get();
+			if (scopeMap == null) {
+				scopeMap = new HashMap<Span, Scope>();
+				currentScopeMapThreadLocal.set(scopeMap);
 			}
-			scopeContextHelper.scope = tracingPlugin.getTracer().activateSpan(delegate);
-
-			Map<Span, ScopeContextHelper> scopeContextHelperMap = currentScopeMapThreadLocal.get();
-			if (scopeContextHelperMap == null) {
-				scopeContextHelperMap = new HashMap<>();
-				currentScopeMapThreadLocal.set(scopeContextHelperMap);
-			}
-			scopeContextHelperMap.put(delegate, scopeContextHelper);
+			scopeMap.put(span, scope);
 		}
 		return getSpanContextInformation(start, span);
 	}
@@ -77,17 +69,16 @@ public class RequestMonitor {
 		if (! corePlugin.isStagemonitorActive()) {
 			return;
 		}
-		final Span activeSpan = tracingPlugin.getTracer().activeSpan();
-		Map<Span, ScopeContextHelper> scopeContextHelperMap = currentScopeMapThreadLocal.get();
-		final ScopeContextHelper scopeContextHelper = scopeContextHelperMap.remove(activeSpan);
-		if (scopeContextHelperMap.isEmpty()) {
-			currentScopeMapThreadLocal.remove();
+		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		Scope scope = null;
+		Map<Span, Scope> scopeMap = currentScopeMapThreadLocal.get();
+		if (scopeMap != null) {
+			scope = scopeMap.remove(activeSpan);
+			if (scopeMap.isEmpty()) {
+				currentScopeMapThreadLocal.remove();
+			}
 		}
-		if (scopeContextHelper != null) {
-			monitorStop(scopeContextHelper.scope, scopeContextHelper.spanWrapper != null ? scopeContextHelper.spanWrapper : activeSpan);
-		} else {
-			monitorStop(null, activeSpan);
-		}
+		monitorStop(scope, activeSpan);
 	}
 
 	private void monitorStop(Scope scope, Span span) {
@@ -112,14 +103,7 @@ public class RequestMonitor {
 		if (corePlugin.isStagemonitorActive()) {
 			final long start = System.nanoTime();
 			final Span span = monitoredRequest.createSpan();
-			final Scope scope;
-			SpanWrapper spanWrapper = null;
-			if (span instanceof SpanWrapper) {
-				spanWrapper = (SpanWrapper) span;
-				scope = tracingPlugin.getTracer().activateSpan(spanWrapper.getDelegate());
-			} else {
-				scope = tracingPlugin.getTracer().activateSpan(span);
-			}
+			final Scope scope = tracingPlugin.getTracer().activateSpan(span);
 
 			try {
 				final SpanContextInformation info = getSpanContextInformation(start, span);
@@ -129,7 +113,7 @@ public class RequestMonitor {
 				recordException(e);
 				throw e;
 			} finally {
-				monitorStop(scope, spanWrapper != null ? spanWrapper : span);
+				monitorStop(scope, span);
 			}
 		}
 		return null;
@@ -139,7 +123,7 @@ public class RequestMonitor {
 		if (! corePlugin.isStagemonitorActive()) {
 			return;
 		}
-		final Span activeSpan = tracingPlugin.getTracer().activeSpan();
+		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
 		if (activeSpan != null) {
 			SpanUtils.setException(activeSpan, e, tracingPlugin.getIgnoreExceptions(), tracingPlugin.getUnnestExceptions());
 		}
@@ -150,11 +134,6 @@ public class RequestMonitor {
 			overhead2 = System.nanoTime() - overhead2;
 			metricRegistry.timer(internalOverheadMetricName).update(overhead2 + overhead1, NANOSECONDS);
 		}
-	}
-
-	private class ScopeContextHelper {
-		SpanWrapper spanWrapper;
-		Scope scope;
 	}
 
 }
