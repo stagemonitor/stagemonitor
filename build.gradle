@@ -108,8 +108,8 @@ subprojects {
 	test.testLogging.exceptionFormat = 'full'
 
 	compileJava {
-		sourceCompatibility = 1.8
-		targetCompatibility = 1.8
+		sourceCompatibility = JavaVersion.VERSION_1_8
+		targetCompatibility = JavaVersion.VERSION_1_8
 		options.debug = true
 		options.debugOptions.debugLevel = "source,lines,vars"
 		options.incremental = true

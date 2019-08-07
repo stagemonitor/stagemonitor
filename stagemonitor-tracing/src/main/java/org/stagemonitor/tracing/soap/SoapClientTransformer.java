@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import org.stagemonitor.core.instrument.StagemonitorByteBuddyTransformer;
+import org.stagemonitor.core.util.ClassUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,8 @@ import static net.bytebuddy.matcher.ElementMatchers.returns;
  */
 public class SoapClientTransformer extends StagemonitorByteBuddyTransformer {
 
+	public static final String JAVAX_XML_WS_DISPATCH = "javax.xml.ws.Dispatch";
+
 	@Override
 	public ElementMatcher.Junction<TypeDescription> getTypeMatcher() {
 		return named("javax.xml.ws.Service");
@@ -44,7 +47,12 @@ public class SoapClientTransformer extends StagemonitorByteBuddyTransformer {
 
 	@Override
 	protected ElementMatcher.Junction<MethodDescription> getExtraMethodElementMatcher() {
-		return named("getPort").or(named("createDispatch").and(returns(named("javax.xml.ws.Dispatch"))));
+		return named("getPort").or(named("createDispatch").and(returns(named(JAVAX_XML_WS_DISPATCH))));
+	}
+
+	@Override
+	public boolean isActive() {
+		return ClassUtils.isPresent(JAVAX_XML_WS_DISPATCH);
 	}
 
 	@Advice.OnMethodExit
