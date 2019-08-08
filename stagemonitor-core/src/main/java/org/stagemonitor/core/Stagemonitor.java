@@ -179,7 +179,6 @@ public final class Stagemonitor {
 	}
 
 	private static void initializePlugin(final StagemonitorPlugin stagemonitorPlugin) {
-		logger.debug("initialize plugin: " + stagemonitorPlugin.getClass().getSimpleName());
 		final String pluginName = stagemonitorPlugin.getClass().getSimpleName();
 		try {
 			stagemonitorPlugin.initializePlugin(new StagemonitorPlugin.InitArguments(metric2Registry, getConfiguration(), measurementSession, healthCheckRegistry));

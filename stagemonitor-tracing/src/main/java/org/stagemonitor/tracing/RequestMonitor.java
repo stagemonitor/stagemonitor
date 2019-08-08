@@ -69,7 +69,7 @@ public class RequestMonitor {
 		if (! corePlugin.isStagemonitorActive()) {
 			return;
 		}
-		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		final Span activeSpan = tracingPlugin.getTracer().activeSpan();
 		Scope scope = null;
 		Map<Span, Scope> scopeMap = currentScopeMapThreadLocal.get();
 		if (scopeMap != null) {

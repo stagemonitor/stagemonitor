@@ -11,7 +11,7 @@ public class SpanWrappingScopeManager implements ScopeManager {
 
 	private ScopeManager delegate;
 
-	private ThreadLocal<Map<String, SpanWrapper>> currentSpanWrapperThreadLocal;
+	private ThreadLocal<Map<Span, SpanWrapper>> currentSpanWrapperThreadLocal = new ThreadLocal<>();
 
 	public SpanWrappingScopeManager(ScopeManager delegate) {
 		this.delegate = delegate;
@@ -22,8 +22,13 @@ public class SpanWrappingScopeManager implements ScopeManager {
 	public Scope activate(Span span) {
 		if (span instanceof SpanWrapper) {
 			SpanWrapper spanWrapper = (SpanWrapper) span;
-			Map<String, SpanWrapper> spanWrapperMap = currentSpanWrapperThreadLocal.get();
-			spanWrapperMap.put(span.context().toSpanId(), spanWrapper);
+			Map<Span, SpanWrapper> spanWrapperMap = currentSpanWrapperThreadLocal.get();
+			if (spanWrapperMap == null) {
+				spanWrapperMap = new HashMap<>();
+				currentSpanWrapperThreadLocal.set(spanWrapperMap);
+			}
+			System.out.println("put" + span);
+			spanWrapperMap.put(span, spanWrapper);
 			return delegate.activate(spanWrapper.getDelegate());
 		}
 		return delegate.activate(span);
@@ -32,13 +37,16 @@ public class SpanWrappingScopeManager implements ScopeManager {
 	@Override
 	public Span activeSpan() {
 		Span activeSpan = delegate.activeSpan();
-		Map<String, SpanWrapper> spanWrapperMap = currentSpanWrapperThreadLocal.get();
+		Map<Span, SpanWrapper> spanWrapperMap = currentSpanWrapperThreadLocal.get();
 		if (spanWrapperMap != null) {
-			SpanWrapper spanWrapper = spanWrapperMap.get(activeSpan.context().toSpanId());
+			System.out.println("get " + activeSpan);
+			SpanWrapper spanWrapper = spanWrapperMap.get(activeSpan);
 			if (spanWrapper != null) {
+				System.out.println("return span wrapper");
 				return spanWrapper;
 			}
 		}
+		System.out.println("return active span");
 		return activeSpan;
 	}
 

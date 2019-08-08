@@ -1,10 +1,6 @@
 package org.stagemonitor.tracing.utils;
 
-import io.opentracing.Scope;
-import io.opentracing.ScopeManager;
-import io.opentracing.Tracer;
 import org.stagemonitor.core.util.InetAddresses;
-import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
 import java.io.PrintWriter;

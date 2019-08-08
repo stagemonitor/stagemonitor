@@ -51,7 +51,7 @@ public class SpanWrappingTracer implements Tracer {
 
 	@Override
 	public Scope activateSpan(Span span) {
-		return delegate.activateSpan(span);
+		return scopeManager().activate(span);
 	}
 
 	@Override
@@ -199,7 +199,7 @@ public class SpanWrappingTracer implements Tracer {
 		}
 
 		@Override
-		public Span start() {
+		public SpanWrapper start() {
 			return startSpanWrapper(delegate.start());
 		}
 
