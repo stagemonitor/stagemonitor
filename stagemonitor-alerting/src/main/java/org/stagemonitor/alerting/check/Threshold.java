@@ -105,9 +105,9 @@ public class Threshold {
 		/**
 		 * Checks, whether {@code actualValue OPERATOR thresholdValue} is true or false
 		 *
-		 * @param actualValue x
-		 * @param expectedValue x
-		 * @return x
+		 * @param actualValue
+		 * @param expectedValue
+		 * @return
 		 */
 		public abstract boolean check(double actualValue, double expectedValue);
 
