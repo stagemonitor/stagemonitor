@@ -34,7 +34,7 @@ public class Threshold {
 	 * @return {@code true}, if the actual value exceeds the threshold, {@code false} otherwise
 	 */
 	public boolean isExceeded(double actualValue) {
-		return !operator.check(actualValue, thresholdValue);
+		return operator.check(actualValue, thresholdValue);
 	}
 
 	public Operator getOperator() {
@@ -60,7 +60,7 @@ public class Threshold {
 	public CheckResult check(CheckResult.Status severity, MetricName target, Map<String, Number> currentValuesByMetric) {
 		double actualValue = currentValuesByMetric.get(valueType.getName()).doubleValue();
 		if (isExceeded(actualValue)) {
-			return new CheckResult(getCheckExpressionAsString(target) + " is false", actualValue, severity);
+			return new CheckResult(getCheckExpressionAsString(target) + " is true", actualValue, severity);
 		}
 		return new CheckResult(null, actualValue, CheckResult.Status.OK);
 	}
@@ -105,9 +105,9 @@ public class Threshold {
 		/**
 		 * Checks, whether {@code actualValue OPERATOR thresholdValue} is true or false
 		 *
-		 * @param actualValue
-		 * @param expectedValue
-		 * @return
+		 * @param actualValue x
+		 * @param expectedValue x
+		 * @return x
 		 */
 		public abstract boolean check(double actualValue, double expectedValue);
 
