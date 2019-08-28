@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
 /**
@@ -65,13 +66,40 @@ public class ConfigurationOption<T> {
 	private final Class<? super T> valueType;
 	// key: validOptionAsString, value: label
 	private final Map<String, String> validOptions;
-	private String valueAsString;
-	private T value;
-	private List<ConfigurationSource> configurationSources;
-	private String nameOfCurrentConfigurationSource;
-	private String errorMessage;
-	private ConfigurationRegistry configuration;
-	private String usedKey;
+	private volatile List<ConfigurationSource> configurationSources;
+	private volatile ConfigurationRegistry configuration;
+	private volatile String errorMessage;
+	private volatile OptionValue<T> optionValue;
+
+	public static class OptionValue<T> {
+		private final T value;
+		private final String valueAsString;
+		private final String nameOfCurrentConfigurationSource;
+		private final String usedKey;
+
+		OptionValue(T value, String valueAsString, String nameOfCurrentConfigurationSource, String usedKey) {
+			this.value = value;
+			this.valueAsString = valueAsString;
+			this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
+			this.usedKey = usedKey;
+		}
+
+		public T getValue() {
+			return value;
+		}
+
+		public String getValueAsString() {
+			return valueAsString;
+		}
+
+		public String getNameOfCurrentConfigurationSource() {
+			return nameOfCurrentConfigurationSource;
+		}
+
+		public String getUsedKey() {
+			return usedKey;
+		}
+	}
 
 	public static <T> ConfigurationOptionBuilder<T> builder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
 		return new ConfigurationOptionBuilder<T>(valueConverter, valueType);
@@ -264,7 +292,7 @@ public class ConfigurationOption<T> {
 		this.valueType = valueType;
 		this.sensitive = sensitive;
 		this.required = required;
-		this.changeListeners = new ArrayList<ChangeListener<T>>(changeListeners);
+		this.changeListeners = new CopyOnWriteArrayList<ChangeListener<T>>(changeListeners);
 		setToDefault();
 		final ArrayList<String> tempAllKeys = new ArrayList<String>(aliasKeys.size() + 1);
 		tempAllKeys.add(key);
@@ -332,11 +360,11 @@ public class ConfigurationOption<T> {
 	 * @return the current value as string
 	 */
 	public String getValueAsString() {
-		return valueAsString;
+		return optionValue.valueAsString;
 	}
 
 	public String getValueAsSafeString() {
-		return valueConverter.toSafeString(value);
+		return valueConverter.toSafeString(optionValue.value);
 	}
 
 	/**
@@ -356,7 +384,7 @@ public class ConfigurationOption<T> {
 	 */
 	@JsonIgnore
 	public T getValue() {
-		return value;
+		return optionValue.value;
 	}
 
 	/**
@@ -367,6 +395,20 @@ public class ConfigurationOption<T> {
 	@JsonIgnore
 	public T get() {
 		return getValue();
+	}
+
+	/**
+	 * Returns an immutable snapshot of the {@link OptionValue}.
+	 * This makes sure to get a consistent snapshot of all the related values without the risk of partially applied updates.
+	 * This means that {@link OptionValue#getValue()} and {@link OptionValue#getValueAsString()} are always in sync,
+	 * which is not guaranteed if subsequently calling {@link #getValue()} and {@link #getValueAsString()}
+	 * because there could be a concurrent update between those reads.
+	 *
+	 * @return an immutable snapshot of the {@link OptionValue}
+	 */
+	@JsonIgnore
+	public OptionValue<T> getOptionValue() {
+		return optionValue;
 	}
 
 	void setConfigurationSources(List<ConfigurationSource> configurationSources) {
@@ -384,7 +426,7 @@ public class ConfigurationOption<T> {
 	 * @return the name of the configuration source that provided the current value
 	 */
 	public String getNameOfCurrentConfigurationSource() {
-		return nameOfCurrentConfigurationSource;
+		return optionValue.nameOfCurrentConfigurationSource;
 	}
 
 
@@ -455,9 +497,8 @@ public class ConfigurationOption<T> {
 		boolean success = false;
 		for (String key : allKeys) {
 			ConfigValueInfo configValueInfo = loadValueFromSources(key);
-			success = trySetValue(configValueInfo);
+			success = trySetValue(configValueInfo, key);
 			if (success) {
-				usedKey = key;
 				break;
 			}
 		}
@@ -476,7 +517,7 @@ public class ConfigurationOption<T> {
 		return new ConfigValueInfo();
 	}
 
-	private boolean trySetValue(ConfigValueInfo configValueInfo) {
+	private boolean trySetValue(ConfigValueInfo configValueInfo, String key) {
 		final String newConfigurationSourceName = configValueInfo.getNewConfigurationSourceName();
 		String newValueAsString = configValueInfo.getNewValueAsString();
 		if (newValueAsString == null) {
@@ -487,7 +528,7 @@ public class ConfigurationOption<T> {
 		if (hasChanges(newValueAsString)) {
 			try {
 				final T newValue = valueConverter.convert(newValueAsString);
-				setValue(newValue, newValueAsString, newConfigurationSourceName);
+				setValue(newValue, newValueAsString, newConfigurationSourceName, key);
 				errorMessage = null;
 				if (isInitialized()) {
 					for (ChangeListener<T> changeListener : changeListeners) {
@@ -514,7 +555,7 @@ public class ConfigurationOption<T> {
 		if (isInitialized() && required && defaultValue == null) {
 			handleMissingRequiredValue(msg);
 		}
-		setValue(defaultValue, defaultValueAsString, "Default Value");
+		setValue(defaultValue, defaultValueAsString, "Default Value", key);
 	}
 
 	private boolean isInitialized() {
@@ -530,7 +571,7 @@ public class ConfigurationOption<T> {
 	}
 
 	private boolean hasChanges(String property) {
-		return !property.equals(valueAsString);
+		return !property.equals(optionValue.valueAsString);
 	}
 
 	/**
@@ -562,14 +603,11 @@ public class ConfigurationOption<T> {
 		configuration.save(key, newValueAsString, configurationSourceName);
 	}
 
-	private void setValue(T value, String valueAsString, String nameOfCurrentConfigurationSource) {
+	private void setValue(T value, String valueAsString, String nameOfCurrentConfigurationSource, String key) {
 		for (Validator<T> validator : validators) {
 			validator.assertValid(value);
 		}
-
-		this.value = value;
-		this.valueAsString = valueAsString;
-		this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
+		this.optionValue = new OptionValue<T>(value, valueAsString, nameOfCurrentConfigurationSource, key);
 	}
 
 	/**
@@ -578,8 +616,8 @@ public class ConfigurationOption<T> {
 	 * @return true if the current value is equal to the default value
 	 */
 	public boolean isDefault() {
-		return (valueAsString != null && valueAsString.equals(defaultValueAsString)) ||
-				(valueAsString == null && defaultValueAsString == null);
+		return (optionValue.valueAsString != null && optionValue.valueAsString.equals(defaultValueAsString)) ||
+				(optionValue.valueAsString == null && defaultValueAsString == null);
 	}
 
 	public void addChangeListener(ChangeListener<T> changeListener) {
@@ -597,7 +635,7 @@ public class ConfigurationOption<T> {
 	 * @return the used key of the current configuration source
 	 */
 	public String getUsedKey() {
-		return usedKey;
+		return optionValue.usedKey;
 	}
 
 	/**
