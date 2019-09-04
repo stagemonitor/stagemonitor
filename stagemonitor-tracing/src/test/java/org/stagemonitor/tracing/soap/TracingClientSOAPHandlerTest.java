@@ -44,12 +44,12 @@ public class TracingClientSOAPHandlerTest {
 		tracingClientSOAPHandler = new TracingClientSOAPHandler(tracingPlugin, soapTracingPlugin);
 		soapRequest = getSoapMessageContext("<request/>", "operationName", false);
 		soapResponse = getSoapMessageContext("<response/>", "operationName", false);
-		assertThat(tracingPlugin.getTracer().scopeManager().activeSpan()).isNull();
+		assertThat(tracingPlugin.getTracer().scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(mockTracer.scopeManager().activeSpan()).isNull();
+		assertThat(mockTracer.scopeManager().active()).isNull();
 	}
 
 	@Test

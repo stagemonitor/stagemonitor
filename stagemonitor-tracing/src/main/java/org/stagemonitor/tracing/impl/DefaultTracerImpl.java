@@ -21,7 +21,7 @@ class DefaultTracerImpl implements Tracer {
 
 	@Override
 	public Span activeSpan() {
-		return scopeManager.activeSpan();
+		return scopeManager.active().span();
 	}
 
 	@Override
@@ -39,13 +39,4 @@ class DefaultTracerImpl implements Tracer {
 		return tracer.extract(format, carrier);
 	}
 
-	@Override
-	public Scope activateSpan(Span span) {
-		return scopeManager.activate(span);
-	}
-
-	@Override
-	public void close() {
-		tracer.close();
-	}
 }

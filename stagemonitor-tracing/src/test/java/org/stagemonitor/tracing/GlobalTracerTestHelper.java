@@ -13,10 +13,6 @@ public class GlobalTracerTestHelper {
 			final Field tracerField = GlobalTracer.class.getDeclaredField("tracer");
 			tracerField.setAccessible(true);
 			tracerField.set(null, NoopTracerFactory.create());
-
-			final Field isRegisteredField = GlobalTracer.class.getDeclaredField("isRegistered");
-			isRegisteredField.setAccessible(true);
-			isRegisteredField.set(null, false);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

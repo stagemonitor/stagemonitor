@@ -1,16 +1,9 @@
 package org.stagemonitor.tracing.wrapper;
 
-import io.opentracing.tag.Tag;
-
 public abstract class AbstractSpanEventListener implements SpanEventListener {
 
 	@Override
 	public void onStart(SpanWrapper spanWrapper) {
-	}
-
-	@Override
-	public <T> T onSetTag(Tag<T> tag, T value) {
-		return value;
 	}
 
 	@Override

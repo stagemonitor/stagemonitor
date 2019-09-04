@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing;
 
+import io.opentracing.Scope;
 import org.stagemonitor.core.Stagemonitor;
 import org.stagemonitor.tracing.profiler.CallStackElement;
 import org.stagemonitor.tracing.sampling.PostExecutionInterceptorContext;
@@ -34,11 +35,11 @@ public class SpanContextInformation {
 	private SpanWrapper spanWrapper;
 
 	public static SpanContextInformation getCurrent() {
-		final Span activeSpan = GlobalTracer.get().scopeManager().activeSpan();
-		if (activeSpan == null) {
+		final Scope activeScope = GlobalTracer.get().scopeManager().active();
+		if (activeScope == null) {
 			return null;
 		}
-		return forSpan(activeSpan);
+		return forSpan(activeScope.span());
 	}
 
 	/**

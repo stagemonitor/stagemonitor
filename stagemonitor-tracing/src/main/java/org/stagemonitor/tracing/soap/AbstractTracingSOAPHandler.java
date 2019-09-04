@@ -29,8 +29,6 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 	protected final TracingPlugin tracingPlugin;
 	protected final SoapTracingPlugin soapTracingPlugin;
 
-	protected static final ThreadLocal<Scope> currentScopeThreadLocal = new ThreadLocal<Scope>();
-
 	public AbstractTracingSOAPHandler(boolean serverHandler) {
 		this(Stagemonitor.getPlugin(TracingPlugin.class), Stagemonitor.getPlugin(SoapTracingPlugin.class), serverHandler);
 	}
@@ -93,7 +91,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return true;
 		}
-		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+		final Span activeSpan = tracingPlugin.getTracer().scopeManager().active().span();
 		if (activeSpan != null) {
 			Tags.ERROR.set(activeSpan, Boolean.TRUE);
 			try {
@@ -112,15 +110,7 @@ public abstract class AbstractTracingSOAPHandler implements SOAPHandler<SOAPMess
 		if (!shouldExecute(context)) {
 			return;
 		}
-		Span span = tracingPlugin.getTracer().scopeManager().activeSpan();
-		if (span != null) {
-			span.finish();
-			Scope scope = currentScopeThreadLocal.get();
-			currentScopeThreadLocal.remove();
-			if (scope != null) {
-				scope.close();
-			}
-		}
+		tracingPlugin.getTracer().scopeManager().active().close();
 	}
 
 	protected String getOperationName(SOAPMessageContext context) {

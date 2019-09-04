@@ -1,7 +1,6 @@
 package org.stagemonitor.web.servlet.spring;
 
 import io.opentracing.Scope;
-import io.opentracing.Span;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -57,16 +56,14 @@ public class SpringRestTemplateContextPropagatingTransformer extends Stagemonito
 
 		@Override
 		public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
+			final Scope scope = new ExternalHttpRequest(tracingPlugin.getTracer(), request.getMethod().toString(), removeQuery(request.getURI()), request.getURI().getHost(), request.getURI().getPort()).createScope();
 			final ExternalHttpRequest externalHttpRequest = new ExternalHttpRequest(tracingPlugin.getTracer(), request.getMethod().toString(), removeQuery(request.getURI()), request.getURI().getHost(), request.getURI().getPort());
-			final Span span = externalHttpRequest.createSpan();
-			final Scope scope = tracingPlugin.getTracer().scopeManager().activate(span);
 			try {
 				Profiler.start(request.getMethod().toString() + " " + request.getURI() + " ");
-				tracingPlugin.getTracer().inject(span.context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
+				tracingPlugin.getTracer().inject(scope.span().context(), Format.Builtin.HTTP_HEADERS, new SpringHttpRequestInjectAdapter(request));
 				return execution.execute(request, body);
 			} finally {
 				Profiler.stop();
-				span.finish();
 				scope.close();
 			}
 		}

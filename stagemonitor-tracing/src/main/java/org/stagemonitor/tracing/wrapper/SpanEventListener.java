@@ -2,7 +2,6 @@ package org.stagemonitor.tracing.wrapper;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-import io.opentracing.tag.Tag;
 
 /**
  * Provides callbacks for interesting events triggered by calling certain {@link Span} and {@link
@@ -40,17 +39,8 @@ public interface SpanEventListener {
 	void onStart(SpanWrapper spanWrapper);
 
 	/**
-	 * Callback for {@link Span#setTag(Tag, Object)} {@link Tracer.SpanBuilder#withTag(Tag, Object)}
-	 * @param tag the tag
-	 * @param value the tag value
-	 * @param <T>
-	 * @return you can modify the value of the tag by returning a different value then the provided one
-	 */
-	<T> T onSetTag(Tag<T> tag, T value);
-
-	/**
 	 * Callback for {@link Span#setTag(String, String)} and {@link Tracer.SpanBuilder#withTag(String, String)}
-	 * <p>
+	 *
 	 * This method may be called before a span is started.
 	 *
 	 * @param key   the tag key
@@ -61,7 +51,7 @@ public interface SpanEventListener {
 
 	/**
 	 * Callback for {@link Span#setTag(String, boolean)} and {@link Tracer.SpanBuilder#withTag(String, boolean)}
-	 * <p>
+	 *
 	 * This method may be called before a span is started.
 	 *
 	 * @param key   the tag key
@@ -72,7 +62,7 @@ public interface SpanEventListener {
 
 	/**
 	 * Callback for {@link Span#setTag(String, Number)} and {@link Tracer.SpanBuilder#withTag(String, Number)}
-	 * <p>
+	 *
 	 * This method may be called before a span is started.
 	 *
 	 * @param key   the tag key

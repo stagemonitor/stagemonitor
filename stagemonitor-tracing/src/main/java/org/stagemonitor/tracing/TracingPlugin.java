@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing;
 
+import io.opentracing.Scope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationOption;
@@ -364,11 +365,11 @@ public class TracingPlugin extends StagemonitorPlugin {
 	 * @return the {@link Span} of the current request or a noop {@link Span} (never <code>null</code>)
 	 */
 	public static Span getCurrentSpan() {
-		final Span span = GlobalTracer.get().scopeManager().activeSpan();
-		if (span != null) {
-			return span;
+		final Scope activeScope = GlobalTracer.get().scopeManager().active();
+		if (activeScope != null) {
+			return activeScope.span();
 		} else {
-			return NoopTracerFactory.create().buildSpan(null).start();
+			return NoopTracerFactory.create().buildSpan(null).startManual();
 		}
 	}
 

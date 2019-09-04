@@ -1,9 +1,6 @@
 package org.stagemonitor.web.servlet;
 
-import io.opentracing.Scope;
-import io.opentracing.Span;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockFilterChain;
@@ -60,13 +57,13 @@ public class MonitoredHttpRequestTest {
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		when(tracingPlugin.isSampled(any())).thenReturn(true);
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.scopeManager().active()).isNull();
 		servletPlugin.initPasswordChecker(configuration);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.scopeManager().active()).isNull();
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
 	}
@@ -88,11 +85,7 @@ public class MonitoredHttpRequestTest {
 		request.addHeader("Accept", "application/json");
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
-
-		Span span = monitoredHttpRequest.createSpan();
-		Scope scope = tracer.scopeManager().activate(span);
-		span.finish();
-		scope.close();
+		monitoredHttpRequest.createScope().close();
 
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
@@ -118,11 +111,7 @@ public class MonitoredHttpRequestTest {
 		request.addHeader("traceid", "42");
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
-
-		Span span = monitoredHttpRequest.createSpan();
-		Scope scope = tracer.scopeManager().activate(span);
-		span.finish();
-		scope.close();
+		monitoredHttpRequest.createScope().close();
 
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
@@ -139,11 +128,7 @@ public class MonitoredHttpRequestTest {
 		request.addHeader("Referer", "https://www.github.com/stagemonitor/stagemonitor");
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
-
-		Span span = monitoredHttpRequest.createSpan();
-		Scope scope = tracer.scopeManager().activate(span);
-		span.finish();
-		scope.close();
+		monitoredHttpRequest.createScope().close();
 
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
@@ -157,11 +142,7 @@ public class MonitoredHttpRequestTest {
 		request.setServerName("www.myapp.com");
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
-
-		Span span = monitoredHttpRequest.createSpan();
-		Scope scope = tracer.scopeManager().activate(span);
-		span.finish();
-		scope.close();
+		monitoredHttpRequest.createScope().close();
 
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
@@ -175,11 +156,7 @@ public class MonitoredHttpRequestTest {
 		request.addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
-
-		Span span = monitoredHttpRequest.createSpan();
-		Scope scope = tracer.scopeManager().activate(span);
-		span.finish();
-		scope.close();
+		monitoredHttpRequest.createScope().close();
 
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);

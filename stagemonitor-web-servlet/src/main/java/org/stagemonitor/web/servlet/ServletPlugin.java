@@ -387,14 +387,6 @@ public class ServletPlugin extends StagemonitorPlugin {
 		return disableResourceTimingTransmission.getValue();
 	}
 
-	public int getMaxLengthForImgRequest() {
-		return maxLengthForImgRequest.getValue();
-	}
-
-	public boolean isDisableResourceTimingTransmission() {
-		return disableResourceTimingTransmission.getValue();
-	}
-
 	public int getClientSpanScriptCacheDuration() {
 		return clientSpanScriptCacheDuration.getValue();
 	}

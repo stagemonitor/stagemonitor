@@ -17,7 +17,7 @@ public class AbstractExternalRequestTest {
 			protected String getType() {
 				return "jdbc";
 			}
-		}.createSpan().finish();
+		}.createScope().close();
 
 		assertThat(tracer.finishedSpans().get(0).tags().get(Tags.SAMPLING_PRIORITY.getKey())).isEqualTo(0);
 	}

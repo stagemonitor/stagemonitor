@@ -52,12 +52,12 @@ public class TracedTransformerTest {
 		tags = new HashMap<>();
 		Stagemonitor.getPlugin(TracingPlugin.class).addSpanEventListenerFactory(new TagRecordingSpanEventListener(tags));
 		Stagemonitor.getPlugin(TracingPlugin.class).addReporter(spanCapturingReporter);
-		assertThat(GlobalTracer.get().scopeManager().activeSpan()).isNull();
+		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(GlobalTracer.get().scopeManager().activeSpan()).isNull();
+		assertThat(GlobalTracer.get().scopeManager().active()).isNull();
 	}
 
 	@AfterClass

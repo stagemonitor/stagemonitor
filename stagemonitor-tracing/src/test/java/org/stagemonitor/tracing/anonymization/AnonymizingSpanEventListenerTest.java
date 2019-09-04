@@ -43,12 +43,12 @@ public class AnonymizingSpanEventListenerTest {
 		when(tracingPlugin.isAnonymizeIPs()).thenReturn(true);
 		when(tracingPlugin.getDiscloseUsers()).thenReturn(Collections.emptySet());
 		when(corePlugin.getThreadPoolQueueCapacityLimit()).thenReturn(1000);
-		assertThat(mockTracer.scopeManager().activeSpan()).isNull();
+		assertThat(mockTracer.scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(mockTracer.scopeManager().activeSpan()).isNull();
+		assertThat(mockTracer.scopeManager().active()).isNull();
 	}
 
 	@Test

@@ -178,7 +178,6 @@ public class ConnectionMonitoringTransformerTest {
 		assertEquals(message, 1, timers.get(name("response_time").operationType("jdbc").operationName("ConnectionMonitoringTransformerTest$TestDao#executeStatement").build()).getCount());
 		assertEquals(message, 1, timers.get(name("response_time").operationType("jdbc").operationName("All").build()).getCount());
 		final CallStackElement callStack = spanContext.getCallTree();
-		assertNotNull(callStack);
 		assertEquals("testRecordSqlStatement", callStack.getSignature());
 		assertEquals("void org.stagemonitor.jdbc.ConnectionMonitoringTransformerTest$TestDao.executeStatement()",
 				callStack.getChildren().get(0).getSignature());

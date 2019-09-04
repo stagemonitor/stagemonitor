@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing;
 
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import org.stagemonitor.configuration.ConfigurationRegistry;
 import org.stagemonitor.tracing.metrics.MetricsSpanEventListener;
@@ -49,16 +50,16 @@ public class MonitoredMethodRequest extends MonitoredRequest {
 	}
 
 	@Override
-	public Span createSpan() {
+	public Scope createScope() {
 		final Tracer tracer = tracingPlugin.getTracer();
 		final Tracer.SpanBuilder spanBuilder = tracer.buildSpan(methodSignature)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
-		final Span span = spanBuilder
+		final Scope scope = spanBuilder
 				.withTag(SpanUtils.OPERATION_TYPE, OP_TYPE_METHOD_INVOCATION)
 				.withTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true)
-				.start();
-		SpanUtils.setParameters(span, safeParameters);
-		return span;
+				.startActive(true);
+		SpanUtils.setParameters(scope.span(), safeParameters);
+		return scope;
 	}
 
 	@Override

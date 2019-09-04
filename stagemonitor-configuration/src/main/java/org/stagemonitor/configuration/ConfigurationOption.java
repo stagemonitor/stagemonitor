@@ -630,7 +630,7 @@ public class ConfigurationOption<T> {
 
 	/**
 	 * A {@link ConfigurationOption} can have multiple keys ({@link #key} and {@link #aliasKeys}). This method returns
-	 * the key which is used by the current configuration source ({@link #nameOfCurrentConfigurationSource}).
+	 * the key which is used by the current configuration source ({@link OptionValue#nameOfCurrentConfigurationSource}).
 	 *
 	 * @return the used key of the current configuration source
 	 */

@@ -1,6 +1,5 @@
 package org.stagemonitor.web.servlet;
 
-import io.opentracing.Span;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,12 +64,12 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		);
 		GlobalTracerTestHelper.override(tracer);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.scopeManager().active()).isNull();
 		GlobalTracerTestHelper.resetGlobalTracer();
 	}
 
@@ -80,12 +79,10 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "1");
 
-		Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-			mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
-		Scope activeScope = tracer.scopeManager().activate(span);
-		SpanWrapper spanWrapper = SpanContextInformation.getCurrent().getSpanWrapper();
-
-		assertThat(spanWrapper.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isEqualTo(0);
+		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+			mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
+		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isEqualTo(0);
 		activeScope.close();
 	}
 
@@ -95,12 +92,10 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "0");
 
-		Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-			mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
-		Scope activeScope = tracer.scopeManager().activate(span);
-		SpanWrapper spanWrapper = SpanContextInformation.getCurrent().getSpanWrapper();
-
-		assertThat(spanWrapper.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
+		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+			mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
+		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 		activeScope.close();
 	}
 
@@ -108,11 +103,10 @@ public class MonitoredHttpRequestDoNotTrackTest {
 	public void testNoDoNotTrackHeader() throws Exception {
 		when(servletPlugin.isHonorDoNotTrackHeader()).thenReturn(true);
 		final MockHttpServletRequest request = new MockHttpServletRequest();
-		Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
-		Scope activeScope = tracer.scopeManager().activate(span);
-		SpanWrapper spanWrapper = SpanContextInformation.getCurrent().getSpanWrapper();
-		assertThat(spanWrapper.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
+		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+			mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
+		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 		activeScope.close();
 	}
 
@@ -121,11 +115,10 @@ public class MonitoredHttpRequestDoNotTrackTest {
 		when(servletPlugin.isHonorDoNotTrackHeader()).thenReturn(false);
 		final MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addHeader("dnt", "1");
-		Span span = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
-				mock(FilterChain.class), configuration, mock(ExecutorService.class)).createSpan();
-		Scope activeScope = tracer.scopeManager().activate(span);
-		SpanWrapper spanWrapper = SpanContextInformation.getCurrent().getSpanWrapper();
-		assertThat(spanWrapper.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
+		Scope activeScope = new MonitoredHttpRequest(request, mock(StatusExposingByteCountingServletResponse.class),
+			mock(FilterChain.class), configuration, mock(ExecutorService.class)).createScope();
+		SpanWrapper span = SpanContextInformation.getCurrent().getSpanWrapper();
+		assertThat(span.getNumberTag(Tags.SAMPLING_PRIORITY.getKey())).isNotEqualTo(0);
 		activeScope.close();
 	}
 

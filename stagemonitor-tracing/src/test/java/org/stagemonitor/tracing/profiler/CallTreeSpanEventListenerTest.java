@@ -91,13 +91,11 @@ public class CallTreeSpanEventListenerTest {
 		SpanWrappingTracer spanWrappingTracer = initTracer();
 		final SpanWrappingTracer.SpanWrappingSpanBuilder spanBuilder = spanWrappingTracer.buildSpan("test");
 		spanBuilder.withTag(Tags.SAMPLING_PRIORITY.getKey(), sampled ? 1 : 0);
-		span = spanBuilder.start();
-		Scope scope = spanWrappingTracer.activateSpan(span);
+		span = spanBuilder.startManual();
 		final SpanContextInformation contextInformation = SpanContextInformation.forSpan(span);
 		contextInformation.setPreExecutionInterceptorContext(new PreExecutionInterceptorContext(contextInformation));
 		contextInformation.setPostExecutionInterceptorContext(new PostExecutionInterceptorContext(contextInformation));
 		span.finish();
-		scope.close();
 		return contextInformation;
 	}
 

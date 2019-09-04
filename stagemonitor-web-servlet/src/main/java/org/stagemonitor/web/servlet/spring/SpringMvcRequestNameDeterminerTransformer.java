@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.spring;
 
+import io.opentracing.Scope;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -39,14 +40,15 @@ public class SpringMvcRequestNameDeterminerTransformer extends StagemonitorByteB
 	}
 
 	public static void setRequestNameByHandler(Object handler) {
-		final BusinessTransactionNamingStrategy namingStrategy = Stagemonitor.getPlugin(TracingPlugin.class)
+		final Scope activeScope = GlobalTracer.get().scopeManager().active();
+		if (activeScope != null) {
+			final BusinessTransactionNamingStrategy namingStrategy = Stagemonitor.getPlugin(TracingPlugin.class)
 				.getBusinessTransactionNamingStrategy();
-		final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
-		if (requestNameFromHandler != null) {
-			final Span activeSpan = GlobalTracer.get().scopeManager().activeSpan();
-			if (activeSpan != null) {
-				activeSpan.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
-				activeSpan.setOperationName(requestNameFromHandler);
+			final String requestNameFromHandler = getRequestNameFromHandler(handler, namingStrategy);
+			if (requestNameFromHandler != null) {
+				final Span span = activeScope.span();
+				span.setTag(MetricsSpanEventListener.ENABLE_TRACKING_METRICS_TAG, true);
+				span.setOperationName(requestNameFromHandler);
 			}
 		}
 	}

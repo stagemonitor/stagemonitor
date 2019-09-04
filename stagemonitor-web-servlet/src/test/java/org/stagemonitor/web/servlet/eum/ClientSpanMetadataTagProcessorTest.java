@@ -1,6 +1,5 @@
 package org.stagemonitor.web.servlet.eum;
 
-import io.opentracing.Scope;
 import org.junit.Before;
 import org.junit.Test;
 import org.stagemonitor.web.servlet.ServletPlugin;
@@ -115,11 +114,9 @@ public class ClientSpanMetadataTagProcessorTest {
 
 	private void processSpanBuilderImpl(MockTracer.SpanBuilder spanBuilder, HashMap<String, String[]> servletParameters) {
 		clientSpanMetadataTagProcessor.processSpanBuilderImpl(spanBuilder, servletParameters);
-		final MockSpan span = spanBuilder.start();
-		Scope scope = tracer.scopeManager().activate(span);
+		final MockSpan span = spanBuilder.startManual();
 		clientSpanMetadataTagProcessor.processSpanImpl(span, servletParameters);
 		span.finish();
-		scope.close();
 	}
 
 	private void addMetadataDefinition(String name, String definition) {

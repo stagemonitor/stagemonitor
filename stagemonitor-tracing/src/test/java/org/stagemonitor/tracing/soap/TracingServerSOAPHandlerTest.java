@@ -50,12 +50,12 @@ public class TracingServerSOAPHandlerTest {
 		tracingServerSOAPHandler = new TracingServerSOAPHandler(tracingPlugin, soapTracingPlugin);
 		soapRequest = getSoapMessageContext("<request/>", "operationName", true);
 		soapResponse = getSoapMessageContext("<response/>", "operationName", true);
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracer.scopeManager().activeSpan()).isNull();
+		assertThat(tracer.scopeManager().active()).isNull();
 	}
 
 	@Test

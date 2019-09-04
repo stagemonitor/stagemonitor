@@ -4,6 +4,7 @@ import com.p6spy.engine.common.ConnectionInformation;
 import com.p6spy.engine.common.StatementInformation;
 import com.p6spy.engine.event.SimpleJdbcEventListener;
 
+import io.opentracing.Scope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.configuration.ConfigurationRegistry;
@@ -134,23 +135,24 @@ public class StagemonitorJdbcEventListener extends SimpleJdbcEventListener {
 
 	@Override
 	public void onAfterAnyExecute(StatementInformation statementInformation, long timeElapsedNanos, SQLException e) {
-		final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
-		if (activeSpan != null) {
+		final Scope activeScope = tracingPlugin.getTracer().scopeManager().active();
+		if (activeScope != null) {
+			final Span span = activeScope.span();
 			if (statementInformation.getConnectionInformation().getDataSource() instanceof DataSource && jdbcPlugin.isCollectSql()) {
 				MetaData metaData = dataSourceUrlMap.get(statementInformation.getConnectionInformation().getDataSource());
-				Tags.PEER_SERVICE.set(activeSpan, metaData.serviceName);
-				activeSpan.setTag("db.type", metaData.productName);
-				activeSpan.setTag("db.user", metaData.userName);
+				Tags.PEER_SERVICE.set(span, metaData.serviceName);
+				span.setTag("db.type", metaData.productName);
+				span.setTag("db.user", metaData.userName);
 
 				if (StringUtils.isNotEmpty(statementInformation.getSql())) {
 					String sql = getSql(statementInformation.getSql(), statementInformation.getSqlWithValues());
 					Profiler.addIOCall(sql, timeElapsedNanos);
-					activeSpan.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, getMethod(sql));
-					activeSpan.setTag(DB_STATEMENT, sql);
+					span.setTag(AbstractExternalRequest.EXTERNAL_REQUEST_METHOD, getMethod(sql));
+					span.setTag(DB_STATEMENT, sql);
 				}
 			}
+			tracingPlugin.getRequestMonitor().monitorStop();
 		}
-		tracingPlugin.getRequestMonitor().monitorStop();
 	}
 
 	static String getMethod(String sql) {
