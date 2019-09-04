@@ -104,7 +104,7 @@ public class AbstractTracingTransformer extends StagemonitorByteBuddyTransformer
 				.getDeclaredAnnotations()
 				.ofType(Traced.class);
 		if (monitorRequestsLoadable != null) {
-			final Traced traced = monitorRequestsLoadable.loadSilent();
+			final Traced traced = monitorRequestsLoadable.load();
 			if (!traced.requestName().isEmpty()) {
 				return traced.requestName();
 			}

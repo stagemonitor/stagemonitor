@@ -60,7 +60,7 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 
 		@Override
 		protected NamingParameters getNamingParameters(MethodDescription instrumentedMethod) {
-			final ExceptionMetered exceptionMetered = instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent();
+			final ExceptionMetered exceptionMetered = instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).load();
 			return new NamingParameters(exceptionMetered.name(), exceptionMetered.absolute());
 		}
 
@@ -83,7 +83,7 @@ public class ExceptionMeteredTransformer extends StagemonitorByteBuddyTransforme
 			return new Advice.OffsetMapping() {
 				@Override
 				public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler, Sort sort) {
-					final ExceptionMetered exceptionMetered = instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).loadSilent();
+					final ExceptionMetered exceptionMetered = instrumentedMethod.getDeclaredAnnotations().ofType(ExceptionMetered.class).load();
 					final TypeDescription.ForLoadedType exceptionType = new TypeDescription.ForLoadedType(exceptionMetered.cause());
 					return Target.ForStackManipulation.of(exceptionType);
 				}

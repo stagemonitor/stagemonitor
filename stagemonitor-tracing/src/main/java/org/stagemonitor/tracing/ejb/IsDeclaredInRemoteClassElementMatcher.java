@@ -19,7 +19,7 @@ class IsDeclaredInRemoteClassElementMatcher extends ElementMatcher.Junction.Abst
 	public boolean matches(MethodDescription targetMethod) {
 		final AnnotationList declaredAnnotationsOfType = targetMethod.getDeclaringType().asErasure().getDeclaredAnnotations();
 		if (declaredAnnotationsOfType.isAnnotationPresent(Remote.class)) {
-			final Class[] remoteInterfaces = declaredAnnotationsOfType.ofType(Remote.class).loadSilent().value();
+			final Class[] remoteInterfaces = declaredAnnotationsOfType.ofType(Remote.class).load().value();
 			if (!new TypeList.ForLoadedTypes(remoteInterfaces).filter(isDeclaredInInterfaceHierarchy(targetMethod)).isEmpty()) {
 				return true;
 			}

@@ -91,10 +91,10 @@ public class SlaCheckCreatingClassPathScanner extends AbstractClassPathScanner {
 
 	private void createChecks(String fullMethodSignature, AnnotationList declaredAnnotations, TimerNames timerNames) {
 		if (declaredAnnotations.isAnnotationPresent(SLA.class)) {
-			createSlaCheck(declaredAnnotations.ofType(SLA.class).loadSilent(), fullMethodSignature, timerNames);
+			createSlaCheck(declaredAnnotations.ofType(SLA.class).load(), fullMethodSignature, timerNames);
 		}
 		if (declaredAnnotations.isAnnotationPresent(SLAs.class)) {
-			for (SLA sla : declaredAnnotations.ofType(SLAs.class).loadSilent().value()) {
+			for (SLA sla : declaredAnnotations.ofType(SLAs.class).load().value()) {
 				createSlaCheck(sla, fullMethodSignature, timerNames);
 			}
 		}
