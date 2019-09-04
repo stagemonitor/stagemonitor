@@ -46,8 +46,9 @@ public abstract class AbstractExclusionFilter implements Filter {
 
 	/**
 	 * Can be used by subclasses to do their initialisation
-	 *
+	 * @param filterConfig x
 	 * @see Filter#init(javax.servlet.FilterConfig)
+	 * @throws ServletException x
 	 */
 	public void initInternal(FilterConfig filterConfig) throws ServletException {
 	}

@@ -25,38 +25,38 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'net.saliman:gradle-cobertura-plugin:2.3.0'
 		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.6.3'
 		classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
-		classpath 'com.github.ben-manes:gradle-versions-plugin:0.15.0'
+		classpath 'com.github.ben-manes:gradle-versions-plugin:0.22.0'
 	}
 }
 
 plugins {
-	id 'net.researchgate.release' version '2.3.5'
+	id 'net.researchgate.release' version '2.6.0'
+	id "net.saliman.cobertura" version "2.6.1"
+	id "org.owasp.dependencycheck" version "5.1.0"
 }
 
 repositories {
 	mavenCentral()
 }
 
+apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'com.github.ben-manes.versions'
 apply plugin: 'java'
-if (!System.getProperty("java.version").startsWith("1.6.")) {
-	apply plugin: 'cobertura'
-	apply plugin: 'com.github.kt3k.coveralls'
-}
+apply plugin: 'cobertura'
+apply plugin: 'com.github.kt3k.coveralls'
 
 ext {
 	metricsVersion = '3.2.4'
 	slf4jVersion = '1.7.25'
 	jacksonVersion = '2.9.6'
 	esVersion = '6.2.4'
-	byteBuddyVersion = '1.8.11'
-	opentracingVersion = '0.31.0'
-	jaegerVersion = '0.31.0'
+	byteBuddyVersion = '1.9.15'
+	opentracingVersion = '0.33.0'
+	jaegerVersion = '0.35.5'
 	jettyVersion = '9.3.13.v20161014'
 	getProjectsToRelease = this.&getProjectsToRelease
 }
@@ -67,9 +67,7 @@ subprojects {
 	apply plugin: 'idea'
 	apply plugin: 'eclipse'
 	apply plugin: 'java'
-	if (!System.getProperty("java.version").startsWith("1.6.")) {
-		apply plugin: 'cobertura'
-	}
+	apply plugin: 'cobertura'
 
 	if (projectsToRelease.contains(project)) {
 		apply plugin: 'osgi'
@@ -110,8 +108,8 @@ subprojects {
 	test.testLogging.exceptionFormat = 'full'
 
 	compileJava {
-		sourceCompatibility = 1.6
-		targetCompatibility = 1.6
+		sourceCompatibility = JavaVersion.VERSION_1_8
+		targetCompatibility = JavaVersion.VERSION_1_8
 		options.debug = true
 		options.debugOptions.debugLevel = "source,lines,vars"
 		options.incremental = true
@@ -188,22 +186,21 @@ def getProjectsToRelease() {
 
 test.dependsOn << projectsToRelease*.tasks*.withType(Test).flatten()
 
-if (!System.getProperty("java.version").startsWith("1.6.")) {
-	cobertura {
-		coverageMergeDatafiles =  projectsToRelease.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
-		coverageFormats = ['html', 'xml']
-		coverageIgnoreTrivial = true
-		coverageSourceDirs = [projectsToRelease.sourceSets.main.java.srcDirs.flatten() ]
-		coverageExcludes = ['.*org.stagemonitor.web.servlet.util.AntPathMatcher.*',
-							'.*org.stagemonitor.core.util.InetAddresses.*',
-							'.*org.stagemonitor.core.util.Ints.*',
-							'.*org.stagemonitor.core.util.Assert.*',
-							'.*org.stagemonitor.core.instrument.WeakConcurrentMap.*']
-	}
+
+cobertura {
+	coverageMergeDatafiles =  projectsToRelease.collect { file("${it.buildDir.path}/cobertura/cobertura.ser") }
+	coverageFormats = ['html', 'xml']
+	coverageIgnoreTrivial = true
+	coverageSourceDirs = [projectsToRelease.sourceSets.main.java.srcDirs.flatten() ]
+	coverageExcludes = ['.*org.stagemonitor.web.servlet.util.AntPathMatcher.*',
+						'.*org.stagemonitor.core.util.InetAddresses.*',
+						'.*org.stagemonitor.core.util.Ints.*',
+						'.*org.stagemonitor.core.util.Assert.*',
+						'.*org.stagemonitor.core.instrument.WeakConcurrentMap.*']
 }
 
-task wrapper(type: Wrapper) {
-	gradleVersion = "4.10"
+wrapper {
+	gradleVersion = "5.5.1"
 	distributionType = "all"
 }
 
@@ -213,5 +210,4 @@ task printProjectsToTest() {
 	}
 }
 
-task install
 install.dependsOn subprojects.compileJava

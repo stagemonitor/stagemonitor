@@ -120,6 +120,7 @@ public class AntPathMatcher {
 	/**
 	 * Set the path separator to use for pattern parsing.
 	 * <p>Default is "/", as in Ant.
+	 * @param pathSeparator x
 	 */
 	public void setPathSeparator(String pathSeparator) {
 		this.pathSeparator = (pathSeparator != null ? pathSeparator : DEFAULT_PATH_SEPARATOR);
@@ -130,6 +131,7 @@ public class AntPathMatcher {
 	 * Specify whether to perform pattern matching in a case-sensitive fashion.
 	 * <p>Default is {@code true}. Switch this to {@code false} for case-insensitive matching.
 	 * @since 4.2
+	 * @param caseSensitive  x
 	 */
 	public void setCaseSensitive(boolean caseSensitive) {
 		this.caseSensitive = caseSensitive;
@@ -138,6 +140,7 @@ public class AntPathMatcher {
 	/**
 	 * Specify whether to trim tokenized paths and patterns.
 	 * <p>Default is {@code false}.
+	 * @param trimTokens x
 	 */
 	public void setTrimTokens(boolean trimTokens) {
 		this.trimTokens = trimTokens;
@@ -154,6 +157,7 @@ public class AntPathMatcher {
 	 * are coming in, with little chance for encountering a recurring pattern.
 	 * @since 4.0.1
 	 * @see #getStringMatcher(String)
+	 * @param cachePatterns x
 	 */
 	public void setCachePatterns(boolean cachePatterns) {
 		this.cachePatterns = cachePatterns;
@@ -184,6 +188,7 @@ public class AntPathMatcher {
 	 * @param path the path String to test
 	 * @param fullMatch whether a full pattern match is required (else a pattern match
 	 * as far as the given base path goes is sufficient)
+	 * @param uriTemplateVariables x
 	 * @return {@code true} if the supplied {@code path} matched, {@code false} if it didn't
 	 */
 	protected boolean doMatch(String pattern, String path, boolean fullMatch,
@@ -464,6 +469,11 @@ public class AntPathMatcher {
 	 * <li>'{@code *}' and '{@code /docs/cvs/commit.html} {@code ->} '{@code /docs/cvs/commit.html}'</li> </ul>
 	 * <p>Assumes that {@link #match} returns {@code true} for '{@code pattern}' and '{@code path}', but
 	 * does <strong>not</strong> enforce this.
+	 *
+	 * @param path x
+	 * @param pattern x
+	 *
+	 * @return x
 	 */
 	public String extractPathWithinPattern(String pattern, String path) {
 		String[] patternParts = StringUtils.tokenizeToStringArray(pattern, this.pathSeparator, this.trimTokens, true);
@@ -672,6 +682,8 @@ public class AntPathMatcher {
 
 		/**
 		 * Main entry point.
+		 * @param uriTemplateVariables x
+		 * @param str x
 		 * @return {@code true} if the string matches against the pattern, or {@code false} otherwise.
 		 */
 		public boolean matchStrings(String str, Map<String, String> uriTemplateVariables) {

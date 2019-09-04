@@ -10,24 +10,25 @@ import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
 import org.stagemonitor.tracing.wrapper.SpanWrapper;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-public class SpanServlet extends HttpServlet {
+public class SpanServlet
+	extends HttpServlet {
 
-	private static final long DEFAULT_REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(25);
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private static final long   DEFAULT_REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(25);
+	private final        Logger logger                  = LoggerFactory.getLogger(getClass());
 
-	private final long requestTimeout;
-	private WidgetAjaxSpanReporter widgetAjaxSpanReporter;
+	private final long                   requestTimeout;
+	private       WidgetAjaxSpanReporter widgetAjaxSpanReporter;
 
 	public SpanServlet() {
 		this(Stagemonitor.getConfiguration(), new WidgetAjaxSpanReporter(), DEFAULT_REQUEST_TIMEOUT);
@@ -35,20 +36,16 @@ public class SpanServlet extends HttpServlet {
 
 	public SpanServlet(ConfigurationRegistry configuration, WidgetAjaxSpanReporter reporter, long requestTimeout) {
 		this.widgetAjaxSpanReporter = reporter;
-		this.requestTimeout = requestTimeout;
+		this.requestTimeout         = requestTimeout;
 		final TracingPlugin tracingPlugin = configuration.getConfig(TracingPlugin.class);
-		tracingPlugin.onInit(new Runnable() {
-			@Override
-			public void run() {
-				tracingPlugin.addReporter(widgetAjaxSpanReporter);
-			}
-		});
+		tracingPlugin.onInit(() -> tracingPlugin.addReporter(widgetAjaxSpanReporter));
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		final String connectionId = req.getParameter("connectionId");
-		if (connectionId != null && !connectionId.trim().isEmpty()) {
+		if (connectionId != null && !connectionId.trim()
+																						 .isEmpty()) {
 			writeSpansToResponse(resp, widgetAjaxSpanReporter.getSpans(connectionId, requestTimeout));
 		} else {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -56,7 +53,7 @@ public class SpanServlet extends HttpServlet {
 	}
 
 	private void writeSpansToResponse(HttpServletResponse response, Collection<Pair<Long, SpanWrapper>> spans)
-			throws IOException {
+		throws IOException {
 		if (spans == null) {
 			spans = Collections.emptyList();
 		}
@@ -66,13 +63,15 @@ public class SpanServlet extends HttpServlet {
 		response.setHeader("Expires", "0");
 		response.setCharacterEncoding("UTF-8");
 
-		final ArrayList<String> jsonResponse = new ArrayList<String>(spans.size());
+		final List<String> jsonResponse = new ArrayList<>(spans.size());
 		for (Pair<Long, SpanWrapper> spanPair : spans) {
 			logger.debug("writeSpansToResponse {}", spanPair);
 			jsonResponse.add(JsonUtils.toJson(spanPair.getB(), SpanUtils.CALL_TREE_ASCII));
 		}
-		response.getWriter().print(jsonResponse.toString());
-		response.getWriter().close();
+		response.getWriter()
+						.print(jsonResponse.toString());
+		response.getWriter()
+						.close();
 	}
 
 	@Override

@@ -80,15 +80,30 @@ public class ElasticsearchClient {
 		}
 	}
 
-	public boolean isElasticsearch6Compatible() {
-		return esMajorVersion != null && esMajorVersion >= 6;
+	public boolean isElasticsearch7Compatible() {
+		return esMajorVersion != null && esMajorVersion >= 7;
 	}
 
-	public String getElasticsearchResourcePath() {
-		if (!isElasticsearch6Compatible()) {
-			return "kibana/5/";
+	public boolean isElasticsearch6Compatible() {
+		return esMajorVersion != null && esMajorVersion == 6;
+	}
+
+	public String getElasticSearchTemplateResourcePath() {
+		if (isElasticsearch7Compatible()) {
+			return "es/7/";
+		} else if (isElasticsearch6Compatible()) {
+			return "es/6/";
 		}
-		return "kibana/6/";
+		return "es/5/";
+	}
+
+	public String getKibanaResourcePath() {
+		if (isElasticsearch7Compatible()) {
+			return "kibana/7/";
+		} else if (isElasticsearch6Compatible()) {
+			return "kibana/6/";
+		}
+		return "kibana/5/";
 	}
 
 	public JsonNode getJson(final String path) {
@@ -161,12 +176,12 @@ public class ElasticsearchClient {
 	}
 
 	public void updateKibanaIndexPattern(final String indexName, final String indexPatternLocation) {
-		final String elasticsearchKibanaIndexPatternPath = isElasticsearch6Compatible() ? "/.kibana/doc/index-pattern:" + indexName : "/.kibana/index-pattern/" + indexName;
+		final String elasticsearchKibanaIndexPatternPath = isElasticsearch6Compatible() || isElasticsearch7Compatible() ? "/.kibana/doc/index-pattern:" + indexName : "/.kibana/index-pattern/" + indexName;
 		logger.debug("Sending index pattern {} to {}", indexPatternLocation, elasticsearchKibanaIndexPatternPath);
 		try {
 			ObjectNode stagemonitorPattern = JsonUtils.getMapper().readTree(IOUtils.getResourceAsStream(indexPatternLocation)).deepCopy();
 
-			if (isElasticsearch6Compatible()) {
+			if (isElasticsearch6Compatible() || isElasticsearch7Compatible()) {
 				ObjectNode indexPatternNode = (ObjectNode) stagemonitorPattern.get("index-pattern");
 				indexPatternNode.put("fields", getFields(stagemonitorPattern.get("index-pattern").get("fields").asText()));
 			} else {
@@ -406,7 +421,7 @@ public class ElasticsearchClient {
 		HttpRequest request =  HttpRequestBuilder.<Void>forUrl(getElasticsearchUrl() + "/" + index + "/_mapping/" + type)
 				.method("PUT")
 				// the mapping might be incompatible, this is probably ok
-				.noopForStatus(400) 
+				.noopForStatus(400)
 				.addHeaders(HttpRequestBuilder.CONTENT_TYPE_JSON)
 				.bodyStream(mapping)
 				.build();

@@ -14,6 +14,7 @@ import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +45,21 @@ public class SpanWrappingTracer implements Tracer {
 	public ScopeManager scopeManager() {
 		return delegate.scopeManager();
 	}
-    
+
     @Override
     public Span activeSpan() {
-        return scopeManager().active() == null ? null : scopeManager().active().span();
+        return scopeManager().activeSpan();
     }
+
+	@Override
+	public Scope activateSpan(Span span) {
+		return delegate.activateSpan(span);
+	}
+
+	@Override
+	public void close() {
+		delegate.close();
+	}
 
 	@Override
 	public SpanWrappingSpanBuilder buildSpan(String operationName) {
@@ -127,6 +138,21 @@ public class SpanWrappingTracer implements Tracer {
 			return this;
 		}
 
+		@Override
+		public <T> SpanBuilder withTag(Tag<T> tag, T value) {
+			final String key = tag.getKey();
+			for (SpanEventListener spanEventListener : spanEventListeners) {
+				value = spanEventListener.onSetTag(tag, value);
+			}
+			if (value != null) {
+				if (!key.startsWith(INTERNAL_TAG_PREFIX)) {
+					delegate = delegate.withTag(tag, value);
+				}
+				tags.put(key, value);
+			}
+			return this;
+		}
+
 		public SpanWrappingSpanBuilder withTag(String key, String value) {
 			for (SpanEventListener spanEventListener : spanEventListeners) {
 				value = spanEventListener.onSetTag(key, value);
@@ -172,17 +198,6 @@ public class SpanWrappingTracer implements Tracer {
 		}
 
 		@Override
-		public Scope startActive(boolean finishSpanOnClose) {
-			return scopeManager().activate(startManual(), finishSpanOnClose);
-		}
-
-		@Override
-		public SpanWrapper startManual() {
-			return startSpanWrapper(delegate.startManual());
-		}
-
-		@Override
-		@Deprecated
 		public SpanWrapper start() {
 			return startSpanWrapper(delegate.start());
 		}

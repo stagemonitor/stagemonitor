@@ -19,7 +19,7 @@ public abstract class Alerter implements StagemonitorSPI {
 	/**
 	 * Triggers an alert
 	 *
-	 * @param alertArguments
+	 * @param alertArguments x
 	 */
 	public abstract void alert(AlertArguments alertArguments);
 
@@ -40,12 +40,12 @@ public abstract class Alerter implements StagemonitorSPI {
 	}
 
 	/**
-	 * The label of the target parameter that is used in {@link Subscription#target}
+	 * The label of the target parameter that is used in {@link Subscription#getTarget()}
 	 * <p>
 	 * For example "Email address" for the Email alerter. Returning <code>null</code> means that
 	 * this alerter does not have a target parameter.
 	 *
-	 * @return The label of the target parameter that is used in {@link Subscription#target}
+	 * @return The label of the target parameter that is used in {@link Subscription#getTarget()}
 	 */
 	public abstract String getTargetLabel();
 

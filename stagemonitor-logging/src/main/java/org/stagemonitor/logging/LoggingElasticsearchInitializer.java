@@ -7,7 +7,7 @@ public class LoggingElasticsearchInitializer extends AbstractElasticsearchInitia
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "Logging.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getKibanaResourcePath() + "Logging.bulk");
 	}
 
 }

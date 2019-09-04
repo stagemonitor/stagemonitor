@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.eum;
 
+import io.opentracing.Scope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stagemonitor.core.Stagemonitor;
@@ -216,27 +217,31 @@ public class ClientSpanServlet extends HttpServlet {
 			tagProcessor.processSpanBuilder(spanBuilder, servletParameters);
 		}
 
-		final Span span = spanBuilder.startManual();
-		if (tracingPlugin.isSampled(span)) {
-			for (ClientSpanTagProcessor tagProcessor : tagProcessors) {
-				tagProcessor.processSpan(span, servletParameters);
-			}
-		}
-
-		if (tracingPlugin.isSampled(span)) {
-			String userAgentHeader = httpServletRequest.getHeader("user-agent");
-			if (servletPlugin.isParseUserAgent()) {
-				if (userAgentParser == null) {
-					userAgentParser = new UserAgentParser();
+		final Span span = spanBuilder.start();
+		final Scope scope = tracingPlugin.getTracer().scopeManager().activate(span);
+		try {
+			if (tracingPlugin.isSampled(span)) {
+				for (ClientSpanTagProcessor tagProcessor : tagProcessors) {
+					tagProcessor.processSpan(span, servletParameters);
 				}
-				userAgentParser.setUserAgentInformation(span, userAgentHeader);
 			}
-			span.setTag("user_agent.header", userAgentHeader);
-			SpanUtils.setClientIp(span, MonitoredHttpRequest.getClientIp(httpServletRequest));
+
+			if (tracingPlugin.isSampled(span)) {
+				String userAgentHeader = httpServletRequest.getHeader("user-agent");
+				if (servletPlugin.isParseUserAgent()) {
+					if (userAgentParser == null) {
+						userAgentParser = new UserAgentParser();
+					}
+					userAgentParser.setUserAgentInformation(span, userAgentHeader);
+				}
+				span.setTag("user_agent.header", userAgentHeader);
+				SpanUtils.setClientIp(span, MonitoredHttpRequest.getClientIp(httpServletRequest));
+			}
+
+			span.finish(MILLISECONDS.toMicros(finishInMillis));
+		} finally {
+			scope.close();
 		}
-
-		span.finish(MILLISECONDS.toMicros(finishInMillis));
-
 	}
 
 	private String getOperationName(HttpServletRequest httpServletRequest) {

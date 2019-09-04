@@ -73,7 +73,7 @@ public class MailRequest {
 	 * Subject, sender and content and session will be set.
 	 * @param session current mail session
 	 * @return MimeMessage without recipients
-	 * @throws MessagingException
+	 * @throws MessagingException x
 	 */
 	public MimeMessage createMimeMessage(Session session) throws MessagingException {
 		if (isEmpty(htmlPart) && isEmpty(textPart)) {

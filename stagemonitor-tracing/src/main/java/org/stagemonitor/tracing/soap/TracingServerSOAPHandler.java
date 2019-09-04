@@ -1,5 +1,6 @@
 package org.stagemonitor.tracing.soap;
 
+import io.opentracing.Scope;
 import org.stagemonitor.tracing.TracingPlugin;
 import org.stagemonitor.tracing.utils.SpanUtils;
 
@@ -27,21 +28,26 @@ public class TracingServerSOAPHandler extends AbstractTracingSOAPHandler {
 
 	@Override
 	protected void handleInboundSOAPMessage(SOAPMessageContext context) {
-		final Tracer.SpanBuilder spanBuilder = tracingPlugin.getTracer()
+		final Tracer tracer = tracingPlugin.getTracer();
+		final Tracer.SpanBuilder spanBuilder = tracer
 				.buildSpan(getOperationName(context))
 				.withTag(SpanUtils.OPERATION_TYPE, "soap")
 				.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
 		if (soapTracingPlugin.isSoapServerRecordRequestMessages()) {
 			spanBuilder.withTag("soap.request", getSoapMessageAsString(context));
 		}
-		spanBuilder.startActive(true);
+		Span span = spanBuilder.start();
+		Scope scope = tracer.scopeManager().activate(span);
+		currentScopeThreadLocal.set(scope);
 	}
 
 	@Override
 	protected void handleOutboundSOAPMessage(SOAPMessageContext context) {
 		if (soapTracingPlugin.isSoapServerRecordResponseMessages()) {
-			final Span span = tracingPlugin.getTracer().scopeManager().active().span();
-			span.setTag("soap.response", getSoapMessageAsString(context));
+			final Span activeSpan = tracingPlugin.getTracer().scopeManager().activeSpan();
+			if (activeSpan != null) {
+				activeSpan.setTag("soap.response", getSoapMessageAsString(context));
+			}
 		}
 	}
 

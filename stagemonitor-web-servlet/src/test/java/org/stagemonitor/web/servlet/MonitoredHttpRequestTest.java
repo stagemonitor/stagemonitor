@@ -1,5 +1,7 @@
 package org.stagemonitor.web.servlet;
 
+import io.opentracing.Scope;
+import io.opentracing.Span;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -58,13 +60,13 @@ public class MonitoredHttpRequestTest {
 		final RequestMonitor requestMonitor = mock(RequestMonitor.class);
 		when(tracingPlugin.getRequestMonitor()).thenReturn(requestMonitor);
 		when(tracingPlugin.isSampled(any())).thenReturn(true);
-		assertThat(tracer.scopeManager().active()).isNull();
+		assertThat(tracer.scopeManager().activeSpan()).isNull();
 		servletPlugin.initPasswordChecker(configuration);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		assertThat(tracer.scopeManager().active()).isNull();
+		assertThat(tracer.scopeManager().activeSpan()).isNull();
 		Stagemonitor.getMetric2Registry().removeMatching(Metric2Filter.ALL);
 		Stagemonitor.reset();
 	}
@@ -87,7 +89,11 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createScope().close();
+		Span span = monitoredHttpRequest.createSpan();
+		Scope scope = tracer.scopeManager().activate(span);
+		span.finish();
+		scope.close();
+
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertEquals("/test.js", mockSpan.tags().get(Tags.HTTP_URL.getKey()));
@@ -113,7 +119,11 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createScope().close();
+		Span span = monitoredHttpRequest.createSpan();
+		Scope scope = tracer.scopeManager().activate(span);
+		span.finish();
+		scope.close();
+
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertEquals("/test.js", mockSpan.tags().get(Tags.HTTP_URL.getKey()));
@@ -130,7 +140,11 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createScope().close();
+		Span span = monitoredHttpRequest.createSpan();
+		Scope scope = tracer.scopeManager().activate(span);
+		span.finish();
+		scope.close();
+
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertEquals("www.github.com", mockSpan.tags().get("http.referring_site"));
@@ -144,7 +158,11 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createScope().close();
+		Span span = monitoredHttpRequest.createSpan();
+		Scope scope = tracer.scopeManager().activate(span);
+		span.finish();
+		scope.close();
+
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertNull(mockSpan.tags().get("http.referring_site"));
@@ -158,7 +176,11 @@ public class MonitoredHttpRequestTest {
 
 		final MonitoredHttpRequest monitoredHttpRequest = createMonitoredHttpRequest(request);
 
-		monitoredHttpRequest.createScope().close();
+		Span span = monitoredHttpRequest.createSpan();
+		Scope scope = tracer.scopeManager().activate(span);
+		span.finish();
+		scope.close();
+
 		assertEquals(1, tracer.finishedSpans().size());
 		final MockSpan mockSpan = tracer.finishedSpans().get(0);
 		assertThat(mockSpan.tags()).containsEntry("user_agent.browser", "Chrome");

@@ -19,7 +19,7 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	/**
 	 * Initialisation method that is called just after the implementation is instantiated
 	 *
-	 * @param initArguments
+	 * @param initArguments x
 	 */
 	public void init(InitArguments initArguments) {
 	}
@@ -27,7 +27,7 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	/**
 	 * Implementations can return html snippets that are injected just before the closing body tag.
 	 *
-	 * @param injectArguments
+	 * @param injectArguments x
 	 */
 	public abstract void injectHtml(InjectArguments injectArguments);
 
@@ -35,7 +35,7 @@ public abstract class HtmlInjector implements StagemonitorSPI {
 	 * Returns <code>true</code>, if this {@link HtmlInjector} should be applied, <code>false</code> otherwise
 	 *
 	 * @return <code>true</code>, if this {@link HtmlInjector} should be applied, <code>false</code> otherwise
-	 * @param isActiveArguments
+	 * @param isActiveArguments x
 	 */
 	public abstract boolean isActive(IsActiveArguments isActiveArguments);
 

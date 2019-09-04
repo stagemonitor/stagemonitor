@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.util.GlobalTracer;
 
@@ -35,11 +34,11 @@ public class SpanContextInformation {
 	private SpanWrapper spanWrapper;
 
 	public static SpanContextInformation getCurrent() {
-		final Scope activeScope = GlobalTracer.get().scopeManager().active();
-		if (activeScope == null) {
+		final Span activeSpan = GlobalTracer.get().scopeManager().activeSpan();
+		if (activeSpan == null) {
 			return null;
 		}
-		return forSpan(activeScope.span());
+		return forSpan(activeSpan);
 	}
 
 	/**

@@ -1,9 +1,6 @@
 package org.stagemonitor.tracing.impl;
 
-import io.opentracing.ScopeManager;
-import io.opentracing.Span;
-import io.opentracing.SpanContext;
-import io.opentracing.Tracer;
+import io.opentracing.*;
 import io.opentracing.noop.NoopTracerFactory;
 import io.opentracing.propagation.Format;
 import io.opentracing.util.ThreadLocalScopeManager;
@@ -21,11 +18,11 @@ class DefaultTracerImpl implements Tracer {
 	public ScopeManager scopeManager() {
 		return scopeManager;
 	}
-    
-    @Override
-    public Span activeSpan() {
-        return scopeManager.active().span();
-    }
+
+	@Override
+	public Span activeSpan() {
+		return scopeManager.activeSpan();
+	}
 
 	@Override
 	public SpanBuilder buildSpan(String operationName) {
@@ -40,5 +37,15 @@ class DefaultTracerImpl implements Tracer {
 	@Override
 	public <C> SpanContext extract(Format<C> format, C carrier) {
 		return tracer.extract(format, carrier);
+	}
+
+	@Override
+	public Scope activateSpan(Span span) {
+		return scopeManager.activate(span);
+	}
+
+	@Override
+	public void close() {
+		tracer.close();
 	}
 }

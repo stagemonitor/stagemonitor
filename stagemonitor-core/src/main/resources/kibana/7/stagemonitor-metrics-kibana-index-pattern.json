@@ -1,0 +1,8 @@
+{
+  "type": "index-pattern",
+  "index-pattern": {
+	"fields": "kibana/7/stagemonitor-metrics-kibana-index-pattern-fields.json",
+	"timeFieldName": "@timestamp",
+	"title": "stagemonitor-metrics-*"
+  }
+}

@@ -7,7 +7,7 @@ public class ServletElasticsearchInitializer extends AbstractElasticsearchInitia
 
 	@Override
 	protected void onElasticsearchFirstAvailable(ElasticsearchClient elasticsearchClient) {
-		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getElasticsearchResourcePath() + "Application-Server.bulk");
+		elasticsearchClient.sendMetricDashboardBulkAsync(elasticsearchClient.getKibanaResourcePath() + "Application-Server.bulk");
 	}
 
 }

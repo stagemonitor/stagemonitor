@@ -25,6 +25,7 @@ public @interface SLA {
 
 	/**
 	 * If set, a check for the error rate (errors/second) will be created
+	 * @return x
 	 */
 	double errorRateThreshold() default -1;
 
@@ -32,6 +33,7 @@ public @interface SLA {
 	 * The metrics a threshold should be created for
 	 * <p>
 	 * Make sure the number of metrics and thresholds match
+	 * @return x
 	 */
 	MetricValueType[] metric() default {};
 
@@ -40,6 +42,8 @@ public @interface SLA {
 	 * <p>
 	 * Make sure the number of metrics and thresholds match.
 	 * Rates are per second and durations are in milliseconds.
+	 *
+	 * @return x
 	 */
 	double[] threshold() default {};
 
@@ -47,11 +51,13 @@ public @interface SLA {
 
 	/**
 	 * Trigger alert when <code>actualValue OPERATOR threshold</code> evaluates to <code>false</code>
+	 * @return x
 	 */
 	Threshold.Operator operator() default Threshold.Operator.LESS;
 
 	/**
 	 * Can be used to make alerts less noisy
+	 * @return x
 	 */
 	int alertAfterXFailures() default 1;
 

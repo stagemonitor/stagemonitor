@@ -19,7 +19,7 @@ public class TracingElasticsearchInitializer extends AbstractElasticsearchInitia
 		if (corePlugin.isInitializeElasticsearch()) {
 			createSpansIndex(elasticsearchClient);
 
-			final String resourcePath = elasticsearchClient.getElasticsearchResourcePath();
+			final String resourcePath = elasticsearchClient.getKibanaResourcePath();
 			elasticsearchClient.updateKibanaIndexPattern("stagemonitor-spans-*",resourcePath + "stagemonitor-spans-kibana-index-pattern.json");
 
 			elasticsearchClient.sendSpanDashboardBulkAsync(resourcePath + "Request-Analysis.bulk", true);
@@ -31,8 +31,12 @@ public class TracingElasticsearchInitializer extends AbstractElasticsearchInitia
 	}
 
 	private void createSpansIndex(ElasticsearchClient elasticsearchClient) {
+		String templatePath = elasticsearchTracingPlugin.getSpanIndexTemplate();
+		if (elasticsearchTracingPlugin.isSpanIndexTemplateDefaultValue()) {
+			templatePath = elasticsearchClient.getElasticSearchTemplateResourcePath() + elasticsearchTracingPlugin.getSpanIndexTemplate();
+		}
 		final String spanMappingJson = ElasticsearchClient.modifyIndexTemplate(
-				elasticsearchTracingPlugin.getSpanIndexTemplate(), corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
+				templatePath, corePlugin.getMoveToColdNodesAfterDays(), corePlugin.getNumberOfReplicas(), corePlugin.getNumberOfShards());
 		elasticsearchClient.sendMappingTemplate(spanMappingJson, "stagemonitor-spans");
 		elasticsearchClient.createEmptyIndex(ElasticsearchSpanReporter.getTodaysIndexName());
 	}

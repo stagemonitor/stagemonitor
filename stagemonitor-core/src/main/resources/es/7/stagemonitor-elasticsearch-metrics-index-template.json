@@ -1,0 +1,45 @@
+{
+  "index_patterns": "stagemonitor-metrics-*",
+  "order" : 1,
+  "settings": {
+    "index": {
+      "refresh_interval": "5s"
+    }
+  },
+  "mappings": {
+    "metrics": {
+      "dynamic_templates": [
+        {
+          "strings": {
+            "match": "*",
+            "match_mapping_type": "string",
+            "mapping":   { "type": "keyword" }
+          }
+        }
+      ],
+      "_source":         { "enabled": false },
+      "properties": {
+        "@timestamp":    { "type": "date",    "format": "epoch_millis" },
+        "count":         { "type": "integer", "index": false },
+        "m1_rate":       { "type": "float",   "index": false },
+        "m5_rate":       { "type": "float",   "index": false },
+        "m15_rate":      { "type": "float",   "index": false },
+        "max":           { "type": "float",   "index": false },
+        "mean_rate":     { "type": "float",   "index": false },
+        "median":        { "type": "float",   "index": false },
+        "min":           { "type": "float",   "index": false },
+        "p25":           { "type": "float",   "index": false },
+        "p50":           { "type": "float",   "index": false },
+        "p75":           { "type": "float",   "index": false },
+        "p95":           { "type": "float",   "index": false },
+        "p98":           { "type": "float",   "index": false },
+        "p99":           { "type": "float",   "index": false },
+        "p999":          { "type": "float",   "index": false },
+        "std":           { "type": "float",   "index": false },
+        "value":         { "type": "float",   "index": false },
+        "value_boolean": { "type": "boolean", "index": false },
+        "value_string":  { "type": "keyword", "index": false }
+      }
+    }
+  }
+}

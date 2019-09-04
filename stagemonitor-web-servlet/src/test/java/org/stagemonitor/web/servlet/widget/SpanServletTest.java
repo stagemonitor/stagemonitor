@@ -1,5 +1,6 @@
 package org.stagemonitor.web.servlet.widget;
 
+import io.opentracing.Scope;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,6 +56,7 @@ public class SpanServletTest {
 	private ServletPlugin servletPlugin;
 	private ConfigurationRegistry configuration;
 	private Span span;
+	private Tracer tracer;
 
 	@Before
 	public void setUp() throws Exception {
@@ -85,7 +87,7 @@ public class SpanServletTest {
 		when(samplePriorityDeterminingSpanInterceptor.onSetTag(anyString(), any(Number.class))).then(invocation -> invocation.getArgument(1));
 		final ReportingSpanEventListener reportingSpanEventListener = new ReportingSpanEventListener(configuration);
 		reportingSpanEventListener.addReporter(reporter);
-		Tracer tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(new ThreadLocalScopeManager(), new B3Propagator()), configuration,
+		tracer = TracingPlugin.createSpanWrappingTracer(new MockTracer(new ThreadLocalScopeManager(), new B3Propagator()), configuration,
 				new Metric2Registry(), ServiceLoader.load(SpanEventListenerFactory.class), samplePriorityDeterminingSpanInterceptor, reportingSpanEventListener);
 		GlobalTracerTestHelper.override(tracer);
 		when(tracingPlugin.getTracer()).thenReturn(tracer);
@@ -102,9 +104,11 @@ public class SpanServletTest {
 		final MonitoredHttpRequest monitoredHttpRequest = new MonitoredHttpRequest(request,
 				mock(StatusExposingByteCountingServletResponse.class), new MockFilterChain(), configuration, mock(ExecutorService.class));
 
-		span = monitoredHttpRequest.createScope().span();
+		span = monitoredHttpRequest.createSpan();
 		span.setOperationName("test");
+		Scope scope = tracer.scopeManager().activate(span);
 		span.finish();
+		scope.close();
 	}
 
 	@Test
