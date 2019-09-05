@@ -7,29 +7,42 @@ import io.opentracing.Span;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SpanWrappingScopeManager implements ScopeManager {
+/**
+ * The purpose of this class is to make it possible to use implementations of the open tracing api
+ * like brave that do not work with the {@link SpanWrapper} class directly.
+ */
+public class SpanWrappingScopeManager implements ScopeManager, SpanWrappingCallback {
 
 	private ScopeManager delegate;
 
-	private ThreadLocal<Map<Span, SpanWrapper>> currentSpanWrapperThreadLocal = new ThreadLocal<>();
+	private ThreadLocal<Map<String, SpanWrapper>> currentSpanWrapperMapThreadLocal = new ThreadLocal<>();
 
 	public SpanWrappingScopeManager(ScopeManager delegate) {
 		this.delegate = delegate;
-		this.currentSpanWrapperThreadLocal.set(new HashMap<>());
+	}
+
+	@Override
+	public void close(String spanId) {
+		Map<String, SpanWrapper> spanWrapperMap = currentSpanWrapperMapThreadLocal.get();
+		spanWrapperMap.remove(spanId);
+		if (spanWrapperMap.isEmpty()) {
+			currentSpanWrapperMapThreadLocal.remove();
+		}
 	}
 
 	@Override
 	public Scope activate(Span span) {
 		if (span instanceof SpanWrapper) {
 			SpanWrapper spanWrapper = (SpanWrapper) span;
-			Map<Span, SpanWrapper> spanWrapperMap = currentSpanWrapperThreadLocal.get();
+			final Span delegate = spanWrapper.getDelegate();
+			final String spanId = delegate.context().toSpanId();
+			Map<String, SpanWrapper> spanWrapperMap = currentSpanWrapperMapThreadLocal.get();
 			if (spanWrapperMap == null) {
 				spanWrapperMap = new HashMap<>();
-				currentSpanWrapperThreadLocal.set(spanWrapperMap);
+				currentSpanWrapperMapThreadLocal.set(spanWrapperMap);
 			}
-			System.out.println("put" + span);
-			spanWrapperMap.put(span, spanWrapper);
-			return delegate.activate(spanWrapper.getDelegate());
+			spanWrapperMap.put(spanId, spanWrapper);
+			return new SpanWrappingScope(this.delegate.activate(delegate), spanId, this);
 		}
 		return delegate.activate(span);
 	}
@@ -37,16 +50,13 @@ public class SpanWrappingScopeManager implements ScopeManager {
 	@Override
 	public Span activeSpan() {
 		Span activeSpan = delegate.activeSpan();
-		Map<Span, SpanWrapper> spanWrapperMap = currentSpanWrapperThreadLocal.get();
-		if (spanWrapperMap != null) {
-			System.out.println("get " + activeSpan);
-			SpanWrapper spanWrapper = spanWrapperMap.get(activeSpan);
+		if (activeSpan != null) {
+			Map<String, SpanWrapper> spanWrapperMap = currentSpanWrapperMapThreadLocal.get();
+			SpanWrapper spanWrapper = spanWrapperMap.get(activeSpan.context().toSpanId());
 			if (spanWrapper != null) {
-				System.out.println("return span wrapper");
 				return spanWrapper;
 			}
 		}
-		System.out.println("return active span");
 		return activeSpan;
 	}
 
