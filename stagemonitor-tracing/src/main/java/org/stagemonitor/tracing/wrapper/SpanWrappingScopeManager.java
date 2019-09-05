@@ -24,9 +24,11 @@ public class SpanWrappingScopeManager implements ScopeManager, SpanWrappingCallb
 	@Override
 	public void close(String spanId) {
 		Map<String, SpanWrapper> spanWrapperMap = currentSpanWrapperMapThreadLocal.get();
-		spanWrapperMap.remove(spanId);
-		if (spanWrapperMap.isEmpty()) {
-			currentSpanWrapperMapThreadLocal.remove();
+		if (spanWrapperMap != null) {
+			spanWrapperMap.remove(spanId);
+			if (spanWrapperMap.isEmpty()) {
+				currentSpanWrapperMapThreadLocal.remove();
+			}
 		}
 	}
 
@@ -52,9 +54,11 @@ public class SpanWrappingScopeManager implements ScopeManager, SpanWrappingCallb
 		Span activeSpan = delegate.activeSpan();
 		if (activeSpan != null) {
 			Map<String, SpanWrapper> spanWrapperMap = currentSpanWrapperMapThreadLocal.get();
-			SpanWrapper spanWrapper = spanWrapperMap.get(activeSpan.context().toSpanId());
-			if (spanWrapper != null) {
-				return spanWrapper;
+			if (spanWrapperMap != null) {
+				SpanWrapper spanWrapper = spanWrapperMap.get(activeSpan.context().toSpanId());
+				if (spanWrapper != null) {
+					return spanWrapper;
+				}
 			}
 		}
 		return activeSpan;
