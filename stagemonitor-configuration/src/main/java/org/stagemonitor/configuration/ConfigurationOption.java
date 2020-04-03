@@ -546,6 +546,8 @@ public class ConfigurationOption<T> {
 				return false;
 			}
 		} else {
+			//don't hide the name of the configuration source
+			this.nameOfCurrentConfigurationSource = newConfigurationSourceName;
 			return true;
 		}
 	}
