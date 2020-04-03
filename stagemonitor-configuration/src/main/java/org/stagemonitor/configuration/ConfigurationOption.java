@@ -71,34 +71,38 @@ public class ConfigurationOption<T> {
 	private volatile String errorMessage;
 	private volatile OptionValue<T> optionValue;
 
-	public static class OptionValue<T> {
-		private final T value;
-		private final String valueAsString;
-		private final String nameOfCurrentConfigurationSource;
-		private final String usedKey;
-
-		OptionValue(T value, String valueAsString, String nameOfCurrentConfigurationSource, String usedKey) {
-			this.value = value;
-			this.valueAsString = valueAsString;
-			this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
-			this.usedKey = usedKey;
+	private ConfigurationOption(boolean dynamic, boolean sensitive, String key, String label, String description,
+								T defaultValue, String configurationCategory, final ValueConverter<T> valueConverter,
+								Class<? super T> valueType, List<String> tags, boolean required,
+								List<ChangeListener<T>> changeListeners, List<Validator<T>> validators,
+								List<String> aliasKeys, final Map<String, String> validOptions) {
+		this.dynamic = dynamic;
+		this.key = key;
+		this.aliasKeys = aliasKeys;
+		this.label = label;
+		this.description = description;
+		this.defaultValue = defaultValue;
+		this.tags = tags;
+		validators = new ArrayList<Validator<T>>(validators);
+		if (validOptions != null) {
+			this.validOptions = Collections.unmodifiableMap(new LinkedHashMap<String, String>(validOptions));
+			validators.add(new ValidOptionValidator<T>(validOptions.keySet(), valueConverter));
+		} else {
+			this.validOptions = null;
 		}
-
-		public T getValue() {
-			return value;
-		}
-
-		public String getValueAsString() {
-			return valueAsString;
-		}
-
-		public String getNameOfCurrentConfigurationSource() {
-			return nameOfCurrentConfigurationSource;
-		}
-
-		public String getUsedKey() {
-			return usedKey;
-		}
+		this.validators = Collections.unmodifiableList(new ArrayList<Validator<T>>(validators));
+		this.defaultValueAsString = valueConverter.toString(defaultValue);
+		this.configurationCategory = configurationCategory;
+		this.valueConverter = valueConverter;
+		this.valueType = valueType;
+		this.sensitive = sensitive;
+		this.required = required;
+		this.changeListeners = new CopyOnWriteArrayList<ChangeListener<T>>(changeListeners);
+		setToDefault();
+		final ArrayList<String> tempAllKeys = new ArrayList<String>(aliasKeys.size() + 1);
+		tempAllKeys.add(key);
+		tempAllKeys.addAll(aliasKeys);
+		this.allKeys = Collections.unmodifiableList(tempAllKeys);
 	}
 
 	public static <T> ConfigurationOptionBuilder<T> builder(ValueConverter<T> valueConverter, Class<? super T> valueType) {
@@ -165,8 +169,7 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt; and all
-	 * Strings are converted to lower case.
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt; and all Strings are converted to lower case.
 	 *
 	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link List}&lt;{@link String}&gt;
 	 */
@@ -195,11 +198,9 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link
-	 * String}&gt;
+	 * Constructs a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link String}&gt;
 	 *
-	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link
-	 * String}&gt;
+	 * @return a {@link ConfigurationOptionBuilder} whose value is of type {@link Map}&lt;{@link Pattern}, {@link String}&gt;
 	 */
 	public static ConfigurationOptionBuilder<Map<Pattern, String>> regexMapOption() {
 		return new ConfigurationOptionBuilder<Map<Pattern, String>>(MapValueConverter.REGEX_MAP_VALUE_CONVERTER, Map.class)
@@ -264,40 +265,6 @@ public class ConfigurationOption<T> {
 	public static ConfigurationOptionBuilder<List<URL>> urlsOption() {
 		return new ConfigurationOptionBuilder<List<URL>>(new ListValueConverter<URL>(UrlValueConverter.INSTANCE), List.class)
 				.defaultValue(Collections.<URL>emptyList());
-	}
-
-	private ConfigurationOption(boolean dynamic, boolean sensitive, String key, String label, String description,
-								T defaultValue, String configurationCategory, final ValueConverter<T> valueConverter,
-								Class<? super T> valueType, List<String> tags, boolean required,
-								List<ChangeListener<T>> changeListeners, List<Validator<T>> validators,
-								List<String> aliasKeys, final Map<String, String> validOptions) {
-		this.dynamic = dynamic;
-		this.key = key;
-		this.aliasKeys = aliasKeys;
-		this.label = label;
-		this.description = description;
-		this.defaultValue = defaultValue;
-		this.tags = tags;
-		validators = new ArrayList<Validator<T>>(validators);
-		if (validOptions != null) {
-			this.validOptions = Collections.unmodifiableMap(new LinkedHashMap<String, String>(validOptions));
-			validators.add(new ValidOptionValidator<T>(validOptions.keySet(), valueConverter));
-		} else {
-			this.validOptions = null;
-		}
-		this.validators = Collections.unmodifiableList(new ArrayList<Validator<T>>(validators));
-		this.defaultValueAsString = valueConverter.toString(defaultValue);
-		this.configurationCategory = configurationCategory;
-		this.valueConverter = valueConverter;
-		this.valueType = valueType;
-		this.sensitive = sensitive;
-		this.required = required;
-		this.changeListeners = new CopyOnWriteArrayList<ChangeListener<T>>(changeListeners);
-		setToDefault();
-		final ArrayList<String> tempAllKeys = new ArrayList<String>(aliasKeys.size() + 1);
-		tempAllKeys.add(key);
-		tempAllKeys.addAll(aliasKeys);
-		this.allKeys = Collections.unmodifiableList(tempAllKeys);
 	}
 
 	/**
@@ -368,8 +335,8 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Returns <code>true</code>, if the value is sensitive, <code>false</code> otherwise. If a value has sensitive
-	 * content (e.g. password), it should be rendered as an input of type="password", rather then as type="text".
+	 * Returns <code>true</code>, if the value is sensitive, <code>false</code> otherwise. If a value has sensitive content (e.g. password), it should be rendered as an input of
+	 * type="password", rather then as type="text".
 	 *
 	 * @return Returns <code>true</code>, if the value is sensitive, <code>false</code> otherwise.
 	 */
@@ -398,11 +365,10 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * Returns an immutable snapshot of the {@link OptionValue}.
-	 * This makes sure to get a consistent snapshot of all the related values without the risk of partially applied updates.
-	 * This means that {@link OptionValue#getValue()} and {@link OptionValue#getValueAsString()} are always in sync,
-	 * which is not guaranteed if subsequently calling {@link #getValue()} and {@link #getValueAsString()}
-	 * because there could be a concurrent update between those reads.
+	 * Returns an immutable snapshot of the {@link OptionValue}. This makes sure to get a consistent snapshot of all the related values without the risk of partially applied updates. This
+	 * means that {@link OptionValue#getValue()} and {@link OptionValue#getValueAsString()} are always in sync, which is not guaranteed if subsequently calling {@link #getValue()} and
+	 * {@link
+	 * #getValueAsString()} because there could be a concurrent update between those reads.
 	 *
 	 * @return an immutable snapshot of the {@link OptionValue}
 	 */
@@ -428,7 +394,6 @@ public class ConfigurationOption<T> {
 	public String getNameOfCurrentConfigurationSource() {
 		return optionValue.nameOfCurrentConfigurationSource;
 	}
-
 
 	/**
 	 * Returns the category name of this configuration option
@@ -462,8 +427,7 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * If there was a error while trying to set value from a {@link ConfigurationSource}, this error message contains
-	 * information about the error.
+	 * If there was a error while trying to set value from a {@link ConfigurationSource}, this error message contains information about the error.
 	 *
 	 * @return a error message or null if there was no error
 	 */
@@ -547,7 +511,7 @@ public class ConfigurationOption<T> {
 			}
 		} else {
 			//don't hide the name of the configuration source
-			this.optionValue = new OptionValue<>(getValue(),getValueAsString(),newConfigurationSourceName, key);
+			this.optionValue = new OptionValue<>(getValue(), getValueAsString(), newConfigurationSourceName, key);
 			return true;
 		}
 	}
@@ -595,8 +559,7 @@ public class ConfigurationOption<T> {
 	 * @param newValue                the new value
 	 * @param configurationSourceName the name of the configuration source that the value should be saved to
 	 * @throws IOException                   if there was an error saving the key to the source
-	 * @throws IllegalArgumentException      if there was a error processing the configuration key or value or the
-	 *                                       configurationSourceName did not match any of the available configuration
+	 * @throws IllegalArgumentException      if there was a error processing the configuration key or value or the configurationSourceName did not match any of the available configuration
 	 *                                       sources
 	 * @throws UnsupportedOperationException if saving values is not possible with this configuration source
 	 */
@@ -631,8 +594,8 @@ public class ConfigurationOption<T> {
 	}
 
 	/**
-	 * A {@link ConfigurationOption} can have multiple keys ({@link #key} and {@link #aliasKeys}). This method returns
-	 * the key which is used by the current configuration source ({@link OptionValue#nameOfCurrentConfigurationSource}).
+	 * A {@link ConfigurationOption} can have multiple keys ({@link #key} and {@link #aliasKeys}). This method returns the key which is used by the current configuration source ({@link
+	 * OptionValue#nameOfCurrentConfigurationSource}).
 	 *
 	 * @return the used key of the current configuration source
 	 */
@@ -689,6 +652,36 @@ public class ConfigurationOption<T> {
 		}
 	}
 
+	public static class OptionValue<T> {
+		private final T value;
+		private final String valueAsString;
+		private final String nameOfCurrentConfigurationSource;
+		private final String usedKey;
+
+		OptionValue(T value, String valueAsString, String nameOfCurrentConfigurationSource, String usedKey) {
+			this.value = value;
+			this.valueAsString = valueAsString;
+			this.nameOfCurrentConfigurationSource = nameOfCurrentConfigurationSource;
+			this.usedKey = usedKey;
+		}
+
+		public T getValue() {
+			return value;
+		}
+
+		public String getValueAsString() {
+			return valueAsString;
+		}
+
+		public String getNameOfCurrentConfigurationSource() {
+			return nameOfCurrentConfigurationSource;
+		}
+
+		public String getUsedKey() {
+			return usedKey;
+		}
+	}
+
 	public static class ConfigurationOptionBuilder<T> {
 		private boolean dynamic = false;
 		private boolean sensitive = false;
@@ -713,12 +706,10 @@ public class ConfigurationOption<T> {
 		}
 
 		/**
-		 * Be aware that when using this method you might have to deal with <code>null</code> values when calling {@link
-		 * #getValue()}. That's why this method is deprecated
+		 * Be aware that when using this method you might have to deal with <code>null</code> values when calling {@link #getValue()}. That's why this method is deprecated
 		 *
-		 * @deprecated use {@link #buildRequired()}, {@link #buildWithDefault(Object)} or {@link #buildOptional()}. The
-		 * only valid use of this method is if {@link #buildOptional()} would be the semantically correct option but you
-		 * are not using Java 8+.
+		 * @deprecated use {@link #buildRequired()}, {@link #buildWithDefault(Object)} or {@link #buildOptional()}. The only valid use of this method is if {@link #buildOptional()} would be
+		 * the semantically correct option but you are not using Java 8+.
 		 */
 		@Deprecated
 		public ConfigurationOption<T> build() {
@@ -736,8 +727,8 @@ public class ConfigurationOption<T> {
 		 * will have to make sure to provide a value is present on startup. </p>
 		 *
 		 * <p> When a required option does not have a value the behavior depends on {@link
-		 * ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised, which
-		 * can potentially prevent the application form starting or a warning gets logged. </p>
+		 * ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised, which can potentially prevent the application form starting or a warning
+		 * gets logged. </p>
 		 */
 		public ConfigurationOption<T> buildRequired() {
 			this.required = true;
@@ -848,8 +839,8 @@ public class ConfigurationOption<T> {
 		 * Marks this option as required.
 		 *
 		 * <p> When a required option does not have a value the behavior depends on {@link
-		 * ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised, which
-		 * can potentially prevent the application form starting or a warning gets logged. </p>
+		 * ConfigurationRegistry#failOnMissingRequiredValues}. Either an {@link IllegalStateException} is raised, which can potentially prevent the application form starting or a warning
+		 * gets logged. </p>
 		 *
 		 * @return <code>this</code>, for chaining.
 		 * @deprecated use {@link #buildRequired()}
