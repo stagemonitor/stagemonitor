@@ -546,8 +546,6 @@ public class ConfigurationOption<T> {
 				return false;
 			}
 		} else {
-			//don't hide the name of the configuration source
-			this.optionValue = new OptionValue<>(getValue(),getValueAsString(),newConfigurationSourceName, key);
 			return true;
 		}
 	}
