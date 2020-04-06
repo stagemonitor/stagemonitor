@@ -22,11 +22,15 @@ public class ListValueConverter<T> extends AbstractCollectionValueConverter<List
 		super(valueConverter);
 	}
 
+	public ListValueConverter(ValueConverter<T> valueConverter, String delimiter) {
+		super(valueConverter, delimiter);
+	}
+
 	@Override
 	public List<T> convert(String s) {
 		if (s != null && s.length() > 0) {
 			final ArrayList<T> result = new ArrayList<T>();
-			for (String split : s.split(",")) {
+			for (String split : s.split(delimiter)) {
 				result.add(valueConverter.convert(split.trim()));
 			}
 			return Collections.unmodifiableList(result);
