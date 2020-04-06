@@ -25,11 +25,15 @@ public class SetValueConverter<T> extends AbstractCollectionValueConverter<Colle
 		super(valueConverter);
 	}
 
+	public SetValueConverter(ValueConverter<T> valueConverter, String delimiter) {
+		super(valueConverter, delimiter);
+	}
+
 	@Override
 	public Collection<T> convert(String s) {
 		if (s != null && s.length() > 0) {
 			final LinkedHashSet<T> result = new LinkedHashSet<T>();
-			for (String split : s.split(",")) {
+			for (String split : s.split(delimiter)) {
 				result.add(valueConverter.convert(split.trim()));
 			}
 			return Collections.unmodifiableSet(result);

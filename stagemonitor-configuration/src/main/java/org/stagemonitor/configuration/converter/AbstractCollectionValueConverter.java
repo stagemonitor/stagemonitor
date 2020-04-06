@@ -7,8 +7,16 @@ public abstract class AbstractCollectionValueConverter<C extends Collection<V>, 
 
 	protected final ValueConverter<V> valueConverter;
 
+	protected final String delimiter;
+
 	public AbstractCollectionValueConverter(ValueConverter<V> valueConverter) {
 		this.valueConverter = valueConverter;
+		this.delimiter = ",";
+	}
+
+	public AbstractCollectionValueConverter(ValueConverter<V> valueConverter, String delimiter) {
+		this.valueConverter = valueConverter;
+		this.delimiter = delimiter;
 	}
 
 	@Override
