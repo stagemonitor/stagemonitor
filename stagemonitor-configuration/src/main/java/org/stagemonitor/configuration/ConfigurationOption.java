@@ -546,6 +546,7 @@ public class ConfigurationOption<T> {
 				return false;
 			}
 		} else {
+			this.optionValue = new OptionValue<>(getValue(), getValueAsString(), newConfigurationSourceName, key);
 			return true;
 		}
 	}
