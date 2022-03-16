@@ -52,7 +52,7 @@ public class MeteredTransformer extends StagemonitorByteBuddyTransformer {
 
 		@Override
 		protected NamingParameters getNamingParameters(MethodDescription instrumentedMethod) {
-			final Metered metered = instrumentedMethod.getDeclaredAnnotations().ofType(Metered.class).loadSilent();
+			final Metered metered = instrumentedMethod.getDeclaredAnnotations().ofType(Metered.class).load();
 			return new NamingParameters(metered.name(), metered.absolute());
 		}
 

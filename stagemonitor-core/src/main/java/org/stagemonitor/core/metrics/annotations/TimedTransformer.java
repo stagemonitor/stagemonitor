@@ -63,7 +63,7 @@ public class TimedTransformer extends StagemonitorByteBuddyTransformer {
 		@Override
 		protected NamingParameters getNamingParameters(MethodDescription instrumentedMethod) {
 			if (instrumentedMethod.getDeclaredAnnotations().isAnnotationPresent(Timed.class)) {
-				final Timed timed = instrumentedMethod.getDeclaredAnnotations().ofType(Timed.class).loadSilent();
+				final Timed timed = instrumentedMethod.getDeclaredAnnotations().ofType(Timed.class).load();
 				return new NamingParameters(timed.name(), timed.absolute());
 			} else {
 				return new NamingParameters("", false);
