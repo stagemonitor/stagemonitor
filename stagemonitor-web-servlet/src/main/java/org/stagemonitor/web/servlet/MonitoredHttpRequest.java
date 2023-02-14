@@ -16,6 +16,10 @@ import org.stagemonitor.web.servlet.tracing.HttpServletRequestTextMapExtractAdap
 import org.stagemonitor.web.servlet.useragent.UserAgentParser;
 import org.stagemonitor.web.servlet.widget.WidgetAjaxSpanReporter;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -30,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -100,10 +105,13 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 		Tags.PEER_PORT.set(span, httpServletRequest.getRemotePort());
 		span.setTag("method", httpServletRequest.getMethod());
 		span.setTag("http.referring_site", getReferringSite());
+
+		if("POST".equals(httpServletRequest.getMethod()) && "application/json".equals(httpServletRequest.getContentType())) {
+			addHTTPBody(span) ;
+		}
 		if (servletPlugin.isCollectHttpHeaders()) {
 			SpanUtils.setHttpHeaders(span, getHeaders(httpServletRequest));
 		}
-
 		SpanContextInformation info = SpanContextInformation.forSpan(span);
 		info.addRequestAttribute(CONNECTION_ID_ATTRIBUTE, connectionId);
 		info.addRequestAttribute(MONITORED_HTTP_REQUEST_ATTRIBUTE, this);
@@ -111,6 +119,14 @@ public class MonitoredHttpRequest extends MonitoredRequest {
 			parseUserAgentAsync(span, info);
 		}
 		return span;
+	}
+	private void addHTTPBody(Span span){
+		try {
+			String requestBody = httpServletRequest.getReader().lines().collect(Collectors.joining());
+			span.setTag("http.body", requestBody);
+		}catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void parseUserAgentAsync(final Span span, SpanContextInformation info) {
