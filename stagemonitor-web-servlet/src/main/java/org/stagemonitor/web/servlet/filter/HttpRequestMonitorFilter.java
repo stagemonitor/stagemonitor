@@ -11,6 +11,7 @@ import org.stagemonitor.web.servlet.DefaultMonitoredHttpRequestFactory;
 import org.stagemonitor.web.servlet.MonitoredHttpRequest;
 import org.stagemonitor.web.servlet.MonitoredHttpRequestFactory;
 import org.stagemonitor.web.servlet.ServletPlugin;
+import org.stagemonitor.web.servlet.util.CachedBodyHttpServletRequest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -80,15 +81,18 @@ public class HttpRequestMonitorFilter extends AbstractExclusionFilter implements
 	@Override
 	public final void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
 			throws IOException, ServletException {
+		CachedBodyHttpServletRequest cachedBodyHttpServletRequest =
+				new CachedBodyHttpServletRequest(request);
 		if (corePlugin.isStagemonitorActive() && !isInternalRequest(request) &&
 				request.getDispatcherType() == REQUEST) {
 			try {
-				doMonitor(request, response, filterChain);
+
+				doMonitor(cachedBodyHttpServletRequest, response, filterChain);
 			} finally {
 				spanWrapperCaptor.clear();
 			}
 		} else {
-			filterChain.doFilter(request, response);
+			filterChain.doFilter(cachedBodyHttpServletRequest, response);
 		}
 	}
 
