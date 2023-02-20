@@ -5,10 +5,14 @@
 [![Coverage Status](https://coveralls.io/repos/stagemonitor/stagemonitor/badge.svg?branch=master&service=github)](https://coveralls.io/github/stagemonitor/stagemonitor?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.stagemonitor/stagemonitor-web-servlet/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.stagemonitor/stagemonitor-web-servlet)
 [![Release](https://jitpack.io/v/stagemonitor/stagemonitor.svg)](https://jitpack.io/#com.github.stagemonitor.stagemonitor/stagemonitor-web-servlet)
-[![Chat on Gitter](https://img.shields.io/gitter/room/TechnologyAdvice/Stardust.svg)](https://gitter.im/stagemonitor/stagemonitor)
 
 ---
 
+# ⚠️ This project is not maintained anymore
+
+A good alternative to stagemonitor that offers a similar feature set, except for the in-browser-widget, is the [Elastic APM Java Agent](https://www.elastic.co/guide/en/apm/agent/java/current/intro.html).
+
+---
 Stagemonitor is a Java monitoring agent that tightly integrates with time series databases like Elasticsearch, Graphite and InfluxDB to analyze graphed metrics and [Kibana](http://www.elasticsearch.org/overview/kibana/) to analyze requests and call stacks. It includes preconfigured Grafana and Kibana dashboards that can be customized.
 
 ## More Information
